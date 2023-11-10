@@ -20,10 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool LstmGradWeightGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -33,21 +31,16 @@ bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_func_ = func_list_[index].second;
 
   InitResource();
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTMGradWeight>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast LSTMGradWeight ops failed!";
-    return false;
-  }
-  bidirectional_ = kernel_ptr->get_bidirectional();
-  input_size_ = kernel_ptr->get_input_size();
-  hidden_size_ = kernel_ptr->get_hidden_size();
-  num_layers_ = kernel_ptr->get_num_layers();
-  has_bias_ = kernel_ptr->get_has_bias();
-  dropout_ = kernel_ptr->get_dropout();
-  auto proj_size = kernel_ptr->get_proj_size();
+  bidirectional_ = GetValue<bool>(primitive_->GetAttr("bidirectional"));
+  input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
+  hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
+  num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
+  dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
+  auto proj_size = GetValue<int64_t>(primitive_->GetAttr("proj_size"));
   if (proj_size != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', 'proj_size' could only be 0 in GPU, but got proj_size=" << proj_size;
@@ -55,10 +48,9 @@ bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int LstmGradWeightGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int LstmGradWeightGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   DestroyTensorDescGrp();
@@ -135,9 +127,9 @@ int LstmGradWeightGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -151,13 +143,13 @@ bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 
   if (!states_init_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, input_size_list_[kIndex4], 0),
+      cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, inputs[kIndex4]->size(), 0),
       "restore dropout state failed");
     states_init_ = true;
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(dw_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)), "cudaMemSet Failed");
+    cudaMemsetAsync(dw_addr, 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)), "cudaMemSet Failed");
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnRNNBackwardWeights(handle_, rnn_desc_, seq_len_, x_desc_.get(), x_addr, hx_desc_, hx_addr, y_desc_.get(),

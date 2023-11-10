@@ -57,7 +57,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kPushWeightOpName).set_input_attr_info(1).set_i
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kROIAlignGradOpName).set_input_attr_info(2, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSimpleMeanGradOpName).set_input_attr_info(1);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSubscalarOpName).set_input_attr_info(1);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherDGradV2OpName).set_input_attr_info(1).set_is_ascend_mindir();
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReshapeOpName).set_input_attr_info(1, "listInt");
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kTensorCopySlicesOpName)

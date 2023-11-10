@@ -52,17 +52,12 @@ void UpsampleTrilinear3DGradCpuKernelMod::ComputeHelper(
   ParallelLaunch(loop, static_cast<size_t>(output_size), block_size);
 }
 
-bool UpsampleTrilinear3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3DGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners_ = kernel_ptr->get_align_corners();
+bool UpsampleTrilinear3DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   auto x = inputs.at(kIndex0);
   MS_EXCEPTION_IF_NULL(x);
-  x_type_ = x->GetDtype();
+  x_type_ = x->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -73,16 +68,14 @@ bool UpsampleTrilinear3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int UpsampleTrilinear3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleTrilinear3DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // shape
-  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
   // workspace
   size_t unit_size = sizeof(WeightsAndIndices<float>);
   if (x_type_ == kNumberTypeFloat64) {
@@ -92,15 +85,15 @@ int UpsampleTrilinear3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   workspace_size_list_.push_back(unit_size * LongToSize(output_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size * LongToSize(output_shape_[kIndex4]));
   // none_list
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
     scales_ = std::vector<double>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_, false)) {
+    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<double>>();
+    if (scales_.empty()) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
     }
   }
@@ -108,9 +101,9 @@ int UpsampleTrilinear3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &workspace,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   // the input grad of backward process is the output of forward process
   auto grad_output_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(grad_output_ptr);
@@ -126,7 +119,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   } else {
     grad_input_ptr = GetDeviceAddress<S>(outputs, kIndex0);
     MS_EXCEPTION_IF_NULL(grad_input_ptr);
-    int ret = memset_s(outputs[kIndex0]->addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
+    int ret = memset_s(outputs[kIndex0]->device_ptr(), outputs[kIndex0]->size(), 0, outputs[kIndex0]->size());
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
     }

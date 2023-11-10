@@ -168,24 +168,6 @@ void HcclKernel::SetWorkspaceSizeList(const std::vector<size_t> &size_list) {
   mutable_workspace_size_list_ = size_list;
 }
 
-const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
-  size_t size = 0;
-  if (!mutable_input_size_list_.empty()) {
-    return mutable_input_size_list_;
-  }
-  if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
-                      << hccl_kernel_input_shape_list_.size();
-  }
-  for (ulong i = 0; i < hccl_data_type_list_.size(); ++i) {
-    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[i], hccl_kernel_input_shape_list_[i], &size)) {
-      MS_LOG(ERROR) << "GetHcclOpInputSize failed";
-    }
-    mutable_input_size_list_.push_back(size);
-  }
-  return mutable_input_size_list_;
-}
-
 void HcclKernel::CalLoopSize() {
   auto anf_node = anf_node_.lock();
   if (!anf_node) {

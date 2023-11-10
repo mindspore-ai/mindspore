@@ -29,7 +29,6 @@
 #include "ir/dtype.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
-#include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "ir/value.h"
@@ -39,6 +38,8 @@
 #include "ops/op_name.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
+#include "ir/kernel_tensor_value.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
@@ -590,6 +591,33 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
+std::string CheckAndConvertUtils::FormatCheckMsg(const std::string &arg_name, const std::vector<int64_t> &arg_value,
+                                                 CompareEnum compare_type, const std::vector<int64_t> &value,
+                                                 const PrimitivePtr &prim) {
+  std::ostringstream buffer;
+  if (prim == nullptr) {
+    buffer << "The attribute[" << arg_name << "]:";
+  } else {
+    buffer << "For primitive[" << prim->name() << "], the " << arg_name << ":";
+  }
+  auto iter_to_string = kCompareToString.find(compare_type);
+  if (iter_to_string == kCompareToString.end()) {
+    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_type << " cannot find in the compare string map";
+  }
+
+  buffer << " [";
+  for (auto item : arg_value) {
+    buffer << item << ",";
+  }
+  buffer << "]";
+  buffer << " must " << iter_to_string->second << "[";
+  for (auto item : value) {
+    buffer << item << ",";
+  }
+  buffer << "]";
+  return buffer.str();
+}
+
 void CheckAndConvertUtils::CheckInputArgs(const std::vector<AbstractBasePtr> &input_args,
                                           const CompareEnum compare_operator, const int64_t match_value,
                                           const std::string &prim_name) {
@@ -617,14 +645,14 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
 abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &prim_name,
                                                              const std::vector<AbstractBasePtr> &input_args,
                                                              size_t index) {
-  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, index);
+  auto abstract = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, index, kObjectTypeTensorType);
   MS_EXCEPTION_IF_NULL(abstract);
-  auto base_shape = abstract->BuildShape();
+  auto base_shape = abstract->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
-  if (!base_shape->isa<abstract::Shape>()) {
+  if (!base_shape->isa<abstract::TensorShape>()) {
     MS_LOG(EXCEPTION) << prim_name << " can not get shape for input " << index;
   }
-  auto shape = base_shape->cast<abstract::ShapePtr>();
+  auto shape = base_shape->cast<abstract::TensorShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }
@@ -639,7 +667,7 @@ TypePtr CheckAndConvertUtils::GetTensorInputType(const std::string &prim_name,
   if (input_arg == nullptr) {
     MS_EXCEPTION(ValueError) << "The " << index << "'s input of " << prim_name << " is nullptr.";
   }
-  auto base_type = input_arg->BuildType();
+  auto base_type = input_arg->GetType();
   MS_EXCEPTION_IF_NULL(base_type);
   if (!base_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "The " << index << "'s input type of " << prim_name << " is not Tensor.";
@@ -848,15 +876,15 @@ TypePtr CheckAndConvertUtils::CheckSparseTensorTypeValid(const std::string &type
   }
 }
 
-ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
                                                       const std::string &prim_name) {
   if (value == nullptr) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                              << "] value is nullptr.";
   }
   ShapeVector tensor_value;
   if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                              << "] must be a tensor, but got " << value->ToString();
   }
   auto input_tensor = value->cast<tensor::TensorPtr>();
@@ -883,7 +911,54 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value = {tensor_data, tensor_data + data_size};
   } else {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                            << "] must be a Tensor[Int64] or Tensor[Int32]"
+                            << " or Tensor[UInt64] or Tensor[UInt32] type, but got " << value->ToString();
+  }
+  return tensor_value;
+}
+
+ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
+                                                      const std::string &prim_name, const TypePtr &type) {
+  if (value == nullptr) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] value is nullptr.";
+  }
+  if (value->isa<ValueAny>() || value->isa<None>()) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] value is unknown.";
+  }
+  if (type->object_type() != kObjectTypeTensorType) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] must be a tensor, but got " << type->ToString();
+  }
+  ShapeVector tensor_value;
+  auto tensor_type_ptr = type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type_ptr);
+  auto tensor_type = tensor_type_ptr->element()->type_id();
+  if (tensor_type == kNumberTypeInt32) {
+    auto data_opt = ops::GetArrayValue<int>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else if (tensor_type == kNumberTypeInt64) {
+    auto data_opt = ops::GetArrayValue<int64_t>(value);
+    tensor_value = data_opt.value().ToVector();
+  } else if (tensor_type == kNumberTypeUInt32) {
+    auto data_opt = ops::GetArrayValue<uint32_t>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else if (tensor_type == kNumberTypeUInt64) {
+    auto data_opt = ops::GetArrayValue<uint64_t>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                             << "] must be a Tensor[Int64] or Tensor[Int32]"
                             << " or Tensor[UInt64] or Tensor[UInt32] type, but got " << value->ToString();
   }
@@ -1207,6 +1282,61 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
   return result;
 }
 
+std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
+                                                              const std::string &prim_name) {
+  std::vector<int64_t> result{};
+  MS_EXCEPTION_IF_NULL(abs);
+  auto abs_value = abs->GetValue();
+  MS_EXCEPTION_IF_NULL(abs_value);
+  if (!ops::IsValueKnown(abs_value)) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
+                             << "] is unknown, please handle this case before calling this function.";
+  }
+  if (IsSequence(abs)) {
+    const auto &type_list = GetSequenceElementTypes(abs);
+    if (type_list.empty()) {
+      return result;
+    }
+    if (type_list.front()->type_id() == kNumberTypeInt64) {
+      const auto &arr_value = ops::GetArrayValue<int64_t>(abs_value);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      result = arr_value->ToVector();
+    } else if (type_list.front()->type_id() == kNumberTypeInt32) {
+      const auto &arr_value = ops::GetArrayValue<int>(abs_value);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      const auto &vec_value = arr_value->ToVector();
+      (void)std::transform(vec_value.begin(), vec_value.end(), std::back_inserter(result),
+                           [](int ele) -> int64_t { return static_cast<int64_t>(ele); });
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
+                              << "'s type is one of ['tuple', 'list'], its element data type must be int32 or int64, "
+                                 "but got "
+                              << type_list.front()->ToString();
+    }
+  } else {
+    auto data_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(data_type);
+    if (data_type->type_id() == kNumberTypeInt64) {
+      const auto &val = ops::GetScalarValue<int64_t>(abs_value);
+      result.push_back(val.value());
+    } else if (data_type->type_id() == kNumberTypeInt32) {
+      const auto &val = ops::GetScalarValue<int>(abs_value);
+      result.push_back(val.value());
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
+                              << "'s type is 'int', its data type must be int32 or int64, but got "
+                              << data_type->ToString();
+    }
+  }
+  return result;
+}
+
 std::vector<int64_t> CheckAndConvertUtils::CheckAttrTuple(const PrimitivePtr &prim, const std::string &attr_name,
                                                           size_t num_element) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -1249,6 +1379,11 @@ std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_
         }
         return GetValue<int64_t>(e);
       });
+  } else if (attr->isa<KernelTensorValue>()) {
+    // to_do: check type of the KernelTensorValue is int64
+    auto data_opt = ops::GetArrayValue<int64_t>(attr);
+    const auto &data_array = data_opt.value();
+    result = data_array.ToVector();
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a tuple with all Int elements, but got " << attr->type_name() << ".";
@@ -1270,6 +1405,11 @@ std::vector<int64_t> CheckAndConvertUtils::CheckListInt(const std::string &arg_n
         }
         return GetValue<int64_t>(e);
       });
+  } else if (attr->isa<KernelTensorValue>()) {
+    // to_do: check type of the KernelTensorValue is int64
+    auto data_opt = ops::GetArrayValue<int64_t>(attr);
+    const auto &data_array = data_opt.value();
+    result = data_array.ToVector();
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a list with all Int elements, but got " << attr->ToString() << ".";
@@ -1312,5 +1452,36 @@ bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_l
     }
   }
   return false;
+}
+
+AbstractBasePtr CheckAndConvertUtils::CheckArgsType(const std::string &op, const AbstractBasePtrList &args_spec_list,
+                                                    size_t index, TypeId type_id) {
+  if (index >= args_spec_list.size()) {
+    MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
+                             << ", index " << index;
+  }
+  auto args_abs = args_spec_list[index];
+  MS_EXCEPTION_IF_NULL(args_abs);
+  if (args_abs->GetType()->object_type() != type_id) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
+                            << TypeIdToType(type_id)->ToString() << ", but got " << args_abs->GetType()->ToString()
+                            << ".";
+  }
+  return args_abs;
+}
+
+AbstractBasePtr CheckAndConvertUtils::CheckArgsSequenceType(const std::string &op,
+                                                            const AbstractBasePtrList &args_spec_list, size_t index) {
+  if (index >= args_spec_list.size()) {
+    MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
+                             << ", index " << index;
+  }
+  auto args_abs = args_spec_list[index];
+  MS_EXCEPTION_IF_NULL(args_abs);
+  if (!IsSequence(args_abs)) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
+                            << "tuple or list, but got " << args_abs->GetType()->ToString() << ".";
+  }
+  return args_abs;
 }
 }  // namespace mindspore

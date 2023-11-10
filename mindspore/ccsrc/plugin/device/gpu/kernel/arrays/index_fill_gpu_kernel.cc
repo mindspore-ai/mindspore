@@ -27,11 +27,11 @@ constexpr size_t kIndexFillOutputsNum = 1;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
-bool IndexFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool IndexFillGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexFillInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexFillOutputsNum, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -42,10 +42,9 @@ bool IndexFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int IndexFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int IndexFillGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -61,18 +60,18 @@ int IndexFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return KRET_OK;
 }
 
-bool IndexFillGpuKernelMod::GetSizeInfo(const AddressPtr &address_ptr, int64_t &outer_size, int64_t &dim_size,
+bool IndexFillGpuKernelMod::GetSizeInfo(const KernelTensor *address_ptr, int64_t &outer_size, int64_t &dim_size,
                                         int64_t &inner_size, cudaStream_t cuda_stream) {
   // Initialize and check 'dim'.
-  auto dim_ptr = address_ptr->addr;
+  auto dim_ptr = address_ptr->device_ptr();
   MS_EXCEPTION_IF_NULL(dim_ptr);
   int rank = static_cast<int>(x_shape_.size());
   int dim;
   // Here we can not use cudaMemcpy, since cudaMemcpy is asynchronous to host,
   // and when memory is pageable, cudaMemcpyAsync is synchronous to host.
-  if (address_ptr->size == sizeof(int)) {
+  if (address_ptr->size() == sizeof(int)) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&dim, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost, cuda_stream),
+      cudaMemcpyAsync(&dim, dim_ptr, address_ptr->size(), cudaMemcpyDeviceToHost, cuda_stream),
       "In IndexFill kernel, cudaMemcpyAsync input 'dim' device to host failed.");
     if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
@@ -81,7 +80,7 @@ bool IndexFillGpuKernelMod::GetSizeInfo(const AddressPtr &address_ptr, int64_t &
   } else {
     int64_t dim_tmp;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&dim_tmp, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost, cuda_stream),
+      cudaMemcpyAsync(&dim_tmp, dim_ptr, address_ptr->size(), cudaMemcpyDeviceToHost, cuda_stream),
       "In IndexFill kernel, cudaMemcpyAsync input 'dim' device to host failed.");
     if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
@@ -111,9 +110,9 @@ bool IndexFillGpuKernelMod::GetSizeInfo(const AddressPtr &address_ptr, int64_t &
 }
 
 template <typename DataType, typename IndexType>
-bool IndexFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool IndexFillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (x_num_ == 0) {
     return true;
   }

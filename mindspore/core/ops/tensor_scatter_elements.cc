@@ -30,14 +30,14 @@ namespace {
 abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  auto updates_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto updates_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(updates_shape_ptr);
   if (input_x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
@@ -54,17 +54,17 @@ abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive
                              << indices_shape << ", updates_shape: " << updates_shape << ".";
   }
 
-  return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
 }
 
 TypePtr TensorScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
   std::set<TypePtr> check_list(common_valid_types);
   (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);

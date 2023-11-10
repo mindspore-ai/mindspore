@@ -26,15 +26,16 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 template <typename T, typename G>
 AbstractBasePtr FindMaxOrMin(const AbstractBasePtrList &seq_elements, const bool is_max) {
   std::vector<T> values;
   for (size_t i = 0; i < seq_elements.size(); ++i) {
     auto element = seq_elements[i];
-    if (element->BuildValue() == kValueAny) {
+    if (element->GetValue()->ContainsValueAny()) {
       return element->Clone();
     }
-    values.push_back(element->BuildValue()->cast<G>()->value());
+    values.push_back(element->GetValue()->cast<G>()->value());
   }
   if (is_max) {
     return std::make_shared<abstract::AbstractScalar>(*std::max_element(values.begin(), values.end()));
@@ -50,7 +51,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
   auto arg = input_args[0];
   auto seq_abs = arg->cast<abstract::AbstractSequencePtr>();
   if (seq_abs->dynamic_len()) {
-    auto seq_type = seq_abs->BuildType();
+    auto seq_type = seq_abs->GetType();
     TypePtr type = nullptr;
     if (seq_type->isa<List>()) {
       type = seq_type->cast<ListPtr>()->dynamic_element_type();
@@ -62,7 +63,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
     return std::make_shared<abstract::AbstractScalar>(kValueAny, type == nullptr ? kTypeAny : type);
   }
   const auto &seq_elements = seq_abs->elements();
-  auto type = seq_elements[0]->BuildType();
+  auto type = seq_elements[0]->GetType();
   if (type->type_id() == kInt64->type_id()) {
     return FindMaxOrMin<int64_t, Int64ImmPtr>(seq_elements, is_max);
   } else if (type->type_id() == kInt32->type_id()) {
@@ -76,16 +77,35 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
   }
 }
 
+BaseShapePtr SequenceMaxMinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto queue_shape = input_args[kIndex0]->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  return queue_shape->shape()[kIndex0]->Clone();
+}
+
+TypePtr SequenceMaxMinInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex0])) {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  } else {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  }
+}
+}  // namespace
+
 MIND_API_OPERATOR_IMPL(SequenceMax, BaseOperator);
 class SequenceMaxInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args)->BuildShape();
+    return SequenceMaxMinInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args)->BuildType();
+    return SequenceMaxMinInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
@@ -99,11 +119,11 @@ class SequenceMinInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args, false)->BuildShape();
+    return SequenceMaxMinInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args, false)->BuildType();
+    return SequenceMaxMinInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

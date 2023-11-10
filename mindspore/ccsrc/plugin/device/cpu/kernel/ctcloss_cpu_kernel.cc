@@ -71,33 +71,24 @@ void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *a
 }
 }  // namespace
 
-bool CTCLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool CTCLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
 
-  MS_EXCEPTION_IF_NULL(base_operator);
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
-
-  preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr(PCR));
-  ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr(CTR));
-  ignore_longer_outputs_than_inputs_ = GetValue<bool>(prim->GetAttr(ILOTI));
+  preprocess_collapse_repeated_ = GetValue<bool>(primitive_->GetAttr(PCR));
+  ctc_merge_repeated_ = GetValue<bool>(primitive_->GetAttr(CTR));
+  ignore_longer_outputs_than_inputs_ = GetValue<bool>(primitive_->GetAttr(ILOTI));
   return true;
 }
 
-int CTCLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   probs_shape_ = inputs[0]->GetShapeVector();
   indices_dims_ = inputs[1]->GetShapeVector();
   labels_dims_ = inputs[2]->GetShapeVector();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   if (probs_shape_.size() != 3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' must be 3-D, but got " << probs_shape_.size()
@@ -119,8 +110,9 @@ int CTCLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool CTCLossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool CTCLossCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -282,14 +274,14 @@ void CTCLossCpuKernelMod::GenLabelWithBlank(const uint32_t *seq_len,
 }
 
 template <typename T>
-void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &outputs) const {
-  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *labels_indices_addr = reinterpret_cast<uint64_t *>(inputs[1]->addr);
-  const auto *labels_values_addr = reinterpret_cast<uint32_t *>(inputs[2]->addr);
-  const auto *sequence_length_addr = reinterpret_cast<uint32_t *>(inputs[3]->addr);
-  auto *loss_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto *gradient_addr = reinterpret_cast<T *>(outputs[1]->addr);
+void CTCLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) const {
+  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *labels_indices_addr = reinterpret_cast<uint64_t *>(inputs[1]->device_ptr());
+  const auto *labels_values_addr = reinterpret_cast<uint32_t *>(inputs[2]->device_ptr());
+  const auto *sequence_length_addr = reinterpret_cast<uint32_t *>(inputs[3]->device_ptr());
+  auto *loss_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto *gradient_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   std::vector<std::vector<uint32_t>> label_batch;
   std::vector<std::vector<uint32_t>> labels_with_blank;

@@ -128,7 +128,6 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
     SendMemoryFreeReq(context);
 
     EraseInput(context);
-    UpdateDynamicShapeInParameter();
     SendOutput(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
@@ -469,36 +468,6 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
     actor->set_start_time(GetTime());
   }
 }
-
-void ControlActor::UpdateDynamicShapeInParameter() {
-  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
-  for (size_t i = 0; i < backend_parameters_.size(); ++i) {
-    if (backend_parameters_[i].empty() || input_device_tensors_[i] == nullptr) {
-      continue;
-    }
-
-    auto node = input_device_tensors_[i]->GetNodeIndex().first;
-    ShapeVector shape = input_device_tensors_[i]->host_shape();
-    if (node != nullptr) {
-      shape = trans::GetRuntimePaddingShape(node, input_device_tensors_[i]->GetNodeIndex().second);
-    }
-    for (const auto &parameter : backend_parameters_[i]) {
-      if (common::AnfAlgo::IsDynamicSequence(parameter)) {
-        std::vector<ShapeVector> shapes = {shape};
-        if (!shape.empty()) {
-          shapes = std::vector<ShapeVector>(*shape.begin(), ShapeVector(shape.begin() + 1, shape.end()));
-        }
-        if (node != nullptr) {
-          shapes = BaseShapeToShapeVector(node->Shape());
-        }
-        std::vector<TypeId> types = std::vector(shapes.size(), input_device_tensors_[i]->type_id());
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, parameter);
-        continue;
-      }
-      common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape}, parameter.get());
-    }
-  }
-}
 namespace {
 CNodePtr CreateRealMakeTuple(const std::vector<DeviceTensor *> &addr_list) {
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRealMakeTuple)};
@@ -603,8 +572,17 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     {addr_list[0]->device_name(), addr_list[0]->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape);
+
+  abstract::BaseShapePtrList shape_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetShape());
+  auto tuple_shape = std::make_shared<abstract::TupleShape>(shape_list);
+  TypePtrList type_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetType());
+  auto tuple_type = std::make_shared<Tuple>(type_list);
+  MS_LOG(WARNING) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString()
+                  << " in device address:" << addr_list[0];
+  const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(new_device_tensor);
 
   MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();

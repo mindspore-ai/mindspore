@@ -95,9 +95,13 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
       std::string error_info = "Copy device tensor failed: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    output_device_tensor_[0]->SetNodeIndex(input_device_tensor_[0]->node_index().first.lock(),
-                                           input_device_tensor_[0]->node_index().second);
+    output_device_tensor_[0]->kernel_tensor()->SetType(input_device_tensor_[0]->kernel_tensor()->GetType());
+    output_device_tensor_[0]->kernel_tensor()->SetShape(input_device_tensor_[0]->kernel_tensor()->GetShape());
     output_device_tensor_[0]->set_user_data(input_device_tensor_[0]->user_data());
+    MS_LOG(DEBUG) << "Set user data:" << input_device_tensor_[0]->user_data()
+                  << " shape:" << input_device_tensor_[0]->kernel_tensor()->GetShape()->ToString()
+                  << " from device tensor:" << input_device_tensor_[0]
+                  << " to device address:" << output_device_tensor_[0];
     output_device_tensor_[0]->set_sync_user_data_handler(input_device_tensor_[0]->sync_user_data_handler());
   }
 
@@ -151,6 +155,12 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
     MS_LOG(DEBUG) << GetAID().Name() << " update output size from " << output_device_tensor_[0]->GetSize() << " to "
                   << input_device_tensor_[0]->GetSize();
     output_device_tensor_[0]->SetSize(input_device_tensor_[0]->GetSize());
+    const auto &output_kernel_tensor = output_device_tensor_[0]->kernel_tensor();
+    const auto &input_kernel_tensor = input_device_tensor_[0]->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+    output_kernel_tensor->SetType(input_kernel_tensor->GetType()->Clone());
+    output_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
   }
 }
 

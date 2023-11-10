@@ -1,0 +1,56 @@
+reduce_all:
+  description: |
+    Reduces a dimension of a tensor by the "logicalAND" of all elements in the dimension, by default. And also can
+      reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+      controlling `keep_dims`.
+    
+        Args:
+            x (Tensor[bool]): The dtype of the tensor to be reduced is bool.
+            axis (Union[int, tuple(int), list(int), tensor]) - The dimensions to reduce. Default: ``()`` , reduce all
+                dimensions. Must be in the range [-rank(x), rank(x)).
+            keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+                If ``False`` , don't keep these dimensions. Default: ``False`` .
+    
+        Returns:
+            output(Tensor): the dtype is bool.
+    
+            - If axis is (), and keep_dims is ``False`` ,
+              the output is a 0-D tensor representing the "logical and" of all elements in the input tensor.
+            - If axis is int, set as 2, and keep_dims is ``False`` ,
+              the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+            - If axis is tuple(int), set as (2, 3), and keep_dims is ``False`` ,
+              the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+    
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `x` is not a Tensor.
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            ValueError: If `axis` is out of range.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[True, False], [True, True]]))
+            >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
+            >>> output = ops.reduce_all(x, (), keep_dims=True)
+            >>> print(output)
+            [[False]]
+            >>> print(output.shape)
+            (1, 1)
+            >>> # case 2: Reduces a dimension along axis 0.
+            >>> output = ops.reduce_all(x, 0, keep_dims=True)
+            >>> print(output)
+            [[ True False]]
+            >>> # case 3: Reduces a dimension along axis 1.
+            >>> output = ops.reduce_all(x, 1, keep_dims=True)
+            >>> print(output)
+            [[False]
+            [ True]]
+            >>> # case 4: input is a scalar.
+            >>> x = Tensor(True)
+            >>> output = ops.reduce_all(x)
+            >>> print(output)
+            True

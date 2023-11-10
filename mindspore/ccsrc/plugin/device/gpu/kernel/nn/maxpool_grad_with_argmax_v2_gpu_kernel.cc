@@ -27,8 +27,8 @@ constexpr size_t kInputNum = 3;
 constexpr size_t kOutputNum = 1;
 
 template <typename T, typename S>
-bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -36,7 +36,7 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<Address
   S *index_addr = GetDeviceAddress<S>(inputs, kIndex2);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemsetAsync(dx_addr, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'MaxPoolWithArgmaxGradV2' failed to cudaMemsetAsync");
   auto status = CalMaxPoolGradWithArgmaxV2(dy_addr, index_addr, x_hw_, x_chw_, x_nchw_, dy_hw_, dy_chw_, dy_nchw_,
                                            dx_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
@@ -44,10 +44,8 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<Address
   return true;
 }
 
-bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -58,11 +56,9 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -76,10 +72,10 @@ int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_oper
                   << outputs.size();
     return KRET_RESIZE_FAILED;
   }
-  auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto dy_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto index_shape = inputs.at(kIndex2)->GetShapeVector();
-  auto dx_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
+  auto dy_shape = inputs[kIndex1]->GetShapeVector();
+  auto index_shape = inputs[kIndex2]->GetShapeVector();
+  auto dx_shape = outputs[kIndex0]->GetShapeVector();
 
   is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") ||
                    CHECK_SHAPE_NULL(index_shape, kernel_name_, "index") ||

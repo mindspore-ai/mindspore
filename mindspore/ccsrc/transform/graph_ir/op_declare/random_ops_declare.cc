@@ -117,4 +117,21 @@ CUST_INPUT_MAP(Dropout2D) = {{1, INPUT_DESC(x)}};
 CUST_ATTR_MAP(Dropout2D) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())}};
 CUST_OUTPUT_MAP(Dropout2D) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
 REG_ADPT_DESC(Dropout2D, kNameDropout2D, CUST_ADPT_DESC(Dropout2D))
+
+#if 0
+// StandardLaplace
+CUST_INPUT_MAP(StandardLaplace) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(seed)}, {3, INPUT_DESC(seed2)}};
+CUST_ATTR_MAP(StandardLaplace) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                                  {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(StandardLaplace) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(StandardLaplace, prim::kPrimStandardLaplace->name(), CUST_ADPT_DESC(StandardLaplace));
+#endif
+
+// RandpermV2
+INPUT_MAP(StatelessRandperm) = {{kIndex1, INPUT_DESC(n)}, {kIndex2, INPUT_DESC(seed)}, {kIndex3, INPUT_DESC(offset)}};
+ATTR_MAP(StatelessRandperm) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(StatelessRandperm) = {{kIndex4, ATTR_DESC(layout, AnyTraits<int64_t>())},
+                                     {kIndex5, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+OUTPUT_MAP(StatelessRandperm) = {{kIndex0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(StatelessRandperm, prim::kPrimRandpermV2->name(), ADPT_DESC(StatelessRandperm));
 }  // namespace mindspore::transform

@@ -57,7 +57,6 @@ class BincountHelperGpuKernel : public GpuKernelHelperBase {
     if (array_size == 0 && inp_flag == 0) {
       inp_flag = 1;
     }
-    input_size_list_.emplace_back(array_size);
 
     size_t size_size = int32_size;
     for (const auto &val : size_shape_) {
@@ -66,7 +65,6 @@ class BincountHelperGpuKernel : public GpuKernelHelperBase {
     if (size_size == 0 && inp_flag == 0) {
       inp_flag = 1;
     }
-    input_size_list_.emplace_back(size_size);
 
     size_t weights_size = T_size;
     for (const auto &val : weights_shape_) {
@@ -74,8 +72,6 @@ class BincountHelperGpuKernel : public GpuKernelHelperBase {
     }
     if (weights_shape_.size() == 0 || weights_size == 0) {
       has_weights_ = false;
-    } else {
-      input_size_list_.emplace_back(weights_size);
     }
 
     int out_flag =

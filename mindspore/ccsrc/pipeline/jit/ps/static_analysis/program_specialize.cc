@@ -142,9 +142,9 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       constexpr int recursive_level = 2;
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
       // Change the node.
-      auto zero_value = NewValueNode(MakeValue(0));
+      auto zero_value = NewValueNode(MakeValue<int64_t>(0));
       zero_value->set_abstract(
-        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0), std::make_shared<Problem>()));
+        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0), std::make_shared<Problem>()));
       cnode->set_input(pos + 1, zero_value);
 
       // Change the abstract.
@@ -171,7 +171,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
 
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << node->DebugString();
       // Change the node.
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       auto value_list = const_cast<ValuePtrList &>(sequence_value->value());
       value_list[pos] = zero;
 
@@ -361,8 +361,10 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
     auto new_abs_fn = GetSpecializedAbstract(old_abs_fn);
     if (new_abs_fn != nullptr && new_abs_fn->isa<AbstractFuncAtom>()) {
       auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
-      new_abs =
+      auto new_partial_abs =
         std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), old_partial_abs->node());
+      new_partial_abs->set_need_append_to_end(old_partial_abs->need_append_to_end());
+      new_abs = new_partial_abs;
       MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
                     << ", specialized_abstract: " << new_abs->ToString();
     } else {
@@ -781,7 +783,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -862,7 +864,7 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -942,8 +944,8 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
         if (!(*flags)[i]) {
-          auto zero_value = NewValueNode(MakeValue(0));
-          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+          auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
           (void)inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
@@ -1928,7 +1930,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     return BuildValueNodeForAbstractFunction(origin_node, ival, attrs, cnode, abs);
   } else {
     ValuePtr val = ival->BuildValue();
-    if (val->isa<ValueAny>()) {
+    if (val->ContainsValueAny()) {
       return nullptr;
     }
     // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.

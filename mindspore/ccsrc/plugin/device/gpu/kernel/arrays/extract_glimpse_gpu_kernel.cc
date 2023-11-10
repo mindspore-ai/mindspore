@@ -29,34 +29,27 @@ constexpr size_t kExtractGlimpseOutputsNum = 1;
 constexpr size_t kExtractGlimpseTwo = 2;
 constexpr int64_t kExtractGlimpseOne = 2;
 constexpr int64_t kExtractGlimpseThree = 3;
-bool ExtractGlimpseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractGlimpse>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExtractGlimpseInputsNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExtractGlimpseOutputsNum, kernel_ptr->name());
+bool ExtractGlimpseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExtractGlimpseInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExtractGlimpseOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
-                      << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  centered_ = kernel_ptr->get_centered();
-  normalized_ = kernel_ptr->get_normalized();
-  uniform_noise_ = kernel_ptr->get_uniform_noise();
-  noise_ = kExtractGlimpsenoiseMap[kernel_ptr->get_noise()];
+  centered_ = GetValue<bool>(primitive_->GetAttr("centered"));
+  normalized_ = GetValue<bool>(primitive_->GetAttr("normalized"));
+  uniform_noise_ = GetValue<bool>(primitive_->GetAttr("uniform_noise"));
+  noise_ = kExtractGlimpsenoiseMap[GetValue<std::string>(primitive_->GetAttr("noise"))];
   return true;
 }
 
-int ExtractGlimpseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ExtractGlimpseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   inputs_shape = inputs[kIndex0]->GetShapeVector();
@@ -95,17 +88,17 @@ int ExtractGlimpseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
     return res;
   };
-  inputs_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(inputs_shape);
-  size_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(size_shape);
-  offsets_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(offsets_shape);
-  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * output_elements_;
+  inputs_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(inputs_shape);
+  size_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(size_shape);
+  offsets_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(offsets_shape);
+  output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * output_elements_;
   return 0;
 }
 
 template <typename T>
-bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   int *size = GetDeviceAddress<int>(inputs, kIndex1);
   T *offsets = GetDeviceAddress<T>(inputs, kIndex2);

@@ -148,6 +148,12 @@ const BaseShapePtr &AbstractBase::GetShapeTrack() const { return shape_; }
 
 BaseShapePtr AbstractBase::BuildShape() const { return kNoShape; }
 
+BaseShapePtr AbstractBase::GetShape() const { return BuildShape(); }
+
+TypePtr AbstractBase::GetType() const { return BuildType(); }
+
+ValuePtr AbstractBase::GetValue() const { return BuildValue(); }
+
 void AbstractBase::set_trace_node_provider(const TraceNodeProvider &trace_node_provider) {
   trace_node_provider_ = trace_node_provider;
 }
@@ -157,7 +163,7 @@ inline AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) {
   return shared_from_base<AbstractBase>();
 }
 
-bool AbstractBase::IsBroaden() const { return value_ == kValueAny; }
+bool AbstractBase::IsBroaden() const { return value_->ContainsValueAny(); }
 
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
@@ -211,16 +217,16 @@ std::string AbstractBase::ToString(bool verbose) const {
   }
   std::ostringstream buffer;
   auto tensor_value = BuildValue();
-  auto shape = BuildShape();
+  auto shape = GetShape();
   auto type = BuildType();
   if (shape != nullptr && type != nullptr) {
     buffer << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   } else if (type != nullptr) {
     buffer << type;
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   }
@@ -1026,7 +1032,7 @@ bool AbstractSequence::PurifyElements() {
   for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
-      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
+      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(0));
       if (elements_[i]->isa<AbstractProblem>()) {
         unuse_node_none->set_type(std::make_shared<Problem>());
       }
@@ -1056,7 +1062,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
   if (input_len > 1) {
     auto first_element = elements()[0];
     MS_EXCEPTION_IF_NULL(first_element);
-    auto first_element_shape = first_element->BuildShape();
+    auto first_element_shape = first_element->GetShape();
     MS_EXCEPTION_IF_NULL(first_element_shape);
     auto first_element_type_id = first_element->BuildType()->generic_type_id();
     for (size_t i = 1; i < input_len; ++i) {
@@ -1072,7 +1078,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
                                  << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The "
                                  << i << "th element type is: " << TypeIdToString(cur_element_type_id);
       }
-      auto cur_element_shape = cur_element->BuildShape();
+      auto cur_element_shape = cur_element->GetShape();
       MS_EXCEPTION_IF_NULL(cur_element_shape);
       if (*first_element_shape != *cur_element_shape) {
         if (!raise_exception) {
@@ -1137,7 +1143,7 @@ BaseShapePtrList AbstractSequence::ElementsShape() const {
   BaseShapePtrList element_shape_list;
   for (const auto &element : elements_) {
     MS_EXCEPTION_IF_NULL(element);
-    BaseShapePtr element_shape = element->BuildShape();
+    BaseShapePtr element_shape = element->GetShape();
     element_shape_list.push_back(element_shape);
   }
   return element_shape_list;
@@ -1192,10 +1198,6 @@ ValuePtr AbstractSequence::ElementsBuildValue() const {
       continue;
     }
     element_value = element->BuildValue();
-    MS_EXCEPTION_IF_NULL(element_value);
-    if (element_value->isa<ValueAny>()) {
-      return kValueAny;
-    }
     element_value_list.push_back(element_value);
   }
   return std::make_shared<T>(element_value_list);
@@ -1339,7 +1341,7 @@ BaseShapePtr AbstractTuple::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<TupleShape>(ElementsShape());
 }
@@ -1409,7 +1411,7 @@ bool AbstractTuple::ContainsAllConstants() const {
     MS_EXCEPTION_IF_NULL(element_value);
     // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
     if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
-          (element->isa<abstract::AbstractTensor>() && element_value != kValueAny) ||
+          (element->isa<abstract::AbstractTensor>() && !element_value->ContainsValueAny()) ||
           element->isa<abstract::AbstractTuple>())) {
       return false;
     }
@@ -1468,7 +1470,7 @@ BaseShapePtr AbstractList::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<ListShape>(ElementsShape());
 }
@@ -2452,11 +2454,11 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
     MS_EXCEPTION_IF_NULL(element);
     auto abs_tuple = element->cast_ptr<AbstractTuple>();
     if (abs_tuple == nullptr) {
-      element_shape_list.push_back(element->BuildShape());
+      element_shape_list.push_back(element->GetShape());
     } else {
       for (const auto &scalar : abs_tuple->elements()) {
         MS_EXCEPTION_IF_NULL(scalar);
-        element_shape_list.push_back(scalar->BuildShape());
+        element_shape_list.push_back(scalar->GetShape());
       }
     }
   }
@@ -2791,21 +2793,21 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
 
   // Join the default_value.
   auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
-  if (joined_default_value == kValueAny) {
+  if (joined_default_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
                              << " != " << other_abs->default_value_->ToString();
   }
 
   // Join the permit_filter_value.
   auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
-  if (joined_permit_filter_value == kValueAny) {
+  if (joined_permit_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
                              << " != " << other_abs->permit_filter_value_->ToString();
   }
 
   // Join the evict_filter_value.
   auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
-  if (joined_evict_filter_value == kValueAny) {
+  if (joined_evict_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
                              << " != " << other_abs->evict_filter_value_->ToString();
   }

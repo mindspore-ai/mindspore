@@ -157,22 +157,23 @@ class BACKEND_EXPORT KernelAttr {
                            const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &object_type, const TypeId &ms_type,
                             const std::string &formatt = kOpFormat_DEFAULT);
-  KernelAttr &AddAllSameAttr(const bool &all_same);
-  KernelAttr &AddSkipCheckAttr(const bool &skip_check);
+  KernelAttr &AddAllSameAttr(bool all_same, size_t all_same_input_num = 1, bool group_allsame = false);
+  KernelAttr &AddSkipCheckAttr(bool skip_check);
   KernelAttr &AddRealTuple(const bool &is_real_tuple);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
-  KernelAttr &AddAllOutInRef(const bool &all_out_in_ref);
+  KernelAttr &AddAllOutInRef(bool all_out_in_ref);
 
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
-  const bool &GetAllSame() const { return all_same_; }
-  const bool &GetSkipCheck() const { return skip_check_; }
+  bool GetAllSame() const { return all_same_; }
+  bool GetSkipCheck() const { return skip_check_; }
   const bool &GetRealTuple() const { return is_real_tuple_; }
-
+  bool GetGroupAllSame() const { return is_group_allsame_; }
+  size_t GetAllSameInputNum() const { return all_same_input_num_; }
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
   const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
-  const bool &GetAllOutInRef() const { return all_out_in_ref_; }
+  bool GetAllOutInRef() const { return all_out_in_ref_; }
 
   void SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
   void SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
@@ -188,6 +189,8 @@ class BACKEND_EXPORT KernelAttr {
   bool all_same_{false};
   bool skip_check_{false};
   bool is_real_tuple_{false};
+  bool is_group_allsame_{false};
+  size_t all_same_input_num_{0};
 
   // The map between kernel's output and input ref relationship.
   OutputInputRefMap out_in_ref_map_;
@@ -206,8 +209,10 @@ BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 BACKEND_EXPORT bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);
+BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs);
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
-Format GetFormatFromStrToEnum(const std::string &format_str);
+BACKEND_EXPORT Format GetFormatFromStrToEnum(const std::string &format_str);
 BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);
 // Synchronize the output and input reference map between two kernel attrs.
 void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
@@ -233,14 +238,17 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
 
-template <typename Derived, typename AddressType = AddressPtr>
+BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
+                                             const KernelAttr &cur_kernel_attr);
+
+template <typename Derived>
 class MatchKernelHelper {
  public:
   MatchKernelHelper() = default;
   virtual ~MatchKernelHelper() = default;
 
-  using KernelRunFunc = std::function<bool(Derived *, const std::vector<AddressType> &,
-                                           const std::vector<AddressType> &, const std::vector<AddressPtr> &)>;
+  using KernelRunFunc = std::function<bool(Derived *, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   virtual const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const = 0;
 
  protected:
@@ -251,6 +259,7 @@ class MatchKernelHelper {
                          [](const std::pair<KernelAttr, KernelRunFunc> &pair) { return pair.first; });
     return support_list;
   }
+  // Delete after KernelMod rectified.
   bool MatchKernelFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                        const std::vector<KernelTensorPtr> &outputs) {
     auto kernel_name = base_operator->name();
@@ -264,6 +273,19 @@ class MatchKernelHelper {
     kernel_func_ = func_list[index].second;
     return true;
   }
+  bool MatchKernelFunc(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                       const std::vector<KernelTensor *> &outputs) {
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto &func_list = static_cast<Derived *>(this)->GetFuncList();
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, OpSupport());
+    if (!is_match) {
+      MS_LOG(ERROR) << "The kernel '" << kernel_name << "' does not support this kernel data type: " << kernel_attr;
+      return false;
+    }
+    kernel_func_ = func_list[index].second;
+    return true;
+  }
+
   KernelRunFunc kernel_func_;
 };
 

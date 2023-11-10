@@ -18,19 +18,19 @@
 #define MINDSPORE_CORE_OPS_AVG_POOL_FUSION_H_
 #include <memory>
 #include <vector>
-
+#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/avg_pool.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolFusion = "AvgPoolFusion";
 /// \brief AvgPoolFusion defined AvgPool operator prototype of lite.
-class MIND_API AvgPoolFusion : public AvgPool {
+class MIND_API AvgPoolFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AvgPoolFusion);
   /// \brief Constructor.
-  AvgPoolFusion() : AvgPool(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
+  AvgPoolFusion() : BaseOperator(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -47,6 +47,44 @@ class MIND_API AvgPoolFusion : public AvgPool {
             const PadMode &pad_mode = VALID, const Format &format = NCHW,
             const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = FLOOR,
             const bool global = false, const ActivationType activation_type = NO_ACTIVATION);
+
+  /// \brief Set pad_mode.
+  void set_pad_mode(const int64_t &pad_mode);
+  /// \brief Set kernel_size.
+  void set_kernel_size(const std::vector<int64_t> &kernel_size);
+  /// \brief Set strides.
+  void set_strides(const std::vector<int64_t> &strides);
+  /// \brief Set format.
+  void set_data_format(const int64_t &data_format);
+  /// \brief Set pad.
+  void set_pad(const std::vector<int64_t> &pad);
+  /// \brief Set round_mode.
+  void set_round_mode(const int64_t &round_mode);
+
+  /// \brief Get kernel_size.
+  ///
+  /// \return kernel_size.
+  std::vector<int64_t> get_kernel_size() const;
+  /// \brief Get strides.
+  ///
+  /// \return strides.
+  std::vector<int64_t> get_strides() const;
+  /// \brief Get pad_mode.
+  ///
+  /// \return pad_mode.
+  int64_t get_pad_mode() const;
+  /// \brief Get format.
+  ///
+  /// \return format.
+  int64_t get_data_format() const;
+  /// \brief Get pad.
+  ///
+  /// \return pad.
+  std::vector<int64_t> get_pad() const;
+  /// \brief Get round_mode.
+  ///
+  /// \return round_mode.
+  int64_t get_round_mode() const;
 
   /// \brief Method to set global attribute.
   ///

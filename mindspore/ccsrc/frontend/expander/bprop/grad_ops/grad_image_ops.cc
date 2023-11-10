@@ -21,14 +21,14 @@
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradImageOps)
-REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto images = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit(
-    "ResizeBicubicGrad", {dout, images},
-    {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->OutZeros(size)};
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("ResizeBicubicGrad", {dout, images, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {

@@ -21,35 +21,66 @@
 #include <memory>
 #include <unordered_map>
 #include "ir/dtype/type_id.h"
+#include "ops_func_impl/op_func_impl.h"
 namespace mindspore::ops {
 
-enum OP_DTYPE {
+enum OP_DTYPE : int64_t {
+  DT_BEGIN = 0,
   DT_BOOL,
   DT_INT,
   DT_FLOAT,
+  DT_NUMBER,
   DT_TENSOR,
   DT_STR,
-  DT_ARRAY_BOOL,
-  DT_ARRAY_INT,
-  DT_ARRAY_FLOAT,
-  DT_ARRAY_TENSOR,
-  DT_ARRAY_STR
+  DT_ANY,
+  DT_TUPLE_BOOL,
+  DT_TUPLE_INT,
+  DT_TUPLE_FLOAT,
+  DT_TUPLE_NUMBER,
+  DT_TUPLE_TENSOR,
+  DT_TUPLE_STR,
+  DT_TUPLE_ANY,
+  DT_LIST_BOOL,
+  DT_LIST_INT,
+  DT_LIST_FLOAT,
+  DT_LIST_NUMBER,
+  DT_LIST_TENSOR,
+  DT_LIST_STR,
+  DT_LIST_ANY,
+  DT_END,
 };
 
 struct OpArg {
   std::string arg_name_;
   OP_DTYPE arg_dtype_;
   bool as_init_arg_;  // true if this is a primitive init arg.
+  std::string arg_handler_;
+  std::vector<OP_DTYPE> cast_dtype_;
 };
 
 struct OpDef {
   std::string name_;
   std::vector<OpArg> args_;
   std::vector<OpArg> returns_;
+  std::unordered_map<std::string, size_t> indexes_;
+  OpFuncImpl &func_impl_;
 };
 
 using OpDefPtr = OpDef *;
 
-OpDefPtr GetOpDef(const std::string &op_name);
+MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
+MS_CORE_API void AddOpDef(const std::string &op_name, const OpDefPtr op_def);
+MS_CORE_API bool IsPrimitiveFunction(const std::string &op_name);
+
+MS_CORE_API std::string EnumToString(OP_DTYPE dtype);
+
+class OpDefRegHelper {
+ public:
+  OpDefRegHelper(const std::string &op_name, const OpDefPtr op_def) { AddOpDef(op_name, op_def); }
+  ~OpDefRegHelper() = default;
+};
+
+#define REGISTER_PRIMITIVE_OP_DEF(op_name, op_def) \
+  static auto op_def_helper_##op_name = OpDefRegHelper(op_name, op_def);
 }  // namespace mindspore::ops
 #endif

@@ -31,12 +31,10 @@ class MatrixSolveLsCpuKernelMod : public NativeCpuKernelMod {
   MatrixSolveLsCpuKernelMod() = default;
   ~MatrixSolveLsCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -46,11 +44,12 @@ class MatrixSolveLsCpuKernelMod : public NativeCpuKernelMod {
  private:
   bool LaunchKernelAcessCheck(void);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   using MatrixSolveLsFunc =
-    std::function<bool(MatrixSolveLsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(MatrixSolveLsCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MatrixSolveLsFunc>> func_list_;
   MatrixSolveLsFunc kernel_func_;
 
@@ -58,27 +57,29 @@ class MatrixSolveLsCpuKernelMod : public NativeCpuKernelMod {
   void RealCholeskySingleCompute(T *aptr, T *bptr, T *xptr, double *l2, int64_t m, int64_t k, int64_t n) const;
 
   template <typename T>
-  bool RealCholesky(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool RealCholesky(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void RealQrSingleCompute(T *aptr, T *bptr, T *xptr, int64_t m, int64_t k, int64_t n) const;
 
   template <typename T>
-  bool RealQr(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool RealQr(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void ComplexCholeskySingleCompute(std::complex<T> *aptr, std::complex<T> *bptr, std::complex<T> *xptr, double *l2,
                                     int64_t m, int64_t k, int64_t n) const;
 
   template <typename T>
-  bool ComplexCholesky(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool ComplexCholesky(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void ComplexQrSingleCompute(std::complex<T> *aptr, std::complex<T> *bptr, std::complex<T> *xptr, int64_t m, int64_t k,
                               int64_t n) const;
 
   template <typename T>
-  bool ComplexQr(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool ComplexQr(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs);
 
   bool qr_chole_{true};
   TypeId matrix_dtype_{kTypeUnknown};

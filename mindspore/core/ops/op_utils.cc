@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ops/op_utils.h"
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -22,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "ir/dtype/tensor_type.h"
@@ -31,82 +34,101 @@
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "ir/value.h"
+#include "ir/kernel_tensor_value.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_name.h"
-#include "ops/op_utils.h"
+#include "ops/op_def.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ops {
-std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
-                                       const std::string &op_name, const std::string &, const std::string &) {
+std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
+                                       const std::string &op_name, const std::string &op_x_name,
+                                       const std::string &op_y_name) {
   if (x_shape == y_shape) {
     return x_shape;
   }
-  constexpr int dynamic_rank_len = 1;
-  constexpr int dynamic_rank_value = -2;
-  if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
-      (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
-    return std::vector<int64_t>({dynamic_rank_value});
+
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return {abstract::Shape::kShapeRankAny};
   }
-  auto x_length = static_cast<int64_t>(x_shape.size());
-  auto y_length = static_cast<int64_t>(y_shape.size());
-  auto length = x_length < y_length ? x_length : y_length;
+
   std::vector<int64_t> broadcast_shape;
-  if (x_length == length) {
-    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
-  } else {
-    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
-  }
-  for (int64_t i = -length; i < 0; i++) {
-    if (x_shape[LongToSize(x_length + i)] == 1) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if (x_shape[LongToSize(x_length + i)] == y_shape[LongToSize(y_length + i)]) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) &&
-               (y_shape[LongToSize(y_length + i)] > 1)) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] > 1) &&
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) ||
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
-      broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
-    } else {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', x.shape and y.shape need to broadcast. The value of x.shape["
-                               << std::to_string(LongToSize(x_length + i)) << "] or y.shape["
-                               << std::to_string(LongToSize(y_length + i))
-                               << "] must be 1 or -1 when they are not the same, but got x.shape = " << x_shape
-                               << " and y.shape = " << y_shape;
+  auto x_length = x_shape.size();
+  auto y_length = y_shape.size();
+  auto res = x_length > y_length;
+  size_t max_len = res ? x_length : y_length;
+  size_t min_len = res ? y_length : x_length;
+  const std::vector<int64_t> &max_shape = res ? x_shape : y_shape;
+  const std::vector<int64_t> &min_shape = res ? y_shape : x_shape;
+
+  broadcast_shape = max_shape;
+  auto miss = max_len - min_len;
+  for (size_t i = 0; i < min_len; i++) {
+    auto dst_i = miss + i;
+    if (max_shape[dst_i] == 1) {
+      broadcast_shape[dst_i] = min_shape[i];
+    } else if (MS_UNLIKELY(max_shape[dst_i] == -1)) {
+      if (min_shape[i] != 1) {
+        broadcast_shape[dst_i] = min_shape[i];
+      }
+    } else if (MS_UNLIKELY(max_shape[dst_i] != min_shape[i] && min_shape[i] != -1 && min_shape[i] != 1)) {
+      auto x_shape_name = op_x_name + ".shape";
+      auto y_shape_name = op_y_name + ".shape";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', " << x_shape_name << " and " << y_shape_name
+                               << " need to broadcast. The value of " << x_shape_name << "["
+                               << std::to_string(x_length + i) << "] or " << y_shape_name << "["
+                               << std::to_string(y_length + i)
+                               << "] must be 1 or -1 when they are not the same, but got " << x_shape_name << " = "
+                               << x_shape << " and " << y_shape_name << " = " << y_shape;
     }
   }
   return broadcast_shape;
 }
+
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
-  auto x_shape = x_shape_map[kShape];
-  auto y_shape = y_shape_map[kShape];
-
-  // ToSupport Dynamic rank
-  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
+  ShapeVector x_shape;
+  if (!input_args[0]->GetShape()->isa<abstract::NoShape>()) {
+    x_shape = GetShapeFromTensor(input_args[0]);
   }
 
-  if (x_shape == y_shape) {
-    return std::make_shared<abstract::Shape>(x_shape);
+  ShapeVector y_shape;
+  if (!input_args[1]->GetShape()->isa<abstract::NoShape>()) {
+    y_shape = GetShapeFromTensor(input_args[1]);
   }
+
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
+
+BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
+  return input_args[0]->GetShape()->Clone();
+}
+
+TypePtr EltwiseGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  auto grad_type = input_args[0]->GetType();
+  MS_EXCEPTION_IF_NULL(grad_type);
+  auto x_type = input_args[1]->GetType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (grad_type->type_id() != x_type->type_id()) {
+    MS_LOG_EXCEPTION << "For " << primitive->name()
+                     << ", the grad type must be same as input type, but got grad_type: " << grad_type->ToString()
+                     << " and x_type: " << x_type->ToString();
+  }
+  return grad_type->Clone();
+}
+
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim) {
   MS_EXCEPTION_IF_NULL(axis);
   int64_t dim_ = static_cast<int64_t>(dim);
@@ -219,7 +241,7 @@ bool CheckAndGetAxisValueFromTensor(const std::vector<abstract::AbstractBasePtr>
                                     const ValuePtr &input_value, const std::string &op_name,
                                     std::vector<int64_t> *axis_value, int64_t *axis_shape_v) {
   bool is_dynamic = false;
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->GetType(), {kInt32, kInt64},
                                                    op_name);
   if (input_value->isa<tensor::Tensor>()) {
     *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
@@ -252,7 +274,12 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     return false;
   }
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto input_value = input_args[kInputIndex1]->BuildValue();
+  auto input_value = input_args[kInputIndex1]->GetValue();
+  if (input_value->isa<KernelTensorValue>()) {
+    auto value_opt = GetArrayValue<int64_t>(input_value);
+    auto value_array = value_opt.value();
+    *axis_value = value_array.ToVector();
+  }
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {
@@ -280,9 +307,7 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args,
                                         const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto x_shape = shape_ptr->shape();
+  auto x_shape = GetShapeFromTensor(input_args[0]);
   bool skip_mode = false;
   if (primitive->HasAttr(kSkipMode)) {
     auto skip_mode_value_ptr = primitive->GetAttr(kSkipMode);
@@ -328,7 +353,7 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
                             const std::set<TypePtr> &check_list) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, check_list, prim->name());
   return x_type;
 }
@@ -505,8 +530,8 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
   }
   std::vector<int64_t> out_shape;
   for (auto element : abs_seq->elements()) {
-    auto element_val = element->BuildValue();
-    if (element_val == kValueAny) {
+    auto element_val = element->GetValue();
+    if (element_val->ContainsValueAny()) {
       out_shape.push_back(abstract::Shape::kShapeDimAny);
     } else if (element_val->isa<Int64Imm>()) {
       (void)out_shape.emplace_back(GetValue<ShapeValueDType>(element_val));
@@ -521,45 +546,36 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
 }
 
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
-  auto abs_value = arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto abs_value = arg->GetValue();
   MS_EXCEPTION_IF_NULL(abs_value);
+  auto arg_type = arg->GetType();
+  MS_EXCEPTION_IF_NULL(arg_type);
 
   if (IsValueKnown(abs_value)) {
-    if (abs_value->isa<tensor::Tensor>()) {
-      auto shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "");
-      return shape_value;
-    } else if (abs_value->isa<ValueSequence>()) {
-      auto out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", abs_value, primitive->name());
-      return out_shape;
+    if (CheckAndConvertUtils::IsTensor(arg)) {
+      return CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "", arg_type);
+    } else if (CheckAndConvertUtils::IsSequence(arg)) {
+      return CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", arg, prim_name);
     }
-  } else if (arg->isa<abstract::AbstractTensor>()) {
-    auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
-    auto abs_tensor_shape = abs_tensor->shape()->shape();
-    if (abs_tensor_shape.size() != 1) {
+  } else if (CheckAndConvertUtils::IsTensor(arg)) {
+    auto arg_shape = arg->GetShape()->GetShapeVector();
+    if (arg_shape.size() != 1) {
       MS_EXCEPTION(ValueError) << "For Primitive[" << primitive->name()
                                << "], Shape of shape value only could be one-dimensional";
     }
-    if (IsDynamic(abs_tensor_shape)) {
+    if (IsDynamic(arg_shape)) {
       return {abstract::Shape::kShapeRankAny};
     }
-    auto shape_size = abs_tensor_shape[0];
-    auto shape_value = abs_tensor->get_shape_value();
-    if (shape_value == nullptr) {
-      return ShapeVector(shape_size, abstract::Shape::kShapeDimAny);
-    } else {
-      auto shape_vector = GetValue<ShapeVector>(shape_value);
-      MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");
-      return shape_vector;
-    }
+    auto shape_size = arg_shape[0];
+    return ShapeVector(shape_size, abstract::Shape::kShapeDimAny);
   } else if (arg->isa<abstract::AbstractSequence>()) {
-    auto shape = GetSequenceValue("input[shape]", arg, primitive->name());
-    return shape;
+    return GetSequenceValue("input[shape]", arg, prim_name);
   }
 
-  auto size_type = arg->BuildType();
-  MS_EXCEPTION_IF_NULL(size_type);
-  MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input type must be Tensor/Tuple/List , but got"
-                          << size_type->ToString() << ".";
+  MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input type must be Tensor/Tuple/List , but got"
+                          << arg_type->ToString() << ".";
 }
 
 ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
@@ -624,7 +640,7 @@ void CheckSparseIndicesDtypeInt32(const TypePtr data_type, const std::string &ar
 }
 
 ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape) {
-  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  auto shape_value = shape->GetValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   ShapeVector shape_vec;
   (void)std::transform(std::begin(shape_value->value()), std::end(shape_value->value()), std::back_inserter(shape_vec),
@@ -656,8 +672,8 @@ std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const Abstract
     return dyn_cast<T>(abs);
   }
   MS_EXCEPTION(TypeError) << "For \'" << primitive->name() << "\', input[" << kIndex
-                          << "] should be AbstractSparseTensor or AbstractTuple, but got "
-                          << abs->BuildType()->ToString() << ".";
+                          << "] should be AbstractSparseTensor or AbstractTuple, but got " << abs->GetType()->ToString()
+                          << ".";
 }
 template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const PrimitivePtr &primitive,
                                                                       const AbstractBasePtrList &args_abs_list);
@@ -680,7 +696,7 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
                              << x_shape << ".";
   }
 
-  auto x_type = input_args[input_0_index]->BuildType();
+  auto x_type = input_args[input_0_index]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input must be a Tensor but got "
@@ -727,13 +743,13 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
   auto queue = abstract::CheckArg<T>(op_name, args_abs_list, 0);
   auto index = abstract::CheckArg<abstract::AbstractScalar>(op_name, args_abs_list, 1);
 
-  auto index_type = index->BuildType();
+  auto index_type = index->GetType();
   MS_EXCEPTION_IF_NULL(index_type);
   if (index_type->type_id() != kInt64->type_id()) {
     MS_EXCEPTION(TypeError) << op_name << " evaluator index should be an int64 number, but got a "
                             << index_type->ToString() << " number.";
   }
-  ValuePtr index_value = index->BuildValue();
+  ValuePtr index_value = index->GetValue();
   MS_EXCEPTION_IF_NULL(index_value);
   auto target = args_abs_list[kIndex2];
   MS_EXCEPTION_IF_NULL(target);
@@ -741,7 +757,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.
@@ -866,13 +882,201 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 }
 
 bool IsValueKnown(const ValuePtr &value) {
-  // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
-  // the BuildValue returns ValueAny if any one of the elements' value is ValueAny
-  if (value->isa<ValueAny>() || value->isa<None>()) {
+  if (value->ContainsValueAny() || value->isa<None>()) {
     return false;
   }
 
   return true;
 }
+
+std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  std::set<int64_t> depend_list;
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_prim->name());
+  if (op_def == nullptr) {
+    // Use old Primitive infer.
+    auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
+    if (!op_infer_opt.has_value()) {
+      if (op_prim->HasAttr(kAttrMeOpName)) {
+        auto ori_prim_name = GetValue<std::string>(op_prim->GetAttr(kAttrMeOpName));
+        op_infer_opt = abstract::GetPrimitiveInferImpl(std::make_shared<Primitive>(ori_prim_name));
+      }
+    }
+    if (op_infer_opt.has_value()) {
+      auto op_infer = op_infer_opt.value().Get();
+      if (op_infer != nullptr && depend_list.empty()) {
+        depend_list = op_infer->GetValueDependArgIndices();
+      }
+    }
+    return depend_list;
+  }
+
+  depend_list = op_def->func_impl_.GetValueDependArgIndices();
+  if (!depend_list.empty()) {
+    return depend_list;
+  }
+  // if not defined the GetValueDependArgIndices() func in infer, consider all the no-Tensor
+  // input as value depend.
+  auto args = op_def->args_;
+  for (size_t i = 0; i < args.size(); i++) {
+    if (args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_TENSOR) {
+      (void)depend_list.insert(i);
+    }
+  }
+  return depend_list;
+}
+
+size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return SIZE_MAX;
+  }
+  auto ks_iter = op_def->indexes_.find(input_name);
+  if (ks_iter != op_def->indexes_.end()) {
+    size_t index = ks_iter->second;
+    MS_LOG(INFO) << "Find " << input_name << "in " << index << "th input of OP " << op_name;
+    return index;
+  }
+  MS_LOG(INFO) << "Not Find " << input_name << "in OP " << op_name;
+  return SIZE_MAX;
+}
+
+size_t GetOpInputsNum(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return SIZE_MAX;
+  }
+  return op_def->indexes_.size();
+}
+
+template <typename T>
+std::optional<T> GetScalarValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
+
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+
+    MS_EXCEPTION_IF_CHECK_FAIL((kernel_tensor_value->GetDataSize() == sizeof(T)),
+                               "The data size in kernel tensor value which contains a scalar [" +
+                                 std::to_string(kernel_tensor_value->GetDataSize()) +
+                                 "] is not equal to the data type size [" + std::to_string(sizeof(T)) + "]");
+
+    const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    return *data_ptr;
+  }
+
+  return GetValue<T>(value);
+}
+
+// Specialization for std::string type.
+template <>
+MS_CORE_API std::optional<std::string> GetScalarValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
+
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+    const char *data_ptr = reinterpret_cast<const char *>(kernel_tensor_value->GetDataPtr());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    size_t str_len = kernel_tensor_value->GetDataSize();
+
+    return std::string(data_ptr, data_ptr + str_len);
+  }
+
+  return GetValue<std::string>(value);
+}
+
+template MS_CORE_API std::optional<int64_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int32_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int16_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int8_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint64_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint32_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint16_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint8_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<double> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<float> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<bool> GetScalarValue(const ValuePtr &value);
+
+// This interface is only used to convert values of type Sequence or Tensor to std::vector.
+template <typename T>
+std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<ValueAny>()) {
+    return std::nullopt;
+  }
+
+  std::vector<T> array_data;
+  std::set<size_t> unknown_value_indexes;
+
+  if (value->isa<KernelTensorValue>()) {
+    auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+
+    size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
+    if (element_size != 0) {
+      const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
+      MS_EXCEPTION_IF_NULL(data_ptr);
+      array_data.assign(data_ptr, data_ptr + element_size);
+    }
+  } else if (value->isa<ValueSequence>()) {
+    // Sequence structure: Data is stored discretely.
+    auto value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+
+    const auto &element_values = value_seq->value();
+    size_t element_size = element_values.size();
+    array_data.reserve(element_size);
+    for (size_t i = 0; i < element_size; i++) {
+      const auto &element = element_values[i];
+      MS_EXCEPTION_IF_NULL(element);
+      if (element->isa<ValueAny>() || element->isa<None>()) {
+        array_data.push_back(static_cast<T>(0));
+        unknown_value_indexes.insert(i);
+        continue;
+      }
+      if constexpr (std::is_same_v<T, float16>) {
+        MS_LOG(EXCEPTION) << "For ValueSequence, float16 type is not support!";
+      } else {
+        array_data.push_back(GetValue<T>(element));
+      }
+    }
+  } else if (value->isa<tensor::Tensor>()) {
+    // Tensor structure: Data is stored continuously.
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    size_t element_size = tensor->DataSize();
+    T *data = reinterpret_cast<T *>(tensor->data_c());
+    array_data.assign(data, data + element_size);
+  } else {
+    MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->type_name();
+  }
+
+  return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::move(unknown_value_indexes));
+}
+
+template std::optional<ArrayValue<int64_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int32_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int16_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<int8_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint64_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint32_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint16_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<float16>> GetArrayValue(const ValuePtr &value);
 }  // namespace ops
 }  // namespace mindspore

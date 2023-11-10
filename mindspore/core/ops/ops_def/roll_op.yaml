@@ -1,0 +1,18 @@
+#operator roll
+roll:
+  args:
+    input:
+      dtype: tensor
+    shift:
+      dtype: tuple[int]
+      init: NO_VALUE
+      type_cast:  int, list[int]
+    axis:
+      dtype: tuple[int]
+      init: NO_VALUE
+      type_cast: int, list[int]
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: roll_

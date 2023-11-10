@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 20223-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,21 @@ const size_t kRightShiftInputsNum = 2;
 const size_t kRightShiftOutputsNum = 1;
 }  // namespace
 
-bool RightShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool RightShiftCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRightShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRightShiftOutputsNum, kernel_name_);
-  input_type_1_ = inputs.at(kIndex0)->GetDtype();
-  input_type_2_ = inputs.at(kIndex1)->GetDtype();
+  input_type_1_ = inputs.at(kIndex0)->dtype_id();
+  input_type_2_ = inputs.at(kIndex1)->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "input1 and input2 must have the same type.";
   }
   return true;
 }
 
-int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RightShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_1_ = inputs.at(kIndex0)->GetShapeVector();
@@ -51,9 +49,9 @@ int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return KRET_OK;
 }
 
-bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> & /* workspace */,
-                                    const std::vector<AddressPtr> &outputs) {
+bool RightShiftCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> & /* workspace */,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (input_type_1_ == kNumberTypeInt8) {
     return IntCompute<int8_t>(inputs, outputs);
   } else if (input_type_1_ == kNumberTypeInt16) {
@@ -79,10 +77,11 @@ bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool RightShiftCpuKernelMod::IntCompute(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
@@ -110,11 +109,11 @@ bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool RightShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool RightShiftCpuKernelMod::UIntCompute(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }

@@ -35,18 +35,18 @@ const size_t tensor_max_size_utils = 0x1000000;
 
 void *RuntimeUtils::GetAddressPtr(device::DeviceAddressPtr address_ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  return address_ptr->ptr_;
+  return address_ptr->GetDevicePtr();
 }
 
 void RuntimeUtils::SetAddressPtr(device::DeviceAddressPtr address_ptr, void *ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  address_ptr->ptr_ = ptr;
+  address_ptr->SetDevicePtr(ptr);
 }
 
 void RuntimeUtils::AllocAddressPtr(device::DeviceAddressPtr address_ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
-  if (address_ptr->ptr_ == nullptr) {
-    address_ptr->ptr_ = malloc(address_ptr->size_);
+  if (address_ptr->GetDevicePtr() == nullptr) {
+    address_ptr->SetDevicePtr(malloc(address_ptr->GetSize()));
   }
 }
 
@@ -54,12 +54,12 @@ kernel::AddressPtr RuntimeUtils::GetAddressFromDevice(device::DeviceAddressPtr d
   MS_EXCEPTION_IF_NULL(device_address);
   kernel::AddressPtr kernel_address = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(kernel_address);
-  if (device_address->ptr_ == nullptr) {
-    device_address->ptr_ = malloc(device_address->size_);
+  if (device_address->GetDevicePtr() == nullptr) {
+    device_address->SetDevicePtr(malloc(device_address->GetSize()));
   }
-  MS_EXCEPTION_IF_NULL(device_address->ptr_);
-  kernel_address->addr = device_address->ptr_;
-  kernel_address->size = device_address->size_;
+  MS_EXCEPTION_IF_NULL(device_address->GetDevicePtr());
+  kernel_address->addr = device_address->GetDevicePtr();
+  kernel_address->size = device_address->GetSize();
   return kernel_address;
 }
 

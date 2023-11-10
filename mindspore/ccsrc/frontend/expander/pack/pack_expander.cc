@@ -97,7 +97,7 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
 
 inline bool IsPackTensor(const py::object &arg) { return py::hasattr(arg, "__pack__"); }
 
-inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->isa<ValueAny>()); }
+inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->ContainsValueAny()); }
 
 bool IsTensorSequence(const py::object &arg) {
   if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {
@@ -114,18 +114,37 @@ bool IsTensorSequence(const py::object &arg) {
 
 std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
                                                         const bool &need_infer_value) {
-  auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
   AbstractBasePtr infer_res = nullptr;
   ValuePtr val = nullptr;
-  // C++ InferShape and InferValue.
-  if (found.has_value()) {
-    if (need_infer_value && found->IsImplInferValue()) {
-      val = found->InferValue(prim, abs_list);
-    } else if (found->IsImplInferShapeAndType()) {
-      infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
-      val = infer_res->BuildValue();
+  bool has_infer_value_impl = false;
+  if (need_infer_value) {
+    auto value_opt = InferValueByFuncImpl(prim, abs_list);
+    if (value_opt.has_value()) {
+      has_infer_value_impl = true;
+      val = value_opt.value();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferValue()) {
+        has_infer_value_impl = true;
+        val = found->InferValue(prim, abs_list);
+      }
     }
   }
+
+  if (!need_infer_value || !has_infer_value_impl) {
+    auto out_abs_opt = InferAbstractByFuncImpl(prim, abs_list);
+    if (out_abs_opt.has_value()) {
+      infer_res = out_abs_opt.value();
+      val = infer_res->GetValue();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferShapeAndType()) {
+        infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
+        val = infer_res->BuildValue();
+      }
+    }
+  }
+
   // Python InferShape and InferValue.
   if ((infer_res == nullptr || need_infer_value) && !IsHasValue(val)) {
     py::gil_scoped_acquire acquire;
@@ -176,7 +195,7 @@ py::object PackNode::GetDtype() const {
 }
 
 py::object PackNode::GetValue() const {
-  if (node_->abstract()->BuildValue() != kValueAny) {
+  if (!node_->abstract()->BuildValue()->ContainsValueAny()) {
     return ValueToPyData(node_->abstract()->BuildValue());
   }
   return py::none();

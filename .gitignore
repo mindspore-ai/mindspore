@@ -112,3 +112,20 @@ mindspore/lite/test/do_test/
 
 # lite opencl compile file
 *.cl.inc
+
+# auto gen code files
+mindspore/core/ops/auto_generate/gen_lite_ops.h
+mindspore/core/ops/auto_generate/gen_lite_ops.cc
+mindspore/core/ops/auto_generate/gen_ops_name.h
+mindspore/core/ops/auto_generate/gen_ops_primitive.h
+mindspore/core/ops/auto_generate/gen_enum_def.h
+mindspore/core/ops/auto_generate/gen_ops_def.cc
+mindspore/python/mindspore/ops_generate/ops.yaml
+mindspore/python/mindspore/ops_generate/ops_doc.yaml
+mindspore/python/mindspore/ops_generate/inner_ops.yaml
+mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml
+mindspore/python/mindspore/ops/auto_generate/gen_labels.py
+mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py
+mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py
+mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
+mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py

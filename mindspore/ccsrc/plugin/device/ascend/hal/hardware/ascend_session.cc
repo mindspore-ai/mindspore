@@ -163,55 +163,6 @@ TensorPtr GetCNodeOutputStubTensor(const KernelWithIndex &kernel_with_index,
   return iter->second.output_stub_tensor;
 }
 
-void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr &kernel,
-                           const std::map<KernelWithIndex, size_t> &cnode_refcount,
-                           std::map<KernelWithIndex, OutputTensorInfo> *op_output_info) {
-  MS_EXCEPTION_IF_NULL(single_op_graph);
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(op_output_info);
-  OutputTensorInfo output_tensor_info;
-  size_t out_idx = 0;
-  for (const auto &output : single_op_graph->outputs()) {
-    KernelWithIndex kernel_with_index = std::make_pair(kernel, out_idx++);
-    if (cnode_refcount.find(kernel_with_index) == cnode_refcount.end()) {
-      continue;
-    }
-    const auto &output_kernel_with_index = common::AnfAlgo::VisitKernel(output, 0);
-    const auto &output_node = output_kernel_with_index.first;
-    MS_EXCEPTION_IF_NULL(output_node);
-    const auto &output_index = output_kernel_with_index.second;
-    auto out_abstract = output_node->abstract();
-    MS_EXCEPTION_IF_NULL(out_abstract);
-    if (out_abstract->isa<abstract::AbstractTuple>()) {
-      out_abstract = out_abstract->cast<abstract::AbstractTuplePtr>()->elements()[output_index];
-      MS_EXCEPTION_IF_NULL(out_abstract);
-    }
-    auto tensor_abstract = out_abstract->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor_abstract);
-    const auto &infer_type = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-    tensor::TensorPtr stub_output_tensor =
-      std::make_shared<tensor::Tensor>(infer_type, tensor_abstract->shape()->shape(), nullptr);
-    MS_EXCEPTION_IF_NULL(stub_output_tensor);
-    const auto &output_type = AnfAlgo::GetOutputDeviceDataType(output_node, output_index);
-    const auto &output_format = AnfAlgo::GetOutputFormat(output_node, output_index);
-    tensor::DeviceInfo device_info;
-    device_info.format_ = output_format;
-    device_info.data_type_ = TypeIdToType(output_type);
-    stub_output_tensor->set_device_info(device_info);
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    device::DeviceAddressPtr device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
-      nullptr, 0, output_format, output_type, kAscendDevice, device_id);
-    stub_output_tensor->set_device_address(device_address);
-    output_tensor_info.output_stub_tensor = stub_output_tensor;
-    auto kernel_info = dynamic_cast<const device::KernelInfo *>(output_node->kernel_info());
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    output_tensor_info.is_weight = !(kernel_info->is_feature_map());
-    (*op_output_info)[kernel_with_index] = output_tensor_info;
-  }
-}
-
 bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
                         const device::DeviceAddressPtr &dst_device_addr) {
   MS_EXCEPTION_IF_NULL(dst_device_addr);
@@ -636,28 +587,6 @@ void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelG
   MS_LOG(INFO) << "HardwareOptimize Finish";
 }
 
-KernelGraphPtr AscendSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-                                          const std::vector<tensor::TensorPtr> &input_tensors,
-                                          const std::vector<int64_t> &tensors_mask) {
-  auto it = run_op_graphs_.find(graph_info);
-  if (it != run_op_graphs_.end()) {
-    return it->second;
-  }
-
-  const auto &graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
-  MS_EXCEPTION_IF_NULL(graph);
-  // init runtime resource
-  InitRuntimeResource();
-  // build kernel
-  RunOpAdjustKernel(graph);
-  BuildKernel(graph);
-  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-  if (enable_op_graph_cache) {
-    run_op_graphs_[graph_info] = graph;
-  }
-  return graph;
-}
-
 void AscendSession::BindAddressToTensor(
   const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) const {
   auto ms_context = MsContext::GetInstance();
@@ -677,57 +606,6 @@ void AscendSession::BindAddressToTensor(
   }
 }
 
-void AscendSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                              std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                              const std::vector<int64_t> &tensors_mask) {
-  RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-}
-
-void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                    std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                                    const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
-  const auto &graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
-  EraseValueNodeTensor(tensors_mask, input_tensors);
-
-  // wait for allreduce
-  for (auto &tensor : *input_tensors) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->NeedWaitDevice()) {
-      tensor->WaitDevice();
-    }
-  }
-
-  // malloc mem
-  RunOpRemoveNopNode(graph);
-  RunOpMemoryAlloc(*input_tensors, graph, op_run_info->is_gradient_out);
-  RunOpGenKernelEvent(graph.get());
-  AnfAlgo::CacheAddrForGraph(graph);
-
-  // load input data to device
-  LoadInputData(graph, *input_tensors);
-  // run op
-  Execute(graph, false);
-  // get output
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
-  UpdateOutputs(graph, outputs, *input_tensors, &tensor_to_node);
-  RunOpMemoryClear(graph.get());
-}
-
-KernelGraphPtr AscendSession::PreBuildOp(const BackendOpRunInfoPtr &op_run_info,
-                                         const std::vector<tensor::TensorPtr> &input_tensors,
-                                         const std::vector<int64_t> &tensors_mask) {
-  // Construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask, true);
-  MS_EXCEPTION_IF_NULL(graph);
-  opt::RunOpAscendBackendIRFusionOptimization(graph);
-  SelectKernel(graph);
-  RunOpHardwareOptimize(graph);
-  runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
-  return graph;
-}
-
 void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
                                           const std::vector<tensor::TensorPtr> &graph_inputs,
                                           const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
@@ -744,7 +622,7 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
     if (real_input->isa<ValueNode>()) {
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
       input_tensor_info->input_tensors_mask.emplace_back(
-        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeTensorMask : kParameterDataTensorMask);
+        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeMask : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       auto parameter = real_input->cast<ParameterPtr>();
@@ -764,66 +642,6 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
                   << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
     input_tensor_info->input_tensors.emplace_back(tensor);
   }
-}
-
-void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
-                                    const std::vector<tensor::TensorPtr> &graph_inputs,
-                                    const std::map<KernelWithIndex, size_t> &cnode_refcount) {
-  if (built_graph_id_.find(graph_id) != built_graph_id_.end()) {
-    return;
-  }
-  auto graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(graph);
-  std::map<KernelWithIndex, OutputTensorInfo> op_output_info;
-  std::vector<CNodePtr> kernels;
-  mindspore::HashMap<KernelGraphPtr, GraphInfo> single_op_graphs;
-  // Collect kernels need to be built in single op graphs
-  for (const auto &kernel : graph->execution_order()) {
-    // Generate fake input tensors, tensor masks and input kernel with index
-    InputTensorInfo input_tensor_info;
-    GetOpInputStubTensors(kernel, parameter_index, graph_inputs, op_output_info, &input_tensor_info);
-    // Get OpRunInfo and GraphInfo
-    BackendOpRunInfoPtr op_run_info = GetSingleOpRunInfo(kernel, input_tensor_info, nullptr);
-    const auto &graph_info =
-      pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
-    const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
-    if (single_op_graph_iter != run_op_graphs_.end()) {
-      // if graph of same single op exists, the output tensor of current op should be generated
-      GenOpOutputStubTensor(single_op_graph_iter->second, kernel, cnode_refcount, &op_output_info);
-      continue;
-    }
-    const auto &single_op_graph =
-      PreBuildOp(op_run_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
-    MS_EXCEPTION_IF_NULL(single_op_graph);
-    GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
-    opt::HideNopNode(single_op_graph.get());
-    // The graph info could have been changed in PreBuildOp
-    single_op_graphs.emplace(single_op_graph, pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(
-                                                op_run_info->base_op_run_info, op_run_info->op_prim));
-    const auto &execution_order = single_op_graph->execution_order();
-    std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
-  }
-  InitRuntimeResource();
-  // Compile all kernels parallel
-  BuildKernel(kernels);
-  // Some new kernel may be added after InsertAtomicCleanOps, so collect and build kernels again
-  kernels.clear();
-  for (const auto &graph_item : single_op_graphs) {
-    device::ascend::InsertAtomicCleanOps(graph_item.first);
-    const auto &execution_order = graph_item.first->execution_order();
-    std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
-  }
-  BuildKernel(kernels);
-  // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
-  for (const auto &graph_item : single_op_graphs) {
-    RunOpMemoryClear(graph_item.first.get());
-    auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
-    if (enable_op_graph_cache) {
-      run_op_graphs_[graph_item.second] = graph_item.first;
-    }
-    MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_item.second;
-  }
-  built_graph_id_.insert(graph_id);
 }
 
 #ifndef ENABLE_SECURITY

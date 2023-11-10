@@ -111,9 +111,9 @@ TypePtr IndexAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   }
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kUInt8, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> indices_types = {kInt32};
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto updates_type = input_args[kInputIndex2]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto updates_type = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_y type", updates_type, valid_types, prim->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x type", var_type, valid_types, prim->name());

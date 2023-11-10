@@ -131,6 +131,8 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
+  void SetInputsReshapeType(const std::vector<std::string> &input_reshape_type);
+
   OpPattern op_pattern() const { return op_pattern_; }
 
   std::vector<nlohmann::json> output_data_desc() const { return output_data_desc_; }

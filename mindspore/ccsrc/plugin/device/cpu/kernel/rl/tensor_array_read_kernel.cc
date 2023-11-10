@@ -24,21 +24,24 @@ using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
 TensorArrayReadCpuKernelMod::TensorArrayReadCpuKernelMod() : value_size_(0), type_(nullptr) {}
 
-void TensorArrayReadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  shapes_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
+int TensorArrayReadCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return KRET_OK;
+  }
+  shapes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
   value_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     value_size_ *= LongToSize(i);
   }
-  input_size_list_.push_back(sizeof(int64_t));
-  input_size_list_.push_back(sizeof(int64_t));
+  output_size_list_.clear();
   output_size_list_.push_back(value_size_);
+  return KRET_OK;
 }
 
-bool TensorArrayReadCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                         const std::vector<AddressPtr> &outputs) {
+bool TensorArrayReadCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);

@@ -85,8 +85,8 @@ AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::v
   for (size_t i = 0; i < data_abs->size(); ++i) {
     abs.push_back(data_abs->elements()[i]);
   }
-  ValuePtr index_value = index_abs->BuildValue();
-  if (index_value == kValueAny) {
+  ValuePtr index_value = index_abs->GetValue();
+  if (index_value->ContainsValueAny()) {
     abs.push_back(target_abs);
     auto new_abs = std::make_shared<abstract::AbstractList>(abs);
     return CheckAndConvertUtils::BroadenAllSequenceElements(new_abs);
@@ -112,11 +112,11 @@ class ListInsertInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListInsertInnerInfer(primitive, input_args)->BuildShape();
+    return ListInsertInnerInfer(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListInsertInnerInfer(primitive, input_args)->BuildType();
+    return ListInsertInnerInfer(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

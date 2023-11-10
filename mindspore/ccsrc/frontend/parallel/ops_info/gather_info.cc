@@ -16,21 +16,21 @@
 
 #include "frontend/parallel/ops_info/gather_info.h"
 
-#include <vector>
-#include <numeric>
-#include <functional>
-#include <utility>
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <numeric>
+#include <utility>
+#include <vector>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #endif
 
 namespace mindspore {
@@ -121,6 +121,15 @@ Status GatherInfo::GetManualSplitAttr() {
   return SUCCESS;
 }
 
+void GatherInfo::GetBatchDims() noexcept {
+  auto batch_dims_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, BATCH_DIMS);
+  if (batch_dims_opt.has_value()) {
+    batch_dims_ = batch_dims_opt.value();
+  } else {
+    MS_LOG(EXCEPTION) << name_ << ": Failed to fetch the value of batch dims.";
+  }
+}
+
 Status GatherInfo::GetAttrs() {
   if (attrs_.find(TARGET) != attrs_.end()) {
     target_ = GetStringAttr(TARGET);
@@ -160,16 +169,7 @@ Status GatherInfo::GetAttrs() {
     return FAILED;
   }
 
-  auto attr_iter = attrs_.find(BATCH_DIMS);
-  if (attr_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(attr_iter->second);
-    if (!attr_iter->second->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << name_ << ": The value of batch dims is not int";
-    }
-
-    batch_dims_ = attr_iter->second->cast<Int64ImmPtr>()->value();
-    MS_LOG(INFO) << name_ << ": batch dims is " << batch_dims_;
-  }
+  GetBatchDims();
 
   if (manual_split_ && (axis_ != 0)) {
     MS_LOG(ERROR) << name_ << ": The axis must be 0 if manual split, bug got " << axis_;
@@ -542,8 +542,8 @@ Status ManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
-  auto gather_v2_node =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+  auto gather_v2_node = gen_g.PushBack(
+    {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
                                                              std::make_pair(gather_v2_node, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
@@ -952,8 +952,17 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
-  auto gather_v2 =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_)});
+
+  AnfNodePtr gather_v2{nullptr};
+  auto replace_op_name = GetPrimNameFromInfoName(replace_op_name_);
+  if (replace_op_name == GATHERV2) {
+    gather_v2 = gen_g.PushBack(
+      {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_), CreatInt64Imm(0)});
+  } else {
+    gather_v2 =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_)});
+  }
+
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gather_v2});
   auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
   auto expand_dims = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast, CreatInt64Imm(axis_ - 1)});
@@ -1144,6 +1153,11 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   return FAILED;
 }
 
+void GatherInfo::DealWithBatchDimsMirrorOp() noexcept {
+  OperatorVector op_for_batch_dims;
+  mirror_ops_.push_back(op_for_batch_dims);
+}
+
 Status GatherInfo::InferMirrorOps() {
   mirror_ops_.clear();
   Shape input_a_tensor_map = inputs_tensor_map_.at(0);
@@ -1165,6 +1179,7 @@ Status GatherInfo::InferMirrorOps() {
   mirror_ops_.push_back(op_for_input_a);
   mirror_ops_.push_back(op_for_input_b);
   mirror_ops_.push_back(op_for_axis);
+  DealWithBatchDimsMirrorOp();
 
   return SUCCESS;
 }

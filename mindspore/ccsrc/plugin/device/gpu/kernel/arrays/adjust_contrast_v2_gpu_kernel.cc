@@ -22,6 +22,8 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/arrays/adjust_contrast_v2_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adjust_contrast_v2_impl.cuh"
+#include "mindspore/core/ops/op_name.h"
+
 namespace mindspore {
 namespace kernel {
 #define ADJUST_CONTRAST_V2_GPU_REGISTER(T_DT, T)                                        \
@@ -35,20 +37,15 @@ constexpr int last_dim = 1, second_dim = 2, third_dim = 3;
 void AdjustContrastV2GpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
 void AdjustContrastV2GpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(total_ * per_batch_elements_ * data_unit_size_);
-  input_size_list_.push_back(sizeof(float));
-
   output_size_list_.push_back(total_ * per_batch_elements_ * data_unit_size_);
 }
 
-bool AdjustContrastV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool AdjustContrastV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
@@ -65,10 +62,8 @@ bool AdjustContrastV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int AdjustContrastV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int AdjustContrastV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.
@@ -78,17 +73,17 @@ int AdjustContrastV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                  inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
     int num_dims = shape.size();
     per_batch_elements_ = shape[num_dims - last_dim] * shape[num_dims - second_dim] * shape[num_dims - third_dim];
     total_ = std::accumulate(shape.begin(), shape.end() - third_dim, third_dim, std::multiplies<int>());
-    std::vector<int64_t> images_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> images_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex0)->GetDeviceShapeVector().end());
     std::vector<int64_t> contrast_factor_shape = std::vector<int64_t>(
-      inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+      inputs.at(kIndex1)->GetDeviceShapeVector().begin(), inputs.at(kIndex1)->GetDeviceShapeVector().end());
     int64_t images_dims = images_shape.size();
     int64_t contrast_factor_dims = contrast_factor_shape.size();
     if (images_dims < INPUT_DIMS_3) {
@@ -112,9 +107,9 @@ int AdjustContrastV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool AdjustContrastV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdjustContrastV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

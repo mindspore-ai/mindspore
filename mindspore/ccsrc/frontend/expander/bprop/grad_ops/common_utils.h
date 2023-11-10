@@ -17,13 +17,13 @@
 #define MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_GRAD_OPS_COMMON_UTILS_H_
 
 #include <cmath>
-#include <vector>
-#include <utility>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
-#include "include/common/expander/core/node.h"
+#include <utility>
+#include <vector>
 #include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "include/common/expander/core/node.h"
 
 namespace mindspore::expander::bprop {
 constexpr size_t i0 = 0;
@@ -87,8 +87,8 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
 NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout,
                 const bool keep_dims = false);
-NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
-                     const NodePtr &dout);
+NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                     const NodePtr &out, const NodePtr &dout);
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);
 NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max);

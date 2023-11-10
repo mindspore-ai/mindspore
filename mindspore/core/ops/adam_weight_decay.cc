@@ -57,13 +57,13 @@ class AdamWeightDecayInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
-    auto m_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto m_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(m_shape_ptr)[kShape];
-    auto v_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto v_shape_ptr = input_args[kInputIndex1]->GetShape();
     auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape_ptr)[kShape];
-    auto grad_shape_ptr = input_args[kInputIndex8]->BuildShape();
+    auto grad_shape_ptr = input_args[kInputIndex8]->GetShape();
     auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
     bool is_dynamic = IsDynamic(var_shape) || IsDynamic(m_shape) || IsDynamic(v_shape) || IsDynamic(grad_shape);
     if (!is_dynamic) {
@@ -84,15 +84,15 @@ class AdamWeightDecayInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto var_type = input_args[kInputIndex0]->BuildType();
-    auto m_type = input_args[kInputIndex1]->BuildType();
-    auto v_type = input_args[kInputIndex2]->BuildType();
-    auto lr_type = input_args[kInputIndex3]->BuildType();
-    auto beta1_type = input_args[kInputIndex4]->BuildType();
-    auto beta2_type = input_args[kInputIndex5]->BuildType();
-    auto epsilon_type = input_args[kInputIndex6]->BuildType();
-    auto decay_type = input_args[kInputIndex7]->BuildType();
-    auto grad_type = input_args[kInputIndex8]->BuildType();
+    auto var_type = input_args[kInputIndex0]->GetType();
+    auto m_type = input_args[kInputIndex1]->GetType();
+    auto v_type = input_args[kInputIndex2]->GetType();
+    auto lr_type = input_args[kInputIndex3]->GetType();
+    auto beta1_type = input_args[kInputIndex4]->GetType();
+    auto beta2_type = input_args[kInputIndex5]->GetType();
+    auto epsilon_type = input_args[kInputIndex6]->GetType();
+    auto decay_type = input_args[kInputIndex7]->GetType();
+    auto grad_type = input_args[kInputIndex8]->GetType();
 
     const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};

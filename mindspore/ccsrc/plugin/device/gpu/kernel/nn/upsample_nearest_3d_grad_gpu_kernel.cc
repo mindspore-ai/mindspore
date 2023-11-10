@@ -33,11 +33,8 @@ const double kValueZero = 0.;
 constexpr int kUpsampleNearest3DGpuGradInputsNum = 3;
 constexpr int kUpsampleNearest3DGpuGradOutputsNum = 1;
 }  // namespace
-bool UpsampleNearest3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool UpsampleNearest3DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -48,15 +45,13 @@ bool UpsampleNearest3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = NativeGpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleNearest3DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeGpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> dy_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> dx_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> dy_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> dx_shape = outputs[kIndex0]->GetShapeVector();
   n_ = dy_shape[kIndex0];
   c_ = dy_shape[kIndex1];
   // input
@@ -68,25 +63,23 @@ int UpsampleNearest3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   dx_h_ = dx_shape[kIndex3];
   dx_w_ = dx_shape[kIndex4];
   // none list
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+
+  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
     scales_ = std::vector<double>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_)) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
-    }
+    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<double>>();
   }
   return KRET_OK;
 }
 
 template <typename T>
-bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool UpsampleNearest3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs) {
   auto dy = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(dy);
   auto dx = GetDeviceAddress<T>(outputs, kIndex0);

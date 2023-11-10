@@ -32,14 +32,10 @@ constexpr size_t kIndicesSizeNum = 2;
 constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
 
-bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  adj_st_ = GetValue<bool>(prim->GetAttr(ADJ_ST));
-  adj_dt_ = GetValue<bool>(prim->GetAttr(ADJ_dT));
+bool SparseTensorDenseMatmulCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  adj_st_ = GetValue<bool>(primitive_->GetAttr(ADJ_ST));
+  adj_dt_ = GetValue<bool>(primitive_->GetAttr(ADJ_dT));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,11 +45,9 @@ bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseTensorDenseMatmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseTensorDenseMatmulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -92,27 +86,27 @@ int SparseTensorDenseMatmulCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename I, typename T>
-bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return false;
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
   const size_t b_index = 3;
-  const auto *a_indices = static_cast<I *>(inputs[0]->addr);
-  const auto *a_values = static_cast<T *>(inputs[1]->addr);
-  const auto *b = static_cast<T *>(inputs[b_index]->addr);
-  auto *out = static_cast<T *>(outputs[0]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(I);
-  const size_t values_length = inputs[1]->size / sizeof(T);
-  const size_t b_length = inputs[b_index]->size / sizeof(T);
+  const auto *a_indices = static_cast<I *>(inputs[0]->device_ptr());
+  const auto *a_values = static_cast<T *>(inputs[1]->device_ptr());
+  const auto *b = static_cast<T *>(inputs[b_index]->device_ptr());
+  auto *out = static_cast<T *>(outputs[0]->device_ptr());
+  const size_t indices_length = inputs[0]->size() / sizeof(I);
+  const size_t values_length = inputs[1]->size() / sizeof(T);
+  const size_t b_length = inputs[b_index]->size() / sizeof(T);
 
   const size_t dim_num = 2;
   const size_t out_dim_0 = output_shape_[0];

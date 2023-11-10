@@ -35,10 +35,19 @@
 namespace mindspore {
 namespace kernel {
 void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  const auto &primitive = GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  primitive_ = primitive->Clone();
+  MS_EXCEPTION_IF_NULL(primitive_);
+  kernel_name_ = primitive_->name();
   MS_LOG(DEBUG) << "kernel_node: " << kernel_node << ", " << kernel_node->DebugString();
   py::gil_scoped_acquire gil_acquire;
   inputs_info_.clear();
   kernel_node_ = kernel_node;
+  if (kernel_node_->abstract() != nullptr && (!kernel_node_->abstract()->isa<abstract::AbstractAny>())) {
+    is_output_any_ = false;
+    MS_LOG(DEBUG) << "No any output for pyexecute kernel:" << kernel_node_->fullname_with_scope();
+  }
   for (size_t i = 1; i < kernel_node->size(); ++i) {
     const auto &input = kernel_node->inputs()[i];
 
@@ -111,8 +120,8 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
-bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
+bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
   if (Py_IsInitialized() == 0) {
     MS_LOG(ERROR) << "Py_IsInitialized failed.";
@@ -142,6 +151,28 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
     device_address->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
     AttachPyOutputData(output);
+    if (device_address != nullptr && (!is_output_any_)) {
+      if (device_address->kernel_tensor() == nullptr || device_address->user_data() == nullptr ||
+          device_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key) ==
+            nullptr) {
+        MS_LOG(WARNING) << "Invalid device tensor:" << device_address
+                        << " for kernel:" << kernel_node_->fullname_with_scope();
+      } else {
+        const auto &user_data_obj =
+          device_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
+        const auto &obj = user_data_obj->obj;
+        const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
+        if (abstract != nullptr) {
+          MS_LOG(DEBUG) << "Update output shape and type for kernel:" << kernel_node_->fullname_with_scope()
+                        << " by abstract:" << abstract->ToString() << " device address:" << device_address;
+          device_address->kernel_tensor()->SetType(abstract->BuildType());
+          device_address->kernel_tensor()->SetShape(abstract->BuildShape());
+          (void)device_address->GetValidPtr(0);
+        } else {
+          MS_LOG(WARNING) << "Failed to generate abstract for kernel:" << kernel_node_->fullname_with_scope();
+        }
+      }
+    }
     return true;
   }
   MS_LOG(EXCEPTION) << "Prebuilt output result not exists for " << input0_str->ToString();

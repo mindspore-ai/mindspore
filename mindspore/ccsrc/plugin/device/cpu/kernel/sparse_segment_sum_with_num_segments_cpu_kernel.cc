@@ -35,11 +35,8 @@ constexpr size_t kOutputsNum = 1;
   }
 }  // namespace
 
-bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                       const std::vector<KernelTensorPtr> &inputs,
-                                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -52,44 +49,42 @@ bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &ba
   return true;
 }
 
-int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                        const std::vector<KernelTensorPtr> &inputs,
-                                                        const std::vector<KernelTensorPtr> &outputs,
-                                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  x_dtype_ = inputs[kIndex0]->GetDtype();
-  indices_dtype_ = inputs[kIndex1]->GetDtype();
-  x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  segment_ids_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  x_dtype_ = inputs[kIndex0]->dtype_id();
+  indices_dtype_ = inputs[kIndex1]->dtype_id();
+  x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  segment_ids_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<kernel::KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   MS_ERROR_IF_NULL(kernel_func_);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T1, typename T2>
-void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                               const std::vector<kernel::AddressPtr> &outputs) {
+void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                               const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kMultiply = 1;
   size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) /
              static_cast<size_t>(x_shape_[kIndex0]);
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
   auto x_shape0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->device_ptr());
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->device_ptr());
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->device_ptr());
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->device_ptr());
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input segment_ids should be sorted.";

@@ -106,10 +106,8 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
   }
 }
 
-bool PSROIPoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PSROIPoolingCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -117,14 +115,14 @@ bool PSROIPoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
 
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
+  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
     MS_LOG_ERROR << "Resize failed!";
     return false;
   }
   return true;
 }
 
-int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) {
+int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor *> &inputs) {
   input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() != INPUT_SHAPE_SIZE) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[features] should be " << INPUT_SHAPE_SIZE
@@ -147,10 +145,8 @@ int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPt
   return KRET_OK;
 }
 
-int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int PSROIPoolingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
@@ -167,7 +163,7 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
 
-  data_type_id_ = inputs[0]->GetDtype();
+  data_type_id_ = inputs[0]->dtype_id();
 
   auto input_size = inputs[0]->GetShapeVector();
   feature_channels_ = static_cast<int32_t>(input_size[kInputChannelsIndex]);
@@ -179,17 +175,17 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto spatial_scale_ptr = base_operator->GetAttr("spatial_scale");
+  auto spatial_scale_ptr = primitive_->GetAttr("spatial_scale");
   MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
   spatial_scale_ = GetValue<float>(spatial_scale_ptr);
 
-  auto group_size_ptr = base_operator->GetAttr("group_size");
+  auto group_size_ptr = primitive_->GetAttr("group_size");
   MS_EXCEPTION_IF_NULL(group_size_ptr);
   pooled_height_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   pooled_width_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   group_size_ = LongToInt(GetValue<int64_t>(group_size_ptr));
 
-  auto output_dim_ptr = base_operator->GetAttr("output_dim");
+  auto output_dim_ptr = primitive_->GetAttr("output_dim");
   output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
 
   for (auto tensor_ptr : inputs) {
@@ -212,44 +208,39 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 
-  for (auto tensor_ptr : inputs) {
-    input_size_list_.push_back(tensor_ptr->GetSizeInBytes());
-  }
-
   for (auto tensor_ptr : outputs) {
-    output_size_list_.push_back(tensor_ptr->GetSizeInBytes());
+    output_size_list_.push_back(tensor_ptr->size());
   }
 
   return KRET_OK;
 }
 
 template <typename T>
-bool PSROIPoolingCpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &outputs, const int output_size) {
-  T *input_data = GetDeviceAddress<T>(inputs, kIndex0);
+bool PSROIPoolingCpuKernelMod::PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs, const int output_size) {
+  auto input_data = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
-  T *rois = GetDeviceAddress<T>(inputs, kIndex1);
+  auto rois = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_EXCEPTION_IF_NULL(rois);
-  T *output_data = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
 
   constexpr size_t unit_size = sizeof(T);
   auto memset_task = [&](size_t start, size_t end) {
     (void)memset_s(output_data + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
   };
-  ParallelLaunchAutoSearch(memset_task, outputs[0]->size / unit_size, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 
   auto task = [&](size_t start, size_t end) { return PSROIPoolForward<T>(start, end, input_data, rois, output_data); };
   ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 
-bool PSROIPoolingCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool PSROIPoolingCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto output_size = output_channels_ * pooled_height_ * pooled_width_ * output_n_;
 
   if (data_type_id_ == kNumberTypeFloat64) {

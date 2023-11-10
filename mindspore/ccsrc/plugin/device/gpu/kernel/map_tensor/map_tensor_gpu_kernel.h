@@ -46,7 +46,6 @@ class MapTensorGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

@@ -15,14 +15,13 @@
  */
 
 #include "src/litert/cxx_api/kernel_executor/op_converter.h"
-#include "ops/relu.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "ops/fusion/arg_min_fusion.h"
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fused_batch_norm.h"
-#include "ops/batch_norm.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/div_fusion.h"
@@ -56,7 +55,7 @@ std::shared_ptr<ops::BaseOperator> CommonConverterCreators(const std::shared_ptr
 }
 
 std::shared_ptr<ops::BaseOperator> ArgMinConverterCreators(const std::shared_ptr<ops::BaseOperator> &op) {
-  auto op_converter = CommonConverterCreators<ops::ArgMin, ops::ArgMinFusion>(op);
+  auto op_converter = CommonConverterCreators<ops::Argmin, ops::ArgMinFusion>(op);
   auto op_arg = std::dynamic_pointer_cast<ops::ArgMinFusion>(op_converter);
   op_arg->set_top_k(1);
   op_arg->set_keep_dims(true);

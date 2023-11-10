@@ -497,9 +497,6 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNode(const FuncGraphPtr &gra
   auto concat = NewCNode(concat_inputs, graph);
   MS_EXCEPTION_IF_NULL(concat);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
-  std::vector<int64_t> dyn_input_size_empty{input_nums};
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   return concat;
 }
 

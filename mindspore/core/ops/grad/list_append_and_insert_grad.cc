@@ -64,7 +64,7 @@ AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
   for (size_t i = 0; i < data_abs->size(); ++i) {
     abs.push_back(data_abs->elements()[i]);
   }
-  ValuePtr index_value = index_abs->BuildValue();
+  ValuePtr index_value = index_abs->GetValue();
   if (index_value == kValueAny) {
     abs.pop_back();
     return CheckAndConvertUtils::BroadenAllSequenceElements(std::make_shared<abstract::AbstractList>(abs));
@@ -88,11 +88,11 @@ class ListAppendAndInsertGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->BuildShape();
+    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->BuildType();
+    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

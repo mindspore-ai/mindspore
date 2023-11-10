@@ -35,10 +35,8 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool StridedSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool StridedSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,10 +47,9 @@ bool StridedSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int StridedSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int StridedSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -63,7 +60,7 @@ int StridedSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   input_shape_ = inputs[0]->GetShapeVector();
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
   output_shape_ = outputs[0]->GetShapeVector();
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be in range [1D, 8D], but got "
@@ -136,8 +133,8 @@ void StridedSliceCpuKernelMod::InitParallelParam() {
   slice_struct_.base_.thread_nr_ = thread_num;
 }
 
-void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
-                                              std::vector<int64_t> *end, std::vector<int64_t> *stride) {
+void StridedSliceCpuKernelMod::InitSliceParam(std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                                              std::vector<int64_t> *stride) {
   static const std::unordered_map<TypeId, std::pair<TypeIdC, int>> type_convert_map = {
     {kNumberTypeBool, {::kNumberTypeBool, sizeof(bool)}},
     {kNumberTypeInt8, {::kNumberTypeInt8, sizeof(int8_t)}},
@@ -161,8 +158,8 @@ void StridedSliceCpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operat
   data_size_ = type_pair->second.second;
   slice_struct_.data_type_ = type_pair->second.first;
   auto input_shape_pad = input_shape_;
-  FillEmptyDims(base_operator, begin, end, stride, &input_shape_pad);
-  ParseStrideSliceMasks(base_operator, begin, end, stride, input_shape_pad);
+  FillEmptyDims(kernel_name_, begin, end, stride, &input_shape_pad);
+  ParseStrideSliceMasks(primitive_, begin, end, stride, input_shape_pad);
 
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
@@ -230,24 +227,24 @@ void StridedSliceCpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t *o
 }
 
 template <typename T, typename S>
-bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> & /* workspace */,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kStridedSliceInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kStridedSliceInputsNum
                       << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->device_ptr());
 
   // for begin, end, stride are tensors
   std::vector<int64_t> begin;
   std::vector<int64_t> end;
   std::vector<int64_t> stride;
-  auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->addr);
-  auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->addr);
+  auto begin_ptr = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto end_ptr = reinterpret_cast<S *>(inputs[kIndex2]->device_ptr());
+  auto strides_ptr = reinterpret_cast<S *>(inputs[kIndex3]->device_ptr());
   for (int64_t i = 0; i < begin_shape_[0]; i++) {
     begin.push_back(static_cast<int64_t>(begin_ptr[i]));
   }
@@ -257,7 +254,7 @@ bool StridedSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   for (int64_t i = 0; i < stride_shape_[0]; i++) {
     stride.push_back(static_cast<int64_t>(strides_ptr[i]));
   }
-  InitSliceParam(op_, &begin, &end, &stride);
+  InitSliceParam(&begin, &end, &stride);
 
   int thread_num = slice_struct_.base_.thread_nr_;
   if (parallel_ && thread_num >= 2) {

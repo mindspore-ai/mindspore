@@ -42,6 +42,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace abstract {
@@ -889,6 +890,20 @@ EvaluatorPtr GetPyEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &e
   return nullptr;
 }
 
+inline StandardPrimEvaluatorPtr GetStandardPrimEvaluator(const PrimitivePtr &prim) {
+  auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
+  if (eval_impl_opt.has_value()) {
+    // Find prim infer function in the prim function map return a standard evaluator
+    auto eval_impl = eval_impl_opt.value();
+    if (eval_impl.IsImplInferShapeAndType() && !IsPrimitiveEquals(prim, prim::kPrimMakeTuple) &&
+        !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
+      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+    }
+  }
+
+  return nullptr;
+}
+
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine) {
   // Custom Primitive with python infer_shape, infer_type
   MS_EXCEPTION_IF_NULL(prim);
@@ -909,14 +924,20 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<SwitchEvaluator>();
   }
 
-  // Find prim infer function in the prim function map return a standard evaluator
-  auto eval_impl_opt = GetFrontendPrimitiveInferImpl(prim);
-  if (eval_impl_opt.has_value()) {
-    auto eval_impl = eval_impl_opt.value();
-    if (eval_impl.IsImplInferShapeAndType() && !IsPrimitiveEquals(prim, prim::kPrimMakeTuple) &&
-        !IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
-      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+  if (prim->isa<prim::DoTransPrimitiveFunction>()) {
+    return std::make_shared<DoTransPrimitiveFunctionEvaluator>(prim);
+  }
+  // Primitive is defined in OpTable.
+  if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+    if (prim->isa<PrimitivePy>()) {
+      return std::make_shared<PrimitiveArgsToInputsEvaluator>(prim);
     }
+    return std::make_shared<PrimitiveFunctionEvaluator>(prim);
+  }
+
+  auto standard_evaluator = GetStandardPrimEvaluator(prim);
+  if (standard_evaluator != nullptr) {
+    return standard_evaluator;
   }
 
   // Use python infer function if the infer function not founded in the map return a python evaluator
@@ -946,6 +967,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
       evaluator = iter->second;
     }
   }
+
   if (evaluator == nullptr) {
     MS_LOG(DEBUG) << "The evaluator of the primitive is not defined (" << prim->name() << ").";
   }
@@ -958,10 +980,12 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
   if (func->tracking_id() == 0) {
     // Create primitive evaluator if tracking_id == 0.
     auto [iter, is_new] = evaluators_.emplace(func, nullptr);
+
     if (is_new) {
       iter->second = GetPrimEvaluator(primitive, shared_from_this());
       if (iter->second == nullptr) {
-        MS_LOG(EXCEPTION) << "Operator '" << primitive->name() << "' is invalid.";
+        MS_LOG(EXCEPTION) << "Operator '" << primitive->name()
+                          << "' is invalid, or no matching evaluator could be found.";
       }
     }
     return iter->second;
@@ -1046,8 +1070,13 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
   if (iter != constructors_app_.end()) {
     return iter->second;
   }
-  auto primal_evaluator = GetEvaluatorFor(primal_func);
-  auto partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
+  EvaluatorPtr partial_evaluator = nullptr;
+  if (func->need_append_to_end()) {
+    partial_evaluator = std::make_shared<PartialToEndEvaluator>(primal_func, func->node());
+  } else {
+    auto primal_evaluator = GetEvaluatorFor(primal_func);
+    partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
+  }
   auto result = constructors_app_.emplace(std::move(part_pair), std::move(partial_evaluator));
   return result.first->second;
 }

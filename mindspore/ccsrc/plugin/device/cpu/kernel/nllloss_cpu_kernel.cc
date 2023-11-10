@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,22 @@
  */
 
 #include "plugin/device/cpu/kernel/nllloss_cpu_kernel.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
-#include "mindspore/core/ops/nllloss.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNLLLossInputsNum = 3;
+constexpr size_t kNLLLossInputsNum = 5;
 constexpr size_t kNLLLossOutputsNum = 2;
 constexpr int minLabelNum = 0;
-const std::map<Reduction, ReductionType> kReductionMap = {
-  {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
+constexpr auto kReductionIdx = 3;
+constexpr auto kIgnoreIndexIdx = 4;
 }  // namespace
 
-bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLoss>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NLLLoss ops failed!";
-    return false;
-  }
-
-  kernel_name_ = kernel_ptr->GetPrim()->name();
+bool NLLLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -47,25 +39,17 @@ bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto reduction = kernel_ptr->get_reduction();
-  auto pair = kReductionMap.find(reduction);
-  if (pair == kReductionMap.end()) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_
-                      << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
-  }
-  reduction_type_ = pair->second;
-  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
   return true;
 }
 
-int NLLLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NLLLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
+  auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
+  reduction_type_ = static_cast<MsPyEnum::Reduction>(reduction);
+  ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
 
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
   nllloss_param_.batch_ = LongToInt(logits_shape[kIndex0]);
@@ -75,17 +59,17 @@ int NLLLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(kNLLLossInputsNum, inputs.size(), kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(kNLLLossOutputsNum, outputs.size(), kernel_name_);
 
-  const auto *logits = static_cast<float *>(inputs[kIndex0]->addr);
-  const auto *labels = static_cast<T *>(inputs[kIndex1]->addr);
-  const auto *weight = static_cast<float *>(inputs[kIndex2]->addr);
-  auto *loss = static_cast<float *>(outputs[kIndex0]->addr);
-  auto *total_weight = static_cast<float *>(outputs[kIndex1]->addr);
+  const auto *logits = static_cast<float *>(inputs[kIndex0]->device_ptr());
+  const auto *labels = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  const auto *weight = static_cast<float *>(inputs[kIndex2]->device_ptr());
+  auto *loss = static_cast<float *>(outputs[kIndex0]->device_ptr());
+  auto *total_weight = static_cast<float *>(outputs[kIndex1]->device_ptr());
   if (logits == nullptr || labels == nullptr || weight == nullptr) {
     MS_LOG(EXCEPTION) << "Nllloss does not support null input";
   }
@@ -108,15 +92,15 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     float n_loss = -logits[index] * n_weight;
     tmp_total_weight += n_weight;
     total_loss += n_loss;
-    if (reduction_type_ == Reduction_None) {
+    if (reduction_type_ == MsPyEnum::Reduction::NONE) {
       loss[i] = n_loss;
     }
   }
 
   *total_weight = tmp_total_weight;
-  if (reduction_type_ == Reduction_Sum) {
+  if (reduction_type_ == MsPyEnum::Reduction::SUM) {
     *loss = total_loss;
-  } else if (reduction_type_ == Reduction_Mean) {
+  } else if (reduction_type_ == MsPyEnum::Reduction::MEAN) {
     *loss = total_loss / tmp_total_weight;
   }
   return true;
@@ -127,6 +111,8 @@ std::vector<std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc>> NLLLossCpuK
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossCpuKernelMod::LaunchKernel<int32_t>},
@@ -134,9 +120,18 @@ std::vector<std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc>> NLLLossCpuK
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> NLLLossCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, NLLLossCpuKernelMod::NLLLossFunc> &pair) { return pair.first; });
+  return support_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NLLLoss, NLLLossCpuKernelMod);
 }  // namespace kernel

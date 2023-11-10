@@ -50,12 +50,12 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
   constexpr size_t kRankNum1 = 1;
   constexpr size_t kShapeNum0 = 0;
   constexpr int kDimNum0 = 0;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto output_dim0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
 
   if (x_shape.size() < kRankNum1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor x's rank cannot be less than 1.";
@@ -73,14 +73,13 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
   }
 
   ShapeVector y_shape = x_shape;
-  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
-    auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(output_dim0_value);
-    auto output_dim0_value_ptr = output_dim0_value->BuildValue();
+  if (!input_args[kInputIndex3]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex3]->GetValue()->isa<None>()) {
+    auto output_dim0_value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
+    auto output_dim0_type_ptr = input_args[kInputIndex3]->GetType();
+    MS_EXCEPTION_IF_NULL(output_dim0_type_ptr);
     auto output_dim0_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name, output_dim0_type_ptr);
     int dim_zero = static_cast<int32_t>(output_dim0_value_ptr_tensor[kShapeNum0]);
     if (dim_zero < kDimNum0) {
       MS_EXCEPTION(ValueError) << "Input output_dim0 must >= 0!";
@@ -96,17 +95,17 @@ abstract::ShapePtr SparseSegmentMeanGradInferShape(const PrimitivePtr &prim,
 
 TypePtr SparseSegmentMeanGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  auto output_dim0_type = input_args[kInputIndex3]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
+  auto output_dim0_type = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, {kFloat16, kFloat32, kFloat64}, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("output_dim0", output_dim0_type, {kInt32}, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32, kInt64}, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

@@ -35,17 +35,15 @@ class SparseSegmentSumWithNumSegmentsCpuKernelMod : public NativeCpuKernelMod {
   SparseSegmentSumWithNumSegmentsCpuKernelMod() = default;
   ~SparseSegmentSumWithNumSegmentsCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T1, typename T2>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
     std::vector<KernelAttr> kernel_attr_list;
@@ -55,8 +53,8 @@ class SparseSegmentSumWithNumSegmentsCpuKernelMod : public NativeCpuKernelMod {
   }
 
   using LaunchKernelFunc =
-    std::function<void(SparseSegmentSumWithNumSegmentsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
+    std::function<void(SparseSegmentSumWithNumSegmentsCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   static std::vector<std::pair<KernelAttr, LaunchKernelFunc>> f_list_;

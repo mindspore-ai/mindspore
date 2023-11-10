@@ -20,7 +20,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/matmul_fusion_inout_test.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/mat_mul.h"
 
 namespace mindspore {
@@ -79,7 +79,6 @@ class TransMatMulFusionInoutTest : public MatMulFusionInoutTest {
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create Act primitivec failed");
     auto prim_c = prim->GetPrim();
     MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
-    prim->Init();
     auto trans_primitive = NewValueNode(prim_c);
     auto perm = opt::BuildIntVecParameterNode(graph, perm_val, name + "_perm");
     auto transpose = graph->NewCNode({trans_primitive, perm});

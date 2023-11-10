@@ -20,6 +20,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
 #include "src/common/log_util.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 #include "ops/op_name.h"
 

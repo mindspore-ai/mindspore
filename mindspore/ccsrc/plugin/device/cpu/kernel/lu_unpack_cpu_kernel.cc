@@ -34,10 +34,7 @@ constexpr uint32_t kSecondOutputIndex = 1;
 constexpr uint32_t kThirdOutputIndex = 2;
 }  // namespace
 
-bool LuUnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LuUnpackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
@@ -54,14 +51,13 @@ bool LuUnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int LuUnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LuUnpackCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  input_0_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_1_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   auto input_0_size = input_0_shape_.size();
   auto input_1_size = input_1_shape_.size();
   if (input_0_size < kDimNum) {
@@ -90,15 +86,16 @@ int LuUnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T_data, typename T_pivots>
-void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &outputs, int64_t Lu_data_dim1,
+void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &outputs, int64_t Lu_data_dim1,
                                     int64_t Lu_pivots_dim, T_pivots *const Lu_pivots_working_ptr, int64_t matrix_index,
                                     int64_t matrix_size, int64_t matrix_width, int64_t matrix_height,
                                     int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *const P_eye) {
   using MatrixMap = Eigen::Map<Eigen::Matrix<T_data, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   auto input_ptr = GetDeviceAddress<T_data>(inputs, kFirstInputIndex);
   MS_EXCEPTION_IF_NULL(input_ptr);
-  MatrixMap input(input_ptr + matrix_index * matrix_size, matrix_width, matrix_height);
+  MatrixMap input(reinterpret_cast<T_data *>(inputs[kFirstInputIndex]->device_ptr()) + matrix_index * matrix_size,
+                  matrix_width, matrix_height);
   auto output_y2 = GetDeviceAddress<T_data>(outputs, kThirdOutputIndex);
   MS_EXCEPTION_IF_NULL(output_y2);
   //  Triu
@@ -109,12 +106,12 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
     T_data *MiddlePtr = new T_data[matrix_size];
     MatrixMap MiddleData(MiddlePtr, matrix_width, matrix_height);
     MiddleData = input.template triangularView<Eigen::Upper>();
-    MatrixMap(output_y2 + matrix_index * U_stride, matrix_height, matrix_height) =
-      MiddleData.block(0, 0, matrix_height, matrix_height);
+    MatrixMap(reinterpret_cast<T_data *>(outputs[kThirdOutputIndex]->device_ptr()) + matrix_index * U_stride,
+              matrix_height, matrix_height) = MiddleData.block(0, 0, matrix_height, matrix_height);
     delete[] MiddlePtr;
   } else {
-    MatrixMap(output_y2 + matrix_index * U_stride, matrix_width, matrix_height) =
-      input.template triangularView<Eigen::Upper>();
+    MatrixMap(reinterpret_cast<T_data *>(outputs[kThirdOutputIndex]->device_ptr()) + matrix_index * U_stride,
+              matrix_width, matrix_height) = input.template triangularView<Eigen::Upper>();
   }
   //  Tril
   auto output_y1 = GetDeviceAddress<T_data>(outputs, kSecondOutputIndex);
@@ -123,12 +120,12 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
     T_data *MiddlePtr = new T_data[matrix_size];
     MatrixMap MiddleData(MiddlePtr, matrix_width, matrix_height);
     MiddleData = input.template triangularView<Eigen::UnitLower>();
-    MatrixMap(output_y1 + matrix_index * L_stride, matrix_width, matrix_width) =
-      MiddleData.block(0, 0, matrix_width, matrix_width);
+    MatrixMap(reinterpret_cast<T_data *>(outputs[kSecondOutputIndex]->device_ptr()) + matrix_index * L_stride,
+              matrix_width, matrix_width) = MiddleData.block(0, 0, matrix_width, matrix_width);
     delete[] MiddlePtr;
   } else {
-    MatrixMap(output_y1 + matrix_index * L_stride, matrix_width, matrix_height) =
-      input.template triangularView<Eigen::UnitLower>();
+    MatrixMap(reinterpret_cast<T_data *>(outputs[kSecondOutputIndex]->device_ptr()) + matrix_index * L_stride,
+              matrix_width, matrix_height) = input.template triangularView<Eigen::UnitLower>();
   }
   //  Swap
   std::vector<T_pivots> final_order;
@@ -155,9 +152,9 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
     std::swap(final_order[perm_id], final_order[perm_pivots_id]);
   }
   //  Index_select
-  auto output_y0 = GetDeviceAddress<T_data>(outputs, kFirstOutputIndex);
+  auto output_y0 = reinterpret_cast<T_data *>(outputs[kFirstOutputIndex]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y0);
-  auto output_size = outputs[kFirstOutputIndex]->size;
+  auto output_size = outputs[kFirstOutputIndex]->size();
   size_t indices_num = final_order.size();
   size_t inner_size = Lu_data_dim1_unsigned;
   size_t slice_size = static_cast<size_t>(inner_size * sizeof(T_data));
@@ -173,8 +170,8 @@ void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T_data, typename T_pivots>
-bool LuUnpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool LuUnpackCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   size_t LU_data_dims = input_0_shape_.size();
   std::vector<int64_t> LU_data_dims_vector = input_0_shape_;
   int64_t Lu_data_dim1 = LU_data_dims_vector[LU_data_dims - 2];
@@ -196,7 +193,7 @@ bool LuUnpackCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   int64_t matrix_width = Lu_data_dim1;
   int64_t matrix_height = Lu_data_dim2;
   int64_t matrix_size = matrix_width * matrix_height;
-  auto input_x1 = reinterpret_cast<T_pivots *>(inputs[1]->addr);
+  auto input_x1 = reinterpret_cast<T_pivots *>(inputs[1]->device_ptr());
 
   int32_t block_size = Lu_data_dim1 * Lu_data_dim1;
   T_data *P_eye = new T_data[block_size]{};

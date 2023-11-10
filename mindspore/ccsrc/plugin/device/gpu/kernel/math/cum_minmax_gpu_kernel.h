@@ -34,14 +34,12 @@ class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
   explicit CumMinMaxGpuKernelMod(const CumOpType &cum_op_type) : cum_op_type_(cum_op_type) {}
   ~CumMinMaxGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -49,12 +47,12 @@ class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   using CumMinMaxLaunchFunc =
-    std::function<bool(CumMinMaxGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(CumMinMaxGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
   CumOpType cum_op_type_{CUM_OP_INVALID_TYPE};
   CumMinMaxLaunchFunc kernel_func_;

@@ -27,25 +27,17 @@ constexpr size_t kQuantileOutputsNum = 1;
 constexpr int kQuantileDefaultDim = 10000;
 }  // namespace
 
-bool QuantileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Quantile ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  dim_ = GetValue<int64_t>(base_operator->GetAttr("dim"));
-  keep_dims_ = GetValue<bool>(base_operator->GetAttr("keep_dims"));
-  ignore_nan_ = GetValue<bool>(base_operator->GetAttr("ignore_nan"));
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool QuantileCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dim_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  keep_dims_ = GetValue<bool>(primitive_->GetAttr("keep_dims"));
+  ignore_nan_ = GetValue<bool>(primitive_->GetAttr("ignore_nan"));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int QuantileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+int QuantileCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != KRET_OK) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != KRET_OK) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -170,25 +162,25 @@ std::vector<int64_t> SetQuantileOutputShape(int64_t dim, int64_t input_dim, bool
 }
 
 template <typename T>
-bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs[kIndex1]->size == 0) {
+bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  if (inputs[kIndex1]->size() == 0) {
     MS_EXCEPTION(ValueError) << "For Quantile, q-th must be non-empty";
   }
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kQuantileInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kQuantileOutputsNum, kernel_name_);
 
-  auto input = static_cast<T *>(inputs[0]->addr);
-  auto q = static_cast<T *>(inputs[1]->addr);
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
+  auto q = static_cast<T *>(inputs[1]->device_ptr());
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   size_t input_dim = input_shape_.size();
   size_t q_dim = q_shape_.size();
-  size_t q_size = inputs[1]->size / sizeof(T);
-  total_ = inputs[0]->size / sizeof(T);
-  auto output_size = outputs[0]->size / sizeof(T);
+  size_t q_size = inputs[1]->size() / sizeof(T);
+  total_ = inputs[0]->size() / sizeof(T);
+  auto output_size = outputs[0]->size() / sizeof(T);
 
   auto input_shape = input_shape_;
   dim_ = static_cast<int64_t>(MaybeWrapDim(dim_, input_shape.size()));

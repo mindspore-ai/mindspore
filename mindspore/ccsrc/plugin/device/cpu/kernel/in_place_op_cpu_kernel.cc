@@ -78,21 +78,14 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
  public:
   InplaceOpCpuTypeFunc() = default;
   ~InplaceOpCpuTypeFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                const std::vector<KernelTensorPtr> &) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->GetPrim()->name();
-    if (kernel_name_ == ops::kNameInplaceAdd) {
-      auto kernel_ptr = std::make_shared<ops::InplaceAdd>(base_operator->GetPrim());
-      indices_ = kernel_ptr->get_indices();
-    } else if (kernel_name_ == ops::kNameInplaceSub) {
-      auto kernel_ptr = std::make_shared<ops::InplaceSub>(base_operator->GetPrim());
-      indices_ = kernel_ptr->get_indices();
-    } else if (kernel_name_ == ops::kNameInplaceUpdate) {
-      auto kernel_ptr = std::make_shared<ops::InplaceUpdate>(base_operator->GetPrim());
-      indices_ = kernel_ptr->get_indices();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                const std::vector<KernelTensor *> &) override {
+    kernel_name_ = primitive->name();
+    auto value_ptr = primitive->GetAttr(ops::kIndices);
+    if (value_ptr->isa<ValueSequence>()) {
+      indices_ = GetValue<std::vector<int64_t>>(value_ptr);
     } else {
-      MS_LOG(EXCEPTION) << "InplaceOp cpu does not support " << kernel_name_;
+      indices_ = {GetValue<int64_t>(value_ptr)};
     }
 
     static std::unordered_map<std::string, TypeComputeFunc> inplaceOpFuncMap = {
@@ -126,8 +119,7 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     }
   }
 
-  int Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &,
-             const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) override {
     auto v_shape = inputs.at(kIndex1)->GetShapeVector();
     if (v_shape.at(0) != SizeToLong(indices_.size())) {
       MS_LOG(ERROR) << "For 'InplaceOp', the size of indices must equal to input_v's shape[0].";
@@ -169,12 +161,12 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     ParallelLaunchAutoSearch(task, LongToSize(v_size_), this, &parallel_search_info_);
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *v = reinterpret_cast<T *>(inputs[1]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    if (memcpy_s(output, outputs[0]->size, x, inputs[0]->size) != EOK) {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *v = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+    if (memcpy_s(output, outputs[0]->size(), x, inputs[0]->size()) != EOK) {
       MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOp'.";
       return false;
     }
@@ -239,9 +231,8 @@ static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
 };
 }  // namespace
 
-bool InPlaceOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool InPlaceOpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
   }
@@ -254,18 +245,17 @@ bool InPlaceOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 
   func_obj_ = kernel_attr_list.at(kernel_name_)[index].second();
 
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
 
   return true;
 }
 
-int InPlaceOpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int InPlaceOpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> InPlaceOpCpuKernelMod::GetOpSupport() {

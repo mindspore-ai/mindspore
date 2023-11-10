@@ -25,20 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
-class DynamicStitchKernelMod : public DeprecatedNativeGpuKernelMod {
+class DynamicStitchKernelMod : public NativeGpuKernelMod {
  public:
   DynamicStitchKernelMod();
   ~DynamicStitchKernelMod();
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-  void ResetResource() noexcept override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  };
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+  void ResetResource() noexcept;
   constexpr static size_t kDivNum2 = 2;
 
  protected:
-  void SyncOutputShape() override;
-  void InitSizeLists() override;
+  ShapeVector GetShapeAdaptively(const std::vector<KernelTensor *> &data, size_t index);
 
  private:
   size_t n_;

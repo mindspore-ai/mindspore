@@ -158,6 +158,13 @@ class BACKEND_EXPORT Callback {
   virtual void ResetKernelInfo(const AnfNodePtr &node) = 0;
 
   /**
+   * @brief Reset KernelInfo input msg for convert attr and input.
+   *
+   * @param node the AnfNodePtr
+   */
+  virtual void ResetKernelInfoInputs(const AnfNodePtr &node) = 0;
+
+  /**
    * @brief The Callback implementation use nodes' device info.
    */
   virtual bool IsUseDeviceInfo() { return true; }

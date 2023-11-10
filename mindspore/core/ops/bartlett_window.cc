@@ -44,6 +44,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,21 +55,16 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
-    auto window_length = input_args[0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(window_length);
-    auto window_length_value_ptr = window_length->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[0]) && IsValueKnown(input_args[0]->GetValue())) {
+    auto window_length_value_ptr = input_args[0]->GetValue();
     MS_EXCEPTION_IF_NULL(window_length_value_ptr);
-    auto window_length_tensor = window_length_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(window_length_tensor);
-    auto input_type = input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     auto input_type_id = input_type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(input_type_id);
     auto input_type_element = input_type_id->element();
     MS_EXCEPTION_IF_NULL(input_type_element);
-    auto window_length_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto window_length_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto window_length_shape = window_length_shape_map[kShape];
     if (IsDynamicRank(window_length_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -87,11 +83,11 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> out_shape;
     int64_t window_length_value = 0;
     if (input_type_element->type_id() == kNumberTypeInt32) {
-      auto window_length_ptr = reinterpret_cast<int *>(window_length_tensor->data_c());
-      window_length_value = static_cast<int64_t>(*window_length_ptr);
+      auto value_opt = GetArrayValue<int32_t>(window_length_value_ptr);
+      window_length_value = static_cast<int64_t>(value_opt.value()[0]);
     } else if (input_type_element->type_id() == kNumberTypeInt64) {
-      auto window_length_ptr = reinterpret_cast<int64_t *>(window_length_tensor->data_c());
-      window_length_value = static_cast<int64_t>(*window_length_ptr);
+      auto value_opt = GetArrayValue<int64_t>(window_length_value_ptr);
+      window_length_value = value_opt.value()[0];
     }
 
     if (window_length_value >= 0 && window_length_value <= max_length) {
@@ -102,7 +98,7 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
                                << max_length << "], but got: " << window_length_value << ".";
     }
   } else {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
     if (IsDynamicRank(x_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     }
@@ -122,7 +118,7 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
 
 TypePtr BartlettWindowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("window_length", input_type, valid_types, prim->name());

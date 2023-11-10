@@ -28,12 +28,10 @@ namespace kernel {
 constexpr size_t INPUT_NUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
 
-bool AddV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool AddV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  kernel_name_ = base_operator->name();
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -48,7 +46,7 @@ bool AddV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_func_ = func_list_[index].second;
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
   std::vector<size_t> lhs_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   std::vector<size_t> rhs_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
@@ -59,14 +57,12 @@ bool AddV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int AddV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AddV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != INPUTS_SIZE) {
+  if (inputs.size() != INPUTS_SIZE) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2.";
     return KRET_RESIZE_FAILED;
   }
@@ -124,13 +120,14 @@ int AddV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     }
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return KRET_OK;
 }
 
 template <typename T>
-bool AddV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool AddV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input_addr1 = GetDeviceAddress<T>(inputs, 0);
   T *input_addr2 = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);

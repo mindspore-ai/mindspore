@@ -1,0 +1,11 @@
+#operator log_softmax
+log_softmax:
+    args:
+        logits:
+            dtype: tensor
+        axis:
+            dtype: int
+            init: -1
+    returns:
+        output:
+            dtype: tensor

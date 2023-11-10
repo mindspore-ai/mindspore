@@ -44,6 +44,46 @@ constexpr size_t kSparseCrossInputValueStart = 1;
 constexpr size_t kSparseCrossInputShapeStart = 2;
 constexpr size_t kSparseCrossInputDenseStart = 3;
 
+TypePtrList GetCrossSequenceTypes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+  bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
+  bool is_list = x->GetType()->object_type() == kObjectTypeList;
+  if ((!is_tuple) && (!is_list)) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << primitive->name()
+                                        << ", the input must be a list or tuple of sparse tensor. but got: "
+                                        << x->ToString() << ".";
+  }
+  auto x_types = x->GetType();
+  TypePtrList types_list;
+  if (is_tuple) {
+    types_list = x_types->cast<TuplePtr>()->elements();
+  } else {
+    types_list = x_types->cast<ListPtr>()->elements();
+  }
+  return types_list;
+}
+
+abstract::BaseShapePtrList GetCrossSequenceShapes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+  bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
+  bool is_list = x->GetType()->object_type() == kObjectTypeList;
+  if ((!is_tuple) && (!is_list)) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << primitive->name()
+                                        << ", the input must be a list or tuple of sparse tensor. but got: "
+                                        << x->ToString() << ".";
+  }
+  auto x_shapes = x->GetShape();
+  abstract::BaseShapePtrList shapes_list;
+  if (is_tuple) {
+    auto shapes_tuple = x_shapes->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(shapes_tuple);
+    shapes_list = shapes_tuple->shape();
+  } else {
+    auto shapes_tuple = x_shapes->cast<abstract::ListShapePtr>();
+    MS_EXCEPTION_IF_NULL(shapes_tuple);
+    shapes_list = shapes_tuple->shape();
+  }
+  return shapes_list;
+}
+
 bool SparseCrossCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   bool hashed_output = GetValue<bool>(primitive->GetAttr("hashed_output"));
   if (!hashed_output) {
@@ -51,26 +91,16 @@ bool SparseCrossCheckShape(const PrimitivePtr &primitive, const std::vector<Abst
                             << ".";
   }
   auto op_name = primitive->name();
-  auto inputs_indices = input_args[kSparseCrossInputIndicesStart]->isa<abstract::AbstractTuple>()
-                          ? input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                          : input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto indices_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
 
-  auto inputs_values = input_args[kSparseCrossInputValueStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSparseCrossInputValueStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSparseCrossInputValueStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
+  auto inputs_indices_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
+  auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes[0])[kShape];
+  auto inputs_values_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputValueStart]);
+  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values_shapes[0])[kShape];
+  auto inputs_shapes_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
+  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes_shapes[0])[kShape];
+  auto inputs_denses_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
+  auto denses_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_denses_shapes[0])[kShape];
 
-  auto inputs_shapes = input_args[kSparseCrossInputShapeStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
-
-  auto inputs_denses = input_args[kSparseCrossInputDenseStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto denses_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_denses[0]->BuildShape())[kShape];
   if (IsDynamic(indices_element0_shape) || IsDynamic(values_element0_shape) || IsDynamic(shapes_element0_shape) ||
       IsDynamic(denses_element0_shape)) {
     return false;
@@ -120,27 +150,21 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});
   }
-  auto inputs_indices1 = input_args[kSparseCrossInputIndicesStart]->isa<abstract::AbstractTuple>()
-                           ? input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                           : input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto indices_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[0]->BuildShape())[kShape];
-  auto inputs_dense1 = input_args[kSparseCrossInputDenseStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto inputs_shape1 = input_args[kSparseCrossInputShapeStart]->isa<abstract::AbstractTuple>()
-                         ? input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape1[0]->BuildShape())[kShape];
-  int64_t rank = indices_shape1[1];
+  auto inputs_indices_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
+  auto indices_element0_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes1[0])[kShape];
+  auto inputs_dense_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
+  auto inputs_shape_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
+  auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape_shapes1[0])[kShape];
+  int64_t rank = indices_element0_shape1[1];
   int64_t indices_row = 0;
   std::vector<int64_t> nnz(shape_shape1[0], 1);
   for (uint32_t r = 0; r < shape_shape1[0]; r++) {
-    for (unsigned int i = 0; i < inputs_indices1.size(); i++) {
-      auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[i]->BuildShape())[kShape];
+    for (unsigned int i = 0; i < inputs_indices_shapes1.size(); i++) {
+      auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes1[i])[kShape];
       nnz[r] = nnz[r] * indices_shape2[0];
     }
-    for (uint32_t i = 0; i < inputs_dense1.size(); i++) {
-      auto denses_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_dense1[i]->BuildShape())[kShape];
+    for (uint32_t i = 0; i < inputs_dense_shapes1.size(); i++) {
+      auto denses_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_dense_shapes1[i])[kShape];
       nnz[r] = nnz[r] * denses_shape2[1];
     }
     indices_row = indices_row + nnz[r];
@@ -157,15 +181,9 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SparseCrossInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto tensors_arg = input_args[kSparseCrossInputValueStart];
-  if (!tensors_arg->isa<abstract::AbstractTuple>() && !tensors_arg->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the values must be list or tuple of tensors.";
-  }
-  auto tensors = tensors_arg->isa<abstract::AbstractTuple>()
-                   ? tensors_arg->cast<abstract::AbstractTuplePtr>()->elements()
-                   : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
-  for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->BuildType();
+  auto input_values_types = GetCrossSequenceTypes(primitive, input_args[kSparseCrossInputValueStart]);
+  for (size_t i = 0; i < input_values_types.size(); ++i) {
+    auto input_dtype = input_values_types[i];
     (void)CheckAndConvertUtils::CheckTypeValid("values", input_dtype, {kInt64}, op_name);
   }
   auto sparse_values_type = std::make_shared<TensorType>(kInt64);

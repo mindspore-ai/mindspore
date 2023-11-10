@@ -22,7 +22,7 @@
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/shape_calc.h"
+#include "ir/functor.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,20 +31,19 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
   ShapeCalcCpuKernelMod() = default;
   ~ShapeCalcCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
 
  private:
   ShapeArray outs_shape_;
+  bool is_dynamic_len_out_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -38,20 +38,18 @@ namespace kernel {
 class LuUnpackGpuKernelMod : public NativeGpuKernelMod {
  public:
   LuUnpackGpuKernelMod() { ResetResource(); }
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   using LuUnpackFunc =
-    std::function<bool(LuUnpackGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(LuUnpackGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   LuUnpackFunc kernel_func_;
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, LuUnpackFunc>> func_list_;
@@ -69,8 +67,8 @@ class LuUnpackGpuKernelMod : public NativeGpuKernelMod {
 
   void ResetResource() noexcept;
   template <typename T_data, typename T_pivots>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

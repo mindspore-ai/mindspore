@@ -641,7 +641,7 @@ void PsEmbeddingCacheInserter::BuildSparseEmbeddingStorages() {
     MS_EXCEPTION_IF_NULL(param_info);
     param_info->set_use_persistent_storage(true);
 
-    const auto &abstract_base = common::AnfAlgo::GetNodeAbstractByIndex(param, 0);
+    const auto &abstract_base = common::AnfAlgo::FrontendGetNodeAbstractByIndex(param, 0);
     MS_EXCEPTION_IF_NULL(abstract_base);
     if (!abstract_base->isa<abstract::AbstractMapTensor>()) {
       MS_LOG(EXCEPTION) << "Parameter:" << param->DebugString() << " is not a map tensor type.";

@@ -20,6 +20,7 @@
 #include <complex>
 #include "mindspore/core/ops/random_shuffle.h"
 #include "kernel/philox_random.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,16 +33,13 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool RandomShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomShuffle>(base_operator);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+bool RandomShuffleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
-  batch_rank_ = LongToSize(kernel_ptr->get_batch_rank());
+  batch_rank_ = LongToSize(ops::get_batch_rank(primitive_));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,10 +49,9 @@ bool RandomShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int RandomShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs);
+int RandomShuffleCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -78,11 +75,11 @@ int RandomShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool RandomShuffleCpuKernelMod::ScalarShuffle(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs,
+bool RandomShuffleCpuKernelMod::ScalarShuffle(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs,
                                               const std::vector<size_t> &perm) const {
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   for (size_t i = 0; i < perm.size(); i++) {
     output[i] = input[perm[i]];
   }
@@ -90,10 +87,10 @@ bool RandomShuffleCpuKernelMod::ScalarShuffle(const std::vector<kernel::AddressP
 }
 
 template <typename T>
-bool RandomShuffleCpuKernelMod::ScalarShuffleWithBatchRank(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+bool RandomShuffleCpuKernelMod::ScalarShuffleWithBatchRank(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task = [this, input, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       std::vector<size_t> perm(shuffle_size_);
@@ -111,11 +108,11 @@ bool RandomShuffleCpuKernelMod::ScalarShuffleWithBatchRank(const std::vector<ker
 }
 
 template <typename T>
-bool RandomShuffleCpuKernelMod::TensorShuffle(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs,
+bool RandomShuffleCpuKernelMod::TensorShuffle(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs,
                                               const std::vector<size_t> &perm) {
-  auto input = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  auto output = reinterpret_cast<int8_t *>(outputs[0]->addr);
+  auto input = reinterpret_cast<int8_t *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
   auto task = [this, output, input, perm](size_t start, size_t end) {
     size_t copy_size = inner_size_ * sizeof(T);
     for (size_t i = start; i < end; i++) {
@@ -132,10 +129,10 @@ bool RandomShuffleCpuKernelMod::TensorShuffle(const std::vector<kernel::AddressP
 }
 
 template <typename T>
-bool RandomShuffleCpuKernelMod::TensorShuffleWithBatchRank(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  auto output = reinterpret_cast<int8_t *>(outputs[0]->addr);
+bool RandomShuffleCpuKernelMod::TensorShuffleWithBatchRank(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<int8_t *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
   auto outer_task = [this, output, input](size_t outer_start, size_t outer_end) {
     size_t copy_size = inner_size_ * sizeof(T);
     for (size_t k = outer_start; k < outer_end; k++) {
@@ -159,13 +156,13 @@ bool RandomShuffleCpuKernelMod::TensorShuffleWithBatchRank(const std::vector<ker
 }
 
 template <typename T>
-bool RandomShuffleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomShuffleCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRandomShuffleInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRandomShuffleOutputsNum, kernel_name_);
 
   if (input_shape_.empty() || input_shape_[batch_rank_] <= 1) {
-    auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
+    auto ret = memcpy_s(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(), inputs[0]->size());
     if (ret != EOK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', memcpy failed, ret=" << ret;
     }

@@ -19,7 +19,7 @@
 #include <functional>
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/gelu.h"
+#include "mindspore/core/ops/ops_func_impl/gelu.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,8 +28,8 @@ constexpr const size_t kGeluInputsNum = 1;
 constexpr const size_t kGeluOutputsNum = 1;
 
 template <typename T>
-bool GeLUGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool GeLUGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGeluInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGeluOutputsNum, kernel_name_);
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
@@ -56,12 +56,7 @@ std::vector<KernelAttr> GeLUGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool GeLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GeLU>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool GeLUGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kGeluInputsNum || outputs.size() != kGeluOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kGeluInputsNum << " and "
                   << kGeluOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -80,11 +75,9 @@ bool GeLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int GeLUGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int GeLUGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -104,8 +97,8 @@ int GeLUGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   // A Code Block For setting input and output shape.
   {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    input_shape_ = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                       inputs[kIndex0]->GetDeviceShapeVector().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }

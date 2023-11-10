@@ -35,9 +35,9 @@ TypePtr RenormInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize, name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, name);
-  return x_dtype;
+  return x_dtype->Clone();
 }
 
 abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -46,7 +46,7 @@ abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = input_shape[kShape];
   MS_EXCEPTION_IF_ZERO("Renorm input shape", shape.size());
   auto out_shape = shape;

@@ -45,21 +45,18 @@ constexpr int64_t kDim1Num = 2;
   }
 }  // namespace
 
-bool SparseSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SparseSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
     const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
@@ -111,33 +108,36 @@ int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     rank_ = input_indices_shape[1];
 
     output_size_list_.clear();
-    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->GetDtype())));
-    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
-    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype())));
+    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->dtype_id())));
+    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
+    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->dtype_id())));
   }
   return ret;
 }
 
-void SparseSliceCpuKernelMod::SyncOutputShape() {
-  outputs_[0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
-  outputs_[1]->SetShapeVector(ShapeVector({slice_nnz_}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+void SparseSliceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({slice_nnz_}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+  outputs[kIndex0]->set_size(LongToSize(slice_nnz_ * rank_) * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(slice_nnz_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(rank_) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
-
 template <typename T>
-bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSliceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSliceOutputsNum, kernel_name_);
-  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto input_values = static_cast<T *>(inputs[kIndex1]->addr);
-  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->addr);
-  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_values = static_cast<T *>(outputs[kIndex1]->addr);
-  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto input_values = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->device_ptr());
+  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_values = static_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
 
   SliceCompute<T>(input_indices, input_values, input_shape, input_start, input_size, output_indices, output_values,
                   output_shape);

@@ -30,31 +30,29 @@ class ResizeBicubicCPUKernelMod : public NativeCpuKernelMod {
   ResizeBicubicCPUKernelMod() = default;
   ~ResizeBicubicCPUKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  void CalResizeClass(const CNodePtr &kernel_node, const std::vector<AddressPtr> &inputs);
+  void CalResizeClass(const CNodePtr &kernel_node, const std::vector<KernelTensor *> &inputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T1, typename T2>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T1, typename T2>
   inline void interpolate_with_caching(const T1 *input_data, const bool half_pixel_centers_, T2 *output_data);
 
-  using ResizeBicubicFunc = std::function<bool(ResizeBicubicCPUKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
+  using ResizeBicubicFunc = std::function<bool(ResizeBicubicCPUKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ResizeBicubicFunc>> func_list_;
   ResizeBicubicFunc kernel_func_;
 };

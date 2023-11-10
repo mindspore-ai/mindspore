@@ -18,6 +18,7 @@
 
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,14 +38,29 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(origin_prim);
   const auto &origin_attrs = origin_prim->attrs();
 
-  if (origin_attrs.count(kShape) == 0) {
+  size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kShape);
+
+  if (origin_attrs.count(kShape) == 0 && idx == SIZE_MAX) {
     MS_LOG(DEBUG) << "Origin primitive: " << origin_prim->name() << "has no attr : " << kShape;
     return node;
   }
-  auto attr_value = origin_prim->GetAttr(kShape);
-  MS_EXCEPTION_IF_NULL(attr_value);
+  std::vector<int64_t> input_x;
+  if (origin_attrs.count(kShape)) {
+    auto attr_value = origin_prim->GetAttr(kShape);
+    MS_EXCEPTION_IF_NULL(attr_value);
+    input_x = GetValue<std::vector<int64_t>>(attr_value);
+  } else {
+    auto shape_node = common::AnfAlgo::GetInputNode(cnode, idx);
+    if (!utils::isa<ValueNodePtr>(shape_node)) {
+      return node;
+    }
+    auto shape = ops::GetArrayValue<int64_t>(shape_node->cast<ValueNodePtr>()->value());
+    if (!shape.has_value()) {
+      return node;
+    }
+    input_x = shape.value().ToVector();
+  }
 
-  auto input_x = GetValue<std::vector<int64_t>>(attr_value);
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
@@ -67,6 +83,10 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
         input_x[i] = x_shape[i - outer_dim_offset];
       }
     }
+  }
+  if (origin_attrs.count(kShape) == 0) {
+    auto shape_node = common::AnfAlgo::GetInputNode(cnode, idx);
+    shape_node->cast<ValueNodePtr>()->set_value(MakeValue(input_x));
   }
   common::AnfAlgo::SetNodeAttr(kShape, MakeValue(input_x), cnode);
   return cnode;

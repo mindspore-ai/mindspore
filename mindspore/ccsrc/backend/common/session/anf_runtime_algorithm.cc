@@ -27,6 +27,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "ir/anf.h"
+#include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
@@ -482,7 +483,7 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   auto format = build_info->GetInputFormat(input_idx);
   if (format == kernel::KernelBuildInfo::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
-                      << " has a invalid input format\n"
+                      << " input index:" << input_idx << " has a invalid input format\n"
                       << trace::DumpSourceLines(node);
   }
   return format;
@@ -886,6 +887,186 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
                                                                    bool skip_nop_node) {
   KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
   return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
+}
+
+std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAbstractInfo(const AnfNodePtr &node,
+                                                                                           size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  abstract::BaseShapePtr shape;
+  TypePtr type;
+  ValuePtr value;
+
+  // Create output kernel tensor if not exists.
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    value = value_node->value();
+    auto abs = node->abstract();
+    if (abs == nullptr) {
+      MS_EXCEPTION_IF_NULL(value);
+      abs = value->ToAbstract();
+      value_node->set_abstract(abs);
+    }
+    MS_EXCEPTION_IF_NULL(abs);
+    shape = abs->GetShape();
+    type = abs->GetType();
+  } else {
+    const auto &abs = AnfAlgo::GetNodeAbstractByIndex(node, output_idx);
+    MS_EXCEPTION_IF_NULL(abs);
+    shape = abs->GetShape();
+    type = abs->GetType();
+    value = kValueAny;
+  }
+
+  // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
+  // so the output infer type and device type will be different, we change the output tensor to the real device type.
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<TensorType>()) {
+    auto real_device_type = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
+    auto abs_tensor_type = type->Clone()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(abs_tensor_type);
+    auto abs_element = abs_tensor_type->element();
+    if (abs_element != nullptr) {
+      auto abs_tensor_element_type = abs_element->type_id();
+      if (real_device_type != kTypeUnknown && real_device_type != abs_tensor_element_type) {
+        MS_LOG(INFO) << "For kernel " << node->DebugString() << ", the infer type of output[" << output_idx << "] is "
+                     << TypeIdToString(abs_tensor_element_type) << ", but the device type is "
+                     << TypeIdToString(real_device_type)
+                     << ". Maybe there has insert cast pass which changed the device type."
+                     << " So we change the tensor type from " << TypeIdToString(abs_tensor_element_type) << " to "
+                     << TypeIdToString(real_device_type);
+        abs_tensor_type->set_element(TypeIdToType(real_device_type));
+        // Use new tensor type with device data type.
+        type = abs_tensor_type;
+      }
+    }
+  }
+
+  return std::make_tuple(shape, type, value);
+}
+
+bool AnfRuntimeAlgorithm::ExistOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  return kernel_info->OutputAddrExist(output_idx) || kernel_info->OutputKernelTensorExist(output_idx);
+}
+
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  // Get output kernel tensor in device address if exists.
+  if (kernel_info->OutputAddrExist(output_idx)) {
+    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+  }
+
+  // Get output kernel tensor if exists.
+  if (kernel_info->OutputKernelTensorExist(output_idx)) {
+    return kernel_info->GetOutputKernelTensor(output_idx);
+  }
+
+  MS_LOG(EXCEPTION) << "Can not find kernel tensor for node : " << node->DebugString()
+                    << ", output index: " << output_idx;
+}
+
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  // Get output kernel tensor in device address if exists.
+  if (kernel_info->OutputAddrExist(output_idx)) {
+    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+  }
+
+  // Get output kernel tensor if exists.
+  if (kernel_info->OutputKernelTensorExist(output_idx)) {
+    return kernel_info->GetOutputKernelTensor(output_idx);
+  }
+
+  auto [shape, type, value] = GetAbstractInfo(node, output_idx);
+  auto kernel_tensor = std::make_shared<KernelTensor>(shape, type, value);
+  // Handle the format diff between host and device, need set format before Resize KernelMod.
+  kernel_tensor->SetStringFormat(GetOutputFormat(node, output_idx));
+  kernel_info->SetOutputKernelTensor(kernel_tensor, output_idx);
+
+  return kernel_info->GetOutputKernelTensor(output_idx);
+}
+
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetPrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_idx, false);
+  return GetOutputKernelTensor(kernel_with_index.first, kernel_with_index.second);
+}
+
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreatePrevNodeOutputKernelTensor(const AnfNodePtr &node,
+                                                                                  size_t input_idx) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_idx, false);
+  return GetOrCreateOutputKernelTensor(kernel_with_index.first, kernel_with_index.second);
+}
+
+std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllInputKernelTensors(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+  std::vector<KernelTensor *> input_kernel_tensors(input_num);
+  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    input_kernel_tensors[input_idx] = GetOrCreatePrevNodeOutputKernelTensor(node, input_idx).get();
+  }
+  return input_kernel_tensors;
+}
+
+std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllOutputKernelTensors(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  std::vector<KernelTensor *> output_kernel_tensors(output_num);
+  for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
+    output_kernel_tensors[output_idx] = GetOrCreateOutputKernelTensor(node, output_idx).get();
+  }
+  return output_kernel_tensors;
+}
+
+KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
+  const AnfWithOutIndex &node_with_index, void *const device_ptr, size_t size, const string &format, TypeId dtype_id,
+  const ShapeVector &host_shape, const std::string &device_name, uint32_t device_id, const UserDataPtr &user_data) {
+  abstract::BaseShapePtr shape;
+  TypePtr type;
+  ValuePtr value;
+  if (ExistOutputKernelTensor(node_with_index.first, node_with_index.second)) {
+    const auto &kernel_tensor = GetOutputKernelTensor(node_with_index.first, node_with_index.second);
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    MS_EXCEPTION_IF_NULL(kernel_tensor->GetShape());
+    MS_EXCEPTION_IF_NULL(kernel_tensor->GetType());
+    shape = kernel_tensor->GetShape()->Clone();
+    type = kernel_tensor->GetType()->Clone();
+    value = kernel_tensor->GetValueTrack();
+  } else {
+    std::tie(shape, type, value) = GetAbstractInfo(node_with_index.first, node_with_index.second);
+  }
+
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(type);
+  MS_LOG(DEBUG) << "Create output kernel tensor for node: " << node_with_index.first->fullname_with_scope()
+                << ", output index: " << node_with_index.second << ", Shape: " << shape->ToString()
+                << ", Type: " << type->ToString() << ", Value: " << (value ? value->ToString() : "nullptr")
+                << ", host shape: " << host_shape;
+
+  return std::make_shared<kernel::KernelTensor>(shape, type, value, device_ptr, size, format, dtype_id, host_shape,
+                                                device_name, device_id, user_data);
+}
+
+std::vector<size_t> AnfRuntimeAlgorithm::GetNodeInputSizeList(const AnfNodePtr &node) {
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+  size_t input_num = input_kernel_tensors.size();
+  std::vector<size_t> input_size_list(input_num, 0);
+  for (size_t i = 0; i < input_num; i++) {
+    MS_EXCEPTION_IF_NULL(input_kernel_tensors[i]);
+    input_size_list[i] = input_kernel_tensors[i]->size();
+  }
+
+  return input_size_list;
 }
 
 size_t AnfRuntimeAlgorithm::GetOutputAddressNum(const AnfNodePtr &node) {
@@ -1698,28 +1879,6 @@ void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_
   }
 }
 
-void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
-  const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters) {
-  for (auto &internal_parameter_iter : internal_parameters) {
-    auto &node = internal_parameter_iter.first.first;
-    MS_EXCEPTION_IF_NULL(node);
-    for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
-      auto internal_parameter = internal_parameter_weakptr.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
-        const auto &shapes = BaseShapeToShapeVector(node->Shape());
-        std::vector<TypeId> types = std::vector(
-          shapes.size(), common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second));
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
-        continue;
-      }
-      common::AnfAlgo::SetOutputInferTypeAndShape(
-        {common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second)},
-        {common::AnfAlgo::GetOutputInferShape(node, internal_parameter_iter.first.second)}, internal_parameter.get());
-    }
-  }
-}
-
 void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &cnode : graph->execution_order()) {
@@ -2090,6 +2249,27 @@ tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_
   return nullptr;
 }
 
+bool AnfRuntimeAlgorithm::IsSequenceOutputOfScalar(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abs = node->abstract();
+  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  // Check all elements in tuple/list are scalar.
+  auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+  MS_EXCEPTION_IF_NULL(abs_seq);
+  if (abs_seq->dynamic_len()) {
+    const auto &element_abs = abs_seq->dynamic_len_element_abs();
+    return (element_abs == nullptr) || (element_abs->isa<abstract::AbstractScalar>());
+  }
+  const auto &elements = abs_seq->elements();
+
+  return std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
+    return (element != nullptr) && (element->isa<abstract::AbstractScalar>()) &&
+           (element->BuildValue() == nullptr || (!element->BuildValue()->isa<StringImm>()));
+  });
+}
+
 bool AnfRuntimeAlgorithm::IsSummaryNode(const AnfNodePtr &node) {
   return (IsPrimitiveCNode(node, prim::kPrimScalarSummary) || IsPrimitiveCNode(node, prim::kPrimTensorSummary) ||
           IsPrimitiveCNode(node, prim::kPrimImageSummary) || IsPrimitiveCNode(node, prim::kPrimHistogramSummary));
@@ -2308,5 +2488,33 @@ bool AnfRuntimeAlgorithm::NeedEraseCache(const PrimitivePtr &prim) {
   auto random_cache_value = prim->GetAttr(kRandomCache);
   MS_EXCEPTION_IF_NULL(random_cache_value);
   return !GetValue<bool>(random_cache_value);
+}
+
+abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abstract = node->abstract();
+  if (abstract == nullptr) {
+    return abstract;
+  }
+
+  // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node) ||
+      (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
+       (mindspore::session::AnfRuntimeAlgorithm::GetOutputKernelObjectType(node, 0) ==
+        kernel::KernelObjectType::TUPLE))) {
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
+                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    return abstract;
+  }
+
+  // Return element abstract by index for tuple type.
+  const auto &abstract_tuple = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  const auto &elements = abstract_tuple->elements();
+  if (elements.size() <= index) {
+    const auto sub_abstract = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
+    return sub_abstract;
+  }
+  return elements[index];
 }
 }  // namespace mindspore::session

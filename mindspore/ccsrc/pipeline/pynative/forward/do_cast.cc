@@ -183,8 +183,9 @@ void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
     bool has_tensor_int8 = false;
     // Find the maximum priority of the same dtype
     for (size_t index : indexes) {
-      if (index >= op_run_info->input_size) {
-        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << op_run_info->input_size;
+      if (index >= op_run_info->none_init_inputs_num) {
+        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of none_init_inputs_num "
+                          << op_run_info->none_init_inputs_num;
       }
       const auto &v = op_run_info->op_grad_info->input_value[index];
       if (v->isa<FloatImm>()) {
@@ -418,10 +419,11 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
   const auto &signature = op_run_info->signatures;
   auto &input_args = op_run_info->op_grad_info->input_value;
   size_t input_args_size = input_args.size();
-  if (dtypes.size() != input_args_size) {
-    MS_LOG(EXCEPTION) << "Signature dtypes size " << dtypes << " not equal to input_args_size is " << input_args_size;
+  if (dtypes.size() > input_args_size) {
+    MS_LOG(EXCEPTION) << "Signature dtypes size[" << dtypes << "] is greater than input_args_size[" << input_args_size
+                      << "].";
   }
-  for (size_t i = 0; i < input_args_size; ++i) {
+  for (size_t i = 0; i < dtypes.size(); ++i) {
     // No need to implicit cast if no dtype.
     if (dtypes.empty() || dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
       continue;
@@ -478,7 +480,7 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
   }
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
   const auto &signature = op_run_info->signatures;
-  for (size_t i = 0; i < op_run_info->input_size; i++) {
+  for (size_t i = 0; i < op_run_info->none_init_inputs_num; i++) {
     const auto &v = op_run_info->op_grad_info->input_value[i];
     auto sig = SignatureEnumRW::kRWDefault;
     if (!signature.empty()) {
@@ -533,9 +535,9 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
         --sig_size;
       }
     }
-    if (sig_size > 0 && sig_size != op_run_info->input_size) {
-      MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs size " << op_run_info->input_size
-                               << " does not match the requires "
+    if (sig_size > 0 && sig_size != op_run_info->none_init_inputs_num) {
+      MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs number "
+                               << op_run_info->none_init_inputs_num << " does not match the requires "
                                << "signature size " << sig_size;
     }
     mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;

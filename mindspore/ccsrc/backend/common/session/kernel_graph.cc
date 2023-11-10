@@ -28,6 +28,7 @@
 #include "kernel/framework_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "ops/array_ops.h"
+#include "ops/op_def.h"
 #include "ops/framework_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "ops/other_ops.h"
@@ -393,7 +394,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   auto abs = node->abstract();
   auto abs_type = AnfAlgo::GetAbstractObjectType(abs);
   auto kernel_object_type = kernel::TypeIdToKernelObjectTypeForTupleUnfold(abs_type);
-  if (common::AnfAlgo::IsDynamicSequence(node)) {
+  if (common::AnfAlgo::IsDynamicSequence(node) || (node->isa<ValueNode>() && AnfAlgo::IsSequenceOutputOfScalar(node))) {
     kernel_object_type = kernel::KernelObjectType::TUPLE;
   } else if (abs_type == kObjectTypeTuple || abs_type == kObjectTypeList) {
     auto tuple_len = AnfAlgo::GetOutputElementNum(node);
@@ -485,6 +486,19 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   }
   MS_EXCEPTION_IF_NULL(value_node);
   value_node->set_abstract(input_tensor->ToAbstract());
+  // add value node to graph
+  auto input_value_node = NewValueNode(value_node);
+  AddValueNodeToGraph(input_value_node);
+  return input_value_node;
+}
+
+ValueNodePtr KernelGraph::NewValueNode(const ValuePtr &input_value) {
+  if (input_value->isa<tensor::Tensor>()) {
+    return NewValueNode(input_value->cast<tensor::TensorPtr>());
+  }
+
+  auto value_node = std::make_shared<ValueNode>(input_value);
+  value_node->set_abstract(input_value->ToAbstract());
   // add value node to graph
   auto input_value_node = NewValueNode(value_node);
   AddValueNodeToGraph(input_value_node);
@@ -693,6 +707,8 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
 }
 
 void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.emplace(value_node); }
+
+void KernelGraph::EraseValueNode(const ValueNodePtr &value_node) { (void)graph_value_nodes_.erase(value_node); }
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 
@@ -1415,6 +1431,18 @@ void KernelGraph::InferType() {
     std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
     const auto &primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(primitive);
+
+    auto op_def = mindspore::ops::GetOpDef(primitive->name());
+    if (op_def) {
+      (void)op_def->func_impl_.CheckValidation(primitive, abstracts);
+      auto shape = op_def->func_impl_.InferShape(primitive, abstracts);
+      auto type = op_def->func_impl_.InferType(primitive, abstracts);
+      auto abstract = mindspore::abstract::MakeAbstract(shape, type);
+      cnode->set_abstract(abstract);
+      MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
+      continue;
+    }
+
     auto find = abstract::GetPrimitiveInferImpl(primitive);
     if (find.has_value()) {
       eval_impl = find.value();

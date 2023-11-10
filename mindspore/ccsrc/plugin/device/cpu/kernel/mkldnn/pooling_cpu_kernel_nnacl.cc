@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/cpu/kernel/utils/cpu_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "ops/conv_pool_op_name.h"
@@ -47,9 +48,9 @@ int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) {
 
 void PoolingCpuKernelNnaclMod::GetPadList(size_t src_dim, size_t padlist_len) {
   // pad_mode has been capitalized in front end.
-  if (pad_mode_ == PAD_MODE_UPPER_VALID) {
+  if (pad_mode_ == PadMode::VALID) {
     (void)pad_list_.insert(pad_list_.begin(), padlist_len, 0);
-  } else if (pad_mode_ == PAD_MODE_UPPER_SAME) {
+  } else if (pad_mode_ == PadMode::SAME) {
     for (size_t i = kHeightIdx4D; i < src_dim; i++) {
       int64_t pad_l, pad_r;
       GetAxisPad(in_size_[i], kernel_size_[i], stride_size_[i], &pad_l, &pad_r);
@@ -86,42 +87,54 @@ void PoolingCpuKernelNnaclMod::InitPooling3DParams() {
   pooling_param_.divisor_override_ = divisor_override_;
 }
 
-bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (kernel_name_ == kAvgPoolOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 5, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  kernel_name_ = base_operator->name();
+  kernel_name_ = primitive()->name();
   if (kernel_name_ == kAvgPool3DOpName || kernel_name_ == kAvgPoolOpName) {
     pool_mode_ = MEAN_POOLING;
   } else if (kernel_name_ == kMaxPool3DOpName || kernel_name_ == kMaxPoolOpName) {
     pool_mode_ = MAX_POOLING;
   } else {
-    MS_LOG(ERROR) << "Pooling only supports Avg or Max, but got " << kernel_name_;
+    MS_LOG(ERROR) << "Pooling only supports Avg or Max, but got: " << kernel_name_ << ".";
     return false;
   }
-  dtype_ = inputs[0]->GetDtype();
-  format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
-  pad_mode_ = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
-  kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
-  stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
-  if (base_operator->HasAttr(COUNT_INCLUDE_PAD)) {
-    count_include_pad_ = GetValue<bool>(base_operator->GetAttr(COUNT_INCLUDE_PAD));
+  dtype_ = inputs[0]->dtype_id();
+  if (kernel_name_ == kAvgPoolOpName) {
+    kernel_size_ = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+    stride_size_ = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[3]->GetValueWithCheck<int64_t>());
+    format_ = static_cast<mindspore::Format>(inputs[4]->GetValueWithCheck<int64_t>());
+
+  } else {
+    kernel_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
+    stride_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
+    pad_mode_ =
+      static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive()->GetAttr(PAD_MODE))));
+    format_ = GetFormatFromStrToEnum(GetValue<std::string>(primitive()->GetAttr(FORMAT)));
   }
-  if (base_operator->HasAttr(DIVISOR_OVERRIDE)) {
-    divisor_override_ = GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE));
+
+  if (primitive()->HasAttr(COUNT_INCLUDE_PAD)) {
+    count_include_pad_ = GetValue<bool>(primitive()->GetAttr(COUNT_INCLUDE_PAD));
+  }
+  if (primitive()->HasAttr(DIVISOR_OVERRIDE)) {
+    divisor_override_ = GetValue<int64_t>(primitive()->GetAttr(DIVISOR_OVERRIDE));
   }
   return true;
 }
 
-int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  in_size_ = inputs[0]->GetDeviceShapeAdaptively();
-  out_size_ = outputs[0]->GetDeviceShapeAdaptively();
+  in_size_ = inputs[0]->GetDeviceShapeVector();
+  out_size_ = outputs[0]->GetDeviceShapeVector();
   auto src_dim = in_size_.size();
   if (!(src_dim == SHAPE_4D && out_size_.size() == SHAPE_4D) &&
       !(src_dim == SHAPE_5D && out_size_.size() == SHAPE_5D)) {
@@ -134,14 +147,36 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   // kernel_size_/stride_size_/pad_list_ in 4D will be extended to 5D later, so here we need to reset
   // kernel_size_/stride_size_/pad_list_ before the extending.
   if (src_dim == SHAPE_4D) {
-    kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
-    stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
+    std::vector<int64_t> kernel_size;
+    std::vector<int64_t> stride_size;
+    if (kernel_name_ == kAvgPoolOpName) {
+      kernel_size = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+      stride_size = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
+    } else {
+      kernel_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
+      stride_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
+    }
+    size_t NC_LEN = 0;
+    if (kernel_name_ != kAvgPoolOpName) {
+      NC_LEN += 2;
+    }
+    constexpr auto kernel_size_len = 2;
+    if (kernel_size.size() != kernel_size_len + NC_LEN) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected kernel size length:" << kernel_size.size();
+    }
+    constexpr auto stride_size_len = 2;
+    if (stride_size.size() != stride_size_len + NC_LEN) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected stride size length:" << stride_size.size();
+    }
+    // change kernel size and strides from (H, W) to (1, 1, H, W)
+    if (kernel_name_ == kAvgPoolOpName) {
+      kernel_size_ = {1, 1, kernel_size[0], kernel_size[1]};
+      stride_size_ = {1, 1, stride_size[0], stride_size[1]};
+    } else {
+      kernel_size_ = kernel_size;
+      stride_size_ = stride_size;
+    }
     pad_list_.clear();
-  }
-
-  if (kernel_size_.size() != src_dim || stride_size_.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernels and strides to be " << src_dim << "D, but got "
-                      << kernel_size_.size() << "D, " << stride_size_.size() << " D!";
   }
 
   size_t padlist_len = src_dim == SHAPE_4D ? 4 : 6;
@@ -149,7 +184,7 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
     GetPadList(src_dim, padlist_len);
   } else {
     // PAD_LIST has been calculated during infer shape, so it can be directly obtained here
-    pad_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
+    pad_list_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(PAD_LIST));
   }
 
   if (pad_list_.size() != padlist_len) {
@@ -183,8 +218,8 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   batches_ = in_size_[0];
   channels_ = in_size_[1];
   output_num_ = batches_ * channels_ * out_size_[kD] * out_size_[kH] * out_size_[kW];
-  auto in_dtype_size = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
-  auto out_dtype_size = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
+  auto in_dtype_size = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
+  auto out_dtype_size = GetTypeByte(TypeIdToType(outputs[0]->dtype_id()));
 
   use_channel_last_ = src_dim == SHAPE_5D && dtype_ == kNumberTypeFloat32 && channels_ >= kMinChannelBlock;
   if (use_channel_last_) {
@@ -203,9 +238,27 @@ std::vector<KernelAttr> PoolingCpuKernelNnaclMod::GetOpSupport() {
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
     {kAvgPoolOpName,
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}},
+     {KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat16)
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
+        .AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
+        .AddOutputAttr(kNumberTypeFloat64)}},
     {kMaxPool3DOpName,
      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
@@ -347,11 +400,11 @@ void PoolingCpuKernelNnaclMod::LaunchPoolingChannelLastFp32(float *input_addr, f
 }
 
 template <typename T>
-bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   CTask task =
     pool_mode_ == MEAN_POOLING ? KernelAvgPool<T>(input_addr, output_addr) : KernelMaxPool<T>(input_addr, output_addr);
   ParallelLaunch(task, output_num_, 1.0);
@@ -364,15 +417,19 @@ bool PoolingCpuKernelNnaclMod::LaunchKernel(const std::vector<kernel::AddressPtr
     break;                                               \
   }
 
-bool PoolingCpuKernelNnaclMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspaces,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+bool PoolingCpuKernelNnaclMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspaces,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  if (kernel_name_ == kAvgPoolOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 5, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
 
   if (use_channel_last_) {
-    float *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-    float *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+    float *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+    float *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
     float *transpose_out = GetDeviceAddress<float>(workspaces, 0);
     float *pooling_out = GetDeviceAddress<float>(workspaces, 1);
     LaunchPoolingChannelLastFp32(input_addr, transpose_out, pooling_out, output_addr);

@@ -41,26 +41,24 @@ bool NcclGpuKernelMod::LoadNvidiaCommLib() {
 bool NcclGpuKernelMod::AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                  ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
   auto allreduce_func = DlsymFuncObj(AllReduce, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                             allreduce_func(input_addr, output_addr, count, data_type, reduce_op, group_name, stream),
-                             "ncclAllReduce failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(
+    allreduce_func(input_addr, output_addr, count, data_type, reduce_op, group_name, stream), "ncclAllReduce failed");
   return true;
 }
 
 bool NcclGpuKernelMod::AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                  cudaStream_t stream, const std::string &group_name) {
   auto allgather_func = DlsymFuncObj(AllGather, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                             allgather_func(input_addr, output_addr, count, data_type, group_name, stream),
-                             "ncclAllGather failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(allgather_func(input_addr, output_addr, count, data_type, group_name, stream),
+                                     "ncclAllGather failed");
   return true;
 }
 
 bool NcclGpuKernelMod::ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                      ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
   auto reducescatter_func = DlsymFuncObj(ReduceScatter, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(
-    kernel_node_, reducescatter_func(input_addr, output_addr, count, data_type, reduce_op, group_name, stream),
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(
+    reducescatter_func(input_addr, output_addr, count, data_type, reduce_op, group_name, stream),
     "ncclReduceScatter failed");
   return true;
 }
@@ -68,37 +66,36 @@ bool NcclGpuKernelMod::ReduceScatter(const void *input_addr, void *output_addr, 
 bool NcclGpuKernelMod::Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
                                  int root, cudaStream_t stream, const std::string &group_name) {
   auto broadcast_func = DlsymFuncObj(Broadcast, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
-                             broadcast_func(input_addr, output_addr, count, data_type, root, group_name, stream),
-                             "ncclBroadcast failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(
+    broadcast_func(input_addr, output_addr, count, data_type, root, group_name, stream), "ncclBroadcast failed");
   return true;
 }
 
 bool NcclGpuKernelMod::Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank,
                             cudaStream_t stream, const std::string &group_name) {
   auto send_func = DlsymFuncObj(Send, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, send_func(send_addr, count, data_type, peer_rank, group_name, stream),
-                             "ncclSend failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(send_func(send_addr, count, data_type, peer_rank, group_name, stream),
+                                     "ncclSend failed");
   return true;
 }
 
 bool NcclGpuKernelMod::Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
                             const std::string &group_name) {
   auto recv_func = DlsymFuncObj(Recv, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, recv_func(recv_addr, count, data_type, peer_rank, group_name, stream),
-                             "ncclRecv failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(recv_func(recv_addr, count, data_type, peer_rank, group_name, stream),
+                                     "ncclRecv failed");
   return true;
 }
 
 bool NcclGpuKernelMod::GroupStart() {
   auto groupstart_func = DlsymFuncObj(GroupStart, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, groupstart_func(), "ncclGroupStart failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(groupstart_func(), "ncclGroupStart failed");
   return true;
 }
 
 bool NcclGpuKernelMod::GroupEnd() {
   auto groupend_func = DlsymFuncObj(GroupEnd, nvidia_collective_handle_);
-  CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_, groupend_func(), "ncclGroupEnd failed");
+  CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(groupend_func(), "ncclGroupEnd failed");
   return true;
 }
 }  // namespace kernel

@@ -39,11 +39,11 @@ using mindspore::abstract::AbstractTuple;
 namespace {
 abstract::TupleShapePtr SparseMatrixMulInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto a_shape_shape = input_args[kInputIndex0]->BuildShape();
-  auto a_batch_pointers_shape = input_args[kInputIndex1]->BuildShape();
-  auto a_indptr_shape = input_args[kInputIndex2]->BuildShape();
-  auto a_indices_shape = input_args[kInputIndex3]->BuildShape();
-  auto a_values_shape = input_args[kInputIndex4]->BuildShape();
+  auto a_shape_shape = input_args[kInputIndex0]->GetShape();
+  auto a_batch_pointers_shape = input_args[kInputIndex1]->GetShape();
+  auto a_indptr_shape = input_args[kInputIndex2]->GetShape();
+  auto a_indices_shape = input_args[kInputIndex3]->GetShape();
+  auto a_values_shape = input_args[kInputIndex4]->GetShape();
 
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     a_shape_shape, a_batch_pointers_shape, a_indptr_shape, a_indices_shape, a_values_shape});
@@ -55,11 +55,11 @@ TuplePtr SparseMatrixMulInferType(const PrimitivePtr &primitive, const std::vect
 
   constexpr size_t kSMAInputsNum = 6;
   mindspore::abstract::CheckArgsSize(op_name, input_args, kSMAInputsNum);
-  auto a_shape_type = input_args[kInputIndex0]->BuildType();
-  auto a_batch_pointers_type = input_args[kInputIndex1]->BuildType();
-  auto a_indptr_type = input_args[kInputIndex2]->BuildType();
-  auto a_indices_type = input_args[kInputIndex3]->BuildType();
-  auto a_values_type = input_args[kInputIndex4]->BuildType();
+  auto a_shape_type = input_args[kInputIndex0]->GetType();
+  auto a_batch_pointers_type = input_args[kInputIndex1]->GetType();
+  auto a_indptr_type = input_args[kInputIndex2]->GetType();
+  auto a_indices_type = input_args[kInputIndex3]->GetType();
+  auto a_values_type = input_args[kInputIndex4]->GetType();
 
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{a_shape_type, a_batch_pointers_type, a_indptr_type, a_indices_type, a_values_type});

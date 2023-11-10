@@ -36,7 +36,7 @@
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/batch_matmul.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
 #include "src/common/file_utils.h"

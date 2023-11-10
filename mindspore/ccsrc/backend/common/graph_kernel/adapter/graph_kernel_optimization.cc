@@ -64,6 +64,7 @@
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
+#include "backend/common/graph_kernel/convert_input_and_attr.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -79,6 +80,9 @@ inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : O
 
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+  // convert input to attr adapter for dyn-shape
+  pm->Add(std::make_shared<ConvertInputToAttr>(), OptLevel_1);
+
   // Do DependElimination all passes of graphkernel
   pm->Add(std::make_shared<DependElimination>(), OptLevel_1);
 
@@ -255,6 +259,9 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Recover the original output info
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<RewriteOutputShape>(), OptLevel_1);
+
+  // Contrary to ConvertInputToAttr pass, adapter for dyn-shape
+  pm->Add(std::make_shared<ConvertAttrToInput>(), OptLevel_1);
 
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);

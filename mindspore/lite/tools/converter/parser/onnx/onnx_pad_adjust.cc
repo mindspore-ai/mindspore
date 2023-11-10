@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "mindspore/core/ops/lite_ops.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/primitive_c.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"

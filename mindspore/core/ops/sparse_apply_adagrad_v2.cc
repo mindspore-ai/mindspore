@@ -50,13 +50,13 @@ abstract::TupleShapePtr SparseApplyAdagradV2InferShape(const PrimitivePtr &primi
     MS_EXCEPTION_IF_NULL(item);
   }
   // Indices and grad must be tensor
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
+  CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex3, kObjectTypeTensorType);
   // Get input shape
-  auto var_shape_ptr = input_args[0]->BuildShape();
-  auto accum_shape_ptr = input_args[1]->BuildShape();
-  auto grad_shape_ptr = input_args[2]->BuildShape();
-  auto indices_shape_ptr = input_args[3]->BuildShape();
+  auto var_shape_ptr = input_args[0]->GetShape();
+  auto accum_shape_ptr = input_args[1]->GetShape();
+  auto grad_shape_ptr = input_args[2]->GetShape();
+  auto indices_shape_ptr = input_args[3]->GetShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
@@ -101,10 +101,10 @@ TuplePtr SparseApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vect
     MS_EXCEPTION_IF_NULL(item);
   }
   // Get all inputs's type
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto grad_type = input_args[2]->BuildType();
-  auto indices_type = input_args[3]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto grad_type = input_args[2]->GetType();
+  auto indices_type = input_args[3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args accum and grad must have the same type as var
   std::map<std::string, TypePtr> args;

@@ -30,15 +30,11 @@ constexpr size_t kSearchSortedInputsNum = 2;
 constexpr size_t kSearchSortedOutputsNum = 1;
 }  // namespace
 
-bool SearchSortedCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SearchSortedCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::SearchSorted>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  right_ = op_prim->get_right();
+  right_ = GetValue<bool>(primitive_->GetAttr("right"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,15 +45,14 @@ bool SearchSortedCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SearchSortedCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SearchSortedCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  sequence_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  sequence_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   search_len_ = LongToSize(sequence_shape_.back());
   return KRET_OK;
 }
@@ -76,13 +71,13 @@ const S *SearchSortedCpuKernelMod::CustomizedLowerBound(const S *seq_start, cons
 }
 
 template <typename S, typename T>
-bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CheckParam<S, T>(inputs, outputs);
-  auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
-  auto values = reinterpret_cast<S *>(inputs[1]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[1]->size / sizeof(S);
+  auto sequence = reinterpret_cast<S *>(inputs[0]->device_ptr());
+  auto values = reinterpret_cast<S *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[1]->size() / sizeof(S);
   size_t seq_dim = sequence_shape_.size();
   size_t search_repeat = static_cast<size_t>(values_shape_.back());
 
@@ -99,15 +94,15 @@ bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 }
 
 template <typename S, typename T>
-void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) const {
+void SearchSortedCpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
 
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
-                      << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
+                      << inputs[1]->size() << " and the dimension of output " << outputs[0]->size();
   }
 }
 

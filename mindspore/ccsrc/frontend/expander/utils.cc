@@ -23,6 +23,7 @@
 #include <set>
 #include "ops/nn_op_name.h"
 #include "ops/structure_ops.h"
+#include "ops/op_def.h"
 #include "ops/math_ops.h"
 #include "ops/array_ops.h"
 #include "mindspore/core/utils/anf_utils.h"
@@ -67,6 +68,10 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
   if (primc == nullptr || primc->isa<PrimitivePy>()) {
     return nullptr;
   }
+  // If it is primitive function, no need convert because primitive function are all C++ infer.
+  if (mindspore::ops::IsPrimitiveFunction(primc->name())) {
+    return nullptr;
+  }
   if (abstract::GetFrontendPrimitiveInferImpl(primc).has_value()) {
     return nullptr;
   }
@@ -89,6 +94,7 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
       }
     }
   }
+  // TODO(dyn_shape): need deleted after moving all python infer to c++ infer.
   auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
   MS_EXCEPTION_IF_NULL(new_prim);
   (void)new_prim->cast<PrimitivePtr>()->SetAttrs(primc->attrs());

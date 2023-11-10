@@ -1,0 +1,27 @@
+#operator extract_image_patches
+extract_image_patches:
+  args:
+    input_x:
+      dtype: tensor
+    ksizes:
+      dtype: tuple[int]
+      type_cast: list[int]
+      init: NO_VALUE
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      type_cast: list[int]
+      init: NO_VALUE
+      arg_handler: to_strides
+    rates:
+      dtype: tuple[int]
+      type_cast: list[int]
+      init: NO_VALUE
+      arg_handler: to_rates
+    padding:
+      dtype: int
+      init: "'VALID'"
+      arg_handler: pad_mode_to_enum
+  returns:
+    output:
+      dtype: tensor

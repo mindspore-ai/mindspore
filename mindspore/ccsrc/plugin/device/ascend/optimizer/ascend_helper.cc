@@ -20,6 +20,7 @@
 #include "mindspore/core/ops/ascend_op_name.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/common_utils.h"

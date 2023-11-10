@@ -24,13 +24,16 @@
 
 namespace mindspore {
 namespace kernel {
-class QRCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class QRCpuKernelMod : public NativeCpuKernelMod {
  public:
   QRCpuKernelMod() = default;
   ~QRCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -38,10 +41,10 @@ class QRCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using QRFunc = std::function<bool(QRCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using QRFunc = std::function<bool(QRCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, QRFunc>> func_list_;
   QRFunc kernel_func_;
 

@@ -40,11 +40,9 @@ using Matrix = Eigen::Matrix<T, Dynamic, Dynamic, Major>;
 using KernelRunFunc = SolveTriangularCpuKernelMod::KernelRunFunc;
 constexpr auto kSolveTriangularInputsNum = 2;
 constexpr auto kSolveTriangularOutputsNum = 1;
-int SolveTriangularCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SolveTriangularCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -59,15 +57,11 @@ int SolveTriangularCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SolveTriangularCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  auto kernel_ptr = std::make_shared<ops::SolveTriangular>(base_operator->GetPrim());
-  lower_ = kernel_ptr->get_lower();
-  unit_diagonal_ = kernel_ptr->get_unit_diagonal();
-  const std::string trans = kernel_ptr->get_trans();
+bool SolveTriangularCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  lower_ = GetValue<bool>(primitive_->GetAttr(ops::kLower));
+  unit_diagonal_ = GetValue<bool>(primitive_->GetAttr(ops::kUnitDiagonal));
+  const std::string trans = GetValue<std::string>(primitive_->GetAttr(ops::kTrans));
   if (trans == "N") {
     trans_ = false;
   } else if (trans == "T") {
@@ -79,7 +73,7 @@ bool SolveTriangularCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'trans' must be in ['N', 'T', 'C'], but got [" << trans << "].";
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -106,14 +100,15 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool SolveTriangularCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SolveTriangularCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 
-  auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto a_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto b_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   size_t a_batch_size = m_ * m_;
   size_t b_batch_size = m_ * n_;

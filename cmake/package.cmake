@@ -290,6 +290,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops_generate
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/communication
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/profiler
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/rewrite

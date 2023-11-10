@@ -22,6 +22,7 @@ from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import auto_generate as gen
 
 # pylint: disable=unused-variable
 
@@ -953,7 +954,7 @@ def test_convert_switch_ops(tag):
 def test_minmax_grad(tag):
     """ test_minmax_grad """
     fns = FnDict()
-    min_grad = G.MinimumGrad()
+    min_grad = gen.MinimumGrad()
 
     @fns
     def before_11(x, y, dout):

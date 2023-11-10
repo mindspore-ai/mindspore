@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,10 @@ class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
   OnesLikeCpuKernelMod() = default;
   ~OnesLikeCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -45,11 +44,12 @@ class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   using OnesLikeFunc =
-    std::function<bool(OnesLikeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(OnesLikeCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, OnesLikeFunc>> func_list_;
   OnesLikeFunc kernel_func_;
 };

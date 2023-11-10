@@ -48,16 +48,16 @@ abstract::ShapePtr SparseApplyCenteredRMSPropInferShape(const PrimitivePtr &prim
                                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto mg_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto ms_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto mom_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto mg_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto ms_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto mom_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
   auto rho_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShapeTrack())[kShape];
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShapeTrack())[kShape];
   auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[7]->GetShapeTrack())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[8]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[9]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[8]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[9]->GetShape())[kShape];
 
   const int64_t scalar_shape = 0;
   if (IsDynamicRank(var_shape) || IsDynamicRank(mg_shape) || IsDynamicRank(ms_shape) || IsDynamicRank(mom_shape) ||
@@ -112,16 +112,16 @@ TypePtr SparseApplyCenteredRMSPropInferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var = input_args[0]->BuildType();
-  auto mg = input_args[1]->BuildType();
-  auto ms = input_args[2]->BuildType();
-  auto mom = input_args[3]->BuildType();
-  auto lr = input_args[4]->BuildType();
-  auto rho = input_args[5]->BuildType();
-  auto momentum = input_args[6]->BuildType();
-  auto epsilon = input_args[7]->BuildType();
-  auto grad = input_args[8]->BuildType();
-  auto indices = input_args[9]->BuildType();
+  auto var = input_args[0]->GetType();
+  auto mg = input_args[1]->GetType();
+  auto ms = input_args[2]->GetType();
+  auto mom = input_args[3]->GetType();
+  auto lr = input_args[4]->GetType();
+  auto rho = input_args[5]->GetType();
+  auto momentum = input_args[6]->GetType();
+  auto epsilon = input_args[7]->GetType();
+  auto grad = input_args[8]->GetType();
+  auto indices = input_args[9]->GetType();
   std::map<std::string, TypePtr> args;
   (void)args.emplace("var", var);
   (void)args.emplace("ms", mg);

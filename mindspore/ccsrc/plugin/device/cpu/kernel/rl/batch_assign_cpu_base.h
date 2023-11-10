@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchAssignCpuBaseMod : public DeprecatedNativeCpuKernelMod {
+class BatchAssignCpuBaseMod : public NativeCpuKernelMod {
  public:
   BatchAssignCpuBaseMod() = default;
   ~BatchAssignCpuBaseMod() override = default;

@@ -262,24 +262,34 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
     if (!input_args[0]->isa<abstract::AbstractSequence>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
+    auto abs_seq = input_args[0]->cast<abstract::AbstractSequencePtr>();
+    if (abs_seq->dynamic_len()) {
+      MS_EXCEPTION(ValueError) << "Op " << primitive->name() << " dose not support dynamic len sequence input now.";
+    }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
     MS_EXCEPTION_IF_CHECK_FAIL(!elements.empty(), "Einsum's input tuple must be not empty!");
   }
   std::vector<std::vector<int64_t>> input_shapes;
+  // If frontend, input is AbstractTuple and element is AbstractTensor. In backend, input is list of KernelTensors and
+  // element is KernelTensor.
   for (size_t idx = 0; idx < elements.size(); ++idx) {
-    auto shape = elements[idx]->BuildShape();
+    auto shape = elements[idx]->GetShape();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->IsDimZero()) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dim of inputs' shape can not be zero, but got input["
                                << idx << "] shape: " << shape->ToString() << ".";
     }
-    auto shape_ptr = shape->cast<abstract::ShapePtr>();
+    auto shape_ptr = shape->cast<abstract::TensorShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_ptr);
     auto &shape_vec = shape_ptr->shape();
     for (auto &val : shape_vec) {
       if (val == 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape can not contain zero, but got input[" << idx
                                  << "] shape: " << shape->ToString() << ".";
+      }
+      if (val == abstract::TensorShape::kShapeDimAny) {
+        MS_EXCEPTION(ValueError) << "Op " << primitive->name()
+                                 << " dose not support dynamic shape tensors of tuple input now.";
       }
     }
     (void)input_shapes.emplace_back(shape_vec);
@@ -307,14 +317,14 @@ TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("out_type", elements[0]->BuildType());
+  (void)types.emplace("out_type", elements[0]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

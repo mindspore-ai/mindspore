@@ -36,8 +36,8 @@ namespace {
 abstract::TupleShapePtr DenseToDenseSetOperationInferShape(const PrimitivePtr &primitive,
                                                            const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x1_shape = input_args[0]->BuildShape();
-  auto x2_shape = input_args[1]->BuildShape();
+  auto x1_shape = input_args[0]->GetShape();
+  auto x2_shape = input_args[1]->GetShape();
   int64_t output_rank_dim = 0;
   auto x1_shape_vec = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape)[kShape];
   auto x1_rank = SizeToLong(x1_shape_vec.size());
@@ -122,8 +122,8 @@ TuplePtr DenseToDenseSetOperationInferType(const PrimitivePtr &prim, const std::
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x1", input_args[0]->BuildType());
-  (void)types.emplace("x2", input_args[1]->BuildType());
+  (void)types.emplace("x1", input_args[0]->GetType());
+  (void)types.emplace("x2", input_args[1]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   std::vector<TypePtr> type_tuple;
   type_tuple.push_back(std::make_shared<TensorType>(kInt64));

@@ -23,14 +23,14 @@ constexpr size_t kSecondDim = 2;
 }  // namespace
 
 void LuUnpackGpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T, typename S>
-bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *lu_data_ptr = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(lu_data_ptr);
   S *lu_pivots_ptr = GetDeviceAddress<S>(inputs, kIndex1);
@@ -66,11 +66,7 @@ bool LuUnpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool LuUnpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool LuUnpackGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -83,24 +79,23 @@ bool LuUnpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
 
   kernel_func_ = func_list_[index].second;
-  unit_size1_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  unit_size2_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  unit_size1_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  unit_size2_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
   return true;
 }
 
-int LuUnpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LuUnpackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  std::vector<int64_t> lu_data_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> lu_pivots_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> lu_data_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> lu_pivots_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex1)->GetDeviceShapeVector().end());
   lu_data_size_ = size_t(std::accumulate(lu_data_shape.begin(), lu_data_shape.end(), 1, std::multiplies<int64_t>()));
   lu_pivots_size_ =
     size_t(std::accumulate(lu_pivots_shape.begin(), lu_pivots_shape.end(), 1, std::multiplies<int64_t>()));
@@ -127,8 +122,9 @@ int LuUnpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-bool LuUnpackGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LuUnpackGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, workspace, outputs);
 }

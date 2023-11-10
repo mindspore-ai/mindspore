@@ -25,22 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
-class InstanceNormV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class InstanceNormV2GradCpuKernelMod : public NativeCpuKernelMod {
  public:
   InstanceNormV2GradCpuKernelMod() = default;
   ~InstanceNormV2GradCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   TypeId in_type_{kTypeUnknown};
   bool is_training_ = true;

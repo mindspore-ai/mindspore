@@ -56,9 +56,9 @@ TypePtr ClipByValueInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kIndex0]->BuildType());
-  (void)types.emplace("clip_value_min", input_args[kIndex1]->BuildType());
-  (void)types.emplace("clip_value_max", input_args[kIndex2]->BuildType());
+  (void)types.emplace("x", input_args[kIndex0]->GetType());
+  (void)types.emplace("clip_value_min", input_args[kIndex1]->GetType());
+  (void)types.emplace("clip_value_max", input_args[kIndex2]->GetType());
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());

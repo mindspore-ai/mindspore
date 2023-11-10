@@ -32,14 +32,12 @@ class MatrixDiagV3CpuKernelMod : public NativeCpuKernelMod {
   MatrixDiagV3CpuKernelMod() = default;
   ~MatrixDiagV3CpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -47,14 +45,15 @@ class MatrixDiagV3CpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using MatrixDiagV3Func = std::function<bool(MatrixDiagV3CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using MatrixDiagV3Func = std::function<bool(MatrixDiagV3CpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MatrixDiagV3Func>> func_list_;
   MatrixDiagV3Func kernel_func_;
 
   template <typename T>
-  bool DoLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool DoLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::vector<int64_t> diagonal_shape_;
   std::vector<int64_t> k_shape_;

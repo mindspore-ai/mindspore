@@ -161,6 +161,7 @@ class Cell(Cell_):
         self._has_config_recompute = False
         self._user_parameters = []
         self._dynamic_shape_inputs = None
+        self._compile_args = None
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
         self.grad_ops_label = False
@@ -981,6 +982,20 @@ class Cell(Cell_):
 
         return self._dynamic_shape_inputs
 
+    def _get_compile_args(self, args):
+        """Get compile arguments."""
+        # this is used only for test
+        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
+            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
+
+        if self._dynamic_shape_inputs is not None:
+            logger.debug("Compiled Graph with dynamic shape")
+            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
+            self.saved_dynamic_shape = self._dynamic_shape_inputs
+            return self._dynamic_shape_inputs
+        return args
+
+
     def compile(self, *args, **kwargs):
         """
         Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
@@ -989,19 +1004,9 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
-        # this is used only for test
-        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
-            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
-
-        if self._dynamic_shape_inputs is None:
-            _cell_graph_executor.compile(self, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, *args, **kwargs)
-        else:
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
-            self.saved_dynamic_shape = self._dynamic_shape_inputs
-            _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, **kwargs)
-            logger.debug("Compiled Graph with dynamic shape")
+        self._compile_args = self._get_compile_args(args)
+        _cell_graph_executor.compile(self, *self._compile_args, phase=self.phase,
+                                     jit_config_dict=self._jit_config_dict, **kwargs)
 
     def compile_and_run(self, *args, **kwargs):
         """
@@ -1019,7 +1024,7 @@ class Cell(Cell_):
         """
         self.compile(*args, **kwargs)
         self.add_flags(ge_sync_data=False)
-        new_args = _get_args_for_run(self, args, kwargs)
+        new_args = _get_args_for_run(self, args, kwargs, self._compile_args)
         return _cell_graph_executor(self, *new_args, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):

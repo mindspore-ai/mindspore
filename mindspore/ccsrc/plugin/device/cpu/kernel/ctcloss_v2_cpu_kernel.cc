@@ -27,24 +27,21 @@ namespace kernel {
 namespace {
 constexpr int64_t target_mul = 2;
 }  // namespace
-bool CTCLossV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCLossV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2>(base_operator->GetPrim());
-  blank_ = kernel_ptr->get_blank();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  blank_ = GetValue<int64_t>(primitive_->GetAttr(kAttrBlank));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
-int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   const auto log_probs_shape = inputs[kIndex0]->GetShapeVector();
@@ -151,15 +148,15 @@ bool CTCLossV2CpuKernelMod::IndexProcessing(const T *in_len_p, const T *tar_len_
 }
 
 template <typename S, typename T>
-bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto log_probs_p = static_cast<S *>(inputs[kIndex0]->addr);
-  auto tar_p = static_cast<T *>(inputs[kIndex1]->addr);
-  auto in_len_p = static_cast<T *>(inputs[kIndex2]->addr);
-  auto tar_len_p = static_cast<T *>(inputs[kIndex3]->addr);
-  auto neg_log_p = static_cast<S *>(outputs[kIndex0]->addr);
-  auto log_alpha_p = static_cast<S *>(outputs[kIndex1]->addr);
+bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  auto log_probs_p = static_cast<S *>(inputs[kIndex0]->device_ptr());
+  auto tar_p = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto in_len_p = static_cast<T *>(inputs[kIndex2]->device_ptr());
+  auto tar_len_p = static_cast<T *>(inputs[kIndex3]->device_ptr());
+  auto neg_log_p = static_cast<S *>(outputs[kIndex0]->device_ptr());
+  auto log_alpha_p = static_cast<S *>(outputs[kIndex1]->device_ptr());
   std::vector<int64_t> target_offsets(LongToSize(batch_sizes_));
   if (!IndexProcessing<T>(in_len_p, tar_len_p, &target_offsets)) {
     return false;

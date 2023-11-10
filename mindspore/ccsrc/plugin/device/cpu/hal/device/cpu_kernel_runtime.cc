@@ -116,9 +116,9 @@ void CPUKernelRuntime::AssignValueNodeAddress(const session::KernelGraph *kernel
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(tensor->is_parameter());
       if (tensor->data_type() == output_type_id) {
-        address->ptr_ = tensor->data_c();
+        address->SetDevicePtr(tensor->data_c());
       } else {
-        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
+        address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
@@ -211,9 +211,9 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
         MS_LOG(EXCEPTION) << "Invalid type_size " << type_size;
       }
       size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
-      if (tensor_size < address->size_) {
+      if (tensor_size < address->GetSize()) {
         temp_shape.clear();
-        (void)temp_shape.emplace_back(address->size_ / type_size);
+        (void)temp_shape.emplace_back(address->GetSize() / type_size);
       }
       tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
@@ -228,9 +228,9 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
-      address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
-      address->size_ = tensor_size;
-      address->type_id_ = device_type_id;
+      address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
+      address->SetSize(tensor_size);
+      address->SetTypeId(device_type_id);
     } else {
       tensor->set_sync_status(kNoNeedSync);
     }
@@ -334,15 +334,15 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
         tensor->data_sync();
       }
     }
-    if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {
-      address->ptr_ = tensor->data_c();
+    if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id()))) {
+      address->SetDevicePtr(tensor->data_c());
     } else {
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(),
-                                           GetTypeByte(TypeIdToType(address->type_id_)), std::multiplies<size_t>());
-      if (address->ptr_ == nullptr || address->size_ != tensor_size) {
-        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
-        address->size_ = tensor_size;
+                                           GetTypeByte(TypeIdToType(address->type_id())), std::multiplies<size_t>());
+      if (address->GetDevicePtr() == nullptr || address->GetSize() != tensor_size) {
+        address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
+        address->SetSize(tensor_size);
       }
       if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                      tensor->data_c())) {
@@ -376,8 +376,8 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
         continue;
       }
       auto address_ptr = std::dynamic_pointer_cast<device::DeviceAddress>(address);
-      if (address_ptr->type_id_ == tensor->data_type_c() && tensor->sync_status() == kNoNeedSync) {
-        address_ptr->ptr_ = tensor->data_c();
+      if (address_ptr->type_id() == tensor->data_type_c() && tensor->sync_status() == kNoNeedSync) {
+        address_ptr->SetDevicePtr(tensor->data_c());
       }
       address_ptr->ref_count_ = INIT_NODE_REF;
     }
@@ -397,12 +397,12 @@ void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<ker
   MS_EXCEPTION_IF_NULL(input_list);
   kernel::AddressPtr input = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(input);
-  if (address->ptr_ == nullptr) {
-    address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->size_);
+  if (address->GetDevicePtr() == nullptr) {
+    address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->GetSize()));
   }
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  input->addr = address->ptr_;
-  input->size = address->size_;
+  MS_EXCEPTION_IF_NULL(address->GetDevicePtr());
+  input->addr = address->GetDevicePtr();
+  input->size = address->GetSize();
   input_list->push_back(input);
 }
 

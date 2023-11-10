@@ -642,7 +642,7 @@ def test_stridedslice_layout():
     sub_graph = {
         'StridedSlice-1': ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))'],
         'Mul-0': ['Reshape-1', 'StridedSlice-1'],
-        'Split-1': ['AllGather-1'],
-        'Concat-1': ['MakeTuple-2']
+        'Split-1': ['AllGather-1', 0, 2],
+        'Concat-1': ['MakeTuple-2', 3]
     }
     assert validator.check_graph_structure(sub_graph)

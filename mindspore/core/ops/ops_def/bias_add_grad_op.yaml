@@ -1,0 +1,12 @@
+#operator bias_add_grad
+bias_add_grad:
+    args:
+        dout:
+            dtype: tensor
+        data_format:
+            dtype: int
+            init: "'NCHW'"
+            arg_handler: py_format_to_enum
+    returns:
+        output:
+            dtype: tensor

@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/grid_sampler_3d_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;
@@ -24,18 +25,16 @@ const size_t kTwo = 2;
 const size_t kThree = 3;
 const size_t kFour = 4;
 const size_t kFive = 5;
-const size_t kInputsNum = 2;
+const size_t kInputsNum = 5;
 const size_t kOutputsNum = 1;
 }  // namespace
 
 namespace mindspore {
 namespace kernel {
-bool GridSampler3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool GridSampler3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -44,25 +43,23 @@ bool GridSampler3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  dtype_ = inputs[kZero]->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  interpolation_mode_ = kernel_ptr->get_interpolation_mode();
-  padding_mode_ = kernel_ptr->get_padding_mode();
-  align_corners_ = kernel_ptr->get_align_corners();
+  dtype_ = inputs[kZero]->dtype_id();
+
   return true;
 }
 
-int GridSampler3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int GridSampler3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  interpolation_mode_ = inputs[kTwo]->GetValueWithCheck<int64_t>();
+  padding_mode_ = inputs[kThree]->GetValueWithCheck<int64_t>();
+  align_corners_ = inputs[kFour]->GetValueWithCheck<bool>();
+  output_shape_ = outputs[kZero]->GetDeviceShapeVector();
   x_stride_.clear();
   grid_stride_.clear();
   output_stride_.clear();
@@ -83,9 +80,9 @@ int GridSampler3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -120,7 +117,7 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
   auto x_ptr_NC = out_iter[kZero] * x_stride_[kZero];
   auto output_ptr_NCDHW = out_iter[kZero] * output_stride_[kZero] + out_iter[kTwo] * output_stride_[kTwo] +
                           out_iter[kThree] * output_stride_[kThree] + out_iter[kFour] * output_stride_[kFour];
-  if (interpolation_mode_ == "bilinear") {
+  if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
     int64_t x_tnw = static_cast<int64_t>(std::floor(x));
     int64_t y_tnw = static_cast<int64_t>(std::floor(y));
     int64_t z_tnw = static_cast<int64_t>(std::floor(z));
@@ -179,7 +176,7 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * bse;
       }
     }
-  } else if (interpolation_mode_ == "nearest") {
+  } else if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
     int64_t x_nearest = static_cast<int64_t>(std::round(x));
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     int64_t z_nearest = static_cast<int64_t>(std::round(z));
@@ -196,11 +193,11 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
 }
 
 template <typename T>
-void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<T *>(inputs[kZero]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[kOne]->addr);
-  auto output_data_addr = static_cast<T *>(outputs[kZero]->addr);
+void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<T *>(inputs[kZero]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[kOne]->device_ptr());
+  auto output_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
   size_t loop_count =
     LongToSize(output_shape_[kZero] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
@@ -216,16 +213,16 @@ void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 }
 
 template <typename T>
-T GridSampler3DCpuKernelMod::grid_sampler_compute_source_index(T coord, int64_t size, const std::string &padding_mode,
+T GridSampler3DCpuKernelMod::grid_sampler_compute_source_index(T coord, int64_t size, int64_t padding_mode,
                                                                bool align_corners) {
   if (align_corners) {
     coord = ((coord + 1.f) / kTwo) * (static_cast<size_t>(size) - kOne);
   } else {
     coord = ((coord + 1.f) * size - kOne) / kTwo;
   }
-  if (padding_mode == "border") {
+  if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::BORDER)) {
     coord = std::min(static_cast<T>(static_cast<size_t>(size) - kOne), std::max(coord, static_cast<T>(kZero)));
-  } else if (padding_mode == "reflection") {
+  } else if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::REFLECTION)) {
     if (align_corners) {
       coord = reflect_coordinates(coord, static_cast<int64_t>(kZero), kTwo * (size - kOne));
     } else {

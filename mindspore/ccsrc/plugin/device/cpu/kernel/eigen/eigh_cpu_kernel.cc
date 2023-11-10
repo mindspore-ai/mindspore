@@ -30,13 +30,11 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
 }  // namespace
 
-bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[0]->GetDtype();
+bool EighCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
 
-  compute_eigen_vectors_ = GetValue<bool>(base_operator->GetAttr(C_EIEH_VECTOR));
-  lower_ = GetValue<bool>(base_operator->GetAttr(LOWER));
+  compute_eigen_vectors_ = GetValue<bool>(primitive_->GetAttr(C_EIEH_VECTOR));
+  lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -49,10 +47,8 @@ bool EighCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int EighCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EighCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -92,13 +88,14 @@ void EighCpuKernelMod::InitIOFunc() {
 }
 
 template <typename T>
-bool EighCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool EighCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto A_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   // is the Matrix a symmetric matrix(true lower triangle, false upper triangle)
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T *a_Work_dir = reinterpret_cast<T *>(workspace[0]->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *a_Work_dir = reinterpret_cast<T *>(workspace[0]->device_ptr());
   Map<MatrixSquare<T>> A(A_addr, m_, m_);
   Map<MatrixSquare<T>> A_(a_Work_dir, m_, m_);
   Map<MatrixSquare<T>> output(output_addr, m_, 1);
@@ -110,7 +107,7 @@ bool EighCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   }
   T *output_v_addr = nullptr;
   if (compute_eigen_vectors_) {
-    output_v_addr = reinterpret_cast<T *>(outputs[1]->addr);
+    output_v_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
   }
   if constexpr (std::is_same<T, float>::value || std::is_same<T, double>::value) {
     SolveSelfAdjointMatrix(A_, &output, compute_eigen_vectors_, m_, output_v_addr);

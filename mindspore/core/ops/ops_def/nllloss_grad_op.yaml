@@ -1,0 +1,26 @@
+#operator nllloss_grad
+nllloss_grad:
+    args:
+        logits:
+            dtype: tensor
+        loss_grad:
+            dtype: tensor
+        labels:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        total_weight:
+            dtype: tensor
+        reduction:
+            dtype: int
+            init: "'mean'"
+            arg_handler: reduction_to_enum
+        ignore_index:
+            dtype: int
+            init: -100
+    returns:
+        logits_grad:
+            dtype: tensor
+    class:
+        name: NLLLossGrad
+

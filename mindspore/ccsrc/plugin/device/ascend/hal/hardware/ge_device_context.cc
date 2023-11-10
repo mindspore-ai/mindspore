@@ -57,7 +57,8 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
     if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
       return false;
     }
-    return common::AnfAlgo::IsDynamicShape(node);
+    return common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicSequence(node) ||
+           common::AnfAlgo::IsNodeMutableScalar(node);
   });
 }
 }  // namespace
@@ -88,16 +89,19 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
         if (!transform::ConvertCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " can not find adpt, run on CPU";
           continue;
         }
         if (!transform::DynamicShapeSupportCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " not support dynamic shape, will run in KernelGraph";
           continue;
         }
         if (!transform::SinkGraphCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " have attrs is not ValueNode, will run in KernelGraph";
         }
       }
     }

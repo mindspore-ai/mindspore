@@ -32,20 +32,19 @@ class AdjustContrastv2CpuKernelMod : public NativeCpuKernelMod {
   AdjustContrastv2CpuKernelMod() = default;
   ~AdjustContrastv2CpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchAdjustContrastv2Kernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs);
 
   std::vector<int64_t> images_shape_;
   TypeId input_type_{kTypeUnknown};

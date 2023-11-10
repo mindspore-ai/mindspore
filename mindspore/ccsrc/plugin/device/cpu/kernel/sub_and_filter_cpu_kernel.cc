@@ -25,19 +25,16 @@ constexpr size_t kSubAndFilterInputsNum = 3;
 constexpr size_t kSubAndFilterOutputNum = 2;
 }  // namespace
 
-bool SubAndFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  x_dtype_ = inputs.at(kIndex0)->GetDtype();
+bool SubAndFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  x_dtype_ = inputs.at(kIndex0)->dtype_id();
   x_dtype_size_ = abstract::TypeIdSize(x_dtype_);
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SubAndFilterCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShapeVector();
@@ -49,17 +46,14 @@ int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto input_x_shape = inputs.at(kIndex0)->GetShapeVector();
   batch_size_ = SizeOf(input_x_shape);
   MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
-  (void)input_size_list_.emplace_back(batch_size_ * x_dtype_size_);
-  (void)input_size_list_.emplace_back(x_dtype_size_);
-  (void)input_size_list_.emplace_back(x_dtype_size_);
   (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
   (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
   return KRET_OK;
 }
 
-bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSubAndFilterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSubAndFilterOutputNum, kernel_name_);
   if (x_dtype_ == kNumberTypeInt32) {
@@ -74,13 +68,13 @@ bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  T max_num = *reinterpret_cast<T *>(inputs[1]->addr);
-  T offset = *reinterpret_cast<T *>(inputs[2]->addr);
-  T *filter_res = reinterpret_cast<T *>(outputs[0]->addr);
-  T *filter_idx = reinterpret_cast<T *>(outputs[1]->addr);
+void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T max_num = *reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T offset = *reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T *filter_res = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *filter_idx = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   int64_t count = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
@@ -96,12 +90,13 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   out_size_ = count;
 }
 
-void SubAndFilterCpuKernelMod::SyncOutputShape() {
+void SubAndFilterCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_shape = {out_size_};
-  outputs_[0]->SetShapeVector(out_shape);
-  outputs_[0]->SetDtype(TypeIdToType(x_dtype_));
-  outputs_[1]->SetShapeVector(out_shape);
-  outputs_[1]->SetDtype(TypeIdToType(x_dtype_));
+  outputs[0]->SetShapeVector(out_shape);
+  outputs[0]->set_size(LongToSize(out_size_) * UnitSizeInBytes(x_dtype_));
+  outputs[1]->SetShapeVector(out_shape);
+  outputs[1]->set_size(LongToSize(out_size_) * UnitSizeInBytes(x_dtype_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SubAndFilter, SubAndFilterCpuKernelMod);

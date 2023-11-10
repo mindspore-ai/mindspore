@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/maximum_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
-#include "mindspore/core/ops/maximum.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -34,32 +33,22 @@ constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Maximum>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Maximum ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool MaximumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaximumInputsNum || outputs.size() != kMaximumOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size must be " << kMaximumInputsNum << " and "
                   << kMaximumOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+int MaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_x_shape_ = inputs[0]->GetShapeVector();
@@ -99,13 +88,14 @@ void MaximumCpuKernelMod::InitInputTensors() {
 }
 
 template <typename T>
-bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
-  T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output_ = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_x_ = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input_y_ = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output_ = reinterpret_cast<T *>(outputs[0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

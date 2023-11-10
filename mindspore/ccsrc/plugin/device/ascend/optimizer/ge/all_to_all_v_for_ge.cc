@@ -176,10 +176,6 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const AnfNodePtrList &input
   MS_EXCEPTION_IF_NULL(concat);
 
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat);
-  auto input_nums = SizeToLong(input_nodes.size());
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
-  ShapeVector dyn_input_size_empty{input_nums};
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(input_nodes[kIndex0], kIndex0);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {shape}, concat.get());
   return concat;

@@ -16,7 +16,7 @@
 
 #include "src/extendrt/delegate/tensorrt/op/gather_nd_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "ops/gather_nd.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore::lite {
 int GatherNDTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

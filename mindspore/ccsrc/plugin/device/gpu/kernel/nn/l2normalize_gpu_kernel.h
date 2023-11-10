@@ -54,8 +54,8 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
         axis_(0) {}
   ~L2NormalizeGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -69,7 +69,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
 
     if (all_match_) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(reduce_workspace_addr, input_addr, input_size_list_[0], cudaMemcpyDeviceToDevice,
+        cudaMemcpyAsync(reduce_workspace_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cudaMemcpyAsync failed in L2Normalize::Launch.");
     } else {
@@ -103,21 +103,17 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
 
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
     auto inputA_shape = inputs[0]->GetShapeVector();
 
     int input_dim_length = SizeToInt(inputA_shape.size());
     // failed to get vector<int64_t> axis from infer
-    int axis = GetValue<int64_t>(base_operator->GetAttr("axis"));
+    int axis = GetValue<int64_t>(primitive_->GetAttr("axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
 
     auto output_shape = outputs[0]->GetShapeVector();
@@ -159,15 +155,11 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
-    data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+    data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     (void)CheckIONumber(inputs, outputs);
-    epsilon_ = kernel_ptr->get_epsilon();
+    epsilon_ = GetValue<float>(primitive_->GetAttr("epsilon"));
     return true;
   }
 
@@ -196,7 +188,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  void CheckIONumber(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
+  void CheckIONumber(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     size_t input_num = inputs.size();
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;

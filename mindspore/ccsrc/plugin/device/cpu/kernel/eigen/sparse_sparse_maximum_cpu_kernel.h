@@ -31,25 +31,25 @@ class SparseSparseMaximumCpuKernelMod : public NativeCpuKernelMod {
   SparseSparseMaximumCpuKernelMod() = default;
   ~SparseSparseMaximumCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckInputShape(const std::vector<KernelTensorPtr> &inputs, const int64_t a_nnz, const int64_t b_nnz,
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void CheckInputShape(const std::vector<KernelTensor *> &inputs, const int64_t a_nnz, const int64_t b_nnz,
                        const int64_t num_dims);
-  void CheckShapeMatch(const std::vector<AddressPtr> &inputs);
+  void CheckShapeMatch(const std::vector<KernelTensor *> &inputs);
 
   TypeId dtype_{kTypeUnknown};
   TypeId itype_{kTypeUnknown};

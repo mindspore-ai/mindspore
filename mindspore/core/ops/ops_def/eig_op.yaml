@@ -1,0 +1,15 @@
+#operator eig
+eig:
+  args:
+    x:
+      dtype: tensor
+    compute_v:
+      dtype: bool
+      init: False
+  returns:
+    eigen_values:
+      dtype: tensor
+    eigen_vectors:
+      dtype: tensor
+  function:
+    name: eig_

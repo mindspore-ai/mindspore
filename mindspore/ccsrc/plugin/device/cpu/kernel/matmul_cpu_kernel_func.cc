@@ -64,23 +64,19 @@ MatMulCpuKernelFunc::~MatMulCpuKernelFunc() {
   }
 }
 
-void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatMul ops failed!";
-  }
-  trans_a_ = kernel_ptr->get_transpose_a();
-  trans_b_ = kernel_ptr->get_transpose_b();
+  kernel_name_ = primitive->name();
+  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
+  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 
   in_size_ = inputs.size();
   out_size_ = outputs.size();
-  if (kernel_ptr->HasAttr(kAttrWithBiasAdd)) {
-    with_bias_add_ = GetValue<bool>(kernel_ptr->GetAttr(kAttrWithBiasAdd));
+  if (primitive->HasAttr(kAttrWithBiasAdd)) {
+    with_bias_add_ = GetValue<bool>(primitive->GetAttr(kAttrWithBiasAdd));
   }
-  if (kernel_ptr->HasAttr(kAttrWithRelu)) {
-    with_relu_ = GetValue<bool>(kernel_ptr->GetAttr(kAttrWithRelu));
+  if (primitive->HasAttr(kAttrWithRelu)) {
+    with_relu_ = GetValue<bool>(primitive->GetAttr(kAttrWithRelu));
   }
   in_ = reinterpret_cast<TensorC **>(malloc(in_size_ * sizeof(TensorC *)));
   if (in_ == nullptr) {
@@ -98,7 +94,7 @@ void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const s
     for (size_t j = 0; j < inputs_shape_i.size(); j++) {
       in_[i]->shape_[j] = inputs_shape_i[j];
     }
-    in_[i]->data_type_ = inputs[i]->GetDtype();
+    in_[i]->data_type_ = inputs[i]->dtype_id();
   }
   for (size_t i = 0; i < out_size_; i++) {
     out_[i] = new TensorC;
@@ -107,7 +103,7 @@ void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const s
     for (size_t j = 0; j < outputs_shape_i.size(); j++) {
       out_[i]->shape_[j] = outputs_shape_i[j];
     }
-    out_[i]->data_type_ = outputs[i]->GetDtype();
+    out_[i]->data_type_ = outputs[i]->dtype_id();
   }
   op_parameter_ = new OpParameter;
   int thread_num = GetActorMgrInnerThreadPool()->GetKernelThreadNum();
@@ -162,9 +158,8 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
   if (kernel_ == nullptr) {
     return 0;
   }
@@ -184,7 +179,7 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     for (size_t j = 0; j < inputs_shape_i.size(); j++) {
       in_[i]->shape_[j] = inputs_shape_i[j];
     }
-    in_[i]->data_type_ = inputs[i]->GetDtype();
+    in_[i]->data_type_ = inputs[i]->dtype_id();
   }
   for (size_t i = 0; i < out_size_; i++) {
     auto outputs_shape_i = outputs[i]->GetShapeVector();
@@ -192,7 +187,7 @@ int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std:
     for (size_t j = 0; j < outputs_shape_i.size(); j++) {
       out_[i]->shape_[j] = outputs_shape_i[j];
     }
-    out_[i]->data_type_ = outputs[i]->GetDtype();
+    out_[i]->data_type_ = outputs[i]->dtype_id();
   }
   return 0;
 }

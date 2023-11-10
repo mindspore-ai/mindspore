@@ -106,18 +106,17 @@ SliceGradGpuKernelMod::SliceGradGpuKernelMod() : kernel_name_("SliceGrad") {
   attr_ptr_ = std::make_shared<cukernel::SliceGradAttr>();
 }
 
-bool SliceGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SliceGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
   return helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) == 0;
 }
 
-bool SliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SliceGrad>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SliceGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -129,10 +128,9 @@ bool SliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SliceGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -141,10 +139,9 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_shape_.clear();
   begin_.clear();
   size_.clear();
-  if (TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_) &&
-      TryGetIntValue(inputs, kSizeIndex_, kernel_name_, &size_)) {
-    ProccessAttr(inputs);
-  }
+  begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  size_ = inputs[kSizeIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  ProccessAttr(inputs);
 
   for (auto s : size_) {
     if (s < 0) {
@@ -156,8 +153,8 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeAdaptively(); });
-  std::vector<int64_t> out_shapes = outputs[0]->GetDeviceShapeAdaptively();
+                 [](const KernelTensor *input) { return input->GetDeviceShapeVector(); });
+  std::vector<int64_t> out_shapes = outputs[0]->GetDeviceShapeVector();
   output_shapes.emplace_back(out_shapes);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
@@ -166,9 +163,9 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return KRET_OK;
 }
 
-void SliceGradGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs) {
+void SliceGradGpuKernelMod::ProccessAttr(const std::vector<KernelTensor *> &inputs) {
   auto input_shape = inputs[1]->GetShapeVector();
-  auto data_format = inputs[1]->GetFormat();
+  auto data_format = inputs[1]->format();
   auto dy_shape = inputs[0]->GetShapeVector();
   if (dy_shape.size() <= kSliceGradDefaultInputShapeSize) {
     ShapeNdToMd(dy_shape, &dy_shape_, kDim4);
@@ -214,8 +211,8 @@ void SliceGradGpuKernelMod::CalcBeginAndSize(const mindspore::Format &data_forma
   }
 }
 
-void SliceGradGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+void SliceGradGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   size_t output_num = outputs.size();
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;

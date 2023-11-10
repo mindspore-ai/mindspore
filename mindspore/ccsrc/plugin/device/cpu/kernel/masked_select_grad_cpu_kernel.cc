@@ -33,11 +33,8 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool MaskedSelectGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MaskedSelectGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
@@ -55,15 +52,13 @@ bool MaskedSelectGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MaskedSelectGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
-  const auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  const auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -74,24 +69,24 @@ int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
   if (tensor_size_ < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', tensor_size_[" << std::to_string(tensor_size_)
                       << "] should not be less than zero. Output shape: " << output_shape_;
   }
-  auto mask = reinterpret_cast<bool *>(inputs[kIndexMask]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
-  auto dx = reinterpret_cast<T *>(outputs[kIndexInput]->addr);
+  auto mask = reinterpret_cast<bool *>(inputs[kIndexMask]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
+  auto dx = reinterpret_cast<T *>(outputs[kIndexInput]->device_ptr());
 
-  auto ret = memset_s(dx, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(dx, outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output[0] failed. Error no: " << ret;
   }
 
-  uint64_t output_size = outputs[0]->size / sizeof(T);
+  uint64_t output_size = outputs[0]->size() / sizeof(T);
   uint64_t j = 0;
   if (input_shape_a_ == input_shape_b_) {
     for (uint64_t i = 0; i < output_size; ++i) {

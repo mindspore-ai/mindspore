@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <vector>
 #include "src/common/ops/ops_func_declare.h"
 #include "src/common/ops/schema_register.h"
 
@@ -73,6 +74,14 @@
 #define OP_ATTR(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
 #define OP_ATTR_ENUM(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
 #define OP_ATTR_VEC2D(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
+#define OP_ATTR_ENUM_SRC(dstkey, dsttype, srckey, srctype) \
+  op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
+#define OP_ATTR_RAW(dstkey, dsttype, srckey, srctype) \
+  op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
+#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue) \
+  op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(" = ").append(#dstvalue).append(";\n");
+#define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey) \
+  op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
 #elif PRIMITIVE_WRITEABLE
 #define OP_ATTR(key, type)            \
   if (op->GetAttr(#key) != nullptr) { \
@@ -102,10 +111,36 @@
     schema_op->key = std::move(vec2d);                        \
   }
 
+#define OP_ATTR_ENUM_SRC(dstkey, dsttype, srckey, srctype)                \
+  if (op->GetAttr(#srckey) != nullptr) {                                  \
+    schema_op->dstkey = static_cast<schema::dsttype>(op->get_##srckey()); \
+  }
+
+#define OP_ATTR_RAW(dstkey, dsttype, srckey, srctype)                                  \
+  if (op->GetAttr(#srckey) != nullptr) {                                               \
+    schema_op->dstkey = static_cast<dsttype>(GetValue<srctype>(op->GetAttr(#srckey))); \
+  }
+
+#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue)             \
+  if (op->GetAttr(#srckey) != nullptr) {                                               \
+    schema_op->dstkey = static_cast<dsttype>(GetValue<srctype>(op->GetAttr(#srckey))); \
+  } else {                                                                             \
+    schema_op->dstkey = dstvalue;                                                      \
+  }
+
+#define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey)                              \
+  if (op->GetAttr(#srckey) != nullptr) {                                      \
+    schema_op->dstkey = GetValue<std::vector<int64_t>>(op->GetAttr(#srckey)); \
+  }
+
 #else
 #define OP_ATTR(key, type)
 #define OP_ATTR_ENUM(key, type)
 #define OP_ATTR_VEC2D(key, type)
+#define OP_ATTR_ENUM_SRC(dstkey, dsttype, srckey, srctype)
+#define OP_ATTR_RAW(dstkey, dsttype, srckey, srctype)
+#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue)
+#define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey)
 #endif
 
 #ifdef GEN_SCHEMA_DEF

@@ -783,7 +783,7 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
     auto target_node = node_inputs[target_index];
     auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+    if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
       return nullptr;
     }
   }
@@ -2285,6 +2285,9 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
+      if (value->ContainsValueAny()) {
+        return nullptr;
+      }
       if (value->isa<ValueDictionary>()) {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {

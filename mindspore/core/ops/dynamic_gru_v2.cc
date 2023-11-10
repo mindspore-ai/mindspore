@@ -52,14 +52,14 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
 
-  auto winput_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto whidden_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  auto h_shape_ptr = input_args[kInputIndex6]->BuildShape();
+  auto winput_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto whidden_shape_ptr = input_args[kInputIndex2]->GetShape();
+  auto h_shape_ptr = input_args[kInputIndex6]->GetShape();
 
   std::vector<ShapeVector> all_shapes = {x_shape, winput_shape, whidden_shape, h_shape};
   auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);
@@ -95,28 +95,27 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
                                                      std::vector<int64_t>{batch_size, hidden_size}, prim_name);
 
     std::vector<int64_t> valid_shape = {3 * hidden_size};
-    if (input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
-      auto binput_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-      auto binput_shape_ptr = input_args[kInputIndex3]->BuildShape();
+    if (input_args[kInputIndex3]->GetType()->type_id() != kMetaTypeNone) {
+      auto binput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+      auto binput_shape_ptr = input_args[kInputIndex3]->GetShape();
       if (!IsDynamic(binput_shape)) {
         (void)CheckAndConvertUtils::CheckTensorShapeSame({{"binput", binput_shape_ptr}}, valid_shape, prim_name);
         placeholder_map[kInputIndex3] = false;
       }
     }
 
-    if (input_args[kInputIndex4]->BuildType()->type_id() != kMetaTypeNone) {
+    if (input_args[kInputIndex4]->GetType()->type_id() != kMetaTypeNone) {
       auto bhidden_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-      auto bhidden_shape_ptr = input_args[kInputIndex4]->BuildShape();
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+      auto bhidden_shape_ptr = input_args[kInputIndex4]->GetShape();
       if (!IsDynamic(bhidden_shape)) {
         (void)CheckAndConvertUtils::CheckTensorShapeSame({{"bhidden", bhidden_shape_ptr}}, valid_shape, prim_name);
         placeholder_map[kInputIndex4] = false;
       }
     }
 
-    if (input_args[kInputIndex5]->BuildType()->type_id() != kMetaTypeNone) {
-      auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    if (input_args[kInputIndex5]->GetType()->type_id() != kMetaTypeNone) {
+      auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'seq_length' must be None, but got "
                                << seq_shape << ".";
     }
@@ -151,10 +150,10 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
 TuplePtr DynamicGRUV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_dtype = input_args[kInputIndex0]->BuildType();
-  auto winput_dtype = input_args[kInputIndex1]->BuildType();
-  auto whidden_dtype = input_args[kInputIndex2]->BuildType();
-  auto h_dtype = input_args[kInputIndex6]->BuildType();
+  auto x_dtype = input_args[kInputIndex0]->GetType();
+  auto winput_dtype = input_args[kInputIndex1]->GetType();
+  auto whidden_dtype = input_args[kInputIndex2]->GetType();
+  auto h_dtype = input_args[kInputIndex6]->GetType();
 
   std::map<std::string, TypePtr> check_types = {
     {"x_dtype", x_dtype}, {"winput_dtype", winput_dtype}, {"whidden_dtype", whidden_dtype}};
@@ -163,12 +162,12 @@ TuplePtr DynamicGRUV2InferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> check_types_h;
   (void)check_types_h.insert({"init_h", h_dtype});
-  if (input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
-    auto binput_dtype = input_args[kInputIndex3]->BuildType();
+  if (input_args[kInputIndex3]->GetType()->type_id() != kMetaTypeNone) {
+    auto binput_dtype = input_args[kInputIndex3]->GetType();
     (void)check_types_h.insert({"bias_input", binput_dtype});
   }
-  if (input_args[kInputIndex4]->BuildType()->type_id() != kMetaTypeNone) {
-    auto bhidden_dtype = input_args[kInputIndex4]->BuildType();
+  if (input_args[kInputIndex4]->GetType()->type_id() != kMetaTypeNone) {
+    auto bhidden_dtype = input_args[kInputIndex4]->GetType();
     (void)check_types_h.insert({"bias_hidden", bhidden_dtype});
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types_h, valid_types, prim_name);

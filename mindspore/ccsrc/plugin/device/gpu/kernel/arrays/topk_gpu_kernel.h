@@ -36,8 +36,8 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
       : sorted_(false), is_null_input_(false), outer_size_(1), inner_size_(1), k_(1), input_shape_size_(0) {}
   ~TopKGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -77,17 +77,13 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
-    sorted_ = kernel_ptr->get_attr("sorted");
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    sorted_ = GetValue<bool>(primitive_->GetAttr("sorted"));
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
 

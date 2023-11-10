@@ -111,21 +111,20 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckValue<size_t>("inputs number", input_args.size(), kEqual, input_num, op_name);
     std::set<TypePtr> valid_params_types = {kTensorType};
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
+    (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->GetType(), valid_params_types,
                                               op_name);
     std::set<TypePtr> int_types = {kInt32, kInt64};
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->GetType(), int_types,
                                                      op_name);
     std::set<TypePtr> int_type = {kInt32, kInt64};
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
-    (void)CheckAndConvertUtils::CheckTypeValid("offset", input_args[kInputIndex2]->BuildType(), int_type, op_name);
+    (void)CheckAndConvertUtils::CheckTypeValid("offset", input_args[kInputIndex2]->GetType(), int_type, op_name);
 
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 0, op_name);
-    abstract::AbstractTensorPtr params =
-      CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto params = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(params);
-    return params->BuildType();
+    return params->GetType();
   }
 };
 

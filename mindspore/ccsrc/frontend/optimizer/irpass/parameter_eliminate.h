@@ -153,8 +153,8 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
         // Erase the unused element in returned MakeTuple CNode.
         auto user_cnode = dyn_cast<CNode>(user);
         MS_EXCEPTION_IF_NULL(user_cnode);
-        auto zero_value = NewValueNode(MakeValue(0));
-        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+        auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
         user_cnode->set_input(IntToSize(pos), zero_value);
       }
     }
@@ -223,6 +223,10 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
       caller->size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
     size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + arg_start_index;
     size_t end_offset = called->fv_param_count();
+    if (start_offset > new_args.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The start_offset is " << start_offset << ", which exceeds the number of new args "
+                                 << new_args.size() << ".";
+    }
     (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
   }
 

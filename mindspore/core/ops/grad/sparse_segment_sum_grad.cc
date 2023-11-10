@@ -47,12 +47,12 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto output_dim0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(grad_shape) || IsDynamicRank(indices_shape) || IsDynamicRank(segment_ids_shape) ||
       IsDynamicRank(output_dim0_shape)) {
@@ -76,14 +76,13 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
-    auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(output_dim0_value);
-    auto output_dim0_value_ptr = output_dim0_value->BuildValue();
+  if (!input_args[kInputIndex3]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex3]->GetValue()->isa<None>()) {
+    auto output_dim0_value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
+    auto output_dim0_type_ptr = input_args[kInputIndex3]->GetType();
+    MS_EXCEPTION_IF_NULL(output_dim0_type_ptr);
     auto output_dim0_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name, output_dim0_type_ptr);
     int64_t dim_zero = static_cast<int64_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
     if (dim_zero <= static_cast<int64_t>(kInputIndex0)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
@@ -102,10 +101,10 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
 
 TypePtr SparseSegmentSumGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto grad_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  auto output_dim0_type = input_args[kInputIndex3]->BuildType();
+  auto grad_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
+  auto output_dim0_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim->name());
@@ -114,7 +113,7 @@ TypePtr SparseSegmentSumGradInferType(const PrimitivePtr &prim, const std::vecto
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)types.emplace("output_dim0", output_dim0_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

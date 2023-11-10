@@ -19,7 +19,6 @@
 
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/ops/sparse_dense_cwise_add.h"
 #include "mindspore/core/ops/sparse_dense_cwise_div.h"
 #include "mindspore/core/ops/sparse_dense_cwise_mul.h"
@@ -40,7 +39,7 @@ namespace kernel {
 constexpr int64_t INPUT_DIMS_1 = 1;
 constexpr int64_t INPUT_DIMS_2 = 2;
 
-bool SparseDenseCwiseOperationGpuKernelMod::GetOpType(const BaseOperatorPtr &base_operator) {
+bool SparseDenseCwiseOperationGpuKernelMod::GetOpType() {
   static const std::map<std::string, SparseDenseCwiseOperationFunctionType> sparse_dense_cwise_op_map = {
     {prim::kPrimSparseDenseCwiseAdd->name(), SPARSE_DENSE_CWISE_OPERATION_FUNC_ADD},
     {prim::kPrimSparseDenseCwiseMul->name(), SPARSE_DENSE_CWISE_OPERATION_FUNC_MUL},
@@ -56,29 +55,25 @@ bool SparseDenseCwiseOperationGpuKernelMod::GetOpType(const BaseOperatorPtr &bas
   return true;
 }
 
-bool SparseDenseCwiseOperationGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseDenseCwiseOperationGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetOpType(base_operator)) {
+  if (!GetOpType()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' it got op type and function type failed.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SparseDenseCwiseOperationGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SparseDenseCwiseOperationGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -87,30 +82,30 @@ int SparseDenseCwiseOperationGpuKernelMod::Resize(const BaseOperatorPtr &base_op
     o_[i] = 1;
   }
 
-  std::vector<int64_t> indice_shape = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                           inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indice_shape = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                           inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(indice_shape, kernel_name_, "input");
   if (!is_null_input_) {
     value_num_ = indice_shape[0];
     dimension_ = indice_shape[1];
-    dense_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeAdaptively().begin(),
-                                        inputs[kIndex3]->GetDeviceShapeAdaptively().end());
+    dense_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeVector().begin(),
+                                        inputs[kIndex3]->GetDeviceShapeVector().end());
 
     dense_num_ =
       std::accumulate(dense_shape_.begin(), dense_shape_.end(), 1,
                       std::multiplies<int64_t>());  // dense_dims_ = static_cast<int64_t>(dense_shape_.size());
   }
 
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
-  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> dense_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> values_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  std::vector<int64_t> dense_shape = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex3)->GetDeviceShapeVector().end());
 
   if (indices_shape.size() != INPUT_DIMS_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  the dim of indices must be 2, but got " << indices_shape.size()
@@ -147,9 +142,9 @@ int SparseDenseCwiseOperationGpuKernelMod::Resize(const BaseOperatorPtr &base_op
 }
 
 template <typename T>
-bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs) {
+bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

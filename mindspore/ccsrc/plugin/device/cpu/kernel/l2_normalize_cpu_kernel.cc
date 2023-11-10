@@ -35,11 +35,11 @@ class L2NormalizeCpuFunc : public CpuKernelFunc {
   L2NormalizeCpuFunc() = default;
   ~L2NormalizeCpuFunc() override = default;
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
   void CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
                        std::unique_ptr<T[]> *denominator_addr);
@@ -47,8 +47,7 @@ class L2NormalizeCpuFunc : public CpuKernelFunc {
   void CalcOutput(const T *input_addr, const ShapeVector &reduce_shape, const size_t output_size, T *output_addr,
                   std::unique_ptr<T[]> const &denominator_addr);
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  private:
   ShapeVector input_shape_;
@@ -56,16 +55,16 @@ class L2NormalizeCpuFunc : public CpuKernelFunc {
   T epsilon_{0};
   int axis_{0};
   std::string kernel_name_;
+  PrimitivePtr primitive_;
 };
 
 template <typename T>
-void L2NormalizeCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  epsilon_ = static_cast<T>(kernel_ptr->get_epsilon());
+void L2NormalizeCpuFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  primitive_ = primitive;
+  kernel_name_ = primitive->name();
+  auto value_ptr = GetValue<float>(primitive->GetAttr(ops::kEpsilon));
+  epsilon_ = static_cast<T>(value_ptr);
   if (epsilon_ == static_cast<T>(0.0)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the parameter of 'epsilon' can not be zero.";
   }
@@ -148,12 +147,13 @@ void L2NormalizeCpuFunc<T>::CalcOutput(const T *input_addr, const ShapeVector &r
 }
 
 template <typename T>
-bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   int dims = SizeToInt(input_shape_.size());
   auto reduce_shape = input_shape_;
@@ -166,23 +166,19 @@ bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &input
 
   L2NormalizeCpuFunc<T>::CalcDenominator(input_addr, reduce_size, dims, &denominator_addr);
 
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   L2NormalizeCpuFunc<T>::CalcOutput(input_addr, reduce_shape, output_size, output_addr, denominator_addr);
 
   return true;
 }
 
 template <typename T>
-int L2NormalizeCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-
+int L2NormalizeCpuFunc<T>::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   input_shape_ = inputs[0]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
 
-  axis_ = GetValue<int64_t>(base_operator->GetAttr("axis"));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in [" << -dims << ", " << dims
@@ -205,27 +201,26 @@ static std::vector<std::pair<KernelAttr, SpecializeL2NormFuncCreator>> func_clas
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeL2NormFunc<double>}};
 }  // namespace
 
-bool L2NormalizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool L2NormalizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "L2Norm does not support this kernel data type: " << kernel_attr;
   }
   func_obj_ = func_class_list[index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int L2NormalizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int L2NormalizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  return func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> L2NormalizeCpuKernelMod::GetOpSupport() {

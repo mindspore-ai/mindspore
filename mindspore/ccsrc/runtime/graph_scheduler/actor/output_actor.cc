@@ -68,6 +68,36 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
   }
 }
 
+void UpdateDynamicSequenceType(const AnfNodePtr &output_node, const kernel::KernelTensorPtr &output_kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+
+  if (!common::AnfAlgo::IsDynamicSequence(output_node)) {
+    return;
+  }
+
+  const auto &abs = output_node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  const auto &seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+
+  // Update abstract.
+  if (seq_abs->dynamic_len()) {
+    std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
+    std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());
+    common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, output_node);
+  }
+
+  // Update real type into output kernel tensor.
+  const auto &type = output_kernel_tensor->GetType();
+  MS_EXCEPTION_IF_NULL(type);
+  const auto &seq_type = type->cast<TuplePtr>();
+  MS_EXCEPTION_IF_NULL(seq_type);
+  if (seq_type->dynamic_len()) {
+    output_kernel_tensor->SetType(output_node->abstract()->GetType());
+  }
+}
+
 void OutputActor::Init() {
   // Check device contexts number.
   if (device_contexts_.size() != output_nodes_.size()) {
@@ -167,9 +197,6 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       output_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
     }
 
-    // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here.
-    UpdateOutputTensorShape(outputs_, output_nodes_);
-
     current_outputs_num_ = 0;
     current_count_ = 0;
     SET_OPCONTEXT_SUCCESS_RET((*context));
@@ -224,35 +251,43 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
+
+  const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
-                << ", output index: " << output_index << ", output position: " << output_position;
+                << ", output index: " << output_index << ", output position: " << output_position
+                << ", output kernel tensor: " << output_kernel_tensor->ToString();
+
+  // For dynamice sequence output, the Type(Tuple) hasn't been re-inferred, only Shape has been re-inferred, need update
+  // real Type of Tuple into kernel tensor to restore the tuple output.
+  UpdateDynamicSequenceType(output_node, output_kernel_tensor);
 
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
-      output_node->abstract()->cast<abstract::AbstractSequencePtr>()->size() == 0) {
+      !output_kernel_tensor->GetShapeVector().empty() && output_kernel_tensor->GetShapeVector().front() == 0) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ShapeVector shape = {0};
     TypeId type_id =
       (device_tensor->type_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64 : device_tensor->type_id());
     const auto &tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-    tensor->set_base_shape(output_node->Shape());
+    tensor->set_base_shape(output_kernel_tensor->GetShape());
     return tensor;
   }
 
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
+  const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
   if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
     return AnfAlgo::CreateMapTensor(output_node, output_index);
   }
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
+  const auto &shape = output_kernel_tensor->GetShapeVector();
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);
   // Set tensor base shape for restoring the tuple output when output node is dynamic sequence.
   if (common::AnfAlgo::IsDynamicSequence(output_node)) {
-    tensor->set_base_shape(output_node->Shape());
+    tensor->set_base_shape(output_kernel_tensor->GetShape());
   }
 
   if (output_position >= device_contexts_.size()) {
@@ -276,9 +311,12 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
-    auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(), device_tensor->host_shape(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(output_kernel_tensor->GetType());
+    kernel_tensor->SetShape(output_kernel_tensor->GetShape());
+    auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << " type:" << tensor_device_address->type_id()
                   << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index

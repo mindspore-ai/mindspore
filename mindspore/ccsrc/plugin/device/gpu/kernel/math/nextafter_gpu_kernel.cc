@@ -1,5 +1,5 @@
 /**
- * Copyright 2022Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 #include "plugin/device/gpu/kernel/math/nextafter_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/nextafter_impl.cuh"
-#include "ops/nextafter.h"
 
 namespace mindspore {
 namespace kernel {
-bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::NextAfter>(base_operator->GetPrim());
+bool NextAfterGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -44,8 +40,8 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
     return false;
   }
-  std::vector<size_t> input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                         inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   if (is_null_input_) {
@@ -67,9 +63,8 @@ bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int NextAfterGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -80,7 +75,7 @@ int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
+    if (!Init(inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
   }
@@ -88,12 +83,12 @@ int NextAfterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
-  T *input1 = GetDeviceAddress<T>(inputs, kIndex0);
-  T *input2 = GetDeviceAddress<T>(inputs, kIndex1);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
+  T *input1 = GetDeviceAddress<T>(inputs, 0);
+  T *input2 = GetDeviceAddress<T>(inputs, 1);
+  T *output = GetDeviceAddress<T>(outputs, 0);
   MS_EXCEPTION_IF_NULL(input1);
   MS_EXCEPTION_IF_NULL(input2);
   MS_EXCEPTION_IF_NULL(output);

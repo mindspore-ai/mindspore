@@ -45,14 +45,14 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
   for (const auto &seq_element : seq_elements) {
     if (seq_element->isa<abstract::AbstractTensor>()) {
       (void)abs.emplace_back(TensorConstructUtils::CreateZerosTensor(
-                               seq_element->BuildType(), seq_element->BuildShape()->cast<abstract::ShapePtr>()->shape())
+                               seq_element->GetType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
-      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->BuildType()));
+      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue<int64_t>(0), seq_element->GetType()));
     } else if (seq_element->isa<abstract::AbstractTuple>() || seq_element->isa<abstract::AbstractList>()) {
       (void)abs.emplace_back(MakeSequenceZeros(seq_element->cast<abstract::AbstractSequencePtr>()));
     } else {
-      MS_EXCEPTION(TypeError) << "For 'SequenceZerosLike' is not supported " << seq_abs->BuildType()->ToString() << '.';
+      MS_EXCEPTION(TypeError) << "For 'SequenceZerosLike' is not supported " << seq_abs->GetType()->ToString() << '.';
     }
   }
   if (seq_abs->isa<abstract::AbstractTuple>()) {
@@ -83,11 +83,11 @@ class SequenceZerosLikeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(primitive, input_args)->BuildShape();
+    return input_args[kIndex0]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(prim, input_args)->BuildType();
+    return input_args[kIndex0]->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

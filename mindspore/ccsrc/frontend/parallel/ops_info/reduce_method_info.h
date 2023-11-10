@@ -21,12 +21,12 @@
 #include <string>
 #include <vector>
 
-#include "utils/hash_map.h"
-#include "ir/tensor.h"
-#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/activation_info.h"
 #include "frontend/parallel/strategy.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace parallel {
@@ -45,24 +45,14 @@ class ReduceMethod : public OperatorInfo {
   bool keepdims_ = false;
   bool cross_batch_ = false;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
-  Status InferMirrorOps() override;
-  virtual std::vector<int64_t> reduce_dim();
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
-};
 
-class ReduceMaxInfo : public ReduceMethod {
- public:
-  ReduceMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMaxCost>()) {
-    reduce_method_ = REDUCE_OP_MAX;
-  }
-
-  ~ReduceMaxInfo() override = default;
+  Status InferMirrorOps() override;
+  Status GetAttrs() override;
+  virtual std::vector<int64_t> reduce_dim();
 };
 
 class ArgMaxWithValueInfo : public ReduceMethod {
@@ -93,76 +83,6 @@ class ArgMinWithValueInfo : public ArgMaxWithValueInfo {
   }
 
   ~ArgMinWithValueInfo() override = default;
-};
-
-class ReduceMeanInfo : public ReduceMethod {
- public:
-  ReduceMeanInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                 const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMeanCost>()) {}
-
-  ~ReduceMeanInfo() override = default;
-
- protected:
-  Status InferForwardCommunication() override;
-};
-
-class ReduceSumInfo : public ReduceMethod {
- public:
-  ReduceSumInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceSumCost>()) {
-    reduce_method_ = REDUCE_OP_SUM;
-  }
-
-  ~ReduceSumInfo() override = default;
-};
-
-class ReduceAnyInfo : public ReduceMethod {
- public:
-  ReduceAnyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceSumCost>()) {
-    reduce_method_ = REDUCE_OP_ANY;
-  }
-  ~ReduceAnyInfo() override = default;
-
- protected:
-  Status InferForwardCommunication() override;
-  ForwardOp CreateForwardOp(const std::vector<Group> &forward_group) const;
-};
-
-class ReduceMinInfo : public ReduceMethod {
- public:
-  ReduceMinInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMinCost>()) {
-    reduce_method_ = REDUCE_OP_MIN;
-  }
-
-  ~ReduceMinInfo() override = default;
-};
-
-class ReduceProdInfo : public ReduceMethod {
- public:
-  ReduceProdInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                 const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceProdCost>()) {
-    reduce_method_ = REDUCE_OP_PROD;
-  }
-
-  ~ReduceProdInfo() override = default;
-};
-
-class ReduceAllInfo : public ReduceAnyInfo {
- public:
-  ReduceAllInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
-      : ReduceAnyInfo(name, inputs_shape, outputs_shape, attrs) {
-    reduce_method_ = REDUCE_OP_ALL;
-  }
-
-  ~ReduceAllInfo() override = default;
 };
 
 class ArgmaxInfo : public ReduceMethod {

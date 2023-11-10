@@ -46,10 +46,10 @@ namespace {
 abstract::TupleShapePtr LSTMInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (IsDynamicRank(x_input_shape) || IsDynamicRank(h_input_shape) || IsDynamicRank(c_input_shape) ||
       IsDynamicRank(weight_shape)) {
     abstract::ShapePtr output = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -110,7 +110,9 @@ abstract::TupleShapePtr LSTMInferShape(const PrimitivePtr &primitive, const std:
 
 TuplePtr LSTMInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t output_num = 5;
-  auto type = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
+  auto input_type = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_type);
+  auto type = input_type->element();
   return std::make_shared<Tuple>(std::vector<TypePtr>(output_num, type));
 }
 }  // namespace

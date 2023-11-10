@@ -30,29 +30,27 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  AbstractBasePtrList elements = input_args;
+  abstract::BaseShapePtrList elements;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (input_args[0]->GetType()->object_type() == kObjectTypeTuple) {
+      elements = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
+    } else if (input_args[0]->GetType()->object_type() == kObjectTypeList) {
+      elements = input_args[0]->GetShape()->cast<abstract::ListShapePtr>()->shape();
+    } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
-    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
 
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+    auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]);
     auto shape_i = shape_map_i[kShape];
     if (IsDynamicRank(shape_i)) {
       return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     }
   }
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0])[kShape];
   auto element0_rank = element0_shape.size();
   if (element0_rank < 1) {
     MS_EXCEPTION(ValueError) << "For [" << prim_name
@@ -62,15 +60,14 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   auto axis = 0;
   int64_t all_shp = static_cast<int64_t>(element0_shape[IntToSize(axis)]);
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_i = elements[i]->BuildShape();
-    if (shape_i->IsDynamic()) {
+    if (elements[i]->IsDynamic()) {
       auto ret_shape = element0_shape;
       ret_shape[IntToSize(axis)] = -1;
       return std::make_shared<abstract::Shape>(ret_shape);
     }
   }
   for (size_t i = 1; i < elements.size(); ++i) {
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i])[kShape];
     (void)CheckAndConvertUtils::CheckInteger("x" + std::to_string(i) + ".shape[0]", elementi_shape[0], kEqual, 1,
                                              prim_name);
     if (elementi_shape.size() != element0_shape.size()) {
@@ -98,25 +95,25 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
 TypePtr ParallelConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  AbstractBasePtrList elements = input_args;
+  TypePtrList elements;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (input_args[0]->GetType()->object_type() == kObjectTypeTuple) {
+      elements = input_args[0]->GetType()->cast<TuplePtr>()->elements();
+    } else if (input_args[0]->GetType()->object_type() == kObjectTypeList) {
+      elements = input_args[0]->GetType()->cast<ListPtr>()->elements();
+    } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
-    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    (void)types.emplace(elementi, elements[i]->BuildType());
+    (void)types.emplace(elementi, elements[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim_name);
-  return elements[0]->BuildType();
+  return elements[0];
 }
 }  // namespace
 

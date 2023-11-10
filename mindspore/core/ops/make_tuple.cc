@@ -42,11 +42,11 @@ AbstractBasePtr MakeTupleInnerInfer(const std::vector<AbstractBasePtr> &input_ar
 class MakeTupleInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(input_args)->BuildShape();
+    return MakeTupleInnerInfer(input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(input_args)->BuildType();
+    return MakeTupleInnerInfer(input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,

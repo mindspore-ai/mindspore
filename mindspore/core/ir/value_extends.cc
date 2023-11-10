@@ -75,6 +75,10 @@ abstract::AbstractBasePtr ValueSlice::ToAbstract() {
   return std::make_shared<abstract::AbstractSlice>(start, end, step);
 }
 
+bool ValueSlice::ContainsValueAny() const {
+  return start_->ContainsValueAny() || stop_->ContainsValueAny() || step_->ContainsValueAny();
+}
+
 abstract::AbstractBasePtr KeywordArg::ToAbstract() {
   MS_EXCEPTION_IF_NULL(value_);
   abstract::AbstractBasePtr argument = value_->ToAbstract();
@@ -88,6 +92,12 @@ abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
                          return std::make_pair(item.first->ToAbstract(), item.second->ToAbstract());
                        });
   return std::make_shared<abstract::AbstractDictionary>(kv);
+}
+
+bool ValueDictionary::ContainsValueAny() const {
+  return std::any_of(key_values_.cbegin(), key_values_.cend(), [](const std::pair<ValuePtr, ValuePtr> &key_value) {
+    return key_value.first->ContainsValueAny() || key_value.second->ContainsValueAny();
+  });
 }
 
 abstract::AbstractBasePtr UMonad::ToAbstract() { return std::make_shared<abstract::AbstractUMonad>(); }

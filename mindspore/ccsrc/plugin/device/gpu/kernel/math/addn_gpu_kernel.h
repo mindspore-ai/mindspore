@@ -38,8 +38,8 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   AddNFwdGpuKernelMod() = default;
   ~AddNFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (empty_tensor_input_) {
       return true;
     }
@@ -48,11 +48,9 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -60,8 +58,8 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   size_t num_input_{0};

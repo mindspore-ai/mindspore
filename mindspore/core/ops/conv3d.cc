@@ -230,8 +230,8 @@ class Conv3DInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
-    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape());
-    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape());
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->GetShape());
+    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->GetShape());
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
     if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
@@ -310,12 +310,12 @@ class Conv3DInfer : public abstract::OpInferBase {
     Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-    auto x_dtype = input_args[0]->BuildType();
+    auto x_dtype = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
 
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kIndex0]->BuildType());
-    (void)types.emplace("w", input_args[kIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kIndex0]->GetType());
+    (void)types.emplace("w", input_args[kIndex1]->GetType());
     std::set<TypePtr> check_list = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, check_list, prim_name);
     return x_dtype;

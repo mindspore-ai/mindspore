@@ -33,9 +33,9 @@ namespace {
 abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto v_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto v_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(v_shape_ptr);
   if (x_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic()) {
     return x_shape_ptr->cast<abstract::ShapePtr>();
@@ -85,8 +85,8 @@ TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractB
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   std::map<std::string, TypePtr> args = {
-    {"x", input_args[0]->BuildType()},
-    {"v", input_args[1]->BuildType()},
+    {"x", input_args[0]->GetType()},
+    {"v", input_args[1]->GetType()},
   };
   if (prim_name == prim::kPrimInplaceUpdate->name()) {
     const std::set<TypePtr> update_valid_types = {kInt32, kFloat16, kFloat32, kFloat64};

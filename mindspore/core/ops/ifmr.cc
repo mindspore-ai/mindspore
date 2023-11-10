@@ -56,24 +56,24 @@ abstract::TupleShapePtr IFMRInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(),
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->GetShape()->isa<abstract::Shape>(),
                              "For primitive[" + prim_name + "], the [x] has no abstract:Shape.");
-  auto data_element = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto data_element = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   auto data_shape = data_element->shape();
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(),
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->GetShape()->isa<abstract::Shape>(),
                              "For primitive[" + prim_name + "], the [data_min] has no abstract:Shape.");
-  auto data_min_shape_element = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
+  auto data_min_shape_element = input_args[kInputIndex1]->GetShape()->cast<abstract::ShapePtr>();
   auto data_min_shape = data_min_shape_element->shape();
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->GetShape()->isa<abstract::Shape>(),
                              "For primitive[" + prim_name + "], the [data_max] has no abstract:Shape.");
-  auto data_max_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
+  auto data_max_shape_element = input_args[kInputIndex2]->GetShape()->cast<abstract::ShapePtr>();
   auto data_max_shape = data_max_shape_element->shape();
 
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex3]->BuildShape()->isa<abstract::Shape>(),
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex3]->GetShape()->isa<abstract::Shape>(),
                              "For primitive[" + prim_name + "], the [cumsum] has no abstract:Shape.");
-  auto cumsum_shape_element = input_args[kInputIndex3]->BuildShape()->cast<abstract::ShapePtr>();
+  auto cumsum_shape_element = input_args[kInputIndex3]->GetShape()->cast<abstract::ShapePtr>();
   auto cumsum_shape = cumsum_shape_element->shape();
   if (IsDynamicRank(data_shape) || IsDynamicRank(data_min_shape) || IsDynamicRank(data_max_shape) ||
       IsDynamicRank(cumsum_shape)) {
@@ -106,14 +106,12 @@ TuplePtr IFMRInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     MS_EXCEPTION_IF_NULL(item);
   }
   std::set<TypePtr> valid_type = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->GetType(), valid_type, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->GetType(), valid_type,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->GetType(), valid_type,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->BuildType(), valid_type,
-                                                   prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->BuildType(), {kInt32},
-                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->GetType(), {kInt32}, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kFloat32, kFloat32});
 }
 }  // namespace

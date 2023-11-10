@@ -1,0 +1,16 @@
+#operator prelu_grad
+prelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        weight:
+            dtype: tensor
+    returns:
+        dx:
+            dtype: tensor
+        dw:
+            dtype: tensor
+    class:
+        name: PReLUGrad

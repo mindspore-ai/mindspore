@@ -49,14 +49,14 @@ abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primi
     MS_EXCEPTION_IF_NULL(item);
   }
   auto prim_name = primitive->name();
-  auto var_shape = input_args[0]->BuildShape();
-  auto m_shape = input_args[1]->BuildShape();
-  auto v_shape = input_args[2]->BuildShape();
-  auto vhat_shape = input_args[3]->BuildShape();
-  auto grad_shape = input_args[7]->BuildShape();
-  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
+  auto var_shape = input_args[0]->GetShape();
+  auto m_shape = input_args[1]->GetShape();
+  auto v_shape = input_args[2]->GetShape();
+  auto vhat_shape = input_args[3]->GetShape();
+  auto grad_shape = input_args[7]->GetShape();
+  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShape())[kShape];
 
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
@@ -96,14 +96,14 @@ abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primi
 
 TuplePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto var_type = input_args[0]->BuildType();
-  auto m_type = input_args[1]->BuildType();
-  auto v_type = input_args[2]->BuildType();
-  auto vhat_type = input_args[3]->BuildType();
-  auto beta1_power_type = input_args[4]->BuildType();
-  auto beta2_power_type = input_args[5]->BuildType();
-  auto lr_type = input_args[6]->BuildType();
-  auto grad_type = input_args[7]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto m_type = input_args[1]->GetType();
+  auto v_type = input_args[2]->GetType();
+  auto vhat_type = input_args[3]->GetType();
+  auto beta1_power_type = input_args[4]->GetType();
+  auto beta2_power_type = input_args[5]->GetType();
+  auto lr_type = input_args[6]->GetType();
+  auto grad_type = input_args[7]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, m, v, vhat, grad valid and must has the same type
   std::map<std::string, TypePtr> args;

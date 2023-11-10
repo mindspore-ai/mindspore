@@ -39,19 +39,14 @@ constexpr size_t kSeqLenRank = 1;
 void CTCGreedyDecoderGpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
 
 void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
-  auto input_elements_ = inputs_x_shape_[kIndex0] * inputs_x_shape_[kIndex1] * inputs_x_shape_[kIndex2];
   max_time_ = inputs_x_shape_[kIndex0];
   batch_size_ = inputs_x_shape_[kIndex1];
   bound_ = inputs_x_shape_[kIndex2];
-
-  input_size_list_.push_back(input_elements_ * data_unit_size_);
-  input_size_list_.push_back(sequence_shape_[kIndex0] * sizeof(int32_t));
 
   workspace_size_list_.push_back(sizeof(int64_t));
   workspace_size_list_.push_back(batch_size_ * sizeof(int64_t));
@@ -63,13 +58,11 @@ void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(max_time_ * batch_size_ * data_unit_size_);
 }
 
-bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCGreedyDecoderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(base_operator->GetPrim());
-  merge_repeated_ = kernel_ptr->get_merge_repeated();
+
+  merge_repeated_ = GetValue<bool>(primitive_->GetAttr("merge_repeated"));
   is_need_retrieve_output_shape_ = true;
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -84,16 +77,14 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   kernel_func_ = func_list_[index].second;
-  data_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   return true;
 }
 
-int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CTCGreedyDecoderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
-    return false;
+    return KRET_OK;
   }
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -128,9 +119,9 @@ int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   InitSizeLists();
 
-  if (input_size_list_.size() != kInputNum) {
+  if (inputs.size() != kInputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kInputNum << ", but got "
-                  << input_size_list_.size() << ".";
+                  << inputs.size() << ".";
     return KRET_RESIZE_FAILED;
   }
 
@@ -138,9 +129,9 @@ int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -185,21 +176,30 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   return true;
 }
 
-void CTCGreedyDecoderGpuKernelMod::SyncOutputShape() {
+void CTCGreedyDecoderGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
 
-  std::vector<int64_t> indices_shape = outputs_[kIndex0]->GetShapeVector();
+  std::vector<int64_t> indices_shape = outputs[kIndex0]->GetShapeVector();
   indices_shape[kIndex0] = element_cnt_;
-  outputs_[kIndex0]->SetShapeVector(std::vector<int64_t>(indices_shape.begin(), indices_shape.end()));
+  outputs[kIndex0]->SetShapeVector(std::vector<int64_t>(indices_shape.begin(), indices_shape.end()));
+  outputs[kIndex0]->set_size(
+    LongToSize(std::accumulate(indices_shape.begin(), indices_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
 
-  std::vector<int64_t> values_shape = outputs_[kIndex1]->GetShapeVector();
+  std::vector<int64_t> values_shape = outputs[kIndex1]->GetShapeVector();
   values_shape[kIndex0] = element_cnt_;
-  outputs_[kIndex1]->SetShapeVector(std::vector<int64_t>(values_shape.begin(), values_shape.end()));
+  outputs[kIndex1]->SetShapeVector(std::vector<int64_t>(values_shape.begin(), values_shape.end()));
+  outputs[kIndex1]->set_size(
+    LongToSize(std::accumulate(values_shape.begin(), values_shape.end(), UnitSizeInBytes(outputs[kIndex1]->dtype_id()),
+                               std::multiplies<int64_t>())));
 
-  std::vector<int64_t> log_shape = outputs_[kIndex3]->GetShapeVector();
+  std::vector<int64_t> log_shape = outputs[kIndex3]->GetShapeVector();
   log_shape[kIndex0] = inputs_x_shape_[1];
-  outputs_[kIndex3]->SetShapeVector(std::vector<int64_t>(log_shape.begin(), log_shape.end()));
+  outputs[kIndex3]->SetShapeVector(std::vector<int64_t>(log_shape.begin(), log_shape.end()));
+  outputs[kIndex3]->set_size(LongToSize(std::accumulate(
+    log_shape.begin(), log_shape.end(), UnitSizeInBytes(outputs[kIndex3]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<std::pair<KernelAttr, CTCGreedyDecoderGpuKernelMod::CTCGreedyDecoderFunc>>

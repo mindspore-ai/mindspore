@@ -46,6 +46,7 @@ mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:matrix_norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:multinomial
+mindspore/mindspore/python/mindspore/ops_generate/arg_dtype_cast.py:type_it
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
@@ -289,6 +290,12 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc:min
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc:mindspore::kernel::Cast  
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetPyTypeFormat
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
+mindspore/mindspore/core/ops/sparse_to_dense_v2.cc:mindspore::ops::SparseToDenseV2InferShape  
+mindspore/mindspore/core/ops/ops_func_impl/div.cc:mindspore::ops::DivFrontendFuncImpl::InferValue
+mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/cumprod_gpu_kernel.cc:mindspore::kernel::CumProdGpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cumprod_cpu_kernel.cc:mindspore::kernel::CumProdCpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.cc:mindspore::kernel::PoolingCpuKernelMod::InitPoolingFields
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel_nnacl.cc:mindspore::kernel::PoolingCpuKernelNnaclMod::Resize
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute

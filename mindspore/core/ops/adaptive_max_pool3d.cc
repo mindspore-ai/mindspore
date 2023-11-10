@@ -39,6 +39,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,7 +51,7 @@ constexpr int64_t kOutputSizeNumElem = 3;
 abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   std::shared_ptr<mindspore::abstract::Shape> out_shape_ptr;
   if (x_shape_ptr->IsDimUnknown()) {
@@ -59,7 +60,7 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamic(output_size_shape)) {
     auto out_shape = x_shape;
     for (size_t i = LongToSize(SizeToLong(out_shape.size()) - kOutputSizeNumElem); i < out_shape.size(); ++i) {
@@ -75,11 +76,13 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("size of output_size", output_size_shape[0], kEqual, kOutputSizeNumElem,
                                            prim_name);
 
-  auto output_size_value = input_args[1]->BuildValue();
+  auto output_size_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(output_size_value);
-  if (input_args[1]->isa<abstract::AbstractTensor>() && !output_size_value->isa<None>() &&
-      !output_size_value->isa<ValueAny>()) {
-    auto output_size = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name);
+  if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType && IsValueKnown(output_size_value)) {
+    auto output_size_type = input_args[1]->GetType();
+    MS_EXCEPTION_IF_NULL(output_size_type);
+    auto output_size =
+      CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name, output_size_type);
 
     ShapeVector out_shape = x_shape;
     for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
@@ -105,8 +108,8 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
 
 TuplePtr AdaptiveMaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
-  auto output_size_dtype = input_args[1]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto output_size_dtype = input_args[1]->GetType();
   const std::set<TypePtr> x_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> output_size_valid_types = {kInt32};

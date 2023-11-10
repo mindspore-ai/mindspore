@@ -40,19 +40,19 @@ TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<Abst
   const std::set<TypePtr> valid_dim_types = {kInt32, kInt64};
 
   // Input 'dim' can be scalar or tensor.
-  auto dim_type = input_args[kInputIndex1]->BuildType();
+  auto dim_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTypeValid("dim", dim_type, valid_dim_types, prim_name);
 
   // Input 'index' must be a tensor with int32 type.
-  auto index_type = input_args[kInputIndex2]->BuildType();
+  auto index_type = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("index", index_type, {kInt32}, prim_name);
 
   // Input 'x' must be a tensor.
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_data_types, prim_name);
 
   // Input 'value' must be a tensor.
-  auto value_type = input_args[kInputIndex3]->BuildType();
+  auto value_type = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("value", value_type, valid_data_types, prim_name);
 
   // Input 'x' and 'value' must have the same types.
@@ -67,9 +67,9 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   // dynamic rank
-  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(index_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -83,11 +83,11 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
   }
 
   // Input 'dim' must be a tensor with a value or a scalar.
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
+    auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto dim_rank = SizeToLong(dim_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'dim'", dim_rank, kEqual, 0, prim_name);
-  } else if (!input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
+  } else if (!CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', 'dim' must be int or Tensor.";
   }
 
@@ -96,8 +96,8 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
   CheckAndConvertUtils::CheckInRange("rank of 'index'", index_rank, kIncludeBoth, {0, 1}, prim_name);
 
   // Input 'value' must be a tensor with a value or a scalar.
-  if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
-    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex3])) {
+    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
     auto value_rank = SizeToLong(value_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, 0, prim_name);
   }

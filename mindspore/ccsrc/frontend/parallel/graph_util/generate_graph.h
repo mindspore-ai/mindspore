@@ -21,7 +21,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ops/op_def.h"
 #include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
@@ -30,16 +34,25 @@
 namespace mindspore {
 namespace parallel {
 const char USING_HASH_NAME[] = "USING_HASH_NAME";
+std::pair<bool, size_t> CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name,
+                                                   const std::string &attr_name, size_t limit_size);
 // Get the operator's path where the operator has be defined
 const char *GetOpPythonPath(const char *op_name);
 
 // Init python operator Instance
 ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
+std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const std::string &instance_name,
+                                            const AnfNodePtrList &inputs, const OperatorAttrs &attrs);
+CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const OperatorName &op_name,
+                                    const std::string &instance_name, const AnfNodePtrList &inputs,
+                                    const OperatorAttrs &attrs);
+CNodePtr CreateNewCNodeForReplace(const CNodePtr &origin_node, const PrimitivePtr &new_prim);
 
 AnfNodePtr CreateTypeInt(int64_t nbits);
 AnfNodePtr CreateTypeFloat(int64_t nbits);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateFP32Imm(float value);
+AnfNodePtr CreateBoolImm(bool value);
 AnfNodePtr CreateInt32Tensor(int64_t value);
 AnfNodePtr CreateFP32Tensor(float value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);

@@ -58,6 +58,11 @@ enum ParseTargetType {
 // Define python module name.
 const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.gen_arg_handler";
+const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops_generate.arg_dtype_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE[] = "mindspore.ops.auto_generate.gen_labels";
+const char PYTHON_MOD_PRIMITIVE_OP_TYPE_IT[] = "type_it";
+const char PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT[] = "op_labels";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
@@ -92,6 +97,7 @@ const char PYTHON_MOD_GET_SCRIPT_ID_ATTRS[] = "get_script_id_attrs";
 const char PYTHON_MOD_PYTHON_ISINSTANCE[] = "python_isinstance";
 const char PYTHON_MOD_MS_ISINSTANCE[] = "ms_isinstance";
 const char PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION[] = "convert_class_to_function";
+const char PYTHON_MOD_GET_PRIMITIVE_SIGNATURES[] = "get_primitive_signatures";
 const char PYTHON_MOD_GET_CONST_ABS[] = "get_const_abs";
 const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";

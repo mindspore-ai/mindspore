@@ -26,11 +26,11 @@
 #include "tools/optimizer/graph/node_infershape.h"
 #include "abstract/dshape.h"
 
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/nn_op_name.h"
 #include "ops/adam.h"
 #include "ops/apply_momentum.h"
-#include "ops/batch_norm.h"
 #include "ops/batch_to_space.h"
-#include "ops/bias_add.h"
 #include "ops/depth_to_space.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/avg_pool_fusion.h"
@@ -40,9 +40,6 @@
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/fusion/prelu_fusion.h"
-#include "ops/grad/avg_pool_grad.h"
-#include "ops/grad/batch_norm_grad.h"
-#include "ops/grad/bias_add_grad.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/grad/resize_grad.h"
 #include "ops/instance_norm.h"
@@ -54,7 +51,6 @@
 #include "ops/space_to_batch.h"
 #include "ops/space_to_batch_nd.h"
 #include "ops/space_to_depth.h"
-#include "ops/grid_sampler_2d.h"
 
 namespace mindspore::lite {
 namespace {
@@ -62,8 +58,8 @@ static const std::set<std::string> FormatAwareOp = {ops::kNameAdam,
                                                     ops::kNameApplyMomentum,
                                                     ops::kNameAvgPoolFusion,
                                                     ops::kNameAvgPoolGrad,
-                                                    ops::kNameBatchNorm,
-                                                    ops::kNameBatchNormGrad,
+                                                    kBatchNormOpName,
+                                                    kBatchNormGradOpName,
                                                     ops::kNameBatchToSpace,
                                                     ops::kNameBiasAdd,
                                                     ops::kNameBiasAddGrad,

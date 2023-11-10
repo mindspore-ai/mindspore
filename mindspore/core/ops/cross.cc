@@ -74,8 +74,8 @@ void CheckAndUpdateDim(const PrimitivePtr &primitive, const ShapeVector &x1_shap
 }
 
 abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -129,8 +129,8 @@ TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   }
   const std::set<TypePtr> valid_types = {kInt8,    kInt16,  kInt32,  kInt64,  kUInt8,     kFloat16,   kFloat32,
                                          kFloat64, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
-  auto x1_type = input_args[0]->BuildType();
-  auto x2_type = input_args[1]->BuildType();
+  auto x1_type = input_args[0]->GetType();
+  auto x2_type = input_args[1]->GetType();
   auto tensor_type = x2_type->cast<TensorTypePtr>();
   auto element = tensor_type->element();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());

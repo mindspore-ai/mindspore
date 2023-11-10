@@ -26,9 +26,8 @@ constexpr size_t kOutputNum = 3;
 }  // namespace
 
 using KernelRunFunc = NMSWithMaskFwdGpuKernelMod::KernelRunFunc;
-bool NMSWithMaskFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool NMSWithMaskFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size()
                   << "input(s).";
@@ -37,16 +36,17 @@ bool NMSWithMaskFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << outputs.size()
                   << "output(s).";
   }
-  iou_value_ = GetValue<float>(base_operator->GetAttr(kAttrIouThreshold));
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (primitive_->HasAttr(kAttrIouThreshold)) {
+    iou_value_ = GetValue<float>(primitive_->GetAttr(kAttrIouThreshold));
+  }
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int NMSWithMaskFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NMSWithMaskFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto in_shape = inputs[kIndex0]->GetShapeVector();
   if (!IsValidShape(in_shape)) {
     return KRET_UNKNOWN_SHAPE;
@@ -54,10 +54,8 @@ int NMSWithMaskFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 
   num_input_ = LongToSizeClipNeg(in_shape[0]);  // Get N value in [N,5] data
   auto ceil_power_2 = NmsRoundUpPower2(num_input_);
-  auto dtype_byte = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dtype_byte = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
-  input_size_list_.clear();
-  input_size_list_.push_back(num_input_ * dtype_byte * box_size_);
   output_size_list_.clear();
   output_size_list_.push_back(num_input_ * dtype_byte * box_size_);
   output_size_list_.push_back(num_input_ * sizeof(int));
@@ -72,9 +70,9 @@ int NMSWithMaskFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool NMSWithMaskFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool NMSWithMaskFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *data_buff = GetDeviceAddress<T>(workspace, kIndex0);
   int *index_buff = GetDeviceAddress<int>(workspace, kIndex1);

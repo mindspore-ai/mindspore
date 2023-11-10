@@ -28,10 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool DenseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'Dense', the kernel name must be in "
@@ -49,7 +46,7 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  auto dtype_str = TypeIdLabel(inputs[kIndex0]->GetDtype());
+  auto dtype_str = TypeIdLabel(inputs[kIndex0]->dtype_id());
   const std::vector<std::string> need_cast_dtypes = {"Int8", "Int16", "Int32", "Int64", "UInt8"};
   auto it = std::find(need_cast_dtypes.begin(), need_cast_dtypes.end(), dtype_str);
   need_cast_ = it != need_cast_dtypes.end();
@@ -58,25 +55,23 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     dtype_b_ = CUDA_R_32F;
     dtype_c_ = CUDA_R_32F;
   } else {
-    dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-    dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-    dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+    dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+    dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+    dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
   }
 
   if (dtype_a_ == CUDA_R_16F) {
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
 
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
   compute_type_ = GetComputeType(dtype_a_);
 
   return true;
 }
 
-int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -142,8 +137,9 @@ cudaError_t DenseGpuKernelMod::FillBias(T *src, T *dst, cudaStream_t stream) {
 }
 
 template <typename T, typename S>
-bool DenseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto x = GetDeviceAddress<T>(inputs, kIndex0);
   auto w = GetDeviceAddress<T>(inputs, kIndex1);
   auto out = GetDeviceAddress<T>(outputs, kIndex0);

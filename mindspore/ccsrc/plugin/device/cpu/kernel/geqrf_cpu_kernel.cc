@@ -30,10 +30,7 @@ constexpr size_t kOutputIndex1 = 1;
 constexpr int64_t kLastSecond = -2;
 }  // namespace
 
-bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool GeqrfCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -46,10 +43,8 @@ bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int GeqrfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int GeqrfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
@@ -140,14 +135,14 @@ void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
 }
 
 template <typename T>
-bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kOutputIndex1]);
-  T *x = static_cast<T *>(inputs[kInputIndex0]->addr);
-  T *y = static_cast<T *>(outputs[kOutputIndex0]->addr);
-  T *tau = static_cast<T *>(outputs[kOutputIndex1]->addr);
+  T *x = static_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  T *y = static_cast<T *>(outputs[kOutputIndex0]->device_ptr());
+  T *tau = static_cast<T *>(outputs[kOutputIndex1]->device_ptr());
   std::copy(x, x + elem_num, y);
   Geqrf<T>(num_m, num_n, y, tau);
   return true;

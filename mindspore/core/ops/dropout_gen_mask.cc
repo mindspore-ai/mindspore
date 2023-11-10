@@ -83,32 +83,29 @@ ShapeVector CalDynamicOutputShape(const PrimitivePtr &primitive, const ValuePtrL
   return shape;
 }
 
-ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtrList shape_list) {
+ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtr shape_list) {
   int64_t count = 1;
-  size_t x_rank = shape_list.size();
-  for (std::size_t i = 0; i < x_rank; ++i) {
-    auto value_track = shape_list[i]->GetValueTrack();
-    MS_EXCEPTION_IF_NULL(value_track);
-    int64_t value = 0;
-    if (value_track->isa<Int64Imm>()) {
-      value = GetValue<int64_t>(value_track);
-    } else {
+  auto value_shape_ptr = shape_list->GetValue();
+  MS_EXCEPTION_IF_NULL(value_shape_ptr);
+  auto value_shape_opt = GetArrayValue<int64_t>(value_shape_ptr);
+  if (!value_shape_opt.has_value() || value_shape_opt.value().HasUnknownValue()) {
+    MS_EXCEPTION(TypeError) << "For 'DropGenMask', the value_shape should not be kAnyValue.";
+  }
+  auto value_shape_vec = value_shape_opt.value();
+  for (size_t i = 0; i < value_shape_vec.size(); i++) {
+    auto dim_value = value_shape_vec[i];
+    if (dim_value <= 0) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', input x_shape elements must be int64 or int32, but got: " << value_track->ToString()
+                        << "', each dim of 'shape' must be greater than 0, but got shape[" << i << "]: " << dim_value
                         << ".";
     }
 
-    if (value <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', product of value must be greater than 0, but got: " << value << ".";
-    }
-
-    if (std::numeric_limits<int64_t>::max() / count / value < 1) {
+    if (std::numeric_limits<int64_t>::max() / count / dim_value < 1) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', integer multiply integer overflow.";
     }
-    count = count * value;
+    count *= value_shape_vec[i];
   }
-  // convert to bytes(8 bits) mask, using round up
+
   int64_t n128s = count / kDropoutGenMaskMaskConvertLen;
   if ((count % kDropoutGenMaskMaskConvertLen) != 0) {
     n128s++;
@@ -129,20 +126,18 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(shape_args);
 
   ShapeVector out_shape;
-  if (shape_args->isa<abstract::AbstractTensor>()) {
-    auto shape_value = shape_args->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
+    auto shape_value = shape_args->GetValue();
     MS_EXCEPTION_IF_NULL(shape_value);
-    if (shape_value->isa<tensor::Tensor>()) {
-      auto mask_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+    if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) && IsValueKnown(shape_value)) {
+      auto mask_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name, shape_args->GetType());
       std::vector<ValuePtr> value_elements;
       (void)std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(value_elements),
                            [](int64_t elem) { return MakeValue(elem); });
       out_shape = CalDynamicOutputShape(primitive, value_elements);
       return std::make_shared<abstract::Shape>(out_shape);
     }
-    auto shape_abstract = dyn_cast<abstract::AbstractTensor>(shape_args);
-    MS_EXCEPTION_IF_NULL(shape_abstract);
-    auto shape_base = shape_abstract->BuildShape();
+    auto shape_base = shape_args->GetShape();
     MS_EXCEPTION_IF_NULL(shape_base);
     auto shape = shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
@@ -154,16 +149,14 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(any_shape);
   }
 
-  auto shape_value = shape_args->BuildValue();
+  auto shape_value = shape_args->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (!IsValueKnown(shape_value)) {
     ShapeVector any_shape{abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::Shape>(any_shape);
   }
 
-  auto x_shape = dyn_cast<abstract::AbstractTuple>(shape_args);
-  auto x_shape_data = x_shape->elements();
-  out_shape = CalOutputShape(primitive, x_shape_data);
+  out_shape = CalOutputShape(primitive, shape_args);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -172,7 +165,7 @@ TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector
   (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->GetType(), valid_types, op_name);
   return kUInt8;
 }
 }  // namespace

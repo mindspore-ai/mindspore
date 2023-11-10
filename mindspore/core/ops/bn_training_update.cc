@@ -59,15 +59,14 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   auto prim_name = primitive->name();
 
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto square_sum_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto square_sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto square_sum_shape_rank = SizeToLong(square_sum_shape.size());
-  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto offset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto offset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = BNTrainingUpdateGetAndCheckFormat(primitive, data_format_ptr);
@@ -106,8 +105,8 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
     CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name,
                                 TypeError);
   }
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto variance_shape_ptr = input_args[kInputIndex6]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto variance_shape_ptr = input_args[kInputIndex6]->GetShape();
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     input_x_shape_ptr, variance_shape_ptr, variance_shape_ptr, variance_shape_ptr, variance_shape_ptr});
 }
@@ -116,13 +115,13 @@ TuplePtr BNTrainingUpdateInferType(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto sum_type = input_args[kInputIndex1]->BuildType();
-  auto square_sum_type = input_args[kInputIndex2]->BuildType();
-  auto scale_type = input_args[kInputIndex3]->BuildType();
-  auto offset_type = input_args[kInputIndex4]->BuildType();
-  auto mean_type = input_args[kInputIndex5]->BuildType();
-  auto variance_type = input_args[kInputIndex6]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto sum_type = input_args[kInputIndex1]->GetType();
+  auto square_sum_type = input_args[kInputIndex2]->GetType();
+  auto scale_type = input_args[kInputIndex3]->GetType();
+  auto offset_type = input_args[kInputIndex4]->GetType();
+  auto mean_type = input_args[kInputIndex5]->GetType();
+  auto variance_type = input_args[kInputIndex6]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // input_x type must be valid
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, valid_types, prim_name);

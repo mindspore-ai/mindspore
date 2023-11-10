@@ -30,16 +30,11 @@ constexpr size_t kCol2ImOutputsNum = 1;
 constexpr int64_t kInt64Number2 = 2;
 }  // namespace
 
-bool Col2ImCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  PrimitivePtr prim = base_operator->GetPrim();
-  kernel_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrKernelSize));
-  dilation_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDilation));
-  padding_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrPadding));
-  stride_ = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStride));
+bool Col2ImCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrKernelSize));
+  dilation_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilation));
+  padding_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrPadding));
+  stride_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrStride));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -52,26 +47,24 @@ bool Col2ImCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int Col2ImCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int Col2ImCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
   return KRET_OK;
 }
 
 template <typename T>
-bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCol2ImInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCol2ImOutputsNum, kernel_name_);
 
-  auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   (void)std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), static_cast<T>(0));
 
   const int64_t output_height = static_cast<int64_t>(output_size_ptr[kIndex0]);

@@ -61,15 +61,15 @@ class CropAndResizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
 
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(),
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [x] has no abstract:Shape.");
-    auto x_shape = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>()->shape();
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(),
+    auto x_shape = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [boxes] has no abstract:Shape.");
-    auto box_shape = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>()->shape();
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
+    auto box_shape = input_args[kInputIndex1]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [box_index] has no abstract:Shape.");
-    auto box_index_shape = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+    auto box_index_shape = input_args[kInputIndex2]->GetShape()->cast<abstract::ShapePtr>()->shape();
     if (IsDynamicRank(x_shape) || IsDynamicRank(box_shape) || IsDynamicRank(box_index_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
@@ -84,10 +84,10 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     int64_t out_channel = x_shape.back();
 
     auto num_boxes = ParseNumBoxes(box_shape, box_index_shape, prim_name);
-    auto crop_size_type = input_args[kInputIndex3]->BuildType();
+    auto crop_size_type = input_args[kInputIndex3]->GetType();
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
                                "For primitive[" + prim_name + "], the [crop_size] typeid is a nullptr.");
-    auto value_ptr = input_args[kInputIndex3]->BuildValue();
+    auto value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     if (!IsValueKnown(value_ptr)) {
       return std::make_shared<abstract::Shape>(
@@ -96,7 +96,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
 
     std::vector<int64_t> crop_size;
     if (crop_size_type->isa<TensorType>()) {
-      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
+      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name, crop_size_type);
     } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
       auto value_tuple = value_ptr->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value_tuple);
@@ -134,11 +134,11 @@ class CropAndResizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
     (void)CheckAndConvertUtils::CheckTensorTypeValid(
-      "x", input_args[kInputIndex0]->BuildType(),
+      "x", input_args[kInputIndex0]->GetType(),
       {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kInputIndex1]->BuildType(), {kFloat32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kInputIndex1]->GetType(), {kFloat32},
                                                      prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kInputIndex2]->BuildType(), {kInt32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kInputIndex2]->GetType(), {kInt32},
                                                      prim_name);
     return kFloat32;
   }

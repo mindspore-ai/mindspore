@@ -22,47 +22,9 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
-from mindspore.ops.operations.array_ops import Identity
+from mindspore.ops.auto_generate import Identity
 from mindspore.ops._primitive_cache import _get_cache_prim
-
-
-class Assign(Primitive):
-    """
-    Assigns `Parameter` with a value.
-
-    Refer to :func:`mindspore.ops.assign` for more details.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions, its rank should be less than 8.
-        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> value = Tensor([2.0], mindspore.float32)
-        >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-        >>> assign = ops.Assign()
-        >>> x = assign(variable, value)
-        >>> print(variable.asnumpy())
-        [2.]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('value', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Assign."""
-        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
-        self.add_prim_attr('side_effect_mem', True)
+from ..auto_generate import Assign
 
 
 class Load(PrimitiveWithCheck):

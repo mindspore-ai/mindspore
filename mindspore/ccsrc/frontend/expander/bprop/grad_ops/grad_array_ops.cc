@@ -15,8 +15,10 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <numeric>
 #include <vector>
+#include "ops/op_utils.h"
 #include "ops/array_op_name.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
@@ -390,8 +392,7 @@ NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr 
   auto res = ib->ShapeCalc(std::make_shared<CalBatchGatherShapeCalc>(axis, batch_dims), {x});
   auto axis_dim = ib->SequenceToTensor(res[0]);
   auto limit = ib->SequenceToTensor(res[1]);
-  ShapeVector a = {};
-  auto delta = ib->Range(ib->Tensor(0, kInt64), ib->Reshape(limit, a), ib->Reshape(axis_dim, a));
+  auto delta = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(limit), ib->TensorToScalar(axis_dim));
   delta = ib->Reshape(delta, delta_reshape);
   indices_rshp = ib->Add(indices_rshp, delta);
   auto params_grad = ib->UnsortedSegmentSum(values_rshp, indices_rshp, limit);
@@ -412,33 +413,25 @@ bool IsMutable(const NodePtr &node) {
 
 DEF_PURE_SHAPE_CALC(g_regenerate_output).SetCalc(RegenerateOutputShapeFunc).SetInfer(RegenerateOutputInferFunc);
 DEF_PURE_SHAPE_CALC(g_perms).SetCalc(PermsShapeFunc).SetInfer(PermsInferFunc);
-NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
-  auto batch_dims = ib->GetAttr<int64_t>(kAttrBatchDims);
+NodePtrList BinopGather(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto ori_indices = indices;  // indices may be changed latter.
   auto axis = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
+  auto batch_dims_ptr = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shp = ib->GetShape(x);
   auto out_shp = ib->GetShape(dout);
   auto ind_shp = ib->GetShape(indices);
 
   if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+    dout = ib->ExpandDims(dout, -1);
   }
-
-  int64_t axis_v = 0;
-  MS_EXCEPTION_IF_NULL(axis);
-  MS_EXCEPTION_IF_NULL(axis->abstract());
-  auto axis_tmp = axis->BuildValue();
-  MS_EXCEPTION_IF_NULL(axis_tmp);
-  if (axis_tmp->isa<tensor::Tensor>()) {
-    axis_v = CheckAndConvertUtils::CheckTensorIntValue("axis value", axis_tmp, "Gather")[0];
-  } else {
-    axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
-  }
-  if (batch_dims < 0) {
-    batch_dims += SizeToLong(ind_shp.size());
+  int64_t axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
+  auto batch_dims = GetIntValue(batch_dims_ptr);
+  auto ind_shp_size = ind_shp.size();
+  while (batch_dims < 0) {
+    batch_dims += ind_shp_size;
   }
 
   auto is_axis_mutable = IsMutable(axis);
@@ -446,11 +439,10 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
       (is_axis_mutable && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)))) {
     auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
-      indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+      indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
-
     // Calculate perm.
     auto perms = ib->ShapeCalc(g_perms, {x, dout, indices, axis, batch_dims_tensor}, {kIndex3, kIndex4});
     const size_t perm_num = 2;
@@ -466,11 +458,11 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
       x_grad = ib->UnsortedSegmentSum(values_transpose, indices, num_segment);
     }
     x_grad = ib->Transpose(x_grad, perm_2);
-    return {x_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+    return {x_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis), ib->OutZeros(batch_dims_ptr)};
   }
 
   if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    indices = ib->ExpandDims(indices, -1);
     ind_shp = ib->GetShape(indices);
     auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
     dout = ib->Reshape(dout, out_shp1);
@@ -488,7 +480,7 @@ NodePtrList BinopGatherCommon(BpropIRBuilder *ib) {
   }
   auto perm_2 = GenerateInverseIndex(x_shp, axis_v, batch_dims);
   auto params_grad = ib->Transpose(x_grad, perm_2);
-  return {params_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+  return {params_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis), ib->OutZeros(batch_dims_ptr)};
 }
 
 ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
@@ -505,8 +497,7 @@ ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
   return res;
 }
 
-NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis,
-                              bool is_list) {
+NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
   auto rank = input_shapes[0].size();
   auto axis_s = LongToSize(NormalizeAxis(axis, rank));
 
@@ -523,31 +514,19 @@ NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const Sha
     }
   }
 
-  NodePtrList res;
   if (is_uniform) {
     auto long_nums = SizeToLong(input_nums);
-    auto dx = ib->Emit(
-      kSplitOpName, {dout},
-      {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(long_nums)}, {"num_split", MakeValue(long_nums)}});
-    // Split output is a tuple.
-    if (!is_list) {
-      return {dx};
-    }
-
-    for (size_t i = 0; i < input_nums; ++i) {
-      res.push_back(ib->TupleGetItem(dx, i));
-    }
-  } else {
-    auto offsets = ConcatOffsetCal(input_shapes, axis_s);
-    for (size_t i = 0; i < input_nums; ++i) {
-      auto offset_value = ib->Value(offsets[i]);
-      auto slice_out = ib->Emit(kSliceOpName, {dout, offset_value, ib->Value(input_shapes[i])});
-      res.push_back(slice_out);
-    }
+    auto dx = ib->Emit(kSplitOpName, {dout, ib->EmitValue(MakeValue(axis)), ib->EmitValue(MakeValue(long_nums))},
+                       {{"num_split", MakeValue(long_nums)}});
+    return {dx};
   }
 
-  if (is_list) {
-    return {ib->MakeList(res)};
+  NodePtrList res;
+  auto offsets = ConcatOffsetCal(input_shapes, axis_s);
+  for (size_t i = 0; i < input_nums; ++i) {
+    auto offset_value = ib->Value(offsets[i]);
+    auto slice_out = ib->Emit(kSliceOpName, {dout, offset_value, ib->Value(input_shapes[i])});
+    res.push_back(slice_out);
   }
   return {ib->MakeTuple(res)};
 }
@@ -650,31 +629,6 @@ class SortShapeCalc1 : public ShapeCalcFunctor {
   int64_t axis_{0};
 };
 REG_FUNCTOR("ShapeCalc_Sort_1", SortShapeCalc1);
-
-class ConcatShapeCalc : public ShapeCalcFunctor {
- public:
-  DECLARE_SHAPE_CALC("ShapeCalc_Concat", ConcatShapeCalc)
-  explicit ConcatShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_Concat"), axis_(axis) {}
-  ValuePtr ToValue() const override { return MakeValue(axis_); }
-  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    auto rank = inputs[0].size();
-    auto axis_s = LongToSize(NormalizeAxis(axis_, rank));
-    return ConcatOffsetCal(inputs, axis_s);
-  }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const override {
-    auto x = inputs.at(0);
-    auto input_num = inputs.size();
-    if (!unknown_inputs.empty() || IsDynamicRank(x)) {
-      return ShapeVector(input_num, -1);
-    }
-    return ShapeVector(input_num, SizeToLong(x.size()));
-  }
-
- protected:
-  int64_t axis_{0};
-};
-REG_FUNCTOR("ShapeCalc_Concat", ConcatShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
 REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -782,10 +736,8 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(tmp, 1);
   auto res = ib->ShapeCalc(g_sort_2, {indices, top_k_input});
   auto indices_dtype = ib->GetDtype(indices);
-  ShapeVector a = {};
-  auto range_flatten_index = ib->Cast(ib->Range(ib->Tensor(0, kInt64), ib->Reshape(ib->SequenceToTensor(res[4]), a),
-                                                ib->Reshape(ib->SequenceToTensor(res[2]), a)),
-                                      indices_dtype);
+  auto range_flatten_index =
+    ib->Cast(ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[4]), ib->TensorToScalar(res[2])), indices_dtype);
   range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
   auto ind_2d = ib->Reshape(indices, res[1]);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});
@@ -812,10 +764,11 @@ REG_BPROP_BUILDER("Range").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZ
 REG_BPROP_BUILDER("Pack").SetUnusedInputs({i0, i1}).SetBody(StackBpropFunc);
 REG_BPROP_BUILDER("Stack").SetUnusedInputs({i0, i1}).SetBody(StackBpropFunc);
 
-REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("ReverseV2", {dout}, {{"axis", ib->GetAttr("axis")}});
-  return {dx};
+REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto axis = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("ReverseV2", {dout, axis});
+  return {dx, ib->OutZeros(axis)};
 });
 
 REG_BPROP_BUILDER("Unstack").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -901,9 +854,11 @@ DEF_PURE_SHAPE_CALC(g_resize_nearest_neighbor)
     auto rank = SizeToLong(x.size());
     return {rank > 2 ? (rank - 2) : 0};
   });
-REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shape = ib->GetShape(x);
   NodePtr shape;
   if (!IsDynamic(x_shape)) {
@@ -915,8 +870,8 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BOD
   } else {
     shape = ib->ShapeCalc(g_resize_nearest_neighbor, {x})[0];
   }
-  auto out = ib->Emit("ResizeNearestNeighborGrad", {dout, shape}, {{"align_corners", ib->GetAttr("align_corners")}});
-  return {out};
+  auto dx = ib->Emit("ResizeNearestNeighborGrad", {dout, shape, align_corners, half_pixel_centers}, {});
+  return {dx, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("GatherNd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
@@ -987,9 +942,9 @@ REG_BPROP_BUILDER("Reshape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
 
 REG_BPROP_BUILDER("NonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("Argmax").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("Argmax").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("Argmin").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("Argmin").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Diag").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
@@ -1030,41 +985,99 @@ REG_BPROP_BUILDER("TensorScatterAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODY
   return {dout, ib->OutZeros(indices), update_grad};
 });
 
-REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto axis = ib->GetAttr<int64_t>(kAttrAxis);
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto input_shapes = ib->GetShapes(x);
-  if (input_shapes.empty()) {
-    MS_EXCEPTION(ValueError) << "For gradient of 'Concat', 'x' can not be empty";
-  }
+DEF_PURE_SHAPE_CALC(g_concat)
+  .SetCalc([](const ShapeArray &inputs, const ElemPosIdx &pos_idx) -> ShapeArray {
+    auto axis = inputs[pos_idx[1].front()][0];
+    auto rank = inputs[0].size();
+    auto axis_s = LongToSize(NormalizeAxis(axis, rank));
+    ShapeArray input_shapes;
+    input_shapes.reserve(pos_idx[0].size());
+    for (auto idx : pos_idx[0]) {
+      input_shapes.push_back(inputs[idx]);
+    }
+    return ConcatOffsetCal(input_shapes, axis_s);
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs,
+               const ElemPosIdx &pos_idx) -> InferOutputInfo {
+    auto x = inputs[0];
+    auto x_rank = IsDynamicRank(x) ? abstract::TensorShape::kShapeDimAny : SizeToLong(x.size());
+    if (unknown_inputs.count(0) != 0) {
+      return std::make_pair(ShapeVector{x_rank}, true);
+    }
 
-  bool is_dynamic = std::any_of(input_shapes.cbegin(), input_shapes.cend(),
-                                [](const std::vector<int64_t> &shape) { return IsDynamic(shape); });
+    auto input_num = pos_idx[0].size();
+    return std::make_pair(ShapeVector(input_num, x_rank), false);
+  });
+REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex3);
+
+  auto axis_node = ib->GetInput(kIndex1);
+
   auto x_abs = x->get()->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
-  bool is_list = x_abs->isa<abstract::AbstractList>();
+  auto base_shape = x_abs->GetShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  auto x_is_dyn_seq = base_shape->isa<abstract::DynamicSequenceShape>();
+  if (!x_is_dyn_seq) {
+    auto input_shapes = ib->GetShapes(x);
+    if (input_shapes.empty()) {
+      MS_EXCEPTION(ValueError) << "For gradient of 'Concat', 'x' can not be empty";
+    }
+    if (!std::any_of(input_shapes.cbegin(), input_shapes.cend(),
+                     [](const std::vector<int64_t> &shape) { return IsDynamic(shape); })) {
+      auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
+      if (!axis_res.has_value()) {
+        auto axis = axis_res.value();
+        return ConcatBpropStatic(ib, dout, input_shapes, axis);
+      }
+    }
 
-  if (!is_dynamic) {
-    return ConcatBpropStatic(ib, dout, input_shapes, axis, is_list);
-  }
-  auto input_nums = input_shapes.size();
-  NodePtrList x_tuple;
-  for (size_t i = 0; i < input_nums; ++i) {
-    x_tuple.push_back(ib->TupleGetItem(x, i));
-  }
-  auto concat_offset = ib->ShapeCalc(std::make_shared<ConcatShapeCalc>(axis), x_tuple);
-  NodePtrList res;
-  for (size_t i = 0; i < input_nums; ++i) {
-    auto input = ib->Shape(ib->TupleGetItem(x, i));
-    auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset.at(i), input});
-    res.push_back(slice_out);
+    auto concat_offset = ib->ShapeCalc(g_concat, {x, axis_node}, {1});
+    auto input_nums = input_shapes.size();
+    if (concat_offset.size() != input_nums) {
+      MS_LOG(EXCEPTION) << "The number of ConcatOffset's ShapeCalc(" << concat_offset.size()
+                        << ") is not equal to input(" << input_nums << ")!";
+    }
+
+    NodePtrList tuple_out;
+    for (size_t i = 0; i < input_nums; ++i) {
+      auto input = ib->Shape(ib->TupleGetItem(x, i));
+      auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset[i], input});
+      tuple_out.push_back(slice_out);
+    }
+    auto res = ib->MakeTuple(tuple_out);
+    return {res, ib->OutZeros(axis_node)};
   }
 
-  if (is_list) {
-    return {ib->MakeList(res)};
-  }
-  return {ib->MakeTuple(res)};
+  // Here the x is a dynamic sequence, so the infer out is a dynamic sequence too!
+  auto concat_offset = ib->ShapeCalc(g_concat, {x, axis_node}, {1})[0];
+  auto first_input = ib->Shape(ib->TupleGetItem(x, 0));
+  auto offset = ib->TupleGetItem(concat_offset, 0);
+  auto first_slice_out = ib->Emit(kSliceOpName, {dout, offset, first_input});
+  auto res_list = ib->MakeList({first_slice_out});
+
+  // Cannot use `auto i = ib->Tensor(1, kInt64);`.
+  // If so, the i will be treat as a const Tensor but variable expected which will be not caught as a while body
+  // parameter.
+  // Here Emit a `ScalarToTensor` to make it a fake-variable-in-logit node.
+  auto i = ib->Emit("ScalarToTensor", {ib->Value<int64_t>(1), ib->EmitValue(kInt64)});
+  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->EmitValue(kInt64)});
+  auto while_body = [&x, &dout, &concat_offset, &i, &res_list](Emitter *e) -> NodePtrList {
+    auto scalar_i = e->Emit("TensorToScalar", {i});
+    auto input = e->Shape(e->Emit(kTupleGetItemOpName, {x, scalar_i}));
+    auto offset = e->Emit(kTupleGetItemOpName, {concat_offset, scalar_i});
+    auto slice_out = e->Emit(kSliceOpName, {dout, offset, input});
+    auto new_list = e->Emit("ListAppend", {res_list, slice_out});
+    auto new_i = e->Emit("Add", {i, e->Tensor(1, kInt64)});
+    return {x, dout, concat_offset, new_i, new_list};
+  };
+  auto cond = ib->Less(i, len);
+  auto while_block = ib->While(cond, while_body, {x, dout, concat_offset, i, res_list});
+  // The `res_list` is a list, it should return a Tuple type rigorously.
+  // Because there are no ListToTuple, and list type is ok for now.....
+  auto dyn_list = ib->TupleGetItem(while_block, kIndex4);
+  return {dyn_list, ib->OutZeros(axis_node)};
 });
 
 REG_BPROP_BUILDER("Mvlgamma").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
@@ -1406,10 +1419,15 @@ REG_BPROP_BUILDER("Slice").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(begin), ib->OutZeros(size)};
 });
 
-REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout}, {{"axis", ib->GetAttr("axis")}});
-  return {dx};
+REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex4);
+  auto axis = ib->GetInput(kIndex1);
+  auto output_num = ib->GetInput(kIndex2);
+  auto axis_ptr = axis->BuildValue();
+  MS_EXCEPTION_IF_NULL(axis_ptr);
+  auto axis_value = GetValue<int64_t>(axis_ptr);
+  auto dx = ib->Emit("Concat", {dout, ib->Value(axis_value)});
+  return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
 DEF_PURE_SHAPE_CALC(g_tile)
@@ -1455,8 +1473,7 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(input_multiples)};
 });
 
-REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon);
-REG_BPROP_BUILDER("GatherV2").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon);
+REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i4}).SetBody(BinopGather);
 
 REG_BPROP_BUILDER("Fill").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
@@ -1469,7 +1486,6 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->Tensor(GetIntValue(idx), kInt64);
   auto ori_indices = indices;  // indices may be changed latter.
   auto ind_shp = ib->GetShape(indices);
-
   int64_t axis_v = 0;
   MS_EXCEPTION_IF_NULL(axis);
   MS_EXCEPTION_IF_NULL(axis->abstract());
@@ -1479,7 +1495,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   int64_t batch_dims = 0;
 
   if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+    dout = ib->ExpandDims(dout, -1);
   } else {
     dout = ib->ExpandDims(dout, axis_v);
   }
@@ -1489,7 +1505,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
       (is_axis_mutable && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)))) {
     auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
-      indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+      indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
@@ -1513,7 +1529,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   }
 
   if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    indices = ib->ExpandDims(indices, -1);
     ind_shp = ib->GetShape(indices);
     auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
     dout = ib->Reshape(dout, out_shp1);
@@ -1650,8 +1666,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto dvalue_shape = dvalue->shape();
   if (IsDynamicRank(dvalue_shape)) {
     auto dvalue_rank = ib->Shape(ib->Shape(dvalue, true), true);
-    ShapeVector shape = {};
-    auto axis_node = ib->Range(ib->Reshape(dvalue_rank, shape));
+    auto axis_node = ib->Range(ib->TensorToScalar(dvalue_rank));
     dvalue = ib->ReduceSum(bout[1], axis_node);
   } else {
     dvalue = ib->ReduceSum(bout[1]);
@@ -1703,19 +1718,19 @@ REG_BPROP_BUILDER("IdentityN").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dout};
 });
 
-REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
-  auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
-  auto half_pixel_centers = GetValue<bool>(ib->GetAttr("half_pixel_centers"));
+REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex3);
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
   if (grad_in_size->isa<ValueNode>()) {
-    grad_in_size = ib->Tensor(GetIntList(grad_in_size), kInt64);
+    grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
+  } else {
+    grad_in_size = ib->Emit("TensorToTuple", {grad_in_size});
   }
-  auto dx =
-    ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size},
-             {{"align_corners", MakeValue(align_corners)}, {"half_pixel_centers", MakeValue(half_pixel_centers)}});
-  return {dx, ib->OutZeros(grad_in_size)};
+  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(grad_in_size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -1736,7 +1751,8 @@ REG_BPROP_BUILDER("SegmentSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   if (dout_type->type_id() == TypeId::kNumberTypeFloat64) {
     dout = ib->Cast(dout, kFloat32);
   }
-  return {ib->Cast(ib->Gather(dout, segment_ids, ib->Tensor(0)), dout_type), ib->OutZeros(segment_ids)};
+  return {ib->Cast(ib->Gather(dout, segment_ids, ib->EmitValue(MakeValue<int64_t>(0))), dout_type),
+          ib->OutZeros(segment_ids)};
 });
 
 REG_BPROP_BUILDER("EmbeddingLookup").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
@@ -1776,7 +1792,7 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout}, {{"axis", MakeValue(split_dim)}});
+  auto dx = ib->Emit("Concat", {dout, ib->Value(split_dim)});
   return {dx};
 });
 
@@ -1826,9 +1842,8 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
   auto out_indices_num = ((((out_d * out_h) * out_w) * ksize_d) * ksize_h) * ksize_w;
   auto out_idx = ib->Tensor(Range(0, out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_d, out_h, out_w, (ksize_d * ksize_h) * ksize_w});
-  auto idx_tensor =
-    ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)})},
-             {{"axis", MakeValue<int64_t>(-1)}});
+  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}),
+                                        ib->Value<int64_t>(-1)});
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
   std::vector<int64_t> ones(out_indices_num, 1);
@@ -2061,7 +2076,7 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
      {"new_axis_mask", MakeValue<int64_t>(0)},
      {"shrink_axis_mask", MakeValue<int64_t>(0)}});
   length = ib->Cast(length, kInt64);
-  auto scatter_indices = ib->Range(ib->Reshape(length, ShapeVector()));
+  auto scatter_indices = ib->Range(ib->TensorToScalar(length));
   dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
                       {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
   dupdates = ib->Reshape(dupdates, ib->Shape(updates));

@@ -15,8 +15,7 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/batchnorm_parameter.h"
-#include "ops/batch_norm.h"
-using mindspore::ops::kNameBatchNorm;
+#include "ops/auto_generate/gen_lite_ops.h"
 using mindspore::schema::PrimitiveType_BatchNorm;
 namespace mindspore {
 namespace lite {
@@ -37,6 +36,7 @@ OpParameter *PopulateBatchNormOpParameter(const BaseOperatorPtr &base_operator) 
   return reinterpret_cast<OpParameter *>(param);
 }
 
+using mindspore::ops::kNameBatchNorm;
 REG_OPERATOR_POPULATE(kNameBatchNorm, PrimitiveType_BatchNorm, PopulateBatchNormOpParameter)
 }  // namespace lite
 }  // namespace mindspore

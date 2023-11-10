@@ -19,12 +19,9 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/unsqueeze.h"
 #include "ops/squeeze.h"
-#include "ops/reshape.h"
-#include "ops/transpose.h"
-#include "ops/flatten.h"
-#include "ops/expand_dims.h"
 #include "ops/broadcast_to.h"
 
 namespace mindspore::lite {

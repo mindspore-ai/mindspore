@@ -23,11 +23,8 @@ const std::vector<int32_t> kDataNHWC2NCHW = {0, 3, 1, 2};
 const std::vector<int32_t> kDataNCHW2NHWC = {0, 2, 3, 1};
 constexpr const size_t k1DElementNum = 4;
 
-bool DataFormatVecPermuteGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::DataFormatVecPermute>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool DataFormatVecPermuteGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -45,8 +42,8 @@ bool DataFormatVecPermuteGpuKernelMod::Init(const BaseOperatorPtr &base_operator
                   << "', the kernel type should be in [int32, int64], but got: " << kernel_attr << ".";
     return false;
   }
-  src_format = kernel_ptr_->get_src_format();
-  dst_format = kernel_ptr_->get_dst_format();
+  src_format = GetValue<std::string>(primitive_->GetAttr("src_format"));
+  dst_format = GetValue<std::string>(primitive_->GetAttr("dst_format"));
   if (src_format == dst_format) {
     data_map_ = kDataSameFormat;
   } else if (src_format == "NHWC" && dst_format == "NCHW") {
@@ -63,10 +60,8 @@ bool DataFormatVecPermuteGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int DataFormatVecPermuteGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int DataFormatVecPermuteGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -75,10 +70,10 @@ int DataFormatVecPermuteGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                           inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                            outputs[kIndex0]->GetDeviceShapeVector().end());
   std::vector<int64_t> shape1 = {4};
   std::vector<int64_t> shape2 = {4, 2};
   if (input_shape_ != shape1 && input_shape_ != shape2) {
@@ -101,9 +96,9 @@ int DataFormatVecPermuteGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T>
-bool DataFormatVecPermuteGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
+bool DataFormatVecPermuteGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto *index = GetDeviceAddress<int32_t>(workspace, kIndex0);

@@ -25,22 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
-class GluGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GluGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   GluGradCpuKernelMod() = default;
   ~GluGradCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   int64_t axis_{1};
   std::vector<int64_t> grad_shape_;
   std::vector<int64_t> x_shape_;

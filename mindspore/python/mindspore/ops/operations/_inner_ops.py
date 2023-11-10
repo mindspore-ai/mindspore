@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Inner operators."""
+# pylint: disable=unused-import
 from types import FunctionType, MethodType
 from collections.abc import Iterable
 import numpy as np
@@ -37,6 +38,8 @@ from mindspore.communication.management import GlobalComm, get_rank
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches
+
 
 # Bit operation
 bit_and = bit_and()
@@ -53,75 +56,6 @@ string_not = Primitive("string_not")
 string_in = Primitive("string_in")
 string_mul = Primitive("string_mul")
 string_getitem = Primitive("string_getitem")
-
-
-class ExtractImagePatches(Primitive):
-    r"""
-    Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NCHW.
-
-    Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-            and the format is [1, 1, ksize_row, ksize_col].
-        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            must be a tuple or list of int, and the format is [1, 1, stride_row, stride_col].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, must be a tuple or a list of integers, and the format is [1, 1, rate_row, rate_col].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
-            not case sensitive. Default: "valid".
-
-            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
-
-            - valid: Means that the taken patch area must be completely covered in the original image.
-
-    Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
-
-    Outputs:
-        Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
-        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
-        and
-
-        .. math::
-            out_depth=ksize\_row * ksize\_col * in\_depth
-
-        and
-        if 'padding' is "valid":
-
-        .. math::
-            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
-            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
-
-        if 'padding' is "same":
-
-        .. math::
-            out\_row=floor((in\_row - 1) / stride\_row) + 1
-            out\_col=floor((in\_col - 1) / stride\_col) + 1
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, ksizes, strides, rates, padding="valid"):
-        """init"""
-
-        def _check_tuple_or_list(arg_name, arg_val, prim_name):
-            validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
-            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s must be [1, {arg_name}_row, "
-                                 f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
-                                 f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
-                                 f"{arg_name}_col is {arg_val[3]}")
-
-        _check_tuple_or_list("ksize", ksizes, self.name)
-        _check_tuple_or_list("stride", strides, self.name)
-        _check_tuple_or_list("rate", rates, self.name)
-        validator.check_value_type('padding', padding, [str], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
 
 
 class Quant(PrimitiveWithInfer):
@@ -1327,45 +1261,6 @@ class DynamicBroadcastGradientArgs(Primitive):
         """Init BroadcastGradientArgs"""
 
 
-class TensorCopySlices(Primitive):
-    """
-    Copy continues memory.
-
-    Inputs:
-        - **x** (Tensor) - The target Tensor.
-        - **value** (Tensor) - The tensor to update x.
-        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
-          constant value is allowed.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
-          Only constant value is allowed.
-        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
-          before reaching the maximum location. Only constant value is allowed.
-
-    Outputs:
-        - **y** (Tensor), has the same shape and data type of x.
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore.ops.operations import _inner_ops
-        >>> copy_slices = _inner_ops.TensorCopySlices()
-        >>> out = copy_slices(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
-        >>> print(out)
-            [[1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [0., 0., 0., 0., 0.],
-             [0., 0., 0., 0., 0.]]
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize TensorScatterUpdate"""
-        self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
-
-
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
@@ -1588,46 +1483,6 @@ class DynamicBroadcastTo(Primitive):
     def __init__(self):
         """Initialize DynamicBroadcastTo"""
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
-
-
-class Cummin(Primitive):
-    r"""
-    Returns the cumulative minimum of elements and the index.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.cummin` for more detail.
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor.
-
-    Outputs:
-        A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-        >>> func = ops.Cummin(axis=0)
-        >>> output = func(a)
-        >>> print(output[0])
-        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
-        >>> print(output[1])
-        [0 1 1 1 4 4]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize Cummin"""
-        validator.check_value_type('axis', axis, [int], self.name)
 
 
 class DynamicResizeNearestNeighbor(Primitive):
@@ -2556,7 +2411,7 @@ class ConvertToMsTensor(Primitive):
         """Run in PyNative mode"""
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
-        return ops.deepcopy(x)
+        return ops.auto_generate.deepcopy(x)
 
 
 convert_to_ms_tensor = ConvertToMsTensor()
@@ -2616,28 +2471,6 @@ class IsParameter(PrimitiveWithInfer):
         return {'shape': [],
                 'dtype': mstype.bool_,
                 'value': isinstance(x['dtype'], mstype.RefType)}
-
-
-class SiLU(Primitive):
-    r"""
-    Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.silu` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.SiLU(x)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SiLU"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class TileSize(Primitive):

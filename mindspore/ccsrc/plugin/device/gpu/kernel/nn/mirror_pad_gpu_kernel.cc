@@ -20,13 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MirrorPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
+bool MirrorPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
@@ -35,25 +30,23 @@ bool MirrorPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  in_type_size_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
-  out_type_size_ = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
-  string mode = kernel_ptr->get_mode();
+  in_type_size_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
+  out_type_size_ = GetTypeByte(TypeIdToType(outputs[0]->dtype_id()));
+  string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "REFLECT") {
     mode_ = 0;  // reflected mirroring
   } else {
     mode_ = 1;  // symmetric mirroring
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  input_size_list_.clear();
+int MirrorPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   output_size_list_.clear();
   auto input_shape = inputs[0]->GetShapeVector();
   auto padding_shape = inputs[1]->GetShapeVector();
@@ -99,8 +92,7 @@ int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     output_size_ *= LongToSizeClipNeg(x);
     output_shape_.push_back(LongToInt(x));
   }
-  input_size_list_.push_back(num_input_ * in_type_size_);
-  input_size_list_.push_back(kSymmetricCoef * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
+
   output_size_list_.push_back(output_size_);
   return static_cast<int>(KRET_OK);
 }

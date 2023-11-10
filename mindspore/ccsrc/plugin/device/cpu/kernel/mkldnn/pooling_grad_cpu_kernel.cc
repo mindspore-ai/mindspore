@@ -20,63 +20,86 @@
 #include "ops/conv_pool_op_name.h"
 #include "utils/profile.h"
 #include "kernel/ops_utils.h"
+#include "mindspore/core/ops/op_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kAvgPooling3DGradInputsNum = 1;
-constexpr size_t kAvgPooling3DGradDynamicInputsNum = 2;
-constexpr size_t kPoolingGradInputsNum = 3;
-constexpr size_t kPoolingGradOutputsNum = 1;
 constexpr size_t kMaxPoolingGradWorkSpaceNum = 2;
 constexpr size_t kAvgPoolingGradWorkSpaceNum = 1;
+// avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
+constexpr size_t kKernelSizeIdx = 3;
+constexpr size_t kStridesIdx = 4;
+constexpr size_t kPadModeIdx = 5;
+constexpr size_t kDataFormatIdx = 6;
+
+// avgpool3dgrad input indexes
+constexpr size_t kAvg3DGradIndex = 1;
+constexpr size_t kAvg3DKernelSizeIdx = 2;
+constexpr size_t kAvg3DStridesIdx = 3;
+constexpr size_t kAvg3DPadModeIdx = 4;
+constexpr size_t kAvg3DPadsIdx = 5;
+constexpr size_t kAvg3DCeilModeIdx = 6;
+constexpr size_t kAvg3DCountIncludePadIdx = 7;
+constexpr size_t kAvg3DDivisorOverrideIdx = 8;
+constexpr size_t kAvg3DDataFormatIdx = 9;
+
+// maxpool3dgrad input indexes are different from those of avgpool3dgrad
+// the input indexes of maxpool3dgrad are roughly listed, which need to be determined later.
+constexpr size_t kMax3DGradIndex = kGradIndex;
+constexpr size_t kMax3DKernelSizeIdx = kKernelSizeIdx;
+constexpr size_t kMax3DStridesIdx = kStridesIdx;
+constexpr size_t kMax3DPadModeIdx = kPadModeIdx;
+constexpr size_t kMax3DPadsIdx = 6;
+constexpr size_t kMax3DCeilModeIdx = 7;
+constexpr size_t kMax3DDataFormatIdx = 8;
+
 }  // namespace
 
-bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
-  size_t inputs_size = inputs.size();
-  if (kernel_name_ != kAvgPool3DGradOpName) {
-    CHECK_KERNEL_INPUTS_NUM(inputs_size, kPoolingGradInputsNum, kernel_name_);
-  } else if (inputs_size != kAvgPooling3DGradInputsNum && inputs_size != kAvgPooling3DGradDynamicInputsNum) {
-    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the number of inputs must be " << kAvgPooling3DGradInputsNum
-                     << " or " << kAvgPooling3DGradDynamicInputsNum << ", but got " << inputs_size;
-  }
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingGradOutputsNum, kernel_name_);
-  if (prim->HasAttr(CEIL_MODE)) {
-    ValuePtr ceil_mode = prim->GetAttr(CEIL_MODE);
-    ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
-                 (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
-  }
-  if (kernel_name_ == kAvgPoolGradOpName || kernel_name_ == kAvgPool3DGradOpName) {
-    algorithm_ = dnnl::algorithm::pooling_avg;
-    if (prim->HasAttr(COUNT_INCLUDE_PAD) && GetValue<bool>(prim->GetAttr(COUNT_INCLUDE_PAD))) {
-      algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
+bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (kernel_name_ != kAvgPoolGradOpName) {
+    if (KernelMod::primitive_->HasAttr(CEIL_MODE)) {
+      ValuePtr ceil_mode = KernelMod::primitive_->GetAttr(CEIL_MODE);
+      ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
+                   (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
     }
-    if (prim->HasAttr(DIVISOR_OVERRIDE) && GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE)) != 0) {
-      divisor_override_ = GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE));
+    if (kernel_name_ == kAvgPool3DGradOpName) {
+      algorithm_ = dnnl::algorithm::pooling_avg;
+      if (KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&
+          GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD))) {
+        algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
+      }
+      if (KernelMod::primitive_->HasAttr(DIVISOR_OVERRIDE) &&
+          GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE)) != 0) {
+        divisor_override_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE));
+      }
     }
+    grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 1 : kGradIndex;
+    format_ = GetFormatFromStrToEnum(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT)));
+    pad_mode_ = static_cast<mindspore::PadMode>(
+      ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
+    kernel_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
+    strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
+    dtype_ = inputs[grad_index_]->dtype_id();
+    return true;
   }
-  grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 0 : kGradIndex;
-  if (kernel_name_ == kAvgPool3DGradOpName && inputs_size == kAvgPooling3DGradDynamicInputsNum) {
-    grad_index_ = 1;
-  }
-  format_ = GetValue<std::string>(prim->GetAttr(FORMAT));
-  pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
-  kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
-  strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
-  dtype_ = inputs[grad_index_]->GetDtype();
+  grad_index_ = kGradIndex;
+  dtype_ = inputs[grad_index_]->dtype_id();
+  // AvgPoolGrad input
+  algorithm_ = dnnl::algorithm::pooling_avg;
+  pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
+  kernel_include_nc_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_include_nc_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  format_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
   return true;
 }
 
-int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto src_shape = outputs[0]->GetShapeVector();
@@ -87,13 +110,16 @@ int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   src_desc_ = GetDefaultMemDesc(src_shape);
   dst_desc_ = GetDefaultMemDesc(dst_shape_);
-  if (src_dim == SHAPE_4D && format_ != NCHW) {
+  if (src_dim == SHAPE_4D && format_ != mindspore::Format::NCHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format_;
   }
-  if (src_dim == SHAPE_5D && format_ != NCDHW) {
+  if (src_dim == SHAPE_5D && format_ != mindspore::Format::NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format_;
   }
-
+  if (kernel_name_ == kAvgPoolGradOpName) {
+    kernel_include_nc_.insert(kernel_include_nc_.begin(), 2, 1);
+    strides_include_nc_.insert(strides_include_nc_.begin(), 2, 1);
+  }
   if (kernel_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
                       << kernel_include_nc_.size() << "D!";
@@ -109,7 +135,11 @@ int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
   PaddingInfo padding_info{pad_mode_, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
-  GetPadding(base_operator, src_shape, padding_info);
+  std::vector<int64_t> pad_list;
+  if (kernel_name_ == kAvgPool3DGradOpName || kernel_name_ == kMaxPool3DGradOpName) {
+    pad_list = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(PAD_LIST));
+  }
+  GetPadding(src_shape, padding_info, pad_list);
 
   // Pooling_avg forward description
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc_,
@@ -136,7 +166,6 @@ int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   size_t dst_space =
     std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
   workspace_size_list_.push_back(dst_space);
-  inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
 
@@ -274,32 +303,20 @@ void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *w
   (void)stream_.wait();
 }
 
-bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  // From CPUKernelExecutor::LaunchKernel
-  if (!Init(op_, inputs_, outputs_)) {
-    MS_LOG(ERROR) << "Re-init PoolingGradCpuKernelMod while launching failed";
-    return false;
-  }
-  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
-  if (resize_ret != KRET_OK) {
-    MS_LOG(ERROR) << "Resize PoolingGradCpuKernelMod while launching failed: " << resize_ret;
-    return false;
-  }
-
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
+bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &workspace,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
 
   // For pooling_max, get the workspace that store the max value indexes.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
-    SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[grad_index_]->addr);
+    SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[grad_index_]->device_ptr());
     CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kMaxPoolingGradWorkSpaceNum, kernel_name_);
-    ComputeMaxValueIndex(inputs[0]->addr, workspace[1]->addr, workspace[0]->addr);
-    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);
+    ComputeMaxValueIndex(inputs[0]->device_ptr(), workspace[1]->device_ptr(), workspace[0]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->device_ptr());
     ExecutePrimitive();
     return true;
   }
-
   if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -314,13 +331,14 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   // Copy data of inputs[grad_index_] to workspace to avoid input data being changed
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kAvgPoolingGradWorkSpaceNum, kernel_name_);
-  auto dst_work_addr = workspace[0]->addr;
-  auto cpy_ret = memcpy_s(dst_work_addr, workspace[0]->size, inputs[grad_index_]->addr, inputs[grad_index_]->size);
+  auto dst_work_addr = workspace[0]->device_ptr();
+  auto cpy_ret =
+    memcpy_s(dst_work_addr, workspace[0]->size(), inputs[grad_index_]->device_ptr(), inputs[grad_index_]->size());
   if (cpy_ret != EOK) {
     MS_LOG_ERROR << "For '" << kernel_name_ << "', input memcpy to workspace error!";
     return false;

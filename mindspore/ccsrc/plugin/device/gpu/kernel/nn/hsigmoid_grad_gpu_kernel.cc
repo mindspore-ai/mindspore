@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
-#include "mindspore/core/ops/grad/hsigmoid_grad.h"
+#include "mindspore/core/ops/ops_func_impl/hsigmoid_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,8 +27,8 @@ constexpr const size_t kHSigmoidGradInputsNum = 2;
 constexpr const size_t kHSigmoidGradOutputsNum = 1;
 
 template <typename T>
-bool HSigmoidGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidGradOutputsNum, kernel_name_);
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);
@@ -65,12 +65,8 @@ std::vector<KernelAttr> HSigmoidGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool HSigmoidGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoidGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool HSigmoidGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kHSigmoidGradInputsNum || outputs.size() != kHSigmoidGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kHSigmoidGradInputsNum << " and "
                   << kHSigmoidGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -89,11 +85,10 @@ bool HSigmoidGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int HSigmoidGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int HSigmoidGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
@@ -116,8 +111,8 @@ int HSigmoidGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
   // A Code Block For setting input and output shape.
   {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    input_shape_ = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                       inputs[kIndex0]->GetDeviceShapeVector().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }

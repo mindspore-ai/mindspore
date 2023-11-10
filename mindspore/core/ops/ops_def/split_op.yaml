@@ -1,0 +1,16 @@
+#operator split
+split:
+  args:
+    input_x:
+      dtype: tensor
+    axis:
+      dtype: int
+      init: 0
+    output_num:
+      dtype: int
+      init: 1
+  returns:
+    output:
+      dtype: tuple[tensor]
+  function:
+    name: split_

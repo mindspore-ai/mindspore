@@ -133,7 +133,7 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
       std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
       for (size_t i = 1; i < user_cnode->size(); ++i) {
         // Create value_node 0 as a placeholder.
-        (void)make_tuple_inputs.emplace_back(NewValueNode(0));
+        (void)make_tuple_inputs.emplace_back(NewValueNode(static_cast<int64_t>(0)));
       }
       auto new_primal_make_tuple = fg->NewCNode(make_tuple_inputs);
       new_primal_make_tuple->set_input(node_and_idx.second, new_primal);

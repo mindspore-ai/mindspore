@@ -46,7 +46,7 @@ namespace {
 abstract::ShapePtr PdistInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -77,7 +77,7 @@ TypePtr PdistInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
 }
 }  // namespace

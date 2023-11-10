@@ -20,22 +20,16 @@
 
 namespace mindspore {
 namespace kernel {
-bool CSRSparseMatrixToSparseTensorGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CSRSparseMatrixToSparseTensor>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast CSRSparseMatrixToSparseTensor ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToSparseTensorInputsNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToSparseTensorOutputsNum, kernel_ptr->name());
+bool CSRSparseMatrixToSparseTensorGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToSparseTensorInputsNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToSparseTensorOutputsNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
-                      << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
@@ -51,15 +45,12 @@ void CSRSparseMatrixToSparseTensorGpuKernelMod::ResetResource() noexcept {
   output_indices_size_ = 0;
   output_values_size_ = 0;
   output_dense_shape_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
 
-int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &others) {
+int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   input_dense_shape_shapes_ = inputs[kIndex0]->GetShapeVector();
   input_batch_pointers_shapes_ = inputs[kIndex1]->GetShapeVector();
@@ -92,25 +83,20 @@ int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const BaseOperatorPtr &bas
     }
     return res;
   };
-  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * GetNums(input_dense_shape_shapes_);
+  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * GetNums(input_dense_shape_shapes_);
   input_batch_pointers_size_ =
-    abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * GetNums(input_batch_pointers_shapes_);
-  input_row_pointers_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * GetNums(input_row_pointers_shapes_);
-  input_col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype()) * GetNums(input_col_indices_shapes_);
-  input_values_size_ = abstract::TypeIdSize(inputs[kIndex4]->GetDtype()) * GetNums(input_values_shapes_);
-  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * GetNums(output_indices_shapes_);
-  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype()) * GetNums(output_values_shapes_);
-  output_dense_shape_size_ = abstract::TypeIdSize(outputs[kIndex2]->GetDtype()) * GetNums(output_dense_shape_shapes_);
+    abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(input_batch_pointers_shapes_);
+  input_row_pointers_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(input_row_pointers_shapes_);
+  input_col_indices_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id()) * GetNums(input_col_indices_shapes_);
+  input_values_size_ = abstract::TypeIdSize(inputs[kIndex4]->dtype_id()) * GetNums(input_values_shapes_);
+  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * GetNums(output_indices_shapes_);
+  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id()) * GetNums(output_values_shapes_);
+  output_dense_shape_size_ = abstract::TypeIdSize(outputs[kIndex2]->dtype_id()) * GetNums(output_dense_shape_shapes_);
   InitSizeLists();
   return 0;
 }
 
 void CSRSparseMatrixToSparseTensorGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_dense_shape_size_);
-  input_size_list_.push_back(input_batch_pointers_size_);
-  input_size_list_.push_back(input_row_pointers_size_);
-  input_size_list_.push_back(input_col_indices_size_);
-  input_size_list_.push_back(input_values_size_);
   workspace_size_list_.push_back(input_col_indices_size_);
   output_size_list_.push_back(output_indices_size_);
   output_size_list_.push_back(output_values_size_);
@@ -118,9 +104,10 @@ void CSRSparseMatrixToSparseTensorGpuKernelMod::InitSizeLists() {
 }
 
 template <typename T, typename S>
-bool CSRSparseMatrixToSparseTensorGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &workspace,
-                                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CSRSparseMatrixToSparseTensorGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &workspace,
+                                                             const std::vector<KernelTensor *> &outputs,
+                                                             void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

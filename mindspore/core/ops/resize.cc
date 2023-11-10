@@ -24,6 +24,7 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -130,33 +131,37 @@ NearestMode Resize::get_nearest_mode() const {
 }
 
 namespace {
+template <typename T>
+bool CheckArrayValueValid(const std::optional<ArrayValue<T>> &input_opt, int64_t *new_height, int64_t *new_width) {
+  if (input_opt.has_value()) {
+    const auto &input_array = input_opt.value();
+    if (input_array.size() > 0) {
+      return true;
+    }
+  }
+  *new_height = -1;
+  *new_width = -1;
+  return false;
+}
+
 constexpr size_t kResizeInputSize = 2;
 void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &shape_abstract,
                           const int64_t &in_height, const int64_t &in_width, int64_t *new_height, int64_t *new_width) {
-  if (!shape_abstract->isa<abstract::AbstractTensor>()) {
+  if (!CheckAndConvertUtils::IsTensor(shape_abstract)) {
     MS_LOG(EXCEPTION) << "For Resize, the inputs[1] must be a tensor, but got: " << shape_abstract->ToString() << ".";
   }
-  auto shape_value = shape_abstract->BuildValue();
-  if (!shape_value->isa<tensor::Tensor>()) {
-    *new_height = -1;
-    *new_width = -1;
-    return;
-  }
-  auto input_tensor = shape_value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  if (input_tensor->data().const_data() == nullptr) {
-    *new_height = -1;
-    *new_width = -1;
-    return;
-  }
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_abstract->BuildShape())[kShape];
+  auto shape_value = shape_abstract->GetValue();
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_abstract->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, 1,
                                            primitive->name());
-  auto tensor_type = input_tensor->Dtype();
+  auto input_dtype = shape_abstract->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_dtype);
+  auto tensor_type = input_dtype->element();
   if (size_shape[0] == 1) {
     // zoom factor
     (void)CheckAndConvertUtils::CheckTypeValid("size", tensor_type, {kInt32}, primitive->name());
-    auto scale_value = CheckAndConvertUtils::CheckTensorIntValue("size", shape_value, primitive->name());
+    auto scale_value =
+      CheckAndConvertUtils::CheckTensorIntValue("size", shape_value, primitive->name(), shape_abstract->GetType());
     auto scale = scale_value[0];
     *new_height = (in_height == -1) ? -1 : (in_height + (in_height - 1) * (scale - 1));
     *new_width = (in_width == -1) ? -1 : (in_width + (in_width - 1) * (scale - 1));
@@ -168,13 +173,21 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
   size_t h_index = size_shape[0] == kSize2 ? 0 : kFormatNCHWIndexH;
   size_t w_index = size_shape[0] == kSize2 ? 1 : kFormatNCHWIndexW;
   if (tensor_type == kInt32) {
-    auto data = reinterpret_cast<int32_t *>(input_tensor->data_c());
-    *new_height = IntToLong(data[h_index]);
-    *new_width = IntToLong(data[w_index]);
+    const auto &data_opt = GetArrayValue<int32_t>(shape_value);
+    if (!CheckArrayValueValid(data_opt, new_height, new_width)) {
+      return;
+    }
+    const auto &data_array = data_opt.value();
+    *new_height = IntToLong(data_array[h_index]);
+    *new_width = IntToLong(data_array[w_index]);
   } else if (tensor_type == kFloat32) {
-    auto data = reinterpret_cast<float *>(input_tensor->data_c());
-    *new_height = (in_height == -1) ? -1 : round(data[h_index] * LongToFloat(in_height));
-    *new_width = (in_width == -1) ? -1 : round(data[w_index] * LongToFloat(in_width));
+    auto data_opt = GetArrayValue<float>(shape_value);
+    if (!CheckArrayValueValid(data_opt, new_height, new_width)) {
+      return;
+    }
+    const auto &data_array = data_opt.value();
+    *new_height = (in_height == -1) ? -1 : round(data_array[h_index] * LongToFloat(in_height));
+    *new_width = (in_width == -1) ? -1 : round(data_array[w_index] * LongToFloat(in_width));
   } else {
     MS_LOG(EXCEPTION) << "For Resize, the inputs[1] datatype " << tensor_type->ToString() << " is not supported.";
   }
@@ -182,10 +195,10 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
 
 abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> output_shape(4, -1);
-  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(images_shape)) {
-    output_shape = {abstract::Shape::kShapeRankAny};
-    return std::make_shared<abstract::Shape>(output_shape);
+    output_shape = {abstract::TensorShape::kShapeRankAny};
+    return std::make_shared<abstract::TensorShape>(output_shape);
   }
   constexpr int64_t image_shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
@@ -203,9 +216,9 @@ abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::ve
     new_width = GetValue<int64_t>(primitive->GetAttr(kNewWidth));
   }
   if (input_args.size() == kResizeInputSize) {
-    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     if (IsDynamic(size_shape)) {
-      return std::make_shared<abstract::Shape>(output_shape);
+      return std::make_shared<abstract::TensorShape>(output_shape);
     }
     GetNewHeightAndWidth(primitive, input_args[1], images_shape[kFormatNCHWIndexH], images_shape[kFormatNCHWIndexW],
                          &new_height, &new_width);
@@ -213,7 +226,7 @@ abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::ve
 
   output_shape[kFormatNCHWIndexH] = new_height;
   output_shape[kFormatNCHWIndexW] = new_width;
-  return std::make_shared<abstract::Shape>(output_shape);
+  return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
 TypePtr ResizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

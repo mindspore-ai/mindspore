@@ -39,10 +39,8 @@ std::normal_distribution<float> dis_normal(kNumber10, kNumber11);
 
 namespace mindspore {
 namespace kernel {
-bool ExtractGlimpseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool ExtractGlimpseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -53,32 +51,29 @@ bool ExtractGlimpseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractGlimpse>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  centered_ = kernel_ptr->get_centered();
-  normalized_ = kernel_ptr->get_normalized();
-  uniform_noise_ = kernel_ptr->get_uniform_noise();
-  noise_ = kernel_ptr->get_noise();
+  centered_ = GetValue<bool>(primitive_->GetAttr("centered"));
+  normalized_ = GetValue<bool>(primitive_->GetAttr(ops::kNormalized));
+  uniform_noise_ = GetValue<bool>(primitive_->GetAttr("uniform_noise"));
+  noise_ = GetValue<std::string>(primitive_->GetAttr("noise"));
   return true;
 }
 
-int ExtractGlimpseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ExtractGlimpseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input_dtype_ = inputs[kIndex0]->GetDtype();
-  size_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  offsets_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input_dtype_ = inputs[kIndex0]->dtype_id();
+  size_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  offsets_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
   if (input_dtype_ == kNumberTypeFloat16) {
     ret = LaunchKernel<float16>(inputs, outputs);
@@ -133,16 +128,16 @@ std::pair<float, float> ExtractGlimpseCpuKernelMod::GetLocation(const float *ptr
 }
 
 template <typename T>
-bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   const size_t kInputIndex3 = 2;
   const size_t kInputIndex4 = 3;
   const size_t kNumber8 = 8;
   const size_t kNumber1024 = 1024;
-  float *x_data = static_cast<float *>(inputs[0]->addr);
-  int32_t *ss_data = static_cast<int32_t *>(inputs[1]->addr);
-  float *offsets_data = static_cast<float *>(inputs[kInputIndex3]->addr);
-  float *y_data = static_cast<float *>(outputs[0]->addr);
+  float *x_data = static_cast<float *>(inputs[0]->device_ptr());
+  int32_t *ss_data = static_cast<int32_t *>(inputs[1]->device_ptr());
+  float *offsets_data = static_cast<float *>(inputs[kInputIndex3]->device_ptr());
+  float *y_data = static_cast<float *>(outputs[0]->device_ptr());
   uint64_t batch_cnt = static_cast<uint64_t>(input_shape_[0]);
   uint64_t image_height = static_cast<uint64_t>(input_shape_[1]);
   uint64_t image_width = static_cast<uint64_t>(input_shape_[kInputIndex3]);

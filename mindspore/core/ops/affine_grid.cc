@@ -57,7 +57,7 @@ constexpr int LEN_IMAGE_SIZE_5D = 5;
 
 abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto theta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto theta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto theta_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
   if (theta_shape_ptr->IsDynamic()) {
     // theta is dynamic shape, verification could not be performed.
@@ -68,13 +68,15 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
   auto theta_rank = SizeToLong(theta_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of 'theta'", theta_rank, kEqual, RANK_THETA, prim_name);
   auto output_size_arg = input_args[kInputIndex1];
-  auto output_size_value_ptr = output_size_arg->BuildValue();
+  auto output_size_value_ptr = output_size_arg->GetValue();
   if (IsValueKnown(output_size_value_ptr)) {
     ShapeVector output_size_val;
-    if (output_size_value_ptr->isa<ValueTuple>()) {
+    auto output_size_obj_type = output_size_arg->GetType()->object_type();
+    if (output_size_obj_type == kObjectTypeTuple) {
       output_size_val = CheckAndConvertUtils::CheckTupleInt("input[output_size]", output_size_value_ptr, prim_name);
-    } else if (output_size_value_ptr->isa<tensor::Tensor>()) {  // 2-rd infer will be a tensor
-      output_size_val = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value_ptr, prim_name);
+    } else if (output_size_obj_type == kObjectTypeTensorType) {  // 2-rd infer will be a tensor
+      output_size_val = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value_ptr, prim_name,
+                                                                  output_size_arg->GetType());
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
                               << "the input[output_size] must be a tuple of int.";
@@ -114,7 +116,8 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
                                << "and the size of 'output_size' is " << output_size_val_size << ".";
     }
     return std::make_shared<abstract::Shape>(grid_shape);
-  } else if (output_size_arg->isa<abstract::AbstractTensor>() || output_size_arg->isa<abstract::AbstractTuple>()) {
+  } else if (output_size_arg->GetType()->object_type() == kObjectTypeTensorType ||
+             output_size_arg->GetType()->object_type() == kObjectTypeTuple) {
     ShapeVector grid_shape = {-2};
     return std::make_shared<abstract::Shape>(grid_shape);
   } else {
@@ -125,12 +128,12 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr AffineGridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
-  auto theta_type = input_args[kInputIndex0]->BuildType();
+  CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto theta_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(theta_type);
   const std::set<TypePtr> theta_valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("theta", theta_type, theta_valid_types, op_name);
-  auto output_size_type = input_args[kInputIndex1]->BuildType();
+  auto output_size_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(output_size_type);
   const std::set<TypePtr> output_size_valid_types = {kTensorType, kTuple};  // 2-rd infer will be a tensor.
   (void)CheckAndConvertUtils::CheckTypeValid("output_size", output_size_type, output_size_valid_types, op_name);

@@ -61,12 +61,13 @@ py::object RawMemoryToScalar(const void *data, const TypeId &type) {
   }
 }
 
-void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressPtr &address) {
+void ScalarToRawMemory(const py::object &obj, const TypeId &type, const KernelTensor *address) {
   MS_EXCEPTION_IF_NULL(address);
   switch (type) {
     case kNumberTypeBool: {
       bool data = py::cast<bool>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(bool)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(bool)), EOK,
+                            "memcpy failed.");
       return;
     }
     // ref: pybind11-src/include/pybind11/pytypes.h
@@ -74,59 +75,69 @@ void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressP
     // according to typename T, and then convert to target data type with C style cast.
     case kNumberTypeInt8: {
       int8_t data = py::cast<int8_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int8_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(int8_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeUInt8: {
       uint8_t data = py::cast<uint8_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(uint8_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(uint8_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeInt16: {
       int16_t data = py::cast<int16_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int16_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(int16_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeUInt16: {
       uint8_t data = py::cast<uint8_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(uint8_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(uint8_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeInt32: {
       int32_t data = py::cast<int32_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int32_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(int32_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeUInt32: {
       uint32_t data = py::cast<uint32_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(uint32_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(uint32_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeInt64: {
       int64_t data = py::cast<int64_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int64_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(int64_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeUInt64: {
       uint64_t data = py::cast<uint64_t>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(uint64_t)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(uint64_t)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeFloat16: {
       float data = py::cast<float>(obj);
       Eigen::half_impl::__half_raw data_half = Eigen::half_impl::float_to_half_rtne(data);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data_half.x, sizeof(data_half.x)), EOK,
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data_half.x, sizeof(data_half.x)), EOK,
                             "memcpy failed.");
       return;
     }
     case kNumberTypeFloat32: {
       float data = py::cast<float>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(float)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(float)), EOK,
+                            "memcpy failed.");
       return;
     }
     case kNumberTypeFloat64: {
       double data = py::cast<double>(obj);
-      CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(double)), EOK, "memcpy failed.");
+      CHECK_RET_WITH_EXCEPT(memcpy_s(address->device_ptr(), address->size(), &data, sizeof(double)), EOK,
+                            "memcpy failed.");
       return;
     }
     default:
@@ -134,13 +145,13 @@ void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressP
   }
 }
 
-void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
+void ArrayToRawMemory(const py::array &array, const KernelTensor *address) {
   MS_EXCEPTION_IF_NULL(address);
   if (static_cast<unsigned int>(array.flags()) &
       static_cast<unsigned int>(pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_)) {
     const py::buffer_info &buf_info = array.request();
     CHECK_RET_WITH_EXCEPT(
-      common::huge_memcpy(reinterpret_cast<uint8_t *>(address->addr), address->size,
+      common::huge_memcpy(reinterpret_cast<uint8_t *>(address->device_ptr()), address->size(),
                           reinterpret_cast<uint8_t *>(buf_info.ptr), LongToSize(buf_info.size * buf_info.itemsize)),
       EOK, "memcpy failed.");
   } else {
@@ -156,14 +167,14 @@ void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
       MS_LOG(EXCEPTION) << "Can't copy numpy.ndarray to a contiguous buffer.";
     }
     PyBuffer_Release(&pybuf);
-    CHECK_RET_WITH_EXCEPT(common::huge_memcpy(reinterpret_cast<uint8_t *>(address->addr), address->size,
+    CHECK_RET_WITH_EXCEPT(common::huge_memcpy(reinterpret_cast<uint8_t *>(address->device_ptr()), address->size(),
                                               reinterpret_cast<uint8_t *>(buffer.get()), LongToSize(pybuf.len)),
                           EOK, "memcpy failed.");
   }
 }
 
 void ObjectToRawMemory(const py::object &object, const PythonOjectType &object_type, const TypeId &data_type,
-                       const AddressPtr &address) {
+                       const KernelTensor *address) {
   switch (object_type) {
     case PythonOjectType::kScalar:
       return ScalarToRawMemory(object, data_type, address);
@@ -174,21 +185,22 @@ void ObjectToRawMemory(const py::object &object, const PythonOjectType &object_t
   }
 }
 
-py::tuple RawMemoryToPyObjects(const std::vector<AddressPtr> &inputs, const PyFuncArgumentInfo &input_infos,
+py::tuple RawMemoryToPyObjects(const std::vector<KernelTensor *> &inputs, const PyFuncArgumentInfo &input_infos,
                                const std::vector<tensor::TensorPtr> &input_tensors) {
   py::tuple result(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
     switch (input_infos.object_types[i]) {
       case PythonOjectType::kScalar:
         MS_EXCEPTION_IF_NULL(inputs[i]);
-        result[i] = RawMemoryToScalar(inputs[i]->addr, input_infos.dtypes[i]);
+        result[i] = RawMemoryToScalar(inputs[i]->device_ptr(), input_infos.dtypes[i]);
         break;
       case PythonOjectType::kNumpyArray: {
         const tensor::TensorPtr &tensor = input_tensors[i];
         MS_EXCEPTION_IF_NULL(tensor);
-        CHECK_RET_WITH_EXCEPT(common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor->data_c()), tensor->Size(),
-                                                  reinterpret_cast<uint8_t *>(inputs[i]->addr), inputs[i]->size),
-                              EOK, "memcpy failed.");
+        CHECK_RET_WITH_EXCEPT(
+          common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor->data_c()), tensor->Size(),
+                              reinterpret_cast<uint8_t *>(inputs[i]->device_ptr()), inputs[i]->size()),
+          EOK, "memcpy failed.");
         result[i] = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
         break;
       }
@@ -200,7 +212,7 @@ py::tuple RawMemoryToPyObjects(const std::vector<AddressPtr> &inputs, const PyFu
 }
 
 void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &output_infos,
-                          const std::vector<AddressPtr> &outputs) {
+                          const std::vector<KernelTensor *> &outputs) {
   // Single output.
   if (!py::isinstance<py::tuple>(object)) {
     if (outputs.size() != 1) {
@@ -224,15 +236,19 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }
 }  // namespace
 
-void PyFuncCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  func_id_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
-  fake_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
-  single_scalar_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
-  BuildFuncInfo(kernel_node);
+int PyFuncCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  func_id_ = GetValue<int64_t>(primitive_->GetAttr("fn_id"));
+  fake_output_ = GetValue<bool>(primitive_->GetAttr("fake_output"));
+  single_scalar_output_ = GetValue<bool>(primitive_->GetAttr("single_scalar_output"));
+  BuildFuncInfo(primitive_, inputs, outputs);
+  return KRET_OK;
 }
 
-bool PyFuncCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool PyFuncCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                const std::vector<KernelTensor *> &outputs) {
   if (!init_) {
     py_func_ = GetPythonFunc();
     init_ = true;
@@ -241,46 +257,51 @@ bool PyFuncCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   return ExecuteKernel(inputs, outputs);
 }
 
-void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
+void PyFuncCpuKernelMod::BuildFuncInfo(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   std::vector<TypeId> in_types;
   std::vector<TypeId> out_types;
   std::vector<std::vector<int64_t>> in_shapes;
   std::vector<std::vector<int64_t>> out_shapes;
 
-  if (common::AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
-    const auto &in_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
+  if (primitive->HasAttr("in_types")) {
+    const auto &in_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("in_types"));
     (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(), [&in_types](auto p) {
       MS_EXCEPTION_IF_NULL(p);
       (void)in_types.emplace_back(p->type_id());
     });
   } else {
-    in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      in_types.emplace_back(inputs[i]->dtype_id());
+    }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
-    const auto &out_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
+  if (primitive->HasAttr("out_types")) {
+    const auto &out_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("out_types"));
     (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(), [&out_types](auto p) {
       MS_EXCEPTION_IF_NULL(p);
       (void)out_types.emplace_back(p->type_id());
     });
   } else {
-    out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      out_types.emplace_back(outputs[i]->dtype_id());
+    }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("in_shapes", kernel_node)) {
-    in_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
+  if (primitive->HasAttr("in_shapes")) {
+    in_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("in_shapes"));
   } else {
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel_node); i++) {
-      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+    for (size_t i = 0; i < inputs.size(); i++) {
+      const auto &in_shape = inputs[i]->GetShapeVector();
       (void)in_shapes.emplace_back(in_shape);
     }
   }
 
-  if (common::AnfAlgo::HasNodeAttr("out_shapes", kernel_node)) {
-    out_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
+  if (primitive->HasAttr("out_shapes")) {
+    out_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("out_shapes"));
   } else {
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
-      auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    for (size_t i = 0; i < outputs.size(); i++) {
+      const auto &out_shape = outputs[i]->GetShapeVector();
       (void)out_shapes.emplace_back(out_shape);
     }
   }
@@ -316,7 +337,8 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
   }
 }
 
-bool PyFuncCpuKernelMod::ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PyFuncCpuKernelMod::ExecuteKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (Py_IsInitialized() != true) {
     MS_LOG(ERROR) << "Py_IsInitialized failed.";
     return false;

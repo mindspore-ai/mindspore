@@ -1,0 +1,15 @@
+#operator softmax
+softmax:
+    args:
+        logits:
+            dtype: tensor
+        axis:
+            dtype: tuple[int]
+            init: -1
+            type_cast: int
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: softmax_
+        disable: False

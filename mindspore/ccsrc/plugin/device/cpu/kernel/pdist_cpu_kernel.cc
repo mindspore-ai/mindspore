@@ -59,23 +59,14 @@ struct pdist_calc {
   static inline double finish(const double &agg, const float &p) { return std::pow(agg, 1.0 / p); }
 };
 
-bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Pdist>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Pdist ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  p_ = kernel_ptr->get_p();
-  dtype_ = inputs[0]->GetDtype();
+bool PdistCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-int PdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int PdistCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetShapeVector();
@@ -86,11 +77,12 @@ int PdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename F, typename T>
-bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PdistCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (h_ == 1) {
     return true;
   }
-  auto output_size = outputs[0]->size / sizeof(T);
+  auto output_size = outputs[0]->size() / sizeof(T);
   const auto *input = GetDeviceAddress<T>(inputs, kIndex0);
   auto *output = GetDeviceAddress<T>(outputs, kIndex0);
   int64_t combs = h_ * (h_ - 1) / 2;
@@ -135,7 +127,8 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 }
 
 template <typename T>
-void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void PdistCpuKernelMod::Apply_pdist(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (std::isinf(p_)) {
     LaunchKernel<idist_calc, T>(inputs, outputs);
   } else if (std::abs(p_ - P_ZERO) <= EPS * p_) {
@@ -149,8 +142,8 @@ void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const
   }
 }
 
-bool PdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool PdistCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPdistInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPdistOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat64) {

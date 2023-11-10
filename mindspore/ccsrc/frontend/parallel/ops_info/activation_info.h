@@ -113,6 +113,7 @@ class Softmax : public ActivationBase {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
+  Status InferMirrorOps() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckLayoutConfig() override;
   Status GetAttrs() override;
@@ -133,6 +134,9 @@ class LogSoftmaxInfo : public Softmax {
                  const PrimitiveAttrs &attrs)
       : Softmax(name, inputs_shape, outputs_shape, attrs) {}
   ~LogSoftmaxInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
 };
 
 class SortInfo : public Softmax {

@@ -29,9 +29,14 @@ class ConvertConstInputToTensorInput : public PatternProcessPass {
       : PatternProcessPass("convert_const_input_to_tensor_input", multigraph) {}
   ~ConvertConstInputToTensorInput() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+};
 
- private:
-  AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
+class ConvertConstInputToTensorInputForPrint : public PatternProcessPass {
+ public:
+  explicit ConvertConstInputToTensorInputForPrint(bool multigraph = true)
+      : PatternProcessPass("convert_const_input_to_tensor_input_for_print", multigraph) {}
+  ~ConvertConstInputToTensorInputForPrint() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

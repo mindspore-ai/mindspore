@@ -673,7 +673,6 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
-
 def get_ast_type(node):
     """Get the ast type."""
     ast_type = AST_SUB_TYPE_UNKNOWN
@@ -759,6 +758,14 @@ def get_args(node):
     if node.args.kwarg:
         args.append(node.args.kwarg)
     return args
+
+
+def get_primitive_signatures(prim):
+    """Get primitive signatures."""
+    if not hasattr(prim, "__mindspore_signature__"):
+        return ()
+    signatures = getattr(prim, "__mindspore_signature__")
+    return ops.Primitive._fill_signature(prim, signatures)
 
 
 def _convert_stub_tensor(data):

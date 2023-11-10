@@ -49,12 +49,12 @@ abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &pr
                                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   // dynamic rank
   if (IsDynamicRank(var_shape) || IsDynamicRank(delta_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
@@ -92,11 +92,11 @@ TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto alpha_type = input_args[kInputIndex1]->BuildType();
-  auto l1_type = input_args[kInputIndex2]->BuildType();
-  auto l2_type = input_args[kInputIndex3]->BuildType();
-  auto delta_type = input_args[kInputIndex4]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto alpha_type = input_args[kInputIndex1]->GetType();
+  auto l1_type = input_args[kInputIndex2]->GetType();
+  auto l2_type = input_args[kInputIndex3]->GetType();
+  auto delta_type = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // var, delta must have the same type as var
   std::map<std::string, TypePtr> args;

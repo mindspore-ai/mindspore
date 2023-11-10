@@ -681,7 +681,7 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(cond_abs);
     auto cond_abs_val = cond_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(cond_abs_val);
-    if (cond_abs_val == kValueAny) {
+    if (cond_abs_val->ContainsValueAny()) {
       return nullptr;
     }
     auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);
@@ -803,7 +803,7 @@ class SideEffectFinder {
       return TraceTupleListCNodeEffectInfo(cnode, indexes);
     }
     // Should not reach here.
-    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr. Invalid node: " << node->DebugString();
   }
 
   EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {

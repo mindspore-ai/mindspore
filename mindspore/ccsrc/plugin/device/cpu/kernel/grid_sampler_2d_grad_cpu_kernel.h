@@ -18,11 +18,9 @@
 #include <map>
 #include <vector>
 #include <memory>
-#include <string>
 #include <algorithm>
 #include <bitset>
 #include <cmath>
-#include <cstring>
 #include <iostream>
 #include <type_traits>
 #include <array>
@@ -31,7 +29,7 @@
 #include <tuple>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grad/grid_sampler_2d_grad.h"
+#include "mindspore/core/ops/ops_func_impl/grid_sampler_2d_grad.h"
 
 namespace mindspore {
 const int64_t hZero = 0;
@@ -52,27 +50,31 @@ class GridSampler2DGradCpuKernelMod : public NativeCpuKernelMod {
   GridSampler2DGradCpuKernelMod() = default;
   ~GridSampler2DGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                      .AddOutputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                      .AddOutputAttr(kNumberTypeFloat64)
                                                      .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
@@ -84,15 +86,15 @@ class GridSampler2DGradCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector grid_shape_;
   ShapeVector dx_shape_;
   ShapeVector dgrid_shape_;
-  std::string interpolation_mode_;
-  std::string padding_mode_;
+  int64_t interpolation_mode_;
+  int64_t padding_mode_;
   bool align_corners_;
   size_t dx_size_;
   size_t grid_size_;
   TypeId dtype_{kTypeUnknown};
 
   template <typename T>
-  void ComputeTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void ComputeTask(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 
 // *******************VEC256***********************

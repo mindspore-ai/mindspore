@@ -21,10 +21,8 @@
 namespace mindspore {
 namespace kernel {
 constexpr int64_t INPUT_DIMS = 2;
-bool LowerBoundGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::LowerBound>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool LowerBoundGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -42,9 +40,8 @@ bool LowerBoundGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int LowerBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int LowerBoundGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -53,10 +50,10 @@ int LowerBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     }
   }
   ResetResource();
-  std::vector<int64_t> sorted_x_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> values_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> sorted_x_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> values_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex1)->GetDeviceShapeVector().end());
   sorted_x_elements_ = std::accumulate(sorted_x_shape_.begin(), sorted_x_shape_.end(), 1, std::multiplies<int64_t>());
   values_elements_ = std::accumulate(values_shape_.begin(), values_shape_.end(), 1, std::multiplies<int64_t>());
   if (sorted_x_elements_ == 0 || values_elements_ == 0) {
@@ -83,20 +80,16 @@ int LowerBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     return false;
   }
 
-  size_t sorted_x_size = sorted_x_elements_ * unit_size_;
-  size_t values_size = values_elements_ * unit_size_;
   size_t output_size = values_elements_ * unit_out_size_;
-  input_size_list_.emplace_back(sorted_x_size);
-  input_size_list_.emplace_back(values_size);
   output_size_list_.emplace_back(output_size);
 
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool LowerBoundGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool LowerBoundGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *sorted_x = GetDeviceAddress<T>(inputs, 0);
   T *values = GetDeviceAddress<T>(inputs, 1);
   S *output = GetDeviceAddress<S>(outputs, 0);

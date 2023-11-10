@@ -136,6 +136,7 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Try to build a real value from an abstract value.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetValue instead.
   /// \note If the value cannot be built, a default value (ValueAny) is returned.
   ///
   /// \return A pointer to the Value.
@@ -143,22 +144,39 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Build the type of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetType instead.
   /// \note Use this function to get the actual type, while track type is not enough accurate.
   ///
   /// \return A pointer to the Type.
-  virtual TypePtr BuildType() const = 0;
+  virtual TypePtr BuildType() const { MS_LOG(EXCEPTION) << "The method 'BuildType()' doesn't implement"; }
 
   /// \brief Build the shape of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetShape instead.
   /// \note Use this function to get the actual shape, while track shape is not enough accurate.
   ///
   /// \return A pointer to the BaseShape.
   virtual BaseShapePtr BuildShape() const;
 
+  /// \brief Get or build the shape of AbstractBase.
+  ///
+  /// \return The base shape got or built.
+  virtual BaseShapePtr GetShape() const;
+
+  /// \brief Get or build the object type of the AbstractBase.
+  ///
+  /// \return The object type.
+  virtual TypePtr GetType() const;
+
+  /// \brief Get or build the value of the AbstractBase.
+  ///
+  /// \return The value of the AbstractBase if exists, else return kValueAny.
+  virtual ValuePtr GetValue() const;
+
   /// \brief Clone an abstract from the abstract.
   ///
   /// \return A pointer to the cloned abstract.
-  virtual AbstractBasePtr Clone() const = 0;
+  virtual AbstractBasePtr Clone() const { MS_LOG(EXCEPTION) << "The method 'Clone()' doesn't implement"; }
 
   /// \brief Set the function, which prints the debug info.
   ///
@@ -223,12 +241,13 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the Value.
   virtual ValuePtr RealBuildValue() const;
 
- private:
   ValuePtr value_;
   TypePtr type_;
   BaseShapePtr shape_;
-  std::string value_desc_;                     // Store initial value description for error report.
-  std::string name_;                           // Store for mindir input and output names.
+  std::string value_desc_;  // Store initial value description for error report.
+  std::string name_;        // Store for mindir input and output names.
+
+ private:
   AbstractBasePtr inplace_abstract_{nullptr};  // Cover *this abstract for inplace primitive.
 };
 

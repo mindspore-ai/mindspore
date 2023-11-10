@@ -157,6 +157,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const;
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
+  ValueNodePtr NewValueNode(const ValuePtr &input_value);
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
@@ -194,6 +195,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   void ClearAllValueNode() { graph_value_nodes_.clear(); }
+  void EraseValueNode(const ValueNodePtr &value_node);
   // ref output is in map
   bool IsInRefOutputMap(const AnfWithOutIndex &pair) const;
   // Whether the value corresponds to ref output.

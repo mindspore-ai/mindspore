@@ -323,6 +323,7 @@ set(LITE_SRC
         ${CORE_DIR}/abstract/abstract_value.cc
         ${CORE_DIR}/ir/anf.cc
         ${CORE_DIR}/base/base.cc
+        ${CORE_DIR}/ops/auto_generate/gen_lite_ops.cc
         )
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)

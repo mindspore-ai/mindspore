@@ -47,16 +47,12 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
   CropAndResizeCpuKernelMod() = default;
   ~CropAndResizeCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -66,7 +62,8 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
  private:
   void InitFunc(const CNodePtr &kernel_node);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void BilinearResize(T *input_image, float target_x, float target_y, size_t pos, int box_index, int pos_channel,
@@ -76,8 +73,8 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
   void BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, int pos_y, int pos_x, size_t pos,
                         int box_index, int pos_channel, float *output) const;
 
-  using CropAndResizeFunc = std::function<bool(CropAndResizeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
+  using CropAndResizeFunc = std::function<bool(CropAndResizeCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                               const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, CropAndResizeFunc>> func_list_;
   CropAndResizeFunc kernel_func_;
   int method_{1};

@@ -18,68 +18,77 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <set>
 #include <string>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
 using TensorParams = transform::TensorParams;
 
-class AclKernelMod : public AscendKernelMod {
+class AclKernelMod : public KernelMod {
  public:
-  AclKernelMod() {
-    if (converter_ == nullptr) {
-      converter_ = std::make_shared<transform::AclConverter>();
-    }
-  }
-  explicit AclKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
-    if (converter_ == nullptr) {
-      converter_ = std::make_shared<transform::AclConverter>();
-    }
-  }
+  // =========================================New interface==========================================================
+  AclKernelMod() {}
   ~AclKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &, uint32_t) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   void SetDeviceInfo(const std::vector<std::string> &input_device_formats,
                      const std::vector<std::string> &output_device_formats,
                      const std::vector<TypeId> &input_device_types, const std::vector<TypeId> &output_device_types);
-  bool IsNeedRetrieveOutputShape() override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override {
+    MS_EXCEPTION_IF_NULL(converter_);
+    return converter_->is_need_retrieve_output_shape();
+  }
+
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
   void PackageInput(const size_t idx, const std::string &format, ShapeVector *shape);
   void PackageOutput(const size_t idx, const ShapeVector &shape);
-  void SetPrimitive(const PrimitivePtr &primitive);
   void SetNeedConvertHostTensor(const bool convert_flag) { need_convert_host_tensor_ = convert_flag; }
   void CreateAclConverter();
+  void SetValueDependArgs(const std::set<int64_t> &indices) { value_depend_args_ = indices; }
+  std::string GetFormatFromInput(const std::vector<KernelTensor *> &inputs);
+
+  const std::set<int64_t> &GetValueDependArgs() const { return value_depend_args_; }
+  std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in ACL."; }
+
+  // =======================Old interface, will deleted after all kernel modified used new interface=================
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    MS_LOG(EXCEPTION) << "This interface is discarded.";
+  }
 
  protected:
   std::string DebugString() const;
-  void SyncOutputShape() override;
-  void GetInputInfo(const std::vector<KernelTensorPtr> &inputs);
-  int GetOutputInfo(const std::vector<KernelTensorPtr> &outputs);
+  void GetInputInfo(const std::vector<KernelTensor *> &inputs);
+  int GetOutputInfo(const std::vector<KernelTensor *> &outputs);
 
  private:
   std::vector<TensorParams> input_params_;
   std::vector<TensorParams> output_params_;
-  transform::AclInputToHost input_to_host_array_;
-
-  PrimitivePtr primitive_ptr_;
-  std::string kernel_name_;
+  // record indices of value depend arguments
+  std::set<int64_t> value_depend_args_;
+  // inputs of operator
+  const std::vector<KernelTensor *> *inputs_ = nullptr;
 
   std::vector<std::string> ms_attr_str_;
   transform::AclConverterPtr converter_;
 
   bool need_convert_host_tensor_{false};
+  transform::AclInputToHost input_to_host_array_;
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;

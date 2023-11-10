@@ -29,28 +29,29 @@ constexpr size_t kTopKOutputsNum = 2;
 }  // namespace
 
 template <typename T>
-void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                    const std::vector<AddressPtr> &outputs) const {
+void TopKCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspaces,
+                                    const std::vector<KernelTensor *> &outputs) const {
   if (inputs.size() != 2 || outputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator must have 2 inputs and 2 outputs, but got "
                       << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
-  if (inputs[0]->size != outer_size_ * inner_size_ * sizeof(T)) {
+  if (inputs[0]->size() != outer_size_ * inner_size_ * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', address size of 'input_x' error.";
   }
-  if (inputs[1]->size != sizeof(int)) {
+  if (inputs[1]->size() != sizeof(int)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' must be int, but got " << inputs[1];
   }
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  int k = reinterpret_cast<int *>(inputs[1]->addr)[0];
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  int k = reinterpret_cast<int *>(inputs[1]->device_ptr())[0];
   size_t *workspace = GetDeviceAddress<size_t>(workspaces, 0);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto indices = reinterpret_cast<int *>(outputs[1]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto indices = reinterpret_cast<int *>(outputs[1]->device_ptr());
   if (k < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' must be greater than 0, but got " << k;
   }
   size_t k_num = IntToSize(std::min<int>(inner_size_, k));
-  if (outputs[0]->size != outer_size_ * k_num * sizeof(T)) {
+  if (outputs[0]->size() != outer_size_ * k_num * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', address size of output error.";
   }
 
@@ -90,19 +91,12 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   ParallelLaunch(tasks);
 }
 
-bool TopKCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
-  sorted_ = kernel_ptr->get_attr("sorted");
+bool TopKCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TopKCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -117,9 +111,8 @@ int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   inner_size_ = x_shape_[x_shape_.size() - 1];
 
-  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
-  sorted_ = kernel_ptr->get_attr("sorted");
-  dtype_ = inputs[0]->GetDtype();
+  sorted_ = GetValue<bool>(primitive_->GetAttr(ops::kSorted));
+  dtype_ = inputs[0]->dtype_id();
 
   size_t element_size = outer_size_ * inner_size_;
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
@@ -127,9 +120,9 @@ int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> &workspaces,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool TopKCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &workspaces,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTopKInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTopKOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {

@@ -41,26 +41,25 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
 
   ~SliceGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
-  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
-                        const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
+  void CopyDataToOutput(const std::vector<kernel::KernelTensor *> &inputs, size_t in_offset,
+                        const std::vector<kernel::KernelTensor *> &outputs, size_t out_offset, size_t copy_num,
                         int id) const;
 
   template <typename T>
-  void InitParams(const std::vector<kernel::AddressPtr> &inputs);
+  void InitParams(const std::vector<kernel::KernelTensor *> &inputs);
 
   void ClearVectors();
 
@@ -73,8 +72,8 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
   void FormatArgs(bool stride);
 
   template <typename T>
-  bool SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                   T *input_addr, T *output_addr);
+  bool SliceGrad8D(const std::vector<kernel::KernelTensor *> &inputs,
+                   const std::vector<kernel::KernelTensor *> &outputs, T *input_addr, T *output_addr);
 
   size_t begin_len_{0};
   size_t end_len_{0};

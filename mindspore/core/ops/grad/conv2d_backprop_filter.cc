@@ -108,9 +108,9 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
 
   auto dout_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterDoutIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterDoutIndex]->GetShape())[kShape];
   auto input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterInputIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterInputIndex]->GetShape())[kShape];
 
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   // normalize shape to NCHW format
@@ -131,8 +131,8 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
   auto prim_name = prim->name();
   // check
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kConv2DBackpropFilterInputIndex]->BuildType());
-  (void)types.emplace("doutput", input_args[kConv2DBackpropFilterDoutIndex]->BuildType());
+  (void)types.emplace("x", input_args[kConv2DBackpropFilterInputIndex]->GetType());
+  (void)types.emplace("doutput", input_args[kConv2DBackpropFilterDoutIndex]->GetType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }

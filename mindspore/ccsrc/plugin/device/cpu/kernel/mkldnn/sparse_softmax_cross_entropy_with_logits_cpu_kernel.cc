@@ -30,31 +30,24 @@ constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputsNum = 1;
 constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  is_grad_ = kernel_ptr->get_is_grad();
+  is_grad_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kIsGrad));
   return true;
 }
 
-int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                            const std::vector<KernelTensorPtr> &inputs,
-                                                            const std::vector<KernelTensorPtr> &outputs,
-                                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  auto logits_shape = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  auto label_shape = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
+  auto logits_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
+  auto label_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
   size_t tensor_size =
     std::accumulate(logits_shape.begin(), logits_shape.end(), sizeof(float), std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
@@ -139,29 +132,29 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::GradPostExecute(const int 
   }
 }
 
-bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                             const std::vector<kernel::AddressPtr> &workspace,
-                                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                             const std::vector<kernel::KernelTensor *> &workspace,
+                                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
-  if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
-      inputs[1]->size != batch_float_size) {
+  if (inputs[0]->size() != workspace[0]->size() || inputs[0]->size() != batch_class_float_size ||
+      inputs[1]->size() != batch_float_size) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
-  if (is_grad_ && outputs[0]->size != batch_class_float_size) {
+  if (is_grad_ && outputs[0]->size() != batch_class_float_size) {
     MS_LOG(EXCEPTION) << "Error output data size!";
-  } else if (!is_grad_ && outputs[0]->size != sizeof(float)) {
+  } else if (!is_grad_ && outputs[0]->size() != sizeof(float)) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST, workspace[0]->device_ptr());
   ExecutePrimitive();
-  const auto *labels = reinterpret_cast<int *>(inputs[1]->addr);
-  const auto *losses = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *labels = reinterpret_cast<int *>(inputs[1]->device_ptr());
+  const auto *losses = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *output = reinterpret_cast<float *>(outputs[0]->device_ptr());
   if (is_grad_) {
     GradPostExecute(labels, losses, output);
   } else {

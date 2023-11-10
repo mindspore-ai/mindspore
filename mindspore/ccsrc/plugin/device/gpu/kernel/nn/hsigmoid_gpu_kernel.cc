@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
-#include "mindspore/core/ops/hsigmoid.h"
+#include "mindspore/core/ops/ops_func_impl/hsigmoid.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,8 +27,8 @@ constexpr const size_t kHSigmoidInputsNum = 1;
 constexpr const size_t kHSigmoidOutputsNum = 1;
 
 template <typename T>
-bool HSigmoidGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool HSigmoidGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSigmoidInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSigmoidOutputsNum, kernel_name_);
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
@@ -63,12 +63,7 @@ std::vector<KernelAttr> HSigmoidGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool HSigmoidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoid>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool HSigmoidGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kHSigmoidInputsNum || outputs.size() != kHSigmoidOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kHSigmoidInputsNum << " and "
                   << kHSigmoidOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -87,11 +82,10 @@ bool HSigmoidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int HSigmoidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int HSigmoidGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -111,8 +105,8 @@ int HSigmoidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   // A Code Block For setting input and output shape.
   {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    input_shape_ = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                       inputs[kIndex0]->GetDeviceShapeVector().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }

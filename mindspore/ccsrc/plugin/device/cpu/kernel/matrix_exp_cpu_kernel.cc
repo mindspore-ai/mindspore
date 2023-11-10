@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/matrix_exp_cpu_kernel.h"
-#include "mindspore/core/ops/matrix_exp.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,23 +39,23 @@ const std::vector<std::vector<double>> b18 = {
   {0., 0., -9.23364619367118555360e-02, -1.69364939002081722752e-02, -1.40086798182036094347e-05}};
 }  // namespace
 
-bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast MatrixExp ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  data_type_ = inputs.at(kIndex0)->GetDtype();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool MatrixExpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  //  Todo, dynamic shape
+  //  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
+  //  if (!kernel_ptr) {
+  //    MS_LOG(ERROR) << "cast MatrixExp ops failed!";
+  //    return false;
+  //  }
+  //  kernel_name_ = kernel_ptr->name();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MatrixExpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
+int MatrixExpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -133,19 +132,19 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived> &A, const 
 }
 
 template <typename T>
-bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &workspace,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixExpInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixExpOutputsNum, kernel_name_);
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   int64_t m = SizeToLong(*(input_shape_.end() - 1));
   int64_t size_mm = m * m;
   MatrixXd<T> I(m, m);
   Eigen::Map<MatrixXd<T>> map_I(I.data(), m, m);
   (void)I.setIdentity();
-  int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
+  int64_t total = SizeToLong(inputs[0]->size() / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, &map_I, m](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

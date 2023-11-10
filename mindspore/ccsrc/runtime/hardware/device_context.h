@@ -41,6 +41,7 @@ namespace mindspore {
 namespace device {
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::KernelMod;
+using mindspore::kernel::KernelTensor;
 
 const size_t kDeviceContextsNumOne = 1;
 const size_t kDeviceContextsNumTwo = 2;
@@ -184,6 +185,11 @@ class BACKEND_EXPORT DeviceResManager {
                                                TypeId type_id, const ShapeVector &shape,
                                                const UserDataPtr &user_data = nullptr) const = 0;
 
+  // Create concrete device address according different device type using KernelTensor.
+  virtual DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+  }
+
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
@@ -278,6 +284,13 @@ class BACKEND_EXPORT KernelExecutor {
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                             const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                            size_t stream_id) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+  }
+
+  // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
+  virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                            const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                             size_t stream_id) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }

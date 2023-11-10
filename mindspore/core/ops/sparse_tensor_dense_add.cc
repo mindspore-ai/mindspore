@@ -41,10 +41,10 @@ namespace ops {
 abstract::ShapePtr SparseTensorDenseAddInferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   size_t x1_indices_shape_size = x1_indices_shape.size();
   size_t x1_values_shape_size = x1_values_shape.size();
   size_t x1_shape_shape_size = x1_shape_shape.size();
@@ -96,10 +96,10 @@ abstract::ShapePtr SparseTensorDenseAddInferShape(const PrimitivePtr &prim,
 }
 
 TypePtr SparseTensorDenseAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto indices_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
-  auto shape_type = input_args[kInputIndex2]->BuildType();
-  auto x2_type = input_args[kInputIndex3]->BuildType();
+  auto indices_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
+  auto shape_type = input_args[kInputIndex2]->GetType();
+  auto x2_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
   const std::set<TypePtr> valid_values_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};

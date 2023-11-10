@@ -27,17 +27,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool NormalizeSliceInfoCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NormalizeSliceInfoCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NormalizeSlice>(base_operator);
-  index_axis_ = IntToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrTupleIndexAxis)));
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  expand_dims_mask_ = GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsMask));
-  init_by_none_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrInitByNone));
+  index_axis_ = IntToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrTupleIndexAxis)));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  expand_dims_mask_ = GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsMask));
+  init_by_none_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrInitByNone));
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
@@ -54,11 +50,9 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int NormalizeSliceInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int NormalizeSliceInfoCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shapes = GetShapes(inputs);
@@ -78,17 +72,17 @@ int NormalizeSliceInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return 0;
 }
 
-bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) const {
-  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->addr);
-  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
+bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) const {
+  const auto start_addr = static_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  const auto step_addr = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
 
-  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
 
-  auto output_arg_size = outputs[kIndex0]->size;
+  auto output_arg_size = outputs[kIndex0]->size();
   int64_t dim_size = data_shape_[0];
   if (!tuple_index_types_.empty()) {
     auto new_index_axis_ = ops::NormalizeDimIndex::ConstNormalizeDimIndex(data_shape_.size(), index_axis_,
@@ -146,8 +140,9 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   return true;
 }
 
-bool NormalizeSliceInfoCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool NormalizeSliceInfoCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, outputs);
 }
 

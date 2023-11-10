@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMaximumGradInputsNum = 3;
+constexpr size_t kMaximumGradInputsNum = 5;
 constexpr size_t kMaximumGradOutputsNum = 2;
 
 void CheckShape(ShapeVector *shape) {
@@ -32,22 +32,20 @@ void CheckShape(ShapeVector *shape) {
 }
 }  // namespace
 
-bool MaximumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaximumGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaximumGradInputsNum || outputs.size() != kMaximumGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaximumGradInputsNum << " and "
                   << kMaximumGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
-int MaximumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int MaximumGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -62,9 +60,9 @@ int MaximumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool MaximumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
@@ -179,13 +177,13 @@ void GetShape(std::vector<size_t> *shape, const ShapeVector &shape_, const Shape
 }
 
 template <typename T>
-void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto dout_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto dx_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto dy_addr = reinterpret_cast<T *>(outputs[1]->addr);
+void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto dout_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto dx_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto dy_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   size_t x_tensor_len = GetTensorLen(x_shape_);
   size_t y_tensor_len = GetTensorLen(y_shape_);

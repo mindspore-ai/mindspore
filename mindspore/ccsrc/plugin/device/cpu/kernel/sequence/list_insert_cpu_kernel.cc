@@ -28,19 +28,16 @@ constexpr int kInputsNum = 3;
 constexpr int kOutputsNum = 1;
 constexpr int kTargetIndex = 2;
 }  // namespace
-bool ListInsertCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ListInsertCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ListInsertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ListInsertCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -53,16 +50,17 @@ int ListInsertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
   MS_EXCEPTION_IF_NULL(index_addr);
   const auto target_addr = GetDeviceAddress<T>(inputs, kTargetIndex);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len_list = list_shape_[0];
-  auto output_size = outputs[0]->size;
-  auto target_size = inputs[kTargetIndex]->size;
+  auto output_size = outputs[0]->size();
+  auto target_size = inputs[kTargetIndex]->size();
   int64_t index = *index_addr;
 
   if (index < -len_list) {

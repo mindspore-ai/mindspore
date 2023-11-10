@@ -51,29 +51,32 @@ struct Complex_traits<Complex<T>> {
 };
 
 template <typename T>
-class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EighcGpuKernelMod : public NativeGpuKernelMod {
  public:
   EighcGpuKernelMod() : is_null_input_(false) {}
   ~EighcGpuKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
-    lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, LOWER));
+    dtype_ = inputs[kIndex0]->dtype_id();
+    const auto &A_shape = inputs[kIndex0]->GetShapeVector();
+    compute_eigen_vectors_ = static_cast<bool>(GetValue<bool>(primitive_->GetAttr(C_EIEH_VECTOR)));
+    lower_ = static_cast<bool>(GetValue<bool>(primitive_->GetAttr(LOWER)));
     if (compute_eigen_vectors_) {
       jobz_ = CUSOLVER_EIG_MODE_VECTOR;
     } else {
       jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
     }
+    output_size_list_.clear();
     cusolver_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (A_shape.size() != kShape2dDims) {
       MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a should be 2D, but got ["
@@ -86,11 +89,11 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     m_ = LongToSizeClipNeg(A_shape[0]);
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -122,10 +125,10 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto w_w_c_addr = GetDeviceAddress<T>(workspace, kDim2);
     // Temp eigenvector before transpose
     auto w_v_addr = GetDeviceAddress<T>(workspace, kDim3);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_v_addr, inout_A_addr, m_ * m_ * sizeof(T),
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Copy input matrix failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(output_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Copy input matrix failed");
 
     TransposeInfo info;
     info.input_shape = std::vector<int64_t>{m_, m_};
@@ -154,10 +157,9 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       cusolverDnZheevd(cusolver_handle_, jobz_, uplo_, m_, reinterpret_cast<cuDoubleComplex *>(w_v_addr), lda_,
                        w_w_addr, reinterpret_cast<cuDoubleComplex *>(d_work), lwork, devInfo);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(w_w_c_addr, w_w_addr, m_ * sizeof(D), cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Copy eigenvalue from workspace to host failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(w_w_c_addr, w_w_addr, m_ * sizeof(D), cudaMemcpyDeviceToDevice,
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "Copy eigenvalue from workspace to host failed");
     // Convert real scalar to complex
     RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
                   reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -168,10 +170,9 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "For 'EignC', copy eigenvalues to output failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "For 'EignC', copy eigenvalues to output failed");
     if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
                                          "For 'EignC', cuda Stream Sync Failed.");
@@ -183,9 +184,7 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
-    // In/out matrix, eigenvector
-    input_size_list_.push_back(m_ * m_ * sizeof(T));
+  void InitSizeLists() {
     // Eigenvalues, cuda output original real scalar, should convert to complex<ft32/64>
     output_size_list_.push_back(m_ * sizeof(T));
     // Eigenvector if need

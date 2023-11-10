@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <algorithm>
-#include <map>
-#include <utility>
 #include <functional>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/softmax_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/softmax_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -35,46 +35,32 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
   SoftmaxGpuKernelMod() = default;
   ~SoftmaxGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using SoftmaxGpuLaunchFunc =
-    std::function<bool(SoftmaxGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using SoftmaxGpuLaunchFunc = std::function<bool(SoftmaxGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &, void *)>;
 
   void ResetResource() {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_shape_.clear();
-
     // add new
     axis_acc_ = 0;
     outer_size_ = 1;
     inner_size_ = 1;
     shape_.clear();
     is_log_softmax_ = false;
-  }
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    return;
   }
 
  private:
@@ -92,11 +78,6 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool is_null_input_{false};
-  size_t input_size_{0};
-  size_t output_size_{0};
-  size_t workspace_size_{0};
-
-  std::vector<size_t> input_shape_{};
   size_t shape_size_{0};
   size_t batch_size_{0};
   size_t height_{0};

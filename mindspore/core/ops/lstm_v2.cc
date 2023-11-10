@@ -84,12 +84,12 @@ abstract::TupleShapePtr LSTMV2InferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kLSTMV2InputNum, op_name);
   auto attr_map = LSTMV2GetAttrMap(primitive);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputXIndex]->BuildShape());
-  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputHIndex]->BuildShape());
-  auto c_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputCIndex]->BuildShape());
-  auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputWIndex]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputXIndex]->GetShape());
+  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputHIndex]->GetShape());
+  auto c_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputCIndex]->GetShape());
+  auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputWIndex]->GetShape());
   auto seq_lengths_shape_map =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputSeqLengthIndex]->BuildShape());
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputSeqLengthIndex]->GetShape());
   auto x_shape = x_shape_map[kShape];
   auto h_shape = h_shape_map[kShape];
   auto c_shape = c_shape_map[kShape];
@@ -154,13 +154,13 @@ abstract::TupleShapePtr LSTMV2InferShape(const PrimitivePtr &primitive,
 TuplePtr LSTMV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[kInputSeqLengthIndex]->BuildType(),
-                                                   {kInt32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[kInputSeqLengthIndex]->GetType(), {kInt32},
+                                                   op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[kInputXIndex]->BuildType());
-  (void)types.emplace("h", input_args[kInputHIndex]->BuildType());
-  (void)types.emplace("c", input_args[kInputCIndex]->BuildType());
-  (void)types.emplace("w", input_args[kInputWIndex]->BuildType());
+  (void)types.emplace("input", input_args[kInputXIndex]->GetType());
+  (void)types.emplace("h", input_args[kInputHIndex]->GetType());
+  (void)types.emplace("c", input_args[kInputCIndex]->GetType());
+  (void)types.emplace("w", input_args[kInputWIndex]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type, type, type});
 }

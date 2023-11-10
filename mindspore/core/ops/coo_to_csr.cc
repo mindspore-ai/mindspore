@@ -47,18 +47,18 @@ AbstractBasePtr COO2CSRInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto height = abstract::CheckArg<AbstractScalar>(op_name, input_args, 1);
   MS_EXCEPTION_IF_NULL(row_indices);
   MS_EXCEPTION_IF_NULL(height);
-  CheckSparseIndicesDtypeInt32(row_indices->element()->BuildType(), "row_indices");
-  MS_EXCEPTION_IF_NULL(height->BuildValue());
+  CheckSparseIndicesDtypeInt32(row_indices->element()->GetType(), "row_indices");
+  MS_EXCEPTION_IF_NULL(height->GetValue());
   ShapeVector out_shape;
-  if (height->BuildValue()->isa<Int32Imm>() || height->BuildValue()->isa<Int64Imm>()) {
-    int64_t height_value = GetValue<int64_t>(height->BuildValue());
+  if (height->GetValue()->isa<Int32Imm>() || height->GetValue()->isa<Int64Imm>()) {
+    int64_t height_value = GetValue<int64_t>(height->GetValue());
     out_shape.push_back(height_value + 1);
   } else {
     MS_EXCEPTION(ValueError) << "Currently, only support Integer height.";
   }
 
   MS_EXCEPTION_IF_NULL(row_indices->element());
-  auto ret = std::make_shared<AbstractTensor>(row_indices->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(row_indices->element()->GetType(), out_shape);
   return ret;
 }
 MIND_API_OPERATOR_IMPL(COO2CSR, BaseOperator);

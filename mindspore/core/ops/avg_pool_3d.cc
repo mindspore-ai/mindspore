@@ -178,7 +178,7 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // ToSupport Dynamic rank
   constexpr int64_t k5DOuputDims = 5;
   if (IsDynamicRank(in_shape)) {
@@ -229,7 +229,7 @@ TypePtr AvgPool3DInferType(const PrimitivePtr &primitive, const std::vector<Abst
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
 }

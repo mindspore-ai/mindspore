@@ -45,12 +45,9 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
  public:
   InplaceOpV2CpuTypeFunc() = default;
   ~InplaceOpV2CpuTypeFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                const std::vector<KernelTensorPtr> &) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-    kernel_name_ = base_operator->GetPrim()->name();
-
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                const std::vector<KernelTensor *> &) override {
+    kernel_name_ = primitive->name();
     static std::unordered_map<std::string, TypeComputeFuncV2> inplaceOpV2FuncMap = {
       {prim::kPrimInplaceUpdateV2->name(), &InplaceOpV2CpuTypeFunc<T, S>::InplaceOpV2<NoCheckUpdate<Update>>},
     };
@@ -62,8 +59,7 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     compute_func_ = inplaceOpV2FuncMap.at(kernel_name_);
   }
 
-  int Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &,
-             const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) override {
     if (inputs.size() != kInplaceOpV2InputNum) {
       MS_LOG(ERROR) << "For 'InplaceOpV2', the size of inputs must be 3, but got " << inputs.size() << ".";
       return KRET_RESIZE_FAILED;
@@ -119,20 +115,20 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     ParallelLaunchAutoSearch(task, LongToSize(v_size_), this, &parallel_search_info_);
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *v = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    if (memcpy_s(output, outputs[0]->size, x, inputs[0]->size) != EOK) {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *v = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+    if (memcpy_s(output, outputs[0]->size(), x, inputs[0]->size()) != EOK) {
       MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOpV2'.";
       return false;
     }
 
     std::vector<int64_t> indices;
-    const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
+    const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
     MS_EXCEPTION_IF_NULL(indice_ptr);
-    for (size_t i = 0; i < inputs[kIndex1]->size / sizeof(S); ++i) {
+    for (size_t i = 0; i < inputs[kIndex1]->size() / sizeof(S); ++i) {
       int64_t indice = IntToLong(indice_ptr[i]);
       if (indice >= row_size_ || indice + row_size_ < 0) {
         MS_LOG(EXCEPTION) << "For 'InplaceUpdate', the value of 'indices' must be between " << -row_size_ << " and "
@@ -184,9 +180,8 @@ static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
 };
 }  // namespace
 
-bool InPlaceOpV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool InPlaceOpV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
   }
@@ -199,18 +194,17 @@ bool InPlaceOpV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 
   func_obj_ = kernel_attr_list.at(kernel_name_)[index].second();
 
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
 
   return true;
 }
 
-int InPlaceOpV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int InPlaceOpV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> InPlaceOpV2CpuKernelMod::GetOpSupport() {

@@ -22,6 +22,7 @@
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
 #include "ops/lite_op_name.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {
@@ -41,10 +42,6 @@ GVAR_DEF(PrimitivePtr, kPrimAddFusion, std::make_shared<Primitive>("AddFusion"))
 GVAR_DEF(PrimitivePtr, kPrimScaleFusion, std::make_shared<Primitive>("ScaleFusion"));
 GVAR_DEF(PrimitivePtr, kPrimSubFusion, std::make_shared<Primitive>("SubFusion"));
 GVAR_DEF(PrimitivePtr, kPrimMulFusion, std::make_shared<Primitive>("MulFusion"));
-GVAR_DEF(PrimitivePtr, kPrimSigmoid, std::make_shared<Primitive>("Sigmoid"));
-GVAR_DEF(PrimitivePtr, kPrimSigmoidGrad, std::make_shared<Primitive>("SigmoidGrad"));
-GVAR_DEF(PrimitivePtr, kPrimHSigmoid, std::make_shared<Primitive>("HSigmoid"));
-GVAR_DEF(PrimitivePtr, kPrimHSigmoidGrad, std::make_shared<Primitive>("HSigmoidGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLogSigmoid, std::make_shared<Primitive>("LogSigmoid"));
 GVAR_DEF(PrimitivePtr, kPrimClip, std::make_shared<Primitive>("Clip"));
 GVAR_DEF(PrimitivePtr, kPrimHardTanh, std::make_shared<Primitive>("HardTanh"));
@@ -69,8 +66,6 @@ GVAR_DEF(PrimitivePtr, kPrimReduceSumD, std::make_shared<Primitive>("ReduceSumD"
 GVAR_DEF(PrimitivePtr, kPrimLayerNormFusion, std::make_shared<Primitive>("LayerNormFusion"));
 GVAR_DEF(PrimitivePtr, kPrimDivFusion, std::make_shared<Primitive>("DivFusion"));
 GVAR_DEF(PrimitivePtr, kPrimExpFusion, std::make_shared<Primitive>("ExpFusion"));
-GVAR_DEF(PrimitivePtr, kPrimErf, std::make_shared<Primitive>("Erf"));
-GVAR_DEF(PrimitivePtr, kPrimErfc, std::make_shared<Primitive>("Erfc"));
 GVAR_DEF(PrimitivePtr, kPrimSplice, std::make_shared<Primitive>("Splice"));
 GVAR_DEF(PrimitivePtr, kPrimAffine, std::make_shared<Primitive>("Affine"));
 GVAR_DEF(PrimitivePtr, kPrimEltwise, std::make_shared<Primitive>("Eltwise"));

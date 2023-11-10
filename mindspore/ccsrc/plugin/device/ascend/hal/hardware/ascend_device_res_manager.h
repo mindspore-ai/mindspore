@@ -60,6 +60,8 @@ class AscendDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
 
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
+
   bool CreateStream(size_t *stream_id) const override;
 
   bool DestroyStream(size_t stream_id) const override;

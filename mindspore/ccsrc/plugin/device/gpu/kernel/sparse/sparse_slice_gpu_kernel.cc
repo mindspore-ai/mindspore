@@ -21,11 +21,11 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool SparseSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSliceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 5;
   constexpr size_t outputs_num = 3;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -39,10 +39,9 @@ bool SparseSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();
@@ -53,9 +52,9 @@ int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     num_dim_ = input_indices_shape[1];
 
     output_size_list_.clear();
-    output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype())));
-    output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[kIndex1]->GetDtype())));
-    output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype())));
+    output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id())));
+    output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[kIndex1]->dtype_id())));
+    output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->dtype_id())));
 
     workspace_size_list_.clear();
     workspace_size_list_.push_back(sizeof(int64_t));
@@ -64,9 +63,9 @@ int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   auto indices_ptr = GetDeviceAddress<IndexType>(inputs, kIndex0);
@@ -80,7 +79,7 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto sum_count_ptr = GetDeviceAddress<int64_t>(workspace, kIndex0);
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kIndex0)->size, cuda_stream),
+    cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kIndex0)->size(), cuda_stream),
     "For SparseSlice, failed to cudaMemset.");
 
   bool is_nullptr = (indices_ptr == nullptr) || (values_ptr == nullptr) || (x_ptr == nullptr) ||
@@ -104,11 +103,15 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-void SparseSliceGpuKernelMod::SyncOutputShape() {
+void SparseSliceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSlice cudaStreamSynchronized failed");
-  outputs_[kIndex0]->SetShapeVector(ShapeVector({real_output_size, static_cast<int64_t>(num_dim_)}));
-  outputs_[kIndex1]->SetShapeVector(ShapeVector({real_output_size}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex0]->SetShapeVector(ShapeVector({real_output_size, static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({real_output_size}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex0]->set_size(LongToSize(real_output_size) * num_dim_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(real_output_size) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(num_dim_ * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, SparseSliceGpuKernelMod::SparseSliceLaunchFunc>> SparseSliceGpuKernelMod::func_list_ =

@@ -19,6 +19,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -43,6 +44,7 @@ STATUS BatchNormMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
+using mindspore::ops::kNameBatchNorm;
 REGISTER_PRIMITIVE_MAPPER(kNameBatchNorm, BatchNormMapper)
 }  // namespace lite
 }  // namespace mindspore

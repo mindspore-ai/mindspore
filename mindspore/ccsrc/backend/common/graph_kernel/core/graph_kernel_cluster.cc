@@ -21,6 +21,15 @@
 #include <fstream>
 #include <string>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"

@@ -54,9 +54,8 @@ const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
    CreateUniqueKernelPtr<int64_t, int64_t>}};
 }  // namespace
 
-bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto batch_rank = base_operator->get_batch_rank();
+bool UniqueGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto batch_rank = primitive_->HasAttr("batch_rank") ? GetValue<int64_t>(primitive_->GetAttr("batch_rank")) : 0;
   if (batch_rank < 0) {
     return false;
   }
@@ -74,9 +73,7 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int UniqueGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -88,30 +85,33 @@ int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     return KRET_OK;
   }
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   return KRET_OK;
 }
 
-void UniqueGpuKernelMod::SyncOutputShape() {
+void UniqueGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
+    std::vector<int64_t> shape = outputs[i]->GetShapeVector();
     if (i == 0) {
       auto dyn_out = helper_ptr_->GetOutputTensorInfo();
       MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,
                                  "Unique output info error.");
       shape[0] = dyn_out.shapes[0][0];
     }
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
+                                                    std::multiplies<int64_t>())));
   }
 }
 

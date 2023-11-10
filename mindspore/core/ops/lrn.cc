@@ -51,7 +51,7 @@ abstract::ShapePtr LrnInferShape(const PrimitivePtr &primitive, const std::vecto
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_shape = input_shape_map[kShape];
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -71,7 +71,7 @@ TypePtr LrnInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   auto op_name = prim->name();
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  TypePtr input_type = input_args[0]->BuildType();
+  TypePtr input_type = input_args[0]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_type);
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, op_name);

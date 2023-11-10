@@ -59,17 +59,15 @@ void CheckMissCount(size_t miss_count, int count_size, float total_count, float 
   }
 }
 
-bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MapCacheIdxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
   is_need_retrieve_output_shape_ = true;
   outputs_size_ = outputs.size();
   for (size_t i = 0; i < outputs_size_; i++) {
     MS_EXCEPTION_IF_NULL(outputs[i]);
-    dtypes_.push_back(outputs[i]->GetDtype());
+    dtypes_.push_back(outputs[i]->dtype_id());
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -82,10 +80,9 @@ bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MapCacheIdxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
     return ret;
@@ -103,25 +100,21 @@ int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  HashmapEntry<T> *hashmap = GetDeviceAddress<HashmapEntry<T>>(inputs, kIndex0);
-  auto input_indices = GetDeviceAddress<T>(inputs, kIndex1);
-  T *step_ = GetDeviceAddress<T>(inputs, kIndex2);
-  T *emb_max_num_ptr = GetDeviceAddress<T>(inputs, kIndex3);
-  T *offset_ptr = GetDeviceAddress<T>(inputs, kIndex4);
-  auto output_cache_idx = GetDeviceAddress<T>(outputs, kIndex0);
-  auto output_old_emb_idx = GetDeviceAddress<T>(outputs, kIndex1);
-  auto output_miss_emb_idx = GetDeviceAddress<T>(outputs, kIndex2);
-  auto output_swap_cache_idx = GetDeviceAddress<T>(outputs, kIndex3);
+bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->device_ptr());
+  auto input_indices = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *step_ = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  T emb_max_num = *reinterpret_cast<T *>(inputs[3]->device_ptr());
+  T offset = *reinterpret_cast<T *>(inputs[4]->device_ptr());
+  auto output_cache_idx = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_old_emb_idx = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  auto output_miss_emb_idx = reinterpret_cast<T *>(outputs[2]->device_ptr());
+  auto output_swap_cache_idx = reinterpret_cast<T *>(outputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(hashmap);
   MS_EXCEPTION_IF_NULL(input_indices);
   MS_EXCEPTION_IF_NULL(step_);
-  MS_EXCEPTION_IF_NULL(emb_max_num_ptr);
-  MS_EXCEPTION_IF_NULL(offset_ptr);
-  T emb_max_num = *emb_max_num_ptr;
-  T offset = *offset_ptr;
   std::vector<T> miss_idx;
   miss_count_ = 0;
   float total_count = 0;
@@ -205,10 +198,12 @@ bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return true;
 }
 
-void MapCacheIdxCpuKernelMod::SyncOutputShape() {
+void MapCacheIdxCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_shape = {SizeToLong(miss_count_)};
   for (size_t i = 1; i < outputs_size_; i++) {
-    outputs_[i]->SetShapeVector(out_shape);
+    outputs[i]->SetShapeVector(out_shape);
+    outputs[i]->set_size(miss_count_ * UnitSizeInBytes(outputs[i]->dtype_id()));
   }
 }
 

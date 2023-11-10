@@ -29,6 +29,8 @@
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/op_utils.h"
+#include "ops/op_def.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/common/utils/utils.h"
@@ -38,6 +40,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "utils/ms_context.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "kernel/kernel_build_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace common {
@@ -462,6 +466,11 @@ FuncGraphPtr AnfAlgo::GetCNodeFuncGraphPtr(const AnfNodePtr &node) {
 std::string AnfAlgo::GetCNodeName(const AnfNodePtr &node) {
   // this function was moved to AnfUtils.
   return AnfUtils::GetCNodeName(node);
+}
+
+bool AnfAlgo::IsGetNextNode(const AnfNodePtr &node) {
+  auto node_name = AnfUtils::GetCNodeName(node);
+  return node_name == kGetNextOpName || node_name == kDynamicGetNextV2OpName;
 }
 
 std::string AnfAlgo::GetNodeDebugString(const AnfNodePtr &node) {
@@ -1183,7 +1192,7 @@ bool AnfAlgo::IsFusedCommunicationOp(const AnfNodePtr &node) {
 
 bool AnfAlgo::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
-  return kernel_name == kGetNextOpName;
+  return kernel_name == kGetNextOpName || kernel_name == kDynamicGetNextV2OpName;
 }
 
 bool AnfAlgo::IsGraphKernel(const AnfNodePtr &node) {
@@ -1572,6 +1581,37 @@ bool AnfAlgo::IsDynamicShape(const AnfNodePtr &node) {
   return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape);
 }
 
+bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode.";
+    return false;
+  }
+  if (AnfAlgo::IsGraphKernel(node)) {
+    MS_LOG(DEBUG) << "Node(" << node->fullname_with_scope() << ") is GraphKernel node, it's not dynamic value type.";
+    return false;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->HasAttr(ops::kHasDynamicValue)) {
+    return true;
+  }
+  auto depend_list = abstract::GetValueDependArgIndices(cnode);
+  if (!depend_list.empty()) {
+    size_t real_input_num = cnode->size() - 1;  // exclude primitive in input[0]
+    for (auto i = depend_list.begin(); i != depend_list.end(); i++) {
+      if (*i >= SizeToInt(real_input_num)) {
+        continue;
+      }
+      if (!cnode->input(*i + 1)->isa<ValueNode>()) {
+        cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void AnfAlgo::GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape) {
   for (auto size : shape) {
     if (size == SIZE_MAX) {
@@ -1650,7 +1690,7 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
 std::string AnfAlgo::GetGraphSplitGroup(const AnfNodePtr &node) {
   return HasNodeAttr(kAttrGraphSplitGroup, node->cast<CNodePtr>())
            ? GetNodeAttr<std::string>(node->cast<CNodePtr>(), kAttrGraphSplitGroup)
-           : kDefaultGroup;
+           : "DefaultGroup";
 }
 
 void AnfAlgo::GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *used_kernels,
@@ -1924,16 +1964,20 @@ AnfNodePtr AnfAlgo::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> 
 }
 
 bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
-  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(),
-                                                      kExpandDimsOpName,
-                                                      prim::kPrimSqueeze->name(),
-                                                      prim::kPrimFlatten->name(),
-                                                      kFlattenGradOpName,
-                                                      prim::kPrimReformat->name(),
-                                                      prim::kPrimTupleToTensor->name(),
-                                                      prim::kPrimScalarToTensor->name(),
-                                                      prim::kPrimTensorToTuple->name(),
-                                                      prim::kPrimTensorToScalar->name()};
+  // There is a problem with the current dynamic shape flow of NopNode, this Type of operator will be optimized by the
+  // back end, output and input share DeviceAddress, also share KernelTensor, and the subsequent operator InferShape
+  // gets the wrong Shape or type. The judgment of NopNode is temporarily disabled.
+  static mindspore::HashSet<std::string> nop_nodes = {};
+  // static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(),
+  //                                                     kExpandDimsOpName,
+  //                                                     prim::kPrimSqueeze->name(),
+  //                                                     prim::kPrimFlatten->name(),
+  //                                                     kFlattenGradOpName,
+  //                                                     prim::kPrimReformat->name(),
+  //                                                     prim::kPrimTupleToTensor->name(),
+  //                                                     prim::kPrimScalarToTensor->name(),
+  //                                                     prim::kPrimTensorToTuple->name(),
+  //                                                     prim::kPrimTensorToScalar->name()};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
@@ -2044,22 +2088,27 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   return buf.str();
 }
 
-abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+abstract::AbstractBasePtr AnfAlgo::FrontendGetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
   if (abstract == nullptr) {
-    return nullptr;
-  }
-
-  if (index == 0 || (!abstract->isa<abstract::AbstractTuple>()) || common::AnfAlgo::IsDynamicSequence(node)) {
     return abstract;
   }
 
-  const auto &abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+  // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node)) {
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
+                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    return abstract;
+  }
+
+  // Return element abstract by index for tuple type.
+  const auto &abstract_tuple = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   const auto &elements = abstract_tuple->elements();
   if (elements.size() <= index) {
-    return nullptr;
+    const auto sub_abstract = FetchAbstractByIndex(node->abstract(), index);
+    return sub_abstract;
   }
   return elements[index];
 }
@@ -2073,6 +2122,33 @@ std::string AnfAlgo::GetJitLevel(const FuncGraphPtr &func_graph) {
   auto jit_level_value = func_graph->get_attr(kAttrJitLevel);
   auto jit_level = GetValue<std::string>(jit_level_value);
   return jit_level;
+}
+
+bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  // Check if the node is mutable scalar by all_inputs are scalar or output is scalar.
+  const auto &is_mutable_scalar_func = [](const AnfNodePtr &cur_node) {
+    const auto &abstract = cur_node->abstract();
+    if (abstract == nullptr || (!abstract->isa<abstract::AbstractScalar>())) {
+      return false;
+    }
+    if (abstract->BuildValue()->ContainsValueAny() && abstract->BuildType()->isa<Number>()) {
+      return true;
+    }
+    return false;
+  };
+  bool is_output_mutable_scalar = is_mutable_scalar_func(node);
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!is_mutable_scalar_func(cnode->input(kRealInputIndexInDepend))) {
+      return false;
+    }
+  }
+  return is_output_mutable_scalar;
 }
 
 bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {

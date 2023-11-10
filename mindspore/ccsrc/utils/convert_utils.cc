@@ -287,6 +287,169 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   }
 }
 
+template <typename T>
+std::vector<T> ConvertValueListToVector(const ValuePtrList &seq_values) {
+  size_t element_num = seq_values.size();
+  std::vector<T> array_data(element_num);
+  for (size_t i = 0; i < element_num; i++) {
+    const auto &element = seq_values[i];
+    MS_EXCEPTION_IF_NULL(element);
+    array_data[i] = GetValue<T>(element);
+  }
+  return array_data;
+}
+
+tensor::TensorPtr SequenceToTensor(const ValueSequencePtr &sequence) {
+  MS_EXCEPTION_IF_NULL(sequence);
+  const auto &element_values = sequence->value();
+  if (element_values.empty()) {
+    std::vector<int32_t> array_data;
+    MS_LOG(WARNING) << "The value sequence is empty.";
+    return std::make_shared<tensor::Tensor>(std::move(array_data), TypeIdToType(kNumberTypeInt32));
+  }
+
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "For sequence value, only sequence of scalar can convert to TensorValue, but got: "
+                      << sequence->ToString();
+  }
+
+  TypePtr data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeInt32:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int32_t>(element_values), data_type);
+    case kNumberTypeInt64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int64_t>(element_values), data_type);
+    case kNumberTypeFloat64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<double>(element_values), data_type);
+    default:
+      MS_LOG(EXCEPTION) << "When convert sequence to tensor, the sequence type: " << data_type << " is invalid.";
+  }
+}
+
+namespace {
+KernelTensorValuePtr ConvertScalarToKernelTensorValue(const ValuePtr &scalar) {
+  MS_EXCEPTION_IF_NULL(scalar);
+  TypePtr data_type = scalar->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeBool:
+      return std::make_shared<KernelTensorValue>(GetValue<bool>(scalar), data_type);
+    case kNumberTypeInt8:
+      return std::make_shared<KernelTensorValue>(GetValue<int8_t>(scalar), data_type);
+    case kNumberTypeInt16:
+      return std::make_shared<KernelTensorValue>(GetValue<int16_t>(scalar), data_type);
+    case kNumberTypeInt32:
+      return std::make_shared<KernelTensorValue>(GetValue<int32_t>(scalar), data_type);
+    case kNumberTypeInt64:
+      return std::make_shared<KernelTensorValue>(GetValue<int64_t>(scalar), data_type);
+    case kNumberTypeUInt8:
+      return std::make_shared<KernelTensorValue>(GetValue<uint8_t>(scalar), data_type);
+    case kNumberTypeUInt16:
+      return std::make_shared<KernelTensorValue>(GetValue<uint16_t>(scalar), data_type);
+    case kNumberTypeUInt32:
+      return std::make_shared<KernelTensorValue>(GetValue<uint32_t>(scalar), data_type);
+    case kNumberTypeUInt64:
+      return std::make_shared<KernelTensorValue>(GetValue<uint64_t>(scalar), data_type);
+    case kNumberTypeFloat32:
+      return std::make_shared<KernelTensorValue>(GetValue<float>(scalar), data_type);
+    case kNumberTypeFloat64:
+      return std::make_shared<KernelTensorValue>(GetValue<double>(scalar), data_type);
+    default:
+      MS_LOG(EXCEPTION) << "When convert scalar to KernelTensorValue, the scalar type: " << data_type->ToString()
+                        << " is invalid.";
+  }
+}
+
+template <typename T>
+KernelTensorValuePtr ConvertValueListToKernelTensorValue(const ValuePtrList &seq_values, const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  size_t element_num = seq_values.size();
+  std::vector<uint8_t> array_data(element_num * sizeof(T));
+  T *array_data_ptr = reinterpret_cast<T *>(array_data.data());
+  MS_EXCEPTION_IF_NULL(array_data_ptr);
+
+  for (size_t i = 0; i < element_num; i++) {
+    const auto &element = seq_values[i];
+    MS_EXCEPTION_IF_NULL(element);
+    array_data_ptr[i] = GetValue<T>(element);
+  }
+  return std::make_shared<KernelTensorValue>(std::move(array_data), type);
+}
+
+KernelTensorValuePtr ConvertSequenceToKernelTensorValue(const ValueSequencePtr &value_seq) {
+  MS_EXCEPTION_IF_NULL(value_seq);
+  const auto &element_values = value_seq->value();
+  std::vector<uint8_t> array_data;
+  if (element_values.empty()) {
+    MS_LOG(INFO) << "The value sequence is empty.";
+    return std::make_shared<KernelTensorValue>(std::move(array_data), value_seq->type());
+  }
+
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "For sequence value, only sequence of scalar can convert to KernelTensorValue, but got: "
+                      << value_seq->ToString();
+  }
+
+  TypePtr data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+
+  switch (type_id) {
+    case kNumberTypeBool:
+      return ConvertValueListToKernelTensorValue<bool>(element_values, value_seq->type());
+    case kNumberTypeInt8:
+      return ConvertValueListToKernelTensorValue<int8_t>(element_values, value_seq->type());
+    case kNumberTypeInt16:
+      return ConvertValueListToKernelTensorValue<int16_t>(element_values, value_seq->type());
+    case kNumberTypeInt32:
+      return ConvertValueListToKernelTensorValue<int32_t>(element_values, value_seq->type());
+    case kNumberTypeInt64:
+      return ConvertValueListToKernelTensorValue<int64_t>(element_values, value_seq->type());
+    case kNumberTypeUInt8:
+      return ConvertValueListToKernelTensorValue<uint8_t>(element_values, value_seq->type());
+    case kNumberTypeUInt16:
+      return ConvertValueListToKernelTensorValue<uint16_t>(element_values, value_seq->type());
+    case kNumberTypeUInt32:
+      return ConvertValueListToKernelTensorValue<uint32_t>(element_values, value_seq->type());
+    case kNumberTypeUInt64:
+      return ConvertValueListToKernelTensorValue<uint64_t>(element_values, value_seq->type());
+    case kNumberTypeFloat32:
+      return ConvertValueListToKernelTensorValue<float>(element_values, value_seq->type());
+    case kNumberTypeFloat64:
+      return ConvertValueListToKernelTensorValue<double>(element_values, value_seq->type());
+    default:
+      MS_LOG(EXCEPTION) << "When convert sequence to KernelTensorValue, the element type: " << data_type->ToString()
+                        << " is invalid.";
+  }
+}
+}  // namespace
+
+KernelTensorValuePtr ConvertValueToKernelTensorValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Scalar>()) {
+    return ConvertScalarToKernelTensorValue(value);
+  } else if (value->isa<ValueSequence>()) {
+    auto value_seq = value->cast<ValueSequencePtr>();
+    return ConvertSequenceToKernelTensorValue(value_seq);
+  } else if (value->isa<tensor::Tensor>()) {
+    auto tensor_ptr = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    return std::make_shared<KernelTensorValue>(tensor_ptr->data_ptr(), tensor_ptr->type());
+  } else if (value->isa<StringImm>()) {
+    auto string_ptr = value->cast<StringImmPtr>();
+    MS_EXCEPTION_IF_NULL(string_ptr);
+    return std::make_shared<KernelTensorValue>(string_ptr, string_ptr->type());
+  } else {
+    MS_LOG(WARNING) << "KernelTensorValue not support the value type: " << value->ToString();
+    return nullptr;
+  }
+}
+
 template <typename T, typename Scalar>
 ValuePtr GetTensorValue(const tensor::TensorPtr &tensor) {
   ValuePtr ret;
@@ -321,6 +484,11 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(data_type);
   TypeId type_id = data_type->type_id();
   switch (type_id) {
+    case kNumberTypeBool: {
+      ret = GetTensorValue<bool, BoolImm>(tensor);
+      break;
+    }
+
     case kNumberTypeInt8: {
       ret = GetTensorValue<int8_t, Int8Imm>(tensor);
       break;

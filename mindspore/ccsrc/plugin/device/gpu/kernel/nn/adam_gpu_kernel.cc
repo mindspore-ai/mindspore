@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/gpu/kernel/nn/adam_gpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,9 +35,8 @@ constexpr size_t kIndexEpsilon = 8;
 constexpr size_t kIndexGrad = 9;
 }  // namespace
 
-bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto prim = base_operator->GetPrim();
+bool AdamGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
 
   if (prim->HasAttr("use_locking")) {
@@ -45,9 +45,7 @@ bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   if (prim->HasAttr("use_nesterov")) {
     use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
   }
-
-  kernel_name_ = prim->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = ops::get_batch_rank(prim);
   constexpr size_t input_num = 10;
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -62,10 +60,8 @@ bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AdamGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -125,8 +121,9 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool AdamGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdamGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *m = GetDeviceAddress<T>(inputs, kIndex1);
   T *v = GetDeviceAddress<T>(inputs, kIndex2);

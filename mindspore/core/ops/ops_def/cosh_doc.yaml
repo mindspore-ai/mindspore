@@ -1,0 +1,27 @@
+cosh:
+    description: |
+        Computes hyperbolic cosine of input element-wise.
+
+        Refer to :func:`mindspore.ops.cosh` for more details.
+
+        Args:
+            x (Tensor): The input Tensor.
+
+        Returns:
+            Tensor, has the same shape and dtype as `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+            >>> output = ops.cosh(x)
+            >>> print(output)
+            [1.0289385 1.364684 1.048436 1.0040528]
+            >>> x = Tensor(2.1, mindspore.float32)
+            >>> output = ops.cosh(x)
+            >>> print(output)
+            4.144313

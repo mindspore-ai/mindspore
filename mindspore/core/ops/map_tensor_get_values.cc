@@ -38,22 +38,19 @@ MIND_API_OPERATOR_IMPL(MapTensorGetValues, BaseOperator);
 abstract::ShapePtr MapTensorGetValuesInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   // Check argument abstracts.
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetValues, input_args, kInputIndex0);
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
-  MS_EXCEPTION_IF_NULL(map_tensor_type);
-  auto value_shape_ptr = abs_map_tensor->value_shape();
-  MS_EXCEPTION_IF_NULL(value_shape_ptr);
-  const auto &value_shape = value_shape_ptr->shape();
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGetValues, input_args, kInputIndex0, kObjectTypeMapTensorType);
+  auto shape_ptr = abs_map_tensor->GetShape();
+  const auto &shape = shape_ptr->GetShapeVector();
   // We don't know the map size in compile time.
   ShapeVector shape_vec = {abstract::Shape::kShapeDimAny};
-  (void)shape_vec.insert(shape_vec.end(), value_shape.begin(), value_shape.end());
+  (void)shape_vec.insert(shape_vec.end(), shape.begin() + 1, shape.end());
   return std::make_shared<abstract::Shape>(shape_vec);
 }
 
 TypePtr MapTensorGetValuesInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetValues, input_args, kInputIndex0);
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGetValues, input_args, kInputIndex0, kObjectTypeMapTensorType);
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
   const auto &value_dtype = map_tensor_type->value_dtype();
   return value_dtype;

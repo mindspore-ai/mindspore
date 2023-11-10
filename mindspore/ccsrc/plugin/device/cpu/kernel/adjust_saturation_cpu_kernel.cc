@@ -121,12 +121,13 @@ static void hsv_to_rgb(float h, float s, float v, T *r, T *g, T *b) {
 }
 
 template <typename T>
-bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input{static_cast<T *>(inputs[0]->addr)};
-  auto scale{static_cast<std::float_t *>(inputs[1]->addr)};
-  auto output{static_cast<T *>(outputs[0]->addr)};
+bool LaunchAdjustSaturationKernel(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto input{static_cast<T *>(inputs[0]->device_ptr())};
+  auto scale{static_cast<std::float_t *>(inputs[1]->device_ptr())};
+  auto output{static_cast<T *>(outputs[0]->device_ptr())};
   constexpr int64_t kChannelSize = 3;
-  std::int64_t num_elements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  std::int64_t num_elements = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
   auto sharder_adjustsaturation = [input, scale, output, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
       float h, s, v;
@@ -151,11 +152,8 @@ bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const s
 }
 }  // namespace detail
 
-bool AdjustSaturationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool AdjustSaturationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustSaturationTwo, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustSaturationOne, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -164,13 +162,13 @@ bool AdjustSaturationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  input_type_ = inputs[kIndex0]->GetDtype();
+  input_type_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
-bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_type_ == kNumberTypeFloat32) {
     return detail::LaunchAdjustSaturationKernel<float>(inputs, outputs);
   } else if (input_type_ == kNumberTypeFloat16) {

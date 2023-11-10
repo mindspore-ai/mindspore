@@ -30,6 +30,7 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace parallel {

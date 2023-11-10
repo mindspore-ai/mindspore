@@ -23,6 +23,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "utils/hash_set.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -60,7 +61,7 @@ std::vector<int64_t> TransposeAxis(const int dim, FormatTransformDir dir) {
 
 ValueNodePtr CreateValueNode(const std::vector<int64_t> &transpose_perm, const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto tensor_ptr = std::make_shared<tensor::Tensor>(transpose_perm, TypeIdToType(kNumberTypeInt64));
+  auto tensor_ptr = MakeValue<std::vector<int64_t>>(transpose_perm);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   auto value_node = std::make_shared<ValueNode>(tensor_ptr);
   MS_EXCEPTION_IF_NULL(value_node);

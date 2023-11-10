@@ -23,11 +23,13 @@
 #include <memory>
 #include <algorithm>
 #include "transform/acl_ir/acl_utils.h"
+#include "transform/graph_ir/op_adapter_util.h"
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace transform {
 using AddressPtr = kernel::AddressPtr;
+using KernelTensor = mindspore::kernel::KernelTensor;
 
 typedef enum { SET_ACL_ATTR, SET_ACL_ATTR_TO_INPUT } AttrConvertMode;
 template <typename T>
@@ -65,12 +67,13 @@ class AclConverter {
   void ConvertToAclOpType(const std::string &prim_name);
   void ResizeAclOpInputs(const PrimitivePtr &prim);
   void ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
-                         const std::vector<AddressPtr> &inputs, const std::vector<TensorParams> &input_params);
-  void ConvertToAclOutput(const std::string &kernel_name, const std::vector<AddressPtr> &outputs,
+                         const std::vector<KernelTensor *> &inputs, const std::vector<TensorParams> &input_params);
+  void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                           const std::vector<TensorParams> &output_params);
 
   void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name,
                              AclInputToHost *inputs_on_host);
+  void ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
   void ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);
@@ -89,6 +92,7 @@ class AclConverter {
 
   static aclDataType ConvertType(TypeId type);
   static aclFormat ConvertFormat(const std::string &format);
+  std::string GetFormatFromInputAttrMap(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
 
  private:
   friend class AttrConverter;
@@ -126,7 +130,8 @@ class AttrHelper {
   template <typename T>
   void ConvertListAttr(const ValuePtr &value, T trans_struct);
 
-  void GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type, ShapeVector *shape);
+  void GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type, ShapeVector *shape,
+                                        bool *is_ge_datatype);
 
   template <typename T>
   void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) const {
@@ -168,6 +173,19 @@ class AttrConverter : public AttrHelper<AttrConverter> {
     ConvertValueSequenceToList(value, &array_list);
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list);
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<::ge::DataType>> &,
+                    AclConverter *acl_converter) {
+    std::vector<::ge::DataType> data;
+    if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
+      MS_LOG(EXCEPTION) << "value must be sequence, but got " << value->ToString();
+    }
+    auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+    (void)std::transform(vec.begin(), vec.end(), std::back_inserter(data),
+                         [](const ValuePtr &it) { return it->cast<GeDataTypeImmPtr>()->value(); });
+    MS_EXCEPTION_IF_NULL(acl_converter);
+    acl_converter->AclRunnerAddAttr(attr_name_, data);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int32_t>> &, AclConverter *acl_converter) {
@@ -226,6 +244,10 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     ConvertValueSequenceToList(value, &array_list);
     tensor_ = std::make_shared<tensor::Tensor>(array_list);
     MS_EXCEPTION_IF_NULL(tensor_);
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<::ge::DataType>> &, TensorParams *) {
+    MS_LOG(EXCEPTION) << "Unsupported convert from vector<::ge::DataType> to input.";
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::string>> &, TensorParams *) {

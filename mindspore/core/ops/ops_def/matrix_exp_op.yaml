@@ -1,0 +1,8 @@
+#operator matrix_exp
+matrix_exp:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor

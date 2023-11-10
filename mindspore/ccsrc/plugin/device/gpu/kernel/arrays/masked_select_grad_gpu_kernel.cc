@@ -63,11 +63,8 @@ static std::vector<int64_t> GetBroadcastShape(const std::vector<int64_t> &x, con
   return broadcast_shape;
 }
 
-bool MaskedSelectGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool MaskedSelectGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -95,16 +92,13 @@ void MaskedSelectGradGpuKernelMod::ResetResource() noexcept {
     mask_shape_[i] = 1;
     broadcast_shape_[i] = 1;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
-int MaskedSelectGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaskedSelectGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -149,9 +143,6 @@ int MaskedSelectGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     mask_broadcast_ = true;
   }
 
-  // list
-  input_size_list_.push_back(input_size_ * input_type_size_);
-  input_size_list_.push_back(mask_size_ * mask_type_size_);
   workspace_size_list_.push_back(broadcast_size_ * sizeof(size_t));  // save prefix sum of mask
   if (input_broadcast_) {
     workspace_size_list_.push_back(broadcast_size_ * input_type_size_);  // save broadcast result of input
@@ -159,15 +150,14 @@ int MaskedSelectGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (mask_broadcast_) {
     workspace_size_list_.push_back(broadcast_size_ * mask_type_size_);  // save broadcast result of mask
   }
-  input_size_list_.push_back(broadcast_size_ * input_type_size_);
   output_size_list_.push_back(input_size_ * input_type_size_);
   return KRET_OK;
 }
 
 template <typename T>
-bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   if (broadcast_size_ == 0) {
     return true;
@@ -197,7 +187,7 @@ bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   if (output_grad_ptr == nullptr) {
     auto input_grad_ptr = GetDeviceAddress<T>(outputs, kIndex0);
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-      cudaMemsetAsync(input_grad_ptr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      cudaMemsetAsync(input_grad_ptr, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "MaskedSelectGradGpuKernelMod cudaMemSet Failed");
     return true;
   }
@@ -207,7 +197,7 @@ bool MaskedSelectGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   MS_EXCEPTION_IF_NULL(input_grad_ptr);
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(input_grad_ptr, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemsetAsync(input_grad_ptr, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "MaskedSelectGradGpuKernelMod cudaMemSet Failed");
 
   if (input_broadcast_) {

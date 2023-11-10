@@ -82,8 +82,8 @@ abstract::TupleShapePtr CudnnGRUInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kCudnnGRUInputsNum, op_name);
   auto attr_map = CudnnGRUGetAttrMap(primitive);
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto input_shape = input_shape_map[kShape];  // (seq_len, batch_size, input_size)
   auto h_shape = h_shape_map[kShape];          // (real_num_layers, batch_size, hidden_size)
 
@@ -136,9 +136,9 @@ TuplePtr CudnnGRUInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("h", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("w", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("input", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("h", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("w", input_args[kInputIndex2]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type, type});
 }

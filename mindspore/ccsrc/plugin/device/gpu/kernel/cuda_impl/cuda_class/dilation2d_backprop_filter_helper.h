@@ -59,20 +59,9 @@ class Dilation2DBackpropFilterHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~Dilation2DBackpropFilterHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 3;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
 
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : f_input_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     f_input_shape_ = input_shapes[kIndex0];
     f_filter_shape_ = input_shapes[kIndex1];
     f_out_backprop_shape_ = input_shapes[kIndex2];
@@ -83,7 +72,7 @@ class Dilation2DBackpropFilterHelperGpuKernel : public GpuKernelHelperBase {
       return out_flag;
     }
     f_output_shape_ = output_shapes[kIndex0];
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 

@@ -30,51 +30,44 @@ class NcclSendGpuKernel : public NcclGpuKernelMod {
   NcclSendGpuKernel() : dest_rank_(-1) {}
   ~NcclSendGpuKernel() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    (void)Send(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_, dest_rank_,
+    (void)Send(input_addr, inputs[0]->size() / sizeof(T), nccl_data_type_, dest_rank_,
                reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    size_t input_num = inputs.size();
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
-
-    dest_rank_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "dest_rank"));
-    group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
-    MS_LOG(INFO) << "NcclSend dest rank is " << dest_rank_ << ", group name is " << group_name_;
-
-    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    size_t input_size = std::accumulate(input_shape.begin(), input_shape.end(), sizeof(T), std::multiplies<size_t>());
-    input_size_list_.push_back(input_size);
-    output_size_list_.push_back(0);
-
     SelectCollectiveHandle();
     return true;
   }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    dest_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("dest_rank")));
+    group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
+    nccl_data_type_ = nccl_dtype(inputs[0]->dtype_id());
+    MS_LOG(INFO) << "NcclSend dest rank is " << dest_rank_ << ", group name is " << group_name_;
 
- protected:
-  void InitSizeLists() override {}
+    auto shape_signed = outputs[0]->GetDeviceShapeVector();
+    if (IsDynamic(shape_signed)) {
+      return KRET_UNKNOWN_OUT_SHAPE;
+    }
+    auto input_shape = Convert2SizeTClipNeg(shape_signed);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+    if (is_null_input_) {
+      return true;
+    }
+    output_size_list_.clear();
+    output_size_list_.push_back(0);
+    return KRET_OK;
+  }
 
  private:
   int dest_rank_;

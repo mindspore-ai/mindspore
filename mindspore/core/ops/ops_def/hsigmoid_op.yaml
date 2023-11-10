@@ -1,0 +1,10 @@
+#operator hsigmoid
+hsigmoid:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSigmoid

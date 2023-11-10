@@ -19,8 +19,8 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_fill_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "mindspore/core/ops/masked_fill.h"
 #include "abstract/utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,9 +30,9 @@ using Complex = mindspore::utils::Complex<T>;
 constexpr int MAX_DIMS = 8;
 
 template <typename T>
-bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &workspace,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   bool *mask_addr = GetDeviceAddress<bool>(inputs, kIndex1);
   T *value = GetDeviceAddress<T>(inputs, kIndex2);
@@ -49,10 +49,9 @@ bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool MaskedFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool MaskedFillGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -116,10 +115,9 @@ bool MaskedFillGpuKernelMod::BroadcastShape(const std::vector<size_t> &input_sha
   return true;
 }
 
-int MaskedFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaskedFillGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -186,7 +184,6 @@ void MaskedFillGpuKernelMod::ResetResource() noexcept {
   lhs_shape_.clear();
   rhs_shape_.clear();
   output_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

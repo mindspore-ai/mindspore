@@ -62,11 +62,8 @@ void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *
   }
 }
 
-bool LUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+bool LUCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
   size_t input_num = inputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
   size_t output_num = outputs.size();
@@ -82,9 +79,8 @@ bool LUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vecto
   return true;
 }
 
-int LUCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LUCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -151,22 +147,16 @@ void LUCpuKernelMod::SetPermutatedValue(T *lu_value, const std::vector<int> &per
 }
 
 template <typename T>
-bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &workspace,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   // input matrix of (m,n) PA = LU
-  T *batch_a_value = GetDeviceAddress<T>(inputs, kLUaIndex);
-  T *batch_lu_value = GetDeviceAddress<T>(outputs, kLuIndex);
-  batch_pivots_ = GetDeviceAddress<int>(outputs, kPivotsIndex);
-  int *batch_permutation_value = GetDeviceAddress<int>(outputs, kPermutationIndex);
-  T *lu_ori_wk = GetDeviceAddress<T>(workspace, kLuIndex);
-  T *lu_trans_wk = GetDeviceAddress<T>(workspace, kPivotsIndex);
-  MS_EXCEPTION_IF_NULL(batch_a_value);
-  MS_EXCEPTION_IF_NULL(batch_lu_value);
-  MS_EXCEPTION_IF_NULL(batch_pivots_);
-  MS_EXCEPTION_IF_NULL(batch_permutation_value);
-  MS_EXCEPTION_IF_NULL(lu_ori_wk);
-  MS_EXCEPTION_IF_NULL(lu_trans_wk);
+  T *batch_a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->device_ptr());
+  T *batch_lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->device_ptr());
+  batch_pivots_ = reinterpret_cast<int *>(outputs[kPivotsIndex]->device_ptr());
+  int *batch_permutation_value = reinterpret_cast<int *>(outputs[kPermutationIndex]->device_ptr());
+  T *lu_ori_wk = reinterpret_cast<T *>(workspace[kLuIndex]->device_ptr());
+  T *lu_trans_wk = reinterpret_cast<T *>(workspace[kPivotsIndex]->device_ptr());
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     T *a_value = batch_a_value + batch * a_row_ * a_col_;
     T *lu_value = batch_lu_value + batch * lu_row_ * lu_col_;

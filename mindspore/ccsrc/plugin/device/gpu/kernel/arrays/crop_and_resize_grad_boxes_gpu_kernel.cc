@@ -157,9 +157,9 @@ const std::vector<std::pair<KernelAttr, CropAndResizeGradBoxesPtrCreatorFunc>> k
 };
 }  // namespace
 
-bool CropAndResizeGradBoxesGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CropAndResizeGradBoxesGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -169,27 +169,29 @@ bool CropAndResizeGradBoxesGpuKernelMod::Launch(const std::vector<AddressPtr> &i
   return true;
 }
 
-bool CropAndResizeGradBoxesGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_grad_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradBoxes>(base_operator);
-  kernel_name_ = kernel_grad_ptr->name();
+bool CropAndResizeGradBoxesGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->method_ = kernel_grad_ptr->get_method();
+  std::string method = GetValue<std::string>(primitive_->GetAttr("method"));
+  if (method == "bilinear") {
+    attr_ptr_->method_ = ResizeMethod::LINEAR;
+  } else if (method == "nearest") {
+    attr_ptr_->method_ = ResizeMethod::NEAREST;
+  } else {  //  bilinear-v2
+    attr_ptr_->method_ = ResizeMethod::CUBIC;
+  }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int CropAndResizeGradBoxesGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CropAndResizeGradBoxesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -211,7 +213,6 @@ int CropAndResizeGradBoxesGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESHAPE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESHAPE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MEMCPY_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MEMCPY_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
 #include <map>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,16 +31,12 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   explicit MemcpyCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~MemcpyCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-            const std::vector<KernelTensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -52,10 +47,11 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   std::string kernel_type_{"Unknown"};
   static std::vector<KernelAttr> common_valid_types_with_bool_complex_;
   static std::vector<KernelAttr> common_two_valid_types_with_bool_complex_;
+  static std::vector<KernelAttr> reshape_valid_types_;
 
   bool is_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESHAPE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MEMCPY_CPU_KERNEL_H_

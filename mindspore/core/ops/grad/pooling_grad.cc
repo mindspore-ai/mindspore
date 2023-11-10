@@ -22,6 +22,16 @@
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "abstract/utils.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
+#include "ir/primitive.h"
+#include "mindapi/base/shape_vector.h"
+#include "utils/check_convert_utils.h"
+#include "ops/conv_pool_ops.h"
 
 namespace mindspore {
 namespace ops {
@@ -120,6 +130,48 @@ bool PoolingGrad::get_global() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNamePoolingGrad, PoolingGrad);
+
+class MIND_API PoolingGradInfer : public abstract::OpInferBase {
+ public:
+  // This is used for backend infer by kernel tensor.
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    // Inputs: three tensors(y, dy, x).
+    constexpr auto kPoolingGradInputNum = 3;
+    const std::string op_name = primitive->name();
+    CheckArgsSize(op_name, input_args, kPoolingGradInputNum);
+    return input_args[kIndex2]->GetShape()->Clone();
+  }
+
+  // This is used for backend infer by kernel tensor.
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    // Inputs: three tensors(y, dy, x).
+    constexpr auto kPoolingGradInputNum = 3;
+    const std::string op_name = primitive->name();
+    CheckArgsSize(op_name, input_args, kPoolingGradInputNum);
+    return input_args[kIndex1]->GetType()->Clone();
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    // Inputs: three tensors(y, dy, x).
+    constexpr auto kPoolingGradInputNum = 3;
+    const std::string op_name = primitive->name();
+    CheckArgsSize(op_name, input_args, kPoolingGradInputNum);
+    auto out_y = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kIndex0);
+    auto d_out = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kIndex1);
+    auto input_x = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kIndex2);
+    (void)abstract::CheckTensorsDTypeSame({out_y, d_out, input_x}, {kInt, kUInt, kFloat},
+                                          op_name + "evaluator three inputs should be %s");
+
+    AbstractBasePtr ret = d_out->Broaden();
+    auto x_shape = dyn_cast<abstract::TensorShape>(input_args[2]->GetShapeTrack());
+    MS_EXCEPTION_IF_NULL(x_shape);
+    ret->set_shape(x_shape);
+    return ret;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PoolingGrad, prim::kPrimPoolingGrad, PoolingGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

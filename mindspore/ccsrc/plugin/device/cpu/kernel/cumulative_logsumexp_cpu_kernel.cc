@@ -35,39 +35,30 @@ const float float_exclusive_data = -3.4028235e+38;
 const double double_exclusive_data = -1.7976931348623157e+308;
 }  // namespace
 
-bool CumulativeLogsumexpCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumulativeLogsumexpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   shape_ = inputs[kInputIndex0]->GetShapeVector();
-  dtype_ = inputs[kInputIndex0]->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumulativeLogsumexp>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', kernel_ptr is null.";
-    return false;
-  }
-  exclusive_ = kernel_ptr->get_exclusive();
-  reverse_ = kernel_ptr->get_reverse();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
+  exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
+  reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
   return true;
 }
 
-int CumulativeLogsumexpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int CumulativeLogsumexpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
   shape_ = inputs[kInputIndex0]->GetShapeVector();
-  dtype_ = inputs[kInputIndex0]->GetDtype();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
   return KRET_OK;
 }
 
-bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumulativeLogsumexpInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumulativeLogsumexpOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat64) {
@@ -150,12 +141,12 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *
 }
 
 template <typename T>
-void CumulativeLogsumexpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) {
-  auto *input_data = static_cast<T *>(inputs[kIndex0]->addr);
-  auto axis_ = static_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto *output_data = static_cast<T *>(outputs[kIndex0]->addr);
-  size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(T)) : 1;
+void CumulativeLogsumexpCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  auto *input_data = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto axis_ = static_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto *output_data = static_cast<T *>(outputs[kIndex0]->device_ptr());
+  size_t lens = inputs[kIndex0]->size() > 0 ? static_cast<size_t>(inputs[kIndex0]->size() / sizeof(T)) : 1;
   auto task = [this, input_data, axis_, output_data](const size_t start, const size_t end) {
     int32_t x_rank = SizeToInt(shape_.size());
     if (axis_[0] >= x_rank || axis_[0] < -x_rank) {

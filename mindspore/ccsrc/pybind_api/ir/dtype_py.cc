@@ -30,6 +30,8 @@ void RegTyping(py::module *m) {
     "dump_type", [](const TypePtr &t) { return t->type_id(); }, "dump type");
   (void)m_sub.def("str_to_type", &StringToType, "string to typeptr");
   (void)m_sub.def("type_size_in_bytes", &GetTypeByte, "type size in bytes");
+  (void)m_sub.def(
+    "type_to_type_id", [](const TypePtr &t) { return GetTypeId(t->type_id()); }, "convert type to type id enum value");
   (void)py::class_<Type, std::shared_ptr<Type>>(m_sub, "Type")
     .def("__eq__",
          [](const TypePtr &t1, const py::object &other) {

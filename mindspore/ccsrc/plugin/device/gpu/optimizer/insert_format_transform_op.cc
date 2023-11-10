@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -33,21 +34,15 @@ namespace opt {
 namespace {
 const int kFakeTransposeShapeOneNum = 2;
 
-AnfNodePtr ConvertValueToTensor(const KernelGraphPtr &kernel_graph, const ValueNodePtr &input_node) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  auto value_node = input_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto value = value_node->value();
-  MS_EXCEPTION_IF_NULL(value);
-  tensor::TensorPtr tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
-  MS_EXCEPTION_IF_NULL(tensor_input);
-  tensor_input->set_abstract(tensor_ptr->ToAbstract());
-  tensor_input = kernel_graph->NewValueNode(tensor_input);
-  kernel_graph->AddValueNodeToGraph(tensor_input);
-  tensor_input->set_scope(input_node->scope());
-  return tensor_input;
+AnfNodePtr CreateTupleValue(const KernelGraphPtr &kernel_graph, const std::vector<int64_t> &perm) {
+  auto tuple_value = MakeValue<std::vector<int64_t>>(perm);
+  MS_EXCEPTION_IF_NULL(tuple_value);
+  auto tuple_input = std::make_shared<ValueNode>(tuple_value);
+  MS_EXCEPTION_IF_NULL(tuple_input);
+  tuple_input->set_abstract(tuple_value->ToAbstract());
+  tuple_input = kernel_graph->NewValueNode(tuple_input);
+  kernel_graph->AddValueNodeToGraph(tuple_input);
+  return tuple_input;
 }
 
 std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::string &dst_format) {
@@ -120,13 +115,11 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node};
   if (is_fake) {
     auto reshape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
-    auto shape_node = NewValueNode(MakeValue<std::vector<int64_t>>(reshape_shape));
-    auto shape_tensor = ConvertValueToTensor(kernel_graph, shape_node);
-    transpose_input.push_back(shape_tensor);
+    auto shape_node = CreateTupleValue(kernel_graph, reshape_shape);
+    transpose_input.push_back(shape_node);
   } else {
-    auto perm_node = NewValueNode(MakeValue<std::vector<int64_t>>(transpose_perm));
-    auto perm_tensor = ConvertValueToTensor(kernel_graph, perm_node);
-    transpose_input.push_back(perm_tensor);
+    auto perm_node = CreateTupleValue(kernel_graph, transpose_perm);
+    transpose_input.push_back(perm_node);
   }
   auto transpose_op = graph->NewCNode(transpose_input);
   MS_EXCEPTION_IF_NULL(transpose_op);

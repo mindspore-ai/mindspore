@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/maxpool_grad_grad_gpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include <string>
 #include "mindspore/core/ops/grad/max_pool_grad_grad.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
@@ -31,23 +32,21 @@ constexpr size_t kGradIndex = 2;
 constexpr size_t kPadHalf = 2;
 }  // namespace
 
-bool MaxPoolGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradGradInputsNum || outputs.size() != kMaxPoolGradGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaxPoolGradGradInputsNum << " and "
                   << kMaxPoolGradGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast MaxPoolGradGrad ops failed!";
-    return false;
-  }
-  kernels_ = kernel_ptr->get_kernel_size();
-  strides_ = kernel_ptr->get_strides();
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  kernels_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  auto mode_str = GetValue<std::string>(primitive_->GetAttr(ops::kPadMode));
+  (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),
+                             "MaxPoolGradGrad only supports pad mode same or valid, but get " + mode_str);
+  pad_mode_ = mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
   if (pad_mode_ != PadMode::SAME && pad_mode_ != PadMode::VALID) {
     MS_LOG(ERROR) << kernel_name_ << " only support pad mode same or valid, but get " << pad_mode_;
     return false;
@@ -102,17 +101,11 @@ void MaxPoolGradGradGpuKernelMod::CalPad() {
   }
 }
 
-int MaxPoolGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolGradGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-  if (input_size_list_.size() != kMaxPoolGradGradInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal kMaxPoolGradGradInputsNum.";
-    return KRET_RESIZE_FAILED;
   }
   in_shapes_ = inputs[kIndex0]->GetShapeVector();
   batch_ = LongToInt(in_shapes_[kDim0]);
@@ -133,8 +126,8 @@ int MaxPoolGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MaxPoolGradGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
+bool MaxPoolGradGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *grad_addr = GetDeviceAddress<T>(inputs, kGradIndex);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);

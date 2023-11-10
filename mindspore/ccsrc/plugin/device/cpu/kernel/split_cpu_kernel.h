@@ -34,45 +34,113 @@ class SplitCpuKernelMod : public NativeCpuKernelMod {
   SplitCpuKernelMod() = default;
   ~SplitCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool)};
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt16),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt8),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt32),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt16),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt8),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt64),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat16),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat64),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeComplex64),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeComplex128),
+                                                   KernelAttr()
+                                                     .AddAllSameAttr(true)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
 
  private:
   void CheckParam();
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void InitIOSize();
 
-  using SplitFunc = std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using SplitFunc =
+    std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   using InitIOFunc = std::function<void(SplitCpuKernelMod *)>;
   static std::vector<std::tuple<KernelAttr, SplitFunc, InitIOFunc>> func_list_;
   SplitFunc kernel_func_;

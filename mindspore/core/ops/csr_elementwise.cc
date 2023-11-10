@@ -53,8 +53,8 @@ AbstractBasePtr CSRElementWiseInfer(const abstract::AnalysisEnginePtr &, const P
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(dense);
 
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
-  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->GetType(), "Indices");
 
   ShapeVector sparse_shape = ConvertToShapeVector(shape);
   auto dense_shape = dense->shape()->shape();

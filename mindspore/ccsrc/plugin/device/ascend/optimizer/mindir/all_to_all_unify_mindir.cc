@@ -173,9 +173,6 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
                                               {single_shape}, concat.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(concat_dim), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(split_count), concat);
-  std::vector<int64_t> dyn_input_size{split_count};
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
   return concat;
 }
 

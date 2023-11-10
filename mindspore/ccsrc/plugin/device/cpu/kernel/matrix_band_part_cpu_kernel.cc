@@ -30,10 +30,8 @@ constexpr size_t kMaxDims = 8;
 constexpr size_t kXMinShapeSize = 2;
 }  // namespace
 
-bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixBandPartCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -84,10 +82,9 @@ void MatrixBandPartCpuKernelMod::BroadcastShape(const ShapeVector &x_shape, cons
   broadcast_upper_shape_[output_shape.size() - 1] = expanded_upper_shape[expanded_upper_shape.size() - 1];
 }
 
-int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixBandPartCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -206,17 +203,17 @@ bool MatrixBandPartCpuKernelMod::LaunchKernelBroadcast(const T *x_ptr, const LU 
 }
 
 template <typename T, typename LU>
-bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
-  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  const auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(inputs[2]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  const auto x_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   // Both the lower and upper have done the type check in C++ primitive.
-  const auto lower_ptr = reinterpret_cast<LU *>(inputs[kIndex1]->addr);
-  const auto upper_ptr = reinterpret_cast<LU *>(inputs[kIndex2]->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  const auto lower_ptr = reinterpret_cast<LU *>(inputs[1]->device_ptr());
+  const auto upper_ptr = reinterpret_cast<LU *>(inputs[2]->device_ptr());
+  auto output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   if (need_broadcast_) {
     return LaunchKernelBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,10 +160,10 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
 
 mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::support_map_{};
 
-std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
+std::vector<void *> ConvertPtrs(const std::vector<KernelTensor *> &input_ptrs) {
   std::vector<void *> out_ptrs;
   std::transform(input_ptrs.begin(), input_ptrs.end(), std::back_inserter(out_ptrs),
-                 [](const auto &cur_addr) { return cur_addr->addr; });
+                 [](const auto &cur_addr) { return (cur_addr == nullptr) ? nullptr : cur_addr->device_ptr(); });
   return out_ptrs;
 }
 
@@ -204,6 +204,7 @@ void ShapeNCDHW2NDHWC(ShapeVector *shape) {
   std::swap((*shape)[kShapeIndex3rd], (*shape)[kShapeIndex4th]);
 }
 
+////////// old: string format ///////////
 void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const std::string &format) {
   if (shape.size() != len) {
     MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
@@ -273,6 +274,78 @@ void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, 
     MS_LOG(ERROR) << "Unsupported data format " << format;
   }
 }
+////////////////////////////////////////
+////////// new: enum format ///////////
+void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const mindspore::Format &format) {
+  if (shape.size() != len) {
+    MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
+  }
+  if (Anyone(format, mindspore::Format::NCHW, mindspore::Format::DEFAULT_FORMAT, mindspore::Format::NCDHW)) {
+    for (size_t i = 0; i < len; ++i) {
+      dimA[i] = LongToInt(shape[i]);
+    }
+  } else if (format == mindspore::Format::NHWC) {
+    dimA[0] = LongToInt(shape[0]);
+    dimA[kShapeIndex1st] = LongToInt(shape[kShapeIndex3rd]);
+    dimA[kShapeIndex2nd] = LongToInt(shape[kShapeIndex1st]);
+    dimA[kShapeIndex3rd] = LongToInt(shape[kShapeIndex2nd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << mindspore::FormatEnumToString(format);
+  }
+}
+
+void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const mindspore::Format &format) {
+  if (shape.size() != len) {
+    MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
+  }
+  if (Anyone(format, mindspore::Format::NCHW, mindspore::Format::DEFAULT_FORMAT, mindspore::Format::NCDHW)) {
+    for (size_t i = 0; i < len; ++i) {
+      strideA[i] = LongToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<int64_t>()));
+    }
+  } else if (format == mindspore::Format::NHWC) {
+    strideA[0] = LongToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+    strideA[1] = 1;
+    strideA[kShapeIndex2nd] = LongToInt(shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+    strideA[kShapeIndex3rd] = LongToInt(shape[kShapeIndex3rd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << mindspore::FormatEnumToString(format);
+  }
+}
+
+void SetNCHW(const ShapeVector &shape, int *n, int *c, int *h, int *w, const mindspore::Format &format) {
+  if (Anyone(format, mindspore::Format::NCHW, mindspore::Format::DEFAULT_FORMAT)) {
+    *n = LongToInt(shape[0]);
+    *c = LongToInt(shape[kShapeIndex1st]);
+    *h = LongToInt(shape[kShapeIndex2nd]);
+    *w = LongToInt(shape[kShapeIndex3rd]);
+  } else if (format == mindspore::Format::NHWC) {
+    *n = LongToInt(shape[0]);
+    *c = LongToInt(shape[kShapeIndex3rd]);
+    *h = LongToInt(shape[kShapeIndex1st]);
+    *w = LongToInt(shape[kShapeIndex2nd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << mindspore::FormatEnumToString(format);
+  }
+}
+
+void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, const mindspore::Format &format) {
+  if (Anyone(format, mindspore::Format::NCDHW, mindspore::Format::DEFAULT_FORMAT)) {
+    *n = LongToInt(shape[0]);
+    *c = LongToInt(shape[kShapeIndex1st]);
+    *d = LongToInt(shape[kShapeIndex2nd]);
+    *h = LongToInt(shape[kShapeIndex3rd]);
+    *w = LongToInt(shape[kShapeIndex4th]);
+  } else if (format == mindspore::Format::NDHWC) {
+    *n = LongToInt(shape[0]);
+    *c = LongToInt(shape[kShapeIndex4th]);
+    *d = LongToInt(shape[kShapeIndex1st]);
+    *h = LongToInt(shape[kShapeIndex2nd]);
+    *w = LongToInt(shape[kShapeIndex3rd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << mindspore::FormatEnumToString(format);
+  }
+}
+///////////////////////////////////////
 
 bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B, const std::vector<int> &Out) {
   if (A != Out && B != Out) {

@@ -31,17 +31,15 @@ class UpsampleNearest3DGradGpuKernelMod : public NativeGpuKernelMod {
   UpsampleNearest3DGradGpuKernelMod() = default;
   ~UpsampleNearest3DGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -49,11 +47,11 @@ class UpsampleNearest3DGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using UpsampleNearest3DGradFunc =
-    std::function<bool(UpsampleNearest3DGradGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    std::function<bool(UpsampleNearest3DGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   void *cuda_stream_{nullptr};
   int64_t n_{};
   int64_t c_{};

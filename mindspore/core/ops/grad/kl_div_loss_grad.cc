@@ -48,9 +48,9 @@ std::string KLDivLossGrad::get_reduction() const { return GetValue<std::string>(
 abstract::ShapePtr KLDivLossGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto grad_shape = input_args[kInputIndex0]->BuildShape();
-  auto x_shape = input_args[kInputIndex1]->BuildShape();
-  auto target_shape = input_args[kInputIndex2]->BuildShape();
+  auto grad_shape = input_args[kInputIndex0]->GetShape();
+  auto x_shape = input_args[kInputIndex1]->GetShape();
+  auto target_shape = input_args[kInputIndex2]->GetShape();
   auto x_shape_ptr = x_shape->cast<abstract::ShapePtr>();
   auto target_shape_ptr = target_shape->cast<abstract::ShapePtr>();
 
@@ -86,9 +86,9 @@ abstract::ShapePtr KLDivLossGradInferShape(const PrimitivePtr &primitive,
 TypePtr KLDivLossGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input_grad_type = input_args[kInputIndex0]->BuildType();
-  auto input_x_type = input_args[kInputIndex1]->BuildType();
-  auto input_target_type = input_args[kInputIndex2]->BuildType();
+  auto input_grad_type = input_args[kInputIndex0]->GetType();
+  auto input_x_type = input_args[kInputIndex1]->GetType();
+  auto input_target_type = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
 
   std::map<std::string, TypePtr> types;

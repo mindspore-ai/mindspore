@@ -67,9 +67,9 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive
 
 TypePtr AdaptiveMaxPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_grad_dtype = input_args[0]->BuildType();
-  auto x_dtype = input_args[1]->BuildType();
-  auto argmax_dtype = input_args[2]->BuildType();
+  auto input_grad_dtype = input_args[0]->GetType();
+  auto x_dtype = input_args[1]->GetType();
+  auto argmax_dtype = input_args[2]->GetType();
   const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                                 kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};

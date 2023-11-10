@@ -156,7 +156,7 @@ BaseOperatorPtr CaffePoolingParser::Parse(const caffe::LayerParameter &proto, co
       MS_LOG(ERROR) << "prim is nullptr.";
       return nullptr;
     }
-    prim->set_format(mindspore::Format::NCHW);
+    prim->set_data_format(mindspore::Format::NCHW);
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
     prim->set_strides(strides);

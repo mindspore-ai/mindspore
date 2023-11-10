@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/nan_to_num_cpu_kernel.h"
-#include "mindspore/core/ops/nan_to_num.h"
 #include "mindspore/core/base/float16.h"
 
 using std::isinf;
@@ -24,50 +23,45 @@ using std::isnan;
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNanToNumInputsNum = 1;
+constexpr size_t kNanToNumInputsNum = 4;
 constexpr size_t kNanToNumOutputsNum = 1;
+constexpr auto kNanValueIdx = 1;
+constexpr auto kPosinfValueIdx = 2;
+constexpr auto kNeginfValueIdx = 3;
 }  // namespace
 
-bool NanToNumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NanToNum>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NanToNum ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  nan_value_ = kernel_ptr->get_nan_value();
-  posinf_value_ = kernel_ptr->get_posinf_value();
-  neginf_value_ = kernel_ptr->get_neginf_value();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool NanToNumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int NanToNumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+int NanToNumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
+  nan_value_ = inputs[kNanValueIdx]->GetValueWithCheck<float>();
+  posinf_value_ = inputs[kPosinfValueIdx]->GetValueWithCheck<float>();
+  neginf_value_ = inputs[kNeginfValueIdx]->GetValueWithCheck<float>();
   return 0;
 }
 
 template <typename T>
-bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNanToNumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNanToNumOutputsNum, kernel_name_);
-  auto input = static_cast<T *>(inputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
 
   T posinf_value = static_cast<T>(posinf_value_);
   T neginf_value = static_cast<T>(neginf_value_);
   T nan_value = static_cast<T>(nan_value_);
-  size_t total = inputs[0]->size / sizeof(T);
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output, &posinf_value, &neginf_value, &nan_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (input[i] > static_cast<T>(0) && isinf(input[i])) {
@@ -88,9 +82,19 @@ bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 const std::vector<std::pair<KernelAttr, NanToNumCpuKernelMod::KernelRunFunc>> &NanToNumCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, NanToNumCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
      &NanToNumCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &NanToNumCpuKernelMod::LaunchKernel<float>}};
   return func_list;
 }

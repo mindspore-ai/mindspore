@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
@@ -29,7 +30,7 @@
 namespace mindspore {
 namespace opt {
 const BaseRef BiasDropoutAddFusion::DefinePattern() const {
-  auto dropout = VectorRef({prim::kPrimDropout, VectorRef({prim::kPrimAdd, x_, bias_})});
+  auto dropout = VectorRef({prim::kPrimDropout, VectorRef({prim::kPrimAdd, x_, bias_}), keep_prob_, seed0_, seed1_});
   auto get_item = VectorRef({prim::kPrimTupleGetItem, dropout, index_});
   auto output = VectorRef({prim::kPrimAdd, residual_, get_item});
   return output;
@@ -73,6 +74,23 @@ const AnfNodePtr BiasDropoutAddFusion::Process(const FuncGraphPtr &graph, const 
   fused_node->set_scope(dropout->scope());
   fused_node->set_abstract(dropout->abstract());
   common::AnfAlgo::CopyNodeAttrs(dropout, fused_node);
+  // set attr for BiasDropoutAdd
+  auto prob = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex1);
+  auto seed0 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex2);
+  auto seed1 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex3);
+  if (!utils::isa<ValueNodePtr>(prob) || !utils::isa<ValueNodePtr>(seed0) || !utils::isa<ValueNodePtr>(seed1)) {
+    return nullptr;
+  }
+  auto seed0_v = ops::GetScalarValue<int64_t>(seed0->cast<ValueNodePtr>()->value());
+  auto prob_v = ops::GetScalarValue<float>(prob->cast<ValueNodePtr>()->value());
+  auto seed1_v = ops::GetScalarValue<int64_t>(seed1->cast<ValueNodePtr>()->value());
+  if (!prob_v.has_value() || !seed0_v.has_value() || !seed1_v.has_value()) {
+    return nullptr;
+  }
+  common::AnfAlgo::SetNodeAttr("keep_prob", MakeValue(prob_v.value()), fused_node);
+  common::AnfAlgo::SetNodeAttr("seed0", MakeValue(seed0_v.value()), fused_node);
+  common::AnfAlgo::SetNodeAttr("seed1", MakeValue(seed1_v.value()), fused_node);
+
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (!manager->Replace(dropout, fused_node)) {

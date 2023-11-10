@@ -70,16 +70,13 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "Bisheng internal op " << kernel_name;
   auto kernel_mod = Factory<BiShengKernelMod>::Instance().Create(kernel_name);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto args = AbstractArgsFromCNode(cnode);
-  auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-  SetInputsByConstInputs(cnode, &inputs_tensor_map);
-  SetInputsByDependMap(inputs_tensor_map, &args.inputs);
-  auto op = CreateOperatorByCNode(cnode);
-  if (!kernel_mod->Init_(op, args.inputs, args.outputs)) {
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(cnode);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(cnode);
+  if (!kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(cnode), input_kernel_tensors, output_kernel_tensors)) {
     MS_LOG(EXCEPTION) << "Initialize bisheng kernel op[" << cnode->fullname_with_scope() << "] failed.";
   }
-  if (!IfNeedSkipResize(cnode)) {
-    if (kernel_mod->Resize(args.inputs, args.outputs, inputs_tensor_map) == KRET_RESIZE_FAILED) {
+  if (CheckResizeCondition(cnode)) {
+    if (kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "Bisheng kernel op[" << cnode->fullname_with_scope() << "] Resize failed.";
     }
   }

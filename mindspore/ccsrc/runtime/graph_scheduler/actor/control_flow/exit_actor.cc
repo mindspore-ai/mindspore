@@ -248,23 +248,6 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
   }
 }
 
-namespace {
-void SetFromMemPoolFlag(const DeviceTensorPtr &device_tensor, size_t to_index,
-                        const std::vector<std::pair<AID, DataArrow *>> &input_data_arrow_aids) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  const auto &iter =
-    std::find_if(input_data_arrow_aids.begin(), input_data_arrow_aids.end(), [to_index](const auto &pair) {
-      return pair.second != nullptr && pair.second->to_input_index_ == SizeToInt(to_index);
-    });
-  if (iter != input_data_arrow_aids.end() &&
-      iter->first.Name().find(kAnyTypeKernelActorNameSuffix) != std::string::npos) {
-    MS_LOG(DEBUG) << "Set from memory pool flag for ptr:" << device_tensor->GetPtr()
-                  << " in device address:" << device_tensor;
-    device_tensor->set_from_mem_pool(true);
-  }
-}
-}  // namespace
-
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.
@@ -303,23 +286,18 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
-    DeviceTensorPtr new_device_tensor = nullptr;
-    if (!is_dynamic_shapes_[i]) {
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        input_device_tensor->host_shape(), input_device_tensor->user_data());
-      MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
-    } else {
-      // If there is a dynamic shape, the shape in the kernel should be used.
-      MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
-                    << " for actor:" << GetAID();
-      const auto &host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        host_shape, input_device_tensor->user_data());
-      MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
-    }
+    const auto &kernel_tensor = input_device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
+    MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+    new_kernel_tensor->set_device_ptr(nullptr);
+    DeviceTensorPtr new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
+    MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new device tensor:" << new_device_tensor
+                  << " type:" << new_device_tensor->type_id() << " by input device tensor:" << input_device_tensor
+                  << " shape:"
+                  << (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString())
+                  << (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString());
     const auto &swap_manager = device_context->device_res_manager_->swap_manager();
     if (swap_manager != nullptr) {
       swap_manager->AddSwappableTensor(new_device_tensor);
@@ -346,9 +324,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     } else {
       // Move the device ptr from input_device_tensor to new_device_tensor.
       input_device_tensor->Swap(new_device_tensor.get());
-      if (!new_device_tensor->from_mem_pool()) {
-        SetFromMemPoolFlag(new_device_tensor, i, input_data_arrow_aids_);
-      }
+      new_device_tensor->set_from_mem_pool(true);
     }
     MS_LOG(DEBUG) << GetAID().Name() << " creates the dynamic ref device address:" << new_device_tensor.get()
                   << ", ptr:" << new_device_tensor->GetPtr()

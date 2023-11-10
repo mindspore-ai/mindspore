@@ -30,18 +30,14 @@ using mindspore::tensor::Tensor;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PrintCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (size_t i = 0; i < inputs.size(); ++i) {
-    TypeId type = inputs[i]->GetDtype();
+    TypeId type = inputs[i]->dtype_id();
     (void)data_types_.emplace_back(type);
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Print>(base_operator);
-  if (kernel_ptr->HasAttr("value_type")) {
-    auto value_type = kernel_ptr->get_value_type();
-    auto value_type_pos = kernel_ptr->get_value_type_pos();
+  if (primitive_->HasAttr("value_type")) {
+    auto value_type = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type"));
+    auto value_type_pos = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type_pos"));
     for (size_t i = 0; i < value_type.size(); i++) {
       value_type_[value_type_pos[i]] = value_type[i];
     }
@@ -49,10 +45,8 @@ bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int PrintCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -67,7 +61,7 @@ int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     for (size_t j = 0; j < input_shape.size(); ++j) {
       size *= input_shape[j];
     }
-    auto type_id = inputs[i]->GetDtype();
+    auto type_id = inputs[i]->dtype_id();
     size_t unit_size = UnitSizeInBytes(type_id);
     auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
     (void)input_sizes_.emplace_back(LongToSize(size));
@@ -76,8 +70,8 @@ int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return ret;
 }
 
-bool PrintCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &) {
+bool PrintCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     TypeId dtype = data_types_[i];
     auto iter = func_map_.find(dtype);
@@ -96,11 +90,11 @@ bool PrintCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 }
 
 template <typename T>
-void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::AddressPtr> &inputs) {
+void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::KernelTensor *> &inputs) {
   if (input_sizes_[index] == 0) {
-    auto num = reinterpret_cast<T *>(inputs[index]->addr);
+    auto num = reinterpret_cast<T *>(inputs[index]->device_ptr());
     if constexpr (std::is_same<T, char>::value) {
-      size_t str_len = inputs[index]->size;
+      size_t str_len = inputs[index]->size();
       // Avoid memory reuse with dirty data.
       num[str_len - 1] = '\0';
       std::cout << num << std::endl;
@@ -109,7 +103,8 @@ void PrintCpuKernelMod::LaunchKernel(size_t index, const std::vector<kernel::Add
     }
   } else {
     TypeId type_id = std::get<1>(input_info_[index]);
-    Tensor tensor(data_types_[index], input_shapes_[index], inputs[index]->addr, input_sizes_[index] * sizeof(T));
+    Tensor tensor(data_types_[index], input_shapes_[index], inputs[index]->device_ptr(),
+                  input_sizes_[index] * sizeof(T));
     if (value_type_.count(index) > 0) {
       // not a tensor
       auto out = tensor.data().ToString(type_id, input_shapes_[index], true);

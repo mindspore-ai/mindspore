@@ -18,27 +18,23 @@
 
 namespace mindspore {
 namespace kernel {
-bool L2LossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool L2LossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int L2LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int L2LossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
   input_size_ = SizeOf(input_shape);
   if (input_size_ == 0) {
@@ -48,8 +44,9 @@ int L2LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool L2LossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool L2LossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto status = L2Loss(input_size_, input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));

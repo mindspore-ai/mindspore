@@ -43,13 +43,13 @@ AbstractBasePtr MapTensorGetDataInferInner(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorGetData);
   // Check argument abstracts.
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetData, input_args, kInputIndex0);
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGetData, input_args, kInputIndex0, kObjectTypeMapTensorType);
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
 
   // key abstract
   const auto &key_dtype = map_tensor_type->key_dtype();
-  ShapeVector shape = abs_map_tensor->shape()->shape();
+  const ShapeVector &shape = abs_map_tensor->GetShape()->GetShapeVector();
   if (shape.empty()) {
     MS_LOG(EXCEPTION) << "Invalid shape:" << input_args[0]->ToString();
   }
@@ -58,7 +58,7 @@ AbstractBasePtr MapTensorGetDataInferInner(const PrimitivePtr &primitive,
 
   // value abstract
   auto value_dtype = map_tensor_type->value_dtype();
-  auto value_abs = std::make_shared<abstract::AbstractTensor>(value_dtype, abs_map_tensor->shape());
+  auto value_abs = std::make_shared<abstract::AbstractTensor>(value_dtype, abs_map_tensor->GetShape());
 
   AbstractBasePtrList abstract_list{key_abs, value_abs};
   return std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -67,14 +67,14 @@ AbstractBasePtr MapTensorGetDataInferInner(const PrimitivePtr &primitive,
 abstract::BaseShapePtr MapTensorGetDataInferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto abs = MapTensorGetDataInferInner(prim, input_args);
-  auto shape = abs->BuildShape();
+  auto shape = abs->GetShape();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }
 
 TypePtr MapTensorGetDataInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto abs = MapTensorGetDataInferInner(prim, input_args);
-  auto type = abs->BuildType();
+  auto type = abs->GetType();
   MS_EXCEPTION_IF_NULL(type);
   return type;
 }

@@ -47,12 +47,8 @@ std::vector<KernelAttr> MapTensorGetDataCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetDataCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorGetDataCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetDataInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetDataOutputNum, kernel_name_);
@@ -74,10 +70,8 @@ bool MapTensorGetDataCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MapTensorGetDataCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetDataCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex0));
@@ -97,9 +91,9 @@ int MapTensorGetDataCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorGetDataCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs) {
+bool MapTensorGetDataCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetDataInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetDataOutputNum, kernel_name_);
@@ -113,14 +107,11 @@ bool MapTensorGetDataCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<CPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->GetKeysAndValues(static_cast<KeyType *>(outputs.at(kIndex0)->addr),
-                                          static_cast<ValueType *>(outputs.at(kIndex1)->addr), nullptr);
+  return hash_table_ptr->GetKeysAndValues(static_cast<KeyType *>(outputs.at(kIndex0)->device_ptr()),
+                                          static_cast<ValueType *>(outputs.at(kIndex1)->device_ptr()), nullptr);
 }
 
 void MapTensorGetDataCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
-  // Return size 1 as the first input size for MapTensorGetData. Real map tensor is assigned by framework.
-  input_size_list_.push_back(kSizeOne);
-
   auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
   MS_EXCEPTION_IF_ZERO("keys size", keys_size);
   output_size_list_.push_back(keys_size * output_key_type_size_);

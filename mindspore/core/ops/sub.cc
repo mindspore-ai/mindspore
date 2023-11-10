@@ -39,8 +39,8 @@ TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
                                          kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("y", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, valid_types, prim->name());
 }
 }  // namespace
@@ -53,7 +53,7 @@ AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto type = SubInferType(primitive, input_args);
   auto shape = SubInferShape(primitive, input_args);
   if (shape->IsDimZero()) {
-    type = input_args[0]->BuildType();
+    type = input_args[0]->GetType();
   }
   return abstract::MakeAbstract(shape, type);
 }

@@ -49,21 +49,21 @@ class MoeFFNInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckInputsNum(primitive, input_args);
-    auto x_shape = input_args[kIndex0]->BuildShape();
+    auto x_shape = input_args[kIndex0]->GetShape();
     auto real_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(real_shape.size()), kEqual, kXShapeRank,
                                              primitive->name());
-    auto w1_shape = input_args[kIndex2]->BuildShape();
+    auto w1_shape = input_args[kIndex2]->GetShape();
     auto real_w1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w1_shape)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("w1 shape rank", SizeToLong(real_w1_shape.size()), kEqual, kW1ShapeRank,
                                              primitive->name());
 
-    auto bias1_shape = input_args[kIndex3]->BuildShape();
+    auto bias1_shape = input_args[kIndex3]->GetShape();
     auto real_bias1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias1_shape)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("bais1 shape rank", SizeToLong(real_bias1_shape.size()), kEqual,
                                              kBiasShapeRank, primitive->name());
 
-    auto w2_shape = input_args[kIndex4]->BuildShape();
+    auto w2_shape = input_args[kIndex4]->GetShape();
     auto real_w2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w2_shape)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("w2 shape rank", SizeToLong(real_w2_shape.size()), kEqual, kW2ShapeRank,
                                              primitive->name());
@@ -75,7 +75,7 @@ class MoeFFNInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckInputsNum(primitive, input_args);
     MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-    auto x_type = input_args[kIndex0]->BuildType();
+    auto x_type = input_args[kIndex0]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kInt8};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
     return kFloat16;

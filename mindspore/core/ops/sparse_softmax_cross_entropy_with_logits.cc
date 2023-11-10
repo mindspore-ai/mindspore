@@ -33,8 +33,8 @@ namespace {
 abstract::ShapePtr SparseSoftmaxCrossEntropyWithLogitsInferShape(const PrimitivePtr &primitive,
                                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto labels_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (!IsDynamic(features_shape) && !IsDynamic(labels_shape)) {
     auto features_dims = features_shape.size();
     auto labels_dims = labels_shape.size();
@@ -64,8 +64,8 @@ abstract::ShapePtr SparseSoftmaxCrossEntropyWithLogitsInferShape(const Primitive
 TypePtr SparseSoftmaxCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto features_type = input_args[kInputIndex0]->BuildType();
-  auto labels_type = input_args[kInputIndex1]->BuildType();
+  auto features_type = input_args[kInputIndex0]->GetType();
+  auto labels_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> valid_features_types = {kFloat16, kFloat32};
   const std::set<TypePtr> valid_labels_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> features_args;

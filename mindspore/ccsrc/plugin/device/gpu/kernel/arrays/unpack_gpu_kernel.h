@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
       : axis_(0), is_null_input_(false), output_num_(0), input_size_(1), dims_after_axis_(1), outputs_host_(nullptr) {}
   ~UnpackFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -56,40 +56,33 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     constexpr size_t input_num = 1;
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-
-    auto prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    axis_ = static_cast<int32_t>(GetValue<int64_t>(prim->GetAttr("axis")));
-    origin_data_format_ = GetValue<std::string>(prim->GetAttr("operator_origin_format"));
-    auto input_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+    axis_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("axis")));
+    auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
     if (axis_ < 0) {
       axis_ += SizeToInt(input_shape.size());
     }
+    // To do:
+    // origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
+    // auto input_format = FormatEnumToString(inputs[0]->format());
+    // axis_ = AxisTransform(origin_data_format_, input_format, axis_);
 
-    auto input_format = FormatEnumToString(inputs[0]->GetFormat());
-    axis_ = AxisTransform(origin_data_format_, input_format, axis_);
-    output_num_ = LongToSize(GetValue<int64_t>(prim->GetAttr("num")));
+    output_num_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("num")));
     outputs_host_ = std::make_unique<T *[]>(output_num_);
-
     ResetResource();
 
     for (size_t i = 0; i < output_num_; i++) {
       size_t _size = 1;
-      auto _shape = outputs[i]->GetDeviceShapeAdaptively();
+      auto _shape = outputs[i]->GetDeviceShapeVector();
       is_null_input_ = CHECK_SHAPE_NULL(_shape, kernel_name_, "output");
       if (is_null_input_) {
         return KRET_OK;
@@ -111,7 +104,6 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
         dims_after_axis_ *= static_cast<size_t>(input_shape[i]);
       }
     }
-    input_size_list_.push_back(input_size_ * sizeof(T));
 
     return KRET_OK;
   }
@@ -121,7 +113,6 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ = false;
     input_size_ = 1;
     dims_after_axis_ = 1;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

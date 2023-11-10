@@ -23,6 +23,43 @@ const kernel::KernelBuildInfo *KernelInfo::select_kernel_build_info() const { re
 
 kernel::KernelBuildInfoPtr KernelInfo::GetMutableSelectKernelBuildInfo() const { return select_kernel_build_info_; }
 
+const KernelTensorPtr &KernelInfo::GetOutputKernelTensor(size_t index) const {
+  if (index >= output_kernel_tensor_list_.size()) {
+    MS_LOG(EXCEPTION) << "Index [" << index << "] out of range 0~" << (output_kernel_tensor_list_.size() - 1);
+  }
+  return output_kernel_tensor_list_[index];
+}
+
+bool KernelInfo::SetOutputKernelTensor(const KernelTensorPtr &kernel_tensor, size_t index) {
+  // Initialize empty output kernel tensor list for Parameter and ValueNode.
+  if (kernel_mod_ == nullptr && index >= output_kernel_tensor_list_.size()) {
+    for (size_t i = output_kernel_tensor_list_.size(); i <= index; i++) {
+      (void)output_kernel_tensor_list_.emplace_back(nullptr);
+    }
+  } else if (kernel_mod_ != nullptr && output_kernel_tensor_list_.empty()) {
+    // Initialize empty output kernel tensor list for CNode.
+    MS_EXCEPTION_IF_NULL(select_kernel_build_info_);
+    for (size_t i = 0; i < select_kernel_build_info_->GetOutputNum(); i++) {
+      (void)output_kernel_tensor_list_.emplace_back(nullptr);
+    }
+  }
+
+  if (index >= output_kernel_tensor_list_.size()) {
+    MS_LOG(ERROR) << "Index [" << index << "] out of range";
+    return false;
+  }
+
+  output_kernel_tensor_list_[index] = kernel_tensor;
+  return true;
+}
+
+bool KernelInfo::OutputKernelTensorExist(size_t index) const {
+  if (index >= output_kernel_tensor_list_.size()) {
+    return false;
+  }
+  return output_kernel_tensor_list_[index] != nullptr;
+}
+
 const DeviceAddress *KernelInfo::GetOutputAddr(size_t index) const {
   if (index >= output_address_list_.size()) {
     MS_LOG(ERROR) << "Index [" << index << "] out of range 0~" << (output_address_list_.size() - 1);
@@ -64,6 +101,7 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
     return false;
   }
   output_address_list_[index] = output_address;
+
   return true;
 }
 

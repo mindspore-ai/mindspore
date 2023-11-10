@@ -35,10 +35,8 @@ constexpr size_t kInputsNum = 2;
 constexpr size_t kOutputsNum = 1;
 }  // namespace
 
-bool PolygammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PolygammaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -158,22 +156,22 @@ inline Eigen::half ScalarPolygamma(int64_t a, Eigen::half x) {
   return val;
 }
 
-int PolygammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others) == KRET_RESIZE_FAILED) {
+int PolygammaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (NativeCpuKernelMod::Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return KRET_RESIZE_FAILED;
   }
   x_shape_ = inputs[kInputIndex1]->GetShapeVector();
   x_tensor_size_ = SizeOf(x_shape_);
-  a_dtype_ = inputs[kInputIndex0]->GetDtype();
-  x_dtype_ = inputs[kInputIndex1]->GetDtype();
+  a_dtype_ = inputs[kInputIndex0]->dtype_id();
+  x_dtype_ = inputs[kInputIndex1]->dtype_id();
   return 0;
 }
 
-bool PolygammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool PolygammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (a_dtype_ == kNumberTypeInt32) {
     if (x_dtype_ == kNumberTypeFloat16) {
       return LaunchKernel<int32_t, Eigen::half>(inputs, outputs);
@@ -200,14 +198,14 @@ bool PolygammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 }
 
 template <typename T1, typename T2>
-bool PolygammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool PolygammaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto input_a = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto input_x = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto input_a = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  auto input_x = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto output_y = reinterpret_cast<T2 *>(outputs[0]->device_ptr());
 
   for (int64_t i = 0; i < x_tensor_size_; i++) {
     *(output_y + i) = ScalarPolygamma<T1, T2>(*input_a, *(input_x + i));

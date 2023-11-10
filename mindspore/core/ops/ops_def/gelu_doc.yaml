@@ -1,0 +1,37 @@
+gelu:
+    description: |
+        Gaussian Error Linear Units activation function.
+
+            GeLU is described in the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_.
+            And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+            <https://arxiv.org/abs/1810.04805>`_.
+
+            GeLU is defined as follows:
+
+            .. math::
+                GELU(x_i) = x_i*P(X < x_i)
+
+            where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
+            :math:`x_i` is the input element.
+
+            Args:
+                - **x** (Tensor) - The input of the activation function GeLU, the data type is float16, float32 or float64.
+
+            Returns:
+                Tensor, with the same type and shape as `x`.
+
+            Raises:
+                TypeError: If `x` is not a Tensor.
+                TypeError: If dtype of `x` is not float16, float32 or float64.
+
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
+
+            Examples:
+                >>> import mindspore
+                >>> import numpy as np
+                >>> from mindspore import Tensor, ops
+                >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+                >>> result = ops.gelu(x)
+                >>> print(result)
+                [0.841192  1.9545976  2.9963627]

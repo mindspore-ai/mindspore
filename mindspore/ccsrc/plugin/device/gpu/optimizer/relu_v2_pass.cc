@@ -26,6 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/optimizer/helper.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -63,6 +64,9 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   builder.SetInputsFormat(inputs_format);
   builder.SetOutputsDeviceType(outputs_type);
   builder.SetOutputsFormat(outputs_format);
+
+  const auto &object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(node));
+  builder.SetOutputsKernelObjectType(object_types);
   return builder.Build();
 }
 

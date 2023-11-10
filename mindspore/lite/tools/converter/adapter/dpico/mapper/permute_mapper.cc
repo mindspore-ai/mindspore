@@ -23,7 +23,7 @@
 #include "common/data_transpose_utils.h"
 #include "common/fetch_content.h"
 #include "common/op_attr.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/permute_operator.h"
 
 namespace mindspore {

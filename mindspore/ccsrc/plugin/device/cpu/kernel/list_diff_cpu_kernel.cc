@@ -37,20 +37,17 @@ constexpr size_t kListDiffOutputNum = 2;
   }
 }  // namespace
 
-bool ListDiffCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool ListDiffCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;
-  kernel_name_ = base_operator->name();
-  TypeId x_type = inputs.at(kIndex0)->GetDtype();
-  TypeId y_type = inputs.at(kIndex1)->GetDtype();
-  out_type_ = outputs.at(kIndex0)->GetDtype();
+  TypeId x_type = inputs.at(kIndex0)->dtype_id();
+  TypeId y_type = inputs.at(kIndex1)->dtype_id();
+  out_type_ = outputs.at(kIndex0)->dtype_id();
   if (x_type != y_type || x_type != out_type_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input 'x', 'y' and output 'out' should be same type, but get x["
                       << TypeIdLabel(x_type) << "], y[" << TypeIdLabel(y_type) << "], out[" << TypeIdLabel(out_type_)
                       << "].";
   }
-  idx_type_ = outputs.at(kIndex1)->GetDtype();
+  idx_type_ = outputs.at(kIndex1)->dtype_id();
   MS_EXCEPTION_IF_CHECK_FAIL((idx_type_ == kNumberTypeInt32 || idx_type_ == kNumberTypeInt64),
                              "attr 'out_idx' should be int32 or int64");
   out_size_ = 0;
@@ -60,14 +57,12 @@ bool ListDiffCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
 }
 
 void ListDiffCPUKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
-int ListDiffCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ListDiffCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   for (auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShapeVector();
@@ -80,19 +75,18 @@ int ListDiffCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   auto y_shape = inputs[kIndex1]->GetShapeVector();
   x_size_ = x_shape[0];
   y_size_ = y_shape[0];
-  (void)input_size_list_.emplace_back(x_size_ * data_size_);
-  (void)input_size_list_.emplace_back(y_size_ * data_size_);
   (void)output_size_list_.emplace_back(x_size_ * data_size_);
   (void)output_size_list_.emplace_back(x_size_ * index_size_);
   return KRET_OK;
 }
 
 template <typename T, typename Tidx>
-bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = static_cast<T *>(inputs[0]->addr);
-  auto y_addr = static_cast<T *>(inputs[1]->addr);
-  auto out_addr = static_cast<T *>(outputs[0]->addr);
-  auto idx_addr = static_cast<Tidx *>(outputs[1]->addr);
+bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto x_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto out_addr = static_cast<T *>(outputs[0]->device_ptr());
+  auto idx_addr = static_cast<Tidx *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_addr);
   MS_EXCEPTION_IF_NULL(y_addr);
   MS_EXCEPTION_IF_NULL(out_addr);
@@ -124,8 +118,9 @@ bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-bool ListDiffCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool ListDiffCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kListDiffInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kListDiffOutputNum, kernel_name_);
   bool result = false;
@@ -244,15 +239,16 @@ std::vector<KernelAttr> ListDiffCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void ListDiffCPUKernelMod::SyncOutputShape() {
+void ListDiffCPUKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   // update out
   ShapeVector out_shape_ = {out_size_};
   ShapeVector idx_shape_ = {out_size_};
   // set output shape and dtype
-  outputs_[0]->SetShapeVector(out_shape_);
-  outputs_[0]->SetDtype(TypeIdToType(out_type_));
-  outputs_[1]->SetShapeVector(idx_shape_);
-  outputs_[1]->SetDtype(TypeIdToType(idx_type_));
+  outputs[0]->SetShapeVector(out_shape_);
+  outputs[0]->set_size(out_size_ * UnitSizeInBytes(out_type_));
+  outputs[1]->SetShapeVector(idx_shape_);
+  outputs[1]->set_size(out_size_ * UnitSizeInBytes(idx_type_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ListDiff, ListDiffCPUKernelMod);

@@ -24,16 +24,20 @@
 #include <cstdint>
 #include <iterator>
 
-#include "mindspore/core/ops/sparse_ops.h"
-#include "mindspore/core/ops/random_ops.h"
-#include "mindspore/core/ops/conv_pool_ops.h"
-#include "mindspore/core/ops/other_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/shape_calc.h"
+#include "abstract/utils.h"
+#include "ops/sparse_ops.h"
+#include "ops/random_ops.h"
+#include "ops/conv_pool_ops.h"
+#include "ops/other_ops.h"
+#include "ops/nn_ops.h"
+#include "ops/math_ops.h"
+#include "ops/image_ops.h"
+#include "ops/array_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/ops_frontend_func_impl.h"
+#include "ops/op_def.h"
+#include "ops/shape_calc.h"
+#include "ops/op_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
@@ -152,7 +156,6 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   }
   auto prim_name = primitive->name();
   std::set<int64_t> ori = {};
-
   auto op_infer_opt = GetPrimitiveInferImpl(primitive);
   if (!op_infer_opt.has_value()) {
     // some operator will be mapped to new operator on Ascend like GatherV2, however they use same Infer information
@@ -177,6 +180,8 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
     }
   } else if (ori.empty()) {
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
+    // if not found in infer, consider all the non-tensor inputs as value depend args.
+    ori = ops::GetInputDependValueList(primitive);
   }
   if (ori.empty()) {
     return ori;
@@ -315,6 +320,82 @@ ValuePtr StandardPrimitiveImplReg::InferValue(const PrimitivePtr &prim, const Ab
   }
 
   return op_infer_->InferValue(prim, args);
+}
+
+std::optional<BaseShapePtr> InferShapeByFuncImpl(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args,
+                                                 bool compile_phase) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  if (compile_phase) {
+    auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
+    if (frontend_func_impl != nullptr) {
+      auto infer_result = frontend_func_impl->InferAbstract(primitive, input_args);
+      if (infer_result != nullptr) {
+        return infer_result->GetShape();
+      }
+    }
+  }
+
+  auto op_def = ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return std::nullopt;
+  }
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  return op_def->func_impl_.InferShape(primitive, input_args);
+}
+
+std::optional<TypePtr> InferTypeByFuncImpl(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args,
+                                           bool compile_phase) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  if (compile_phase) {
+    auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
+    if (frontend_func_impl != nullptr) {
+      auto infer_result = frontend_func_impl->InferAbstract(primitive, input_args);
+      if (infer_result != nullptr) {
+        return infer_result->GetType();
+      }
+    }
+  }
+
+  auto op_def = ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return std::nullopt;
+  }
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  return op_def->func_impl_.InferType(primitive, input_args);
+}
+
+std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const PrimitivePtr &primitive,
+                                                       const AbstractBasePtrList &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
+  if (frontend_func_impl != nullptr) {
+    auto infer_result = frontend_func_impl->InferAbstract(primitive, input_args);
+    if (infer_result != nullptr) {
+      return infer_result;
+    }
+  }
+
+  auto op_def = ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return std::nullopt;
+  }
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  auto shape = op_def->func_impl_.InferShape(primitive, input_args);
+  auto type = op_def->func_impl_.InferType(primitive, input_args);
+  return MakeAbstract(shape, type);
+}
+
+std::optional<ValuePtr> InferValueByFuncImpl(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
+  if (frontend_func_impl == nullptr) {
+    return std::nullopt;
+  }
+  return frontend_func_impl->InferValue(primitive, input_args);
 }
 }  // namespace abstract
 }  // namespace mindspore

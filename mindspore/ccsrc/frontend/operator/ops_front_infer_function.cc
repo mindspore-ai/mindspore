@@ -37,18 +37,9 @@
 #include "abstract/ops/infer_functions.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
-#include "ops/exp.h"
-#include "ops/log.h"
-#include "ops/reciprocal.h"
-#include "ops/real_div.h"
-#include "ops/add.h"
-#include "ops/arg_min.h"
-#include "ops/equal.h"
-#include "ops/greater_equal.h"
-#include "ops/greater.h"
-#include "ops/not_equal.h"
-#include "ops/neg.h"
-#include "ops/mul.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/ops_func_impl/greater_equal.h"
+#include "ops/ops_func_impl/greater.h"
 #include "ops/mod.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
@@ -279,7 +270,7 @@ bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, cons
     cmp_type = ValueToPyData(cmp_closure_first_input->BuildValue());
   } else {
     auto cmp_value = cmp->BuildValue();
-    if (cmp_value == kValueAny) {
+    if (cmp_value->ContainsValueAny()) {
       return false;
     }
     cmp_type = ValueToPyData(cmp_value);
@@ -451,7 +442,8 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   } else if (IsAdapterTensor(x)) {
     // x is adapter tensor.
     result = CheckIsInstanceForAdapter(x, cmp);
-  } else if (x->BuildValue() == kValueAny) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  } else if (x->BuildValue()->ContainsValueAny()) {
     // x is variable built-in type.
     auto x_abs_type = std::make_shared<AbstractType>(x->BuildType());
     auto py_x_type = ValueToPyData(x_abs_type->BuildValue());
@@ -611,7 +603,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(args_abs_list[1]);
 
   auto x_shp_value = shape_x->BuildValue();
-  if (x_shp_value->isa<ValueAny>()) {
+  if (x_shp_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
                                << args_abs_list[1]->ToString() << ".";
   }
@@ -631,7 +623,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
 
   auto axis_value = axis->BuildValue();
-  if (axis_value->isa<ValueAny>()) {
+  if (axis_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
                                << args_abs_list[1]->ToString() << ".";
   }
@@ -655,14 +647,14 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto div_shp_value = div_shp->BuildValue();
   MS_EXCEPTION_IF_NULL(div_shp_value);
-  if (div_shp_value->isa<ValueAny>()) {
+  if (div_shp_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                                << args_abs_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_x_value);
-  if (shape_x_value->isa<ValueAny>()) {
+  if (shape_x_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                                << args_abs_list[1]->ToString() << ".";
   }
@@ -763,7 +755,7 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_abs_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_abs_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<IntegerImm>() || scalar_value == kValueAny) {
+      if (scalar_value->isa<IntegerImm>() || scalar_value->ContainsValueAny()) {
         slice_args.push_back(args_abs_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
@@ -1080,6 +1072,23 @@ AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const Prim
   return SetAdapterFlag(op_name, args_abs_list[input_index], false);
 }
 
+AbstractBasePtr InferImplDtypeToEnum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list) {
+  constexpr size_t args_num = 1;
+  constexpr size_t input_index = 0;
+  CheckArgsSize(primitive->name(), args_abs_list, args_num);
+  auto abs_type = args_abs_list[input_index]->cast<AbstractTypePtr>();
+  if (abs_type == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect a type as input, but got " << args_abs_list[input_index]->ToString();
+  }
+  auto val_type = abs_type->BuildValue();
+  MS_EXCEPTION_IF_NULL(val_type);
+  auto dtype = val_type->cast<TypePtr>();
+  MS_EXCEPTION_IF_NULL(dtype);
+  int64_t type_id = GetTypeId(dtype->type_id());
+  return std::make_shared<AbstractScalar>(type_id);
+}
+
 #ifndef _MSC_VER
 // String
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringMul, prim::kPrimStringMul, InferImplStringMul, nullptr);
@@ -1118,6 +1127,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToAdapterTensor, prim::kPrimConvertToA
                                    InferImplConvertToAdapterTensor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToMsTensor, prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor,
                                    nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DtypeToEnum, prim::kPrimDtypeToEnum, InferImplDtypeToEnum, nullptr);
 #else
 void RegPrimitiveFrontEval() {
   // String
@@ -1181,6 +1191,8 @@ void RegPrimitiveFrontEval() {
                                                 nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
                                                 prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimDtypeToEnum,
+                                                InferImplDtypeToEnum, nullptr);
 }  // namespace abstract
 #endif
 }  // namespace abstract

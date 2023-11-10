@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "ops/apply_rms_prop.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -170,14 +171,11 @@ void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(std::complex<double> *variable,
   }
 }
 
-bool RMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
-  batch_rank_ = base_operator->get_batch_rank();
+bool RMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
-  auto node_name = base_operator->name();
-  if (node_name == "ApplyCenteredRMSProp") {
+  if (kernel_name_ == "ApplyCenteredRMSProp") {
     use_center_ = true;
   }
   if (kernel_name_ != kernel_type_) {
@@ -220,10 +218,8 @@ int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector
   return ret;
 }
 
-int RMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int RMSPropCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -258,38 +254,38 @@ int RMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &) {
-  size_ = inputs[0]->size / sizeof(T);
+bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &) {
+  size_ = inputs[0]->size() / sizeof(T);
   if (!use_center_) {
-    size_ = inputs[0]->size / sizeof(float);
+    size_ = inputs[0]->size() / sizeof(float);
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
-    float *variable = reinterpret_cast<float *>(inputs[kNumberZero]->addr);
-    float *mean_square = reinterpret_cast<float *>(inputs[kNumberOne]->addr);
-    float *moment = reinterpret_cast<float *>(inputs[kNumberTwo]->addr);
-    float *learning_rate = reinterpret_cast<float *>(inputs[kNumberThree]->addr);
-    float *gradients = reinterpret_cast<float *>(inputs[kNumberFour]->addr);
+    float *variable = reinterpret_cast<float *>(inputs[kNumberZero]->device_ptr());
+    float *mean_square = reinterpret_cast<float *>(inputs[kNumberOne]->device_ptr());
+    float *moment = reinterpret_cast<float *>(inputs[kNumberTwo]->device_ptr());
+    float *learning_rate = reinterpret_cast<float *>(inputs[kNumberThree]->device_ptr());
+    float *gradients = reinterpret_cast<float *>(inputs[kNumberFour]->device_ptr());
     float *decay = GetDeviceAddress<float>(inputs, kNumberFive);
     float *momentum = GetDeviceAddress<float>(inputs, kNumberSix);
     float *epsilon = GetDeviceAddress<float>(inputs, kNumberSeven);
 
-    size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
+    size_t lens = inputs[0]->size() > 0 ? static_cast<size_t>(inputs[0]->size() / sizeof(float)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;
     LaunchRMSPropUnuseCenter<float>(variable, mean_square, moment, gradients, learning_rate, decay, momentum, epsilon);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
-    T *variable = static_cast<T *>(inputs[kNumberZero]->addr);
-    T *mean_gradients = static_cast<T *>(inputs[kNumberOne]->addr);
-    T *mean_square = static_cast<T *>(inputs[kNumberTwo]->addr);
-    T *moment = static_cast<T *>(inputs[kNumberThree]->addr);
-    T *gradients = static_cast<T *>(inputs[kNumberFour]->addr);
-    T *learning_rate = static_cast<T *>(inputs[kNumberFive]->addr);
-    T *decay = static_cast<T *>(inputs[kNumberSix]->addr);
-    T *momentum = static_cast<T *>(inputs[kNumberSeven]->addr);
-    T *epsilon = static_cast<T *>(inputs[kNumberEight]->addr);
+    T *variable = static_cast<T *>(inputs[kNumberZero]->device_ptr());
+    T *mean_gradients = static_cast<T *>(inputs[kNumberOne]->device_ptr());
+    T *mean_square = static_cast<T *>(inputs[kNumberTwo]->device_ptr());
+    T *moment = static_cast<T *>(inputs[kNumberThree]->device_ptr());
+    T *gradients = static_cast<T *>(inputs[kNumberFour]->device_ptr());
+    T *learning_rate = static_cast<T *>(inputs[kNumberFive]->device_ptr());
+    T *decay = static_cast<T *>(inputs[kNumberSix]->device_ptr());
+    T *momentum = static_cast<T *>(inputs[kNumberSeven]->device_ptr());
+    T *epsilon = static_cast<T *>(inputs[kNumberEight]->device_ptr());
 
-    size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
+    size_t lens = inputs[0]->size() > 0 ? static_cast<size_t>(inputs[0]->size() / sizeof(T)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;
     LaunchRMSPropUseCenter<T>(variable, mean_square, moment, gradients, mean_gradients, momentum, learning_rate, decay,
                               epsilon);

@@ -16,54 +16,34 @@
 
 #include "plugin/device/gpu/kernel/arrays/one_hot_gpu_kernel.h"
 #include <cstdint>
-#include "mindspore/core/ops/one_hot.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cuh"
 #include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
-#define REG_ONE_HOT_THREE_INPUT(IndicesEnumType, IndicesImplType, ValueEnumType, ValueImplType) \
-  {                                                                                             \
-    KernelAttr()                                                                                \
-      .AddInputAttr(IndicesEnumType)                                                            \
-      .AddInputAttr(ValueEnumType)                                                              \
-      .AddInputAttr(ValueEnumType)                                                              \
-      .AddOutputAttr(ValueEnumType),                                                            \
-      &OneHotGpuKernelMod::LaunchKernel<ValueImplType, IndicesImplType>                         \
+constexpr size_t kOneHotInputsNum = 5;
+constexpr size_t kOneHotOutputsNum = 1;
+#define REG_ONE_HOT_FIVE_INPUT(IndicesEType, IndicesImplType, DepthEType, AxisEType, ValueEType, ValueImplType) \
+  {                                                                                                             \
+    KernelAttr()                                                                                                \
+      .AddInputAttr(IndicesEType)                                                                               \
+      .AddInputAttr(kObjectTypeNumber, DepthEType)                                                              \
+      .AddInputAttr(ValueEType)                                                                                 \
+      .AddInputAttr(ValueEType)                                                                                 \
+      .AddInputAttr(kObjectTypeNumber, AxisEType)                                                               \
+      .AddOutputAttr(ValueEType),                                                                               \
+      &OneHotGpuKernelMod::LaunchKernel<ValueImplType, IndicesImplType>                                         \
   }
 
-#define REG_ONE_HOT_FOUR_INPUT(IndicesEType, IndicesImplType, DepthEType, DepthImplType, ValueEType, ValueImplType) \
-  {                                                                                                                 \
-    KernelAttr()                                                                                                    \
-      .AddInputAttr(IndicesEType)                                                                                   \
-      .AddInputAttr(DepthEType)                                                                                     \
-      .AddInputAttr(ValueEType)                                                                                     \
-      .AddInputAttr(ValueEType)                                                                                     \
-      .AddOutputAttr(ValueEType),                                                                                   \
-      &OneHotGpuKernelMod::LaunchKernel<ValueImplType, IndicesImplType, DepthImplType>                              \
-  }
+#define REG_ONE_HOT_GPU_KERNEL(ValueEnumType, ValueImplType)                                                       \
+  REG_ONE_HOT_FIVE_INPUT(kNumberTypeInt32, int, kNumberTypeInt64, kNumberTypeInt64, ValueEnumType, ValueImplType), \
+    REG_ONE_HOT_FIVE_INPUT(kNumberTypeInt64, int64_t, kNumberTypeInt64, kNumberTypeInt64, ValueEnumType,           \
+                           ValueImplType)
 
-#define REG_ONE_HOT_GPU_KERNEL(ValueEnumType, ValueImplType)                                                \
-  REG_ONE_HOT_THREE_INPUT(kNumberTypeInt32, int, ValueEnumType, ValueImplType),                             \
-    REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt32, int, kNumberTypeInt32, int, ValueEnumType, ValueImplType),     \
-    REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt32, int, kNumberTypeInt64, int64_t, ValueEnumType, ValueImplType), \
-    REG_ONE_HOT_THREE_INPUT(kNumberTypeInt64, int64_t, ValueEnumType, ValueImplType),                       \
-    REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt64, int64_t, kNumberTypeInt32, int, ValueEnumType, ValueImplType), \
-    REG_ONE_HOT_FOUR_INPUT(kNumberTypeInt64, int64_t, kNumberTypeInt64, int64_t, ValueEnumType, ValueImplType)
-
-bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  constexpr size_t min_input_num = 3;
-  constexpr size_t max_input_num = 4;
-  if (inputs.size() != min_input_num && inputs.size() != max_input_num) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input num should be 3 or 4, but get: " << inputs.size();
-    return false;
-  }
-  constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+bool OneHotGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -74,17 +54,13 @@ bool OneHotGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int OneHotGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto output_shape = LongVecToSizeVec(outputs[kIndex0]->GetShapeVector());
-  auto one_hot_ptr = std::dynamic_pointer_cast<ops::OneHot>(base_operator);
-  MS_EXCEPTION_IF_NULL(one_hot_ptr);
-  int64_t axis = one_hot_ptr->get_axis();
+  int64_t axis = inputs[axis_index_]->GetValueWithCheck<int64_t>();
 
   int64_t input_dims = static_cast<int64_t>(input_shape.size());
   int64_t output_dims = static_cast<int64_t>(output_shape.size());
@@ -116,9 +92,9 @@ int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return KRET_OK;
 }
 
-template <typename T, typename S, typename G = int>
-bool OneHotGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+template <typename T, typename S>
+bool OneHotGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   const size_t on_value_idx = 2;
   const size_t off_value_idx = 3;
   const S *indices = GetDeviceAddress<S>(inputs, 0);

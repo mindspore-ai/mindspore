@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,21 +33,17 @@ class ReduceCpuKernelMod : public NativeCpuKernelMod {
   ReduceCpuKernelMod() = default;
   explicit ReduceCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ReduceCpuKernelMod() override = default;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   std::shared_ptr<CpuKernelFunc> func_obj_;

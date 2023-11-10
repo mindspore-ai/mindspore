@@ -39,7 +39,8 @@ REG_ADPT_DESC(ReluV2, kReluV2OpName, ADPT_DESC(ReluV2))
 
 // Elu
 INPUT_MAP(Elu) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Elu) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};
+INPUT_ATTR_MAP(Elu) = {{2, ATTR_DESC(alpha, AnyTraits<float>())}};
+ATTR_MAP(Elu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Elu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Elu, kNameElu, ADPT_DESC(Elu))
 
@@ -71,15 +72,15 @@ REG_ADPT_DESC(SeLU, kNameSeLU, ADPT_DESC(Selu))
 REG_ADPT_DESC(Selu, kSeluOpName, ADPT_DESC(Selu))
 
 // Sigmoid
-INPUT_MAP(Sigmoid) = {{1, INPUT_DESC(x)}};
+INPUT_MAP(Sigmoid) = {{kIndex1, INPUT_DESC(x)}};
 ATTR_MAP(Sigmoid) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Sigmoid) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(Sigmoid) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sigmoid, kNameSigmoid, ADPT_DESC(Sigmoid))
 
 // SigmoidGrad
-INPUT_MAP(SigmoidGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+INPUT_MAP(SigmoidGrad) = {{kIndex1, INPUT_DESC(y)}, {kIndex2, INPUT_DESC(dy)}};
 ATTR_MAP(SigmoidGrad) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(SigmoidGrad) = {{0, OUTPUT_DESC(z)}};
+OUTPUT_MAP(SigmoidGrad) = {{kIndex0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(SigmoidGrad, kNameSigmoidGrad, ADPT_DESC(SigmoidGrad))
 
 // Swish
@@ -188,7 +189,8 @@ REG_ADPT_DESC(GeluGrad, prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad))
 
 // CeluV2
 INPUT_MAP(CeluV2) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(CeluV2) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};
+ATTR_MAP(CeluV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(CeluV2) = {{2, ATTR_DESC(alpha, AnyTraits<float>())}};
 OUTPUT_MAP(CeluV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CeluV2, kCeluV2OpName, ADPT_DESC(CeluV2))
 REG_ADPT_DESC(CeLU, prim::kPrimCeLU->name(), ADPT_DESC(CeluV2))
@@ -221,14 +223,16 @@ REG_ADPT_DESC(Shrink, kShrinkOpName, ADPT_DESC(Shrink))
 
 // HardShrink
 INPUT_MAP(HardShrink) = {{1, INPUT_DESC(input_x)}};
-ATTR_MAP(HardShrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+ATTR_MAP(HardShrink) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(HardShrink) = {{2, ATTR_DESC(lambd, AnyTraits<float>())}};
 OUTPUT_MAP(HardShrink) = {{0, OUTPUT_DESC(output_y)}};
 REG_ADPT_DESC(HShrink, prim::kPrimHShrink->name(), ADPT_DESC(HardShrink))
 REG_ADPT_DESC(HardShrink, kHardShrinkOpName, ADPT_DESC(HardShrink))
 
 // HardShrinkGrad
 INPUT_MAP(HardShrinkGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
-ATTR_MAP(HardShrinkGrad) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+ATTR_MAP(HardShrinkGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(HardShrinkGrad) = {{3, ATTR_DESC(lambd, AnyTraits<float>())}};
 OUTPUT_MAP(HardShrinkGrad) = {{0, OUTPUT_DESC(backprops)}};
 REG_ADPT_DESC(HShrinkGrad, prim::kPrimHShrinkGrad->name(), ADPT_DESC(HardShrinkGrad))
 REG_ADPT_DESC(HardShrinkGrad, kHardShrinkGradOpName, ADPT_DESC(HardShrinkGrad))

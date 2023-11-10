@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
@@ -32,6 +33,8 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/operator/ops_backend_infer_function.h"
+#include "utils/log_adapter.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::graphkernel::inner {
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
@@ -43,6 +46,11 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
 }
 
 BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto shape_optional = abstract::InferShapeByFuncImpl(prim, abs_list, true);
+  if (shape_optional.has_value()) {
+    return shape_optional.value();
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();
@@ -55,6 +63,11 @@ BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBase
 }
 
 TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto type_optional = abstract::InferTypeByFuncImpl(prim, abs_list, true);
+  if (type_optional.has_value()) {
+    return type_optional.value();
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();
@@ -67,6 +80,11 @@ TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrLis
 }
 
 tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto value_optional = abstract::InferValueByFuncImpl(prim, abs_list);
+  if (value_optional.has_value()) {
+    return std::static_pointer_cast<tensor::Tensor>(value_optional.value());
+  }
+
   auto found = abstract::GetBackendPrimitiveInferImpl(prim);
   if (found.has_value()) {
     auto infer = found.value();
@@ -79,26 +97,19 @@ tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const Abstrac
 
 std::pair<PrimitivePtr, AbstractBasePtrList> PrimOp::GenPrimAndAbstract(const NodePtrList &inputs,
                                                                         const DAttrs &attrs) const {
-  const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  const auto iter = op_primc_fns.find(op_);
-  if (iter == op_primc_fns.end()) {
-    return std::pair<PrimitivePtr, AbstractBasePtrList>(nullptr, {});
-  }
-  auto primc = iter->second();
-  (void)primc->SetAttrs(attrs);
+  auto prim = std::make_shared<Primitive>(op_);
+  MS_EXCEPTION_IF_NULL(prim);
+  (void)prim->SetAttrs(attrs);
   AbstractBasePtrList abs_list(inputs.size());
   (void)std::transform(inputs.cbegin(), inputs.cend(), abs_list.begin(),
                        [](const NodePtr &node) { return node->ToAbstract(); });
-  return std::make_pair(primc->cast<PrimitivePtr>(), abs_list);
+  return std::make_pair(prim, abs_list);
 }
 
 std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
-  if (primc == nullptr) {
-    MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
-  }
-  RectifyAbstract(primc, &abs_list);
-  auto baseshape = InferShapeWithAbstract(primc, abs_list);
+  auto [prim, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  RectifyAbstract(prim, &abs_list);
+  auto baseshape = InferShapeWithAbstract(prim, abs_list);
   MS_EXCEPTION_IF_NULL(baseshape);
   if (baseshape->isa<abstract::TupleShape>()) {
     auto tuple_shape = baseshape->cast<abstract::TupleShapePtr>();
@@ -117,10 +128,9 @@ std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &
 }
 
 std::vector<TypeId> PrimOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
-  auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
-  MS_EXCEPTION_IF_NULL(primc);
-  RectifyAbstract(primc, &abs_list);
-  auto type = InferTypeWithAbstract(primc, abs_list);
+  auto [prim, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  RectifyAbstract(prim, &abs_list);
+  auto type = InferTypeWithAbstract(prim, abs_list);
   MS_EXCEPTION_IF_NULL(type);
   auto get_type_id = [](const TypePtr &t) {
     return t->isa<TensorType>() ? t->cast<TensorTypePtr>()->element()->type_id() : t->type_id();
@@ -325,12 +335,9 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
       return nullptr;
   }
   if (res == nullptr) {
-    auto [primc, inputs_abstract] = GenPrimAndAbstract(inputs, attrs);
-    if (primc == nullptr) {
-      return nullptr;
-    }
-    RectifyAbstract(primc, &inputs_abstract);
-    res = InferValueWithAbstract(primc, inputs_abstract);
+    auto [prim, inputs_abstract] = GenPrimAndAbstract(inputs, attrs);
+    RectifyAbstract(prim, &inputs_abstract);
+    res = InferValueWithAbstract(prim, inputs_abstract);
   }
   return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
@@ -689,6 +696,39 @@ void ConcatOp::RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_
   input_abstract_ptr->swap(rectifyed_abs_list);
 }
 
+void ReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "keep_dims");
+  (void)abs_list->emplace_back(prim->GetAttr("keep_dims")->ToAbstract());
+  if (prim->name() == prim::kPrimReduceSum->name()) {
+    CHECK_ATTR(prim->attrs(), "skip_mode");
+    (void)abs_list->emplace_back(prim->GetAttr("skip_mode")->ToAbstract());
+  }
+}
+
+void OneHotOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "axis");
+  (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
+}
+
+void CumSumOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "exclusive");
+  (void)abs_list->emplace_back(prim->GetAttr("exclusive")->ToAbstract());
+  CHECK_ATTR(prim->attrs(), "reverse");
+  (void)abs_list->emplace_back(prim->GetAttr("reverse")->ToAbstract());
+}
+
+void GatherOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "batch_dims");
+  (void)abs_list->emplace_back(prim->GetAttr("batch_dims")->ToAbstract());
+}
+
+void ArgReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "axis");
+  (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
+  CHECK_ATTR(prim->attrs(), "output_type");
+  (void)abs_list->emplace_back(prim->GetAttr("output_type")->ToAbstract());
+}
+
 std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
   std::vector<size_t> new_shape;
   size_t accu = 1;
@@ -835,8 +875,10 @@ tensor::TensorPtr ConcatOp::CalcConcat(const NodePtrList &inputs, const DAttrs &
   constexpr size_t second_dim = 1;
   constexpr size_t third_dim = 2;
   int64_t axis = 0;
-  if (attrs.count("axis") > 0) {
-    axis = GetValue<int64_t>(attrs.find("axis")->second);
+  auto axis_node = inputs.back();
+  if (axis_node->NodeType() == NType::Scalar) {
+    auto scalar_node = axis_node->As<ConstScalarNode>();
+    axis = GetValue<int64_t>(scalar_node->data());
   } else {
     return nullptr;
   }

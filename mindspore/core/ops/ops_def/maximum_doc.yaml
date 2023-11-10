@@ -1,0 +1,51 @@
+maximum:
+    description: |
+        Computes the maximum of input tensors element-wise.
+
+        Note:
+            - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+            consistent.
+            - The inputs must be two tensors or one tensor and one scalar.
+            - When the inputs are two tensors,
+            dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+            - When the inputs are one tensor and one scalar,
+            the scalar could only be a constant.
+            - Broadcasting is supported.
+            - If one of the elements being compared is a NaN, then that element is returned.
+
+        .. math::
+            output_i = \max(input_i, other_i)
+
+        Args:
+            x (Union[Tensor, Number, bool]): The first input is a number or
+                a bool or a tensor whose data type is number or bool.
+            y (Union[Tensor, Number, bool]): The second input is a number or
+                a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+            ValueError: If `input` and `other` are not the same shape.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> # case 1 : same data type
+            >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
+            >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+            >>> output = ops.maximum(x, y)
+            >>> print(output)
+            [4. 5. 6.]
+            >>> # case 2 : different data type
+            >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.int32)
+            >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+            >>> output = ops.maximum(x, y)
+            >>> print(output.dtype)
+            Float32

@@ -37,13 +37,8 @@ constexpr int64_t kNum4 = 4;
 const std::vector<std::string> mode_list = {ops::kConstant, ops::kReflect, ops::kEdge, ops::kCircular};
 }  // namespace
 
-bool PadV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  mode_ = kernel_ptr->get_mode();
+bool PadV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  mode_ = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode_) != mode_list.end();
   if (is_mode_available == false) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'mode' should be 'constant', 'reflect' or 'edge', but got "
@@ -57,21 +52,19 @@ bool PadV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  paddings_contiguous_ = kernel_ptr->get_paddings_contiguous();
+  paddings_contiguous_ = GetValue<bool>(primitive_->GetAttr("paddings_contiguous"));
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int PadV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int PadV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_dim_ = SizeToLong(input_shape.size());
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   auto padding_shape = inputs[kIndex1]->GetShapeVector();
   if (padding_shape.size() != 1) {
     paddings_num_ = 1;
@@ -82,8 +75,8 @@ int PadV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename S>
-bool PadV3CpuKernelMod::GetPaddings(const std::vector<AddressPtr> &inputs) {
-  auto paddings_arg = static_cast<S *>(inputs[1]->addr);
+bool PadV3CpuKernelMod::GetPaddings(const std::vector<KernelTensor *> &inputs) {
+  auto paddings_arg = static_cast<S *>(inputs[1]->device_ptr());
   paddings_ = std::vector<int64_t>(input_dim_ * kNum2, 0);
   for (int64_t i = 0; i < paddings_num_; ++i) {
     paddings_[i] = int64_t(*(paddings_arg + i));
@@ -310,15 +303,15 @@ int64_t PadV3CpuKernelMod::IndexCalculate(int64_t pad_value, int64_t pad_end, in
 }
 
 template <typename T, typename S>
-bool PadV3CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool PadV3CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (!GetPaddings<S>(inputs)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', get paddings failed";
   }
-  auto input_ptr = static_cast<T *>(inputs[0]->addr);
-  auto output_ptr = static_cast<T *>(outputs[0]->addr);
+  auto input_ptr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_ptr = static_cast<T *>(outputs[0]->device_ptr());
   if (mode_ == ops::kConstant) {
-    T constant_values = *(static_cast<T *>(inputs[2]->addr));
+    T constant_values = *(static_cast<T *>(inputs[2]->device_ptr()));
     for (int64_t i = 0; i < input_dim_ / kNum2; ++i) {
       int64_t u = paddings_[i * kNum2];
       int64_t v = paddings_[i * kNum2 + 1];

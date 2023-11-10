@@ -32,30 +32,28 @@ namespace kernel {
 class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
  public:
   ScatterFunctorGPUKernelMod() = default;
-  explicit ScatterFunctorGPUKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
+  explicit ScatterFunctorGPUKernelMod(const std::string &kernel_name_) : kernel_type_(kernel_name_) {}
   ~ScatterFunctorGPUKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cuda_stream_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   using LaunchFunc =
-    std::function<bool(ScatterFunctorGPUKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(ScatterFunctorGPUKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, LaunchFunc>>> kernel_attr_map_;
   ScatterFunctorType scatter_functor_type_;
   LaunchFunc kernel_func_{};

@@ -64,8 +64,8 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(output_dim_ptr);
   auto output_dim = GetValue<int64_t>(output_dim_ptr);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (x_shape[0] != rois_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the batch number of input 'features' and 'rois' must be equal, but got: " << x_shape[0]
@@ -116,19 +116,19 @@ TypePtr PSROIPoolingInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const int64_t kInputNum = 2;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat64, kFloat32, kFloat16},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat64, kFloat32, kFloat16},
                                                    prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat64, kFloat32, kFloat16},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->GetType(), {kFloat64, kFloat32, kFloat16},
                                                    prim->name());
 
-  auto input_type = input_args[0]->BuildType();
-  auto rois_type = input_args[1]->BuildType();
+  auto input_type = input_args[0]->GetType();
+  auto rois_type = input_args[1]->GetType();
   if (input_type->ToString() != rois_type->ToString()) {
     MS_EXCEPTION(TypeError) << "For '" << prim->name()
                             << "', input[features] is expected to have the same type with input[rois], but got type ("
                             << input_type << ", " << rois_type << ").";
   }
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 

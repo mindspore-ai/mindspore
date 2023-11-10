@@ -28,13 +28,11 @@ constexpr size_t kMapUniformInputsNum = 3;
 constexpr size_t kMapUniformOutputsNum = 1;
 }  // namespace
 
-bool MapUniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapUniformCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapUniformOutputsNum, kernel_name_);
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -46,10 +44,9 @@ bool MapUniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int MapUniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MapUniformCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -59,14 +56,14 @@ int MapUniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool MapUniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MapUniformCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   MS_LOG(INFO) << "Input size: " << batch_size_;
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto per_group_size = *reinterpret_cast<T *>(inputs[1]->addr);
-  auto group_num = *reinterpret_cast<T *>(inputs[2]->addr);
-  auto output_x = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto per_group_size = *reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto group_num = *reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto output_x = reinterpret_cast<T *>(outputs[0]->device_ptr());
   if (group_num <= 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group_num' must be greater than 0, but got " << group_num;
   }

@@ -71,14 +71,14 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
   ~UnaryOpCpuKernelFunc() override = default;
   using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
     GetUnaryOpFunc();
   }
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override {
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override {
     auto output = outputs.front();
     const auto input_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<S>(outputs, 0);
@@ -87,7 +87,7 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
     }
     ParallelLaunchAutoSearch(
       std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
-      output->size / sizeof(S), this, &parallel_search_info_);
+      output->size() / sizeof(S), this, &parallel_search_info_);
     return true;
   }
 
@@ -197,9 +197,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}}};
 }  // namespace
 
-bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool UnaryOpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
   if (inputs.empty() || outputs.empty() || is_null_input_) {
@@ -212,14 +210,12 @@ bool UnaryOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(EXCEPTION) << kernel_attr << " does not support this kernel data type: " << kernel_attr;
   }
   func_obj_ = kernel_attr_list[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int UnaryOpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int UnaryOpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> UnaryOpCpuKernelMod::GetOpSupport() {

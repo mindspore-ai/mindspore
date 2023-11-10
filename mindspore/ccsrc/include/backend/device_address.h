@@ -31,6 +31,7 @@
 #include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/device_type.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace device {
@@ -65,6 +66,8 @@ class RuntimeUtils;
 namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 
 struct StorageInfo {
   void *host_ptr_{nullptr};
@@ -84,7 +87,6 @@ enum class DeviceAddressStatus {
   kInHostToFile,
   kInFileToHost
 };
-using UserDataPtr = std::shared_ptr<UserData>;
 
 // The flag of device address.
 constexpr size_t kDeviceAddressFlagInit = 0;
@@ -92,35 +94,70 @@ constexpr size_t kDeviceAddressFlagInit = 0;
 constexpr size_t kDeviceAddressFlagRefNode = 1;
 // Indicates that it is the device address of node which has no user.
 constexpr size_t kDeviceAddressFlagNotUsed = 2;
+// Indicates that it is the device address of node has init arg and do not need device address.
+constexpr size_t kDeviceAddressFlagIgnoreDevicePtr = 4;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
-  explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
-  explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
-      : ptr_(ptr), size_(size), format_(format), type_id_(type_id) {}
+  explicit DeviceAddress(const KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
+
+  explicit DeviceAddress(void *ptr, size_t size) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+  }
+  explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+    kernel_tensor_->SetStringFormat(format);
+    kernel_tensor_->set_dtype_id(type_id);
+  }
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index)
-      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_(node_index) {}
+      : node_index_(node_index) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+    kernel_tensor_->SetStringFormat(format);
+    kernel_tensor_->set_dtype_id(type_id);
+  }
 
-  explicit DeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
-      : ptr_(ptr), size_(size), device_name_(device_name), device_id_(device_id) {}
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+    kernel_tensor_->set_device_name(device_name);
+    kernel_tensor_->set_device_id(device_id);
+  }
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id, const std::string &device_name,
-                         uint32_t device_id)
-      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), device_name_(device_name), device_id_(device_id) {}
+                         uint32_t device_id) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+    kernel_tensor_->SetStringFormat(format);
+    kernel_tensor_->set_dtype_id(type_id);
+    kernel_tensor_->set_device_name(device_name);
+    kernel_tensor_->set_device_id(device_id);
+  }
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
-      : ptr_(ptr),
-        size_(size),
-        format_(format),
-        type_id_(type_id),
-        node_index_(node_index),
-        device_name_(device_name),
-        device_id_(device_id) {}
+      : node_index_(node_index) {
+    kernel_tensor_ = std::make_shared<KernelTensor>();
+    kernel_tensor_->set_device_ptr(ptr);
+    kernel_tensor_->set_size(size);
+    kernel_tensor_->SetStringFormat(format);
+    kernel_tensor_->set_dtype_id(type_id);
+    kernel_tensor_->set_device_name(device_name);
+    kernel_tensor_->set_device_id(device_id);
+  }
+
+  explicit DeviceAddress(KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
   virtual ~DeviceAddress() {
-    if (!from_mem_pool_ && deleter_ && ptr_ != nullptr) {
-      deleter_(static_cast<uint8_t *>(ptr_));
+    if (!from_mem_pool_ && deleter_ && GetDevicePtr() != nullptr) {
+      deleter_(static_cast<uint8_t *>(GetDevicePtr()));
     }
-    ptr_ = nullptr;
+    SetDevicePtr(nullptr);
   }
 
   // Asynchronously copy host memory to device side.
@@ -137,13 +174,22 @@ class DeviceAddress : public mindspore::DeviceSync {
     return true;
   }
 
+  // Get kernel tensor pointer.
+  const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
+  // Set kernel tensor pointer.
+  void set_kernel_tensor(const KernelTensorPtr &kernel_tensor) { kernel_tensor_ = kernel_tensor; }
+
+  void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
+    kernel_tensor_->set_device_synchronizer(device_synchronizer);
+  }
+
   const void *GetPtr() const {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    return ptr_;
+    return GetDevicePtr();
   }
   void set_ptr(void *ptr) {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    ptr_ = ptr;
+    kernel_tensor_->set_device_ptr(ptr);
     if (ptr != nullptr) {
       const auto &storage_info = GetStorageInfo();
       if (storage_info.host_ptr_ == nullptr && storage_info.file_name_.empty()) {
@@ -151,21 +197,21 @@ class DeviceAddress : public mindspore::DeviceSync {
       }
     }
   }
-  size_t GetSize() const { return size_; }
-  void SetSize(size_t size) { size_ = size; }
+  size_t GetSize() const { return size(); }
+  void SetSize(size_t size) { kernel_tensor_->set_size(size); }
 
-  const std::string &format() const { return format_; }
-  void set_format(const std::string &format) { format_ = format; }
-  const std::string &padding_type() const { return padding_type_; }
-  void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
-  TypeId type_id() const { return type_id_; }
+  std::string format() const { return kernel_tensor_->GetStringFormat(); }
+  void set_format(const std::string &format) { kernel_tensor_->SetStringFormat(format); }
+  const std::string &padding_type() const { return kernel_tensor_->padding_type(); }
+  void set_padding_type(const std::string &padding_type) { kernel_tensor_->set_padding_type(padding_type); }
+  TypeId type_id() const { return kernel_tensor_->dtype_id(); }
+  void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
-  void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
-  void set_type_id(TypeId type_id) { type_id_ = type_id; }
-  ShapeVector host_shape() const { return host_shape_; }
+  void set_host_shape(const ShapeVector &shape) { kernel_tensor_->set_host_shape(shape); }
+  const ShapeVector &host_shape() const { return kernel_tensor_->host_shape(); }
   void set_device_shape(const ShapeVector &shape) { device_shape_ = shape; }
   const ShapeVector &device_shape() const { return device_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
@@ -178,10 +224,13 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceType GetDeviceType() const { return DeviceType::kUnknown; }
   void *GetMutablePtr() const override {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    return ptr_;
+    return GetDevicePtr();
   }
-  std::string device_name() const { return device_name_; }
-  uint32_t device_id() const { return device_id_; }
+
+  const std::string &device_name() const { return kernel_tensor_->device_name(); }
+  uint32_t device_id() const { return kernel_tensor_->device_id(); }
+
+  void set_stream_id(uint32_t stream_id) { kernel_tensor_->set_stream_id(stream_id); }
 
   void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }
@@ -199,7 +248,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void IncreaseDynamicRefCount(const std::string &op_object) {
     if (dynamic_ref_count_ < INT32_MAX) {
       (void)++dynamic_ref_count_;
-      MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
+      MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_
+                    << " for ptr:" << GetDevicePtr();
     }
   }
   void DecreaseDynamicRefCount(const std::string &op_object) {
@@ -207,7 +257,8 @@ class DeviceAddress : public mindspore::DeviceSync {
       MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
     }
     (void)--dynamic_ref_count_;
-    MS_LOG(DEBUG) << op_object << " decreases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
+    MS_LOG(DEBUG) << op_object << " decreases dynamic ref count to:" << dynamic_ref_count_
+                  << " for ptr:" << GetDevicePtr();
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
@@ -225,23 +276,24 @@ class DeviceAddress : public mindspore::DeviceSync {
   // Return whether DeviceAddress has a valid ptr.
   virtual bool IsPtrValid() const {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    return ptr_ != nullptr;
+    return GetDevicePtr() != nullptr;
   }
 
   // Return the valid device ptr.
   virtual void *GetValidPtr(size_t) {
-    if (user_data_ == nullptr || sync_user_data_handler_ == nullptr) {
-      return ptr_;
+    auto device_ptr = GetDevicePtr();
+    if (user_data() == nullptr || sync_user_data_handler_ == nullptr) {
+      return GetDevicePtr();
     }
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     if (sync_user_data_handler_ == nullptr) {
-      return ptr_;
+      return device_ptr;
     }
     if (sync_user_data_handler_ != nullptr) {
       sync_user_data_handler_(this);
     }
     sync_user_data_handler_ = nullptr;
-    return ptr_;
+    return device_ptr;
   }
 
   // Offload data from device to host and free device memory
@@ -269,17 +321,25 @@ class DeviceAddress : public mindspore::DeviceSync {
     if (other == this) {
       return;
     }
-    other->ptr_ = ptr_;
+    other->SetDevicePtr(GetDevicePtr());
+    SetDevicePtr(nullptr);
+
     other->from_mem_pool_ = from_mem_pool_;
     other->set_deleter(deleter());
     other->set_sync_user_data_handler(sync_user_data_handler_);
-    ptr_ = nullptr;
+    SetDevicePtr(nullptr);
     from_mem_pool_ = false;
     deleter_ = nullptr;
   }
 
   virtual void set_swappable(bool) {}
   virtual bool swappable() { return false; }
+
+  // Get user data maintained by the DeviceAddress.
+  const UserDataPtr &user_data() const override { return kernel_tensor_->user_data(); }
+
+  // Set user data to the DeviceAddress.
+  void set_user_data(const UserDataPtr &user_data) override { kernel_tensor_->set_user_data(user_data); }
 
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}
@@ -301,17 +361,16 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_sync_user_data_handler(SyncUserDataHandler handler) { sync_user_data_handler_ = handler; }
 
  protected:
-  const void *ptr() const { return ptr_; }
-  size_t size() const { return size_; }
+  KernelTensorPtr kernel_tensor_;
+  size_t size() const { return kernel_tensor_->size(); }
 
-  mutable void *ptr_{nullptr};
-  size_t size_{0};
-  string format_{"DefaultFormat"};
-  std::string padding_type_;
-  TypeId type_id_{kNumberTypeFloat16};
+  void *GetDevicePtr() const { return kernel_tensor_->device_ptr(); }
+  void SetDevicePtr(void *ptr) const { kernel_tensor_->set_device_ptr(ptr); }
+
+  void SetTypeId(TypeId type) const { return kernel_tensor_->set_dtype_id(type); }
+
   mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
-  ShapeVector host_shape_{};
   ShapeVector device_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
@@ -328,9 +387,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   // The device address generated in the control flow scene uses dynamic_ref_count_.
   std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
 
-  // The key of device context.
-  std::string device_name_{""};
-  uint32_t device_id_{0};
   bool from_persistent_mem_{false};
   bool need_recycle_{false};
 

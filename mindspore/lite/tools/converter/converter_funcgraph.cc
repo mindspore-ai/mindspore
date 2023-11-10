@@ -68,6 +68,7 @@
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "tools/optimizer/graph/input_and_output_variable_pass.h"
 #include "tools/optimizer/graph/output_variable_pass.h"
+#include "tools/optimizer/graph/args_to_attr_pass.h"
 
 namespace mindspore {
 namespace lite {
@@ -408,39 +409,70 @@ bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraph
   return false;
 }
 
+STATUS ConverterFuncGraph::CheckFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  auto args_to_attr_pass = std::make_shared<opt::ArgsToAttrPass>();
+  if (args_to_attr_pass == nullptr) {
+    MS_LOG(ERROR) << "create pass failed";
+    return RET_NULL_PTR;
+  }
+  if (!args_to_attr_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "convert args to attr pass failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS ConverterFuncGraph::OptmizedConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  auto status = Quantize(param, func_graph);
+  ClearBuiltinPass();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Quantize failed.";
+    return status;
+  }
+  return RET_OK;
+}
+
+STATUS ConverterFuncGraph::GEOptmize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  MS_LOG(INFO) << "It will run ge optimize";
+  if (CheckNeedQuant(param, func_graph)) {
+    MS_LOG(INFO) << "It will run quant optimize";
+    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+    if (acl_pass_ptr == nullptr) {
+      MS_LOG(ERROR) << "Failed to create acl pass";
+      return RET_ERROR;
+    }
+    if (!acl_pass_ptr->Run(func_graph)) {
+      MS_LOG(ERROR) << "Acl pass failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+  return OptimizeForGE(param, func_graph);
+}
+
 STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
     return RET_ERROR;
   }
 
+  if (CheckFuncGraph(param, func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "args to attr failed";
+    return RET_ERROR;
+  }
+
   bool is_optimized = IsOptimizedFuncGraph(func_graph);
   if (is_optimized) {
-    auto status = Quantize(param, func_graph);
-    ClearBuiltinPass();
+    auto status = OptmizedConvert(param, func_graph);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Quantize failed.";
+      MS_LOG(ERROR) << "optimized convert failed with " << status;
       return status;
     }
     return RET_OK;
   }
 
   if (param->provider == "ge") {
-    MS_LOG(INFO) << "It will run ge optimize";
-    if (CheckNeedQuant(param, func_graph)) {
-      MS_LOG(INFO) << "It will run quant optimize";
-      auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
-      if (acl_pass_ptr == nullptr) {
-        MS_LOG(ERROR) << "Failed to create acl pass";
-        return RET_ERROR;
-      }
-      if (!acl_pass_ptr->Run(func_graph)) {
-        MS_LOG(ERROR) << "Acl pass failed.";
-        return RET_ERROR;
-      }
-      return RET_OK;
-    }
-    return OptimizeForGE(param, func_graph);
+    return GEOptmize(param, func_graph);
   }
   std::vector<std::string> output_names;
   auto status = UnifyFuncGraphForInfer(param, func_graph, &output_names);

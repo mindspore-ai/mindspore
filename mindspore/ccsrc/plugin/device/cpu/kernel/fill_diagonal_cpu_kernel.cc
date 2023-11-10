@@ -33,20 +33,14 @@ const size_t kInputMinDim = 2;
 constexpr int64_t kParallelDataNums = 512 * 1024;
 }  // namespace
 
-bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool FillDiagonalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillDiagonalInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillDiagonalOutputNum, kernel_name_);
 
-  input_type_ = inputs[0]->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Init FillDiagonal kernel ptr failed.";
-    return false;
-  }
-  fill_value_ = kernel_ptr->get_fill_value();
-  wrap_ = kernel_ptr->get_wrap();
+  input_type_ = inputs[0]->dtype_id();
+  fill_value_ = GetValue<float>(primitive_->GetAttr(ops::kFillValue));
+  wrap_ = GetValue<bool>(primitive_->GetAttr(ops::kWrap));
 
   if (IsOneOfUnsignedType(input_type_) && fill_value_ < 0) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
@@ -55,20 +49,19 @@ bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FillDiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
-bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   if (input_type_ == kNumberTypeFloat16) {
     return LaunchKernel<float16>(inputs, outputs);
   } else if (input_type_ == kNumberTypeFloat32) {
@@ -98,14 +91,14 @@ bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_ptr);
 
-  size_t data_nums = outputs[0]->size / sizeof(T);
+  size_t data_nums = outputs[0]->size() / sizeof(T);
   if (SizeToLong(data_nums) <= kParallelDataNums) {
     auto ret_code = memcpy_s(output_ptr, data_nums * sizeof(T), input_ptr, data_nums * sizeof(T));
     if (ret_code != EOK) {

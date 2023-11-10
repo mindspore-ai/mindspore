@@ -41,22 +41,20 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
   AdaptiveMaxPool2dCpuKernelMod() = default;
   ~AdaptiveMaxPool2dCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
+  bool ResizedInputSize(const std::vector<KernelTensor *> &inputs);
 
   bool ResizedOutputSize();
 
-  bool UpdateOutputSizeList(const std::vector<KernelTensorPtr> &outputs, size_t input_type_size);
+  bool UpdateOutputSizeList(const std::vector<KernelTensor *> &outputs, size_t input_type_size);
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -64,8 +62,8 @@ class AdaptiveMaxPool2dCpuKernelMod : public NativeCpuKernelMod,
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   using FuncList = std::vector<std::pair<KernelAttr, AdaptiveMaxPool2dCpuKernelMod::KernelRunFunc>>;
 

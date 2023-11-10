@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     for (size_t j = 0, idx = i; j < LongToSize(rank_size); ++j, idx += inputs_size) {
       concat_inputs.push_back(new_tuple_getitems[idx]);
     }
+    concat_inputs.push_back(NewValueNode(MakeValue(static_cast<int64_t>(0))));  // axis
     auto concat = func_graph->NewCNode(concat_inputs);
     MS_EXCEPTION_IF_NULL(concat);
     MS_EXCEPTION_IF_NULL(new_tuple_getitems[i]);
@@ -110,9 +111,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     shape[0] *= LongToSize(rank_size);
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {shape}, concat.get());
 
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat);
-    common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(rank_size), concat);
-    std::vector<int64_t> dyn_input_size{rank_size};
+    std::vector<int64_t> dyn_input_size{rank_size, -1};
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
     auto kernel_build_info = GenerateKernelBuildInfo(concat, output_info, inputs_size, i);
     AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, concat.get());

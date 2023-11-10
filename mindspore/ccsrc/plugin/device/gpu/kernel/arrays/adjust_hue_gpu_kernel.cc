@@ -32,18 +32,13 @@ constexpr size_t OUTPUT_NUM = 1;
 void AdjustHueGpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void AdjustHueGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_elements * data_unit_size_);
-  input_size_list_.push_back(sizeof(float));
-  output_size_list_.push_back(input_elements * data_unit_size_);
-}
+void AdjustHueGpuKernelMod::InitSizeLists() { output_size_list_.push_back(input_elements * data_unit_size_); }
 
-bool AdjustHueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool AdjustHueGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_BUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   if (inputs.empty() || outputs.empty()) {
@@ -61,11 +56,10 @@ bool AdjustHueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                  inputs[kIndex0]->GetDeviceShapeAdaptively().end());
+int AdjustHueGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
     input_elements = 1;
@@ -96,8 +90,8 @@ int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                   << shape[input_dims - 1] << ".";
     return false;
   }
-  std::vector<size_t> delta_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
-                                                        inputs[kIndex1]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> delta_shape =
+    std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(), inputs[kIndex1]->GetDeviceShapeVector().end());
   int64_t delta_dims = delta_shape.size();
   if (delta_dims != DETLA_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the  dimension of 'dalta' should be equal to 0-D, but got "
@@ -110,9 +104,9 @@ int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool AdjustHueGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdjustHueGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

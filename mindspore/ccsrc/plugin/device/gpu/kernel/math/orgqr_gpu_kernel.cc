@@ -28,11 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool OrgqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Orgqr>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool OrgqrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -46,9 +42,7 @@ bool OrgqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int OrgqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int OrgqrGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -56,10 +50,10 @@ int OrgqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_tau_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                         inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  input_x_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_tau_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                         inputs.at(kIndex1)->GetDeviceShapeVector().end());
   input_x_dims_ = input_x_shape_.size();
   input_tau_dims_ = input_tau_shape_.size();
   is_null_input_ = (input_x_dims_ == 0 || input_tau_dims_ == 0);
@@ -125,9 +119,6 @@ int OrgqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
 template <typename T>
 void OrgqrGpuKernelMod::InitSizeLists() {
-  // input x, tau
-  input_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
-  input_size_list_.push_back(batch_size_ * k_ * sizeof(T));
   // output y
   output_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
   workspace_size_list_.push_back(batch_size_ * sizeof(int));
@@ -182,8 +173,9 @@ void OrgqrGpuKernelMod::LaunchOrgqr(T *d_input_x, T *input_tau, T *d_output_y, i
 }
 
 template <typename T>
-bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }

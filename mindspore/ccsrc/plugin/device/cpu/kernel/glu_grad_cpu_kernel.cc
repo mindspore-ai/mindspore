@@ -21,18 +21,17 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kGluGradInputsNum = 2;
-constexpr size_t kGluGradOutputsNum = 1;
 const int64_t kEvenNum = 2;
 }  // namespace
 
-void GluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto axis_value = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
-  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+int GluGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs[kIndex0]->dtype_id();
+  auto axis_value = GetValue<int64_t>(primitive_->GetAttr("axis"));
+  grad_shape_ = inputs[kIndex0]->GetShapeVector();
+  x_shape_ = inputs[kIndex1]->GetShapeVector();
 
   int64_t rank = SizeToLong(x_shape_.size());
   if (axis_value < -rank || axis_value >= rank) {
@@ -58,12 +57,12 @@ void GluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          "/2,  but got axis="
                       << axis_value << ", x.shape=" << x_shape_ << " and grad.shape=" << grad_shape_ << ".";
   }
+  return KRET_OK;
 }
 
-bool GluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGluGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGluGradOutputsNum, kernel_name_);
+bool GluGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -78,13 +77,14 @@ bool GluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void GluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *input0 = static_cast<T *>(inputs[0]->addr);
-  const auto *input1 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+void GluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const auto *input0 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input1 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   std::vector<int64_t> shape = x_shape_;
   int64_t dim = axis_;
-  size_t lens = outputs[0]->size > 0 ? outputs[0]->size / sizeof(T) : 1;
+  size_t lens = outputs[0]->size() > 0 ? outputs[0]->size() / sizeof(T) : 1;
   auto task = [&input0, &input1, &output, &shape, &dim](const size_t start, const size_t end) {
     int64_t input_num = std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
     int num = input_num;

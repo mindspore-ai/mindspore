@@ -26,7 +26,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/fft_with_size.h"
+#include "ops/auto_generate/gen_enum_def.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fft_with_size_impl.cuh"
@@ -40,62 +40,56 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   FFTWithSizeGpuKernelMod() = default;
   ~FFTWithSizeGpuKernelMod() override { ResetResource(); };
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    return resize_func_(this, base_operator, inputs, outputs, inputsOnHost);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (!FFTVarietyInResize(inputs, outputs)) {
+      return RET_FAILED;
+    }
+    return resize_func_(this, inputs, outputs);
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return launch_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool FFTVarietyInResize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void ResetResource() noexcept;
-  bool MakeCufftPlan(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  int ResizeBase(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeIFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeRFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                 const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  int ResizeIRFFT(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                  const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &);
-  using FFTWithSizeResizeFunc =
-    std::function<int(FFTWithSizeGpuKernelMod *, const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
-                      const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &)>;
+  bool MakeCufftPlan(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeBase(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeIFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int ResizeIRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using FFTWithSizeResizeFunc = std::function<int(FFTWithSizeGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &)>;
   FFTWithSizeResizeFunc resize_func_{};
 
   template <typename T>
-  bool LaunchFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                 const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                 const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename T>
-  bool LaunchIFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchIFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename S, typename T>
-  bool LaunchRFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                  const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename S, typename T>
-  bool LaunchIRFFT(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                   const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchIRFFT(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                   const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   using FFTWithSizeLaunchFunc =
-    std::function<bool(FFTWithSizeGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(FFTWithSizeGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   FFTWithSizeLaunchFunc launch_func_{};
 
  private:
   int64_t rank_{1};
   bool is_inverse_{false};  // 0: forward, 1: inverse
   bool is_real_{false};
-  std::string norm_type_{"backward"};  // forward, backward, ortho
+  MsPyEnum::NormMode norm_type_{MsPyEnum::NormMode::BACKWARD};  // forward, backward, ortho
   // is_onesided controls whether frequency is halved when signal is real, which means is_real_ is true.
   // The default value is true. cufft does not support full freq with real signal. We use cast as a temporary solution.
   bool is_onesided_{true};
@@ -111,6 +105,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> y_shape_;
   int x_elements_{0};
   int y_elements_{0};
+  int fit_index_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

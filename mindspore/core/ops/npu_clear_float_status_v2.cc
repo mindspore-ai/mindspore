@@ -29,7 +29,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr NPUClearFloatStatusV2InferShape(const PrimitivePtr &,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // dynamic rank
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
@@ -54,7 +54,7 @@ abstract::ShapePtr NPUClearFloatStatusV2InferShape(const PrimitivePtr &,
 TypePtr NPUClearFloatStatusV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kInt32};
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   (void)types.emplace("input_x", input_x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return kInt32;

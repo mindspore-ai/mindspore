@@ -53,12 +53,16 @@ constexpr int64_t kAlignSize = 8;
 namespace {
 void CheckInputLengthType(const std::string &arg_name, const AbstractBasePtr &input_arg,
                           const std::set<TypePtr> &valid_type, const std::string &prim_name) {
-  if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTypeValid(arg_name, input_arg->BuildType(), valid_type, prim_name);
-  } else if (input_arg->isa<abstract::AbstractTuple>()) {
-    auto elements = input_arg->cast<abstract::AbstractTuplePtr>()->elements();
-    for (size_t i = 0; i < elements.size(); ++i) {
-      (void)CheckAndConvertUtils::CheckSubClass(arg_name, elements[i]->BuildType(), valid_type, prim_name);
+  if (CheckAndConvertUtils::IsTensor(input_arg)) {
+    (void)CheckAndConvertUtils::CheckTypeValid(arg_name, input_arg->GetType(), valid_type, prim_name);
+  } else if (CheckAndConvertUtils::IsTuple(input_arg)) {
+    auto idx_type_ptr = input_arg->GetType();
+    MS_EXCEPTION_IF_NULL(idx_type_ptr);
+    auto types_list_ptr = idx_type_ptr->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(types_list_ptr);
+    TypePtrList types_list = types_list_ptr->elements();
+    for (size_t i = 0; i < types_list.size(); ++i) {
+      (void)CheckAndConvertUtils::CheckSubClass(arg_name, types_list[i]->cast<TensorTypePtr>(), valid_type, prim_name);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input " << input_arg->type_name()
@@ -74,17 +78,22 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto log_probs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
-  auto targets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape())[kShape];
-  auto input_lengths_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex2]->BuildShape())[kShape];
-  auto target_lengths_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex3]->BuildShape())[kShape];
-  if (input_args[kIndex2]->isa<abstract::AbstractTuple>()) {
-    auto size = input_args[kIndex2]->cast<abstract::AbstractTuplePtr>()->elements().size();
+  auto log_probs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->GetShape())[kShape];
+  auto targets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->GetShape())[kShape];
+  auto input_lengths_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex2]->GetShape())[kShape];
+  auto target_lengths_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex3]->GetShape())[kShape];
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex2])) {
+    auto idx_shape_ptr = input_args[kIndex2]->GetShape();
+    MS_EXCEPTION_IF_NULL(idx_shape_ptr);
+    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
+    auto size = shape_tuple->size();
     input_lengths_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{SizeToLong(size)})->shape();
   }
-  if (input_args[kIndex3]->isa<abstract::AbstractTuple>()) {
-    auto size = input_args[kIndex3]->cast<abstract::AbstractTuplePtr>()->elements().size();
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex3])) {
+    auto idx_shape_ptr = input_args[kIndex3]->GetShape();
+    MS_EXCEPTION_IF_NULL(idx_shape_ptr);
+    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
+    auto size = shape_tuple->size();
     target_lengths_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{SizeToLong(size)})->shape();
   }
 
@@ -135,9 +144,9 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
 TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  auto type = CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->BuildType(),
-                                                   {kFloat32, kFloat64}, name);
-  (void)CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64}, name);
+  auto type =
+    CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->GetType(), {kFloat32, kFloat64}, name);
+  (void)CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->GetType(), {kInt32, kInt64}, name);
 
   CheckInputLengthType("input_lengths", input_args[kInputIndex2], {kInt32, kInt64}, name);
   CheckInputLengthType("target_lengths", input_args[kInputIndex3], {kInt32, kInt64}, name);

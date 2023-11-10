@@ -1,0 +1,16 @@
+#operator tensor_copy_slices
+tensor_copy_slices:
+    args:
+        x:
+            dtype: tensor
+        value:
+            dtype: tensor
+        begin:
+            dtype: tuple[int]
+        end:
+            dtype: tuple[int]
+        strides:
+            dtype: tuple[int]
+    returns:
+        output:
+            dtype: tensor

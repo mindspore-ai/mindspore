@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <map>
 #include <functional>
 #include "mindspore/core/ops/argmax_with_value.h"
@@ -37,14 +38,12 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
   ArgMaxAndMinWithValueGpuKernelMod() { ResetResource(); }
   ~ArgMaxAndMinWithValueGpuKernelMod() override = default;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto input_shape = inputs.at(kIndex0)->GetShapeVector();
     if (CheckNullInput(input_shape)) {
-      kernel_name_ = base_operator->name();
       MS_EXCEPTION(ValueError) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
     }
-    if (!InitSize(base_operator, inputs, outputs)) {
+    if (!InitSize(inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
     return KRET_OK;
@@ -66,8 +65,8 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     return support_list;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     MS_EXCEPTION_IF_NULL(stream_ptr);
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
@@ -78,10 +77,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (kernel_name_ != "ArgMaxWithValue" && kernel_name_ != "ArgMinWithValue") {
       MS_EXCEPTION(ArgumentError) << "The kernel must be either ArgMaxWithValue or ArgMinWithValue.";
     }
@@ -102,22 +98,13 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool InitSize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) {
+  bool InitSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(inputs[0]);
     auto shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
     MS_EXCEPTION_IF_NULL(outputs[0]);
     auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
     int64_t dims = SizeToLong(shape.size());
-    if (kernel_name_ == "ArgMinWithValue") {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMinWithValue>(base_operator);
-      MS_EXCEPTION_IF_NULL(kernel_ptr);
-      axis_ = kernel_ptr->axis();
-    } else {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
-      MS_EXCEPTION_IF_NULL(kernel_ptr);
-      axis_ = kernel_ptr->axis();
-    }
+    axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
     is_zero_dim_ = (dims == 0);
 
     if (is_zero_dim_) {
@@ -159,9 +146,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
       inner_size_ *= shape[i];
     }
 
-    input_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     output_size_list_.push_back(output_size_ / sizeof(S) * sizeof(T));
     return true;
@@ -175,7 +160,6 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     bound_ = 0;
     outer_size_ = 0;
     inner_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

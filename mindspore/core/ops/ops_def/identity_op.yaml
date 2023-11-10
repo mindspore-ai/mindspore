@@ -1,0 +1,10 @@
+#operator identity
+identity:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: deepcopy

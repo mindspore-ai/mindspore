@@ -86,8 +86,6 @@ class SegmentOpsHelperGpuKernel : public GpuKernelHelperBase {
                     << segment_id_num << ", and input_shape[0] " << outer_size_;
       return -1;
     }
-    input_size_list_[0] *= sizeof(T);
-    input_size_list_[1] *= sizeof(S);
     work_size_list_.emplace_back((outer_size_ + 1) * sizeof(size_t));
     return 0;
   }

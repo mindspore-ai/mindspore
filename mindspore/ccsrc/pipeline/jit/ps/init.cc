@@ -131,6 +131,7 @@ void RegModule(py::module *m) {
   RegUpdateFuncGraphHyperParams(m);
   RegParamInfo(m);
   RegPrimitive(m);
+  RegPrimitiveFunction(m);
   RegSignatureEnumRW(m);
   mindspore::tensor::RegMetaTensor(m);
   mindspore::tensor::RegCSRTensor(m);

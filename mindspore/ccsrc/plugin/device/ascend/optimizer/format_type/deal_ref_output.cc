@@ -23,6 +23,7 @@
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/format_type/utils.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "kernel/oplib/oplib.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

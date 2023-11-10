@@ -54,9 +54,11 @@ class AicpuExtInfoHandler {
 
   [[nodiscard]] bool UpdateInputShapeAndType(uint32_t input_index, const NotNull<AnfNodePtr> &anf_node);
 
-  [[nodiscard]] bool UpdateInputShapeAndType(uint32_t input_index, const kernel::KernelTensorPtr &kernel_tensor);
+  [[nodiscard]] bool UpdateInputShapeAndType(uint32_t input_index, const kernel::KernelTensor *kernel_tensor);
 
   [[nodiscard]] bool UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node);
+
+  [[nodiscard]] bool UpdateOutputShapeAndType(uint32_t input_index, const kernel::KernelTensor *kernel_tensor);
 
   [[nodiscard]] bool GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
                                            NotNull<TypeId *> data_type);

@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "ir/primal_attr.h"
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
@@ -109,12 +110,8 @@ static CNodePtr CreateTupleGetItem(const AnfNodePtr &node, size_t index, const F
 }
 
 static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
-  mindspore::parallel::OperatorAttrs attrs;
-  ValuePtr pyop_instance = mindspore::parallel::CreateOpInstance(attrs, mindspore::parallel::VIRTUAL_DATA_SET,
-                                                                 mindspore::parallel::VIRTUAL_DATA_SET);
-  auto value_node = NewValueNode(pyop_instance);
   std::vector<AbstractBasePtr> abstract_list;
-  std::vector<AnfNodePtr> virtual_dataset_node_inputs = {value_node};
+  std::vector<AnfNodePtr> virtual_dataset_node_inputs;
   for (size_t index = 0; index < func_graph->get_inputs().size(); index++) {
     if (!HasAbstractMonad(func_graph->get_inputs()[index])) {
       auto graph_input_index = func_graph->get_inputs()[index];
@@ -124,7 +121,10 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
       virtual_dataset_node_inputs.push_back(func_graph->get_inputs()[index]);
     }
   }
-  CNodePtr virtual_dataset_node = func_graph->NewCNode(virtual_dataset_node_inputs);
+
+  auto virtual_dataset_node = mindspore::parallel::CreateCNodeByInputsAndAttr(
+    func_graph, mindspore::parallel::VIRTUAL_DATA_SET, mindspore::parallel::VIRTUAL_DATA_SET,
+    virtual_dataset_node_inputs, {});
   MS_EXCEPTION_IF_NULL(virtual_dataset_node);
   virtual_dataset_node->set_in_forward_flag(true);
   virtual_dataset_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));

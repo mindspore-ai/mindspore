@@ -16,6 +16,7 @@
 #include "plugin/device/cpu/kernel/sparse_matrix_add_cpu_kernel.h"
 #include <algorithm>
 #include <complex>
+#include <functional>
 #include <utility>
 #include <set>
 #include <map>
@@ -48,11 +49,8 @@ constexpr size_t kOutIndices = 3;
 constexpr size_t kOutValue = 4;
 using KernelRunFunc = SparseMatrixAddCpuKernelMod::KernelRunFunc;
 }  // namespace
-bool SparseMatrixAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixAdd>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool SparseMatrixAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(ERROR) << "For " << kernel_name_
@@ -60,21 +58,19 @@ bool SparseMatrixAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << kInputNum << " tensors, but get " << input_num;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SparseMatrixAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kInputNum) {
-      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
+    if (inputs.size() != kInputNum) {
+      MS_LOG(ERROR) << "The size of inputs should be " << kInputNum << ", but got " << inputs.size();
       return KRET_RESIZE_FAILED;
     }
     auto indptr_shape = inputs.at(kAIndptrIdx)->GetShapeVector();
@@ -83,20 +79,28 @@ int SparseMatrixAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
     row_ = LongToSize(indptr_shape[0] - 1);
     for (size_t i = 0; i < kOutputNum; i++) {
-      auto dtype = inputs[i]->GetDtype();
+      auto dtype = inputs[i]->dtype_id();
       (void)types_.emplace_back(dtype);
     }
     output_size_list_.clear();
-    (void)output_size_list_.emplace_back(input_size_list_[kADenseShapeIdx]);  // dense shape
-    (void)output_size_list_.emplace_back(input_size_list_[kABatchPtrIdx]);    // batch
-    (void)output_size_list_.emplace_back(input_size_list_[kAIndptrIdx]);      // indptr
-    auto max_out_size = input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx];
+    (void)output_size_list_.emplace_back(inputs[kADenseShapeIdx]->size());  // dense shape
+    (void)output_size_list_.emplace_back(inputs[kABatchPtrIdx]->size());    // batch
+    (void)output_size_list_.emplace_back(inputs[kAIndptrIdx]->size());      // indptr
+    auto max_out_size = inputs[kAIndicesIdx]->size() + inputs[kBIndicesIdx]->size();
     (void)output_size_list_.emplace_back(max_out_size);  // index
     (void)output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
                                          GetTypeByte(TypeIdToType(types_[kAValuesIdx])));  // value
     // set dense and batch shape for output.
-    outputs_[kOutDenseShape]->SetShapeVector(inputs[kADenseShapeIdx]->GetShapeVector());
-    outputs_[kOutBatch]->SetShapeVector(inputs[kABatchPtrIdx]->GetShapeVector());
+    auto out_dense_shape = inputs[kADenseShapeIdx]->GetShapeVector();
+    auto ele_size =
+      LongToSize(std::accumulate(out_dense_shape.begin(), out_dense_shape.end(), 1, std::multiplies<int64_t>()));
+    outputs[kOutDenseShape]->SetShapeVector(out_dense_shape);
+    outputs[kOutDenseShape]->set_size(ele_size * UnitSizeInBytes(outputs[kOutDenseShape]->dtype_id()));
+    auto out_batch_shape = inputs[kABatchPtrIdx]->GetShapeVector();
+    ele_size =
+      LongToSize(std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), 1, std::multiplies<int64_t>()));
+    outputs[kOutBatch]->SetShapeVector(out_batch_shape);
+    outputs[kOutBatch]->set_size(ele_size * UnitSizeInBytes(outputs[kOutBatch]->dtype_id()));
   }
   return ret;
 }
@@ -112,8 +116,9 @@ void CheckInputValid(const T *input, const size_t &size, const std::string &name
 }
 
 template <typename T, typename S>
-bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
@@ -122,28 +127,28 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputNum << ", but got "
                       << outputs.size() << " output(s).";
   }
-  const auto a_batch_size = inputs[kABatchPtrIdx]->size / sizeof(T);
-  const auto a_dense_shape = reinterpret_cast<T *>(inputs[kADenseShapeIdx]->addr);
-  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->addr);
-  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->addr);
-  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto b_indptr = reinterpret_cast<T *>(inputs[kBIndptrIdx]->addr);
-  const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->addr);
-  const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->addr);
-  const auto alpha = reinterpret_cast<S *>(inputs[kAlphaIdx]->addr);
-  const auto beta = reinterpret_cast<S *>(inputs[kBetaIdx]->addr);
-  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptr]->addr);
-  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndices]->addr);
-  auto c_values = reinterpret_cast<S *>(outputs[kOutValue]->addr);
-  auto c_dense_shape = reinterpret_cast<T *>(outputs[kOutDenseShape]->addr);
-  auto c_batch = reinterpret_cast<T *>(outputs[kOutBatch]->addr);
+  const auto a_batch_size = inputs[kABatchPtrIdx]->size() / sizeof(T);
+  const auto a_dense_shape = reinterpret_cast<T *>(inputs[kADenseShapeIdx]->device_ptr());
+  const auto a_indptr = reinterpret_cast<T *>(inputs[kAIndptrIdx]->device_ptr());
+  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->device_ptr());
+  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->device_ptr());
+  const auto b_indptr = reinterpret_cast<T *>(inputs[kBIndptrIdx]->device_ptr());
+  const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->device_ptr());
+  const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->device_ptr());
+  const auto alpha = reinterpret_cast<S *>(inputs[kAlphaIdx]->device_ptr());
+  const auto beta = reinterpret_cast<S *>(inputs[kBetaIdx]->device_ptr());
+  auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptr]->device_ptr());
+  auto c_indices = reinterpret_cast<T *>(outputs[kOutIndices]->device_ptr());
+  auto c_values = reinterpret_cast<S *>(outputs[kOutValue]->device_ptr());
+  auto c_dense_shape = reinterpret_cast<T *>(outputs[kOutDenseShape]->device_ptr());
+  auto c_batch = reinterpret_cast<T *>(outputs[kOutBatch]->device_ptr());
   // Consider the dense shape of input and output are the same.
-  auto ret = memcpy_s(c_dense_shape, outputs[kOutDenseShape]->size, a_dense_shape, inputs[kADenseShapeIdx]->size);
+  auto ret = memcpy_s(c_dense_shape, outputs[kOutDenseShape]->size(), a_dense_shape, inputs[kADenseShapeIdx]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
-  CheckInputValid(a_indptr, inputs[kAIndptrIdx]->size / sizeof(T), "a indptr");
-  CheckInputValid(b_indptr, inputs[kBIndptrIdx]->size / sizeof(T), "b indptr");
+  CheckInputValid(a_indptr, inputs[kAIndptrIdx]->size() / sizeof(T), "a indptr");
+  CheckInputValid(b_indptr, inputs[kBIndptrIdx]->size() / sizeof(T), "b indptr");
   auto batch_size = static_cast<size_t>(a_batch_size > 1 ? (a_batch_size - 1) : 1);
   c_batch[0] = 0;
   // Do the compute: C = alpha * A + beta * B.
@@ -203,9 +208,12 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   (void)out_indptr_shape.emplace_back(SizeToLong(batch_size * (row_ + 1)));
   (void)out_indices_shape.emplace_back(SizeToLong(c_idx));
   (void)out_values_shape.emplace_back(SizeToLong(c_idx));
-  outputs_[kOutIndptr]->SetShapeVector(out_indptr_shape);
-  outputs_[kOutIndices]->SetShapeVector(out_indices_shape);
-  outputs_[kOutValue]->SetShapeVector(out_values_shape);
+  outputs[kOutIndptr]->SetShapeVector(out_indptr_shape);
+  outputs[kOutIndptr]->set_size(batch_size * (row_ + 1) * UnitSizeInBytes(outputs[kOutIndptr]->dtype_id()));
+  outputs[kOutIndices]->SetShapeVector(out_indices_shape);
+  outputs[kOutIndices]->set_size(c_idx * UnitSizeInBytes(outputs[kOutIndices]->dtype_id()));
+  outputs[kOutValue]->SetShapeVector(out_values_shape);
+  outputs[kOutValue]->set_size(c_idx * UnitSizeInBytes(outputs[kOutValue]->dtype_id()));
   return true;
 }
 

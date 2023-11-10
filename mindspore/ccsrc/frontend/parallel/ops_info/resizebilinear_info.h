@@ -48,6 +48,7 @@ class ResizeBilinearInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
 
   std::vector<int64_t> size_;
   std::vector<int64_t> slice_size_;

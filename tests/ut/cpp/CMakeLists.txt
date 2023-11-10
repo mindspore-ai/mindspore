@@ -43,8 +43,10 @@ link_directories(${MS_CCSRC_BUILD_PATH}/minddata/mindrecord)
 # fetch ut test files
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
-file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./core/abstract/*.cc ./core/utils/*.cc
-        ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/*.cc ./ops/view/*.cc ./base/*.cc)
+
+#file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./core/abstract/*.cc ./core/utils/*.cc
+#        ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/*.cc ./ops/view/*.cc ./base/*.cc)
+file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops/*.cc)
 file(GLOB_RECURSE UT_CORE_OPS_TODO_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops/todo/*.cc)
 list(REMOVE_ITEM UT_CORE_SRCS ${UT_CORE_OPS_TODO_SRCS})
 
@@ -132,6 +134,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_event.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_build_ascend.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_kernel_runtime.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_synchronizer.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_runtime_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_adapter.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_gmem_adapter.cc"
@@ -262,7 +265,6 @@ add_dependencies(_ut_mindspore_obj proto_input_ut)
 foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
 endforeach()
-
 include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
 file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/proto/*.proto")

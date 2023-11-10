@@ -34,6 +34,7 @@
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/model/graph_builder.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::graphkernel {
 // operator which follows commutative rules
@@ -437,7 +438,17 @@ class ExtraReduce1PatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
-    attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}};
+    if (GetRootOp() == prim::kPrimReduceSum->name()) {
+      auto iter = origin_root->attrs().find("skip_mode");
+      if (iter != origin_root->attrs().end()) {
+        bool skip_mode = GetValue<bool>(iter->second);
+        attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}, {"skip_mode", MakeValue(skip_mode)}};
+      } else {
+        MS_LOG(EXCEPTION) << origin_root->ToString() << "not found skip_mode attrs.";
+      }
+    } else {
+      attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}};
+    }
     return attrs_map;
   }
 };
@@ -452,7 +463,14 @@ class ExtraReduce2PatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
-    attrs_map[this->rhs_root()->inputs()[0]] = {{"keep_dims", MakeValue(keep_dims)}};
+    auto iter = origin_root->attrs().find("skip_mode");
+    if (iter != origin_root->attrs().end()) {
+      bool skip_mode = GetValue<bool>(iter->second);
+      attrs_map[this->rhs_root()->inputs()[0]] = {{"keep_dims", MakeValue(keep_dims)},
+                                                  {"skip_mode", MakeValue(skip_mode)}};
+    } else {
+      MS_LOG(EXCEPTION) << origin_root->ToString() << "not found skip_mode attrs.";
+    }
     return attrs_map;
   }
 };

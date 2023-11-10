@@ -52,23 +52,16 @@ std::map<size_t, std::string> InputNames = {{kVarIndex, "var"},
 std::map<size_t, std::string> OutputNames = {{kVarIndex, "var"}};
 }  // namespace
 
-bool SparseApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool SparseApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto batch_rank = primitive_->HasAttr("batch_rank") ? GetValue<int64_t>(primitive_->GetAttr("batch_rank")) : 0;
+  batch_rank_ = static_cast<size_t>(batch_rank);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
   CheckParam(inputs, outputs);
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyAdagradDA>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast SparseApplyAdagradDA ops failed!";
-    return false;
-  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -76,15 +69,13 @@ bool SparseApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_var_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndicesIndex]->GetDtype());
+  unit_var_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndicesIndex]->dtype_id());
   return true;
 }
 
-int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseApplyAdagradDAGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   is_null_input_ = false;
   stream_ptr_ = nullptr;
   input_elements_ = 0;
@@ -96,18 +87,18 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     }
   }
 
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs.at(kVarIndex)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kVarIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs.at(kGradIndex)->GetDeviceShapeAdaptively().begin(),
-                                                         inputs.at(kGradIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> indices = std::vector<int64_t>(inputs.at(kIndicesIndex)->GetDeviceShapeAdaptively().begin(),
-                                                      inputs.at(kIndicesIndex)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs.at(kLRIndex)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kLRIndex)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs[kVarIndex]->GetDeviceShapeVector().begin(),
+                                                        inputs[kVarIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs[kGradIndex]->GetDeviceShapeVector().begin(),
+                                                         inputs[kGradIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> indices = std::vector<int64_t>(inputs[kIndicesIndex]->GetDeviceShapeVector().begin(),
+                                                      inputs[kIndicesIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs[kLRIndex]->GetDeviceShapeVector().begin(),
+                                                       inputs[kLRIndex]->GetDeviceShapeVector().end());
   int64_t indices_nums_ = std::accumulate(indices.begin(), indices.end(), int64_t(1), std::multiplies<int64_t>());
 
   if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
@@ -166,7 +157,7 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_var_size_;
+  input_elements_ = inputs[0]->size() / unit_var_size_;
   indices_size_ = 1;
   for (size_t i = 0; i < indices.size(); i++) {
     indices_size_ *= indices[i];
@@ -181,8 +172,8 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-void SparseApplyAdagradDAGpuKernelMod::CheckShape(const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) const {
+void SparseApplyAdagradDAGpuKernelMod::CheckShape(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) const {
   std::vector<std::vector<int64_t>> input_shapes(kSparseApplyAdagradDAInputsNum);
   for (size_t i = 0; i < kSparseApplyAdagradDAInputsNum; ++i) {
     input_shapes[i] = inputs[i]->GetShapeVector();
@@ -227,16 +218,16 @@ void SparseApplyAdagradDAGpuKernelMod::CheckShape(const std::vector<KernelTensor
   }
 }
 
-void SparseApplyAdagradDAGpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) const {
+void SparseApplyAdagradDAGpuKernelMod::CheckDType(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) const {
   std::vector<TypeId> input_types(kSparseApplyAdagradDAInputsNum);
   for (size_t i = 0; i < kSparseApplyAdagradDAInputsNum; ++i) {
-    input_types[i] = inputs[i]->GetDtype();
+    input_types[i] = inputs[i]->dtype_id();
   }
 
   std::vector<TypeId> output_types(kSparseApplyAdagradDAOutputsNum);
   for (size_t i = 0; i < kSparseApplyAdagradDAOutputsNum; ++i) {
-    output_types[i] = outputs[i]->GetDtype();
+    output_types[i] = outputs[i]->dtype_id();
   }
 
   for (size_t i = 1; i < kGlobalStepIndex; ++i) {
@@ -266,16 +257,16 @@ void SparseApplyAdagradDAGpuKernelMod::CheckDType(const std::vector<KernelTensor
   }
 }
 
-void SparseApplyAdagradDAGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) const {
+void SparseApplyAdagradDAGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradDAOutputsNum, kernel_name_);
   CheckDType(inputs, outputs);
 }
 
-bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   stream_ptr_ = stream_ptr;
   if (is_null_input_) {
@@ -285,26 +276,26 @@ bool SparseApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inp
 }
 
 template <typename T, typename S, typename S1>
-bool SparseApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  const auto *global_step = reinterpret_cast<S1 *>(inputs[kGlobalStepIndex]->addr);
+bool SparseApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  auto *squared_accum = reinterpret_cast<T *>(inputs[kSquaredAccumIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  const auto *global_step = reinterpret_cast<S1 *>(inputs[kGlobalStepIndex]->device_ptr());
 
-  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
+  auto *output_var = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
 
-  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->addr);
-  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->addr);
-  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->addr);
-  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->addr);
-  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->addr);
+  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->device_ptr());
+  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->device_ptr());
+  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->device_ptr());
+  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->device_ptr());
+  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->device_ptr());
 
   auto status =
     CalSparseApplyAdagradDA(batch_size_, indices_size_, input_elements_, var, accum, squared_accum, grad, indices, lr,

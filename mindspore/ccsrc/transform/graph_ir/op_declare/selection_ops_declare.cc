@@ -30,11 +30,11 @@ ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bo
 OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
 
 // Cumsum
-INPUT_MAP(Cumsum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumsum) = {{"axis", "axis"}};
-ATTR_MAP(Cumsum) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                    {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumsum) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumsum) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumsum) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumsum) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                          {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumsum) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumsumD, kNameCumsumD, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(Cumsum, kNameCumsum, ADPT_DESC(Cumsum))
 REG_ADPT_DESC(CumSum, kNameCumSum, ADPT_DESC(Cumsum))
@@ -48,11 +48,11 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cumprod, kNameCumprod, ADPT_DESC(CumprodD))
 
 // Cumprod
-INPUT_MAP(Cumprod) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(Cumprod) = {{"axis", "axis"}};
-ATTR_MAP(Cumprod) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
-                     {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
-OUTPUT_MAP(Cumprod) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(Cumprod) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
+ATTR_MAP(Cumprod) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cumprod) = {{kIndex3, ATTR_DESC(exclusive, AnyTraits<bool>())},
+                           {kIndex4, ATTR_DESC(reverse, AnyTraits<bool>())}};
+OUTPUT_MAP(Cumprod) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumprodD, ADPT_DESC(Cumprod))
 REG_ADPT_DESC(CumProd, kNameCumProd, ADPT_DESC(Cumprod))
 
@@ -89,20 +89,22 @@ OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopKD))
 REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 // OneHot
-INPUT_MAP(OneHot) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(depth)}, {3, INPUT_DESC(on_value)}, {4, INPUT_DESC(off_value)}};
+INPUT_MAP(OneHot) = {{kIndex1, INPUT_DESC(x)},
+                     {kIndex2, INPUT_DESC(depth)},
+                     {kIndex3, INPUT_DESC(on_value)},
+                     {kIndex4, INPUT_DESC(off_value)}};
 ATTR_INPUT_MAP(OneHot) = {{"depth", "depth"}};
-ATTR_MAP(OneHot) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(OneHot) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(OneHot) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(OneHot) = {{kIndex5, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(OneHot) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(OneHot, prim::kPrimOneHot->name(), ADPT_DESC(OneHot))
 REG_ADPT_DESC(OneHotD, prim::kPrimOneHotD->name(), ADPT_DESC(OneHot))
 
 // GatherV2
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
-ATTR_INPUT_MAP(GatherV2) = {{"axis", "axis"}};
-ATTR_MAP(GatherV2) = {{"batch_dims", ATTR_DESC(batch_dims, AnyTraits<int64_t>())},
-                      {"negative_index_support", ATTR_DESC(negative_index_support, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(GatherV2) = {{kIndex4, ATTR_DESC(batch_dims, AnyTraits<int64_t>())}};
+ATTR_MAP(GatherV2) = {{"negative_index_support", ATTR_DESC(negative_index_support, AnyTraits<bool>())}};
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(GatherV2D, kNameGatherV2D, ADPT_DESC(GatherV2))
 REG_ADPT_DESC(SparseGatherV2, prim::kPrimSparseGatherV2->name(), ADPT_DESC(GatherV2))
@@ -266,10 +268,18 @@ OUTPUT_MAP(InplaceUpdate) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceUpdate, kInplaceUpdateDOpName, ADPT_DESC(InplaceUpdate))
 
 // Cummin
-INPUT_MAP(Cummin) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Cummin) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
-OUTPUT_MAP(Cummin) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(indices)}};
+INPUT_MAP(Cummin) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummin) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummin) = {{kIndex2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummin) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(Cummin, prim::kPrimCummin->name(), ADPT_DESC(Cummin))
+
+// Cummax
+INPUT_MAP(Cummax) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Cummax) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cummax) = {{kIndex2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cummax) = {{kIndex0, OUTPUT_DESC(y)}, {kIndex1, OUTPUT_DESC(indices)}};
+REG_ADPT_DESC(Cummax, prim::kPrimCummax->name(), ADPT_DESC(Cummax))
 
 // StridedRead
 INPUT_MAP(StridedRead) = {{1, INPUT_DESC(x)}};

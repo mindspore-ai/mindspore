@@ -48,7 +48,6 @@ using device::DeviceAddressPtr;
 using device::DeviceContextKey;
 using device::DeviceContextRegister;
 using device::DeviceType;
-using device::UserDataPtr;
 using kernel::AddressPtr;
 using session::KernelGraph;
 

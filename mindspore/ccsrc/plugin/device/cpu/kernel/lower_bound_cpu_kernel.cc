@@ -24,24 +24,21 @@ namespace {
 constexpr size_t kInputsNum = 2;
 constexpr size_t kOutputsNum = 1;
 }  // namespace
-bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LowerBoundCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int LowerBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int LowerBoundCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   sorted_x_shape_ = inputs[0]->GetShapeVector();
@@ -59,12 +56,12 @@ int LowerBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename I, typename O>
-bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->addr);
-  auto values_data_addr = static_cast<I *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<O *>(outputs[0]->addr);
+bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->device_ptr());
+  auto values_data_addr = static_cast<I *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<O *>(outputs[0]->device_ptr());
   size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
   size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,

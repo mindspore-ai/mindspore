@@ -19,7 +19,6 @@
 #include <functional>
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/grad/fast_gelu_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,8 +27,8 @@ constexpr const size_t kFastGeluGradInputsNum = 2;
 constexpr const size_t kFastGeluGradOutputsNum = 1;
 
 template <typename T>
-bool FastGeLUGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool FastGeLUGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);
@@ -56,17 +55,10 @@ std::vector<KernelAttr> FastGeLUGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool FastGeLUGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FastGeLUGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  if (inputs.size() != kFastGeluGradInputsNum || outputs.size() != kFastGeluGradOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kFastGeluGradInputsNum << " and "
-                  << kFastGeluGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
+bool FastGeLUGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -80,11 +72,10 @@ bool FastGeLUGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int FastGeLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int FastGeLUGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
@@ -107,8 +98,8 @@ int FastGeLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
   // A Code Block For setting input and output shape.
   {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+    input_shape_ = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                       inputs[kIndex0]->GetDeviceShapeVector().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }

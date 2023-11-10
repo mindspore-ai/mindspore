@@ -37,6 +37,7 @@ class LaunchKernel;
 namespace ascend {
 class AscendDeviceAddress : public LoadableDeviceAddress {
  public:
+  explicit AscendDeviceAddress(const KernelTensorPtr &kernel_tensor) : LoadableDeviceAddress(kernel_tensor) {}
   explicit AscendDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
       : LoadableDeviceAddress(ptr, size, device_name, device_id) {}

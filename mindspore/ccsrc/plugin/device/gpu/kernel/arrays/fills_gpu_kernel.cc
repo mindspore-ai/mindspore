@@ -57,9 +57,7 @@ std::vector<std::pair<KernelAttr, FillsGpuKernelMod::FillsFunc>> FillsGpuKernelM
   FILLS_GPU_REG(kNumberTypeInt32, int32_t), FILLS_GPU_REG(kNumberTypeFloat16, half),
   FILLS_GPU_REG(kNumberTypeFloat32, float)};
 
-bool FillsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool FillsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -73,12 +71,10 @@ bool FillsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int FillsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FillsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
@@ -98,14 +94,14 @@ std::vector<KernelAttr> FillsGpuKernelMod::GetOpSupport() {
 void FillsGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T>
-bool FillsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool FillsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto value_ptr = GetDeviceAddress<float>(inputs, kIndex1);
   auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
   float value = 0;

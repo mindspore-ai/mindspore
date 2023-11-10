@@ -23,11 +23,13 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
+#include "ir/anf.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -389,7 +391,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::SCALAR);
   } else {
-    // For other ops, defaulty set TENSOR as output object type.
+    // For other ops, set TENSOR as output object type by default.
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::TENSOR);
   }
@@ -693,6 +695,11 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  if (data_type == TypeId::kTypeUnknown && input->abstract() != nullptr &&
+      input->abstract()->isa<abstract::AbstractSequence>() &&
+      input->abstract()->cast<abstract::AbstractSequencePtr>()->elements().size() == 0) {
+    data_type = TypeId::kNumberTypeInt64;
+  }
   // There might be nested tuples, we need to find one step further to get element's data type.
   if (data_type == kObjectTypeTuple) {
     auto seq_abs = input->abstract();

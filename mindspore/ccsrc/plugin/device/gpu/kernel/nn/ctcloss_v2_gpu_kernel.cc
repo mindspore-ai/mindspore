@@ -26,28 +26,26 @@ namespace mindspore {
 namespace kernel {
 using KernelRunFunc = CTCLossV2GpuKernelMod::KernelRunFunc;
 constexpr auto kInterval = 2;
-bool CTCLossV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCLossV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
 
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2>(base_operator->GetPrim());
-  blank_ = kernel_ptr->get_blank();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  blank_ = GetValue<int64_t>(primitive_->GetAttr("blank"));
+
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
-int CTCLossV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   const auto log_probs_shape = inputs[kIndex0]->GetShapeVector();
@@ -99,9 +97,9 @@ int CTCLossV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename S, typename T>
-bool CTCLossV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool CTCLossV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto log_probs_p = GetDeviceAddress<S>(inputs, kIndex0);
   auto target_p = GetDeviceAddress<T>(inputs, kIndex1);
   auto input_len_p = GetDeviceAddress<T>(inputs, kIndex2);

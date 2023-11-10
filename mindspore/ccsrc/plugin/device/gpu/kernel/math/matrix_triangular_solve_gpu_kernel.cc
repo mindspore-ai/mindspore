@@ -130,25 +130,22 @@ void BroadcastBatchIndices(const std::vector<int64_t> &a_batch_shape, const std:
 }
 }  // namespace
 
-bool MatrixTriangularSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixTriangularSolveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   // the size of per element of args
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
   // set mode and operation
-  lower_ = GetValue<bool>(base_operator->GetAttr("lower"));
-  adjoint_ = GetValue<bool>(base_operator->GetAttr("adjoint"));
+  lower_ = GetValue<bool>(primitive_->GetAttr("lower"));
+  adjoint_ = GetValue<bool>(primitive_->GetAttr("adjoint"));
   uplo_ = lower_ ? CUBLAS_FILL_MODE_UPPER : CUBLAS_FILL_MODE_LOWER;
   trans_ = adjoint_ ? CUBLAS_OP_C : CUBLAS_OP_N;
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
@@ -156,10 +153,8 @@ bool MatrixTriangularSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int MatrixTriangularSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int MatrixTriangularSolveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -215,11 +210,8 @@ int MatrixTriangularSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     }
   }
 
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
-  input_size_list_.emplace_back(a_elements * unit_size_);
-  input_size_list_.emplace_back(b_elements * unit_size_);
   output_size_list_.emplace_back(output_elements * unit_size_);
   workspace_size_list_.emplace_back(output_batch_num_ * sizeof(void *));
   workspace_size_list_.emplace_back(output_batch_num_ * sizeof(void *));
@@ -228,9 +220,9 @@ int MatrixTriangularSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T>
-bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   T *a = GetDeviceAddress<T>(inputs, kIndex0);
   T *b = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -252,7 +244,7 @@ bool MatrixTriangularSolveGpuKernelMod::LaunchKernel(const std::vector<kernel::A
 
   if (!is_bcast_required_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output, b, inputs[kIndex1]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
+      cudaMemcpyAsync(output, b, inputs[kIndex1]->size(), cudaMemcpyDeviceToDevice, cuda_stream_),
       "For 'MatrixTriangularSolveGpuKernelMod', copy 'rhs' from device to device failed.");
   } else {
     for (int64_t i = 0; i < batch_num; i++) {

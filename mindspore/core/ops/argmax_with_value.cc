@@ -63,7 +63,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
@@ -107,7 +107,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
 TuplePtr ArgMaxWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});

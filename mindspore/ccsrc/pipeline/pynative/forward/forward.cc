@@ -185,7 +185,7 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
   if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
     op_run_info->base_op_run_info.need_earse_cache = true;
   }
-  if (op_run_info->base_op_run_info.has_dynamic_output && op_run_info->base_op_run_info.op_name != kGetNextOpName) {
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
     backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
   }
   return backend_op_run_info;
@@ -504,8 +504,14 @@ void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr
   device_context->Initialize();
 
   auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape());
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   device_address->set_is_view(true);
   if (!op_run_info->device_sync_promises.empty()) {
     MS_LOG(DEBUG) << "Has promise and update tensor address.";
@@ -640,7 +646,7 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
     const auto &top_cell = op_run_info->requires_grad ? grad()->top_cell() : nullptr;
     for (size_t index = 0; index < op_run_info->input_size; ++index) {
       const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
-      PyNativeAlgo::DataConvert::ConvertValueToTensor(op_run_info, input_object, index, top_cell);
+      PyNativeAlgo::DataConvert::MarkInputs(op_run_info, input_object, index, top_cell);
     }
   }
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
@@ -978,8 +984,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       op_run_info->op_grad_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetValueGradInfo(
         op_run_info->op_grad_info->input_value[i], nullptr, TensorGradType::kConstant);
-      (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
-        op_run_info->op_grad_info->input_value[i]->cast<tensor::TensorPtr>());
+      (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(op_run_info->op_grad_info->input_value[i]);
     }
   }
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
@@ -1260,8 +1265,11 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
-  for (const auto &tensor : op_run_info->base_op_run_info.input_tensor) {
-    RefreshTensorContiguous(tensor);
+  for (const auto &value : op_run_info->base_op_run_info.expanded_input_values) {
+    if (!value->isa<tensor::Tensor>()) {
+      continue;
+    }
+    RefreshTensorContiguous(value->cast<tensor::TensorPtr>());
   }
 }
 

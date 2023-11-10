@@ -1620,7 +1620,7 @@ bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::ob
     } else if (anf_node->isa<Parameter>()) {
       MS_LOG(DEBUG) << "left parameter node: " << anf_node->DebugString();
       auto value = GetParameterValue(anf_node);
-      if (value == nullptr || value == kValueAny) {
+      if (value == nullptr || value->ContainsValueAny()) {
         return false;
       }
       left_obj = ValueToPyData(value);
@@ -2632,7 +2632,7 @@ bool Parser::CheckNameConstantCond(const FunctionBlockPtr &block, const py::obje
     value = anf_node->cast<ValueNodePtr>()->value();
   } else if (anf_node->isa<Parameter>()) {
     value = GetParameterValue(anf_node);
-    if (value == nullptr || value == kValueAny) {
+    if (value == nullptr || value->ContainsValueAny()) {
       return false;
     }
     MS_LOG(DEBUG) << "Found constant value: " << value->ToString() << " for anf_node: " << anf_node;

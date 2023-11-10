@@ -37,13 +37,12 @@ AbstractBasePtr RemakeTupleIndexInferInner(const PrimitivePtr &primitive,
   CheckArgsSize(op_name, input_args, inputs_size);
   const AbstractBasePtr &data_abs = input_args[kIndex0];
   const AbstractBasePtr &index_tensor_abs = input_args[kIndex1];
-  if (index_tensor_abs->BuildShape()->IsDynamic()) {
+  if (index_tensor_abs->GetShape()->IsDynamic()) {
     auto output = std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector{abstract::Shape::kShapeRankAny});
     return output;
   }
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape())[kShape];
-  ShapeVector final_data_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(index_tensor_abs->BuildShape())[kShape];
+  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape())[kShape];
+  ShapeVector final_data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(index_tensor_abs->GetShape())[kShape];
   (void)final_data_shape.emplace_back(data_shape.size());
   auto output = std::make_shared<abstract::AbstractTensor>(kInt64, final_data_shape);
   return output;
@@ -53,11 +52,11 @@ class MIND_API RemakeTupleIndexInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemakeTupleIndexInferInner(primitive, input_args)->BuildShape();
+    return RemakeTupleIndexInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemakeTupleIndexInferInner(prim, input_args)->BuildType();
+    return RemakeTupleIndexInferInner(prim, input_args)->GetType();
   }
 };
 

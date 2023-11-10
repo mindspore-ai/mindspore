@@ -31,12 +31,12 @@ namespace {
 abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto set_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto set_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(set_indices_shape) || IsDynamicRank(set_values_shape) || IsDynamicRank(set_shape_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
   }
 
   auto set_indices_shape_num = 2;
@@ -49,7 +49,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
                                            kEqual, 1, op_name);
 
   if (IsDynamic(set_shape_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
   }
 
   if (!IsDynamic(set_indices_shape) && !IsDynamic(set_values_shape)) {
@@ -65,16 +65,14 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   std::vector<int64_t> set_shape_value_vec(shape_size_dim);
   auto set_shape_tensor = input_args[2];
   MS_EXCEPTION_IF_NULL(set_shape_tensor);
-  if (set_shape_tensor->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(set_shape_tensor)) {
     const std::set<TypePtr> output_size_valid_types = {kInt64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->BuildType(),
-                                                     output_size_valid_types, op_name);
-    auto set_shape_value = set_shape_tensor->BuildValue();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->GetType(), output_size_valid_types,
+                                                     op_name);
+    auto set_shape_value = set_shape_tensor->GetValue();
     MS_EXCEPTION_IF_NULL(set_shape_value);
-    if (!set_shape_value->isa<None>() && !set_shape_value->isa<ValueAny>()) {
-      auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
-      auto value = static_cast<int64_t *>(set_shape_value_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(value);
+    if (!set_shape_value->isa<None>() && !set_shape_value->ContainsValueAny()) {
+      auto value = GetArrayValue<int64_t>(set_shape_value).value().ToVector();
       for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
         set_shape_value_vec[i] = value[i];
       }
@@ -82,21 +80,19 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     }
   }
   if (!gen_value_succ) {
-    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-    ShapeVector dynamic_shape(dense_size[0] - 1);
+    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
     ShapeVector max_shape(dense_size[0] - 1);
     auto max_length_ptr = primitive->GetAttr("max_length");
     MS_EXCEPTION_IF_NULL(max_length_ptr);
     int64_t max_length = GetValue<int64_t>(max_length_ptr);
     for (int64_t i = 1; i <= dense_size[0] - 1; ++i) {
-      dynamic_shape.end()[-i] = abstract::Shape::kShapeDimAny;
       max_shape.end()[-i] = max_length;
     }
-    return std::make_shared<abstract::Shape>(dynamic_shape, max_shape);
+    return std::make_shared<abstract::TensorShape>(max_shape);
   } else {
     ShapeVector output_shape;
     auto set_values_index = 2;
-    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
     if (dense_size.size() == 1 && dense_size[0] < set_values_index) {
       output_shape.push_back(1);
     } else {
@@ -104,7 +100,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
         output_shape.push_back(set_shape_value_vec[i]);
       }
     }
-    return std::make_shared<abstract::Shape>(output_shape);
+    return std::make_shared<abstract::TensorShape>(output_shape);
   }
 }
 
@@ -112,11 +108,11 @@ TypePtr SetSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kInt64};
   const std::set<TypePtr> set_values_valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_indices", input_args[kInputIndex0]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_indices", input_args[kInputIndex0]->GetType(), valid_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_values", input_args[kInputIndex1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_values", input_args[kInputIndex1]->GetType(),
                                                    set_values_valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", input_args[kInputIndex2]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", input_args[kInputIndex2]->GetType(), valid_types,
                                                    prim_name);
   return std::make_shared<TensorType>(kInt32);
 }

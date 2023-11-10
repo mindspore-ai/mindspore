@@ -16,8 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_flatten_parser.h"
 #include <memory>
-#include "ops/flatten.h"
-#include "nnacl/op_base.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,7 +26,7 @@ PrimitiveCPtr OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph, const
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      prim->set_axis(onnx_node_attr.i());
+      prim->AddAttr("axis", api::MakeValue(onnx_node_attr.i()));
     }
   }
   return prim->GetPrim();

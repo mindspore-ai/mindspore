@@ -21,34 +21,34 @@
 
 namespace mindspore {
 void InferDeviceAddress::ClearDeviceMemory() {
-  if (ptr_ == nullptr) {
+  if (GetDevicePtr() == nullptr) {
     return;
   }
-  free(ptr_);
-  ptr_ = nullptr;
+  free(GetDevicePtr());
+  SetDevicePtr(nullptr);
 }
 
 bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId type, void *host_ptr) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The pointer ptr_ is null!";
+  if (GetDevicePtr() == nullptr) {
+    MS_LOG(ERROR) << "The pointer device ptr is null!";
     return false;
   }
-  if (host_ptr == ptr_) {
-    MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
+  if (host_ptr == GetDevicePtr()) {
+    MS_LOG(DEBUG) << "host_ptr is equal to device ptr, request ignored.";
     return true;
   }
 
-  if (type == type_id_) {
-    if (size > size_) {
-      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (type == type_id()) {
+    if (size > GetSize()) {
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
       return true;
     }
-    errno_t ret_code = memcpy_s(host_ptr, size, ptr_, size);
+    errno_t ret_code = memcpy_s(host_ptr, size, GetDevicePtr(), size);
     // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
@@ -63,22 +63,22 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
 bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId type, const void *host_ptr,
                                           const std::string &) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The pointer ptr_ is null!";
+  if (GetDevicePtr() == nullptr) {
+    MS_LOG(ERROR) << "The pointer device ptr() is null!";
     return false;
   }
-  if (host_ptr == ptr_) {
-    MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
+  if (host_ptr == GetDevicePtr()) {
+    MS_LOG(DEBUG) << "host_ptr is equal to device ptr request ignored.";
     return true;
   }
 
-  if (type == type_id_) {
-    if (size > size_) {
-      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (type == type_id()) {
+    if (size > GetSize()) {
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
       return true;
     }
 
@@ -87,11 +87,11 @@ bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, Type
 #ifndef __APPLE__
     const size_t kCopySize = 16;
     if (size <= kCopySize) {
-      return ((memcpy_s(ptr_, size, host_ptr, size) != EOK) ? false : true);
+      return ((memcpy_s(GetDevicePtr(), size, host_ptr, size) != EOK) ? false : true);
     }
 #endif
 
-    ptr_ = const_cast<void *>(host_ptr);
+    SetDevicePtr(const_cast<void *>(host_ptr));
     original_ref_count_ = SIZE_MAX;
     ref_count_ = SIZE_MAX;
   }

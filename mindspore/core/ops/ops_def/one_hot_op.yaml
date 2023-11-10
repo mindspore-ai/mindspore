@@ -1,0 +1,19 @@
+#operator one_hot
+one_hot:
+    args:
+        indices:
+            dtype: tensor
+        depth:
+            dtype: int
+        on_value:
+            dtype: tensor
+        off_value:
+            dtype: tensor
+        axis:
+            dtype: int
+            init: -1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: one_hot_

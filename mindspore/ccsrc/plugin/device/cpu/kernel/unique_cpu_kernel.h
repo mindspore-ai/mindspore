@@ -27,6 +27,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/thread_pool.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -118,22 +119,18 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   UniqueCpuKernelMod() = default;
   ~UniqueCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    dtype_ = inputs[0]->GetDtype();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    dtype_ = inputs[0]->dtype_id();
     is_need_retrieve_output_shape_ = true;
-    auto batch_rank = base_operator->get_batch_rank();
+    auto batch_rank = ops::get_batch_rank(primitive_);
     if (batch_rank < 0) {
       return false;
     }
     batch_rank_ = static_cast<size_t>(batch_rank);
     return true;
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
       return ret;
     }
@@ -159,8 +156,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
         std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
       input_size_ = static_cast<size_t>(input_shape[batch_rank_]);
     }
-    if (base_operator->HasAttr(SORTED)) {
-      auto value_ptr = base_operator->GetAttr(SORTED);
+    if (primitive_->HasAttr(SORTED)) {
+      auto value_ptr = primitive_->GetAttr(SORTED);
       sorted_ = GetValue<bool>(value_ptr);
     }
     workspace_size_list_.clear();
@@ -170,8 +167,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     return ret;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -187,21 +184,23 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     };
     return support_list;
   }
-
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     ShapeVector out_shape;
     if (output_sizes_.empty()) {
       (void)out_shape.emplace_back(SizeToLong(0));
     } else {
       (void)out_shape.emplace_back(SizeToLong(output_sizes_[0]));
     }
-    outputs_[0]->SetShapeVector(out_shape);
+    outputs[0]->SetShapeVector(out_shape);
+    outputs[0]->set_size(LongToSize(out_shape[0]) * UnitSizeInBytes(outputs[0]->dtype_id()));
   }
 
  protected:
   template <typename DataType, typename IndexType>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t batch_size_{1};

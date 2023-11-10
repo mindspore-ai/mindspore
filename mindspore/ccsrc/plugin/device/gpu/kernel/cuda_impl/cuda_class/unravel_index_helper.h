@@ -37,12 +37,7 @@ class UnravelIndexHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
 
-    constexpr size_t INPUT_NUM = 2;
     constexpr size_t OUTPUT_NUM = 1;
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     // get input shape vector
     input_indices_shape_ = input_shapes[0];
     input_dims_shape_ = input_shapes[1];
@@ -52,7 +47,7 @@ class UnravelIndexHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
 
     // emplace_back workspace_size
     size_t check_dims_ptr_workspace_size = sizeof(T);

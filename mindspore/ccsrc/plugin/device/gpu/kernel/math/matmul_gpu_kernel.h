@@ -41,14 +41,12 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
   explicit MatMulGpuKernelMod(const string kernel_name) : kernel_name_(kernel_name) { ResetResource(); }
   ~MatMulGpuKernelMod() = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cublasSetStream failed");
     VARIABLE_NOT_USED(workspace);
@@ -68,7 +66,6 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
     dtype_c_ = CUDA_R_32F;
     algo_ = CUBLAS_GEMM_DEFAULT;
     is_fused_matmul_biasadd_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
@@ -77,11 +74,12 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  using MatMulFunc = std::function<bool(MatMulGpuKernelMod *, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  using MatMulFunc =
+    std::function<bool(MatMulGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, void *)>;
   MatMulFunc kernel_func_{};
   static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatMulFunc>>> kernel_attr_map_;
 

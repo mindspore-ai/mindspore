@@ -43,8 +43,7 @@ class SparseSliceInfer : public abstract::OpInferBase {
         std::vector<abstract::BaseShapePtr>{y_indices_shape, y_value_shape, y_shape_shape});
     }
 
-    auto indices_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     int64_t nnz = indices_shape[0];
     int64_t rank = indices_shape[1];
 
@@ -63,11 +62,11 @@ class SparseSliceInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 5;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    auto indices_type = input_args[kInputIndex0]->BuildType();
-    auto value_type = input_args[kInputIndex1]->BuildType();
-    auto shape_type = input_args[kInputIndex2]->BuildType();
-    auto start_type = input_args[kInputIndex3]->BuildType();
-    auto size_type = input_args[kInputIndex4]->BuildType();
+    auto indices_type = input_args[kInputIndex0]->GetType();
+    auto value_type = input_args[kInputIndex1]->GetType();
+    auto shape_type = input_args[kInputIndex2]->GetType();
+    auto start_type = input_args[kInputIndex3]->GetType();
+    auto size_type = input_args[kInputIndex4]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("start", start_type, {kInt64}, op_name);
@@ -84,11 +83,11 @@ class SparseSliceInfer : public abstract::OpInferBase {
  private:
   static bool SparseSliceCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
     auto op_name = primitive->name();
-    auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
-    auto start_shape_ptr = input_args[kInputIndex3]->BuildShape();
-    auto size_shape_ptr = input_args[kInputIndex4]->BuildShape();
+    auto indices_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto shape_shape_ptr = input_args[kInputIndex2]->GetShape();
+    auto start_shape_ptr = input_args[kInputIndex3]->GetShape();
+    auto size_shape_ptr = input_args[kInputIndex4]->GetShape();
 
     auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
     auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];

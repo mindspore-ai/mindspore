@@ -24,14 +24,17 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayReadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TensorArrayReadCpuKernelMod : public NativeCpuKernelMod {
  public:
   TensorArrayReadCpuKernelMod();
   ~TensorArrayReadCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {

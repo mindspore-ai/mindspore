@@ -42,8 +42,8 @@ abstract::ShapePtr MapTensorGetKeysInferShape(const PrimitivePtr &, const std::v
 
 TypePtr MapTensorGetKeysInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetKeys, input_args, kInputIndex0);
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGetKeys, input_args, kInputIndex0, kObjectTypeMapTensorType);
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
   const auto &key_dtype = map_tensor_type->key_dtype();
   return key_dtype;

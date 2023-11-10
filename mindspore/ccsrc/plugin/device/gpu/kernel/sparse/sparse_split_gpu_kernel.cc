@@ -24,13 +24,11 @@ constexpr int64_t Kindex2 = 2;
 constexpr int64_t Kindex3 = 3;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
-  num_split = kernel_ptr->get_num_split();
+bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  num_split = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("num_split")));
 
-  input_dtype_ = inputs[kIndex2]->GetDtype();
+  input_dtype_ = inputs[kIndex2]->dtype_id();
   size_t outputs_num = Kindex3 * num_split;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
@@ -55,12 +53,11 @@ bool SparseSplitGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
-  num_split = kernel_ptr->get_num_split();
+int SparseSplitGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
+
+  num_split = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("num_split")));
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     auto input_indices_shape = inputs[kIndex1]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();
@@ -69,17 +66,17 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
     input_nnz_ = input_indices_shape[0];
     num_dim_ = input_indices_shape[1];
-    input_dtype_ = inputs[kIndex2]->GetDtype();
+    input_dtype_ = inputs[kIndex2]->dtype_id();
 
     output_size_list_.clear();
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
+      (void)output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
     }
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[Kindex2]->GetDtype())));
+      (void)output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[Kindex2]->dtype_id())));
     }
     for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[Kindex3]->GetDtype())));
+      (void)output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[Kindex3]->dtype_id())));
     }
 
     workspace_size_list_.clear();
@@ -87,15 +84,15 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     workspace_size_list_.push_back(num_split * sizeof(void *));
     workspace_size_list_.push_back(num_split * sizeof(void *));
     workspace_size_list_.push_back(num_split * sizeof(int));
-    workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
+    workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
   }
   return ret;
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
   auto split_dim_ptr = GetDeviceAddress<IndexType>(inputs, kIndex0);
@@ -179,7 +176,7 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   auto sum_count_ptr = GetDeviceAddress<int>(workspace, kIndex3);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(sum_count_ptr, 0, workspace[kIndex3]->size, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(sum_count_ptr, 0, workspace[kIndex3]->size(), cuda_stream),
                                      "For SparseSplit, cudaMemsetAsync failed.");
 
   SparseSplit<DataType, IndexType>(split_dim_ptr, indices_ptr, values_ptr, shape_ptr, num_split, d_y_indices_vec,
@@ -193,12 +190,17 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-void SparseSplitGpuKernelMod::SyncOutputShape() {
+void SparseSplitGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSplit cudaStreamSynchronized failed");
   for (size_t i = 0; i < num_split; i++) {
-    outputs_[i]->SetShapeVector(ShapeVector({h_blocks[i], Kindex2}));                                  // indices
-    outputs_[i + num_split]->SetShapeVector(ShapeVector({h_blocks[i]}));                               // value
-    outputs_[i + num_split * Kindex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));  // shape
+    outputs[i]->SetShapeVector(ShapeVector({h_blocks[i], Kindex2}));                                  // indices
+    outputs[i + num_split]->SetShapeVector(ShapeVector({h_blocks[i]}));                               // value
+    outputs[i + num_split * Kindex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));  // shape
+    outputs[i]->set_size(LongToSize(h_blocks[i] * Kindex2) * UnitSizeInBytes(outputs[i]->dtype_id()));
+    outputs[i + num_split]->set_size(LongToSize(h_blocks[i]) * UnitSizeInBytes(outputs[i + num_split]->dtype_id()));
+    outputs[i + num_split * Kindex2]->set_size(num_dim_ *
+                                               UnitSizeInBytes(outputs[i + num_split * Kindex2]->dtype_id()));
   }
 }
 

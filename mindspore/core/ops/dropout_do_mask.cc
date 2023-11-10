@@ -35,25 +35,32 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ir/kernel_tensor_value.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
-  auto value = reinterpret_cast<T *>(keep_prop->data_c());
-  MS_EXCEPTION_IF_NULL(value);
+T GetAndCheckKeepProp(const AbstractBasePtr &input_arg) {
+  auto value_ptr = input_arg->GetValue();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto value_opt = GetArrayValue<T>(value_ptr);
+  if (!value_opt.has_value()) {
+    MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop must be valid";
+  }
+  auto value = value_opt.value()[0];
   T min = T(0.0);
   T max = T(1.0);
-  if (*value < min || *value > max) {
+  if (value < min || value > max) {
     MS_EXCEPTION(ValueError)
-      << "For 'DropoutDoMask', the 'keep_prop' input value must be in the range [0, 1], but got: " << *value << ".";
+      << "For 'DropoutDoMask', the 'keep_prop' input value must be in the range [0, 1], but got: " << value << ".";
   }
-  return *value;
+  return value;
 }
 
 abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
@@ -84,8 +91,8 @@ abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
     }
   }
   auto keep_prop = input_args[kInputIndex2];
-  if (keep_prop->isa<abstract::AbstractTensor>()) {
-    auto keep_prop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(keep_prop->BuildShape())[kShape];
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
+    auto keep_prop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(keep_prop->GetShape())[kShape];
     if (!keep_prop_shape.empty()) {
       MS_EXCEPTION(ValueError) << "'For 'DropoutDoMask', dim of 'keep_prop' must be 0(scalar), but got: "
                                << keep_prop_shape.size() << ".";
@@ -98,32 +105,33 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   auto keep_prop = input_args[kInputIndex2];
   MS_EXCEPTION_IF_NULL(keep_prop);
-  auto keep_prop_value = keep_prop->BuildValue();
+  auto keep_prop_value = keep_prop->GetValue();
   MS_EXCEPTION_IF_NULL(keep_prop_value);
-
-  if (keep_prop->isa<abstract::AbstractTensor>()) {
+  auto keep_prop_type = keep_prop->GetType();
+  MS_EXCEPTION_IF_NULL(keep_prop_type);
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
     const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kFloat32, kFloat64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->BuildType(), keep_prop_valid_types,
-                                                     op_name);
-    if (keep_prop_value->isa<tensor::Tensor>()) {
-      auto keep_prop_tensor = keep_prop_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(keep_prop_tensor);
-      TypeId tensor_type = keep_prop_tensor->data_type();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->GetType(), keep_prop_valid_types, op_name);
+    if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2]) && IsValueKnown(keep_prop_value)) {
+      auto keep_prop_type_ptr = keep_prop_type->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(keep_prop_type_ptr);
+      TypeId tensor_type = keep_prop_type_ptr->element()->type_id();
       if (tensor_type == TypeId::kNumberTypeFloat16) {
-        (void)GetAndCheckKeepProp<float16>(keep_prop_tensor);
+        (void)GetAndCheckKeepProp<float16>(input_args[kInputIndex2]);
       } else if (tensor_type == TypeId::kNumberTypeFloat32) {
-        (void)GetAndCheckKeepProp<float>(keep_prop_tensor);
+        (void)GetAndCheckKeepProp<float>(input_args[kInputIndex2]);
       } else {
-        (void)GetAndCheckKeepProp<double>(keep_prop_tensor);
+        (void)GetAndCheckKeepProp<double>(input_args[kInputIndex2]);
       }
     }
-  } else if (keep_prop->isa<abstract::AbstractScalar>()) {
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
     if (keep_prop_value != nullptr) {
-      if (!keep_prop_value->isa<FloatImm>()) {
-        MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float, but got: "
-                                << keep_prop_value->ToString() << ".";
+      if (!keep_prop_value->isa<FloatImm>() && !keep_prop_value->isa<KernelTensorValue>()) {
+        MS_EXCEPTION(TypeError)
+          << "For 'DropoutDoMask', the type of 'keep_prop' must be float && KernelTensorValue, but got: "
+          << keep_prop_value->ToString() << ".";
       }
-      auto value = GetValue<float>(keep_prop_value);
+      auto value = GetScalarValue<float>(keep_prop_value).value();
       if (value < 0 || value > 1) {
         MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the 'keep_prop' must in the range [0, 1], but got: " << value
                                  << ".";
@@ -134,9 +142,9 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
                             << keep_prop_value->ToString() << ".";
   }
 
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), {kUInt8}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->GetType(), {kUInt8}, op_name);
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kInt32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), input_valid_types, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->GetType(), input_valid_types, op_name);
 }
 }  // namespace
 

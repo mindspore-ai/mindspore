@@ -26,30 +26,35 @@
 
 namespace mindspore {
 namespace kernel {
-class AicpuOpKernelMod : public AscendKernelMod {
+class AicpuOpKernelMod : public KernelMod {
  public:
-  AicpuOpKernelMod();
-  explicit AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr);
+  // =========================================New interface==========================================================
+  AicpuOpKernelMod() : unknow_type_(::ge::UnknowShapeOpType::DEPEND_IN_SHAPE) {}
 
   ~AicpuOpKernelMod() override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  void SetInputList(const std::vector<int64_t> &input_list);
-  void SetOutputList(const std::vector<int64_t> &output_list);
-  void SetAnfNode(const AnfNodePtr &anf_node);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override;
+
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    MS_LOG(EXCEPTION) << "This interface is not support in AicpuOpKernelMod.";
+  }
+
   void SetNodeDef(const std::string &node_def);
-  void SetExtInfo(const std::string &ext_info);
+  void SetExtInfo(const std::string &ext_info, size_t input_num, size_t output_num);
   void SetNodeName(const std::string &node_name);
   void SetCustSo(const std::string &cust_so);
+  void SetIsDynamicShape(bool is_dynamic_shape) { is_dynamic_shape_ = is_dynamic_shape; }
+  void SetNodeScopeName(const std::string &scope_name) { node_scope_name_ = scope_name; }
 
   /**
    *  @brief Build AICPU Engine kernel structure, and allocate device memory for offline task generate
@@ -59,8 +64,23 @@ class AicpuOpKernelMod : public AscendKernelMod {
    */
   void CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  void CloseTdtWingManQueue();
+
+  // =======================Old interface, will deleted after all kernel modified used new interface=================
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module launch interface.";
+  }
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
+    MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module resize interface.";
+  }
+
  protected:
-  void SyncOutputShape() override;
   std::string args_;
   std::string ext_info_;
   std::string node_name_;
@@ -75,17 +95,21 @@ class AicpuOpKernelMod : public AscendKernelMod {
   void *stream_ = nullptr;
 
  private:
-  void AllocateExtInfoDeviceAddr(const CNodePtr &cnode);
+  void AllocateExtInfoDeviceAddr();
   void FreeExtInfoDeviceAddr();
-  void UpdateOutputShapeFromExtInfo(const CNodePtr &cnode);
   bool CheckDeviceSupportBlockingAicpuOpProcess() const;
   void ParseNodeNameAndNodeSo();
-  void CreateAsyncWaitEventAndUpdateEventInfo(const CNodePtr &cnode);
+  void CreateAsyncWaitEventAndUpdateEventInfo();
+  bool IsOutputAllEmptyTensor(const std::vector<KernelTensor *> &outputs);
   std::vector<int64_t> input_list_;
   std::vector<int64_t> output_list_;
   rtEvent_t rt_event_ = nullptr;
   bool is_blocking_;  // is op has asyncflag
   bool need_skip_execute_ = false;
+  bool is_output_all_empty_tensor_{false};
+  bool is_dynamic_shape_{false};
+  uint32_t stream_id_{0};
+  std::string node_scope_name_;
 };
 
 using AicpuOpKernelModPtr = std::shared_ptr<AicpuOpKernelMod>;

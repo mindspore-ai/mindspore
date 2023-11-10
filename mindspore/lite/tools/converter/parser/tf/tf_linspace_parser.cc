@@ -18,7 +18,7 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include "ops/lin_space.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 
 namespace mindspore {

@@ -34,15 +34,15 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   std::vector<int64_t> batch_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> row_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   std::vector<int64_t> col_indices =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   std::vector<int64_t> values =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
 
   const int kInputNoBatch = 2;
   const int kInputWithBatch = 3;
@@ -90,11 +90,11 @@ TypePtr SparseMatrixNNZInferType(const PrimitivePtr &prim, const std::vector<Abs
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kInt8,    kInt16,   kInt32,   kInt64,     kUInt8,      kUInt16,
                                                 kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_type = input_args[kInputIndex1]->BuildType();
-  auto row_type = input_args[kInputIndex2]->BuildType();
-  auto col_type = input_args[kInputIndex3]->BuildType();
-  auto value_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_type = input_args[kInputIndex1]->GetType();
+  auto row_type = input_args[kInputIndex2]->GetType();
+  auto col_type = input_args[kInputIndex3]->GetType();
+  auto value_type = input_args[kInputIndex4]->GetType();
 
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x_dense_shape", dense_shape_type);

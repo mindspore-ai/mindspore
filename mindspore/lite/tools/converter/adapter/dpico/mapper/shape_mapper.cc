@@ -19,7 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
-#include "ops/shape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/shape_operator.h"
 
 namespace mindspore {

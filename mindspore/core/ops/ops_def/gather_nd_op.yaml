@@ -1,0 +1,10 @@
+#operator gather_nd
+gather_nd:
+  args:
+    input_x:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  returns:
+    y:
+      dtype: tensor

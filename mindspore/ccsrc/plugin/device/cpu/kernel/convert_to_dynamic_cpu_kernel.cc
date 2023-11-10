@@ -15,28 +15,25 @@
  */
 
 #include "plugin/device/cpu/kernel/convert_to_dynamic_cpu_kernel.h"
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <memory>
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr auto kConvertToDynamicRank = "ConvertToDynamic";
 }  // namespace
-bool ConvertToDynamicCpuKernelMod::Init(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
-                                        const std::vector<KernelTensorPtr> &) {
+bool ConvertToDynamicCpuKernelMod::Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
   kernel_name_ = kConvertToDynamicRank;
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ConvertToDynamicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 
   const size_t kInOutNum = 1;
@@ -46,7 +43,7 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   auto &input = inputs[0];
   size_t tensor_size = 0;
-  size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(input->dtype_id()));
   auto shape = input->GetShapeVector();
   if (!IsValidShape(shape)) {
     ret = KRET_UNKNOWN_SHAPE;
@@ -57,7 +54,6 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     tensor_size = std::max(tensor_size, type_size);
   }
 
-  (void)input_size_list_.emplace_back(tensor_size);
   (void)output_size_list_.emplace_back(tensor_size);
 
   outputs_.clear();
@@ -67,23 +63,23 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return static_cast<int>(ret);
 }
 
-bool ConvertToDynamicCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvertToDynamicCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the inputs can not be empty.";
   }
   const size_t kOutputsNum = 1;
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the size of 'input_x': {" << inputs[0]->size
-                      << "} is not equal to the size of the first output: {" << outputs[0]->size << "}";
+  if (inputs[0]->size() != outputs[0]->size()) {
+    MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', the size of 'input_x': {" << inputs[0]->size()
+                      << "} is not equal to the size of the first output: {" << outputs[0]->size() << "}";
   }
-  if (inputs[0]->addr == outputs[0]->addr) {
+  if (inputs[0]->device_ptr() == outputs[0]->device_ptr()) {
     return true;
   }
-  size_t copy_size = outputs[0]->size;
-  auto ret = memcpy_s(outputs[0]->addr, copy_size, inputs[0]->addr, copy_size);
+  size_t copy_size = outputs[0]->size();
+  auto ret = memcpy_s(outputs[0]->device_ptr(), copy_size, inputs[0]->device_ptr(), copy_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', memcpy_s error. Error no: " << ret;
   }

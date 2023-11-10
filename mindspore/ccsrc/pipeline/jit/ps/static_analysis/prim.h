@@ -27,13 +27,35 @@
 #include "utils/hash_map.h"
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/op_def.h"
+#include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore {
 namespace abstract {
+class PrimitiveFunctionEvaluator final : public TrivialPrimEvaluator {
+ public:
+  explicit PrimitiveFunctionEvaluator(const PrimitivePtr &primitive);
+  ~PrimitiveFunctionEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveFunctionEvaluator, TrivialPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  std::string ToString() const override { return identifier_ + "_PrimitiveFunction_" + prim_func_->name(); }
+
+ protected:
+  bool inplace_prim() const override { return prim_func_->inplace_prim(); }
+
+ private:
+  AbstractBasePtr CheckAndInfer(const AbstractBasePtrList &args);
+  PrimitivePtr prim_func_;
+  mindspore::ops::OpDefPtr op_def_{nullptr};
+  mindspore::ops::OpFrontendFuncImplPtr frontend_func_impl_{nullptr};
+};
+
 class StandardPrimEvaluator final : public TrivialPrimEvaluator {
  public:
   StandardPrimEvaluator(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &eval_impl)
       : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive), eval_impl_(eval_impl) {}
+  explicit StandardPrimEvaluator(const PrimitivePtr &primitive)
+      : TrivialPrimEvaluator("StandardPrimEvaluator"), prim_(primitive) {}
   ~StandardPrimEvaluator() override = default;
   MS_DECLARE_PARENT(StandardPrimEvaluator, TrivialPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
@@ -193,6 +215,46 @@ class SwitchLayerEvaluator final : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
+};
+
+class PrimitiveArgsToInputsEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit PrimitiveArgsToInputsEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("PrimitiveArgsToInputsEvaluator"), prim_(primitive) {}
+  ~PrimitiveArgsToInputsEvaluator() override = default;
+  MS_DECLARE_PARENT(PrimitiveArgsToInputsEvaluator, TransitionPrimEvaluator)
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  PrimitivePtr prim_;
+};
+
+class DoTransPrimitiveFunctionEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit DoTransPrimitiveFunctionEvaluator(const PrimitivePtr primitive)
+      : TransitionPrimEvaluator("DoTransPrimitiveFunctionEvaluator"), prim_(primitive) {}
+  ~DoTransPrimitiveFunctionEvaluator() override = default;
+  MS_DECLARE_PARENT(DoTransPrimitiveFunctionEvaluator, TransitionPrimEvaluator)
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  PrimitivePtr prim_;
+};
+
+class PartialToEndEvaluator : public TransitionPrimEvaluator {
+ public:
+  explicit PartialToEndEvaluator(const AbstractFunctionPtr &primal_func, const AnfNodePtr &partial_node)
+      : TransitionPrimEvaluator("PartialToEndEvaluator"), primal_func_(primal_func), partial_node_(partial_node) {}
+  ~PartialToEndEvaluator() override = default;
+  MS_DECLARE_PARENT(PartialToEndEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+
+ private:
+  AbstractFunctionPtr primal_func_;
+  AnfNodePtr partial_node_;
 };
 
 class ConstexprEvaluator : public TransitionPrimEvaluator {

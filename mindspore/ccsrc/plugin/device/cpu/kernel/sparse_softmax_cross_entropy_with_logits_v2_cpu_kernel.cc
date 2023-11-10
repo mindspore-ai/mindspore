@@ -27,11 +27,8 @@ constexpr std::size_t kSparseSoftmaxCrossEntropyWithLogitsV2FeaturesShape{2};
 constexpr std::size_t kSparseSoftmaxCrossEntropyWithLogitsV2LabelsShape{1};
 }  // namespace
 
-bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                             const std::vector<KernelTensorPtr> &inputs,
-                                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -42,11 +39,9 @@ bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Init(const BaseOperatorP
   return true;
 }
 
-int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                              const std::vector<KernelTensorPtr> &inputs,
-                                                              const std::vector<KernelTensorPtr> &outputs,
-                                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   features_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -69,16 +64,16 @@ int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const BaseOperator
 }
 
 template <typename data_type, typename label_type>
-bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::LaunchKernel(
+  const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsV2InputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsV2OutputNum, kernel_name_);
-  auto *features = static_cast<data_type *>(inputs[kIndex0]->addr);
-  auto *labels = static_cast<label_type *>(inputs[kIndex1]->addr);
-  auto *loss = static_cast<data_type *>(outputs[kIndex0]->addr);
-  auto *backprop = static_cast<data_type *>(outputs[kIndex1]->addr);
-  const size_t features_length = inputs[kIndex0]->size / sizeof(data_type);
-  const size_t labels_length = inputs[kIndex1]->size / sizeof(label_type);
+  auto *features = static_cast<data_type *>(inputs[kIndex0]->device_ptr());
+  auto *labels = static_cast<label_type *>(inputs[kIndex1]->device_ptr());
+  auto *loss = static_cast<data_type *>(outputs[kIndex0]->device_ptr());
+  auto *backprop = static_cast<data_type *>(outputs[kIndex1]->device_ptr());
+  const size_t features_length = inputs[kIndex0]->size() / sizeof(data_type);
+  const size_t labels_length = inputs[kIndex1]->size() / sizeof(label_type);
   const size_t batch_size = labels_length;
   const size_t classes_num = features_length / labels_length;
   for (size_t index = 0; index < labels_length; index++) {

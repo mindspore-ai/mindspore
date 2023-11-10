@@ -32,14 +32,12 @@ class AffineGridGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   AffineGridGradCpuKernelMod() = default;
   ~AffineGridGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
@@ -47,26 +45,29 @@ class AffineGridGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
  private:
   template <typename T, typename T0>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T, typename T0>
-  void LaunchKernel_3D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void LaunchKernel_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T, typename T0>
-  void LaunchKernel_4D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void LaunchKernel_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T0>
-  Eigen::MatrixXf make_base_grid_3D(const std::vector<kernel::AddressPtr> &inputs, Eigen::VectorXf vecX,
+  Eigen::MatrixXf make_base_grid_3D(const std::vector<kernel::KernelTensor *> &inputs, Eigen::VectorXf vecX,
                                     Eigen::VectorXf vecY);
   template <typename T, typename T0>
-  void DoCompute_3D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                    Eigen::MatrixXf all);
+  void DoCompute_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs, Eigen::MatrixXf all);
   template <typename T0>
-  Eigen::MatrixXf make_base_grid_4D(const std::vector<kernel::AddressPtr> &inputs, Eigen::VectorXf vecX,
+  Eigen::MatrixXf make_base_grid_4D(const std::vector<kernel::KernelTensor *> &inputs, Eigen::VectorXf vecX,
                                     Eigen::VectorXf vecY, Eigen::VectorXf vecZ);
   template <typename T, typename T0>
-  void DoCompute_4D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                    Eigen::MatrixXf all);
+  void DoCompute_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs, Eigen::MatrixXf all);
   using AffineGridGradFunc =
-    std::function<bool(AffineGridGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(AffineGridGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
   std::vector<int64_t> x_size_dims_;
   bool align_corners_{false};

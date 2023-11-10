@@ -27,11 +27,13 @@ Status CholeskyInfo::GetAttrs() {
 
 // the last two dimensions can not be split
 Status CholeskyInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
 
-  Strategies stra = strategy->GetInputDim();
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   for (auto &element : axis_) {

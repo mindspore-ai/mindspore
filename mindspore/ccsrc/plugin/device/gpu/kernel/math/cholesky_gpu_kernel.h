@@ -33,7 +33,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kCholeskyInputsNum = 1;
+constexpr size_t kCholeskyInputsNum = 2;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kCholeskyOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
@@ -47,21 +47,16 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   CholeskyGpuKernelMod() = default;
   ~CholeskyGpuKernelMod() = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskyInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskyOutputsNum, kernel_name_);
-    kernel_name_ = base_operator->GetPrim()->name();
-    if (base_operator->HasAttr("upper")) {
-      flag_ = false;
-      upper_ = GetValue<bool>(base_operator->GetAttr("upper"));
-    }
+
     // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-    if (base_operator->HasAttr(kClean)) {
-      clean_ = GetValue<bool>(base_operator->GetAttr(kClean));
+    if (primitive_->HasAttr(kClean)) {
+      clean_ = GetValue<bool>(primitive_->GetAttr(kClean));
     }
-    if (base_operator->HasAttr(kLower)) {
-      lower_ = GetValue<bool>(base_operator->GetAttr(kLower));
+    if (primitive_->HasAttr(kLower)) {
+      lower_ = GetValue<bool>(primitive_->GetAttr(kLower));
     }
     // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
     // Cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
@@ -84,15 +79,12 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    input_size_list_.clear();
     output_size_list_.clear();
-
+    upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
     auto in_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
     if (!InitNoSplitDim(in_shape)) {
       return KRET_RESIZE_FAILED;
@@ -100,8 +92,8 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                   "Cholesky bind cusolverDnSetStream failed");
     return NoSplitLaunch(inputs, workspace, outputs, stream_ptr);
@@ -141,14 +133,12 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     workspace_size = outer_batch_ * sizeof(int);
     workspace_size_list_.emplace_back(workspace_size);
 
-    size_t input_size = outer_batch_ * m_ * lda_ * unit_size_;
-    input_size_list_.push_back(input_size);
     size_t output_size = outer_batch_ * m_ * lda_ * unit_size_;
     output_size_list_.push_back(output_size);
   }
 
-  bool NoSplitLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool NoSplitLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     // Here all addresses are malloc by cuda, so deal with them as device's address.
     auto input1_addr = GetDeviceAddress<T>(inputs, kDim0);
     auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
@@ -184,7 +174,7 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
-    size_t output_elements = outputs.at(kDim0)->size / unit_size_;
+    size_t output_elements = outputs.at(kDim0)->size() / unit_size_;
     // copy results from original input's matrix to output's matrix by up or lower flag.
     auto status = TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
                                      reinterpret_cast<cudaStream_t>(stream_ptr));

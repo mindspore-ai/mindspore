@@ -21,6 +21,7 @@
 #include <functional>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/apply_adagrad_da_cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,21 +42,19 @@ constexpr size_t kL2Index = 6;
 constexpr size_t kStepIndex = 7;
 }  // namespace
 
-bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ApplyAdagradDACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_EXCEPTION(ValueError) << "ApplyAdagradDA input is empty";
   }
-  dtype_ = inputs[0]->GetDtype();
-  batch_rank_ = base_operator->get_batch_rank();
+  dtype_ = inputs[0]->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   return true;
 }
 
-int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdagradDACpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -78,8 +77,8 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
 }
 
-bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -122,16 +121,17 @@ T max(T num1, T num2) {
 }
 
 template <typename T>
-void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
+void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->addr);
-  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->device_ptr());
+  const auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  const auto *l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     // Multithreading

@@ -996,7 +996,8 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
   if (has_variable) {
     auto cnode = input->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
-    bool not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+    bool not_variable =
+      (!arg->BuildValue()->ContainsValueAny()) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
       auto &element = arg_tuple_elements[index];
       const auto &inputs = cnode->inputs();
@@ -1061,7 +1062,7 @@ std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &inp
   MS_EXCEPTION_IF_NULL(arg);
   if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
     return GetTupleOrListString(arg, input, key_value, need_symbol, need_comma);
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
+  } else if (arg->BuildValue()->ContainsValueAny() || arg->isa<abstract::AbstractTensor>() ||
              IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
     exception_str = GetVariable(input, key_value, exception_str, need_symbol);
   } else if (arg->isa<abstract::AbstractDictionary>()) {
@@ -1089,7 +1090,7 @@ bool CheckHasVariable(const AbstractBasePtr &arg) {
         return true;
       }
     }
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
+  } else if (arg->BuildValue()->ContainsValueAny() || arg->isa<abstract::AbstractTensor>()) {
     return true;
   }
   return false;

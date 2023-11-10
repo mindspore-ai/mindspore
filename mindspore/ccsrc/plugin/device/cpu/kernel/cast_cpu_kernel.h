@@ -33,19 +33,15 @@ class CastCpuKernelMod : public NativeCpuKernelMod {
   CastCpuKernelMod() = default;
   ~CastCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     const size_t kCastInputsNum = 1;
     const size_t kCastOutputsNum = 1;
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
-    if (outputs[0]->size == 0) {
+    if (outputs[0]->size() == 0) {
       MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output must be greater than 0, but got 0.";
       return true;
     }
@@ -55,7 +51,7 @@ class CastCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ResetKernelFunc(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
+  void ResetKernelFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   TypeId source_dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};
 

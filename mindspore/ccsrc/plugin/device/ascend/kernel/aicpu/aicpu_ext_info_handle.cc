@@ -205,7 +205,7 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
   return UpdateShapeAndType(input_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
-bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const kernel::KernelTensorPtr &kernel_tensor) {
+bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const kernel::KernelTensor *kernel_tensor) {
   auto input_shape = kernel_tensor->GetShapeVector();
   if (input_index >= input_shape_and_type_.size()) {
     MS_LOG(ERROR) << "Invalid input_index: " << input_index
@@ -243,6 +243,20 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
     shape = {1};
   }
   return UpdateShapeAndType(shape, NOT_NULL(output_shape_and_type_[output_index]));
+}
+
+bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const kernel::KernelTensor *kernel_tensor) {
+  auto output_shape = kernel_tensor->GetShapeVector();
+  if (output_index >= output_shape_and_type_.size()) {
+    MS_LOG(ERROR) << "Invalid output_index: " << output_index
+                  << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+    return false;
+  }
+  if (output_shape.empty()) {
+    output_shape = {1};
+  }
+
+  return UpdateShapeAndType(output_shape, NOT_NULL(output_shape_and_type_[output_index]));
 }
 
 bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,

@@ -22,17 +22,20 @@
 
 namespace mindspore {
 namespace kernel {
-using TensorParams = transform::TensorParams;
 
 class MaskedSelectAclnnKernelMod : public AclnnKernelMod {
  public:
   MaskedSelectAclnnKernelMod() {}
   ~MaskedSelectAclnnKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
-  bool IsNeedRetrieveOutputShape() override { return true; }
+ protected:
+  std::vector<ShapeVector> outputs_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

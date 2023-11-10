@@ -32,18 +32,11 @@ ReservoirReplayBufferCreateGpuKernel::~ReservoirReplayBufferCreateGpuKernel() {
   }
 }
 
-bool ReservoirReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferCreate>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferCreate ops failed!";
-    return false;
-  }
-
-  const std::vector<int64_t> &schema = kernel_ptr->get_schema();
-  const int64_t &seed0 = kernel_ptr->get_seed0();
-  const int64_t &seed1 = kernel_ptr->get_seed1();
+bool ReservoirReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  const std::vector<int64_t> &schema = GetValue<std::vector<int64_t>>(primitive_->GetAttr("schema"));
+  const int64_t &seed0 = GetValue<int64_t>(primitive_->GetAttr("seed0"));
+  const int64_t &seed1 = GetValue<int64_t>(primitive_->GetAttr("seed1"));
 
   unsigned int seed = 0;
   std::random_device rd;
@@ -59,7 +52,7 @@ bool ReservoirReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_oper
   std::transform(schema.begin(), schema.end(), std::back_inserter(schema_in_size),
                  [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
-  const int64_t &capacity = kernel_ptr->get_capacity();
+  const int64_t &capacity = GetValue<int64_t>(primitive_->GetAttr("capacity"));
   auto &factory = ReservoirReplayBufferFactory::GetInstance();
   std::tie(handle_, reservoir_replay_buffer_) = factory.Create(seed, capacity, schema_in_size);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
@@ -94,16 +87,9 @@ ReservoirReplayBufferPushGpuKernel::~ReservoirReplayBufferPushGpuKernel() {
   }
 }
 
-bool ReservoirReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferPush>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferPush ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+bool ReservoirReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   reservior_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservior_replay_buffer_);
 
@@ -111,14 +97,6 @@ bool ReservoirReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operat
   handle_device_ = static_cast<int64_t *>(allocator.AllocTensorMem(sizeof(handle_)));
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpy(handle_device_, &handle_, sizeof(handle_), cudaMemcpyHostToDevice),
                                     "cudaMemcpy failed.");
-
-  for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type = inputs[i]->GetDtype();
-    size_t type_size = GetTypeByte(TypeIdToType(type));
-    const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
-    size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    input_size_list_.push_back(tensor_size);
-  }
 
   output_size_list_.push_back(sizeof(handle_));
   return true;
@@ -140,22 +118,15 @@ std::vector<KernelAttr> ReservoirReplayBufferPushGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool ReservoirReplayBufferSampleGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferSample>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferSample ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
-  batch_size_ = kernel_ptr->get_batch_size();
+bool ReservoirReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
+  batch_size_ = GetValue<int64_t>(primitive_->GetAttr("batch_size"));
   reservior_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservior_replay_buffer_);
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    TypeId type_id = outputs[i]->GetDtype();
+    TypeId type_id = outputs[i]->dtype_id();
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
     const std::vector<int64_t> &shape = outputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -175,16 +146,9 @@ std::vector<KernelAttr> ReservoirReplayBufferSampleGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool ReservoirReplayBufferDestroyGpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast ReservoirReplayBufferDestroy ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+bool ReservoirReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   output_size_list_.push_back(sizeof(handle_));
   return true;
 }

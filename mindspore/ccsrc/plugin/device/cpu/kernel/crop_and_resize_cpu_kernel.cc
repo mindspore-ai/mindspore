@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,14 @@
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
+bool CropAndResizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CropAndResize>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
   // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
   // for the moment to support dynamic shape.
-  std::string method = GetValue<std::string>(kernel_ptr->GetAttr("method"));
+  std::string method = GetValue<std::string>(primitive_->GetAttr("method"));
   if (method == "bilinear") {
     method_ = BILINEAR;
   } else if (method == "nearest") {
@@ -39,7 +35,7 @@ bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   } else {  //  bilinear-v2
     method_ = BILINEAR_V2;
   }
-  extrapolation_value_ = kernel_ptr->get_extrapolation_value();
+  extrapolation_value_ = GetValue<float>(primitive_->GetAttr(ops::kExtrapolationValue));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -51,10 +47,9 @@ bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  input image
@@ -181,12 +176,12 @@ void CropAndResizeCpuKernelMod::BilinearV2Resize(T *input_image, float y1, float
 }
 
 template <typename T>
-bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->addr);
-  auto *input_boxes = reinterpret_cast<float *>(inputs[BOXES]->addr);
-  auto *input_box_index = reinterpret_cast<int *>(inputs[BOX_INDEX]->addr);
-  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
+bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->device_ptr());
+  auto *input_boxes = reinterpret_cast<float *>(inputs[BOXES]->device_ptr());
+  auto *input_box_index = reinterpret_cast<int *>(inputs[BOX_INDEX]->device_ptr());
+  auto *output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   auto task = [this, &input_box_index, &input_boxes, &input_image, &output](size_t start, size_t end) {
     const float HALF = 0.5;
@@ -379,7 +374,7 @@ void CropAndResizeCpuKernelMod::InitFunc(const CNodePtr &kernel_node) {
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Concat does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "CropAndResize does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;

@@ -21,12 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool UniformCandidateSamplerGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
+bool UniformCandidateSamplerGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 3;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -36,28 +35,22 @@ bool UniformCandidateSamplerGpuKernelMod::Init(const BaseOperatorPtr &base_opera
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniformCandidateSampler>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   // getting attrs
-  num_true_ = kernel_ptr->get_num_true();
-  num_sampled_ = kernel_ptr->get_num_sampled();
-  unique_ = kernel_ptr->get_unique();
-  range_max_ = kernel_ptr->get_range_max();
-  remove_accidental_hits_ = kernel_ptr->get_remove_accidental_hits();
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  num_true_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumTrue));
+  num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
+  unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
+  range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
+  remove_accidental_hits_ = GetValue<bool>(primitive_->GetAttr("remove_accidental_hits"));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kSeed)));
   uint64_t init_seed = random::GetSeed(seed, 0);
   rng_.seed(init_seed);
 
   return true;
 }
 
-int UniformCandidateSamplerGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int UniformCandidateSamplerGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
@@ -70,9 +63,9 @@ int UniformCandidateSamplerGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T, typename S>
-bool UniformCandidateSamplerGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &,
-                                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool UniformCandidateSamplerGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &,
+                                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *sampled_candidates = GetDeviceAddress<T>(outputs, kIndex0);
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);

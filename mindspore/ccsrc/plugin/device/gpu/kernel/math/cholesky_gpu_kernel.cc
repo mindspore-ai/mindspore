@@ -17,10 +17,18 @@
 #include "plugin/device/gpu/kernel/math/cholesky_gpu_kernel.h"
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Cholesky, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_GPU_KERNEL_ONE(Cholesky,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
                       CholeskyGpuKernelMod, float)
 
-MS_REG_GPU_KERNEL_ONE(Cholesky, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+MS_REG_GPU_KERNEL_ONE(Cholesky,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat64),
                       CholeskyGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

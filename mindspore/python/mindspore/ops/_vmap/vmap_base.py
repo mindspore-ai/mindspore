@@ -29,6 +29,7 @@ from mindspore.ops.function import _VmapGeneralPreprocess
 from mindspore.ops.primitive import Primitive, _PrimitiveC
 from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
 from mindspore.ops._grad_experimental.grad_base import BpropRegistry as VmapRuleRegistry
+from mindspore._c_expression import PrimitiveFunction_
 
 
 vmap_rules_getters = VmapRuleRegistry()
@@ -36,7 +37,10 @@ vmap_rules_getters = VmapRuleRegistry()
 
 def get_vmap_rule(prim, axis_size):
     """get vmap rule function by primitive obj or prim name for c++"""
-    out = vmap_rules_getters.get(prim, None)
+    if isinstance(prim, str):
+        out = vmap_rules_getters.get(prim, None)
+    elif isinstance(prim, (Primitive, PrimitiveFunction_)):
+        out = vmap_rules_getters.get(prim.name, None)
     if out:
         return out(prim, axis_size)
     return None
@@ -447,6 +451,9 @@ def _vmap_clone_prim(prim):
 @_primexpr
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""
+    if x_dim < 0:
+        x_dim = x_dim + x_ndim
+
     # For axis, it's value in Union[int, list, tuple]
     logical_x_ndim = x_ndim - 1
     if isinstance(axis, int):

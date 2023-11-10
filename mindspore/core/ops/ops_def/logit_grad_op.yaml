@@ -1,0 +1,13 @@
+#operator logit_grad
+logit_grad:
+    args:
+        grad:
+            dtype: tensor
+        input:
+            dtype: tensor
+        eps:
+            dtype: float
+            init: -1.0
+    returns:
+        input_grad:
+            dtype: tensor

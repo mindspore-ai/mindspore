@@ -346,19 +346,14 @@ void CombinedNonMaxSuppressionCpuKernelMod::CheckOutput() {
   }
 }
 
-bool CombinedNonMaxSuppressionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CombinedNonMaxSuppressionCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CombinedNonMaxSuppressionCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -367,17 +362,17 @@ int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   CHECK_KERNEL_INPUTS_NUM(input_num, kCombinedNonMaxSuppressionInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kCombinedNonMaxSuppressionOutputsNum, kernel_name_);
 
-  input0_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  input1_shape_ = inputs.at(KIndex1)->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs.at(KIndex2)->GetDeviceShapeAdaptively();
-  input3_shape_ = inputs.at(KIndex3)->GetDeviceShapeAdaptively();
-  input4_shape_ = inputs.at(KIndex4)->GetDeviceShapeAdaptively();
-  input5_shape_ = inputs.at(KIndex5)->GetDeviceShapeAdaptively();
+  input0_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input1_shape_ = inputs.at(KIndex1)->GetDeviceShapeVector();
+  input2_shape_ = inputs.at(KIndex2)->GetDeviceShapeVector();
+  input3_shape_ = inputs.at(KIndex3)->GetDeviceShapeVector();
+  input4_shape_ = inputs.at(KIndex4)->GetDeviceShapeVector();
+  input5_shape_ = inputs.at(KIndex5)->GetDeviceShapeVector();
 
-  output0_shape_ = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
-  output1_shape_ = outputs.at(kIndex1)->GetDeviceShapeAdaptively();
-  output2_shape_ = outputs.at(kIndex2)->GetDeviceShapeAdaptively();
-  output3_shape_ = outputs.at(kIndex3)->GetDeviceShapeAdaptively();
+  output0_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
+  output1_shape_ = outputs.at(kIndex1)->GetDeviceShapeVector();
+  output2_shape_ = outputs.at(kIndex2)->GetDeviceShapeVector();
+  output3_shape_ = outputs.at(kIndex3)->GetDeviceShapeVector();
 
   soft_nms_sigma_ = 0.0;
   num_bath_ = static_cast<int>(input0_shape_[0]);
@@ -387,10 +382,8 @@ int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_op
 
   pad_per_class_ = false;
   clip_boxes_ = true;
-
-  PrimitivePtr prim = base_operator->GetPrim();
-  auto pad_per_class = prim->GetAttr("pad_per_class");
-  auto clip_boxes = prim->GetAttr("clip_boxes");
+  auto pad_per_class = primitive_->GetAttr("pad_per_class");
+  auto clip_boxes = primitive_->GetAttr("clip_boxes");
   if (pad_per_class != nullptr) {
     pad_per_class_ = GetValue<bool>(pad_per_class);
   }
@@ -404,19 +397,19 @@ int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   return KRET_OK;
 }
 
-bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  float *boxes = static_cast<float *>(inputs[0]->addr);
-  float *scores = static_cast<float *>(inputs[KIndex1]->addr);
-  max_output_size_per_class_ = *(static_cast<int *>(inputs[KIndex2]->addr));
-  max_total_size_ = *(static_cast<int *>(inputs[KIndex3]->addr));
-  iou_threshold_ = *(static_cast<float *>(inputs[KIndex4]->addr));
-  score_threshold_ = *(static_cast<float *>(inputs[KIndex5]->addr));
-  float *nmsed_boxes = static_cast<float *>(outputs[KIndex0]->addr);
-  float *nmsed_scores = static_cast<float *>(outputs[KIndex1]->addr);
-  float *nmsed_class = static_cast<float *>(outputs[KIndex2]->addr);
-  int *valid_detection = static_cast<int *>(outputs[KIndex3]->addr);
+bool CombinedNonMaxSuppressionCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  float *boxes = static_cast<float *>(inputs[0]->device_ptr());
+  float *scores = static_cast<float *>(inputs[KIndex1]->device_ptr());
+  max_output_size_per_class_ = *(static_cast<int *>(inputs[KIndex2]->device_ptr()));
+  max_total_size_ = *(static_cast<int *>(inputs[KIndex3]->device_ptr()));
+  iou_threshold_ = *(static_cast<float *>(inputs[KIndex4]->device_ptr()));
+  score_threshold_ = *(static_cast<float *>(inputs[KIndex5]->device_ptr()));
+  float *nmsed_boxes = static_cast<float *>(outputs[KIndex0]->device_ptr());
+  float *nmsed_scores = static_cast<float *>(outputs[KIndex1]->device_ptr());
+  float *nmsed_class = static_cast<float *>(outputs[KIndex2]->device_ptr());
+  int *valid_detection = static_cast<int *>(outputs[KIndex3]->device_ptr());
   if (pad_per_class_) {
     num_detection_ = std::min(max_total_size_, max_output_size_per_class_ * num_class_);
   } else {

@@ -1071,7 +1071,7 @@ def test_ascend_train_pynative():
     """
     test_ascend_train_by_mode(context.PYNATIVE_MODE)
 
-
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

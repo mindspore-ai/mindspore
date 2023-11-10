@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,16 +179,34 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
     MS_LOG(EXCEPTION) << "Input size is empty";
     return;  // To pass the CI Check_Cppcheck
   }
+  size_t all_same_input_num = kernel_attr->GetAllSameInputNum();  // default 0; else >=1 when allsame=true
+  size_t standalone_input_num = attr_num - all_same_input_num;
+  bool is_group_allsame = kernel_attr->GetGroupAllSame();
   // Only support one dynamic input like Concat or
   // many dynamic input but each input has same number like DynamicStitch
   std::string format = kOpFormat_DEFAULT;
   std::vector<DataType> attr_list;
-  size_t each_attr_input_num = input_num / attr_num;
-  for (size_t i = 0; i < attr_num; ++i) {
-    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
-    for (size_t j = 0; j < each_attr_input_num; ++j) {
-      (void)attr_list.emplace_back(DataType(input_dtype, format));
+  size_t each_attr_input_num = (input_num - standalone_input_num) / (all_same_input_num == 0 ? 1 : all_same_input_num);
+  // Deal with allsame==True
+  if (is_group_allsame) {
+    for (size_t i = 0; i < each_attr_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < all_same_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
     }
+  } else {
+    for (size_t i = 0; i < all_same_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
+    }
+  }
+  // Deal with the rest attrs
+  for (size_t i = all_same_input_num; i < attr_num; ++i) {
+    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+    (void)attr_list.emplace_back(input_dtype, format);
   }
   kernel_attr->SetInputAttrList(attr_list);
 

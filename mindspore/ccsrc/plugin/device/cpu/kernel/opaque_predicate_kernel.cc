@@ -28,19 +28,19 @@ constexpr size_t kOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-bool OpaquePredicateKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) const {
-  auto input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+bool OpaquePredicateKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) const {
+  auto input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
   output[0] =
     CustomizedOpaquePredicate::GetInstance().run_function(static_cast<float>(*input1), static_cast<float>(*input2));
   return true;
 }
 
-bool OpaquePredicateKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+bool OpaquePredicateKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

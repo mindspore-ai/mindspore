@@ -32,32 +32,29 @@ namespace {
 abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const auto &prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  // If called from the backend, the input_args[0] is a KernelTensor, not AbstractSequence
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
-  auto shape_0 = elements[0]->BuildShape();
+  auto shape_0 = elements[0]->GetShape();
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto shape_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(shape_i)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     }
     if (IsDynamic(shape_i)) {
-      element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+      element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape());
     }
   }
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape = elements[i]->BuildShape();
+    auto shape = elements[i]->GetShape();
     if (shape->isa<abstract::Shape>() && shape_0->isa<abstract::Shape>()) {
       const auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
       const auto &shape_0_vec = shape_0->cast<abstract::ShapePtr>()->shape();
@@ -86,27 +83,24 @@ TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<Abstr
     MS_EXCEPTION_IF_NULL(item);
   }
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("element_0", elements[0]->BuildType());
+  (void)types.emplace("element_0", elements[0]->GetType());
   for (size_t i = 0; i < elements.size(); ++i) {
-    if (elements[i]->BuildType()->type_id() == kObjectTypeUndeterminedType) {
-      return elements[0]->BuildType();
+    if (elements[i]->GetType()->type_id() == kObjectTypeUndeterminedType) {
+      return elements[0]->GetType();
     }
     std::string element_i = "element_" + std::to_string(i);
-    (void)types.emplace(element_i, elements[i]->BuildType());
+    (void)types.emplace(element_i, elements[i]->GetType());
   }
   std::set<TypePtr> valid_types = common_valid_types;
   (void)valid_types.emplace(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return elements[0]->BuildType();
+  return elements[0]->GetType();
 }
 }  // namespace
 

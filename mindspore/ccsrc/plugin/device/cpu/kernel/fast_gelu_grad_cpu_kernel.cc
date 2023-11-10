@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <functional>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/grad/fast_gelu_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
@@ -29,19 +28,19 @@ constexpr const size_t kFastGeluGradOutputsNum = 1;
 using KernelRunFunc = FastGeLUGradCpuKernelMod::KernelRunFunc;
 }  // namespace
 template <typename T>
-bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
-  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input1, false);
-  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input2, false);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  const size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [&input1, &input2, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T x = input2[i];
@@ -67,30 +66,21 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &FastGeLUGradCpuKernelMo
   return func_list;
 }
 
-bool FastGeLUGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FastGeLUGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  if (inputs.size() != kFastGeluGradInputsNum || outputs.size() != kFastGeluGradOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kFastGeluGradInputsNum << " and "
-                  << kFastGeluGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool FastGeLUGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int FastGeLUGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int FastGeLUGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();

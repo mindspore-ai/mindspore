@@ -342,7 +342,7 @@ def test_1d_eval():
         assert np.allclose(y_pred.asnumpy(), y, atol=1.0e-4)
 
 
-def test_batch_norm_forward_functional(nptype):
+def batch_norm_forward_functional(nptype):
     """
     Feature: test batch_norm forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -368,6 +368,6 @@ def test_batch_norm_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_batch_norm_forward_functional(np.float32)
+    batch_norm_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_batch_norm_forward_functional(np.float32)
+    batch_norm_forward_functional(np.float32)

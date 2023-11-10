@@ -18,14 +18,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                        const std::vector<KernelTensorPtr> &inputs,
-                                                        const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 4;
   constexpr size_t outputs_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -36,18 +35,19 @@ bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::Init(const BaseOperatorPtr &b
   return true;
 }
 
-int SparseSegmentMeanWithNumSegmentsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs,
-                                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseSegmentMeanWithNumSegmentsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto y_shape = outputs.at(kIndex0)->GetShapeVector();
-  batch_rank_ = LongToSize(base_operator->get_batch_rank());
+  if (primitive_->HasAttr("batch_rank")) {
+    int64_t batch_rank = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+    batch_rank_ = LongToSize(batch_rank);
+  }
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
   outer_size_ = LongToSize(x_shape.at(batch_rank_));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});
@@ -61,9 +61,9 @@ int SparseSegmentMeanWithNumSegmentsGpuKernelMod::Resize(const BaseOperatorPtr &
 }
 
 template <typename DataType, typename IndexType>
-bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                const std::vector<AddressPtr> &workspace,
-                                                                const std::vector<AddressPtr> &outputs,
+bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                                const std::vector<KernelTensor *> &workspace,
+                                                                const std::vector<KernelTensor *> &outputs,
                                                                 void *stream_ptr) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
@@ -76,7 +76,7 @@ bool SparseSegmentMeanWithNumSegmentsGpuKernelMod::LaunchKernel(const std::vecto
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(x_ptr, indices_ptr, segment_ids_ptr, num_segments_ptr, segment_pos_ptr, y_ptr)) {
-    cudaMemset(y_ptr, 0, outputs[0]->size);
+    cudaMemset(y_ptr, 0, outputs[0]->size());
     return true;
   }
   int ret_flag_host = 0;

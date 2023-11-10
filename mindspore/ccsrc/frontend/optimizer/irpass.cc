@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
@@ -73,7 +74,7 @@ namespace irpass {
 OptimizeIRPassLib::OptimizeIRPassLib() {
   arithmetic_simplify_ = MakeSubstitution(std::make_shared<ArithmeticSimplify>(), "arithmetic_simplify",
                                           {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimAdd,
-                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
+                                           prim::kPrimidentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   special_op_eliminate_ = MakeSubstitution(
     std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
     {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType});

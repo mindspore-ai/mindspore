@@ -30,8 +30,8 @@ constexpr int kSparseMatrixMulAddIndex1 = 1;
 constexpr int kSparseMatrixMulAddIndex2 = 2;
 constexpr int kSparseMatrixMulAddIndex3 = 3;
 }  // namespace
-bool SparseMatrixMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -42,12 +42,10 @@ bool SparseMatrixMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SparseMatrixMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseMatrixMulGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -63,8 +61,9 @@ int SparseMatrixMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseMatrixMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *a_shape_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *a_batch_pointers_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *a_indptr_addr = GetDeviceAddress<T>(inputs, kIndex2);

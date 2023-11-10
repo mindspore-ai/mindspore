@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_GRAD_CPU_KERNEL_H_
 
-#include <vector>
 #include <map>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -32,13 +32,12 @@ class BatchNormGradGradCpuKernelMod : public NativeCpuKernelMod {
   BatchNormGradGradCpuKernelMod() = default;
   ~BatchNormGradGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -47,67 +46,70 @@ class BatchNormGradGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void TrainingComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs) const;
+  void TrainingComputeNHWC(const std::vector<kernel::KernelTensor *> &inputs,
+                           const std::vector<kernel::KernelTensor *> &workspace,
+                           const std::vector<kernel::KernelTensor *> &outputs) const;
 
   template <typename T>
-  void InferenceComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> &workspace,
-                            const std::vector<kernel::AddressPtr> &outputs) const;
+  void InferenceComputeNHWC(const std::vector<kernel::KernelTensor *> &inputs,
+                            const std::vector<kernel::KernelTensor *> &workspace,
+                            const std::vector<kernel::KernelTensor *> &outputs) const;
 
   template <typename T>
-  void TrainingComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs) const;
+  void TrainingComputeNCHW(const std::vector<kernel::KernelTensor *> &inputs,
+                           const std::vector<kernel::KernelTensor *> &workspace,
+                           const std::vector<kernel::KernelTensor *> &outputs) const;
   template <typename T>
-  void InferenceComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> &workspace,
-                            const std::vector<kernel::AddressPtr> &outputs) const;
+  void InferenceComputeNCHW(const std::vector<kernel::KernelTensor *> &inputs,
+                            const std::vector<kernel::KernelTensor *> &workspace,
+                            const std::vector<kernel::KernelTensor *> &outputs) const;
 
   template <typename T>
-  void TrainingNHWCCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNHWCCalculateDx(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &workspace,
+                               const std::vector<kernel::KernelTensor *> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
-  void TrainingNHWCCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNHWCCalculateDdy(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
-  void TrainingNHWCCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNHWCCalculateDscale(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &workspace,
+                                   const std::vector<kernel::KernelTensor *> &outputs, float *x_hat,
+                                   float *inv_std) const;
 
   template <typename T>
-  void TrainingNCHWCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNCHWCalculateDx(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &workspace,
+                               const std::vector<kernel::KernelTensor *> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
-  void TrainingNCHWCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNCHWCalculateDdy(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
-  void TrainingNCHWCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
+  void TrainingNCHWCalculateDscale(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &workspace,
+                                   const std::vector<kernel::KernelTensor *> &outputs, float *x_hat,
+                                   float *inv_std) const;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   using BatchNormGradGradFunc =
-    std::function<bool(BatchNormGradGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(BatchNormGradGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, BatchNormGradGradFunc>> func_list_;
   BatchNormGradGradFunc kernel_func_;
 
   float epsilon_;
   bool is_training_;
-  std::string data_format_;
+  mindspore::Format data_format_;
   int x_num_;
   int C_num_;
   int N_num_;

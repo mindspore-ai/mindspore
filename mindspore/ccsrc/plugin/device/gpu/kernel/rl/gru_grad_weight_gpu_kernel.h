@@ -30,7 +30,7 @@ constexpr size_t DimOfTensor = 3;
 constexpr size_t LeastWeightShape = 3;
 constexpr size_t LeastInputShapeSize = 2;
 template <typename T>
-class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
  public:
   GruGradWeightGpuKernelMod()
       : batch_size_(0),
@@ -55,8 +55,8 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
   ~GruGradWeightGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -69,19 +69,16 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     void *workspace_addr = GetDeviceAddress<T>(workspace, 0);
 
     if (!states_init_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, input_size_list_[kIndexFour], 0),
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, state_size_, 0),
         "restore dropout state failed");
       states_init_ = true;
     }
 
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(dw_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemSet Failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(dw_addr, 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)), "cudaMemSet Failed");
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnRNNBackwardWeights(handle_, rnn_desc_, seq_len_, x_desc_.get(), x_addr, hx_desc_, hx_addr, y_desc_.get(),
                               y_addr, workspace_addr, workspace_size_list_[0], dw_desc_, dw_addr, reserved_addr,
                               reserved_size_),
@@ -89,30 +86,28 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+    auto input_shape = inputs[kIndex0]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (input_shape.size() < LeastInputShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
                         << input_shape.size();
     }
     seq_len_ = LongToInt(input_shape[0]);
     batch_size_ = LongToInt(input_shape[1]);
 
-    input_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "input_size"));
-    hidden_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "hidden_size"));
-    num_layers_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_layers"));
-    has_bias_ = GetAttr<bool>(kernel_node, "has_bias");
-    bidirectional_ = GetAttr<bool>(kernel_node, "bidirectional");
-    dropout_ = GetAttr<float>(kernel_node, "dropout");
+    input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
+    hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
+    num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
+    has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
+    bidirectional_ = GetValue<bool>(primitive_->GetAttr("bidirectional"));
+    dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
 
     cudnnRNNInputMode_t input_mode = CUDNN_LINEAR_INPUT;
     cudnnDirectionMode_t direction = bidirectional_ ? CUDNN_BIDIRECTIONAL : CUDNN_UNIDIRECTIONAL;
@@ -121,96 +116,81 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     CreateTensorDescGrp();
     int hx_dims[3]{num_layers_ * (bidirectional_ ? 2 : 1), batch_size_, hidden_size_};
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptorEx(hx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, DimOfTensor, hx_dims),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetTensorNdDescriptorEx(hx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, DimOfTensor, hx_dims),
       "set hx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, nullptr, 0, 0),
-                                "set dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, nullptr, 0, 0),
+                                        "set dropout_desc failed");
     cudnnRNNBiasMode_t bias_mode = has_bias_ ? CUDNN_RNN_DOUBLE_BIAS : CUDNN_RNN_NO_BIAS;
 #if CUDNN_VERSION < 8000
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetRNNDescriptor_v6(handle_, rnn_desc_, hidden_size_, num_layers_, dropout_desc_,
-                                                         input_mode, direction, rnn_mode, algo, cudnn_data_type_),
-                                "set rnn_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetRNNBiasMode(rnn_desc_, bias_mode), "set bias_mode failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetRNNDescriptor_v6(handle_, rnn_desc_, hidden_size_, num_layers_, dropout_desc_, input_mode, direction,
+                               rnn_mode, algo, cudnn_data_type_),
+      "set rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetRNNBiasMode(rnn_desc_, bias_mode), "set bias_mode failed");
 #else
     cudnnMathType_t math_type = (cudnn_data_type_ == CUDNN_DATA_HALF) ? CUDNN_TENSOR_OP_MATH : CUDNN_FMA_MATH;
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetRNNDescriptor_v8(rnn_desc_, algo, rnn_mode, bias_mode, direction, input_mode,
-                                                         cudnn_data_type_, cudnn_data_type_, math_type, input_size_,
-                                                         hidden_size_, hidden_size_, num_layers_, dropout_desc_, 0),
-                                "set rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetRNNDescriptor_v8(rnn_desc_, algo, rnn_mode, bias_mode, direction, input_mode, cudnn_data_type_,
+                               cudnn_data_type_, math_type, input_size_, hidden_size_, hidden_size_, num_layers_,
+                               dropout_desc_, 0),
+      "set rnn_desc failed");
 #endif
-    auto weight_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-    is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
+    auto weight_shape = Convert2SizeTClipNeg(outputs[kIndex0]->GetShapeVector());
+    is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name_, "weight");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (weight_shape.size() < LeastWeightShape) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of weight cannot be less than 3, but got "
                         << weight_shape.size();
     }
     size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnGetRNNParamsSize(handle_, rnn_desc_, x_desc_[0], &weight_size_, cudnn_data_type_),
-                                "get weight_size_ failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetRNNParamsSize(handle_, rnn_desc_, x_desc_[0], &weight_size_, cudnn_data_type_),
+      "get weight_size_ failed");
     if (weight_size != weight_size_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of weight should be equal to " << weight_size_
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of weight should be equal to " << weight_size_
                         << " but got " << weight_size;
     }
     int w_dims[3] = {SizeToInt(weight_size_ / sizeof(T)), 1, 1};
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetFilterNdDescriptor(dw_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, DimOfTensor, w_dims),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetFilterNdDescriptor(dw_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, DimOfTensor, w_dims),
       "set dw_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnGetRNNTrainingReserveSize(handle_, rnn_desc_, seq_len_, x_desc_.get(), &reserved_size_),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetRNNTrainingReserveSize(handle_, rnn_desc_, seq_len_, x_desc_.get(), &reserved_size_),
       "get reserve size failed");
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
  protected:
   void InitResource() override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&hx_desc_), "create hx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateFilterDescriptor(&dw_desc_), "create dw_desc_ failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateDropoutDescriptor(&dropout_desc_),
-                                "create dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&hx_desc_), "create hx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateFilterDescriptor(&dw_desc_), "create dw_desc_ failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateDropoutDescriptor(&dropout_desc_), "create dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
   }
-  void InitSizeLists() override {
-    size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * sizeof(T);
-
-    size_t h_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-
-    size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * sizeof(T);
-    input_size_list_.push_back(x_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(reserved_size_);
-    size_t state_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnDropoutGetStatesSize(handle_, &state_size),
-                                "get dropout states size failed");
-    input_size_list_.push_back(state_size);
+  void InitSizeLists() {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size_),
+                                        "get dropout states size failed");
 
     output_size_list_.push_back(weight_size_);
 
     size_t workspace_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnGetRNNWorkspaceSize(handle_, rnn_desc_, seq_len_, x_desc_.get(), &workspace_size),
-                                "get workspace size failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetRNNWorkspaceSize(handle_, rnn_desc_, seq_len_, x_desc_.get(), &workspace_size),
+      "get workspace size failed");
     workspace_size_list_.push_back(workspace_size);
   }
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyRNNDescriptor(rnn_desc_), "destroy rnn_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyDropoutDescriptor(dropout_desc_),
-                               "destroy dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyFilterDescriptor(dw_desc_), "destroy dw_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(hx_desc_), "destroy hx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyRNNDescriptor(rnn_desc_), "destroy rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyDropoutDescriptor(dropout_desc_), "destroy dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyFilterDescriptor(dw_desc_), "destroy dw_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(hx_desc_), "destroy hx_desc_ failed");
     DestroyTensorDescGrp();
   }
 
@@ -223,23 +203,21 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     y_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
 
     for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_[i]), "create x_desc failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&x_desc_[i]), "create x_desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensorNdDescriptorEx(x_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, DimOfTensor, x_dims),
         "set x_desc failed");
 
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&y_desc_[i]), "create y_desc failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_[i]), "create y_desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensorNdDescriptorEx(y_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, DimOfTensor, y_dims),
         "set y_desc failed");
     }
   }
   void DestroyTensorDescGrp() {
     for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_[i]), "destroy x_desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_[i]), "destroy x_desc failed");
     }
   }
 
@@ -257,6 +235,7 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   size_t weight_size_;
   size_t reserved_size_;
+  size_t state_size_;
 
   cudnnRNNDescriptor_t rnn_desc_;
   cudnnDropoutDescriptor_t dropout_desc_;

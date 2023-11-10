@@ -30,8 +30,10 @@ namespace runtime {
 class BACKEND_EXPORT DeviceAddressUtils {
  public:
   static void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
-  static void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, const ValuePtr &node_value,
-                                                size_t output_idx, const ValueNodePtr &value_node);
+  static std::vector<device::DeviceAddressPtr> CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
+                                                                                 const ValuePtr &node_value,
+                                                                                 size_t output_idx,
+                                                                                 const ValueNodePtr &value_node);
   static void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph,
                                               bool is_gradient_out);

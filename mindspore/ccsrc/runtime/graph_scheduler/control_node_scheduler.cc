@@ -189,6 +189,9 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
     const auto &device_context = node_with_index_with_context.second;
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     MS_EXCEPTION_IF_NULL(device_context);
+    MS_LOG(DEBUG) << "Control node parameter front node:" << parameter_with_index.first->DebugString()
+                  << " index:" << parameter_with_index.second
+                  << " backend node:" << node_with_index.first->DebugString() << " index:" << node_with_index.second;
     auto iter = find(control_node_ds_actor->data_node_with_indexs_.begin(),
                      control_node_ds_actor->data_node_with_indexs_.end(), node_with_index);
     if (iter != control_node_ds_actor->data_node_with_indexs_.end()) {
@@ -200,14 +203,23 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
       // Create device tensor.
       const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
-      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, device_address->GetSize(), device_address->format(), device_address->type_id(),
-        device_address->host_shape());
+      const auto &sub_abstract =
+        common::AnfAlgo::FetchAbstractByIndex(parameter_with_index.first->abstract(), parameter_with_index.second);
+      MS_EXCEPTION_IF_NULL(sub_abstract);
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        sub_abstract->BuildShape(), sub_abstract->BuildType(), nullptr, nullptr, device_address->GetSize(),
+        device_address->format(), device_address->type_id(), device_address->host_shape(),
+        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
       MS_LOG(DEBUG) << "Create new address for node that has no corresponding backend node:"
                     << parameter_with_index.first->DebugString() << " index:" << parameter_with_index.second
                     << " addr:" << new_address << " size:" << device_address->GetSize()
-                    << ", type id:" << device_address->type_id();
+                    << ", type id:" << device_address->type_id()
+                    << " type:" << (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString())
+                    << " shape:"
+                    << (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString());
       AnfAlgo::SetOutputAddr(new_address, parameter_with_index.second, parameter_with_index.first.get());
 
       (void)node_map.emplace(parameter_with_index, control_node_ds_actor->data_node_with_indexs_.size());
@@ -629,8 +641,9 @@ void ControlNodeScheduler::CollectDynamicLenIndexForArgment(const GraphCompilerI
       auto dynamic_len_index = func_with_index.second;
       std::vector<std::pair<std::vector<size_t>, bool>> real_indexes;
       ParseRealIndex(dynamic_len_index, gather_actor->formal_parameters_.size(), &real_indexes, gather_actor);
-      MS_LOG(INFO) << "add dynamic len index for funcgraph:" << func_graph->ToString()
-                   << " actor:" << gather_actor->GetAID();
+      MS_LOG(INFO) << "Add dynamic len index for funcgraph:" << func_graph->ToString()
+                   << " actor:" << gather_actor->GetAID()
+                   << " formal parameter num:" << gather_actor->formal_parameters_.size();
       gather_actor->dynamic_len_index_[func_graph] = real_indexes;
     }
   }

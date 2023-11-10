@@ -27,9 +27,10 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S = int64_t>
-bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (IsEmptyInput(inputs[0]->size)) {
+bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  if (IsEmptyInput(inputs[0]->size())) {
     return true;
   }
   T *input = GetDeviceAddress<T>(inputs, 0);
@@ -40,9 +41,8 @@ bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   return true;
 }
 
-bool StridedSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool StridedSliceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,10 +53,9 @@ bool StridedSliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int StridedSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -67,11 +66,10 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", but got " << input_shape_.size();
   }
-
-  TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_);
-  TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_);
-  TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_);
-  CollectInfo(base_operator);
+  begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+  CollectInfo(kernel_name_, primitive_);
 
   return ret;
 }

@@ -26,10 +26,11 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "mindapi/ir/type.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(ArgMaxFusion, Argmax);
+MIND_API_OPERATOR_IMPL(ArgMaxFusion, BaseOperator);
 void ArgMaxFusion::Init(const bool keep_dims, const bool out_max_value, const int64_t top_k, const int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);
@@ -59,6 +60,19 @@ int64_t ArgMaxFusion::get_top_k() const {
   return GetValue<int64_t>(topk);
 }
 
+void ArgMaxFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+void ArgMaxFusion::set_output_type(const TypeId output_type) {
+  (void)this->AddAttr(kOutputType, api::Type::GetType(output_type));
+}
+
+int64_t ArgMaxFusion::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+
+TypeId ArgMaxFusion::get_output_type() const {
+  auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
+  return type_ptr->type_id();
+}
+
 namespace {
 BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -66,7 +80,7 @@ BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vecto
   const int64_t kArgMaxInputNum = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kArgMaxInputNum,
                                            prim_name);
-  auto x_base_shape = input_args[kInputIndex0]->BuildShape();
+  auto x_base_shape = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_base_shape);
   auto x_shape = x_base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape);
@@ -112,8 +126,8 @@ TypePtr ArgFusionInferType(const PrimitivePtr &primitive, const std::vector<Abst
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kArgMaxInputNum,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x_type = x->BuildType();
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto x_type = x->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

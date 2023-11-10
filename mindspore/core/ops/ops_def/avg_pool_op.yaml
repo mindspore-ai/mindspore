@@ -1,0 +1,24 @@
+#operator avg_pool
+avg_pool:
+  args:
+    x:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      init: 1
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      init: 1
+      arg_handler: to_strides
+    pad_mode:
+      dtype: int
+      init: "'VALID'"
+      arg_handler: pad_mode_to_enum
+    data_format:
+      dtype: int
+      init: "'NCHW'"
+      arg_handler: py_format_to_enum
+  returns:
+    output:
+      dtype: tensor

@@ -1,0 +1,14 @@
+#operator gelu_grad
+gelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        y:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GeLUGrad

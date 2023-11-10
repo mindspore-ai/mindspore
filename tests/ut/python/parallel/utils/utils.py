@@ -124,7 +124,10 @@ class ParallelValidator:
             return False
 
         for i in range(inputs_len):
-            if inputs[i].find(expect_inputs[i]) == -1:
+            if isinstance(inputs[i], int):
+                if not isinstance(expect_inputs[i], int) or inputs[i] != expect_inputs[i]:
+                    return False
+            elif inputs[i].find(expect_inputs[i]) == -1:
                 return False
         return True
 

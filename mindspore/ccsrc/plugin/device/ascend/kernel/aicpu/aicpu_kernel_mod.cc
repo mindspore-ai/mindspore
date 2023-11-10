@@ -23,6 +23,8 @@
 
 #include "ops/structure_op_name.h"
 #include "ops/array_ops.h"
+#include "ops/math_op_name.h"
+#include "ops/lite_op_name.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "include/common/utils/convert_utils.h"
@@ -48,40 +50,28 @@ namespace mindspore {
 namespace kernel {
 namespace {
 // todo: delete when tansdata in libcpu_kernel.so is fixed
-bool IsTransDataGroupsMoreThanOne(const AnfNodePtr &anf_node) {
-  if (anf_node == nullptr) {
+bool IsTransDataGroupsMoreThanOne(const PrimitivePtr &prim) {
+  if (!IsPrimitiveEquals(prim, prim::kPrimTransData)) {
     return false;
   }
 
-  if (!IsPrimitiveCNode(anf_node, prim::kPrimTransData)) {
-    return false;
-  }
-
-  if (common::AnfAlgo::GetAttrGroups(anf_node, 0) == 1) {
-    return false;
-  }
-
-  return true;
-}
-}  // namespace
-
-AicpuOpKernelMod::AicpuOpKernelMod() : AscendKernelMod(), unknow_type_(::ge::UnknowShapeOpType::DEPEND_IN_SHAPE) {}
-
-AicpuOpKernelMod::AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
-  if (common::AnfAlgo::GetCNodeName(anf_node_ptr) == kGetNextOpName && !common::AnfAlgo::IsDynamicShape(anf_node_ptr)) {
-    device::CloseTdtWingManQueue(anf_node_ptr);
-  }
-  unknow_type_ = ::ge::UnknowShapeOpType::DEPEND_IN_SHAPE;
-  is_blocking_ = false;
-  auto cnode = anf_node_ptr->cast<CNodePtr>();
-  if (cnode != nullptr) {
-    auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-    if (IsOneOfComputeDepend(op_name)) {
-      unknow_type_ = ::ge::UnknowShapeOpType::DEPEND_COMPUTE;
+  // Get AttrFracZGroup value
+  int64_t fz_group = 1;
+  if (prim->HasAttr(kAttrFracZGroupIdx)) {
+    auto fz_group_idx = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrFracZGroupIdx));
+    if (fz_group_idx.empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Attr fracz_group_idx of kernel [" << prim->name() << "] is an empty vector";
+      fz_group = fz_group_idx[0];
     }
-    is_blocking_ = (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName);
+  } else if (prim->HasAttr(kAttrFracZGroup)) {
+    fz_group = GetValue<int64_t>(prim->GetAttr(kAttrFracZGroup));
   }
+
+  return fz_group != 1;
 }
+
+bool IsGetNextOp(const std::string &op_name) { return op_name == kGetNextOpName || op_name == kDynamicGetNextV2OpName; }
+}  // namespace
 
 AicpuOpKernelMod::~AicpuOpKernelMod() {
   FreeExtInfoDeviceAddr();
@@ -94,8 +84,6 @@ AicpuOpKernelMod::~AicpuOpKernelMod() {
   ext_info_.clear();
 }
 
-void AicpuOpKernelMod::SetInputList(const std::vector<int64_t> &input_list) { input_list_ = input_list; }
-void AicpuOpKernelMod::SetOutputList(const std::vector<int64_t> &output_list) { output_list_ = output_list; }
 void AicpuOpKernelMod::SetNodeDef(const std::string &node_def) { (void)node_def_str_.assign(node_def); }
 void AicpuOpKernelMod::SetNodeName(const std::string &node_name) { node_name_ = node_name; }
 void AicpuOpKernelMod::SetCustSo(const std::string &cust_so) {
@@ -103,15 +91,9 @@ void AicpuOpKernelMod::SetCustSo(const std::string &cust_so) {
   cust_kernel_ = true;
 }
 
-void AicpuOpKernelMod::SetAnfNode(const mindspore::AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  anf_node_ = anf_node;
-}
-
-void AicpuOpKernelMod::CreateAsyncWaitEventAndUpdateEventInfo(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
+void AicpuOpKernelMod::CreateAsyncWaitEventAndUpdateEventInfo() {
   if (rt_event_ != nullptr) {
-    MS_LOG(INFO) << "The event is already created! node: " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "The event is already created! node: " << node_scope_name_;
     return;
   }
   if (is_blocking_ && CheckDeviceSupportBlockingAicpuOpProcess()) {
@@ -121,19 +103,18 @@ void AicpuOpKernelMod::CreateAsyncWaitEventAndUpdateEventInfo(const CNodePtr &cn
     uint32_t rt_event_id = resource_manager.GetRtEventId(rt_event_);
 
     MS_EXCEPTION_IF_NULL(ext_info_handler_);
-    MS_LOG(DEBUG) << "Call UpdateEventId, device event id: " << rt_event_id
-                  << ", blocking node: " << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "Call UpdateEventId, device event id: " << rt_event_id << ", blocking node: " << node_scope_name_;
     if (!ext_info_handler_->UpdateEventId(rt_event_id)) {
       MS_LOG(EXCEPTION) << "Aicpu ext_info_handler update event id failed.";
     }
   } else {
-    MS_LOG(DEBUG) << "The node is not blocking op, no need to create event, node: " << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "The node is not blocking op, no need to create event, node: " << node_scope_name_;
   }
 }
 
 void AicpuOpKernelMod::ParseNodeNameAndNodeSo() {
   if (!cust_kernel_) {
-    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end() || IsTransDataGroupsMoreThanOne(anf_node_.lock())) {
+    if (kCpuKernelOps.find(node_name_) != kCpuKernelOps.end() || IsTransDataGroupsMoreThanOne(primitive_)) {
       node_so_ = kLibCpuKernelSoName;
       node_name_ = kCpuRunApi;
     } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
@@ -153,21 +134,13 @@ void AicpuOpKernelMod::ParseNodeNameAndNodeSo() {
   }
 }
 
-void AicpuOpKernelMod::SetExtInfo(const std::string &ext_info) {
+void AicpuOpKernelMod::SetExtInfo(const std::string &ext_info, size_t input_num, size_t output_num) {
   ext_info_ = ext_info;
 
   // Initialize ext_info_handler_
   if (ext_info_handler_ == nullptr) {
-    auto node = anf_node_.lock();
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-    auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
-
     ext_info_handler_ = std::make_shared<device::ascend::AicpuExtInfoHandler>(
-      cnode->fullname_with_scope(), static_cast<uint32_t>(input_num), static_cast<uint32_t>(output_num), unknow_type_);
-    MS_EXCEPTION_IF_NULL(ext_info_handler_);
+      node_scope_name_, static_cast<uint32_t>(input_num), static_cast<uint32_t>(output_num), unknow_type_);
   }
   // Parse ext_info_
   if (!ext_info_handler_->Parse(ext_info_)) {
@@ -175,8 +148,7 @@ void AicpuOpKernelMod::SetExtInfo(const std::string &ext_info) {
   }
 }
 
-void AicpuOpKernelMod::AllocateExtInfoDeviceAddr(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
+void AicpuOpKernelMod::AllocateExtInfoDeviceAddr() {
   if (ext_info_addr_dev_ != nullptr) {
     return;
   }
@@ -185,8 +157,7 @@ void AicpuOpKernelMod::AllocateExtInfoDeviceAddr(const CNodePtr &cnode) {
     auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
     ext_info_addr_dev_ = mem_manager->MallocMemFromMemPool(ext_info_.size(), false);
     if (ext_info_addr_dev_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Call MemoryPool to allocate ext_info_addr_dev_ failed. Op name: "
-                        << cnode->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "Call MemoryPool to allocate ext_info_addr_dev_ failed. Op name: " << node_scope_name_;
     }
   }
   ext_info_size_ = ext_info_.size();
@@ -276,47 +247,122 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   MS_LOG(DEBUG) << "CreateCpuKernelInfoOffline end";
 }
 
-bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void AicpuOpKernelMod::CloseTdtWingManQueue() {
+  if (IsGetNextOp(kernel_name_) && !is_dynamic_shape_) {
+    device::CloseTdtWingManQueue(primitive_);
+  }
+}
+
+bool AicpuOpKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  unknow_type_ = IsOneOfComputeDepend(kernel_name_) ? ::ge::UnknowShapeOpType::DEPEND_COMPUTE
+                                                    : ::ge::UnknowShapeOpType::DEPEND_IN_SHAPE;
+  is_blocking_ = IsGetNextOp(kernel_name_);
+  return true;
+}
+
+int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (IsGetNextOp(kernel_name_)) {
+    auto wingman_queue = device::GetTdtWingManQueue(primitive_);
+    std::vector<device::DataQueueItem> data;
+    RetryPeakItemFromDataQueue(nullptr, wingman_queue, &data);
+    (void)wingman_queue->Pop();
+    MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == data.size(), "Size of output is not equal to size of data");
+    output_size_list_.clear();
+    for (size_t i = 0; i < outputs.size(); i++) {
+      outputs[i]->SetShapeVector(data[i].shapes);
+      output_size_list_.push_back(data[i].data_len);
+    }
+  } else {
+    // update output size after InferShape.
+    KernelMod::Resize(inputs, outputs);
+  }
+
+  need_skip_execute_ = [this, &inputs]() -> bool {
+    if ((kernel_name_ != kReduceSumOpName) && (kernel_name_ != kReduceSumDOpName)) {
+      return false;
+    }
+    constexpr size_t kAxisIndex{1};
+    bool skip_mode = inputs[kIndex3]->GetValueWithCheck<bool>();
+    if (inputs.size() > kAxisIndex &&
+        AnfAlgo::IsDynamicShapeSkipExecute(skip_mode, inputs[kAxisIndex]->GetShapeVector())) {
+      return true;
+    }
+
+    return false;
+  }();
+
+  if (need_skip_execute_) {
+    return 0;
+  }
+  if (IsOutputAllEmptyTensor(outputs)) {
+    return 0;
+  }
+
+  MS_LOG(DEBUG) << "UpdateExtInfo of " << node_scope_name_ << " start";
+  auto input_num = inputs.size();
+  auto output_num = outputs.size();
+  if (input_num == 0 && output_num == 0) {
+    MS_LOG(INFO) << "Node:" << node_scope_name_ << " no need to update output shape";
+    return 0;
+  }
+
+  if (ext_info_handler_ == nullptr || ext_info_.empty()) {
+    MS_LOG(EXCEPTION) << "The ext_info_handler_ is nullptr or  ext_info_ is empty.";
+    return 0;
+  }
+
+  for (uint32_t i = 0; i < input_num; ++i) {
+    if (!ext_info_handler_->UpdateInputShapeAndType(i, inputs[i])) {
+      MS_LOG(EXCEPTION) << "Update input shape failed, node:" << node_scope_name_ << " input:" << i;
+    }
+  }
+
+  for (uint32_t i = 0; i < output_num; ++i) {
+    if (!ext_info_handler_->UpdateOutputShapeAndType(i, outputs[i])) {
+      MS_LOG(EXCEPTION) << "Update output shape failed, node:" << node_scope_name_ << " output:" << i;
+    }
+  }
+  outputs_.clear();
+
+  return 0;
+}
+
+bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
 
   stream_ = stream_ptr;
-
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Start launch of node: " << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Start launch of node: " << node_scope_name_;
 
   // need skip, for reducesum empty input axis
   if (need_skip_execute_) {
     // Skip reduce if axis is a empty Tensor (shape = 0)
-    MS_LOG(INFO) << "For AICPU ,The node " << cnode->fullname_with_scope() << " Need Skip.";
+    MS_LOG(INFO) << "For AICPU ,The node " << node_scope_name_ << " Need Skip.";
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-    rtError_t status = aclrtMemcpyAsync(outputs[0]->addr, inputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                        ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    rtError_t status = aclrtMemcpyAsync(outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
+                                        inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
     if (status != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << cnode->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << node_scope_name_;
     }
 
-    MS_LOG(INFO) << "AICPU Execute node:" << cnode->fullname_with_scope() << " success.";
+    MS_LOG(INFO) << "AICPU Execute node:" << node_scope_name_ << " success.";
     return true;
   }
   // skip execute if all outputs are empty tensor
   if (is_output_all_empty_tensor_) {
-    MS_LOG(INFO) << "Outputs are all empty tensors, skip launch node " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "Outputs are all empty tensors, skip launch node " << node_scope_name_;
     return true;
   }
 
   // create asyncflag_op's event
-  CreateAsyncWaitEventAndUpdateEventInfo(cnode);
+  CreateAsyncWaitEventAndUpdateEventInfo();
 
   // alloc extinfo device address memory
-  AllocateExtInfoDeviceAddr(cnode);
+  AllocateExtInfoDeviceAddr();
 
   // copy extinfo to device
   if (ext_info_handler_ != nullptr) {
@@ -325,17 +371,23 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
                                 ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << node_scope_name_;
       return false;
     }
-  } else if (common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(ERROR) << "The node is dynamic, but the ext_info_handler_ is nullptr. Node info: "
-                  << cnode->fullname_with_scope();
+  } else if (is_dynamic_shape_) {
+    MS_LOG(ERROR) << "The node is dynamic, but the ext_info_handler_ is nullptr. Node info: " << node_scope_name_;
     return false;
   }
 
   // create kernelinfo
-  CreateCpuKernelInfo(inputs, outputs);
+  auto get_addrs = [](const std::vector<KernelTensor *> &kernel_tensors) -> std::vector<AddressPtr> {
+    std::vector<AddressPtr> addr_ptrs;
+    (void)std::transform(
+      kernel_tensors.begin(), kernel_tensors.end(), std::back_inserter(addr_ptrs),
+      [](KernelTensor *ptr) { return std::make_shared<mindspore::kernel::Address>(ptr->device_ptr(), ptr->size()); });
+    return addr_ptrs;
+  };
+  CreateCpuKernelInfo(get_addrs(inputs), get_addrs(outputs));
 
   // launch kernel
   auto flag = RT_KERNEL_DEFAULT;
@@ -352,7 +404,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
                                 reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_ptr,
                                 flag) != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Aicpu op launch failed! node: " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << "Aicpu op launch failed! node: " << node_scope_name_;
     return false;
   }
 #ifndef ENABLE_SECURITY
@@ -365,7 +417,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   // for asyncflag op, create event wait op
   if (is_blocking_ && CheckDeviceSupportBlockingAicpuOpProcess()) {
     MS_LOG(INFO) << "Insert EventWait, stream: " << stream_ptr << ", event: " << rt_event_
-                 << ", node: " << cnode->fullname_with_scope();
+                 << ", node: " << node_scope_name_;
 
     auto rt_ret = aclrtStreamWaitEvent(stream_ptr, rt_event_);
     if (rt_ret != ACL_ERROR_NONE) {
@@ -386,166 +438,57 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
-int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
+bool AicpuOpKernelMod::IsNeedUpdateOutputShapeAndSize() {
+  if (IsOneOfComputeDepend(kernel_name_)) {
+    is_need_retrieve_output_shape_ = true;
   }
-  if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
-    auto wingman_queue = device::GetTdtWingManQueue(cnode);
-    MS_EXCEPTION_IF_NULL(wingman_queue);
-    std::vector<device::DataQueueItem> data;
-    RetryPeakItemFromDataQueue(cnode, wingman_queue, &data);
-    (void)wingman_queue->Pop();
-    UpdateGetNextWithDataQueueItems(cnode, data);
-  } else {
-    // update output size after InferShape.
-    AscendKernelMod::UpdateOutputSizeList();
-  }
-
-  need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
-  if (need_skip_execute_) {
-    return 0;
-  }
-  if (IsOutputAllEmptyTensor()) {
-    return 0;
-  }
-
-  MS_LOG(DEBUG) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
-  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
-  if (input_num == 0 && output_num == 0) {
-    MS_LOG(INFO) << "Node:" << cnode->fullname_with_scope() << " no need to update output shape";
-    return 0;
-  }
-
-  if (ext_info_handler_ == nullptr || ext_info_.empty()) {
-    MS_LOG(EXCEPTION) << "The ext_info_handler_ is nullptr or  ext_info_ is empty.";
-    return 0;
-  }
-
-  for (uint32_t i = 0; i < input_num; ++i) {
-    if (use_kernel_tensor()) {
-      if (!ext_info_handler_->UpdateInputShapeAndType(i, inputs[i])) {
-        MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
-      }
-    } else {
-      if (!ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode))) {
-        MS_LOG(EXCEPTION) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
-      }
-    }
-  }
-
-  for (uint32_t i = 0; i < output_num; ++i) {
-    if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
-      MS_LOG(EXCEPTION) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
-    }
-  }
-  outputs_.clear();
-
-  return 0;
+  return is_need_retrieve_output_shape_;
 }
 
-void AicpuOpKernelMod::SyncOutputShape() {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Aicpu " << cnode->fullname_with_scope() << " PostExecute";
+void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  MS_LOG(INFO) << "Aicpu " << node_scope_name_ << " PostExecute";
   // is dynamic shape
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
+  if (!is_dynamic_shape_) {
+    MS_LOG(EXCEPTION) << "The node is not dynamic shape:" << node_scope_name_;
   }
 
-  if (unknow_type_ != ::ge::UnknowShapeOpType::DEPEND_COMPUTE ||
-      common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
-    MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " update op skip.";
-    return;
-  }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_);
   auto ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
                               ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << node_scope_name_;
   }
   ret = aclrtSynchronizeStreamWithTimeout(stream_, -1);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call runtime aclrtSynchronizeStreamWithTimeout failed. Op name: "
-                      << cnode->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Call runtime aclrtSynchronizeStreamWithTimeout failed. Op name: " << node_scope_name_;
   }
 
-  MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
-  UpdateOutputShapeFromExtInfo(cnode);
-}
-
-void AicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "UpdateOutputShapeFromExtInfo start. Op name " << cnode->fullname_with_scope();
-  MS_EXCEPTION_IF_NULL(ext_info_handler_);
-
-  std::vector<TypeId> type_ids;
-  std::vector<ShapeVector> shapes;
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << node_scope_name_;
+  auto output_num = outputs.size();
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<int64_t> shape;
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
     if (std::any_of(shape.begin(), shape.end(), [](int64_t x) { return x < 0; })) {
-      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << ": output[" << i << "] shape = " << ShapeVectorToStr(shape)
+      MS_LOG(EXCEPTION) << node_scope_name_ << ": output[" << i << "] shape = " << ShapeVectorToStr(shape)
                         << " contains negative value.";
     }
-    (void)type_ids.emplace_back(type_id);
-    (void)shapes.emplace_back(shape);
+    outputs[i]->SetShapeVector(shape);
   }
-
-  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
 }
 
-std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
-  MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
-
-  stream_id_ = stream_id;
-
-  ParseNodeNameAndNodeSo();
-  std::vector<void *> input_data_addrs;
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
-
-  std::vector<void *> output_data_addrs;
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
-
-  std::vector<TaskInfoPtr> ret_task_info;
-
-  uint32_t ms_event_id = 0;
-  bool is_blocking = (is_blocking_ && CheckDeviceSupportBlockingAicpuOpProcess());
-  if (is_blocking) {
-    device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
-    ms_event_id = resource_manager.ApplyNewEvent();
+bool AicpuOpKernelMod::IsOutputAllEmptyTensor(const std::vector<KernelTensor *> &outputs) {
+  for (auto ptr : outputs) {
+    auto &output_shape = ptr->GetShapeVector();
+    if (std::none_of(output_shape.cbegin(), output_shape.cend(), [](int64_t dim) { return dim == 0; })) {
+      is_output_all_empty_tensor_ = false;
+      return false;
+    }
   }
-
-  // op task
-  AicpuTaskInfoPtr task_info_ptr = std::make_shared<mindspore::ge::model_runner::AicpuTaskInfo>(
-    unique_name_, stream_id, node_so_, node_name_, node_def_str_, ext_info_, input_data_addrs, output_data_addrs,
-    NeedDump(), cust_kernel_, is_blocking, ms_event_id, unknow_type_);
-  (void)ret_task_info.emplace_back(task_info_ptr);
-
-  if (is_blocking) {
-    EventWaitTaskInfoPtr wait_task_info_ptr =
-      std::make_shared<mindspore::ge::model_runner::EventWaitTaskInfo>(unique_name_ + "_wait", stream_id, ms_event_id);
-    (void)ret_task_info.emplace_back(wait_task_info_ptr);
-  }
-
-  MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
-  return ret_task_info;
+  is_output_all_empty_tensor_ = true;
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

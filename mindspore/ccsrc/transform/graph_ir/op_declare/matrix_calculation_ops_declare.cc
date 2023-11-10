@@ -101,7 +101,7 @@ OUTPUT_MAP(ScatterNdSub) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterNdSub, kNameScatterNdSub, ADPT_DESC(ScatterNdSub))
 
 // MatMul
-INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
+INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                     {"transpose_x2", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
@@ -112,7 +112,7 @@ INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(
 ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                       {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
+REG_ADPT_DESC(MatMulV2, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2))
 REG_ADPT_DESC(MatMulV2Duplicate, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2))
 
 // MatrixDiagD
@@ -240,8 +240,8 @@ REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
 // Eye
 INPUT_MAP(Eye) = EMPTY_INPUT_MAP;
 ATTR_MAP(Eye) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int>())},
-                       {2, ATTR_DESC(num_columns, AnyTraits<int>())},
+INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int64_t>())},
+                       {2, ATTR_DESC(num_columns, AnyTraits<int64_t>())},
                        {3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(Eye) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Eye, kNameEye, ADPT_DESC(Eye));

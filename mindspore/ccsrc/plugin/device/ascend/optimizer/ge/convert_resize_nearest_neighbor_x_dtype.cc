@@ -21,6 +21,7 @@
 
 #include "mindspore/core/ops/image_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

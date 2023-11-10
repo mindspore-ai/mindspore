@@ -751,9 +751,7 @@ ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
     auto make_tuple = gen_g.PushBack(make_tuple_inputs);
     // concat
     int64_t concat_axis = 1;
-    Attr concat_axis_attr = std::make_pair(AXIS, MakeValue(concat_axis));
-    OperatorAttrs concat_attrs = {concat_axis_attr};
-    auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT, concat_attrs), make_tuple});
+    auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT), make_tuple, CreatInt64Imm(concat_axis)});
     matmul_left_input = concat;
   } else {
     matmul_left_input = gen_g.virtual_input_node();

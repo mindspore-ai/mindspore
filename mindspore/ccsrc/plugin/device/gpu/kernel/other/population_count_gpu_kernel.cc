@@ -45,9 +45,9 @@ const std::vector<std::pair<KernelAttr, PopulationCountPtrCreatorFunc>> kernel_a
    CreatePopulationCountKernelPtr<int64_t>}};
 }  // namespace
 
-bool PopulationCountGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PopulationCountGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -57,24 +57,20 @@ bool PopulationCountGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool PopulationCountGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PopulationCount>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool PopulationCountGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int PopulationCountGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int PopulationCountGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
@@ -84,7 +80,6 @@ int PopulationCountGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

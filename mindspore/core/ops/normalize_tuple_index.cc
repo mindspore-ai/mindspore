@@ -76,12 +76,12 @@ AbstractBasePtr NormalizeIntIndex(const ShapeVector &data_shape, const AbstractB
                                   const std::vector<int64_t> &tuple_index_types, size_t expand_dims_mask) {
   AbstractBasePtr output_index_val_abs =
     std::make_shared<abstract::AbstractTensor>(std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64));
-  if (IsDynamic(data_shape) || index_val_abs->BuildValue() == kValueAny) {
+  if (IsDynamic(data_shape) || index_val_abs->GetValue()->ContainsValueAny()) {
     return output_index_val_abs;
   }
   auto new_dim_index =
     NormalizeTupleIndex::NormalizeDimIndex(data_shape, dim_index, tuple_index_types, expand_dims_mask);
-  int64_t int_index_val = GetValue<int64_t>(index_val_abs->BuildValue());
+  int64_t int_index_val = GetValue<int64_t>(index_val_abs->GetValue());
   int64_t dim = data_shape[new_dim_index];
   int_index_val = NormalizeTupleIndex::CheckRange(int_index_val, dim);
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector{}, &int_index_val, sizeof(int64_t));
@@ -92,16 +92,18 @@ AbstractBasePtr NormalizeIntIndex(const ShapeVector &data_shape, const AbstractB
 AbstractBasePtr NormalizeSequenceIndex(const ShapeVector &data_shape, const AbstractBasePtr &index_val_abs,
                                        size_t dim_index, const std::vector<int64_t> &tuple_index_types,
                                        size_t expand_dims_mask) {
-  auto list_index_val_abs = index_val_abs->cast<abstract::AbstractSequencePtr>();
   auto output_list_elements = std::vector<int64_t>();
-  if (list_index_val_abs->dynamic_len()) {
+  auto index_val = index_val_abs->GetValue();
+  auto index_val_opt = GetArrayValue<int64_t>(index_val);
+  if (!index_val_opt.has_value()) {
     MS_EXCEPTION(IndexError) << "The sequence element(tuple/list) in tuple index can't be dynamic len.";
   }
-  const AbstractBasePtrList &list_index_val_ele = list_index_val_abs->elements();
-  size_t seq_size = list_index_val_ele.size();
+  auto index_val_array = index_val_opt.value();
+  size_t seq_size = index_val_array.size();
+
   AbstractBasePtr output_index_val_abs = std::make_shared<abstract::AbstractTensor>(
     kInt64, std::make_shared<abstract::Shape>(ShapeVector({SizeToLong(seq_size)})));
-  if (list_index_val_abs->BuildValue() == kValueAny || IsDynamicRank(data_shape)) {
+  if (index_val_array.HasUnknownValue() || IsDynamicRank(data_shape)) {
     return output_index_val_abs;
   }
   auto new_dim_index =
@@ -110,8 +112,9 @@ AbstractBasePtr NormalizeSequenceIndex(const ShapeVector &data_shape, const Abst
     return output_index_val_abs;
   }
   int64_t dim_size = data_shape[new_dim_index];
+
   for (size_t i = 0; i < seq_size; i++) {
-    int64_t int_index_val = GetValue<int64_t>(list_index_val_ele[i]->BuildValue());
+    int64_t int_index_val = index_val_array[i];
     int_index_val = NormalizeTupleIndex::CheckRange(int_index_val, dim_size);
     output_list_elements.emplace_back(int_index_val);
   }
@@ -150,7 +153,7 @@ AbstractBasePtr NormalizeBoolSequenceIndex(const ShapeVector &data_shape, const 
   // Handle bool list index
   AbstractBasePtr output_index_val_abs = std::make_shared<abstract::AbstractTensor>(
     kInt64, std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
-  if (list_index_val_abs->BuildValue() == kValueAny || IsDynamicRank(data_shape)) {
+  if (list_index_val_abs->GetValue()->ContainsValueAny() || IsDynamicRank(data_shape)) {
     return output_index_val_abs;
   }
   const AbstractBasePtrList &list_index_val_ele = list_index_val_abs->elements();
@@ -165,7 +168,7 @@ AbstractBasePtr NormalizeBoolSequenceIndex(const ShapeVector &data_shape, const 
     MS_EXCEPTION(IndexError) << "dimension is " << dim_size << " but corresponding boolean dimension is " << seq_size;
   }
   for (size_t i = 0; i < seq_size; i++) {
-    if (GetValue<bool>(list_index_val_ele[i]->BuildValue())) {
+    if (GetValue<bool>(list_index_val_ele[i]->GetValue())) {
       (void)output_list_elements.emplace_back(SizeToLong(i));
     }
   }
@@ -215,7 +218,7 @@ AbstractBasePtr NormalizeTupleIndexInferInner(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   const AbstractBasePtr &data_abs = input_args[kIndex0];
   const AbstractBasePtr &index_val_abs = input_args[kIndex1];
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape());
   size_t dim_index = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrTupleIndexAxis)));
   auto data_shape = shape_map[kShape];
   string index_types = GetValue<string>(primitive->GetAttr(kAttrOriginIndexType));
@@ -250,14 +253,18 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
     if (primitive->HasAttr(kAttrExpandDimsMask)) {
       expand_dims_mask = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsMask)));
     }
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto data_shape = shape_map[kShape];
     if (index_types == kIntIndex) {
       return std::make_shared<abstract::Shape>(ShapeVector{});
     }
     if (index_types == kTensorIndexSequenceIndex) {
-      auto tensor = GetValue<tensor::TensorPtr>(input_args[1]->BuildValue());
-      return std::make_shared<abstract::Shape>(tensor->shape());
+      auto input_shape = input_args[1]->GetShape();
+      if (input_shape->isa<abstract::TensorShape>()) {
+        return input_shape->Clone();
+      }
+      auto tuple_shape = input_shape->cast<abstract::TupleShapePtr>()->shape();
+      return std::make_shared<abstract::Shape>(ShapeVector({SizeToLong(tuple_shape.size())}));
     }
     if (index_types == kNoneIndex) {
       ShapeVector shape = ShapeVector({abstract::Shape::kShapeDimAny});
@@ -269,18 +276,16 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
     }
     if (index_types == kBoolSequenceIndex || index_types == kSliceIndex) {
       ShapeVector max_shape;
-      if (!IsDynamic(data_shape)) {
-        auto new_dim_index =
-          NormalizeTupleIndex::NormalizeDimIndex(data_shape, dim_index, tuple_index_types, expand_dims_mask);
-        max_shape = ShapeVector({data_shape[new_dim_index]});
-      }
-      return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), max_shape);
+      auto new_dim_index =
+        NormalizeTupleIndex::NormalizeDimIndex(data_shape, dim_index, tuple_index_types, expand_dims_mask);
+      max_shape = ShapeVector({data_shape[new_dim_index]});
+      return std::make_shared<abstract::Shape>(max_shape);
     }
-    return NormalizeEllipsisIndex(data_shape, dim_index, tuple_index_types)->BuildShape();
+    return NormalizeEllipsisIndex(data_shape, dim_index, tuple_index_types)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeTupleIndexInferInner(prim, input_args)->BuildType();
+    return std::make_shared<TensorType>(kInt64);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

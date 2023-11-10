@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -35,8 +36,20 @@ const AnfNodePtr GatherFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
+  size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "batch_dims");
+  ValuePtr batch_dim = MakeValue(static_cast<int64_t>(0));
+  if (idx != SIZE_MAX) {
+    auto batch_dim_node = common::AnfAlgo::GetInputNode(cnode, idx);
+    if (utils::isa<ValueNodePtr>(batch_dim_node)) {
+      auto batch_dim_v = ops::GetScalarValue<int64_t>(batch_dim_node->cast<ValueNodePtr>()->value());
+      if (batch_dim_v.has_value()) {
+        batch_dim = batch_dim_node->cast<ValueNodePtr>()->value();
+      }
+    }
+  }
+
   if (!common::AnfAlgo::HasNodeAttr("batch_dims", cnode)) {
-    common::AnfAlgo::SetNodeAttr("batch_dims", MakeValue(static_cast<int64_t>(0)), cnode);
+    common::AnfAlgo::SetNodeAttr("batch_dims", batch_dim, cnode);
   }
 
   return cnode;

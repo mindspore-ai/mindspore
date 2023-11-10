@@ -34,8 +34,8 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
   SGDGpuKernelMod() : size_(1), dampening_(0.0), weight_decay_(0.0), nesterov_(false), is_null_input_(false) {}
   ~SGDGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -56,9 +56,7 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (inputs.empty() || outputs.empty()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
       return false;
@@ -75,17 +73,15 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
                     << outputs.size();
       return false;
     }
-    auto sgd_op = std::make_shared<ops::SGD>(base_operator->GetPrim());
 
-    dampening_ = sgd_op->get_dampening();
-    weight_decay_ = sgd_op->get_weight_decay();
-    nesterov_ = sgd_op->get_nesterov();
+    dampening_ = GetValue<float>(primitive_->GetAttr(ops::kDampening));
+    weight_decay_ = GetValue<float>(primitive_->GetAttr(ops::kWeightDecay));
+    nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kNesterov));
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }
@@ -104,16 +100,9 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
 
     size_t input_size = size_ * sizeof(T);
-    input_size_list_.push_back(input_size);  // parameter
-    input_size_list_.push_back(input_size);  // gradient
-    input_size_list_.push_back(sizeof(T));   // lr
-    input_size_list_.push_back(input_size);  // accum
-    input_size_list_.push_back(sizeof(T));   // momentum
-    input_size_list_.push_back(input_size);  // stat
     output_size_list_.push_back(input_size);
   }
 

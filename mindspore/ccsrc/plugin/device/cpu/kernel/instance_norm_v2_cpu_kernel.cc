@@ -51,7 +51,8 @@ struct InvStd {
 }  // namespace
 
 template <typename T>
-void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x, float *_mean_, float *_var_sum) const {
+void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::KernelTensor *x, float *_mean_,
+                                                    float *_var_sum) const {
   const int64_t batch = x_shape_4d_[kIndex0];
   const int64_t channel = x_shape_4d_[kIndex3];
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
@@ -59,7 +60,7 @@ void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x,
   MS_EXCEPTION_IF_ZERO("image_size", image_size);
   // cast (B, H, W, C) to (B, H*W, C)
   std::vector<int64_t> shape_3d = {batch, image_size, channel};
-  auto x_3d = EigenTensor(shape_3d, x->addr).tensor<T, kDim3>();
+  auto x_3d = EigenTensor(shape_3d, x->device_ptr()).tensor<T, kDim3>();
   auto loop_batch = [&](int64_t begin, int64_t end) {
     for (int64_t batch_idx = begin; batch_idx < end; ++batch_idx) {
       for (int64_t channel_idx = 0; channel_idx < channel; ++channel_idx) {
@@ -85,18 +86,18 @@ void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x,
 }
 
 template <typename T, template <typename S> class VarTransform>
-void InstanceNormV2CpuKernelMod::UpdateStatsTemplate(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+void InstanceNormV2CpuKernelMod::UpdateStatsTemplate(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<float> _var_sum(instance_num_, float_init_zero);
   std::vector<float> _mean_(instance_num_, float_init_zero);
   CollectStatsKernel<T>(inputs[kIndex0], _mean_.data(), _var_sum.data());
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
   MS_EXCEPTION_IF_ZERO("image_size", image_size);
   std::vector<int64_t> batch_channels_1d_ = {batch_channels_2d_.front() * batch_channels_2d_.back()};
-  auto running_mean_vec = EigenTensor(batch_channels_1d_, inputs[kIndex3]->addr).vec<float>();
-  auto running_var_vec = EigenTensor(batch_channels_1d_, inputs[kIndex4]->addr).vec<float>();
-  auto save_mean_vec = EigenTensor(batch_channels_1d_, outputs[kIndex1]->addr).vec<float>();
-  auto save_var_vec = EigenTensor(batch_channels_1d_, outputs[kIndex2]->addr).vec<float>();
+  auto running_mean_vec = EigenTensor(batch_channels_1d_, inputs[kIndex3]->device_ptr()).vec<float>();
+  auto running_var_vec = EigenTensor(batch_channels_1d_, inputs[kIndex4]->device_ptr()).vec<float>();
+  auto save_mean_vec = EigenTensor(batch_channels_1d_, outputs[kIndex1]->device_ptr()).vec<float>();
+  auto save_var_vec = EigenTensor(batch_channels_1d_, outputs[kIndex2]->device_ptr()).vec<float>();
 
   auto loop_momentum = [&](int64_t begin, int64_t end) {
     for (int64_t idx = begin; idx < end; ++idx) {
@@ -151,26 +152,26 @@ void InstanceNormV2CpuKernelMod::CollectLinearAndConstant(const typename TTypes<
 }
 
 template <typename T>
-void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
   const int64_t batch = x_shape_4d_[kIndex0];
   const int64_t channel = x_shape_4d_[kIndex3];
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
   std::vector<float> _alpha_(instance_num_, float_init_zero);
   std::vector<float> _beta_(instance_num_, float_init_zero);
   std::vector<int64_t> batch_channels_1d_ = {batch_channels_2d_.front() * batch_channels_2d_.back()};
-  auto gamma = EigenTensor(batch_channels_1d_, inputs[kIndex1]->addr).vec<float>();
-  auto beta = EigenTensor(batch_channels_1d_, inputs[kIndex2]->addr).vec<float>();
-  auto running_mean = EigenTensor(batch_channels_1d_, inputs[kIndex3]->addr).vec<float>();
-  auto running_var = EigenTensor(batch_channels_1d_, inputs[kIndex4]->addr).vec<float>();
-  auto save_mean = EigenTensor(batch_channels_1d_, outputs[kIndex1]->addr).vec<float>();
-  auto save_invstd = EigenTensor(batch_channels_1d_, outputs[kIndex2]->addr).vec<float>();
+  auto gamma = EigenTensor(batch_channels_1d_, inputs[kIndex1]->device_ptr()).vec<float>();
+  auto beta = EigenTensor(batch_channels_1d_, inputs[kIndex2]->device_ptr()).vec<float>();
+  auto running_mean = EigenTensor(batch_channels_1d_, inputs[kIndex3]->device_ptr()).vec<float>();
+  auto running_var = EigenTensor(batch_channels_1d_, inputs[kIndex4]->device_ptr()).vec<float>();
+  auto save_mean = EigenTensor(batch_channels_1d_, outputs[kIndex1]->device_ptr()).vec<float>();
+  auto save_invstd = EigenTensor(batch_channels_1d_, outputs[kIndex2]->device_ptr()).vec<float>();
   CollectLinearAndConstant(gamma, beta, running_mean, running_var, save_mean, save_invstd, _alpha_.data(),
                            _beta_.data());
   // cast (B, H, W, C) to (B, H*W, C)
   std::vector<int64_t> shape_3d = {batch, image_size, channel};
-  auto x_3d = EigenTensor(shape_3d, inputs[kIndex0]->addr).tensor<T, kDim3>();
-  auto y_3d = EigenTensor(shape_3d, outputs[kIndex0]->addr).tensor<T, kDim3>();
+  auto x_3d = EigenTensor(shape_3d, inputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
+  auto y_3d = EigenTensor(shape_3d, outputs[kIndex0]->device_ptr()).tensor<T, kDim3>();
   // Apply the linear terms to the input,
   auto loop_transform = [&](int64_t begin, int64_t end) {
     for (int64_t batch_idx = begin; batch_idx < end; ++batch_idx) {
@@ -188,13 +189,8 @@ void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::Addres
   CPUKernelUtils::ParallelFor(loop_transform, batch, block_size);
 }
 
-bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
+bool InstanceNormV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2OutputNum, kernel_name_);
 
@@ -204,10 +200,10 @@ bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  in_type_ = inputs[kIndex0]->GetDtype();
-  is_training_ = GetValue<bool>(prim->GetAttr(kAttrIsTraining));
-  momentum_ = GetValue<float>(prim->GetAttr(kAttrMomentum));
-  epsilon_ = GetValue<float>(prim->GetAttr(kAttrEpsilon));
+  in_type_ = inputs[kIndex0]->dtype_id();
+  is_training_ = GetValue<bool>(primitive_->GetAttr(kAttrIsTraining));
+  momentum_ = GetValue<float>(primitive_->GetAttr(kAttrMomentum));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(kAttrEpsilon));
   if (momentum_ > momentum_max || momentum_ < momentum_min) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "momentum value should be in [0, 1], but get momentum = " << momentum_ << ".";
@@ -220,10 +216,9 @@ bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int InstanceNormV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int InstanceNormV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -251,9 +246,9 @@ int InstanceNormV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-bool InstanceNormV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool InstanceNormV2CpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   bool res = false;
   switch (in_type_) {
     case kNumberTypeFloat16:
@@ -270,10 +265,10 @@ bool InstanceNormV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool InstanceNormV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto batch_mean_ptr = static_cast<float *>(outputs[kIndex1]->addr);
-  auto batch_var_ptr = static_cast<float *>(outputs[kIndex2]->addr);
+bool InstanceNormV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto batch_mean_ptr = static_cast<float *>(outputs[kIndex1]->device_ptr());
+  auto batch_var_ptr = static_cast<float *>(outputs[kIndex2]->device_ptr());
   (void)std::fill_n(batch_mean_ptr, CPUKernelUtils::CalcElementNum(batch_channels_2d_), float_init_zero);
   (void)std::fill_n(batch_var_ptr, CPUKernelUtils::CalcElementNum(batch_channels_2d_), float_init_zero);
 

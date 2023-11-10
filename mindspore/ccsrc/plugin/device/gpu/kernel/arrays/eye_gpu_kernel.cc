@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <memory>
 
-#include "mindspore/core/ops/eye.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/eye_impl.cuh"
@@ -31,37 +30,29 @@ namespace {
 constexpr size_t kEyeInputsNum = 3;
 constexpr size_t kEyeOutputsNum = 1;
 }  // namespace
-bool EyeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Eye>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Eye ops failed!";
-    return false;
-  }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool EyeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int EyeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &others) {
+int EyeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeGpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeGpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
-  auto out_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  auto out_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
   num_n_ = out_shape[kIndex0];
   num_m_ = out_shape[kIndex1];
   return 0;
 }
 
 template <typename T>
-bool EyeGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool EyeGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   T *ouput_ptr = GetDeviceAddress<T>(outputs, kIndex0);
-  auto status = CudaEye(outputs[kIndex0]->size, num_n_, num_m_, ouput_ptr, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    CudaEye(outputs[kIndex0]->size(), num_n_, num_m_, ouput_ptr, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

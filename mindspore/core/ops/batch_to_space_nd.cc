@@ -50,7 +50,7 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
@@ -99,7 +99,7 @@ TypePtr BatchToSpaceNDInferType(const std::vector<AbstractBasePtr> &input_args) 
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   // check_scalar_or_tensor_types_same
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "BatchToSpaceND");
 }

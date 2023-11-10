@@ -35,12 +35,12 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
                                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto num_segments_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual,
                                            SizeToLong(kInputIndex1), prim->name());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
@@ -62,20 +62,19 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
+  if (!input_args[kInputIndex3]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex3]->GetValue()->isa<None>()) {
     if (!IsDynamic(num_segments_shape) && num_segments_shape.size() == kInputIndex1) {
       if (LongToSize(num_segments_shape[kInputIndex0]) != kInputIndex1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1, but got ["
                                  << num_segments_shape[kInputIndex0] << "].";
       }
     }
-    auto num_segments_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments_value);
-    auto num_segments_value_ptr = num_segments_value->BuildValue();
+    auto num_segments_value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
-    auto num_segments_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
+    auto num_segments_type_ptr = input_args[kInputIndex3]->GetType();
+    MS_EXCEPTION_IF_NULL(num_segments_type_ptr);
+    auto num_segments_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+      "num_segments", num_segments_value_ptr, prim->name(), num_segments_type_ptr);
     size_t dim_zero = static_cast<size_t>(num_segments_value_ptr_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
@@ -96,10 +95,10 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
 TypePtr SparseSegmentSqrtNWithNumSegmentsInferType(const PrimitivePtr &prim,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  auto num_segments_type = input_args[kInputIndex3]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
+  auto num_segments_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
@@ -108,7 +107,7 @@ TypePtr SparseSegmentSqrtNWithNumSegmentsInferType(const PrimitivePtr &prim,
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)types.emplace("num_segments", num_segments_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

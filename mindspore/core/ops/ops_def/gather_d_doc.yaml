@@ -1,0 +1,20 @@
+gather_d:
+  description: |
+    Gathers elements along an axis specified by dim.
+
+        Refer to :func:`mindspore.ops.gather_elements` for more detail.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+            >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+            >>> dim = 1
+            >>> output = ops.gather_d(x, dim, index)
+            >>> print(output)
+            [[1 1]
+             [4 3]]

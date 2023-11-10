@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,6 +61,9 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
+from mindspore.ops.auto_generate import concat_
+from mindspore.ops.operations.manually_defined import tile
+
 tuple_to_tensor_ = TupleToTensor()
 eye_ = P.Eye()
 fills_ = Fills()
@@ -99,7 +102,6 @@ masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
 diag_ = P.Diag()
-range_ = P.Range()
 zeros_like_ = P.ZerosLike()
 cast_ = P.Cast()
 tensor_select_ = P.Select()
@@ -296,7 +298,7 @@ def cat(tensors, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    return concat(tensors, axis)
+    return concat_(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -889,7 +891,7 @@ def chunk(input, chunks, axis=0):
         true_chunks = int(length_along_dim // block_size)
         length1 = true_chunks * block_size
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(input), 0, True)
+        start1 = _list_comprehensions(rank_(input), 0, True)
         size1 = _tuple_setitem(arr_shape, arr_axis, length1)
         start2 = _tuple_setitem(start1, arr_axis, length1)
         size2 = _tuple_setitem(arr_shape, arr_axis, length2)
@@ -1077,120 +1079,6 @@ def zeros_like(input, *, dtype=None):
     output = _zeros_like(input)
     output = _cast(output, _dtype)
     return output
-
-
-def tile(input, multiples):
-    r"""
-    Replicates an input tensor with given multiples times.
-
-    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
-    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
-    are replicated `multiples[i]` times along the i'th dimension.
-
-    Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input`.
-
-    Args:
-        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
-            :math:`(x_1, x_2, ..., x_S)` .
-
-        multiples (tuple[int]): The parameter that specifies the number of replications,
-            the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input`.
-            Only constant value is allowed.
-
-    Returns:
-        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
-        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
-
-        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
-          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
-
-    Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]
-         [1.  2.  1.  2.  1.  2.]
-         [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = ops.tile(input, multiples)
-        >>> print(output)
-        [[[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]
-         [[1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]
-          [1. 2. 1. 2.]
-          [3. 4. 3. 4.]]]
-    """
-    tile_op = _get_cache_prim(P.Tile)()
-    return tile_op(input, multiples)
-
-
-def range(start, end, step):
-    r"""
-    Creates a sequence of numbers that begins at `start` and extends by increments of
-    `limit` up to but not including `end`.
-
-    The types of all 3 inputs must be the same. The type of the resulting tensor is
-    the same as the type of the inputs.
-
-    Args:
-        start (Tensor): A scalar Tensor. The first number in the sequence. Must have
-          type: int32 ,int64, float32 or float64.
-        end (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 ,int64, float32 or float64.
-        step (Tensor): A scalar Tensor. Number that increments `start`. Must have
-          type: int32 ,int64, float32 or float64.
-
-    Returns:
-        A 1-D Tensor, with the same type as the inputs.
-
-    Raises:
-        TypeError: If `start`, `end` or `step` is not scalar Tensor.
-        TypeError: If datatype of `start`, `end` or `step` is not same.
-        TypeError: If datatype of `start`, `end` or `step` is not supported.
-        ValueError: If `step` = 0.
-        ValueError: If `start` >= `end` when `step` > 0.
-        ValueError: If `start` <= `end` when `step` < 0.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> start = Tensor(0, mstype.int32)
-        >>> end = Tensor(10, mstype.int32)
-        >>> step = Tensor(4, mstype.int32)
-        >>> output = ops.range(start, end, step)
-        >>> print(output)
-        [0 4 8]
-    """
-    return range_(start, end, step)
 
 
 ##############################
@@ -1534,39 +1422,6 @@ def dyn_shape(input_x):
         [3 2 1]
     """
     return tensor_shape_(input_x)
-
-
-def rank(input_x):
-    """
-    Returns the rank of a tensor.
-
-    Returns a 0-D int32 Tensor representing the rank of input; the rank of a tensor
-    is the number of indices required to uniquely select each element of the tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
-
-    Returns:
-        Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`. The data type is an int.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.rank(input_tensor)
-        >>> print(output)
-        2
-        >>> print(type(output))
-        <class 'int'>
-    """
-    return rank_(input_x)
 
 
 def reshape(input, shape):
@@ -2171,8 +2026,7 @@ def concat(tensors, axis=0):
         - `Sentiment Classification Implemented by RNN - Dense
           <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
     """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(tensors)
+    return concat_(tensors, axis)
 
 
 def stack(tensors, axis=0):
@@ -5411,48 +5265,6 @@ def masked_select(input, mask):
     return masked_select_(input, mask)
 
 
-def masked_fill(input_x, mask, value):
-    """
-    Fills elements of Tensor with value where mask is True.
-    The shapes of `input_x` and `mask` need to be the same or broadcastable.
-
-    Args:
-        input_x (Tensor): The source Tensor whose data type is one of bool, uint8, int8, int16, int32,
-                    int64, float16, float32, float64, complex64, complex128.
-        mask (Tensor[bool]): The boolean mask.
-        value (Union[float, Tensor]): The value to fill in with, which dtype is the same as `input_x`.
-
-    Returns:
-        Tensor, has the same type and shape as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `mask` is not bool.
-        TypeError: If `input_x` or `mask` is not a Tensor.
-        ValueError: If the shapes of `input_x` and `mask` could not be broadcast.
-        TypeError: If dtype of `input_x` or `value` is not one of bool, uint8, int8, int16, int32,
-                   int64, float16, float32, float64, complex64, complex128.
-        TypeError: If dtype of `value` is different from that of `input_x`.
-        TypeError: If `value` is neither float number nor Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
-        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
-        >>> output = ops.masked_fill(input_x, mask, 0.5)
-        >>> print(output)
-        [0.5 0.5 3.  0.5]
-    """
-    if isinstance(value, (float, int)) and isinstance(input_x, Tensor):
-        value = scalar_to_tensor_(value, input_x.dtype)
-    masked_fill_ = _get_cache_prim(P.MaskedFill)()
-    return masked_fill_(input_x, mask, value)
-
-
 def diag(input):
     r"""
     Constructs a diagonal tensor with a given diagonal values.
@@ -5602,7 +5414,7 @@ def _split_int(x, split_size_or_sections, axis):
         num_sections = length_along_dim // split_size_or_sections
         length1 = num_sections * split_size_or_sections
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
@@ -5934,7 +5746,7 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
         num_short_tensor = indices_or_sections - num_long_tensor
         length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
@@ -7610,35 +7422,6 @@ def top_k(input_x, k, sorted=True):
     return top_k_(input_x, k)
 
 
-def deepcopy(input_x):
-    """
-    Returns a deepcopy of input tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Returns:
-        Tensor, a deepcopy of `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
-        >>> output = ops.deepcopy(input)
-        >>> print(output)
-        [[0 1]
-         [2 1]]
-    """
-    _deepcopy = _get_cache_prim(P.Identity)()
-    return _deepcopy(input_x)
-
-
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -7664,8 +7447,6 @@ __all__ = [
     'full',
     'full_like',
     'dyn_shape',
-    'rank',
-    'range',
     'arange',
     'reshape',
     'reshape_',
@@ -7714,7 +7495,6 @@ __all__ = [
     'gather_elements',
     'gather_nd',
     'one_hot',
-    'masked_fill',
     'masked_select',
     'where',
     'narrow',
@@ -7774,7 +7554,6 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
-    'top_k',
-    'deepcopy'
+    'top_k'
 ]
 __all__.sort()

@@ -33,23 +33,23 @@ class AdaptiveMaxPool3DCpuKernelMod : public NativeCpuKernelMod {
   AdaptiveMaxPool3DCpuKernelMod() = default;
   ~AdaptiveMaxPool3DCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) const;
   template <typename T>
-  void AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void AdaptiveMaxPool3DCompute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void ComputeKernel(T *input_data, T *output_data, int32_t *indices_data, int64_t start_T, int64_t end_T) const;
   std::vector<int64_t> input_shape_;

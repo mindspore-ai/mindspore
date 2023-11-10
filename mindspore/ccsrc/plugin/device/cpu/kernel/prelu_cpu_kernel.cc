@@ -17,19 +17,11 @@
 #include "plugin/device/cpu/kernel/prelu_cpu_kernel.h"
 #include <utility>
 #include <algorithm>
-#include "mindspore/core/ops/prelu.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-bool PReluCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PReLU>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast PRelu ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool PReluCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -44,10 +36,8 @@ bool PReluCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int PReluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, others); ret != KRET_OK) {
+int PReluCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
@@ -75,16 +65,16 @@ std::vector<KernelAttr> PReluCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool PReluCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
-  auto *input = static_cast<T *>(inputs[0]->addr);
+bool PReluCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto *input = static_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *weight = static_cast<T *>(inputs[1]->addr);
+  auto *weight = static_cast<T *>(inputs[1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(weight, false);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [this, input, weight, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       size_t channel_id = weight_length_ == 1 ? 0 : (i / per_channel_length_) % weight_length_;

@@ -34,10 +34,8 @@ static constexpr int kNumber2 = 2;
 constexpr size_t kParallelDataNums = 2 * 1024;
 constexpr int64_t kParallelDataNumMid = 16 * 1024;
 }  // namespace
-bool MatrixLogarithmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixLogarithmCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -50,11 +48,9 @@ bool MatrixLogarithmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MatrixLogarithmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixLogarithmCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape_x = inputs.at(kIndex0)->GetShapeVector();
@@ -93,10 +89,10 @@ std::vector<KernelAttr> MatrixLogarithmCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<AddressPtr> &inputs,
-                                                        const std::vector<AddressPtr> &outputs) {
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   size_t shape_size = shape_x_.size();
   auto m = IntToSize(shape_x_[shape_size - 1]);

@@ -32,28 +32,27 @@ class SequenceIndexCpuKernelMod : public NativeCpuKernelMod {
   explicit SequenceIndexCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~SequenceIndexCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   using SequenceIndexFunc =
-    std::function<bool(SequenceIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(SequenceIndexCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, SequenceIndexFunc>> func_list_;
   SequenceIndexFunc kernel_func_;

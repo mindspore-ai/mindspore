@@ -36,10 +36,8 @@ class ListDiffHelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
-    input_size_list_.emplace_back(input_shapes[kIndex0][kIndex0] * sizeof(T));
-    input_size_list_.emplace_back(input_shapes[kIndex1][kIndex0] * sizeof(T));
-    num_elements_x_ = input_size_list_[kIndex0] / sizeof(T);
-    num_elements_y_ = input_size_list_[kIndex1] / sizeof(T);
+    num_elements_x_ = input_shapes[kIndex0][kIndex0];
+    num_elements_y_ = input_shapes[kIndex1][kIndex0];
     output_size_list_.emplace_back(num_elements_x_ * sizeof(T));
     output_size_list_.emplace_back(num_elements_x_ * sizeof(S));
     work_size_list_.emplace_back(num_elements_y_ * sizeof(T));

@@ -18,46 +18,32 @@
 
 namespace mindspore {
 namespace kernel {
-bool AdamWeightDecayGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AdamWeightDecayGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 9;
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  auto var_data_type = inputs.at(kIndex0)->GetDtype();
+  auto var_data_type = inputs.at(kIndex0)->dtype_id();
   s_type_id_size_ = abstract::TypeIdSize(var_data_type);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
-  auto m_data_type = inputs.at(kIndex1)->GetDtype();
+  auto m_data_type = inputs.at(kIndex1)->dtype_id();
   t_type_id_size_ = abstract::TypeIdSize(m_data_type);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 void AdamWeightDecayGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(m_size_);
-  input_size_list_.push_back(v_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(beta1_size_);
-  input_size_list_.push_back(beta2_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(decay_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(0);
   output_size_list_.push_back(0);
   output_size_list_.push_back(0);
 }
 
-int AdamWeightDecayGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AdamWeightDecayGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
 
   variable_size_ = s_type_id_size_;
@@ -95,8 +81,9 @@ int AdamWeightDecayGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool AdamWeightDecayGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool AdamWeightDecayGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -109,7 +96,7 @@ bool AdamWeightDecayGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   float *epsilon = GetDeviceAddress<float>(inputs, kIndex6);
   float *decay = GetDeviceAddress<float>(inputs, kIndex7);
   S *gradient = GetDeviceAddress<S>(inputs, kIndex8);
-  auto status = AdamWeightDecayOp(inputs[0]->size / s_type_id_size_, gradient, lr, beta1, beta2, epsilon, decay,
+  auto status = AdamWeightDecayOp(inputs[0]->size() / s_type_id_size_, gradient, lr, beta1, beta2, epsilon, decay,
                                   variable, m, v, stream_ptr_);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

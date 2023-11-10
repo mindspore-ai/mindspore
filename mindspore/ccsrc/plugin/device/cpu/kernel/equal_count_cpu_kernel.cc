@@ -24,34 +24,32 @@ constexpr size_t kEqualCountInputsNum = 2;
 constexpr size_t kEqualCountOutputsNum = 1;
 }  // namespace
 
-bool EqualCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool EqualCountCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEqualCountInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEqualCountOutputsNum, kernel_name_);
-  if (inputs[0]->size != inputs[1]->size) {
+  if (inputs[0]->size() != inputs[1]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the address size of inputs must be the same, but got the address size of 'inputs[0]': "
-                      << inputs[0]->size << " and the address size of 'inputs[1]': " << inputs[1]->size;
+                      << inputs[0]->size() << " and the address size of 'inputs[1]': " << inputs[1]->size();
   }
 
   int count = 0;
-  auto left = reinterpret_cast<int *>(inputs[0]->addr);
-  auto right = reinterpret_cast<int *>(inputs[1]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(int);
+  auto left = reinterpret_cast<int *>(inputs[0]->device_ptr());
+  auto right = reinterpret_cast<int *>(inputs[1]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(int);
   for (size_t i = 0; i < elem_num; i++) {
     if (left[i] == right[i]) {
       count++;
     }
   }
-  auto output = reinterpret_cast<int *>(outputs[0]->addr);
+  auto output = reinterpret_cast<int *>(outputs[0]->device_ptr());
   output[0] = count;
   return true;
 }

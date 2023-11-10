@@ -56,6 +56,7 @@ struct GeTensorInfo {
 
   // Attr
   mindspore::HashMap<std::string, std::string> attr_map;
+  // NOTE: input index starts with 0
   mindspore::HashMap<uint32_t, std::string> input_attr_map;
   mindspore::HashMap<size_t, std::string> attr_input_map;
 

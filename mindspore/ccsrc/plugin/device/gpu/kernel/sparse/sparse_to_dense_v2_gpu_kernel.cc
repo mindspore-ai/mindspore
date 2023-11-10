@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/abstract/utils.h"
 #include "plugin/device/gpu/kernel/sparse/sparse_to_dense_v2_gpu_kernel.h"
 
@@ -32,11 +31,9 @@ constexpr size_t kSparseToDenseV2OneDim = 1;
 constexpr size_t kSparseToDenseV2ZeroDim = 0;
 }  // namespace
 
-bool SparseToDenseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseToDenseV2>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
-  validate_indices_ = kernel_ptr_->get_validate_indices();
+bool SparseToDenseV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  validate_indices_ = GetValue<bool>(primitive_->GetAttr("validate_indices"));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseV2OutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -51,10 +48,8 @@ bool SparseToDenseV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SparseToDenseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseToDenseV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -63,12 +58,12 @@ int SparseToDenseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  indices_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                      inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> input_shape_values = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                               inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  indices_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                      inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<size_t> input_shape_values = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                               inputs.at(kIndex2)->GetDeviceShapeVector().end());
   indices_dims_ = indices_shape_.size();
   ndims = indices_shape_.size() > 1 ? indices_shape_[1] : 1;
   num_elems = indices_shape_.size() > 0 ? indices_shape_[0] : 1;
@@ -83,13 +78,7 @@ int SparseToDenseV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     std::accumulate(input_shape_values.begin(), input_shape_values.end(), 1, std::multiplies<size_t>());
   input_elements_output_shape =
     std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  size_t input_size_indices = input_elements_indices * indice_size_;
-  size_t input_size_values = input_elements_values * value_size_;
-  size_t input_size_output_shape = input_elements_output_shape * indice_size_;
   size_t output_size = output_elements * value_size_;
-  input_size_list_.push_back(input_size_indices);
-  input_size_list_.push_back(input_size_values);
-  input_size_list_.push_back(input_size_output_shape);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }
@@ -100,17 +89,16 @@ void SparseToDenseV2GpuKernelMod::ResetResource() noexcept {
   input_elements_values = 0;
   input_elements_output_shape = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
 template <typename I, typename T>
-void SparseToDenseV2GpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &workspace,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+void SparseToDenseV2GpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseV2OutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
   }
   I *input_indices = GetDeviceAddress<I>(inputs, kIndex0);
@@ -174,12 +162,12 @@ void SparseToDenseV2GpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::
 }
 
 template <typename I, typename T>
-void SparseToDenseV2GpuKernelMod::CheckValidateOneDim(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &workspace,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
+void SparseToDenseV2GpuKernelMod::CheckValidateOneDim(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseV2OutputsNum, kernel_name_);
-  if (outputs[0]->size == 0) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
   }
   I *input_indices = GetDeviceAddress<I>(inputs, kIndex0);
@@ -233,9 +221,9 @@ void SparseToDenseV2GpuKernelMod::CheckValidateOneDim(const std::vector<kernel::
 }
 
 template <typename I, typename T>
-bool SparseToDenseV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseToDenseV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2TwoDims) {
     (void)SparseToDenseV2GpuKernelMod::CheckValidateTwoDim<I, T>(inputs, workspace, outputs);
   } else if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2OneDim) {

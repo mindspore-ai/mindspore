@@ -18,6 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
+from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import Tensor
 
@@ -30,7 +31,7 @@ class Roll(nn.Cell):
         super(Roll, self).__init__()
         self.shift = shift
         self.axis = axis
-        self.roll = nn.Roll(self.shift, self.axis)
+        self.roll = P.Roll(self.shift, self.axis)
 
     def construct(self, x):
         return self.roll(x)
@@ -84,8 +85,8 @@ def test_roll_exception_1():
     shift = 2
     axis = (0, -1, 0)
     try:
-        _ = ms.ops.roll(Tensor(x_np), shift, dims=axis)
-    except ValueError:
+        _ = ms.ops.roll_(Tensor(x_np), shift, dims=axis)
+    except TypeError:
         assert True
 
 
@@ -102,6 +103,6 @@ def test_roll_exception_2():
     shifts = ()
     axis = 0
     try:
-        _ = ms.ops.roll(input_x, shifts, dims=axis)
-    except ValueError:
+        _ = ms.ops.roll_(input_x, shifts, dims=axis)
+    except TypeError:
         assert True

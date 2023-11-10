@@ -47,13 +47,13 @@ namespace {
 abstract::ShapePtr ImagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto name = primitive->name();
   MS_LOG(DEBUG) << "Start infer shape for op: " << name;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto in_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr ImagInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> all_types_with_complex = {kBool,    kInt,     kInt8,    kInt16,     kInt32,     kInt64,
                                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,    kFloat,
                                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};

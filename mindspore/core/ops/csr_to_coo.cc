@@ -46,15 +46,15 @@ AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   CheckArgsSize(op_name, input_args, kCSRArgsSize);
   auto indptr = abstract::CheckArg<AbstractTensor>(op_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(indptr);
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
 
   auto nnz = abstract::CheckArg<AbstractScalar>(op_name, input_args, 1);
   MS_EXCEPTION_IF_NULL(nnz);
 
-  MS_EXCEPTION_IF_NULL(nnz->BuildValue());
+  MS_EXCEPTION_IF_NULL(nnz->GetValue());
   ShapeVector out_shape;
-  if (nnz->BuildValue()->isa<Int32Imm>() || nnz->BuildValue()->isa<Int64Imm>()) {
-    int64_t nnz_value = GetValue<int64_t>(nnz->BuildValue());
+  if (nnz->GetValue()->isa<Int32Imm>() || nnz->GetValue()->isa<Int64Imm>()) {
+    int64_t nnz_value = GetValue<int64_t>(nnz->GetValue());
     out_shape.push_back(nnz_value);
   } else {
     MS_EXCEPTION(ValueError) << "Currently, only support Integer nnz.";
@@ -62,12 +62,12 @@ AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 
   MS_EXCEPTION_IF_NULL(indptr->shape());
   auto num_rows = indptr->shape()->shape()[0] - 1;
-  int csr_avg_rows = GetValue<int64_t>(nnz->BuildValue()) / num_rows;
+  int csr_avg_rows = GetValue<int64_t>(nnz->GetValue()) / num_rows;
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kIsCSR, MakeValue(true));
 
   MS_EXCEPTION_IF_NULL(indptr->element());
-  auto ret = std::make_shared<AbstractTensor>(indptr->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(indptr->element()->GetType(), out_shape);
   return ret;
 }
 MIND_API_OPERATOR_IMPL(CSR2COO, BaseOperator);

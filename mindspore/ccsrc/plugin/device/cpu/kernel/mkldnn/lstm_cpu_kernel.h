@@ -29,16 +29,12 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
   LstmCpuKernelMod() = default;
   ~LstmCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -56,7 +52,7 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
   }
 
  private:
-  void InitOutputSize(const std::vector<KernelTensorPtr> &outputs);
+  void InitOutputSize(const std::vector<KernelTensor *> &outputs);
 
   int64_t weight_size_{0};
   int64_t weight_h_size_{0};

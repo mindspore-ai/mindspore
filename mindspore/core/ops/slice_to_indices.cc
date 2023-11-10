@@ -46,8 +46,8 @@ AbstractBasePtr ConstSliceToIndices(const std::vector<int64_t> &init_by_none, co
     MS_EXCEPTION(IndexError) << "Index size out of data dims.";
   }
   std::shared_ptr<IndexSlice> slice_ptr = std::make_shared<IndexSlice>(
-    GetValue<int64_t>(start_abs->BuildValue()), GetValue<int64_t>(stop_abs->BuildValue()),
-    GetValue<int64_t>(step_abs->BuildValue()), data_shape[new_dim_index], init_by_none, true);
+    GetValue<int64_t>(start_abs->GetValue()), GetValue<int64_t>(stop_abs->GetValue()),
+    GetValue<int64_t>(step_abs->GetValue()), data_shape[new_dim_index], init_by_none, true);
 
   if (slice_ptr->is_empty_slice()) {
     int64_t empty_stub_data = 0;
@@ -93,10 +93,9 @@ AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
   const size_t inputs_size = 4;
   CheckArgsSize(op_name, input_args, inputs_size);
 
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (!IsDynamic(data_shape) && std::all_of(input_args.begin() + 1, input_args.end(), [](const AbstractBasePtr &abs) {
-        return IsValueKnown(abs->BuildValue());
-      })) {
+  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  if (!IsDynamic(data_shape) && std::all_of(input_args.begin() + 1, input_args.end(),
+                                            [](const AbstractBasePtr &abs) { return IsValueKnown(abs->GetValue()); })) {
     size_t dim_index = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrTupleIndexAxis)));
     auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
     size_t expand_dims_mask = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsMask)));
@@ -133,7 +132,7 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
     auto indices_tensor_shape =
       std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}, ShapeVector{data_shape[0], 1});
     const size_t max_dims = 8;
@@ -147,7 +146,7 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceToIndicesInferInner(prim, input_args)->BuildType();
+    return SliceToIndicesInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

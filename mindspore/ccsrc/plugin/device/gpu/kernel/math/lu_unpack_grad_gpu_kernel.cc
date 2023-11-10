@@ -23,12 +23,8 @@ constexpr const size_t kLuUnpackGradOutputNum = 2;
 constexpr const int64_t Min_Dim = 2;
 }  // namespace
 
-bool LuUnpackGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LuUnpackGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool LuUnpackGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kLuUnpackGradInputNum || outputs.size() != kLuUnpackGradOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kLuUnpackGradInputNum << " and "
                   << kLuUnpackGradOutputNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -43,31 +39,30 @@ bool LuUnpackGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
 
   kernel_func_ = func_list_[pair.second].second;
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                        inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                        inputs.at(kIndex2)->GetDeviceShapeVector().end());
   return true;
 }
 
-int LuUnpackGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &others) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LuUnpackGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
   ResetResource();
-  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                        inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  input_L_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_U_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  input_LU_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                        inputs.at(kIndex2)->GetDeviceShapeVector().end());
   int64_t input_L_elements_ =
     std::accumulate(input_L_shape.begin(), input_L_shape.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t input_U_elements_ =
@@ -78,9 +73,6 @@ int LuUnpackGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   int64_t input_L_size = input_L_elements_ * unit_size_;
   int64_t input_U_size = input_U_elements_ * unit_size_;
   int64_t input_LU_size = input_LU_elements_ * unit_size_;
-  input_size_list_.emplace_back(input_L_size);
-  input_size_list_.emplace_back(input_U_size);
-  input_size_list_.emplace_back(input_LU_size);
   output_size_list_.emplace_back(input_LU_size);
   output_size_list_.emplace_back(input_LU_size);
   workspace_size_list_.emplace_back(input_L_size);
@@ -92,15 +84,14 @@ int LuUnpackGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 void LuUnpackGradGpuKernelMod::ResetResource() noexcept {
   input_elements_ = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T>
-bool LuUnpackGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool LuUnpackGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   T *l_grad_input = GetDeviceAddress<T>(inputs, kIndex0);
   T *u_grad_input = GetDeviceAddress<T>(inputs, kIndex1);
   T *l_grad_output = GetDeviceAddress<T>(outputs, kIndex0);

@@ -41,6 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
+from mindspore.ops.auto_generate import log_softmax
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -3507,61 +3508,6 @@ def relu6(x):
     return relu6_(x)
 
 
-def prelu(x, weight):
-    r"""
-    Parametric Rectified Linear Unit activation function.
-
-    PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
-    ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
-
-    .. math::
-        prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
-
-    where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
-
-    Note:
-        Scalar or 1-D Tensor is not supported on Ascend.
-
-    Args:
-        x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        weight (Tensor):  Weight Tensor. The data type is float16 or float32.
-          The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is :math:`(1,)` .
-
-    Returns:
-        Tensor, with the same shape and dtype as `x`.
-
-        For detailed information, please refer to :class:`mindspore.nn.PReLU`.
-
-    Raises:
-        TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
-        TypeError: If the `x` or the `weight` is not a Tensor.
-        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
-        ValueError: If the `weight` is not a 1-D Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
-        >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
-        >>> output = ops.prelu(x, weight)
-        >>> print(output)
-        [[[-0.60 -0.50]
-          [-2.40 -1.80]
-          [ 0.60  0.30]]
-         [[ 0.00  1.00]
-          [ 2.00  3.00]
-          [ 4.0   5.00]]]
-    """
-    prelu_ = _get_cache_prim(NN_OPS.PReLU)()
-    return prelu_(x, weight)
-
-
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
     r"""
 
@@ -4217,48 +4163,6 @@ def intopk(x1, x2, k):
     """
     _in_topk = _get_cache_prim(P.InTopK)(k)
     return _in_topk(x1, x2)
-
-
-def log_softmax(logits, axis=-1):
-    r"""
-    Applies the Log Softmax function to the input tensor on the specified axis.
-    Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
-    the Log Softmax function is shown as follows:
-
-    .. math::
-        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
-
-    where :math:`N` is the length of the Tensor.
-
-    Args:
-        logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-        axis (int): The axis to perform the Log softmax operation. Default: ``-1`` .
-
-    Returns:
-        Tensor, with the same type and shape as the logits.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
-        ValueError: If dimension of `logits` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.log_softmax(logits)
-        >>> print(output)
-        [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
-    """
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(axis)
-    return _log_softmax(logits)
-
 
 def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
     r"""
@@ -7330,7 +7234,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
+        attn_mask = new_attn_mask.masked_fill(attn_mask, ops.scalar_cast(float("-inf"), attn_mask.dtype))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:
@@ -7494,7 +7398,6 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
-    'prelu',
     'mirror_pad',
     'cross_entropy',
     'grid_sample',

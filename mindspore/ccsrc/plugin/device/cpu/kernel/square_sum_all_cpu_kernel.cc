@@ -45,27 +45,23 @@ void SquareSum(const T *in0, const T *in1, float *out0, float *out1, int64_t bat
 }
 }  // namespace
 
-bool SquareSumAllCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
+bool SquareSumAllCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs.at(kIndex0)->dtype_id();
   dtype_size_ = abstract::TypeIdSize(dtype_);
-  PrimitivePtr prim = base_operator->GetPrim();
-  if (prim->HasAttr(kBatchRank)) {
-    int64_t batch_rank = GetValue<int64_t>(prim->GetAttr(kBatchRank));
+  if (primitive_->HasAttr(kBatchRank)) {
+    int64_t batch_rank = GetValue<int64_t>(primitive_->GetAttr(kBatchRank));
     batch_rank_ = LongToSize(batch_rank);
   }
   return true;
 }
 
-int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SquareSumAllCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[0]->GetDeviceShapeVector();
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   num_batch_ =
     std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, size_t(1), std::multiplies<size_t>());
@@ -75,8 +71,9 @@ int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   return KRET_OK;
 }
 
-bool SquareSumAllCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool SquareSumAllCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   bool ret = true;
   if (input_size_ == 0) {
     return ret;
@@ -95,21 +92,15 @@ bool SquareSumAllCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
 }
 
 template <typename T>
-bool SquareSumAllCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  const T *input_0_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(input_0_addr, false);
-  const T *input_1_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(input_1_addr, false);
-  T *output_0_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(output_0_addr, false);
-  T *output_1_addr = reinterpret_cast<T *>(outputs[1]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(output_1_addr, false);
-  float *workspace_0_addr = reinterpret_cast<float *>(workspace[0]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(workspace_0_addr, false);
-  float *workspace_1_addr = reinterpret_cast<float *>(workspace[1]->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(workspace_1_addr, false);
+bool SquareSumAllCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &workspace,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  const T *input_0_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const T *input_1_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output_0_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  T *output_1_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  float *workspace_0_addr = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  float *workspace_1_addr = reinterpret_cast<float *>(workspace[1]->device_ptr());
   for (size_t i = 0; i < num_batch_; ++i) {
     workspace_0_addr[i] = static_cast<float>(0.0);
     workspace_1_addr[i] = static_cast<float>(0.0);

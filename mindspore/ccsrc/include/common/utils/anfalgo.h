@@ -77,6 +77,7 @@ class COMMON_EXPORT AnfAlgo {
   static FuncGraphPtr GetCNodeFuncGraphPtr(const AnfNodePtr &node);
   // get kernel_name of anf node
   static std::string GetCNodeName(const AnfNodePtr &node);
+  static bool IsGetNextNode(const AnfNodePtr &node);
   // get detail info of anf node
   static std::string GetNodeDebugString(const AnfNodePtr &node);
   // get attr of anf node
@@ -181,6 +182,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsNodeOutputDynamicShape(const AnfNodePtr &node);
   static bool IsDynamicShape(const AnfNodePtr &node);
   static bool IsDynamicRankNode(const AnfNodePtr &node);
+  static bool IsDynamicValue(const AnfNodePtr &node);
   static bool IsNodeInputDynamicRank(const CNodePtr &anf_node_ptr);
   static bool IsNodeOutputDynamicRank(const AnfNodePtr &node);
   static bool IsInputAnchorDynamicRank(const AnfNodePtr &node, size_t idx);
@@ -298,11 +300,12 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
 
   static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
-  static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+  static abstract::AbstractBasePtr FrontendGetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
 
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
 
+  static bool IsNodeMutableScalar(const AnfNodePtr &node);
   static bool IsDynamicSequence(const AnfNodePtr &node);
   static bool IsAnyTypeOutput(const AnfNodePtr &node);
   static bool IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs);

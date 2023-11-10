@@ -65,6 +65,7 @@
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
+#include "plugin/device/gpu/hal/device/gpu_device_synchronizer.h"
 #include "include/common/profiler.h"
 #include "ops/ascend_op_name.h"
 #include "runtime/pynative/async/kernel_task.h"
@@ -316,7 +317,9 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
 
   device_address->set_user_data(user_data);
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
-  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (user_data_type == nullptr) {
+    return;
+  }
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
 #if CUDA_VERSION > 11000 && defined(__linux__)
     auto key_type = user_data->get<TypeId>(kHashTableKeyType);
@@ -349,6 +352,21 @@ DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   if (user_data != nullptr) {
     SetUserData(device_address.get(), user_data);
   }
+
+  device_address->set_device_synchronizer(std::make_shared<GPUDeviceSynchronizer>());
+  return device_address;
+}
+
+DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto device_address = std::make_shared<GPUDeviceAddress>(kernel_tensor);
+
+  const auto &user_data = kernel_tensor->user_data();
+  if (user_data != nullptr) {
+    SetUserData(device_address.get(), user_data);
+  }
+
+  device_address->set_device_synchronizer(std::make_shared<GPUDeviceSynchronizer>());
   return device_address;
 }
 
@@ -791,9 +809,9 @@ void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   CreateGPUKernel(nodes);
 }
 
-bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                     size_t stream_id) const {
+bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!res_manager_->BindDeviceToCurrentThread(false)) {
     return false;
@@ -830,10 +848,11 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
 
   return ret;
 }
+
 #ifndef ENABLE_SECURITY
-bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream) const {
+bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
 
@@ -864,9 +883,10 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   return ret;
 }
 #endif
-bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                       void *stream) const {
+
+bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

@@ -18,6 +18,7 @@
 #include <string>
 #include "ops/sequence_ops.h"
 #include "ops/nn_ops.h"
+#include "ops/op_utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -162,18 +163,25 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                                     const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, node->cast<CNodePtr>())) {
-    MS_LOG(DEBUG) << "The BatchNormGrad " << node->DebugString() << " has no is_training attr, should not be changed";
+
+  // the 0's input of cnode is primitive
+  const size_t kIsTraningIdx = 7;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto is_training_input = cnode->input(kIsTraningIdx);
+  MS_EXCEPTION_IF_NULL(is_training_input);
+  auto value = is_training_input->abstract()->GetValue();
+  auto is_training = ops::GetValueWithCheck<bool>(value);
+  if (is_training) {
+    MS_LOG(DEBUG) << "The is_training value of " << node->DebugString() << " is true, no need change";
     return nullptr;
   }
-  if (common::AnfAlgo::GetNodeAttr<bool>(node, kAttrIsTraining)) {
-    MS_LOG(DEBUG) << "The is_training attr value of " << node->DebugString() << " is true, no need change";
-    return nullptr;
-  }
+
   if (!CheckOutputsIndex(func_graph, node)) {
     MS_LOG(DEBUG) << "The output 3 or 4 of BatchNormGrad is not null, no need change";
     return nullptr;
   }
+
   AnfNodePtr bn_infer_grad = CreateBNInferGrad(func_graph, node, equiv);
   AnfNodePtr bn_training_update_grad = CreateBNTrainingUpdateGrad(func_graph, node, equiv);
   std::vector<AnfNodePtr> bn_training_update_grad_outputs;

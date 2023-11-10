@@ -1,0 +1,34 @@
+expand_dims:
+  description: |
+    Adds an additional dimension to `input_x` at the given axis.
+
+        Note:
+            If the specified axis is a negative number, the index is counted
+            backward from the end and starts at 1.
+
+        Args:
+            input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+            axis (int): Specifies the dimension index at which to expand
+                the shape of `input_x`. The value of axis must be in the range
+                `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
+
+        Returns:
+            Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
+            value of `axis` is 0. It has the same data type as `input_x`.
+
+        Raises:
+            TypeError: If `axis` is not an int.
+            ValueError: If `axis` is not in the valid range :math:`[-a.ndim-1, a.ndim]`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+            >>> output = ops.expand_dims(input_tensor, 0)
+            >>> print(output)
+            [[[2. 2.]
+              [2. 2.]]]

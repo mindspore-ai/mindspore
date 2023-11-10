@@ -65,7 +65,7 @@ constexpr auto kLiteDeviceName = "LiteDevice";
 
 class LiteDeviceAddress : public device::DeviceAddress {
  public:
-  LiteDeviceAddress(void *ptr, size_t size) : device::DeviceAddress(ptr, size) { device_name_ = kLiteDeviceName; }
+  LiteDeviceAddress(void *ptr, size_t size) : device::DeviceAddress(ptr, size) {}
   void SetData(void *data) { set_ptr(data); }
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override {

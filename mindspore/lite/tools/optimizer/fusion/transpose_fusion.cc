@@ -23,7 +23,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
-#include "mindspore/core/ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "ops/fusion/scale_fusion.h"
 #include "nnacl/op_base.h"

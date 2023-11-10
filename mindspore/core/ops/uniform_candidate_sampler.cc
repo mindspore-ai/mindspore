@@ -52,7 +52,7 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
 
@@ -115,7 +115,7 @@ TuplePtr UCSInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   std::set<TypePtr> check_list = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_type, check_list, op_name);
 

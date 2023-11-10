@@ -19,14 +19,13 @@
 
 #include <map>
 #include <vector>
-#include "mindspore/core/ops/resize_nearest_neighbor.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputNumTwo = 2;
+constexpr size_t kResizeNearestNeighborV2InputNum = 4;
 constexpr size_t kSecondInputSize = 2;
 
 template <typename T>
@@ -35,8 +34,8 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
   ResizeNearestNeighborGpuKernelMod() = default;
   ~ResizeNearestNeighborGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -44,7 +43,7 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(input);
     T *output = GetDeviceAddress<T>(outputs, 0);
     MS_EXCEPTION_IF_NULL(output);
-    auto output_size = outputs[kIndex0]->size;
+    auto output_size = outputs[kIndex0]->size();
     int size = SizeToInt(output_size / sizeof(T));
     float h_scale = Scaling(input_shape_[2], output_shape_[2], align_corners_);
     float w_scale = Scaling(input_shape_[3], output_shape_[3], align_corners_);
@@ -56,27 +55,19 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     input_num_ = inputs.size();
-    if (input_num_ != 1 && input_num_ != kInputNumTwo) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kInputNumTwo
+    if (input_num_ != kResizeNearestNeighborV2InputNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be " << kResizeNearestNeighborV2InputNum
                     << ", but got " << input_num_;
       return false;
     }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-    auto prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     auto input_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -94,6 +85,7 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < output_shape.size(); ++i) {
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
     return KRET_OK;
   }
 

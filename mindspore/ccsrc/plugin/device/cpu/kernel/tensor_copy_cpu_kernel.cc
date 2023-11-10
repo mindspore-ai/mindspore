@@ -29,18 +29,15 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool TensorCopyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TensorCopyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   auto input_shape = inputs[ktInput]->GetShapeVector();
   auto output_shape = outputs[ktOutput]->GetShapeVector();
-  auto input_type = inputs[ktInput]->GetDtype();
-  auto output_type = inputs[ktOutput]->GetDtype();
+  auto input_type = inputs[ktInput]->dtype_id();
+  auto output_type = inputs[ktOutput]->dtype_id();
 
   auto copy_size = GetTypeByte(TypeIdToType(input_type));
   copy_size = std::accumulate(input_shape.begin(), input_shape.end(), copy_size, std::multiplies<size_t>());
-  input_size_list_.push_back(copy_size);
   output_size_list_.push_back(copy_size);
   if (input_type != output_type) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -57,26 +54,25 @@ bool TensorCopyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int TensorCopyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int TensorCopyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
   return 0;
 }
 
-bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /* workspace */,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 
-  auto ret = memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
+  auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
   if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << "Copy input:" << input
-                  << " size=" << inputs[0]->size << " ,To output:" << output << " size=" << outputs[0]->size;
+                  << " size=" << inputs[0]->size() << " ,To output:" << output << " size=" << outputs[0]->size();
     return false;
   }
   return true;

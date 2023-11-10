@@ -41,8 +41,8 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
   AdadeltaGpuKernelMod() { ResetResource(); }
   ~AdadeltaGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -50,11 +50,9 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -63,19 +61,17 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
     t_size_ = DEFAULT_SIZE_;
     s_size_ = DEFAULT_SIZE_;
     g_size_ = DEFAULT_SIZE_;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 
  private:
   template <typename T, typename S, typename G>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using ApplyAdadeltaFunc =
-    std::function<bool(AdadeltaGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  void InOutputResize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                      const std::vector<KernelTensorPtr> &outputs);
+    std::function<bool(AdadeltaGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
+  void InOutputResize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  private:
   constexpr static int64_t DEFAULT_SIZE_ = 4;
@@ -94,9 +90,8 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
   int64_t s_size_{4};
   int64_t g_size_{4};
   int64_t input_elements_;
-  BaseOperatorPtr kernel_ptr_{nullptr};
 
-  std::vector<KernelTensorPtr> outputs_ = {};
+  std::vector<KernelTensor *> outputs_ = {};
 
   ApplyAdadeltaFunc kernel_func_{};
   void *stream_ptr_{nullptr};

@@ -37,47 +37,39 @@ const size_t kGerOutputsNum = 1;
 const size_t kNoBatchNum = 1;
 }  // namespace
 
-bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  if (!base_operator) {
-    MS_LOG(ERROR) << "For " << kernel_type_ << ", cast " << kernel_type_ << " ops failed!";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
+bool GerCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kGerInputsNum || outputs.size() != kGerOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kGerInputsNum << " and "
                   << kGerOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  input_type_1_ = inputs[0]->GetDtype();
-  input_type_2_ = inputs[1]->GetDtype();
+  input_type_1_ = inputs[0]->dtype_id();
+  input_type_2_ = inputs[1]->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input1 and input2 must have the same type. But got input1 type "
                   << input_type_1_ << ", input2 type " << input_type_2_;
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != 0) {
+int GerCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
 
-  input_shape_1_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_shape_2_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_1_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  input_shape_2_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto in_shape_size_1 = input_shape_1_.size();
   auto in_shape_size_2 = input_shape_2_.size();
 
@@ -151,15 +143,15 @@ void GerCpuKernelMod::InitLaunchFunc() {
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
-  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
-  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchBatchesElse(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->device_ptr());
+  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->device_ptr());
+  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   auto task = [this, &float_input1, &float_input2, &input1, &input2, &output, &float_output](size_t start, size_t end) {
     for (size_t i = start * this->in1dim_; i < end * this->in1dim_; ++i) {
@@ -184,20 +176,20 @@ bool GerCpuKernelMod::LaunchBatchesElse(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchNoBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
-  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
-  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchNoBatchesElse(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &workspace,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->device_ptr());
+  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->device_ptr());
+  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
-  for (size_t i = 0; i < ((inputs[kIndex0]->size) / sizeof(T)); ++i) {
+  for (size_t i = 0; i < ((inputs[kIndex0]->size()) / sizeof(T)); ++i) {
     float_input1[i] = static_cast<float>(input1[i]);
   }
-  for (size_t i = 0; i < ((inputs[kIndex1]->size) / sizeof(T)); ++i) {
+  for (size_t i = 0; i < ((inputs[kIndex1]->size()) / sizeof(T)); ++i) {
     float_input2[i] = static_cast<float>(input2[i]);
   }
 
@@ -213,12 +205,12 @@ bool GerCpuKernelMod::LaunchNoBatchesElse(const std::vector<kernel::AddressPtr> 
   return true;
 }
 
-bool GerCpuKernelMod::LaunchBatches(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
-  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->addr);
-  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->addr);
-  float *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->device_ptr());
+  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->device_ptr());
+  float *output = reinterpret_cast<float *>(outputs[kIndex0]->device_ptr());
   auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       MatMulOpt(input1 + i * this->in1dim_, input2 + i * this->in2dim_, output + i * this->outdim_, nullptr, ActType_No,
@@ -229,12 +221,12 @@ bool GerCpuKernelMod::LaunchBatches(const std::vector<kernel::AddressPtr> &input
   return true;
 }
 
-bool GerCpuKernelMod::LaunchNoBatches(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->addr);
-  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->addr);
-  float *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchNoBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->device_ptr());
+  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->device_ptr());
+  float *output = reinterpret_cast<float *>(outputs[kIndex0]->device_ptr());
   auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
     MatMulOpt(input1 + start, input2, output + start * this->in2dim_, nullptr, ActType_No, 1,
               static_cast<int>(end - start), static_cast<int>(this->in2dim_), this->in2dim_, 1);
@@ -244,12 +236,12 @@ bool GerCpuKernelMod::LaunchNoBatches(const std::vector<kernel::AddressPtr> &inp
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchMacBatches(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchMacBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
     for (size_t batch_index = start; batch_index < end; batch_index++) {
       size_t row_i_s = batch_index * this->in1dim_;
@@ -269,12 +261,12 @@ bool GerCpuKernelMod::LaunchMacBatches(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchMacNoBatches(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool GerCpuKernelMod::LaunchMacNoBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
     for (size_t row = start; row < end; row++) {
       T in_one = input1[row];
@@ -289,9 +281,9 @@ bool GerCpuKernelMod::LaunchMacNoBatches(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGerInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGerOutputsNum, kernel_name_);
   return launch_func_(this, inputs, workspace, outputs);

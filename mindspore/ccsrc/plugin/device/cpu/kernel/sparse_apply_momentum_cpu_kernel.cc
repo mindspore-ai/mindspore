@@ -42,10 +42,8 @@ using KernelRunFunc = SparseApplyMomentumCpuKernelMod::KernelRunFunc;
     .AddOutputAttr(kNumberType##t7)
 }  // namespace
 
-bool SparseApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyMomentumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -60,16 +58,14 @@ bool SparseApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << ", but got " << outputs.size() << ".";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyMomentum>(base_operator->GetPrim());
-  use_nesterov_ = kernel_ptr->get_use_nesterov();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  use_nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kUseNesterov));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyMomentumCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -79,12 +75,10 @@ void SparseApplyMomentumCpuKernelMod::ResetResource() noexcept {
   use_nesterov_ = false;
 }
 
-int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyMomentumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -132,19 +126,19 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename I, typename T>
-bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) const {
+bool SparseApplyMomentumCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyMomentumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyMomentumOutputsNum, kernel_name_);
 
-  auto var = static_cast<T *>(inputs[0]->addr);
-  auto accum = static_cast<T *>(inputs[1]->addr);
-  auto grad = static_cast<T *>(inputs[3]->addr);
-  auto indices = static_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = static_cast<T *>(inputs[2]->addr)[0];
-  auto momentum_scalar = static_cast<T *>(inputs[5]->addr)[0];
-  auto output = static_cast<T *>(outputs[0]->addr);
+  auto var = static_cast<T *>(inputs[0]->device_ptr());
+  auto accum = static_cast<T *>(inputs[1]->device_ptr());
+  auto grad = static_cast<T *>(inputs[3]->device_ptr());
+  auto indices = static_cast<I *>(inputs[4]->device_ptr());
+  auto lr_scalar = static_cast<T *>(inputs[2]->device_ptr())[0];
+  auto momentum_scalar = static_cast<T *>(inputs[5]->device_ptr())[0];
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
 
   for (size_t i = 0; i < indices_size_; ++i) {
     I index = indices[i];

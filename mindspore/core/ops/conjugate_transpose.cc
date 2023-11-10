@@ -33,7 +33,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto is_dynamic_rank = IsDynamicRank(x_shape);
   if (is_dynamic_rank) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -43,7 +43,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("[x] rank", static_cast<int64_t>(x_shape.size()), kLessEqual, dim_7,
                                            op_name);
 
-  auto perm_value = input_args[1]->BuildValue();
+  auto perm_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(perm_value);
   if (!IsValueKnown(perm_value)) {
     std::vector<int64_t> output_shape(static_cast<int>(x_shape.size()), -1);
@@ -52,13 +52,14 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
 
   ShapeVector p_value;
   ShapeVector p_value_raw;
-  if (perm_value->isa<tensor::Tensor>()) {
-    p_value_raw = CheckAndConvertUtils::CheckTensorIntValue("input[perm]", perm_value, op_name);
-  } else if (perm_value->isa<ValueTuple>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1]) && IsValueKnown(perm_value)) {
+    p_value_raw =
+      CheckAndConvertUtils::CheckTensorIntValue("input[perm]", perm_value, op_name, input_args[1]->GetType());
+  } else if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex1]) && IsValueKnown(perm_value)) {
     p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the type of perm must be Tuple, but got "
-                            << input_args[1]->BuildType()->ToString() << " .";
+                            << input_args[1]->GetType()->ToString() << " .";
   }
 
   for (auto p : p_value_raw) {
@@ -98,11 +99,10 @@ TypePtr ConjugateTransposeInferType(const PrimitivePtr &prim, const std::vector<
   const std::set<TypePtr> all_types_with_complex = {kBool,    kInt,     kInt8,    kInt16,     kInt32,     kInt64,
                                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,    kFloat,
                                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), all_types_with_complex,
-                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), all_types_with_complex, prim->name());
   const std::set<TypePtr> perm_valid_types = {kTuple};
-  (void)CheckAndConvertUtils::CheckTypeValid("perm", input_args[1]->BuildType(), perm_valid_types, prim->name());
-  return input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTypeValid("perm", input_args[1]->GetType(), perm_valid_types, prim->name());
+  return input_args[0]->GetType();
 }
 }  // namespace
 

@@ -19,11 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeGradBoxesCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CropAndResizeGradBoxesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNums, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -36,11 +33,9 @@ bool CropAndResizeGradBoxesCpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int CropAndResizeGradBoxesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeGradBoxesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  input grads
@@ -95,8 +90,8 @@ int CropAndResizeGradBoxesCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   return KRET_OK;
 }
 
-void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::AddressPtr> &outputs) {
-  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
+void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->device_ptr());
   const int nums_boxes = LongToInt(grads_shape_[0]);
   int num = nums_boxes * SizeToInt(kCoordinateLen);
   float zero_num = static_cast<float>(0);
@@ -106,13 +101,13 @@ void CropAndResizeGradBoxesCpuKernelMod::OutputZeroing(const std::vector<kernel:
 }
 
 template <typename T>
-bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto *grads = reinterpret_cast<float *>(inputs[kGrads]->addr);
-  auto *image = reinterpret_cast<T *>(inputs[kImages]->addr);
-  auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->addr);
-  auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndex]->addr);
-  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->addr);
+bool CropAndResizeGradBoxesCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *grads = reinterpret_cast<float *>(inputs[kGrads]->device_ptr());
+  auto *image = reinterpret_cast<T *>(inputs[kImages]->device_ptr());
+  auto *boxes = reinterpret_cast<float *>(inputs[kBoxes]->device_ptr());
+  auto *box_ind = reinterpret_cast<int *>(inputs[kBoxIndex]->device_ptr());
+  auto *outputDatas = reinterpret_cast<float *>(outputs[0]->device_ptr());
   const int image_batch = LongToInt(image_shape_[kBatch]);
   const int image_height = LongToInt(image_shape_[kHeight]);
   const int image_width = LongToInt(image_shape_[kWidth]);

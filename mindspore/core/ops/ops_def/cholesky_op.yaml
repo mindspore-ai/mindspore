@@ -1,0 +1,13 @@
+#operator cholesky
+cholesky:
+  args:
+    input_x:
+      dtype: tensor
+    upper:
+      dtype: bool
+      init: false
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: cholesky_

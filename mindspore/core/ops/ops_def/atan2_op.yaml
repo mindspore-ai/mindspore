@@ -1,0 +1,12 @@
+#operator atan2
+atan2:
+  args:
+    x:
+      dtype: tensor
+    y:
+      dtype: tensor
+  args_signature:
+    dtype_group: (x, y)
+  returns:
+    output:
+      dtype: tensor

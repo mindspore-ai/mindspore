@@ -57,19 +57,16 @@ void Add(const float *in_0, const float *in_1, float *out, int start, int end) {
 }
 }  // namespace
 
-bool SequenceAddNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceAddNCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceAddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceAddNCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -83,13 +80,14 @@ int SequenceAddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
-  size_t elements_num = outputs[0]->size / sizeof(T);
-  const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
+bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
+  size_t elements_num = outputs[0]->size() / sizeof(T);
+  const auto input_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
   auto input_1 = input_0 + elements_num;
 
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task_0 = std::bind(Add<T>, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
   ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
 

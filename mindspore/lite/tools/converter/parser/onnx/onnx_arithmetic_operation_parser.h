@@ -190,10 +190,10 @@ class OnnxCoshParser : public OnnxNodeParser {
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
-class OnnxAcosParser : public OnnxNodeParser {
+class OnnxACosParser : public OnnxNodeParser {
  public:
-  OnnxAcosParser() : OnnxNodeParser("Acos") {}
-  ~OnnxAcosParser() override = default;
+  OnnxACosParser() : OnnxNodeParser("ACos") {}
+  ~OnnxACosParser() override = default;
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };

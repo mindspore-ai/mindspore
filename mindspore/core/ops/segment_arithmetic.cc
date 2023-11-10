@@ -46,17 +46,18 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-void CheckSegmentIDDataMean(const T *segment_ids_data, const size_t data_size) {
+void CheckSegmentIDDataMean(const std::vector<T> &segment_ids_data) {
   if (segment_ids_data[0] < 0) {
     MS_EXCEPTION(ValueError) << "For 'SegmentMean', the values of segment_ids must be nonnegative. but got "
                              << segment_ids_data[0] << ".";
   }
-  for (size_t i = 0; i < data_size - 1; ++i) {
+  for (size_t i = 0; i < segment_ids_data.size() - 1; ++i) {
     if (segment_ids_data[i] > segment_ids_data[i + 1]) {
       MS_EXCEPTION(ValueError)
         << "For 'SegmentMean', segment_ids must be a tensor with element values sorted in ascending order.";
@@ -75,11 +76,11 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
 
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
 
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual, 1, prim_name);
@@ -95,21 +96,20 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector out_shape(x_shape);
-  auto segment_ids_ptr = input_args[1]->BuildValue();
+  auto segment_ids_ptr = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(segment_ids_ptr);
-  if (!segment_ids_ptr->isa<ValueAny>() && !segment_ids_ptr->isa<None>()) {
-    auto segment_ids_tensor = segment_ids_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(segment_ids_tensor);
-    auto data_size = segment_ids_tensor->DataSize();
-    auto segment_ids_type_id = segment_ids_tensor->data_type();
+  if (!segment_ids_ptr->ContainsValueAny() && !segment_ids_ptr->isa<None>()) {
+    auto segment_ids_type = input_args[1]->GetType()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(segment_ids_type);
+    auto segment_ids_type_id = segment_ids_type->element()->type_id();
     if (segment_ids_type_id == kNumberTypeInt64) {
-      int64_t *segment_ids_data = static_cast<int64_t *>(segment_ids_tensor->data_c());
-      CheckSegmentIDDataMean<int64_t>(segment_ids_data, data_size);
-      out_shape[0] = static_cast<int64_t>(segment_ids_data[data_size - 1] + 1);
+      const auto segment_ids_data = GetArrayValue<int64_t>(segment_ids_ptr).value().ToVector();
+      CheckSegmentIDDataMean<int64_t>(segment_ids_data);
+      out_shape[0] = segment_ids_data[SizeToLong(segment_ids_data.size()) - 1] + 1;
     } else if (segment_ids_type_id == kNumberTypeInt32) {
-      int32_t *segment_ids_data = static_cast<int32_t *>(segment_ids_tensor->data_c());
-      CheckSegmentIDDataMean<int32_t>(segment_ids_data, data_size);
-      out_shape[0] = static_cast<int64_t>(segment_ids_data[data_size - 1] + 1);
+      const auto segment_ids_data = GetArrayValue<int32_t>(segment_ids_ptr).value().ToVector();
+      CheckSegmentIDDataMean<int32_t>(segment_ids_data);
+      out_shape[0] = static_cast<int64_t>(segment_ids_data[SizeToLong(segment_ids_data.size()) - 1] + 1);
     }
     uint32_t length = 1;
     for (size_t i = 0; i < out_shape.size(); ++i) {
@@ -130,15 +130,15 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
 
 TypePtr SegmentArithmeticInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  TypePtr x_type = input_args[0]->BuildType();
-  TypePtr segment_ids_type = input_args[1]->BuildType();
+  TypePtr x_type = input_args[0]->GetType();
+  TypePtr segment_ids_type = input_args[1]->GetType();
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,  kComplex128, kInt32,
                                            kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64, kComplex64};
   const std::set<TypePtr> segment_ids_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, x_valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids_type", segment_ids_type, segment_ids_valid_types,
                                                    prim_name);
-  return x_type;
+  return x_type->Clone();
 }
 }  // namespace
 

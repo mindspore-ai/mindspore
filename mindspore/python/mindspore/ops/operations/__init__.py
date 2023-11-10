@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ from ._ms_kernel import (ms_kernel, kernel)
 from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchToSpace,
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
-                        Eye, Fill, Gather, GatherD, GatherNd, Identity, Im2Col, InvertPermutation,
+                        Eye, Fill, Gather, GatherD, GatherNd, Im2Col, InvertPermutation,
                         LowerBound, Lstsq, MaskedFill, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
                         Padding, ParallelConcat, PopulationCount, Range, Rank, Reshape, ResizeNearestNeighbor,
                         ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
@@ -44,7 +44,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         TensorScatterUpdate, TensorShape, Tile, TopK, TransShape, Transpose, TupleToArray, Unique,
                         UniqueWithPad, UnsortedSegmentMax, UnsortedSegmentMin, UnsortedSegmentProd,
                         UnsortedSegmentSum, Unstack, UpperBound, Zeros, ZerosLike, AffineGrid, Bincount, CheckNumerics,
-                        HammingWindow, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
+                        HammingWindow, Identity, IdentityN, IndexFill, LeftShift, ListDiff, LogSpace, MatrixBandPart,
                         MatrixDiagPartV3, MatrixDiagV3, MatrixSetDiagV3, NonZero, Expand, Col2Im, ConjugateTranspose,
                         FillDiagonal, Fills, ResizeNearestNeighborV2, RightShift, ScatterAddWithAxis,
                         ScatterNdMul, SegmentMean, SegmentProd, SegmentSum, SegmentMax, SegmentMin, Tril, Triu,
@@ -137,6 +137,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 
+
 __all__ = [
     'HSVToRGB',
     'CeLU',
@@ -226,7 +227,6 @@ __all__ = [
     'EmbeddingLookup',
     'Padding',
     'GatherD',
-    'Identity',
     'UniqueWithPad',
     'Concat',
     'Pack',
@@ -563,6 +563,7 @@ __all__ = [
     "Heaviside",
     "Histogram",
     "Hypot",
+    "Identity",
     "IdentityN",
     "IndexFill",
     "IsClose",

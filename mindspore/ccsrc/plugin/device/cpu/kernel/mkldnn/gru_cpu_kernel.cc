@@ -34,28 +34,18 @@ using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-bool GRUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
-
+bool GRUCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kGRUInputsNum || outputs.size() != kGRUOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kGRUInputsNum << " and " << kGRUOutputsNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GRUV2>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast GRUV2 ops failed!";
-    return false;
-  }
-
-  bidirectional_ = kernel_ptr->get_bidirectional();
-  input_size_ = kernel_ptr->get_input_size();
-  hidden_size_ = kernel_ptr->get_hidden_size();
-  num_layers_ = kernel_ptr->get_num_layers();
-  has_bias_ = kernel_ptr->get_has_bias();
+  bidirectional_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kBidirectional));
+  input_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kInputSize));
+  hidden_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kHiddenSize));
+  num_layers_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kNumLayers));
+  has_bias_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kHasBias));
   constexpr int kBidirectional = 2;
   num_directions_ = 1;
   if (bidirectional_) {
@@ -78,21 +68,20 @@ bool GRUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   weights_dims_ = {num_layers_, num_directions_, input_size_, kGateNum, hidden_size_};
   weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kGateNum, hidden_size_};
   bias_dims_ = {num_layers_, num_directions_, kGateNum, hidden_size_};
-  is_training_ =
-    base_operator->HasAttr(kAttrIsTraining) ? GetValue<bool>(base_operator->GetAttr(kAttrIsTraining)) : true;
+  is_training_ = KernelMod::primitive_->HasAttr(kAttrIsTraining)
+                   ? GetValue<bool>(KernelMod::primitive_->GetAttr(kAttrIsTraining))
+                   : true;
   return true;
 }
 
-void GRUCpuKernelMod::InitOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+void GRUCpuKernelMod::InitOutputSize(const std::vector<KernelTensor *> &outputs) {
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
   size_t len = reserve_size_ / IntToSize(kGateNum);
   outputs[kOutputWorkSpaceIndex]->SetShapeVector({SizeToLong(len), 1});
 }
 
-int GRUCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int GRUCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -162,15 +151,17 @@ int GRUCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   return KRET_OK;
 }
 
-bool GRUCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                             const std::vector<kernel::AddressPtr> &outputs) {
-  SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->addr);
-  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_);
+bool GRUCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                             const std::vector<kernel::KernelTensor *> &,
+                             const std::vector<kernel::KernelTensor *> &outputs) {
+  SetDataHandle(user_weights_memory_, inputs[kInputWeightIndex]->device_ptr());
+  SetDataHandle(user_weights_h_memory_,
+                reinterpret_cast<float *>(inputs[kInputWeightIndex]->device_ptr()) + weight_size_);
   Reorder(&user_weights_memory_, &weights_memory_);
   Reorder(&user_weights_h_memory_, &weights_h_memory_);
   if (has_bias_) {
     SetDataHandle(bias_memory_,
-                  reinterpret_cast<float *>(inputs[kInputWeightIndex]->addr) + weight_size_ + weight_h_size_);
+                  reinterpret_cast<float *>(inputs[kInputWeightIndex]->device_ptr()) + weight_size_ + weight_h_size_);
   } else {
     auto size = GetSize(bias_desc_);
     auto ret = memset_s(GetDataHandle(bias_memory_), size, 0, size);
@@ -179,15 +170,15 @@ bool GRUCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
     }
   }
   // set handle
-  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[1]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[1]->device_ptr());
   SetArgumentHandle(DNNL_ARG_WEIGHTS_LAYER, GetDataHandle(weights_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_ITER, GetDataHandle(weights_h_memory_));
   SetArgumentHandle(DNNL_ARG_BIAS, GetDataHandle(bias_memory_));
-  SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->addr);
+  SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->device_ptr());
   if (is_training_) {
-    SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[kOutputWorkSpaceIndex]->addr);
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[kOutputWorkSpaceIndex]->device_ptr());
   }
   ExecutePrimitive();
   return true;

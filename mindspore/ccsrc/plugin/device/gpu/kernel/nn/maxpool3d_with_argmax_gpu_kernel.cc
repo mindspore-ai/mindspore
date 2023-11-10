@@ -34,8 +34,8 @@ constexpr int kIndexRevrseH = -2;
 constexpr int kIndexRevrseD = -3;
 
 template <typename T, typename S>
-bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
+bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -51,15 +51,12 @@ bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<AddressP
   return true;
 }
 
-bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::MaxPool3DWithArgmax>(base_operator->GetPrim());
-  auto ksize = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
-  auto pads = kernel_ptr->get_pads();
-  auto dilation = kernel_ptr->get_dilation();
+bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
+  auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
   if (ksize.size() < kMinAttrSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attr 'ksize' dims should not less than " << kMinAttrSize
                   << ", but got " << ksize.size();
@@ -107,11 +104,9 @@ bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int MaxPool3DWithArgmaxFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPool3DWithArgmaxFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -125,8 +120,8 @@ int MaxPool3DWithArgmaxFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
                   << outputs.size();
     return KRET_RESIZE_FAILED;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
   if (is_null_input_) {

@@ -22,6 +22,7 @@
 #include <utility>
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
+#include "mindspore/core/ops/op_def.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
@@ -157,6 +158,11 @@ bool IrExportBuilder::BuildPrimitives() {
 
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
+    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+      prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION);
+    } else {
+      prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE);
+    }
 
     auto real_prim = GetValueWithoutDoSignature(prim)->cast<PrimitivePtr>();
     if (real_prim != nullptr) {
@@ -500,7 +506,7 @@ bool IrExportBuilder::SetQuantizationParamToAttrProto(const std::shared_ptr<Quan
 bool IrExportBuilder::SetFunctorToAttrProto(const FunctorPtr &func, mind_ir::AttributeProto *const attr_proto) {
   auto *functor_proto = attr_proto->mutable_functor();
   attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FUNCTOR);
-  if (func->isa<ShapeCalcFunctor>()) {
+  if (func->isa<ShapeCalcBaseFunctor>()) {
     functor_proto->set_type(mind_ir::FunctorProto_FunctorType_SHAPE_CALC_FUNCTOR);
   } else {
     MS_LOG(ERROR) << "Unknown functor: " << func->ToString();

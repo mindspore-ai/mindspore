@@ -23,8 +23,17 @@ namespace mindspore {
 namespace kernel {
 KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto kernel_mod_ptr = std::make_shared<AclKernelMod>(anf_node);
+  auto kernel_mod_ptr = std::make_shared<AclKernelMod>();
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
+
+  if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
+         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
+                      << "] failed.";
+  }
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
   MS_EXCEPTION_IF_NULL(build_info);
@@ -36,14 +45,16 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  kernel_mod_ptr->SetValueDependArgs(abstract::GetValueDependArgIndices(cnode));
   if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
     return kernel_mod_ptr;
   }
 
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  kernel_mod_ptr->SetPrimitive(primitive);
-  std::string format = transform::AclHelper::GetFormatFromAttr(primitive);
+  kernel_mod_ptr->CreateAclConverter();
+  std::string format = transform::AclHelper::GetFormatFromAttr(kernel_mod_ptr->primitive());
+  if (format.empty()) {
+    format = kernel_mod_ptr->GetFormatFromInput(input_kernel_tensors);
+  }
   for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
     auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, i);
     kernel_mod_ptr->PackageInput(i, format, &shape);
@@ -53,7 +64,9 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     kernel_mod_ptr->PackageOutput(i, shape);
   }
   kernel_mod_ptr->SetNeedConvertHostTensor(true);
-  kernel_mod_ptr->CreateAclConverter();
+  if (kernel::CheckResizeCondition(cnode)) {
+    kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
+  }
   return kernel_mod_ptr;
 }
 }  // namespace kernel

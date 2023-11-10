@@ -1,0 +1,16 @@
+#operator logical_or
+logical_or:
+    args:
+        input:
+            dtype: tensor
+            type_cast: bool
+        other:
+            dtype: tensor
+            type_cast: bool
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: logical_or_

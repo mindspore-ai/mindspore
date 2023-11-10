@@ -36,23 +36,19 @@ namespace {
 constexpr char kSupportedReduceOp[] = "sum";
 }  // namespace
 
-bool AllReduceCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool AllReduceCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto group = GetValue<std::string>(prim->GetAttr(GROUP));
+  auto group = GetValue<std::string>(primitive_->GetAttr(GROUP));
   if (group != kMCCLGlobalGroupName) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
-  auto reduce_op = GetValue<std::string>(prim->GetAttr(OP));
+  auto reduce_op = GetValue<std::string>(primitive_->GetAttr(OP));
   if (reduce_op != kSupportedReduceOp) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support reduce sum on CPU, but got " << reduce_op;
   }
@@ -68,18 +64,18 @@ std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }
   std::size_t data_size = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    data_size += inputs[i]->size;
+    data_size += inputs[i]->size();
   }
-  bool ret = MsCollectiveCommLib::GetInstance().AllReduce(inputs[0]->addr, outputs[0]->addr, data_size,
+  bool ret = MsCollectiveCommLib::GetInstance().AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), data_size,
                                                           kNumberTypeFloat32, Reduce_Sum, kMCCLGlobalGroupName);
   if (!ret) {
     MS_LOG(ERROR) << "AllReduceCPUKernelMod launch failed.";

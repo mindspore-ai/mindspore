@@ -1,0 +1,42 @@
+trace:
+  description: |
+    Computes the sum of the diagonal elements in a 2-D matrix.
+
+    Note:
+        Input must be matrix, and complex number is not supported at present.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
+
+    Outputs:
+        Tensor, 0D Tensor with 1 element, it has the same data type as input `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the dimension of `x` is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        15.0
+        >>> x = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        18.0
+        >>> x = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        24.0

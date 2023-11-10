@@ -1,0 +1,10 @@
+#operator expand_dims
+expand_dims:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor

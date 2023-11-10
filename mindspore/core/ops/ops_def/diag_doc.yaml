@@ -1,0 +1,27 @@
+diag:
+    description: |
+        Constructs a diagonal tensor with a given diagonal values.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Refer to :func:`mindspore.ops.diag` for more details.
+
+        Args:
+            - **input_x** (Tensor) - The input tensor.
+
+        Returns:
+            Tensor, has the same dtype as the `input_x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
+            >>> output = ops.diag(input_x)
+            >>> print(output)
+            [[1 0 0 0]
+             [0 2 0 0]
+             [0 0 3 0]
+             [0 0 0 4]]

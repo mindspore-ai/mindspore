@@ -49,12 +49,8 @@ std::vector<KernelAttr> MapTensorGetGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorGetGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorGetGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorGetGradInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorGetGradOutputNum, kernel_name_);
@@ -78,10 +74,8 @@ bool MapTensorGetGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MapTensorGetGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorGetGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
@@ -107,15 +101,18 @@ int MapTensorGetGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-void MapTensorGetGradGpuKernelMod::SyncOutputShape() {
-  MS_EXCEPTION_IF_CHECK_FAIL(outputs_.size() == 1, "The outputs number of kernel MapTensorGetGrad should be 1");
-  outputs_[0]->SetShapeVector(value_dims_);
+void MapTensorGetGradGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The outputs number of kernel MapTensorGetGrad should be 1");
+  outputs[0]->SetShapeVector(value_dims_);
+  outputs[0]->set_size(LongToSize(std::accumulate(
+    value_dims_.begin(), value_dims_.end(), UnitSizeInBytes(outputs[0]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 template <typename KeyType>
-bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // The real hash table should be accessed by user data.
   if (output_user_data_.empty()) {
     MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
@@ -131,9 +128,9 @@ bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
     auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, float>>(kUserDataData);
     MS_EXCEPTION_IF_NULL(hash_table_ptr);
 
-    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                  inputs.at(kIndex1)->size / sizeof(KeyType),
-                                  reinterpret_cast<float *>(inputs.at(kIndex2)->addr), stream_ptr);
+    return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                  inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                  reinterpret_cast<float *>(inputs.at(kIndex2)->device_ptr()), stream_ptr);
   } else {
     MS_LOG(EXCEPTION) << "GPU hash table does not support value type:" << value_type;
   }
@@ -141,17 +138,6 @@ bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 }
 
 void MapTensorGetGradGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &dout_shape) {
-  // Put size one for map tensor input, the real memory will allocate by gpu hash table dynamically.
-  input_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_keys_type_size_);
-
-  auto dout_size = std::accumulate(dout_shape.begin(), dout_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("dout size", dout_size);
-  input_size_list_.push_back(dout_size * input_dout_type_size_);
-
   // Put size one for map tensor output, the real memory will allocate by gpu hash table dynamically.
   output_size_list_.push_back(kSizeOne);
 }

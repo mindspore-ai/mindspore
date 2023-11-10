@@ -37,36 +37,22 @@ FakeQuantPerChannelGpuKernelMod::FakeQuantPerChannelGpuKernelMod()
       quant_max_(0),
       global_step_(0) {}
 
-bool FakeQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  kernel_node_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kSize3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-  }
-
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kSize1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-  }
-
+bool FakeQuantPerChannelGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   // get attribute
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
-  training_ = GetValue<bool>(prim->GetAttr("training"));
-  symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
-  narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
-  quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(primitive_->GetAttr("num_bits")));
+  training_ = GetValue<bool>(primitive_->GetAttr("training"));
+  symmetric_ = GetValue<bool>(primitive_->GetAttr("symmetric"));
+  narrow_range_ = GetValue<bool>(primitive_->GetAttr("narrow_range"));
+  quant_delay_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("quant_delay")));
 
   if (num_bits_ <= kMinQuantBit || num_bits_ >= kMaxQuantBit) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of num_bits should be in (2, 16), but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of num_bits should be in (2, 16), but got "
                       << num_bits_;
   }
 
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of quant_delay_ cannot be less than 0, but got "
                       << quant_delay_;
   }
 
@@ -76,30 +62,34 @@ bool FakeQuantPerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   if (narrow_range_) {
     quant_min_++;
   }
-
-  // shape info for gpu
-  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-  if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', input cannot be empty, but got empty";
-  }
-  num_channels_ = LongToInt(input_shape[0]);
-  input_size_ = sizeof(float) * SizeOf(input_shape);
-  InitSizeLists();
   return true;
 }
 
-void FakeQuantPerChannelGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);                        // input in tensor
-  input_size_list_.push_back(sizeof(float) * num_channels_);      // min one scalar
-  input_size_list_.push_back(sizeof(float) * num_channels_);      // max on scalar
+void FakeQuantPerChannelGpuKernelMod::SetSizeLists() {
   output_size_list_.push_back(input_size_);                       // output in tensor
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // scale in channel
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // min in channel
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // max in channel
+}
+
+int FakeQuantPerChannelGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  // shape info for gpu
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+  if (is_null_input_) {
+    SetSizeLists();
+    return KRET_UNKNOWN_SHAPE;
+  }
+  if (input_shape.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input cannot be empty, but got empty";
+  }
+  num_channels_ = LongToInt(input_shape[0]);
+  input_size_ = sizeof(float) * SizeOf(input_shape);
+  SetSizeLists();
+  return KRET_OK;
 }
 
 void FakeQuantPerChannelGpuKernelMod::CalFakeQuantize(const float *input, float *output, float *input_min,
@@ -113,9 +103,9 @@ void FakeQuantPerChannelGpuKernelMod::CalFakeQuantize(const float *input, float 
   CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
-bool FakeQuantPerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeQuantPerChannelGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -132,10 +122,9 @@ bool FakeQuantPerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inpu
     if (global_step_ >= quant_delay_) {
       CalFakeQuantize(input, output, input_min, input_max, nudge_min, nudge_max, scale, stream_ptr);
     } else {
-      CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
-                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "Copy gpu memory failed.");
+      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
+                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                        "Copy gpu memory failed.");
     }
     global_step_++;
   } else {

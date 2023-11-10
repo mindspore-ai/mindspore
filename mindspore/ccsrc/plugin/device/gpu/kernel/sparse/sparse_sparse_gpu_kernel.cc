@@ -31,9 +31,8 @@ constexpr size_t kSparseSparseIndex4 = 4;
 constexpr size_t kSparseSparseIndex5 = 5;
 }  // namespace
 
-bool SparseSparseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SparseSparseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseOutputsNum, kernel_name_);
   if (inputs.empty() || outputs.empty()) {
@@ -53,9 +52,8 @@ bool SparseSparseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseSparseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -89,10 +87,6 @@ int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   size_t ab_status1 = (a_values_num + b_values_num) * sizeof(int64_t);
   size_t ab_status2 = (a_values_num + b_values_num) * sizeof(int64_t);
 
-  input_size_list_.push_back(a_indices_size * indices_size_);
-  input_size_list_.push_back(a_values_size * values_size_);
-  input_size_list_.push_back(b_indices_size * indices_size_);
-  input_size_list_.push_back(b_values_size * values_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * rank_ * indices_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * values_size_);
   workspace_size_list_.push_back(ab_status);
@@ -103,9 +97,9 @@ int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T, typename S>
-bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto a_indices_ptr = GetDeviceAddress<T>(inputs, kSparseSparseIndex0);
   MS_EXCEPTION_IF_NULL(a_indices_ptr);
@@ -132,10 +126,10 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   auto ab_status_ptr2 = GetDeviceAddress<int64_t>(workspace, kSparseSparseIndex3);
   MS_EXCEPTION_IF_NULL(ab_status_ptr2);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemsetAsync(sum_ptr, static_cast<int64_t>(1), workspace.at(kSparseSparseIndex1)->size, cuda_stream_),
+    cudaMemsetAsync(sum_ptr, static_cast<int64_t>(1), workspace.at(kSparseSparseIndex1)->size(), cuda_stream_),
     "For SparseSparseOperators, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(ab_status_ptr1, static_cast<int64_t>(kSparseSparseIndex3),
-                                                    workspace.at(kSparseSparseIndex2)->size, cuda_stream_),
+                                                    workspace.at(kSparseSparseIndex2)->size(), cuda_stream_),
                                     "For SparseSparseOperators, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseSparseOperators, cudaStreamSynchronize failed.");
@@ -177,13 +171,18 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   return true;
 }
 
-void SparseSparseGpuKernelMod::SyncOutputShape() {
+void SparseSparseGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseSparseOperators, cudaStreamSynchronize failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int64_t>(rank_)};
   std::vector<int64_t> sum_values_shape = {real_output_size_};
-  outputs_[kSparseSparseIndex0]->SetShapeVector(sum_indices_shape);
-  outputs_[kSparseSparseIndex1]->SetShapeVector(sum_values_shape);
+  outputs[kSparseSparseIndex0]->SetShapeVector(sum_indices_shape);
+  outputs[kSparseSparseIndex1]->SetShapeVector(sum_values_shape);
+  outputs[kSparseSparseIndex0]->set_size(LongToSize(real_output_size_ * rank_) *
+                                         UnitSizeInBytes(outputs[kSparseSparseIndex0]->dtype_id()));
+  outputs[kSparseSparseIndex1]->set_size(LongToSize(real_output_size_) *
+                                         UnitSizeInBytes(outputs[kSparseSparseIndex1]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, SparseSparseGpuKernelMod::SparseSparseFunc>> SparseSparseGpuKernelMod::func_list_ = {

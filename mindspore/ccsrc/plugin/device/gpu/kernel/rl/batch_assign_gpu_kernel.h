@@ -30,16 +30,17 @@ class BatchAssignKernelMod : public BatchAssignBaseMod {
   BatchAssignKernelMod();
   ~BatchAssignKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t elements_num_;
   bool lock_;
 };
 
-MS_REG_GPU_KERNEL(BatchAssign, BatchAssignKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -35,9 +35,7 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
   DenseToCSRSparseMatrixKernelMod() { handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle(); }
   ~DenseToCSRSparseMatrixKernelMod() {}
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_name = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
     if (!is_match) {
@@ -47,13 +45,12 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -90,12 +87,13 @@ class DenseToCSRSparseMatrixKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename S>
   void ProcessBeforeLaunch(S *dev_nd_strides, S *dev_nd_indices, S *dense_shape_addr, void *stream_ptr);
-  using LaunchFunc = std::function<bool(DenseToCSRSparseMatrixKernelMod *, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  using LaunchFunc =
+    std::function<bool(DenseToCSRSparseMatrixKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
   LaunchFunc kernel_func_;
 };

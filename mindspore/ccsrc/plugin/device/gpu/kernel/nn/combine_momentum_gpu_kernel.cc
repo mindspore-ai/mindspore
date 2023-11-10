@@ -20,7 +20,7 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 5, true)
                           .AddInputAttr(kNumberTypeFloat32)  // variable
                           .AddInputAttr(kNumberTypeFloat32)  // accumulation
                           .AddInputAttr(kNumberTypeFloat32)  // learning_rate
@@ -30,7 +30,7 @@ MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         CombineMomentumGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 5, true)
                           .AddInputAttr(kNumberTypeFloat16)  // variable
                           .AddInputAttr(kNumberTypeFloat16)  // accumulation
                           .AddInputAttr(kNumberTypeFloat16)  // learning_rate
@@ -40,7 +40,7 @@ MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         CombineMomentumGpuKernelMod, half, half, half)
 MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 5, true)
                           .AddInputAttr(kNumberTypeFloat16)  // variable
                           .AddInputAttr(kNumberTypeFloat16)  // accumulation
                           .AddInputAttr(kNumberTypeFloat32)  // learning_rate
@@ -50,7 +50,7 @@ MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         CombineMomentumGpuKernelMod, half, float, half)
 MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 5, true)
                           .AddInputAttr(kNumberTypeFloat32)  // variable
                           .AddInputAttr(kNumberTypeFloat32)  // accumulation
                           .AddInputAttr(kNumberTypeFloat32)  // learning_rate
@@ -60,7 +60,7 @@ MS_REG_GPU_KERNEL_THREE(CombineMomentum,
                         CombineMomentumGpuKernelMod, float, float, half)
 MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 6, true)
                           .AddInputAttr(kNumberTypeFloat32)  // scale
                           .AddInputAttr(kNumberTypeFloat32)  // variable
                           .AddInputAttr(kNumberTypeFloat32)  // accumulation
@@ -71,7 +71,7 @@ MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
                         CombineMomentumGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 6, true)
                           .AddInputAttr(kNumberTypeFloat32)  // scale
                           .AddInputAttr(kNumberTypeFloat32)  // variable
                           .AddInputAttr(kNumberTypeFloat32)  // accumulation
@@ -82,7 +82,7 @@ MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
                         CombineMomentumGpuKernelMod, float, float, half)
 MS_REG_GPU_KERNEL_THREE(CombineWeightDecayScaleMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 7, true)
                           .AddInputAttr(kNumberTypeFloat32)  // weight decay
                           .AddInputAttr(kNumberTypeFloat32)  // scale
                           .AddInputAttr(kNumberTypeFloat32)  // variable
@@ -94,7 +94,7 @@ MS_REG_GPU_KERNEL_THREE(CombineWeightDecayScaleMomentum,
                         CombineMomentumGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(CombineWeightDecayScaleMomentum,
                         KernelAttr()
-                          .AddAllSameAttr(true)
+                          .AddAllSameAttr(true, 7, true)
                           .AddInputAttr(kNumberTypeFloat32)  // weight decay
                           .AddInputAttr(kNumberTypeFloat32)  // scale
                           .AddInputAttr(kNumberTypeFloat32)  // variable

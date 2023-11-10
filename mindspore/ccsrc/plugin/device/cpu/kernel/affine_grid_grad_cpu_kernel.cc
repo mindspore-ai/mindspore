@@ -57,33 +57,29 @@ const int kXSizeH4D = 3;
 const int kXSizeW4D = 4;
 }  // namespace
 
-bool AffineGridGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
-  auto type_id = inputs[0]->GetDtype();
+bool AffineGridGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
+  auto type_id = inputs[0]->dtype_id();
   input_info_.push_back(type_id);
-  type_id = inputs[1]->GetDtype();
+  type_id = inputs[1]->dtype_id();
   input_info_.push_back(type_id);
   return true;
 }
 
-int AffineGridGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AffineGridGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
+  x_size_dims_ = inputs[1]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
 template <typename T, typename T0>
-void AffineGridGradCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+void AffineGridGradCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
 
   int64_t H = x_size_data[kXSizeH3D];
@@ -114,9 +110,9 @@ void AffineGridGradCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::Addre
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_3D(const std::vector<kernel::AddressPtr> &inputs,
+Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_3D(const std::vector<kernel::KernelTensor *> &inputs,
                                                               Eigen::VectorXf vecX, Eigen::VectorXf vecY) {
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
   int64_t H = x_size_data[kXSizeH3D];
   int64_t W = x_size_data[kXSizeW3D];
@@ -136,13 +132,13 @@ Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_3D(const std::vector<
 }
 
 template <typename T, typename T0>
-void AffineGridGradCpuKernelMod::DoCompute_3D(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs, Eigen::MatrixXf all) {
-  auto data_y_grad = reinterpret_cast<T *>(inputs[0]->addr);
+void AffineGridGradCpuKernelMod::DoCompute_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs, Eigen::MatrixXf all) {
+  auto data_y_grad = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_y_grad);
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
   int64_t N = x_size_data[0];
   int64_t H = x_size_data[kXSizeH3D];
@@ -175,9 +171,9 @@ void AffineGridGradCpuKernelMod::DoCompute_3D(const std::vector<kernel::AddressP
 }
 
 template <typename T, typename T0>
-void AffineGridGradCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+void AffineGridGradCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
   int64_t D = x_size_data[kXSizeD4D];
   int64_t H = x_size_data[kXSizeH4D];
@@ -217,10 +213,10 @@ void AffineGridGradCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::Addre
 }
 
 template <typename T0>
-Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_4D(const std::vector<kernel::AddressPtr> &inputs,
+Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_4D(const std::vector<kernel::KernelTensor *> &inputs,
                                                               Eigen::VectorXf vecX, Eigen::VectorXf vecY,
                                                               Eigen::VectorXf vecZ) {
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
   int64_t D = x_size_data[kXSizeD4D];
   int64_t H = x_size_data[kXSizeH4D];
@@ -243,13 +239,13 @@ Eigen::MatrixXf AffineGridGradCpuKernelMod::make_base_grid_4D(const std::vector<
 }
 
 template <typename T, typename T0>
-void AffineGridGradCpuKernelMod::DoCompute_4D(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs, Eigen::MatrixXf all) {
-  auto data_y_grad = reinterpret_cast<T *>(inputs[0]->addr);
+void AffineGridGradCpuKernelMod::DoCompute_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs, Eigen::MatrixXf all) {
+  auto data_y_grad = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_y_grad);
-  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->addr);
+  auto x_size_data = reinterpret_cast<T0 *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(x_size_data);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
   int64_t N = x_size_data[0];
   int64_t D = x_size_data[kXSizeD4D];
@@ -286,8 +282,8 @@ void AffineGridGradCpuKernelMod::DoCompute_4D(const std::vector<kernel::AddressP
 }
 
 template <typename T, typename T0>
-bool AffineGridGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool AffineGridGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (x_size_dims_[0] == kLenXSize3D) {
     LaunchKernel_3D<T, T0>(inputs, outputs);
   } else if (x_size_dims_[0] == kLenXSize4D) {
@@ -296,8 +292,8 @@ bool AffineGridGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   return true;
 }
 
-bool AffineGridGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool AffineGridGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs) {
   constexpr int INPUTSNUM = 1;
   TypeId input_type = input_info_[0];
   TypeId x_size_type = input_info_[INPUTSNUM];

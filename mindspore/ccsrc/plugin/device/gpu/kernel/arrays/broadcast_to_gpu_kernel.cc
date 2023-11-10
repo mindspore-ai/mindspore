@@ -20,9 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool BroadcastToGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool BroadcastToGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -33,11 +32,10 @@ bool BroadcastToGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int BroadcastToGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BroadcastToGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto inp_shape = inputs[kIndex0]->GetShapeVector();
@@ -53,9 +51,9 @@ int BroadcastToGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   if (is_broadcast_) {

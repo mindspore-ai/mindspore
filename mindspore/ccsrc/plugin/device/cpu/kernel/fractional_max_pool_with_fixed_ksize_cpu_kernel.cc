@@ -58,29 +58,24 @@ const size_t kOutputShapeLength2 = 2;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                       const std::vector<KernelTensorPtr> &inputs,
-                                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  input_type_ = inputs[kInputIndex0]->GetDtype();
-  random_samples_type_ = inputs[kInputIndex1]->GetDtype();
-  argmax_type_ = outputs[kOutputIndex1]->GetDtype();
+  input_type_ = inputs[kInputIndex0]->dtype_id();
+  random_samples_type_ = inputs[kInputIndex1]->dtype_id();
+  argmax_type_ = outputs[kOutputIndex1]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolWithFixedKsize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  output_shape_ = kernel_ptr->get_output_shape();
-  ksize_ = kernel_ptr->get_ksize();
-  data_format_ = kernel_ptr->get_data_format();
+  output_shape_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("output_shape"));
+  ksize_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   if (data_format_ != "NCHW") {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the attr data_format must be NCHW.";
   }
@@ -112,16 +107,14 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &ba
   return true;
 }
 
-int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                        const std::vector<KernelTensorPtr> &inputs,
-                                                        const std::vector<KernelTensorPtr> &outputs,
-                                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  random_samples_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
 
   input_n_ = input_shape_[kInputDimIndexN];
   input_c_ = input_shape_[kInputDimIndexC];
@@ -158,9 +151,9 @@ int FractionalMaxPoolWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &b
   return ret;
 }
 
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   switch (input_type_) {
@@ -181,9 +174,9 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<Addre
 }
 
 template <typename scalar_t>
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(const std::vector<AddressPtr> &inputs,
-                                                                                 const std::vector<AddressPtr> &outputs,
-                                                                                 TypeId random_samples_type_) const {
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+  TypeId random_samples_type_) const {
   switch (random_samples_type_) {
     case kNumberTypeFloat16:
       return ComputeTemplate<scalar_t, float16>(inputs, outputs);
@@ -198,12 +191,12 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType
 }
 
 template <typename scalar_t, typename random_sample_t>
-bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &outputs) const {
-  scalar_t *input_ptr = static_cast<scalar_t *>(inputs[0]->addr);
-  random_sample_t *random_samples_ptr = static_cast<random_sample_t *>(inputs[1]->addr);
-  scalar_t *output_ptr = static_cast<scalar_t *>(outputs[0]->addr);
-  int64_t *argmax_ptr = static_cast<int64_t *>(outputs[1]->addr);
+bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &outputs) const {
+  scalar_t *input_ptr = static_cast<scalar_t *>(inputs[0]->device_ptr());
+  random_sample_t *random_samples_ptr = static_cast<random_sample_t *>(inputs[1]->device_ptr());
+  scalar_t *output_ptr = static_cast<scalar_t *>(outputs[0]->device_ptr());
+  int64_t *argmax_ptr = static_cast<int64_t *>(outputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(random_samples_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);

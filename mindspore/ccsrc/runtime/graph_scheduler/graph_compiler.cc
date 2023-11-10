@@ -312,7 +312,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(node->input(0));
     bool enable = false;
     if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-      if (kernel::IfNeedSkipResize(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
+      if (!kernel::CheckResizeCondition(node) && graph->has_flag(kFlagPyNativeRunInGraph)) {
         MS_LOG(INFO) << "Enable Run Graph By Single Op";
         enable = true;
       }
@@ -802,7 +802,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     // dynamic shape pass of graphmode
     if (graph->is_dynamic_shape()) {
       if (!graph->is_graph_run_mode()) {
-        opt::DynamicShapeConvertPass(graph);
+        // Temporarily disable CustomActor for asynchronous InferShape and Resize for the dynamic shape scenario,
+        // and implement the corresponding capability through direct InferShape and Resize in KernelActor.
+        // opt::DynamicShapeConvertPass(graph);
       }
       auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
       MS_EXCEPTION_IF_NULL(profiler_manage_inst);
@@ -927,11 +929,11 @@ void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernel
   session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
 }
 
-void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<tensor::TensorPtr> &input_tensor,
+void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
                                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
-  session_->ReleaseForwardOpOutput(input_tensor, forward_op_output_tensor_id);
+  session_->ReleaseForwardOpOutput(input_values, forward_op_output_tensor_id);
 }
 
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,

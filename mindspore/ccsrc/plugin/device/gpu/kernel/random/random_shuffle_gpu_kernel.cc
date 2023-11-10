@@ -40,14 +40,13 @@ constexpr size_t kRandomShuffleOutputsNum = 1;
 constexpr size_t kScalarShapeSize = 1;
 }  // namespace
 
-bool RandomShuffleGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::RandomShuffle>(base_operator->GetPrim());
-  batch_rank_ = LongToSize(kernel_ptr->get_batch_rank());
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+bool RandomShuffleGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank)));
+  }
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -59,12 +58,11 @@ bool RandomShuffleGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int RandomShuffleGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int RandomShuffleGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRandomShuffleInputsNum, kernel_name_);
 
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -107,9 +105,9 @@ std::vector<int> RandomShuffleGpuKernelMod::GetShuffleIndex() {
 }
 
 template <typename T>
-bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRandomShuffleInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRandomShuffleOutputsNum, kernel_name_);
 
@@ -118,7 +116,7 @@ bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto *output_addr = GetDeviceAddress<T>(outputs, 0);
   if (input_shape_.empty() || input_shape_[batch_rank_] <= 1) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "RandomShuffle cudaMemcpy failed.");
     return true;

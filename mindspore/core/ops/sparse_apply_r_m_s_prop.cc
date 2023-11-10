@@ -38,17 +38,17 @@ abstract::TupleShapePtr SparseApplyRMSPropInferShape(const PrimitivePtr &primiti
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_shape_ptr = input_args[0]->BuildShape();
-  auto ms_shape_ptr = input_args[1]->BuildShape();
-  auto mom_shape_ptr = input_args[2]->BuildShape();
+  auto var_shape_ptr = input_args[0]->GetShape();
+  auto ms_shape_ptr = input_args[1]->GetShape();
+  auto mom_shape_ptr = input_args[2]->GetShape();
 
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto ms_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(ms_shape_ptr)[kShape];
   auto mom_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mom_shape_ptr)[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   auto lr_shape_rank = SizeToLong(lr_shape.size());
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
 
   // Args lr must be scalar
   const int64_t input_num = 0;
@@ -95,16 +95,16 @@ TuplePtr SparseApplyRMSPropInferType(const PrimitivePtr &prim, const std::vector
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (!input_args[kInputIndex4]->BuildType()->isa<TensorType>() ||
-      !input_args[kInputIndex5]->BuildType()->isa<TensorType>()) {
+  if (!input_args[kInputIndex4]->GetType()->isa<TensorType>() ||
+      !input_args[kInputIndex5]->GetType()->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For SparseApplyRMSProp, 'grad' or 'indices' should be Tensor.";
   }
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto ms_type = input_args[kInputIndex1]->BuildType();
-  auto mom_type = input_args[kInputIndex2]->BuildType();
-  auto lr_type = input_args[kInputIndex3]->BuildType();
-  auto grad_type = input_args[kInputIndex4]->BuildType();
-  auto indices_type = input_args[kInputIndex5]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto ms_type = input_args[kInputIndex1]->GetType();
+  auto mom_type = input_args[kInputIndex2]->GetType();
+  auto lr_type = input_args[kInputIndex3]->GetType();
+  auto grad_type = input_args[kInputIndex4]->GetType();
+  auto indices_type = input_args[kInputIndex5]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
 
   // Args ms、mom、grad must have the same type as var

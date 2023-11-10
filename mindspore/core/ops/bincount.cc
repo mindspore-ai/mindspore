@@ -37,15 +37,16 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto arr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+  auto arr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(arr_shape) || IsDynamicRank(size_shape) || IsDynamicRank(w_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -57,14 +58,15 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
     return std::make_shared<abstract::Shape>(shape_out);
   }
   (void)CheckAndConvertUtils::CheckInteger("size", SizeToLong(size_shape.size()), kEqual, 0, primitive->name());
-  auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
+  auto size_value_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
-  if (!size_value_ptr->isa<ValueAny>() && !size_value_ptr->isa<None>()) {
-    if (!size_value_ptr->isa<tensor::Tensor>()) {
+  if (IsValueKnown(size_value_ptr)) {
+    if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
       MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the input argument[size]"
                                << " must be a tensor, but got " << size_value_ptr->ToString();
     }
-    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("size", size_value_ptr, primitive->name());
+    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("size", size_value_ptr, primitive->name(),
+                                                               input_args[kInputIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("size", out_shape, primitive->name());
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
@@ -75,12 +77,12 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
 TypePtr BincountInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_type = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->GetType(), valid_type,
                                                    primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->GetType(), valid_type,
                                                    primitive->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32, kInt64};
-  auto weights_type = input_args[kInputIndex2]->BuildType();
+  auto weights_type = input_args[kInputIndex2]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("weights", weights_type, valid_types, primitive->name());
 }
 }  // namespace

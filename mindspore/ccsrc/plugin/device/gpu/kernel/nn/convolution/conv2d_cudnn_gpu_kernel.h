@@ -95,13 +95,13 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
   void CalConv2dPadGradNHWC(const ConvolutionArgs &conv_args, const void *padded_addr, void *dx_addr, void *stream_ptr);
 
   bool LaunchForward(const ConvolutionArgs &conv_args, const void *input_addr, const void *filter_addr,
-                     void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                     void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
 
   bool LaunchInputGrad(const ConvolutionArgs &conv_args, const void *dy_addr, const void *filter_addr, void *dx_addr,
-                       const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                       const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
 
   bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *dy_addr, const void *input_addr, void *dw_addr,
-                        const std::vector<AddressPtr> &workspace, void *stream_ptr) override;
+                        const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
 
   void CalInputGradPadList(ConvolutionArgs *conv_args, const ShapeVector &input_shape, const ShapeVector &filter_shape,
                            int h_index, int w_index) {
@@ -648,7 +648,7 @@ void ConvolutionCudnnGpuKernel<T>::CalConv2dPadGradNHWC(const ConvolutionArgs &c
 template <typename T>
 bool ConvolutionCudnnGpuKernel<T>::LaunchForward(const ConvolutionArgs &conv_args, const void *input_addr,
                                                  const void *filter_addr, void *output_addr,
-                                                 const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                 const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
   void *workspace_addr = nullptr;
   void *padded_addr = nullptr;
   if (workspace.size() >= 1) {
@@ -681,7 +681,7 @@ bool ConvolutionCudnnGpuKernel<T>::LaunchForward(const ConvolutionArgs &conv_arg
 template <typename T>
 bool ConvolutionCudnnGpuKernel<T>::LaunchInputGrad(const ConvolutionArgs &conv_args, const void *dy_addr,
                                                    const void *filter_addr, void *dx_addr,
-                                                   const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                   const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
   void *workspace_addr = nullptr;
   void *padded_addr = nullptr;
   if (workspace.size() >= 1) {
@@ -714,7 +714,7 @@ bool ConvolutionCudnnGpuKernel<T>::LaunchInputGrad(const ConvolutionArgs &conv_a
 template <typename T>
 bool ConvolutionCudnnGpuKernel<T>::LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *dy_addr,
                                                     const void *input_addr, void *dw_addr,
-                                                    const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                                                    const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
   void *workspace_addr = nullptr;
   void *padded_addr = nullptr;
   if (workspace.size() >= 1) {

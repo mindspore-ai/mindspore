@@ -32,14 +32,12 @@ class SoftplusGradGpuKernelMod : public NativeGpuKernelMod {
   SoftplusGradGpuKernelMod() = default;
   ~SoftplusGradGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -51,9 +49,9 @@ class SoftplusGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using SoftplusGradFunc = std::function<bool(SoftplusGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  using SoftplusGradFunc = std::function<bool(SoftplusGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                              const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, SoftplusGradFunc>> func_list_;
   SoftplusGradFunc kernel_func_;
   bool is_null_input_{false};

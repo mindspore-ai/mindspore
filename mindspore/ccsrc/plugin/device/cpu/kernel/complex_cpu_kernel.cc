@@ -48,10 +48,7 @@ bool NeedBroadcast(const std::vector<int64_t> &shape) {
 
 namespace mindspore {
 namespace kernel {
-bool ComplexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ComplexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -63,10 +60,8 @@ bool ComplexCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int ComplexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ComplexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -108,7 +103,8 @@ int ComplexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool ComplexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool ComplexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -118,19 +114,19 @@ bool ComplexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   if (!real_need_broadcast && !image_need_broadcast) {
     int64_t num = std::accumulate(out_shape_.begin(), out_shape_.end(), 1, std::multiplies<int64_t>());
     ShapeVector shape = {num};
-    auto real = EigenTensor(shape, inputs[kIndex0]->addr).tensor<T, 1>();
-    auto image = EigenTensor(shape, inputs[kIndex1]->addr).tensor<T, 1>();
-    auto out = EigenTensor(shape, outputs[kIndex0]->addr).tensor<std::complex<T>, 1>();
+    auto real = EigenTensor(shape, inputs[kIndex0]->device_ptr()).tensor<T, 1>();
+    auto image = EigenTensor(shape, inputs[kIndex1]->device_ptr()).tensor<T, 1>();
+    auto out = EigenTensor(shape, outputs[kIndex0]->device_ptr()).tensor<std::complex<T>, 1>();
     // cppcheck-suppress *
     out = real.binaryExpr(image, ComplexOp<T>());
     return true;
   }
 
   auto real_shape = EigenTensor(real_bcast_, nullptr).AsEigenDSizes<kMaxDims>();
-  auto real = EigenTensor(real_shape_, inputs[kIndex0]->addr).tensor<T, kMaxDims>().broadcast(real_shape);
+  auto real = EigenTensor(real_shape_, inputs[kIndex0]->device_ptr()).tensor<T, kMaxDims>().broadcast(real_shape);
   auto image_shape = EigenTensor(image_bcast_, nullptr).AsEigenDSizes<kMaxDims>();
-  auto image = EigenTensor(image_shape_, inputs[kIndex1]->addr).tensor<T, kMaxDims>().broadcast(image_shape);
-  auto out = EigenTensor(out_shape_, outputs[kIndex0]->addr).tensor<std::complex<T>, kMaxDims>();
+  auto image = EigenTensor(image_shape_, inputs[kIndex1]->device_ptr()).tensor<T, kMaxDims>().broadcast(image_shape);
+  auto out = EigenTensor(out_shape_, outputs[kIndex0]->device_ptr()).tensor<std::complex<T>, kMaxDims>();
   // cppcheck-suppress *
   out = real.binaryExpr(image, ComplexOp<T>());
   return true;

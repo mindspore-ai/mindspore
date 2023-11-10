@@ -64,8 +64,8 @@ abstract::ShapePtr SoftShrinkGradInferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                            primitive->name());
-  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   auto prim_name = primitive->name();
   CheckAndConvertUtils::Check("input_grad_shape", input_grad_shape, kEqual, input_x_shape, prim_name, TypeError);
   return std::make_shared<abstract::Shape>(input_grad_shape);
@@ -77,8 +77,8 @@ TypePtr SoftShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abst
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_grad", input_args[0]->BuildType());
-  (void)types.emplace("input_x", input_args[1]->BuildType());
+  (void)types.emplace("input_grad", input_args[0]->GetType());
+  (void)types.emplace("input_x", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

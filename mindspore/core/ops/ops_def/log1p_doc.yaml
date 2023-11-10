@@ -1,0 +1,27 @@
+log1p:
+    description: |
+        Returns the natural logarithm of one plus the input tensor element-wise.
+
+        .. math::
+            out_i = {log_e}(input_i + 1)
+
+        Args:
+            input (Tensor): The input tensor. The value must be greater than -1.
+
+        Returns:
+            Tensor, has the same shape as the `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = ops.log1p(x)
+            >>> print(output)
+            [0.6931472 1.0986123 1.609438 ]

@@ -1,0 +1,17 @@
+#operator resize_bicubic
+resize_bicubic:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor
+    align_corners:
+      dtype: bool
+      init: False
+    half_pixel_centers:
+      dtype: bool
+      init: False
+  returns:
+    output:
+      dtype: tensor

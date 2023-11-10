@@ -56,7 +56,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__or__", prim::kPrimBoolOr},       // P.bool_or
        {"__eq__", prim::kPrimBoolEq},       // P.bool_eq
        {"__ne__", std::string("bool_ne")},  // C.bool_ne
-       {"__bool__", prim::kPrimIdentity}    // P.identity
+       {"__bool__", prim::kPrimidentity}    // P.identity
      }},
     {kNumberTypeInt,
      {
@@ -67,16 +67,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow
-       {"__floor__", prim::kPrimIdentity},             // P.identity
-       {"__trunc__", prim::kPrimIdentity},             // P.identity
+       {"__floor__", prim::kPrimidentity},             // P.identity
+       {"__trunc__", prim::kPrimidentity},             // P.identity
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -89,16 +89,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
-       {"__floor__", prim::kPrimIdentity},             // P.identity,
-       {"__trunc__", prim::kPrimIdentity},             // P.identity,
+       {"__floor__", prim::kPrimidentity},             // P.identity,
+       {"__trunc__", prim::kPrimidentity},             // P.identity,
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe,
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -115,12 +115,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
        {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                  // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                  // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                  // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                  // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                  // P.ScalarGe,
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
@@ -213,7 +213,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
        {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
        {"__ms_next__", std::string("array_next")},                         // C.array_next
-       {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
+       {"__ms_to_array__", prim::kPrimidentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
        {"itemset", std::string("itemset")},                                // P.itemset,
@@ -555,9 +555,9 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
-    {kObjectTypeString, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeTuple, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeList, {{"__ms_iter__", prim::kPrimIdentity}}},
+    {kObjectTypeString, {{"__ms_iter__", prim::kPrimidentity}}},
+    {kObjectTypeTuple, {{"__ms_iter__", prim::kPrimidentity}}},
+    {kObjectTypeList, {{"__ms_iter__", prim::kPrimidentity}}},
     {kObjectTypeDictionary, {{"__ms_iter__", prim::kPrimDictGetKeys}}},
     {kObjectTypeTensorType,
      {
@@ -572,7 +572,7 @@ BuiltInTypeMap &GetAttrMap() {
        {"strides", std::string("strides_")},    // C.strides_
        {"mH", std::string("adjoint")},          // C.adjoint
        {"mT", std::string("mT")},               // C.mT_
-       {"__ms_iter__", prim::kPrimIdentity},    // C.array_iter
+       {"__ms_iter__", prim::kPrimidentity},    // C.array_iter
      }},
     {kObjectTypeRowTensorType,
      {

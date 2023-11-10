@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for gradients."""
+# pylint: disable=unused-import
 from __future__ import absolute_import
 
 from __future__ import division
@@ -22,11 +23,22 @@ from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from mindspore.ops.auto_generate import MaximumGrad, MaximumGradGrad
 import mindspore.context as context
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
+from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
+                             AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+                             SqrtGrad, BatchNormGrad, BatchNormGradGrad,
+                             BiasAddGrad, GeLUGrad, FastGeLUGrad, AvgPoolGrad,
+                             MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad,
+                             ReLU6Grad, EluGrad, GatherDGradV2, ResizeBilinearGrad,
+                             ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
+                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
+                             GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -37,92 +49,6 @@ class SparseFillEmptyRowsGrad(Primitive):
         """Initialize SparseFillEmptyRowsGrad."""
         self.init_prim_io_names(inputs=['reverse_index_map', 'grad_values'],
                                 outputs=['y_values', 'y_default_value'])
-
-
-class AbsGrad(PrimitiveWithInfer):
-    """Computes gradients for abs operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AbsGrad"""
-
-
-class ACosGrad(Primitive):
-    """
-    Computes ACosGrad of input element-wise.
-
-    Returns:
-        Tensor, has the same type as input.
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ACosGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class LogitGrad(Primitive):
-    """
-    Computes LogitGrad of input element-wise.
-
-    Returns:
-        Tensor, has the same type as input.
-    """
-    @prim_attr_register
-    def __init__(self, eps=-1.0):
-        """Initialize Exp"""
-        self.init_prim_io_names(inputs=['grad', 'input'], outputs=['dx'])
-        validator.check_value_type("eps", eps, [float], self.name)
-        self.add_prim_attr('eps', eps)
-
-
-class AcoshGrad(Primitive):
-    """Performs grad of Acosh operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AcoshGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class AsinGrad(Primitive):
-    """
-    Computes AsinGrad of input element-wise.
-
-    Returns:
-        Tensor, has the same type as input.
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AsinGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class AsinhGrad(Primitive):
-    """Performs grad of Asinh operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AsinhGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class ReciprocalGrad(Primitive):
-    """Performs grad of Reciprocal operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ReciprocalGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class RsqrtGrad(Primitive):
-    """Performs grad of Rsqrt operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize RsqrtGrad"""
 
 
 class ScaleAndTranslateGrad(Primitive):
@@ -137,38 +63,13 @@ class ScaleAndTranslateGrad(Primitive):
         validator.check_value_type("antialias", antialias, [bool], self.name)
 
 
-class SoftmaxGrad(ReciprocalGrad):
+class SoftmaxGrad(Primitive):
     """Performs grad of Softmax operation."""
-
-
-class SqrtGrad(Primitive):
-    """Performs grad of Sqrt operation."""
 
     @prim_attr_register
     def __init__(self):
-        """Initialize SqrtGrad"""
+        """Initialize SoftmaxGrad"""
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
-class BatchNormGrad(Primitive):
-    """Performs grad of BatchNorm operation."""
-
-    @prim_attr_register
-    def __init__(self, is_training=False, epsilon=1e-5, data_format='NCHW'):
-        self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
-        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-
-
-class BatchNormGradGrad(Primitive):
-    """Performs grad of BatchNormGrad operation."""
-
-    @prim_attr_register
-    def __init__(self, is_training=False, epsilon=1e-5, data_format='NCHW'):
-        self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
-        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-
 
 class SyncBatchNormGrad(Primitive):
     """Performs grad of SyncBatchNorm operation."""
@@ -179,18 +80,6 @@ class SyncBatchNormGrad(Primitive):
         if not isinstance(group, str):
             raise TypeError("The group attr of SyncBatchNormGrad must be str.")
         validator.check_int(device_num, 2, validator.GE, "device_num", self.name)
-
-
-class BiasAddGrad(Primitive):
-    """Computes gradients of BiasAdd."""
-
-    @prim_attr_register
-    def __init__(self, data_format="NCHW"):
-        self.init_prim_io_names(inputs=['dout'], outputs=['output'])
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
-        if self.format == "NCDHW":
-            self.format = "NCHW"
-        self.add_prim_attr('data_format', self.format)
 
 
 class KLDivLossGrad(Primitive):
@@ -713,22 +602,6 @@ class NeighborExchangeV2Grad(PrimitiveWithInfer):
                 'value': None}
 
 
-class GeLUGrad(Primitive):
-    """Gradients of GeLU operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['dy', 'x', 'y'], outputs=['z'])
-
-
-class FastGeLUGrad(Primitive):
-    """Gradients of FastGeLU operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """init FastGeLUGrad"""
-
-
 class _PoolGrad(PrimitiveWithInfer):
     """Gradients of the max/avg pool operation."""
 
@@ -811,20 +684,6 @@ class AvgPoolGradGe(_PoolGrad):
         }
 
         return out
-
-
-class AvgPoolGrad(_PoolGrad):
-    """Gradients of the avg pool operation."""
-
-    @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
-        super(AvgPoolGrad, self).__init__(kernel_size, strides, pad_mode, data_format)
-
-    def infer_shape(self, x1_shape, x2_shape, grad_shape):
-        return x1_shape
-
-    def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
-        return x1_dtype
 
 
 class AvgPoolGradV1(Primitive):
@@ -1192,25 +1051,6 @@ class MaxPool3DGradGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class MaximumGrad(Primitive):
-    """Grad for maximum."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MaximumGrad"""
-        self.init_prim_io_names(inputs=['x1', 'x2', 'grads'], outputs=['y1', 'y2'])
-
-
-class MaximumGradGrad(Primitive):
-    """Grad for maximum grad."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MaximumGradGrad"""
-        super().__init__("MaximumGradGrad")
-        self.init_prim_io_names(inputs=['x1', 'x2', 'dy1', 'dy2'], outputs=['sopd_x1', 'sopd_x2', 'sopd_grad'])
-
-
 class MaxPoolGradWithArgmax(Primitive):
     """Computes the gradients of MaxPoolWithArgmax."""
     @prim_attr_register
@@ -1359,15 +1199,6 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
         return grad_dtype
 
 
-class MinimumGrad(Primitive):
-    """Grad for minimum."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MinimumGrad"""
-        self.init_prim_io_names(inputs=['x1', 'x2', 'grads'], outputs=['y1', 'y2'])
-
-
 class MinimumGradGrad(Primitive):
     """Grad for minimum_grad."""
     @prim_attr_register
@@ -1404,27 +1235,6 @@ class L2NormalizeGrad(Primitive):
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
             raise TypeError("The length of axis must be 1, later will support multiple axis!")
-
-
-class LayerNormGrad(Primitive):
-    """
-    Applies the layer Normalization to the input array.
-
-    This operator will calculate the input gradients of layernorm.
-
-    Args:
-        begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
-        begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
-
-    Returns:
-        tuple[int], tuple of 3 values (the gradients of layernorm input,  gamma, beta).
-    """
-
-    @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
-        """init"""
-        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
-        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
 
 
 class LayerNormGradGrad(Primitive):
@@ -1468,15 +1278,6 @@ class LayerNormGradGrad(Primitive):
         self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
         self.init_prim_io_names(inputs=['x', 'dy', 'variance', 'mean', 'gamma', 'd_dx', 'd_dg', 'd_db'],
                                 outputs=['sopd_x', 'sopd_dy', 'sopd_gamma'])
-
-
-class LogSoftmaxGrad(Primitive):
-    """Computes gradient for the Log Softmax activation."""
-
-    @prim_attr_register
-    def __init__(self, axis=-1):
-        """Initialize LogSoftmaxGrad"""
-        validator.check_value_type("axis", axis, [int], self.name)
 
 
 class LSTMGradData(Primitive):
@@ -1741,27 +1542,6 @@ class DynamicGRUV2Grad(Primitive):
                                 ])
 
 
-class PReLUGrad(Primitive):
-    r"""
-    Gradients of PReLU operation.
-
-    Note:
-        1-dimensional input_x is not supported.
-
-    Inputs:
-        - **y_backprop** (Tensor) - Representing the backprop of the next layer.
-        - **input_x** (Tensor) - Must be the input `input_x` of forward operator PRelu.
-        - **weight** (Tensor) - Float Tensor, w > 0, must be the input `weight` of forward operator PRelu.
-
-    Outputs:
-        Tensor, with the same type as `input_x`.
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-
 class RandomGammaGrad(Primitive):
     r"""
     Computes the derivative of a random sample of Gamma with respect to alpha.:
@@ -1800,15 +1580,6 @@ class RandomGammaGrad(Primitive):
         self.add_prim_attr("side_effect_hidden", True)
 
 
-class ReluGrad(Primitive):
-    """Performs grad of Relu operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ReluGrad"""
-        self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
-
-
 class SiLUGrad(Primitive):
     """Performs grad of SiLU operation."""
 
@@ -1818,126 +1589,12 @@ class SiLUGrad(Primitive):
         self.init_prim_io_names(inputs=['dout', 'out'], outputs=['output'])
 
 
-class ReLU6Grad(Primitive):
-    """Performs grad of ReLU6 operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
-
-
 class ReluGradV2(Primitive):
     """Performs grad of ReLUV2 operation."""
 
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
-
-
-class EluGrad(Primitive):
-    """Performs grad of Elu operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize EluGrad"""
-        self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
-
-
-class GatherDGrad(Primitive):
-    """Performs grad of GatherD operation."""
-
-    @prim_attr_register
-    def __init__(self, dim=0, shape=None):
-        """Initialize GatherDGrad"""
-        validator.check_is_int(dim, int)
-        self.add_prim_attr("dim", dim)
-        self.dim = dim
-        self.out_shape = shape
-        self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
-
-
-class GatherDGradV2(Primitive):
-    """Performs grad of GatherD operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize GatherDGradV2"""
-        self.init_prim_io_names(inputs=['x', 'dim', 'index', 'grad'], outputs=['output'])
-
-
-class ResizeBilinearGrad(Primitive):
-    """Performs grad of ResizeBilinear operation."""
-
-    @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False):
-        """init"""
-        validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        validator.check_value_type("half_pixel_centers", half_pixel_centers, [bool], self.name)
-        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
-                                                             half_pixel_centers, [bool], self.name)
-        self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
-        if half_pixel_centers and align_corners:
-            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
-
-
-class ResizeNearestNeighborGrad(Primitive):
-    """
-    Compute gradient of `ResizeNearestNeighbor` operator.
-
-    Note:
-        The shape of input parameter `size` must be (height, width).
-
-    Args:
-        align_corners (bool): Whether the centers of the 4 corner pixels of the input
-            and output tensors are aligned. Default: ``False``.
-    """
-
-    @prim_attr_register
-    def __init__(self, align_corners=False):
-        """Initialize ResizeNearestNeighborGrad"""
-        self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
-
-
-class ResizeLinear1DGrad(Primitive):
-    """
-    Compute gradient of `ResizeLinear1D` operator.
-
-    .. warning::
-        This is an experimental API that is subject to change.
-
-    Args:
-        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
-            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.
-    """
-
-    @prim_attr_register
-    def __init__(self, coordinate_transformation_mode="align_corners"):
-        """Initialize ResizeLinear1DGrad"""
-        self.init_prim_io_names(
-            inputs=['grads', 'input_x'], outputs=['y'])
-        validator.check_value_type(
-            "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
-        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel"],
-                               "coordinate_transformation_mode", self.name)
-
-
-class ResizeNearestNeighborV2Grad(Primitive):
-    """
-    Compute gradient of `ResizeNearestNeighborV2` operator.
-
-    Args:
-        align_corners (bool): Whether the centers of the 4 corner pixels of the input
-            and output tensors are aligned. Default: ``False``.
-        half_pixel_centers (bool): Default: ``False``.
-    """
-
-    @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False):
-        """Initialize ResizeNearestNeighborV2Grad"""
-        self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
-        validator.check_value_type('align_corners', align_corners, [bool], self.name)
-        validator.check_value_type('half_pixel_centers', half_pixel_centers, [bool], self.name)
 
 
 class UpsampleNearest3DGrad(Primitive):
@@ -2034,15 +1691,6 @@ class PsROIPoolingGrad(PrimitiveWithInfer):
         return ydiff_type
 
 
-class SigmoidGrad(Primitive):
-    """Gets the gradient of Sigmoid operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SigmoidGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['output'])
-
-
 class _ActivationGrad(PrimitiveWithInfer):
     """_ActivationGrad base class."""
 
@@ -2058,14 +1706,6 @@ class _ActivationGrad(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
         validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
         return x_dtype
-
-
-class HSwishGrad(Primitive):
-    """Gets the gradient of HSwish operation."""
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSwishGrad"""
-        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
 
 class SigmoidCrossEntropyWithLogitsGrad(Primitive):
@@ -2100,19 +1740,6 @@ class SliceGrad(PrimitiveWithInfer):
         return {'shape': x_shape,
                 'dtype': x['dtype'],
                 'value': None}
-
-
-class NLLLossGrad(PrimitiveWithInfer):
-    """Computes the gradients of `NLLLoss`."""
-
-    @prim_attr_register
-    def __init__(self, reduction="mean", ignore_index=-100):
-        """Initialize NLLLoss"""
-        self.init_prim_io_names(inputs=['x', 'loss_grad', 'target', 'weight', 'total_weight'], outputs=['x_grad'])
-        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
-        self.ignore_index = ignore_index
-        self.add_prim_attr('reduction', self.reduction)
-        self.add_prim_attr('ignore_index', self.ignore_index)
 
 
 class SmoothL1LossGrad(Primitive):
@@ -2299,19 +1926,6 @@ class RefToEmbed(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
-
-
-class AtanGrad(Primitive):
-    """
-    Computes AtanGrad of input element-wise.
-
-    Returns:
-        Tensor, has the same type as input.
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AtanGrad"""
 
 
 class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
@@ -2614,40 +2228,6 @@ class MultilabelMarginLossGrad(Primitive):
         """Initialize MultilabelMarginLossGrad"""
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'is_target'], outputs=['x_grad'])
-
-
-class HShrinkGrad(Primitive):
-    """
-    Computes gradients for HShrinkGrad operation.
-
-    Args:
-        lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
-
-    Inputs:
-        - **Gradients** (Tensor) - the gradients of loss to output of HShrink function.
-          Currently gradients data type only support float16 and float32.
-        - **Features** (Tensor) - Must be the input `input_x` of the forward operator HSHrink.
-          Currently features data type only support float16 and float32.
-
-    Outputs:
-        backprops - Tensor, with the same shape and data type as `features`.
-
-    Rasise:
-        ValueError: If `lambd` is not a float.
-        ValueError: If shape of `gradients` is not the same as `features`.
-        TypeError: If dtype of `gradients` is not the same as `features`.
-        TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, lambd=0.5):
-        validator.check_value_type("lambd", lambd, [float], self.name)
-        if lambd < 0.0:
-            lambd = 0.0
-            self.add_prim_attr('lambd', lambd)
 
 
 class Dilation2DBackpropInput(Primitive):
@@ -3010,58 +2590,6 @@ class UpsampleTrilinear3DGrad(Primitive):
             outputs=['dx'])
         self.align_corners = align_corners
         self.add_prim_attr('align_corners', self.align_corners)
-
-
-class GridSampler3DGrad(Primitive):
-    """
-    Computes gradients for GridSampler3D operation.
-
-    Args:
-        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
-            "bilinear" or "nearest". Default: "bilinear".
-        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
-            "reflection". Default: "zeros".
-        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
-            tensors are aligned. Defaults to "false".
-
-    Inputs:
-        - **grad** (Tensor) - A 5-D tensor whose dtype is float32 or float64 and whose shape is :math:`(N, C, D_{out},
-          H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
-        - **input_x** (Tensor) - A 5-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,
-          D_{in}, H_{in}, W_{in})`.
-        - **grid** (Tensor) - A 5-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, D_{out},
-          H_{out}, W_{out}, 3)`.
-
-    Outputs:
-        - **dx** (Tensor) - A 5-D tensor whose dtype and shape are the same as `input_x`.
-        - **dgrid** (Tensor) - A 5-D tensor whose dtype and shape are the same as `grid`.
-
-    Raises:
-        TypeError: If `grad`, `input_x` or `grid` is not a Tensor.
-        TypeError: If the dtypes of `grad`, `input_x` and `grid` are inconsistent.
-        TypeError: If the dtype of `grad`, `input_x` or `grid` is not a valid type.
-        TypeError: If `align_corners` is not a boolean value.
-        ValueError: If the rank of `grad`, `input_x` or `grid` is not equal to 5.
-        ValueError: If the first dimension of `grad`, `input_x` and `grid` are inconsistent.
-        ValueError: If the last dimension of `grid` is not equal to 3.
-        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
-        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
-        ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
-        """Initialize GridSampler3DGrad."""
-        validator.check_string(interpolation_mode, ['bilinear', 'nearest'], 'interpolation_mode', self.name)
-        validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
-        validator.check_bool(align_corners, 'align_corners', self.name)
-        self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
-        self.add_prim_attr('interpolation_mode', interpolation_mode)
-        self.add_prim_attr('padding_mode', padding_mode)
-        self.add_prim_attr('align_corners', align_corners)
 
 
 class SparseSegmentMeanGrad(Primitive):
@@ -3466,136 +2994,6 @@ class SparseSegmentSqrtNGrad(Primitive):
         self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids', 'output_dim0'], outputs=['y'])
 
 
-class GridSampler2DGrad(Primitive):
-    """
-    Computes gradients for GridSampler2D operation.
-
-      Args:
-        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
-            "bilinear" or "nearest". Default: "bilinear".
-        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
-            "reflection". Default: "zeros".
-        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
-            tensors are aligned. Defaults to "false".
-
-      Inputs:
-        - **grad** (Tensor) - A 4-D tensor whose dtype is float16 or float32 and whose shape is :math:`(N, C,
-          H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
-        - **input_x** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,
-          H_{in}, W_{in})`.
-        - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose
-          shape is :math:`(N, H_{out}, W_{out}, 2)`.
-
-    Outputs:
-        - **dx** (Tensor) - A 4-D tensor whose dtype and shape are the same as `input_x`.
-        - **dgrid** (Tensor) - A 4-D tensor whose dtype and shape are the same as `grid`.
-
-    Raises:
-        TypeError: If `grad`, `input_x` or `grid` is not a Tensor.
-        TypeError: If the dtypes of `grad`, `input_x` and `grid` are inconsistent.
-        TypeError: If the dtype of `grad`, `input_x` or `grid` is not a valid type.
-        TypeError: If `align_corners` is not a boolean value.
-        ValueError: If the rank of `grad`, `input_x` or `grid` is not equal to 4.
-        ValueError: If the first dimension of `grad`, `input_x` and `grid` are inconsistent.
-        ValueError: If the last dimension of `grid` is not equal to 2.
-        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
-        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
-        ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
-        """Initialize GridSampler2DGrad."""
-        validator.check_string(interpolation_mode, ['bilinear', 'nearest'], 'interpolation_mode', self.name)
-        validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
-        validator.check_bool(align_corners, 'align_corners', self.name)
-        self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
-        self.add_prim_attr('interpolation_mode', interpolation_mode)
-        self.add_prim_attr('padding_mode', padding_mode)
-        self.add_prim_attr('align_corners', align_corners)
-
-
-class ResizeBicubicGrad(Primitive):
-    """
-    Computes gradients for ResizeBicubicGrad operation.
-
-    Args:
-        align_corners (bool):If true, the centers of the 4 corner pixels of the input
-    and output tensors are aligned, preserving the values at the corner pixels.Default: ``False``.
-        half_pixel_centers (bool): An optional bool. Default: ``False``.
-
-    Inputs:
-        - **grads** (Tensor) - A Tensor of type float. 4-D with shape
-          [batch, height, width,channels]. The format must be NHWC.
-        - **original_image** (Tensor) - A Tensor. Must be one of the following types: float,double.
-          4-D with shape [batch, orig_height, orig_width, channels], The image tensor that was resized.
-          The format must be NHWC.
-
-    Outputs:
-        A 4-D Tensor , with the same shape and data type as `original_image`.
-
-    Rasise:
-        TypeError: If `grads` is not allowed.
-        TypeError: If `original_image` is not allowed.
-        ValueError: If `images` dim is not 4.
-        ValueError: If `size` dim is not 4.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False):
-        """Initialize CropAndResize"""
-        validator.check_value_type('align_corners', align_corners, bool, self.name)
-        validator.check_value_type('half_pixel_centers', half_pixel_centers, bool, self.name)
-        self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
-
-    def __infer__(self, grads, original_image):
-        # get shape
-        grads_shape = list(grads['shape'])
-        original_image_shape = list(original_image['shape'])
-        # get value
-        if grads['value'] is None:
-            raise ValueError(
-                f"For '{self.name}', the 'grads' cannot be None, but got {grads['value']}."
-            )
-        if original_image['value'] is None:
-            raise ValueError(
-                f"For '{self.name}', the 'original_image' cannot be None, but got {original_image['value']}."
-            )
-        # get dtype
-        grads_dtype = grads['dtype']
-        original_image_dtype = original_image['dtype']
-        # check dytpe
-        validator.check_tensor_dtype_valid("grads", grads_dtype,
-                                           [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid("original_image", original_image_dtype,
-                                           [mstype.float32, mstype.float64], self.name)
-        # check input shape rank
-        validator.check("grads rank", len(grads_shape), "expected", 4, validator.EQ, self.name)
-        validator.check("original_image rank", len(original_image_shape), "expected", 4, validator.EQ, self.name)
-        validator.check("batch_size equal", grads_shape[0], "expected",
-                        original_image_shape[0], validator.EQ, self.name)
-        validator.check("channel equal", grads_shape[3], "expected", original_image_shape[3], validator.EQ, self.name)
-        # check original_image_shape and grads_shape
-        validator.check("original_image[0] and grads[0]", original_image_shape[0],
-                        "expected", grads_shape[0], validator.EQ, self.name)
-        validator.check("original_image[3] and grads[3]", original_image_shape[3],
-                        "expected", grads_shape[3], validator.EQ, self.name)
-
-        batch_size = grads_shape[0]
-        height = original_image_shape[1]
-        width = original_image_shape[2]
-        channel = grads_shape[3]
-        out_shape = (batch_size, height, width, channel)
-        return {'shape': out_shape,
-                'dtype': original_image_dtype,
-                'value': None}
-
-
 class SparseSliceGrad(Primitive):
     r"""
     Computes gradients for SparseSlice operation.
@@ -3717,13 +3115,6 @@ class AffineGridGrad(Primitive):
         self.init_prim_io_names(inputs=['y_grad', 'x_size'], outputs=['x_grad'])
 
 
-class HSigmoidGrad(Primitive):
-    """Gets the gradient of HSigmoid operation."""
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSigmoidGrad"""
-        self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
-
 
 class GluGrad(Primitive):
     """
@@ -3735,46 +3126,6 @@ class GluGrad(Primitive):
         self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=["grads", "x"], outputs=["y"])
         validator.check_value_type("axis", axis, [int], self.name)
-
-
-class CholeskyGrad(Primitive):
-    r"""
-    Computes the reverse mode backpropgated gradient of the Cholesky algorithm.
-
-    Inputs:
-        - **x** (Tensor) - A tensor with float32 or float64 data type.
-        - **grad** (Tensor) - A tensor with float32 or float64 data type. `x` should have
-          the same dtype with `a`.
-
-    Outputs:
-        Tensor, has the same dtype as `a` and `x`.
-
-    Raises:
-        TypeError: If x is not Tensor.
-        TypeError: If grad is not Tensor.
-        TypeError: If dtype of input x and grad is not float64 nor float32,
-        TypeError: If x has different dtype with grad.
-        ValueError: If input tensor's last two dims are not equal,
-        ValueError: If the shape of x and grad mismatch.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> x = Tensor(np.array([[4, 2],[2, 3]]), mstype.float64)
-        >>> grad = Tensor(np.array([[4, 2],[2, 3]]), mstype.float64)
-        >>> choleskygrad = G.CholeskyGrad()
-        >>> output = choleskygrad(x, grad)
-        >>> print (output)
-        [[0.5 0. ]
-         [0.  0.5]]
-
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize CholeskyGrad"""
-        self.init_prim_io_names(inputs=['x', 'grad'], outputs=['y'])
 
 
 class MapTensorGetGrad(Primitive):

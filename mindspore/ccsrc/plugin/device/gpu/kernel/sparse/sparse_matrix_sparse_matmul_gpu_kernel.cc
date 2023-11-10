@@ -38,20 +38,18 @@ void SparseMatrixSparseMatMulGpuKernelMod::MatrixTranspose(int m, int n, int nnz
   allocator.FreeTensorMem(csc_buffer);
 }
 
-bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
+bool SparseMatrixSparseMatMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   cusparseCreateMatDescr(&desc);
   cusparseSetMatType(desc, CUSPARSE_MATRIX_TYPE_GENERAL);
   cusparseSetMatIndexBase(desc, CUSPARSE_INDEX_BASE_ZERO);
 
   cusparseCreateCsrgemm2Info(&info);
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixSparseMatMul>(base_operator);
-  transpose_a = kernel_ptr->get_transpose_a();
-  transpose_b = kernel_ptr->get_transpose_b();
-  adjoint_a = kernel_ptr->get_adjoint_a();
-  adjoint_b = kernel_ptr->get_adjoint_b();
+
+  transpose_a = GetValue<bool>(primitive_->GetAttr("transpose_a"));
+  transpose_b = GetValue<bool>(primitive_->GetAttr("transpose_b"));
+  adjoint_a = GetValue<bool>(primitive_->GetAttr("adjoint_a"));
+  adjoint_b = GetValue<bool>(primitive_->GetAttr("adjoint_b"));
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -65,29 +63,28 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeFloat32) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeFloat32) {
     computeType = CUDA_R_32F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeFloat64) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeFloat64) {
     computeType = CUDA_R_64F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeComplex64) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeComplex64) {
     computeType = CUDA_C_32F;
   }
-  if (inputs.at(kIndex4)->GetDtype() == TypeId::kNumberTypeComplex128) {
+  if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeComplex128) {
     computeType = CUDA_C_64F;
   }
   is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < inputs.size(); i++) {
-    std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> input_shape =
+      std::vector<int64_t>(inputs.at(i)->GetDeviceShapeVector().begin(), inputs.at(i)->GetDeviceShapeVector().end());
 
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
 
     std::vector<size_t> temp{input_elements_, unit_size_};
     ele_size_vec.push_back(temp);
-    input_size_list_.push_back(input_elements_ * unit_size_);
   }
 
   rank = ele_size_vec[InputList::X1_DENSE_SHAPE][0];
@@ -95,8 +92,8 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
   x2_nnz = ele_size_vec[InputList::X2_VALUES][0];
   batch_ele = ele_size_vec[InputList::X1_BATCH_POINTERS][0];
   for (size_t i = 0; i < outputs.size(); i++) {
-    std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(i)->GetDeviceShapeAdaptively().begin(),
-                                                             outputs.at(i)->GetDeviceShapeAdaptively().end());
+    std::vector<int64_t> output_shape =
+      std::vector<int64_t>(outputs.at(i)->GetDeviceShapeVector().begin(), outputs.at(i)->GetDeviceShapeVector().end());
     size_t output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
     size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(i).dtype);
     output_size_list_.push_back(output_elements_ * unit_size_);
@@ -341,9 +338,9 @@ int ShapeCalCol(bool transpose_b, bool adjoint_b, int B_row, int B_col) {
 }
 
 template <typename T>
-bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                        const std::vector<AddressPtr> &workspace,
-                                                        const std::vector<AddressPtr> &outputs) {
+bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &workspace,
+                                                        const std::vector<KernelTensor *> &outputs) {
   int *x1_dense_shape = GetDeviceAddress<int>(inputs, 0);
   int *x1_batch_pointers = GetDeviceAddress<int>(inputs, 1);
   int *x1_row_pointers = GetDeviceAddress<int>(inputs, 2);
@@ -431,7 +428,8 @@ bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<Addres
   return true;
 }
 
-void SparseMatrixSparseMatMulGpuKernelMod::SyncOutputShape() {
+void SparseMatrixSparseMatMulGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
                                      "SparseMatrixSparseMatMul cudaStreamSynchronized failed");
   std::vector<int64_t> output2_shape = {
@@ -443,9 +441,12 @@ void SparseMatrixSparseMatMulGpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> output4_shape = {
     SizeToLong(C_nnz1),
   };
-  outputs_[kIndex2]->SetShapeVector(output2_shape);
-  outputs_[kIndex3]->SetShapeVector(output3_shape);
-  outputs_[kIndex4]->SetShapeVector(output4_shape);
+  outputs[kIndex2]->SetShapeVector(output2_shape);
+  outputs[kIndex3]->SetShapeVector(output3_shape);
+  outputs[kIndex4]->SetShapeVector(output4_shape);
+  outputs[kIndex2]->set_size(LongToSize(C_num_rows1) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+  outputs[kIndex3]->set_size(LongToSize(C_nnz1) * UnitSizeInBytes(outputs[kIndex3]->dtype_id()));
+  outputs[kIndex4]->set_size(LongToSize(C_nnz1) * UnitSizeInBytes(outputs[kIndex4]->dtype_id()));
 }
 
 template <typename T>

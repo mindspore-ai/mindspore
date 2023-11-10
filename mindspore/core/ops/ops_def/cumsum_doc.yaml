@@ -1,0 +1,62 @@
+cumsum:
+    description: |
+        Computes the cumulative sum of input tensor along axis.
+
+        .. math::
+
+            y_i = x_1 + x_2 + x_3 + ... + x_i
+
+        Args:
+            input (Tensor): The input tensor to accumulate.
+            axis (int): The axis to accumulate the tensor's value. Only constant value is allowed.
+              Must be in the range [-rank(input), rank(input)).
+            exclusive (bool): By default, this op performs an inclusive cumsum, which means that the first
+                element of the input is identical to the first element of the output. Default: ``False`` .
+            reverse (bool): If ``True`` , perform inverse cumulative sum. Default: ``False`` .
+
+        Returns:
+            Tensor, the shape of the output tensor is consistent with the input tensor's.
+
+        Raises:
+            TypeError: If `exclusive` or `reverse` is not a bool.
+            TypeError: If `axis` is not an int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
+            >>> cumsum = ops.cum_sum
+            >>> # case 1: along the axis 0
+            >>> y = cumsum(x, 0, False, False)
+            >>> print(y)
+            [[ 3.  4.  6. 10.]
+             [ 4. 10. 13. 19.]
+             [ 8. 13. 21. 26.]
+             [ 9. 16. 28. 35.]]
+            >>> # case 2: along the axis 1
+            >>> y = cumsum(x, 1, False, False)
+            >>> print(y)
+            [[ 3.  7. 13. 23.]
+             [ 1.  7. 14. 23.]
+             [ 4.  7. 15. 22.]
+             [ 1.  4. 11. 20.]]
+            >>> # Next demonstrate exclusive and reverse, along axis 1
+            >>> # case 3: exclusive = True
+            >>> cumsum = ops.cum_sum
+            >>> y = cumsum(x, 1, True, False)
+            >>> print(y)
+            [[ 0.  3.  7. 13.]
+             [ 0.  1.  7. 14.]
+             [ 0.  4.  7. 15.]
+             [ 0.  1.  4. 11.]]
+            >>> # case 4: reverse = True
+            >>> cumsum = ops.cum_sum
+            >>> y = cumsum(x, 1, False, True)
+            >>> print(y)
+            [[23. 20. 16. 10.]
+             [23. 22. 16.  9.]
+             [22. 18. 15.  7.]
+             [20. 19. 16.  9.]]

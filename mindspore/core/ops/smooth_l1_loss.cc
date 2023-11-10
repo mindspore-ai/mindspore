@@ -68,20 +68,20 @@ namespace {
 abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto prediction_shape = prediction->shape();
+  auto prediction = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto target = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto prediction_shape = prediction->GetShape();
   MS_EXCEPTION_IF_NULL(prediction_shape);
-  auto target_shape = target->shape();
+  auto target_shape = target->GetShape();
   MS_EXCEPTION_IF_NULL(target_shape);
-  if (IsDynamicRank(prediction_shape->shape()) || IsDynamicRank(target_shape->shape())) {
+  if (IsDynamicRank(prediction_shape->GetShapeVector()) || IsDynamicRank(target_shape->GetShapeVector())) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   abstract::CheckShapeSame(prim_name, prediction, target);
 
   auto reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
   if (reduction == kNone) {
-    return prediction_shape;
+    return std::make_shared<abstract::Shape>(prediction_shape->GetShapeVector());
   } else {
     ShapeVector shape_out{};
     return std::make_shared<abstract::Shape>(shape_out);
@@ -93,10 +93,10 @@ TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
 
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("scale", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("bias", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("scale", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("bias", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

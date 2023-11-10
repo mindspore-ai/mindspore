@@ -48,10 +48,10 @@ namespace {
 abstract::TupleShapePtr DenseToCSRSparseMatrixInferShape(const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
   CheckInputShapeEmpty(primitive->name(), input_args);
-  auto dense_input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto dense_input_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto dense_input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dense_input_shape_ptr);
   auto dense_input_shape = dense_input_shape_map[kShape];
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto indices_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr);
   auto indices_shape = indices_shape_map[kShape];
   const int64_t kZero = 0;
@@ -105,8 +105,8 @@ TuplePtr DenseToCSRSparseMatrixInferType(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   const std::set<TypePtr> values_types = {kFloat64, kFloat32, kComplex128, kComplex64};
   const std::set<TypePtr> indices_types = {kInt32, kInt64};
-  auto dense_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
+  auto dense_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dense_input", dense_type, values_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices_type", indices_type, indices_types, op_name);
   std::vector<TypePtr> types_list{indices_type, indices_type, indices_type, indices_type, dense_type};

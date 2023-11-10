@@ -146,6 +146,11 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfDepend failed.";
         return ret;
       }
+      ret = RemoveIfMakeTuple(cnode);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfMakeTuple failed.";
+        return ret;
+      }
       opt::RemoveIfMonad(cnode);
       auto before_cnode_map = opt::GetRealCertainVarInput(cnode, index);
       cnode->set_inputs(origin_inputs);
@@ -246,6 +251,11 @@ int PropagateQuantParamPass::FindNodeDepends(const std::list<CNodePtr> &nodes,
     auto ret = RemoveIfDepend(cnode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfDepend failed.";
+      return ret;
+    }
+    ret = RemoveIfMakeTuple(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " RemoveIfMakeTuple failed.";
       return ret;
     }
     opt::RemoveIfMonad(cnode);

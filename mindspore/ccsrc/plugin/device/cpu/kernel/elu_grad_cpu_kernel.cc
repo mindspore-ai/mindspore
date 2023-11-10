@@ -19,62 +19,18 @@
 #include <string>
 #include <thread>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/elu_grad.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kEleGradInputsNum = 2;
-constexpr size_t kEleGradOutputsNum = 1;
-}  // namespace
-
-bool EluGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EluGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  dtype_ = inputs[0]->GetDtype();
-  auto dtype_1 = inputs[1]->GetDtype();
-  if (dtype_ != dtype_1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', 'input0' and 'input1' must have the same data type, but got the dtype of 'input0': " << dtype_
-                  << " and the dtype of 'input1': " << dtype_1;
-    return false;
-  }
-  return true;
-}
-
-int EluGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
-    return ret;
-  }
-  return KRET_OK;
-}
-
-bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEleGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEleGradOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float, but got "
-                      << TypeIdLabel(dtype_) << ".";
-  }
-  return true;
-}
-
 template <typename T>
-void EluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+bool EluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const auto *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [input0, input1, output](const size_t start, const size_t end) {
     const T alpha = T(1);
     for (size_t i = start; i < end; i++) {
@@ -82,14 +38,18 @@ void EluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  return true;
 }
 
-std::vector<KernelAttr> EluGradCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat).AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, EluGradCpuKernelMod::KernelRunFunc>> &EluGradCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, EluGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &EluGradCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat).AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat),
+     &EluGradCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &EluGradCpuKernelMod::LaunchKernel<double>}};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EluGrad, EluGradCpuKernelMod);

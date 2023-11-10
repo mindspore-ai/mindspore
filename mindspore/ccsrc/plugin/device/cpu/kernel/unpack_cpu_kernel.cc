@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,8 @@ constexpr size_t kUnpackWorkspaceMinNum = 1;
 constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
-bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast unstack ops failed!";
-    return false;
-  }
-  unstack_param_.axis_ = kernel_ptr->get_axis();
+bool UnpackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  unstack_param_.axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   origin_axis_ = unstack_param_.axis_;
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
@@ -60,11 +53,8 @@ bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int UnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UnpackCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -106,9 +96,9 @@ void UnpackCpuKernelMod::InitIOSize() {
   (void)workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
 }
 
-bool UnpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool UnpackCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
   if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -119,13 +109,13 @@ bool UnpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<unsigned char *>(inputs[0]->addr);
-  auto **outputs_host = reinterpret_cast<unsigned char **>(workspace[0]->addr);
+bool UnpackCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<unsigned char *>(inputs[0]->device_ptr());
+  auto **outputs_host = reinterpret_cast<unsigned char **>(workspace[0]->device_ptr());
   for (size_t i = 0; i < outputs.size(); i++) {
-    outputs_host[i] = reinterpret_cast<unsigned char *>(outputs[i]->addr);
+    outputs_host[i] = reinterpret_cast<unsigned char *>(outputs[i]->device_ptr());
   }
 
   size_t total_size = input_size_ * sizeof(T);

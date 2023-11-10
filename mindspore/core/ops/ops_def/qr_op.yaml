@@ -1,0 +1,15 @@
+#operator qr
+qr:
+    args:
+        x:
+            dtype: tensor
+        full_matrices:
+            dtype: bool
+            init: False
+    returns:
+        q:
+            dtype: tensor
+        r:
+            dtype: tensor
+    function:
+        name: qr_

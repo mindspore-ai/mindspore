@@ -32,25 +32,25 @@ class ExtractGlimpseCpuKernelMod : public NativeCpuKernelMod {
  public:
   ExtractGlimpseCpuKernelMod() = default;
   ~ExtractGlimpseCpuKernelMod() override = default;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   std::pair<float, float> GetLocation(const float *ptr, const uint64_t seq,
                                       const std::pair<uint64_t, uint64_t> image_size,
                                       const std::pair<uint64_t, uint64_t> g_size, const bool normalized,
                                       const bool centered);
-  using ExtractGlimpseFunc = std::function<bool(ExtractGlimpseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &)>;
+  using ExtractGlimpseFunc =
+    std::function<bool(ExtractGlimpseCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ExtractGlimpseFunc>> func_list_;
   TypeId input_shape_type_{kNumberTypeFloat32};
   TypeId size_shape_type_{kNumberTypeInt32};

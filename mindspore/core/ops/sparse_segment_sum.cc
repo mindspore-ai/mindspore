@@ -32,10 +32,10 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(x_shape) || IsDynamicRank(indices_shape) || IsDynamicRank(segment_ids_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -59,12 +59,13 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (!input_args[kInputIndex2]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
-    auto segment_ids_value_ptr = input_args[kInputIndex2]->BuildValue();
+  if (!input_args[kInputIndex2]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex2]->GetValue()->isa<None>()) {
+    auto segment_ids_value_ptr = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
-    auto segment_ids_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
+    auto segment_ids_type_ptr = input_args[kInputIndex2]->GetType();
+    MS_EXCEPTION_IF_NULL(segment_ids_type_ptr);
+    auto segment_ids_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr,
+                                                                                  prim->name(), segment_ids_type_ptr);
     size_t dim_zero = static_cast<size_t>(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "
@@ -84,9 +85,9 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
 TypePtr SparseSegmentSumInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
@@ -94,7 +95,7 @@ TypePtr SparseSegmentSumInferType(const PrimitivePtr &prim, const std::vector<Ab
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

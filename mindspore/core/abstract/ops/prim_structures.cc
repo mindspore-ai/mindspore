@@ -29,7 +29,8 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
   if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
-        (key->isa<abstract::AbstractTensor>() && key_value != kValueAny) || key->isa<abstract::AbstractTuple>())) {
+        (key->isa<abstract::AbstractTensor>() && !key_value->ContainsValueAny()) ||
+        key->isa<abstract::AbstractTuple>())) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
                       << key->BuildValue()->ToString();
   }
@@ -151,7 +152,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.

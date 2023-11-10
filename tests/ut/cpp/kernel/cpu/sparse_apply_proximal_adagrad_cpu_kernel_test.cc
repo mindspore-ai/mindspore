@@ -38,11 +38,13 @@ class SparseApplyProximalAdagradCpuKernelTest : public UT::Common {
     inputs_.clear();
     workspace_.clear();
     outputs_.clear();
+    kernel_tensor_inputs_.clear();
+    kernel_tensor_inputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr) {
-    auto kernel_addr = std::make_shared<Address>();
-    kernel_addr->addr = addr;
+  KernelTensor *CreateKernelAddress(void *addr) {
+    auto kernel_addr = new KernelTensor();
+    kernel_addr->set_device_ptr(addr);
     return kernel_addr;
   }
 
@@ -64,11 +66,11 @@ class SparseApplyProximalAdagradCpuKernelTest : public UT::Common {
     workspace_.push_back(CreateKernelAddress(tmp_indices.data()));
   }
 
-  KernelTensorPtr CreateKernelTensor(const std::vector<int64_t> &shape, const TypePtr &dtype) {
+  KernelTensor *CreateKernelTensor(const std::vector<int64_t> &shape, const TypePtr &dtype) {
     auto shape_ab = std::make_shared<abstract::Shape>(shape);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(dtype, shape_ab);
     TensorInfo tensor_info{mindspore::Format::NCHW, new_abstract, shape};
-    KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
+    KernelTensor *res_tensor = new KernelTensor();
     res_tensor->SetTensorInfo(tensor_info);
     return res_tensor;
   }
@@ -98,11 +100,11 @@ class SparseApplyProximalAdagradCpuKernelTest : public UT::Common {
   std::vector<float> var_;
   std::vector<float> accum_;
   std::vector<float> grad_;
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> workspace_;
-  std::vector<AddressPtr> outputs_;
-  std::vector<KernelTensorPtr> kernel_tensor_inputs_;
-  std::vector<KernelTensorPtr> kernel_tensor_outputs_;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> workspace_;
+  std::vector<KernelTensor *> outputs_;
+  std::vector<KernelTensor *> kernel_tensor_inputs_;
+  std::vector<KernelTensor *> kernel_tensor_outputs_;
   std::shared_ptr<SparseApplyProximalAdagradCpuKernelMod> sparse_proximal_adagrad_;
   float lr_ = 0.01;
   float l1_ = 0.0;
@@ -121,8 +123,8 @@ TEST_F(SparseApplyProximalAdagradCpuKernelTest, dense_test) {
   std::vector<int64_t> indices_shape = {3};
   CreateInputKernelTensor(var_shape, indices_shape);
   CreateOutputKernelTensor();
-  sparse_proximal_adagrad_->Init(ops, kernel_tensor_inputs_, kernel_tensor_outputs_);
-  sparse_proximal_adagrad_->Resize(ops, kernel_tensor_inputs_, kernel_tensor_outputs_, {});
+  sparse_proximal_adagrad_->Init(kernel_tensor_inputs_, kernel_tensor_outputs_);
+  sparse_proximal_adagrad_->Resize(kernel_tensor_inputs_, kernel_tensor_outputs_);
 
   std::vector<int64_t> indices{0, 1, 2};
   CreateInputAddress(indices);
@@ -151,8 +153,8 @@ TEST_F(SparseApplyProximalAdagradCpuKernelTest, sparse_test1) {
   std::vector<int64_t> indices_shape = {2};
   CreateInputKernelTensor(var_shape, indices_shape);
   CreateOutputKernelTensor();
-  sparse_proximal_adagrad_->Init(ops, kernel_tensor_inputs_, kernel_tensor_outputs_);
-  sparse_proximal_adagrad_->Resize(ops, kernel_tensor_inputs_, kernel_tensor_outputs_, {});
+  sparse_proximal_adagrad_->Init(kernel_tensor_inputs_, kernel_tensor_outputs_);
+  sparse_proximal_adagrad_->Resize(kernel_tensor_inputs_, kernel_tensor_outputs_);
 
   std::vector<int64_t> indices{0, 2};
   CreateInputAddress(indices);
@@ -185,8 +187,8 @@ TEST_F(SparseApplyProximalAdagradCpuKernelTest, sparse_test2) {
   std::vector<int64_t> indices_shape = {3};
   CreateInputKernelTensor(var_shape, indices_shape);
   CreateOutputKernelTensor();
-  sparse_proximal_adagrad_->Init(ops, kernel_tensor_inputs_, kernel_tensor_outputs_);
-  sparse_proximal_adagrad_->Resize(ops, kernel_tensor_inputs_, kernel_tensor_outputs_, {});
+  sparse_proximal_adagrad_->Init(kernel_tensor_inputs_, kernel_tensor_outputs_);
+  sparse_proximal_adagrad_->Resize(kernel_tensor_inputs_, kernel_tensor_outputs_);
 
   std::vector<int64_t> indices{2, 2, 1};
   CreateInputAddress(indices);

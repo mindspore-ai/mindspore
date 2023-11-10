@@ -49,20 +49,20 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  abstract::AbstractTensorPtr minval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex1);
+  auto minval = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex1, kObjectTypeTensorType);
   MS_EXCEPTION_IF_NULL(minval);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("minval", minval->BuildType(), {kInt32}, op_name);
-  abstract::ShapePtr minval_shape = minval->shape();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("minval", minval->GetType(), {kInt32}, op_name);
+  auto minval_shape = minval->GetShape();
   MS_EXCEPTION_IF_NULL(minval_shape);
-  if (minval_shape->IsDimUnknown() || minval_shape->shape().size() != 0) {
+  if (minval_shape->IsDimUnknown() || minval_shape->GetShapeVector().size() != 0) {
     MS_EXCEPTION(ValueError) << "For UniformInt, the min value should be a scalar tensor, while the shape is: "
                              << minval_shape->ToString();
   }
-  abstract::AbstractTensorPtr maxval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex2);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->BuildType(), {kInt32}, op_name);
-  abstract::ShapePtr maxval_shape = maxval->shape();
+  auto maxval = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->GetType(), {kInt32}, op_name);
+  auto maxval_shape = maxval->GetShape();
   MS_EXCEPTION_IF_NULL(maxval_shape);
-  if (maxval_shape->IsDimUnknown() || maxval_shape->shape().size() != 0) {
+  if (maxval_shape->IsDimUnknown() || minval_shape->GetShapeVector().size() != 0) {
     MS_EXCEPTION(ValueError) << "The max value should be a scalar tensor, while the shape is: "
                              << maxval_shape->ToString();
   }
@@ -70,10 +70,11 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
   ShapeVector shape;
   abstract::ShapePtr output_shape;
 
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_abs = input_args[kInputIndex0];
+  auto shape_value = shape_abs->GetValue();
   if (IsValueKnown(shape_value)) {
-    shape = shape_value->isa<tensor::Tensor>()
-              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
+    shape = CheckAndConvertUtils::IsTensor(shape_abs)
+              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name, shape_abs->GetType())
               : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {

@@ -55,8 +55,8 @@ TypePtr BitwiseOrInferType(const PrimitivePtr &prim, const std::vector<AbstractB
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("y", input_args[1]->GetType());
   const std::set<TypePtr> valid_types = {kBool, kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }

@@ -16,7 +16,6 @@
 
 #include <complex>
 #include "plugin/device/cpu/kernel/sinc_cpu_kernel.h"
-#include "mindspore/core/ops/sinc.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,22 +24,19 @@ constexpr size_t kSincInputsNum = 1;
 constexpr size_t kSincOutputsNum = 1;
 }  // namespace
 
-bool SincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool SincCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>
-bool SincCpuKernelMod::LaunchSameKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SincCpuKernelMod::LaunchSameKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = static_cast<T *>(inputs[0]->addr);
-  auto output = static_cast<T *>(outputs[0]->addr);
-  size_t total = inputs[0]->size / sizeof(T);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
+  auto output = static_cast<T *>(outputs[0]->device_ptr());
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (static_cast<T>(input[i]) == static_cast<T>(0.0f)) {
@@ -57,14 +53,14 @@ bool SincCpuKernelMod::LaunchSameKernel(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool SincCpuKernelMod::LaunchDiffKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SincCpuKernelMod::LaunchDiffKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = static_cast<T *>(inputs[0]->addr);
-  auto output = static_cast<float *>(outputs[0]->addr);
-  size_t total = inputs[0]->size / sizeof(T);
+  auto input = static_cast<T *>(inputs[0]->device_ptr());
+  auto output = static_cast<float *>(outputs[0]->device_ptr());
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (input[i] == static_cast<T>(0)) {
@@ -81,14 +77,14 @@ bool SincCpuKernelMod::LaunchDiffKernel(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool SincCpuKernelMod::LaunchBoolKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool SincCpuKernelMod::LaunchBoolKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = static_cast<bool *>(inputs[0]->addr);
-  auto output = static_cast<float *>(outputs[0]->addr);
-  size_t total = inputs[0]->size / sizeof(T);
+  auto input = static_cast<bool *>(inputs[0]->device_ptr());
+  auto output = static_cast<float *>(outputs[0]->device_ptr());
+  size_t total = inputs[0]->size() / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       float tmp;

@@ -46,7 +46,7 @@ AbstractBasePtr PyExecuteInfer::InferPy(const PrimitivePtr &primitive,
 BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
   const auto &abs = InferPy(primitive, input_args);
-  return abs->BuildShape();
+  return abs->GetShape();
 }
 
 TypePtr PyExecuteInfer::InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const {

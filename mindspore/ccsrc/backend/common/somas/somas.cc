@@ -785,9 +785,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
   // Input Tensor
   auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
   size_t real_input_index = 0;
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  const auto &input_size_list = kernel_mod->GetInputSizeList();
+  const auto &input_size_list = AnfAlgo::GetNodeInputSizeList(kernel);
   for (size_t i = 0; i < input_tensor_num; i++) {
     auto input_node = kernel->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);

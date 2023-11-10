@@ -111,7 +111,7 @@ BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
   auto out_shape = GetShapeValue(primitive, input_size);
   auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
   auto dout_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->GetShape())[kShape];
 
   constexpr size_t kRank = 4;
   if (!IsDynamicRank(dout_shape) && dout_shape.size() < kRank) {
@@ -131,8 +131,8 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   // check
   std::map<std::string, TypePtr> types;
   // todo: check input_sizes
-  (void)types.emplace("x", input_args[kConv2DBackpropInputInputIndex]->BuildType());
-  (void)types.emplace("doutput", input_args[kConv2DBackpropInputDoutIndex]->BuildType());
+  (void)types.emplace("x", input_args[kConv2DBackpropInputInputIndex]->GetType());
+  (void)types.emplace("doutput", input_args[kConv2DBackpropInputDoutIndex]->GetType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }

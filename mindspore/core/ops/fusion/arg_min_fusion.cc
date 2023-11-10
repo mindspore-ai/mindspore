@@ -23,10 +23,11 @@
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "mindapi/ir/type.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(ArgMinFusion, ArgMin);
+MIND_API_OPERATOR_IMPL(ArgMinFusion, BaseOperator);
 void ArgMinFusion::Init(bool keep_dims, bool out_max_value, int64_t top_k, int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);
@@ -54,6 +55,19 @@ int64_t ArgMinFusion::get_top_k() const {
   auto value_ptr = GetAttr(kTopK);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
+}
+
+void ArgMinFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+void ArgMinFusion::set_output_type(const TypeId output_type) {
+  (void)this->AddAttr(kOutputType, api::Type::GetType(output_type));
+}
+
+int64_t ArgMinFusion::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+
+TypeId ArgMinFusion::get_output_type() const {
+  auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
+  return type_ptr->type_id();
 }
 }  // namespace ops
 }  // namespace mindspore

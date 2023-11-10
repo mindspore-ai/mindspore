@@ -44,13 +44,9 @@ static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_di
 }
 }  // namespace
 
-bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagV3>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  auto align = op_prim->get_align();
+bool MatrixDiagV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto align = GetValue<std::string>(primitive_->GetAttr(ops::kAlign));
   if (!align.empty()) {
     align_ = align;
   }
@@ -66,17 +62,15 @@ bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_ERROR_IF_NULL(base_operator);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MatrixDiagV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  diagonal_data_type_ = inputs[kIndex0]->GetDtype();
-  auto padding_type = inputs[kIndexPaddingValue]->GetDtype();
-  auto output_data_type = outputs[kIndex0]->GetDtype();
+  diagonal_data_type_ = inputs[kIndex0]->dtype_id();
+  auto padding_type = inputs[kIndexPaddingValue]->dtype_id();
+  auto output_data_type = outputs[kIndex0]->dtype_id();
 
   if (diagonal_data_type_ != padding_type) {
     MS_LOG(ERROR) << "For MatrixDiagV3, the data type of x need be same with padding_value.";
@@ -98,8 +92,8 @@ int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixDiagV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixDiagV3OutputsNum, kernel_name_);
   lower_diag_index_ = 0;
@@ -112,11 +106,11 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   max_diag_len_ = diagonal_shape_[diag_rank - 1];
   // k
-  auto *k_data = static_cast<int32_t *>(inputs[1]->addr);
+  auto *k_data = static_cast<int32_t *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(k_data);
   lower_diag_index_ = k_data[0];
   upper_diag_index_ = lower_diag_index_;
-  size_t k_num = static_cast<size_t>(inputs[1]->size / sizeof(int32_t));
+  size_t k_num = static_cast<size_t>(inputs[1]->size() / sizeof(int32_t));
   const size_t k_num_max = 2;
   if (k_num == 0 || k_num > k_num_max) {
     MS_LOG(EXCEPTION) << "For MatrixDiagV3, k must have one or two elements, but received " << k_num << "elements.";
@@ -130,21 +124,21 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   const int64_t num_diags = IntToLong(upper_diag_index_) - IntToLong(lower_diag_index_) + 1;
   // num_rows
-  size_t num_rows_num = static_cast<size_t>(inputs[kIndexNumRow]->size / sizeof(int32_t));
+  size_t num_rows_num = static_cast<size_t>(inputs[kIndexNumRow]->size() / sizeof(int32_t));
   if (!(num_rows_num == 1)) {
     MS_LOG(EXCEPTION) << "For MatrixDiagV3, num_rows must have only one element, received " << num_rows_num
                       << " elements. ";
   }
-  auto *num_rows_data = static_cast<int32_t *>(inputs[kIndexNumRow]->addr);
+  auto *num_rows_data = static_cast<int32_t *>(inputs[kIndexNumRow]->device_ptr());
   MS_EXCEPTION_IF_NULL(num_rows_data);
   num_rows_ = num_rows_data[0];
   // num_cols
-  size_t num_cols_num = static_cast<size_t>(inputs[kIndexNumCol]->size / sizeof(int32_t));
+  size_t num_cols_num = static_cast<size_t>(inputs[kIndexNumCol]->size() / sizeof(int32_t));
   if (!(num_cols_num == 1)) {
     MS_LOG(EXCEPTION) << "For MatrixDiagV3, num_cols must have only one element, received " << num_cols_num
                       << " elements. ";
   }
-  auto *num_cols_data = static_cast<int32_t *>(inputs[kIndexNumCol]->addr);
+  auto *num_cols_data = static_cast<int32_t *>(inputs[kIndexNumCol]->device_ptr());
   MS_EXCEPTION_IF_NULL(num_cols_data);
   num_cols_ = num_cols_data[0];
 
@@ -172,34 +166,34 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   diag_elements_in_batch_ = num_diags * max_diag_len_;
   diag_batch_base_index_ = 0 * diag_elements_in_batch_;
-  size_t num_element = static_cast<size_t>(outputs[0]->size / sizeof(T));
+  size_t num_element = static_cast<size_t>(outputs[0]->size() / sizeof(T));
   num_batches_ = (SizeToLong(num_element)) / (num_rows_ * num_cols_);
 
   return DoLaunch<T>(inputs, outputs);
 }
 
 template <typename T>
-bool MatrixDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   align_superdiag_ = align_ == "LEFT_LEFT" || align_ == "LEFT_RIGHT";
   align_subdiag_ = align_ == "LEFT_LEFT" || align_ == "RIGHT_LEFT";
   // padding_value
-  size_t padding_value_num = static_cast<size_t>(inputs[kIndexPaddingValue]->size / sizeof(T));
+  size_t padding_value_num = static_cast<size_t>(inputs[kIndexPaddingValue]->size() / sizeof(T));
   if (!(padding_value_num == 1)) {
     MS_LOG(EXCEPTION) << "For MatrixDiagV3, padding_value must have only one element, received " << padding_value_num
                       << " elements. ";
   }
-  auto *padding_value_data = static_cast<T *>(inputs[kIndexPaddingValue]->addr);
+  auto *padding_value_data = static_cast<T *>(inputs[kIndexPaddingValue]->device_ptr());
   MS_EXCEPTION_IF_NULL(padding_value_data);
   T padding_value = padding_value_data[0];
 
-  auto *diagonal_data = static_cast<T *>(inputs[0]->addr);
+  auto *diagonal_data = static_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(diagonal_data);
-  auto *output_data = static_cast<T *>(outputs[0]->addr);
+  auto *output_data = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
   int64_t elem = 0;
-  size_t num_element = static_cast<size_t>(outputs[0]->size / sizeof(T));
-  size_t input_num_element = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t num_element = static_cast<size_t>(outputs[0]->size() / sizeof(T));
+  size_t input_num_element = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   if (static_cast<size_t>(num_batches_ * num_rows_ * num_cols_) > num_element) {
     MS_LOG(ERROR) << "For MatrixDiagV3, output buffer size is smaller than expected.";
     return false;

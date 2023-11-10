@@ -37,8 +37,8 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
   LUGpuKernelMod() : is_null_input_(false) {}
   ~LUGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -145,18 +145,13 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     batch_size_ = 1;
@@ -216,9 +211,6 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    size_t input_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
-    input_size_list_.push_back(input_size);
-
     size_t output_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
 
     size_t output_piv_size = 0;

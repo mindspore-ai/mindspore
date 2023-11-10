@@ -1,0 +1,17 @@
+#operator argmin
+argmin:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+      init: -1
+    output_type:
+      dtype: int
+      init: mstype.int32
+      arg_handler: dtype_to_enum
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: argmin_

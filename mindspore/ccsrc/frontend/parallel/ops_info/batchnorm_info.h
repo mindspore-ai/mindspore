@@ -47,6 +47,7 @@ class BatchNormInfo : public OperatorInfo {
   Status InferTensorMap() override;
   void InferReplaceOps() override;
   Status InferAsLossDivisor() override;
+  Status InferMirrorOps() override;
 
  private:
   bool is_training_ = false;

@@ -19,7 +19,8 @@
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "ops/bias_add.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore {
 class ConvBiasFusionInoutTest : public ConvFusionInoutTest {
@@ -58,9 +59,9 @@ class ConvBiasFusionInoutTest : public ConvFusionInoutTest {
   static CNodePtr AddBias(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::string &name) {
     auto prim = std::make_unique<ops::BiasAdd>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create BiasAdd primitivec failed");
+    prim->set_data_format(Format::NCHW);
     auto prim_c = prim->GetPrim();
     MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
-    prim->Init();
     auto bias_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(bias_primitive != nullptr, nullptr);
     auto bias = AddParameter(graph, oc_ * sizeof(float), {oc_}, kNumberTypeFloat32, name + "_bias");

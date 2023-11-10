@@ -30,6 +30,7 @@ namespace mindspore {
 const uint32_t kInvalidGraphId = UINT32_MAX;
 const uint32_t kInvalidDistincLabel = UINT32_MAX;
 namespace device {
+using kernel::KernelTensorPtr;
 class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
  public:
   KernelInfo() {
@@ -51,6 +52,9 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
     select_kernel_build_info_ = select_kernel_build_info;
   }
   void set_feature_map_flag(bool flag) { is_feature_map_ = flag; }
+  const KernelTensorPtr &GetOutputKernelTensor(size_t index) const;
+  bool SetOutputKernelTensor(const KernelTensorPtr &kernel_tensor, size_t index);
+  bool OutputKernelTensorExist(size_t index) const;
   const DeviceAddress *GetOutputAddr(size_t index) const;
   DeviceAddressPtr GetMutableOutputAddr(size_t index) const;
   bool OutputAddrExist(size_t index) const;
@@ -99,6 +103,7 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
  private:
   bool is_feature_map_;
   kernel::KernelBuildInfoPtr select_kernel_build_info_;
+  std::vector<KernelTensorPtr> output_kernel_tensor_list_;
   std::vector<std::shared_ptr<DeviceAddress>> output_address_list_;
   std::vector<std::shared_ptr<DeviceAddress>> workspace_address_list_;
   // pair<size_t, size_t> : (offset, aligned_size)

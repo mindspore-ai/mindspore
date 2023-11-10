@@ -24,10 +24,8 @@ constexpr int64_t UNKNOWN_ERR = 1;
 constexpr int64_t NEGTIVE_ERR = 2;
 constexpr int64_t INFER_ERR = 3;
 constexpr int64_t SHAPE_ERR = 4;
-bool SparseReshapeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseReshape>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SparseReshapeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
   }
@@ -41,18 +39,17 @@ bool SparseReshapeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseReshapeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseReshapeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> new_shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> shape_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  std::vector<int64_t> new_shape_shape = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                                              inputs.at(kIndex2)->GetDeviceShapeVector().end());
   if (indices_shape.size() != INDICES_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'indices' should be 2-D, but got "
                   << indices_shape.size() << "-D.";
@@ -79,9 +76,9 @@ int SparseReshapeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-bool SparseReshapeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SparseReshapeGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   int64_t *indices = GetDeviceAddress<int64_t>(inputs, kIndex0);
   int64_t *shape = GetDeviceAddress<int64_t>(inputs, kIndex1);
   int64_t *new_shape = GetDeviceAddress<int64_t>(inputs, kIndex2);

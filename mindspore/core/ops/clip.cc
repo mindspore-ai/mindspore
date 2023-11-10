@@ -54,7 +54,7 @@ class ClipInferBase : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim->name());
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildShape();
+    return input_args[0]->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -62,7 +62,7 @@ class ClipInferBase : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim->name());
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildType();
+    return input_args[0]->GetType();
   }
 };
 

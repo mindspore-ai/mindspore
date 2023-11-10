@@ -55,7 +55,7 @@ int64_t BNTrainingReduceGetAndCheckFormat(const PrimitivePtr &primitive, const V
 }
 abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = input_shape[kShape];
 
   constexpr auto kMinInputDim = 1;
@@ -80,7 +80,7 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
 
 TypePtr BNTrainingReduceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   std::set<TypePtr> check_list = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, check_list, primitive->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, input_type});

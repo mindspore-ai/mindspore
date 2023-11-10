@@ -32,24 +32,23 @@ class LcmCpuKernelMod : public NativeCpuKernelMod {
   LcmCpuKernelMod() = default;
   ~LcmCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LcmLaunchFunc = std::function<bool(LcmCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using LcmLaunchFunc = std::function<bool(LcmCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, LcmLaunchFunc>> func_list_;
   LcmLaunchFunc kernel_func_;
   ShapeVector x1_shape_;

@@ -31,14 +31,12 @@ class RaggedRangeCpuKernelMod : public NativeCpuKernelMod {
   RaggedRangeCpuKernelMod() = default;
   ~RaggedRangeCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-              const std::vector<kernel::AddressPtr> &outputs) override;
+  bool Launch(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<kernel::KernelTensor *> &workspace,
+              const std::vector<kernel::KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -50,9 +48,9 @@ class RaggedRangeCpuKernelMod : public NativeCpuKernelMod {
   TypeId tsplits_type_{kTypeUnknown};
   std::vector<int> in_sizes_;
   template <typename T, typename TSPLITS>
-  void RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::AddressPtr> &inputs, bool broadcast_starts,
+  void RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::KernelTensor *> &inputs, bool broadcast_starts,
                          bool broadcast_limits, bool broadcast_deltas,
-                         const std::vector<kernel::AddressPtr> &outputs) const;
+                         const std::vector<kernel::KernelTensor *> &outputs) const;
   template <typename T, typename TSPLITS>
   TSPLITS RangeSize(T start, T limit, T delta) const;
 };

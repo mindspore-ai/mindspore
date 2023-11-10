@@ -96,7 +96,7 @@ void TestSpecializeGraph::SetUp() {
   // build func_graph beta
   ParameterPtr x1 = graph_beta_->add_parameter();
   inputs.clear();
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>(kScalarAddOpName)));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>("ScalarAdd")));
   inputs.push_back(x1);
   inputs.push_back(y);
   CNodePtr cnode_add = graph_beta_->NewCNode(inputs);
@@ -163,7 +163,7 @@ class MetaScalarAdd : public MetaFuncGraph {
     FuncGraphPtr graph_g = std::make_shared<FuncGraph>();
     ParameterPtr x = graph_g->add_parameter();
     ParameterPtr y = graph_g->add_parameter();
-    auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+    auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(NewValueNode(prim_scalar_add));
     inputs.push_back(x);

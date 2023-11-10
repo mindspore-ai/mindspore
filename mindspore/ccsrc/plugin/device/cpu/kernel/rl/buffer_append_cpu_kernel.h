@@ -26,16 +26,24 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kSecondInputIndex = 2;
-class BufferAppendCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
  public:
   BufferAppendCpuKernelMod() : element_nums_(0), exp_batch_(0), capacity_(0) {}
 
   ~BufferAppendCpuKernelMod() override = default;
-  void Init(const CNodePtr &kernel_node) {
-    auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-    auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-    capacity_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
-    exp_batch_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "exp_batch");
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
+    auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));
+    capacity_ = GetValue<int64_t>(primitive_->GetAttr("capacity"));
+    exp_batch_ = GetValue<int64_t>(primitive_->GetAttr("exp_batch"));
     // check capacity > 0
     if (capacity_ <= 0) {
       MS_LOG(EXCEPTION) << "Capacity must be greater than 0 ";
@@ -44,21 +52,13 @@ class BufferAppendCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     for (size_t i = 0; i < element_nums_; i++) {
       exp_element_list.push_back(LongToSize(shapes[i]) * UnitSizeInBytes(types[i]->type_id()));
     }
-    // buffer size
-    for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * LongToSize(capacity_));
-    }
-    // exp size
-    for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * LongToSize(exp_batch_));
-    }
-    // count and head
-    input_size_list_.push_back(sizeof(int));
-    input_size_list_.push_back(sizeof(int));
+    output_size_list_.clear();
     output_size_list_.push_back(sizeof(int));
+    return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &) override {
     auto count_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_ + 1);
     int index = 0;
@@ -97,8 +97,6 @@ class BufferAppendCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     ParallelLaunchAutoSearch(task, element_nums_, this, &parallel_search_info_);
     return true;
   }
-
-  void InitKernel(const CNodePtr &) { return; }
 
  private:
   size_t element_nums_;

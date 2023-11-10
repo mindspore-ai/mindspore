@@ -38,23 +38,17 @@ class RaggedRangeHelperGpuKernel : public GpuKernelHelperBase {
 
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 3;
     constexpr size_t OUTPUT_NESTED_SPLITS_NUM = 1;
     constexpr size_t OUTPUT_DENSE_VALUES_NUM = 1;
     constexpr size_t WORKSPACE_NUM = 1;
     const std::vector<std::vector<int64_t>> nested_splits_shapes{output_shapes[0]};
     const std::vector<std::vector<int64_t>> dense_values_shapes{output_shapes[1]};
     const std::vector<std::vector<int64_t>> range_sizes_shapes{std::vector<int64_t>{output_shapes[0][0] - 1}};
-    int in_flag;
     int nested_splits_out_flag;
     int dense_values_out_flag;
     int workspace_flag;
     ResetResource();
 
-    if ((in_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_)) ==
-        -1) {
-      return in_flag;
-    }
     if ((workspace_flag = CalShapesSizeInBytes<TSPLITS>(range_sizes_shapes, WORKSPACE_NUM, kernel_name_,
                                                         "range_sizes_shape", &work_size_list_)) == -1) {
       return workspace_flag;
@@ -121,7 +115,6 @@ class RaggedRangeHelperGpuKernel : public GpuKernelHelperBase {
   }
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
     broadcast_starts_ = false;

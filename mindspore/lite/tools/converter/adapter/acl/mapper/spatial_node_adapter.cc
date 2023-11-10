@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,24 @@
 
 #define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/spatial_node_adapter.h"
-#include <vector>
-#include <set>
 #include <memory>
+#include <set>
 #include <string>
-#include "mindspore/core/ops/sequence_ops.h"
-#include "tools/converter/adapter/acl/common/utils.h"
-#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "tools/common/tensor_util.h"
-#include "include/errorcode.h"
+#include <vector>
 #include "base/base.h"
-#include "ops/concat.h"
-#include "ops/batch_norm.h"
+#include "include/errorcode.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/argmax_with_value.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fused_batch_norm.h"
+#include "ops/fusion/layer_norm_fusion.h"
 #include "ops/instance_norm.h"
+#include "ops/nn_op_name.h"
 #include "ops/stack.h"
 #include "ops/tuple_get_item.h"
-#include "ops/layer_norm.h"
-#include "ops/fusion/layer_norm_fusion.h"
-#include "ops/argmax_with_value.h"
+#include "tools/common/tensor_util.h"
+#include "tools/converter/adapter/acl/common/utils.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,7 +41,7 @@ namespace {
 constexpr size_t kCnodeInputMinNum = 2;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
-const std::set<std::string> kCNodeWithMultiOutputs = {ops::kNameBatchNorm,       ops::kNameFusedBatchNorm,
+const std::set<std::string> kCNodeWithMultiOutputs = {kBatchNormOpName,          ops::kNameFusedBatchNorm,
                                                       ops::kNameInstanceNorm,    ops::kNameLayerNorm,
                                                       ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue};
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,

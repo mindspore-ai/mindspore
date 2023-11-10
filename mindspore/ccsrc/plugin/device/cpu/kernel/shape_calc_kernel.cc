@@ -17,51 +17,73 @@
 #include "plugin/device/cpu/kernel/shape_calc_kernel.h"
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace kernel {
-bool ShapeCalcCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto operator_ptr = std::dynamic_pointer_cast<ops::ShapeCalc>(base_operator);
-  if (!operator_ptr) {
-    MS_LOG(ERROR) << "cast ShapeCalc ops failed!";
-    return false;
+bool ShapeCalcCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr(kOutputRealTuple)) {
+    is_dynamic_len_out_ = true;
   }
-  kernel_name_ = operator_ptr->name();
   return true;
 }
 
-int ShapeCalcCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ShapeCalcCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto operator_ptr = std::dynamic_pointer_cast<ops::ShapeCalc>(base_operator);
-  if (!operator_ptr) {
-    MS_LOG(ERROR) << "cast ShapeCalc ops failed!";
+
+  if (!primitive_->HasAttr(ops::kAttrCalcResult)) {
+    MS_LOG(ERROR) << "For ShapeCalc, the calc result should be get here.";
     return KRET_RESIZE_FAILED;
   }
-  outs_shape_ = operator_ptr->get_calc_result();
+  outs_shape_ = GetValue<ShapeArray>(primitive_->GetAttr(ops::kAttrCalcResult));
   return ret;
 }
 
-bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->addr);
-    for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
-      output_addr[j] = outs_shape_[i][j];
+bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  if (!is_dynamic_len_out_) {
+    if (outputs.size() != outs_shape_.size()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', outputs address list size must be equal to the number of outputs of shape func, but got "
+                    << outputs.size() << " vs " << outs_shape_.size();
+      return false;
+    }
+
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->device_ptr());
+      for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
+        output_addr[j] = outs_shape_[i][j];
+      }
+    }
+  } else {
+    // Dynamic length, each out should have same shape for dynamic-length-out solution in runtime.
+    if (outputs.size() != 1) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', dynamic length outputs address list size must be equal to 1, but got " << outputs.size();
+      return false;
+    }
+
+    auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
+    size_t offset_inner = outs_shape_[0].size();
+    for (size_t i = 0; i < outs_shape_.size(); ++i) {
+      for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
+        size_t cur_offset = i * offset_inner + j;
+        *(output_addr + cur_offset) = outs_shape_[i][j];
+      }
     }
   }
+
   return true;
 }
 
 std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddRealTuple(true)};
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
 }
 

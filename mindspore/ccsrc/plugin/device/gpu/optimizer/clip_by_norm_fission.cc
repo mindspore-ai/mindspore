@@ -151,9 +151,10 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
 
   auto axis_node = NewValueNode(MakeValue<std::vector<int64_t>>(axis));
   auto axis_tensor = ConvertValueToTensor(kernel_graph, axis_node);
-  reduce_sum = CreateCNodeBase(func_graph, {square, axis_tensor}, kReduceSumOpName, square);
+  reduce_sum =
+    CreateCNodeBase(func_graph, {square, axis_tensor, NewValueNode(MakeValue(true)), NewValueNode(MakeValue(false))},
+                    kReduceSumOpName, square);
   MS_EXCEPTION_IF_NULL(reduce_sum);
-
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(true), reduce_sum);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
   reduce_sum->set_abstract(abs);

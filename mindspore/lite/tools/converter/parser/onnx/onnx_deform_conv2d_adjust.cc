@@ -17,8 +17,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/shape.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/nn_ops.h"
 #include "include/errorcode.h"
 #include "tools/common/tensor_util.h"

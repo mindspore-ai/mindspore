@@ -37,13 +37,11 @@ class FractionalMaxPoolGradCpuKernelMod : public NativeCpuKernelMod {
   FractionalMaxPoolGradCpuKernelMod() = default;
   ~FractionalMaxPoolGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -51,7 +49,8 @@ class FractionalMaxPoolGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool FractionalMaxPoolGradLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool FractionalMaxPoolGradLaunch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs);
   template <typename T>
   void FractionalMaxPoolGradOutput(size_t tensor_in_num, T *output, const T *out_backprop, size_t back_in_nums,
                                    size_t output_nums, std::vector<int64_t> tensor_out_index);
@@ -62,8 +61,8 @@ class FractionalMaxPoolGradCpuKernelMod : public NativeCpuKernelMod {
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> output_mat,
     Eigen::Map<Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic>> output_index_mat);
   using FractionalMaxPoolGradFunc =
-    std::function<bool(FractionalMaxPoolGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(FractionalMaxPoolGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FractionalMaxPoolGradFunc>> func_list_;
   FractionalMaxPoolGradFunc kernel_func_;
   std::vector<int64_t> tensor_in_shape_;

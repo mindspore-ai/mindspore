@@ -88,11 +88,9 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   SparseMatrixAddGpuKernel() { handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCuSparseHandle(); }
   ~SparseMatrixAddGpuKernel() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     is_need_retrieve_output_shape_ = true;
-    type_id_ = inputs.at(InputList::X1_VALUE)->GetDtype();
+    type_id_ = inputs.at(InputList::X1_VALUE)->dtype_id();
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x1_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&x2_descr_), "Create descriptor failed.");
     CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreateMatDescr(&y_descr_), "Create descriptor failed.");
@@ -105,22 +103,21 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
       return ret;
     }
     output_size_list_.clear();
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_DENSE_SHAPE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_BATCH_POINTER]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_ROW]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
+    output_size_list_.emplace_back(inputs[InputList::X1_DENSE_SHAPE]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_BATCH_POINTER]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_ROW]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_VALUE]->size() + inputs[InputList::X2_VALUE]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_VALUE]->size() + inputs[InputList::X2_VALUE]->size());
     return KRET_OK;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     ParseKernelParam(inputs, stream);
 
@@ -149,8 +146,8 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
 
     // Fill y_dense_shape and y_batch_pointer.
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(y_dense_shape, inputs[InputList::X1_DENSE_SHAPE]->addr, inputs[InputList::X1_DENSE_SHAPE]->size,
-                      cudaMemcpyDeviceToDevice, stream),
+      cudaMemcpyAsync(y_dense_shape, inputs[InputList::X1_DENSE_SHAPE]->device_ptr(),
+                      inputs[InputList::X1_DENSE_SHAPE]->size(), cudaMemcpyDeviceToDevice, stream),
       "cudaMemcpy failed.");
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -162,7 +159,9 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     std::vector<ShapeVector> shapes = {
       {SizeToLong(x1_dense_shape_host_.size())},                              // dense shape
       {SizeToLong(y_batch_pointer_host_.size())},                             // batch pointer
@@ -170,39 +169,41 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // col
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // values
     };
-    for (size_t i = 0; i < outputs_.size(); ++i) {
-      outputs_[i]->SetShapeVector(shapes[i]);
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      outputs[i]->SetShapeVector(shapes[i]);
+      outputs[i]->set_size(LongToSize(std::accumulate(
+        shapes[i].begin(), shapes[i].end(), UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
     }
   }
 
  private:
-  void ParseKernelParam(const std::vector<AddressPtr> &inputs, cudaStream_t stream) {
+  void ParseKernelParam(const std::vector<KernelTensor *> &inputs, cudaStream_t stream) {
     // Due to the design of primitive, dense_shape, batch_pointer, alpha, beta are on the device memory, while cusparse
     // requires it on the host. Additional memory copy between host and device will lead to significant performance
     // degradation. However, such an interface can only be compromised.
     auto x1_dense_shape = GetDeviceAddress<int>(inputs, InputList::X1_DENSE_SHAPE);
-    x1_dense_shape_host_.resize(inputs[InputList::X1_DENSE_SHAPE]->size / sizeof(int));
+    x1_dense_shape_host_.resize(inputs[InputList::X1_DENSE_SHAPE]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x1_dense_shape_host_.data(), x1_dense_shape, x1_dense_shape_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x1_batch_pointer = GetDeviceAddress<int>(inputs, InputList::X1_BATCH_POINTER);
-    x1_batch_pointer_host_.resize(inputs[InputList::X1_BATCH_POINTER]->size / sizeof(int));
+    x1_batch_pointer_host_.resize(inputs[InputList::X1_BATCH_POINTER]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x1_batch_pointer_host_.data(), x1_batch_pointer, x1_batch_pointer_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x2_dense_shape = GetDeviceAddress<int>(inputs, InputList::X2_DENSE_SHAPE);
-    x2_dense_shape_host_.resize(inputs[InputList::X2_DENSE_SHAPE]->size / sizeof(int));
+    x2_dense_shape_host_.resize(inputs[InputList::X2_DENSE_SHAPE]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x2_dense_shape_host_.data(), x2_dense_shape, x2_dense_shape_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),
       "cudaMemcpy failed.");
 
     auto x2_batch_pointer = GetDeviceAddress<int>(inputs, InputList::X2_BATCH_POINTER);
-    x2_batch_pointer_host_.resize(inputs[InputList::X2_BATCH_POINTER]->size / sizeof(int));
+    x2_batch_pointer_host_.resize(inputs[InputList::X2_BATCH_POINTER]->size() / sizeof(int));
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(x2_batch_pointer_host_.data(), x2_batch_pointer, x2_batch_pointer_host_.size() * sizeof(int),
                       cudaMemcpyDeviceToHost, stream),

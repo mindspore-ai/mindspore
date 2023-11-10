@@ -37,6 +37,7 @@ using SwapEventPtr = std::shared_ptr<SwapEvent>;
 // LoadableDeviceAddress provide the ability to offload data on device to ddr or disk and load it back later.
 class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
  public:
+  explicit LoadableDeviceAddress(const KernelTensorPtr &kernel_tensor) : DeviceAddress(kernel_tensor) {}
   LoadableDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   LoadableDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
@@ -90,12 +91,14 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   }
 
   virtual void set_swappable(bool swappable) { swappable_ = swappable; }
-  virtual bool swappable() { return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr); }
+  virtual bool swappable() {
+    return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && GetDevicePtr() == nullptr);
+  }
 
  protected:
   DeviceContext *GetDeviceContext() const {
     DeviceContext *device_context = nullptr;
-    device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name(), device_id()});
     return device_context;
   }
 

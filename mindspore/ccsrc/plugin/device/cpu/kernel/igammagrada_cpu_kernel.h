@@ -34,12 +34,10 @@ class IgammaGradACpuKernelMod : public NativeCpuKernelMod {
   IgammaGradACpuKernelMod() = default;
   ~IgammaGradACpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {
@@ -54,16 +52,16 @@ class IgammaGradACpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> z_shape_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void BcastCompute(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &);
+  void BcastCompute(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &);
 
   template <typename T>
   void SpecialCompute(int64_t, int64_t, int64_t, const T *, const T *, T *);
 
   template <typename T>
-  void NoBcastCompute(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &);
+  void NoBcastCompute(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &);
 };
 }  // namespace kernel
 }  // namespace mindspore

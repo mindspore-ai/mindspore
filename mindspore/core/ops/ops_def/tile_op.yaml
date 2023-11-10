@@ -1,0 +1,14 @@
+#operator tile
+tile:
+    args:
+        input_x:
+            dtype: tensor
+        multiples:
+            dtype: tuple[int]
+    returns:
+        output:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True

@@ -48,7 +48,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()), prim_name);
@@ -98,7 +98,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
         << "For '" << prim_name
         << "', in order to broadcast, each dimension pair must be equal or input dimension is 1 or target "
            "dimension is -1. But got x_shape: "
-        << input_args[0]->BuildShape()->ToString() << ", target shape: " << x_shape_ptr->ToString() << ".";
+        << input_args[0]->GetShape()->ToString() << ", target shape: " << x_shape_ptr->ToString() << ".";
     }
   }
   return x_shape_ptr;
@@ -108,7 +108,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
+  auto x_dtype = input_args[0]->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(x_dtype);
   std::set<TypePtr> template_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
@@ -150,7 +150,7 @@ class MIND_API AGBroadcastToInfer : public abstract::OpInferBase {
     return BroadcastToInfer(engine, primitive, input_args);
   }
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+  // std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BroadcastTo, prim::kPrimBroadcastTo, AGBroadcastToInfer, false);

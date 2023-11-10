@@ -43,8 +43,8 @@ class AkgCpuKernelMod : public CpuKernelMod {
   explicit AkgCpuKernelMod(const KernelPackPtr &kp);
   ~AkgCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *) override;
 
   std::vector<KernelAttr> GetOpSupport() { return {}; }
 

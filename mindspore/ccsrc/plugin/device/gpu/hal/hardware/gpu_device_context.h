@@ -52,6 +52,8 @@ class GPUDeviceResManager : public DeviceResManager {
                                        const ShapeVector &shape = ShapeVector(),
                                        const UserDataPtr &user_data = nullptr) const override;
 
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
+
   bool CreateStream(size_t *stream_id) const override;
   bool DestroyStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;
@@ -87,8 +89,8 @@ class GPUKernelExecutor : public KernelExecutor {
 
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
-  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                     size_t stream_id) const override;
 
   uint32_t GetRankID() const override;
@@ -116,13 +118,13 @@ class GPUKernelExecutor : public KernelExecutor {
 
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
-  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                 const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                 void *stream) const;
+  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs, void *stream) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                      const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                       void *stream) const;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same

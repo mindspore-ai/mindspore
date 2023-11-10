@@ -29,14 +29,12 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
   XlogyCpuKernelMod() { ResetResource(); }
   ~XlogyCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -44,7 +42,6 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
 
  protected:
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
     index_listx_.clear();
@@ -53,8 +50,9 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   std::vector<size_t> index_listx_{};
   std::vector<size_t> index_listy_{};
   bool is_need_broadcast_{false};

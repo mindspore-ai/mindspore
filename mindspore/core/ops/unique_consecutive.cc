@@ -47,7 +47,7 @@ bool CheckNullInput(const std::vector<int64_t> &shape) {
 abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto input_shape_vec = input_shape_map[kShape];
   if (CheckNullInput(input_shape_vec)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", the shape of input cannot contain zero.";
@@ -134,7 +134,7 @@ TypePtr UniqueConsecutiveInferType(const PrimitivePtr &primitive, const std::vec
   auto name = primitive->name();
   const std::set<TypePtr> valid_types = {kComplex64, kComplex128, kFloat16, kFloat,  kFloat64, kInt8,  kInt16,
                                          kInt32,     kInt64,      kUInt8,   kUInt16, kUInt32,  kUInt64};
-  auto input_type = CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->BuildType(), valid_types, name);
+  auto input_type = CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->GetType(), valid_types, name);
   std::vector<TypePtr> ret_type_vec = {input_type, std::make_shared<TensorType>(kInt32),
                                        std::make_shared<TensorType>(kInt32)};
   return std::make_shared<Tuple>(ret_type_vec);

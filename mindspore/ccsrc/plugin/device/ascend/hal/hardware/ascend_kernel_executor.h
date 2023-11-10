@@ -52,8 +52,8 @@ class AscendKernelExecutor : public KernelExecutor {
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
   // Launch a kernel via 'KernelMod' of the kernel.
-  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                     size_t stream_id) const override;
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
@@ -76,12 +76,13 @@ class AscendKernelExecutor : public KernelExecutor {
 
   // launch
   bool PySyncRuning() const;
-  bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
-  bool LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
-                         const std::vector<AddressPtr> &outputs, void *stream) const;
+  bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
+                       const vector<KernelTensor *> &outputs) const;
+  bool LaunchAtomicClean(const CNodePtr &node, const std::vector<KernelTensor *> &workspace,
+                         const std::vector<KernelTensor *> &outputs, void *stream) const;
 
-  bool GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                           std::vector<AddressPtr> *real_inputs) const;
+  bool GetKernelRealInputs(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
+                           std::vector<KernelTensor *> *real_inputs) const;
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const;
   void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const;
   static void DoSomas(const KernelGraphPtr &graph);

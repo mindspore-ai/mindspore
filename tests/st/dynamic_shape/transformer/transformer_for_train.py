@@ -89,7 +89,7 @@ class TransformerTrainingLoss(nn.Cell):
         flat_shape = (self.batch_size * seq_length,)
         label_ids = self.reshape(label_ids, flat_shape)
         label_weights = self.cast(self.reshape(label_weights, flat_shape), ms.float32)
-        one_hot_labels = self.onehot(self.cast(label_ids, ms.int32), self.cast(self.vocab_size, ms.int32),
+        one_hot_labels = self.onehot(self.cast(label_ids, ms.int32), self.vocab_size,
                                      self.on_value, self.off_value)
 
         per_example_loss = self.neg(self.reduce_sum(prediction_scores * one_hot_labels, self.last_idx))

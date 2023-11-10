@@ -45,8 +45,8 @@ class SoftplusInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-    return input_args[0]->BuildShape();
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+    return input_args[0]->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -56,7 +56,7 @@ class SoftplusInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     std::set<TypePtr> valid_index_types = {kFloat16, kFloat32, kFloat64};
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_index_types, prim_name);
     return x_type;
   }

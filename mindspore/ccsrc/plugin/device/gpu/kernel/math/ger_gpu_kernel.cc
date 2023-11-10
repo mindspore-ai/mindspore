@@ -22,10 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool GerGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Ger>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool GerGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -41,9 +38,7 @@ bool GerGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int GerGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
+int GerGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -52,16 +47,16 @@ int GerGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  std::vector<int64_t> clo_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> row_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                        inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> clo_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> row_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                        inputs.at(kIndex1)->GetDeviceShapeVector().end());
   if (clo_shape.size() != 1 || row_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x1' and 'x2' should be 1-D.";
     return KRET_RESIZE_FAILED;
@@ -70,9 +65,7 @@ int GerGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   output_elements_ = clo_shape[0] * row_shape[0];
   matrix_row_ = clo_shape[0];
   matrix_col_ = row_shape[0];
-  int64_t input_size = input_elements_ * unit_size_;
   int64_t output_size = output_elements_ * unit_size_;
-  input_size_list_.emplace_back(input_size);
   output_size_list_.emplace_back(output_size);
   return KRET_OK;
 }
@@ -82,14 +75,14 @@ void GerGpuKernelMod::ResetResource() noexcept {
   matrix_col_ = 0;
   input_elements_ = 0;
   output_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T>
-bool GerGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool GerGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   T *col_input = GetDeviceAddress<T>(inputs, 0);
   T *row_input = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);

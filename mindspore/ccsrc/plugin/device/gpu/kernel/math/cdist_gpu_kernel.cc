@@ -23,10 +23,7 @@ namespace kernel {
 constexpr size_t kOne = 1;
 constexpr size_t kTwo = 2;
 constexpr size_t kThree = 3;
-bool CdistGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Cdist>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool CdistGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -41,13 +38,11 @@ bool CdistGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_func_ = func_list_[index].second;
   batch_ = 0;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = kernel_ptr_->get_p();
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
   return true;
 }
 
-int CdistGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int CdistGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -79,19 +74,16 @@ int CdistGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   x_col_ = in_shape_x[in_shape_size - kOne];
   y_row_ = in_shape_y[in_shape_size - kTwo];
 
-  size_t x_size = x_elements_ * unit_size_;
-  size_t y_size = y_elements_ * unit_size_;
   size_t out_size = out_elements_ * unit_size_;
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(y_size);
   output_size_list_.push_back(out_size);
 
   return KRET_OK;
 }
 
 template <typename T>
-bool CdistGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool CdistGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   T *input_y = GetDeviceAddress<T>(inputs, 1);
   T *out_data = GetDeviceAddress<T>(outputs, 0);

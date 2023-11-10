@@ -17,7 +17,7 @@
 #include "parser/caffe/caffe_permute_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

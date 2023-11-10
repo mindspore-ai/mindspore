@@ -39,7 +39,7 @@ AnfNodePtr BuildBatchNormGrad(const PatternMap &m, const AnfNodePtr &new_node) {
   MS_EXCEPTION_IF_NULL(node);
   auto bn_grad_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_grad_node);
-  size_t kBNGradInputNum = 6;
+  size_t kBNGradInputNum = 9;
   CheckCNodeInputSize(bn_grad_node, kBNGradInputNum);
   auto new_bn_grad = new_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(new_bn_grad);
@@ -85,7 +85,7 @@ void BatchNormGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
 
 void BatchNormGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
   (void)(*dst_pattern)
-    .AddCNode(kRBatchnormGrad, {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5},
+    .AddCNode(kRBatchnormGrad, {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5, kXs},
               BuildBatchNormGrad);
 }
 }  // namespace opt

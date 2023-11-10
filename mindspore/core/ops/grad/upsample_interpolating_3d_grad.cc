@@ -53,10 +53,10 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
                         size_t *const scales_idx, const std::string &prim_name) {
   if (input_args.size() == kVALUE_4) {
     std::vector<int64_t> none_list{};
-    auto size_type = input_args[kInputIndex2]->BuildType();
+    auto size_type = input_args[kInputIndex2]->GetType();
     MS_EXCEPTION_IF_NULL(size_type);
     auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
-    auto scale_type = input_args[kInputIndex3]->BuildType();
+    auto scale_type = input_args[kInputIndex3]->GetType();
     MS_EXCEPTION_IF_NULL(scale_type);
     auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
@@ -76,7 +76,7 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
-  auto size_value_ptr = input_arg->BuildValue();
+  auto size_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
@@ -93,7 +93,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &input_size, std::vector<int64_t> *const y_shape) {
-  auto scales_value_ptr = input_arg->BuildValue();
+  auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr)) {
     std::vector<double> scales;
@@ -157,7 +157,7 @@ void UpsampleInterpolating3DGradCheck(const PrimitivePtr &primitive, const std::
   }
   if (shape_error) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', The shape of grad, which is the same as that of output, is "
-                             << input_args[kInputIndex0]->BuildShape()->ToString() << ", but the shape of output is ("
+                             << input_args[kInputIndex0]->GetShape()->ToString() << ", but the shape of output is ("
                              << std::to_string(y_shape[kInputIndex0]) << ", " << std::to_string(y_shape[kInputIndex1])
                              << ", " << std::to_string(y_shape[kInputIndex2]) << ", "
                              << std::to_string(y_shape[kInputIndex3]) << ", " << std::to_string(y_shape[kInputIndex4])
@@ -173,8 +173,8 @@ abstract::ShapePtr UpsampleInterpolating3DGradInferShape(const PrimitivePtr &pri
   for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input_size_ptr = input_args[kInputIndex1]->BuildValue();
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto input_size_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(input_size_ptr);
   auto input_size = GetShapeValue(primitive, input_args[kInputIndex1]);
   if (IsValueKnown(input_size_ptr)) {
@@ -203,7 +203,7 @@ TypePtr UpsampleInterpolating3DGradInferType(const PrimitivePtr &primitive,
   }
   auto grad_arg = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(grad_arg);
-  TypePtr grad_type = grad_arg->BuildType();
+  TypePtr grad_type = grad_arg->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim_name);
 }
 }  // namespace

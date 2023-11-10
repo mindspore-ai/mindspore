@@ -30,17 +30,13 @@ constexpr size_t kReduceScatterOutputsNum = 1;
 
 ReduceScatterCpuKernelMod::ReduceScatterCpuKernelMod() : op_type_(kMPIOpTypeSum) {}
 
-bool ReduceScatterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto op_prim = std::dynamic_pointer_cast<ops::ReduceScatter>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  auto op = op_prim->GetAttr(kOP);
+bool ReduceScatterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto op = primitive_->GetAttr(kOP);
   if (op != nullptr) {
     op_type_ = GetValue<std::string>(op);
   }
-  auto ranks_group = op_prim->GetAttr(kRanksGroup);
+  auto ranks_group = primitive_->GetAttr(kRanksGroup);
   if (ranks_group == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'group' can not be null, but got empty value.";
     return false;
@@ -49,14 +45,14 @@ bool ReduceScatterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceScatterOutputsNum, kernel_name_);
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  auto output_data_num = outputs[0]->size / sizeof(float);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto output_data_num = outputs[0]->size() / sizeof(float);
   return MPIReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
 }
 

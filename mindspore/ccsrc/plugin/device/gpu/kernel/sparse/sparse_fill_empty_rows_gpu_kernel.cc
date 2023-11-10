@@ -21,26 +21,19 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseFillEmptyRowsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseFillEmptyRows>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast SparseFillEmptyRows ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, kernel_ptr->name());
+bool SparseFillEmptyRowsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_ptr->name()
-                            << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  if (abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) != abstract::TypeIdSize(inputs[kIndex3]->GetDtype())) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_ptr->name()
-                             << "The datatypes of values and default_value are not same.";
+  if (abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) != abstract::TypeIdSize(inputs[kIndex3]->dtype_id())) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << ", the datatypes of values and default_value are not same.";
   }
   kernel_func_ = func_list_[index].second;
   return true;
@@ -62,15 +55,12 @@ void SparseFillEmptyRowsGpuKernelMod::ResetResource() noexcept {
   output_elements4_ = 0;
   dense_row = 0;
   real_output_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
 
-int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &others) {
+int SparseFillEmptyRowsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;  // infershape dynamic in gpu kernel.
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
@@ -96,11 +86,11 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (inputs[kIndex0]->GetShapeVector()[0] != inputs[kIndex1]->GetShapeVector()[0]) {
     MS_EXCEPTION(ValueError) << "The element number of indices should be equal to values element number.";
   }
-  input_default_values_size_ = abstract::TypeIdSize(inputs[kIndex3]->GetDtype());
+  input_default_values_size_ = abstract::TypeIdSize(inputs[kIndex3]->dtype_id());
   input_indice_size_ =
-    abstract::TypeIdSize(inputs[kIndex0]->GetDtype()) * input_indices_shapes_[kIndex0] * input_indices_shapes_[kIndex1];
-  input_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype()) * input_values_shapes_[kIndex0];
-  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex2]->GetDtype()) * input_dense_shape_shapes_[kIndex0];
+    abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * input_indices_shapes_[kIndex0] * input_indices_shapes_[kIndex1];
+  input_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * input_values_shapes_[kIndex0];
+  input_dense_shape_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * input_dense_shape_shapes_[kIndex0];
   output_elements1_ =
     std::accumulate(output_indices_shapes_.begin(), output_indices_shapes_.end(), 1, std::multiplies<int64_t>());
   output_elements2_ =
@@ -113,11 +103,11 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (output_elements1_ == 0 || output_elements2_ == 0 || output_elements3_ == 0 || output_elements4_ == 0) {
     is_null_input_ = true;
   }
-  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->GetDtype()) * output_elements1_;
-  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->GetDtype()) * output_elements2_;
-  auto output_empty_row_indicator_type = outputs[kIndex2]->GetDtype();
+  output_indices_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * output_elements1_;
+  output_values_size_ = abstract::TypeIdSize(outputs[kIndex1]->dtype_id()) * output_elements2_;
+  auto output_empty_row_indicator_type = outputs[kIndex2]->dtype_id();
   output_empty_row_indicator_size_ = abstract::TypeIdSize(output_empty_row_indicator_type) * output_elements3_;
-  auto output_reverse_index_map_type = outputs[kIndex3]->GetDtype();
+  auto output_reverse_index_map_type = outputs[kIndex3]->dtype_id();
   output_reverse_index_map_size_ = abstract::TypeIdSize(output_reverse_index_map_type) * output_elements4_;
 
   auto workspace_elements_per_rows_size = dense_row * sizeof(int64_t);
@@ -128,11 +118,6 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   auto workspace_final_shape_size = sizeof(size_t);
   auto workspace_origin_index_order_size = input_indices_shapes_[kIndex0] * sizeof(int64_t);
   auto workspace_sorted_key_size = input_indices_shapes_[kIndex0] * sizeof(int64_t);
-
-  input_size_list_.push_back(input_indice_size_);
-  input_size_list_.push_back(input_values_size_);
-  input_size_list_.push_back(input_dense_shape_size_);
-  input_size_list_.push_back(input_default_values_size_);
 
   workspace_size_list_.push_back(workspace_elements_per_rows_size);
   workspace_size_list_.push_back(workspace_empty_rows_count_size);
@@ -151,9 +136,9 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 template <typename S>
-bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -211,13 +196,26 @@ bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-void SparseFillEmptyRowsGpuKernelMod::SyncOutputShape() {
+void SparseFillEmptyRowsGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_indice_shape = {SizeToLong(real_output_size_), 2};
-  outputs_[kIndex0]->SetShapeVector(new_output_indice_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_indice_shape);
   std::vector<int64_t> new_output_values_shape = {SizeToLong(real_output_size_)};
-  outputs_[kIndex1]->SetShapeVector(new_output_values_shape);
-  outputs_[kIndex2]->SetShapeVector(output_empty_row_indicator_shape_);
-  outputs_[kIndex3]->SetShapeVector(output_reverse_index_map_shape_);
+  outputs[kIndex1]->SetShapeVector(new_output_values_shape);
+  outputs[kIndex2]->SetShapeVector(output_empty_row_indicator_shape_);
+  outputs[kIndex3]->SetShapeVector(output_reverse_index_map_shape_);
+  outputs[kIndex0]->set_size(
+    LongToSize(std::accumulate(new_output_indice_shape.begin(), new_output_indice_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex1]->set_size(
+    LongToSize(std::accumulate(new_output_values_shape.begin(), new_output_values_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex2]->set_size(
+    LongToSize(std::accumulate(output_empty_row_indicator_shape_.begin(), output_empty_row_indicator_shape_.end(),
+                               UnitSizeInBytes(outputs[kIndex2]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex3]->set_size(
+    LongToSize(std::accumulate(output_reverse_index_map_shape_.begin(), output_reverse_index_map_shape_.end(),
+                               UnitSizeInBytes(outputs[kIndex3]->dtype_id()), std::multiplies<int64_t>())));
 }
 std::vector<KernelAttr> SparseFillEmptyRowsGpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list;

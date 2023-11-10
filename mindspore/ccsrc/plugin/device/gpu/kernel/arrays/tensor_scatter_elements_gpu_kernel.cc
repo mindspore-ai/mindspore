@@ -75,15 +75,9 @@ void TensorScatterElementsGpuKernelMod::GetSize() {
   input_axis_size_ = input_shape_[axis_];
 }
 
-bool TensorScatterElementsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::TensorScatterElements>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  std::string reduction = kernel_ptr->get_reduction();
+bool TensorScatterElementsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr("reduction"));
   if (reduction == "none") {
     type_ = TensorScatterElementsReductionType::REDUCTION_ASSIGNMENT;
   } else if (reduction == "add") {
@@ -150,25 +144,23 @@ int TensorScatterElementsGpuKernelMod::AxisCheck() {
   return KRET_OK;
 }
 
-int TensorScatterElementsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int TensorScatterElementsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   FreeResource();
   sync_resource_ = true;
 
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  indices_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  updates_shape_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                     inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  indices_shape_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
+  updates_shape_ = std::vector<size_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
+                                       inputs.at(kIndex2)->GetDeviceShapeVector().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
   input_dims_ = input_shape_.size();
 
@@ -177,8 +169,8 @@ int TensorScatterElementsGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
     return ret;
   }
 
-  if (base_operator->HasAttr(kAttrAxis)) {
-    axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrAxis));
+  if (primitive_->HasAttr(kAttrAxis)) {
+    axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
     if (axis_ < 0) {
       axis_ += input_dims_;
     }
@@ -195,9 +187,9 @@ int TensorScatterElementsGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool TensorScatterElementsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TensorScatterElementsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);

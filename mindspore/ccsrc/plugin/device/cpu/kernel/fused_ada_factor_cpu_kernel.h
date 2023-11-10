@@ -33,30 +33,27 @@ class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
   FusedAdaFactorCpuKernelMod() = default;
   explicit FusedAdaFactorCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~FusedAdaFactorCpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs) override;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckInputAddresses(const std::vector<AddressPtr> &inputs) const;
-  void CheckWorkspaceAddresses(const std::vector<AddressPtr> &workspaces) const;
+  void CheckInputAddresses(const std::vector<KernelTensor *> &inputs) const;
+  void CheckWorkspaceAddresses(const std::vector<KernelTensor *> &workspaces) const;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                    const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+                    const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
   float CalcRMS(const T *input, size_t elem_num) const;
 
   template <typename T>
-  void FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspaces) const;
+  void FactorUpdate(float *update, const std::vector<KernelTensor *> &inputs,
+                    const std::vector<KernelTensor *> &workspaces) const;
 
   bool enable_scale_parameter_{false};
   bool enable_first_moment_{false};

@@ -21,6 +21,7 @@
 
 #include "ops/nn_optimizer_ops.h"
 #include "ops/nn_ops.h"
+#include "ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -35,8 +36,8 @@ namespace mindspore {
 namespace opt {
 const BaseRef BatchNormReluGradFusion::DefinePattern() const {
   VectorRef relu_grad = VectorRef({prim::kPrimReluGrad, dy_, y_});
-  VectorRef batch_norm_grad =
-    VectorRef({prim::kPrimBatchNormGrad, relu_grad, x_, scale_, save_mean_, save_var_, reserve_});
+  VectorRef batch_norm_grad = VectorRef(
+    {prim::kPrimBatchNormGrad, relu_grad, x_, scale_, save_mean_, save_var_, reserve_, is_training_, eps_, format_});
   return batch_norm_grad;
 }
 
@@ -44,20 +45,33 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto is_train = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("is_training");
-  MS_EXCEPTION_IF_NULL(is_train);
-  if (!GetValue<bool>(is_train)) {
+  auto kernel_name = common::AnfAlgo::GetCNodeName(node);
+  size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "data_format");
+  if (is_train_idx == SIZE_MAX || format_idx == SIZE_MAX) {
     return nullptr;
   }
-  auto format_attr = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
-  MS_EXCEPTION_IF_NULL(format_attr);
-  auto format = GetValue<std::string>(format_attr);
+  auto is_train_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), is_train_idx);
+  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), format_idx);
+
+  if (!utils::isa<ValueNodePtr>(is_train_input_node) || !utils::isa<ValueNodePtr>(format_input_node)) {
+    return nullptr;
+  }
+  auto is_train_v = ops::GetScalarValue<bool>(is_train_input_node->cast<ValueNodePtr>()->value());
+  if (!is_train_v.has_value() || !is_train_v.value()) {
+    return nullptr;
+  }
+
+  auto format_v = ops::GetScalarValue<int64_t>(format_input_node->cast<ValueNodePtr>()->value());
+  if (!format_v.has_value()) {
+    return nullptr;
+  }
+  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format_v.value() != Format::NHWC) {
+    return nullptr;
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return nullptr;
-  }
-  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
     return nullptr;
   }
   auto shape = AnfAlgo::GetInputDeviceShape(node, 0);
@@ -88,6 +102,12 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(save_var);
   auto reserve = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex5);
   MS_EXCEPTION_IF_NULL(reserve);
+  auto is_train = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex6);
+  MS_EXCEPTION_IF_NULL(is_train);
+  auto eps = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex7);
+  MS_EXCEPTION_IF_NULL(eps);
+  auto format = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex8);
+  MS_EXCEPTION_IF_NULL(format);
   auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), kIndex0);
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
@@ -96,7 +116,8 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   auto prim = std::make_shared<Primitive>(kBatchNormGradWithActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
   prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::RELU)));
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy,  x,     scale, save_mean, save_var, reserve, bias, y,
+                                    is_train,           eps, format};
   auto fused_batch_norm_grad_with_relu = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_grad_with_relu);
 

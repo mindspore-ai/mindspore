@@ -29,11 +29,8 @@ static constexpr int kNumber1 = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-bool LogMatrixDeterminantCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LogMatrixDeterminantCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -45,15 +42,13 @@ bool LogMatrixDeterminantCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int LogMatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LogMatrixDeterminantCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   shape_x_ = inputs[kIndex0]->GetShapeVector();
   auto shape_sign = outputs[kIndex0]->GetShapeVector();
   auto shape_y = outputs[kIndex1]->GetShapeVector();
@@ -93,9 +88,9 @@ int LogMatrixDeterminantCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> & /* workspace */,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchLogMatrixDeterminant<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -111,11 +106,11 @@ bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressP
 }
 
 template <typename T>
-void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &outputs) {
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_sign = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[1]->addr);
+void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &outputs) {
+  auto input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_sign = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto output_y = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   size_t shape_size = shape_x_.size();
   int64_t m = shape_x_[shape_size - 1];

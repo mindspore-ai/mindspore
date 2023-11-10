@@ -37,11 +37,9 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   MaxPool3DWithArgmaxCpuKernelMod() = default;
   ~MaxPool3DWithArgmaxCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   template <typename DATA_T>
   bool CheckIfLessOne(const std::vector<DATA_T> &inputs) const;
@@ -58,8 +56,8 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
                                         int64_t kH, int64_t kW, int64_t sD, int64_t sH, int64_t sW, int64_t pD,
                                         int64_t pH, int64_t pW, int64_t dD, int64_t dH, int64_t dW) const;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -68,11 +66,11 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename DATA_T, typename INDICES_T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<KernelTensor *> &outputs);
   using MaxPool3DWithArgmaxFunc =
-    std::function<bool(MaxPool3DWithArgmaxCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(MaxPool3DWithArgmaxCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MaxPool3DWithArgmaxFunc>> func_list_;
   MaxPool3DWithArgmaxFunc kernel_func_;
   std::vector<int64_t> x_shape_;

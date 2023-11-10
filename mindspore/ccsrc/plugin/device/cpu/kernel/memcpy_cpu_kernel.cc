@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/memcpy_cpu_kernel.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,18 +30,9 @@ constexpr auto kExpandDims = "ExpandDims";
 constexpr auto kSqueeze = "Squeeze";
 }  // namespace
 
-bool MemcpyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                              const std::vector<KernelTensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  return true;
-}
-
-int MemcpyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MemcpyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
   auto shape0 = inputs[kIndex0]->GetShapeVector();
@@ -48,8 +40,9 @@ int MemcpyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   return ret;
 }
 
-bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (is_empty_tensor_) {
     return true;
   }
@@ -57,15 +50,15 @@ bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs can not be empty.";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMemcpyOutputsNum, kernel_name_);
-  if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size
-                      << "} is not equal to the size of the first output: {" << outputs[0]->size << "}";
+  if (inputs[0]->size() != outputs[0]->size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size()
+                      << "} is not equal to the size of the first output: {" << outputs[0]->size() << "}";
   }
-  if (inputs[0]->addr == outputs[0]->addr) {
+  if (inputs[0]->device_ptr() == outputs[0]->device_ptr()) {
     return true;
   }
-  const auto *input_addr = reinterpret_cast<unsigned char *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<unsigned char *>(outputs[0]->addr);
+  const auto *input_addr = reinterpret_cast<unsigned char *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<unsigned char *>(outputs[0]->device_ptr());
   int cp_ret = EOK;
   auto task = [input_addr, output_addr, &cp_ret](size_t start, size_t end) {
     // the max size allowed by memcpy_s is SECUREC_MEM_MAX_LEN. If end - start > SECUREC_MEM_MAX_LEN,
@@ -80,7 +73,7 @@ bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       }
     } while (start < end);
   };
-  ParallelLaunchAutoSearch(task, outputs[0]->size, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, outputs[0]->size(), this, &parallel_search_info_);
   if (cp_ret != EOK) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
   }
@@ -133,10 +126,69 @@ std::vector<KernelAttr> MemcpyCpuKernelMod::common_two_valid_types_with_bool_com
   KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
   KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128)};
 
+std::vector<KernelAttr> MemcpyCpuKernelMod::reshape_valid_types_ = {KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeInt8)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeInt8),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeInt16)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeInt16),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeInt32)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeInt32),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeInt64)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeInt64),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeBool)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeBool),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeFloat16)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeFloat16),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeFloat32)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeFloat32),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeFloat64)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeFloat64),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeUInt8)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeUInt8),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeUInt16)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeUInt16),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeUInt32)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeUInt32),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeUInt64)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeUInt64),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeComplex64)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeComplex64),
+                                                                    KernelAttr()
+                                                                      .AddInputAttr(kNumberTypeComplex128)
+                                                                      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                                      .AddOutputAttr(kNumberTypeComplex128)};
+
 std::vector<KernelAttr> MemcpyCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-    {kReshape, common_two_valid_types_with_bool_complex_},     {kFlatten, common_valid_types_with_bool_complex_},
-    {kFlattenGrad, common_two_valid_types_with_bool_complex_}, {kExpandDims, common_two_valid_types_with_bool_complex_},
+    {kReshape, reshape_valid_types_},
+    {kFlatten, common_valid_types_with_bool_complex_},
+    {kFlattenGrad, common_two_valid_types_with_bool_complex_},
+    {kExpandDims, common_two_valid_types_with_bool_complex_},
     {kSqueeze, common_valid_types_with_bool_complex_},
   };
 

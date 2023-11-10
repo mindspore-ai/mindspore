@@ -29,8 +29,8 @@
 
 namespace mindspore {
 namespace opt {
-AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGraphPtr &func_graph,
-                                                                   const CNodePtr &cnode) const {
+namespace {
+AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
@@ -92,6 +92,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   }
   return nullptr;
 }
+}  // namespace
 
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &) const {
@@ -108,5 +109,19 @@ const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &fun
 
   return ConstInputToTensorInput(func_graph, node->cast<CNodePtr>());
 }
+
+const AnfNodePtr ConvertConstInputToTensorInputForPrint::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                                 const EquivPtr &) const {
+  // convert const input to tensor input for print op.
+  if (node == nullptr || func_graph == nullptr || !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPrint)) {
+    return nullptr;
+  }
+  if (!node->isa<CNode>()) {
+    return nullptr;
+  }
+
+  return ConstInputToTensorInput(func_graph, node->cast<CNodePtr>());
+}
+
 }  // namespace opt
 }  // namespace mindspore

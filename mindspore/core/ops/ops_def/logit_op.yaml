@@ -1,0 +1,11 @@
+#operator logit
+logit:
+    args:
+        input:
+            dtype: tensor
+        eps:
+            dtype: float
+            init: -1.0
+    returns:
+        output:
+            dtype: tensor

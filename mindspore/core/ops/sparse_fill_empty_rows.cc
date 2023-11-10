@@ -49,12 +49,12 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool CheckSparseFillEmptyRowsInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto default_value_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape) ||
       IsDynamic(default_value_shape)) {
     return false;
@@ -96,15 +96,16 @@ abstract::TupleShapePtr SparseFillEmptyRowsInferShape(const PrimitivePtr &primit
   abstract::ShapePtr output_reverse_index_map_shape;
 
   const int64_t rank = 2;
-  auto input_shape_value = input_args[kInputIndex2]->BuildValue();
+  auto input_shape_value = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value);
 
   if (CheckSparseFillEmptyRowsInputs(input_args, op_name) && !input_shape_value->isa<ValueAny>() &&
       !input_shape_value->isa<None>()) {
-    auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
     const int64_t input_nnz = indice_shape[0];
 
-    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name)[0];
+    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name,
+                                                               input_args[kInputIndex2]->GetType())[0];
     output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
                                                              ShapeVector({input_nnz + dense_row, rank}));
     output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}),
@@ -127,10 +128,10 @@ TypePtr SparseFillEmptyRowsInferType(const PrimitivePtr &primitive, const std::v
   const std::set<TypePtr> common_valid_types_with_bool_and_complex = {
     kInt8,   kInt16,   kInt32,   kInt64,   kUInt8, kUInt16,    kUInt32,
     kUInt64, kFloat16, kFloat32, kFloat64, kBool,  kComplex64, kComplex128};
-  auto indices_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
-  auto dense_shape_type = input_args[kInputIndex2]->BuildType();
-  auto default_value_type = input_args[kInputIndex3]->BuildType();
+  auto indices_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
+  auto dense_shape_type = input_args[kInputIndex2]->GetType();
+  auto default_value_type = input_args[kInputIndex3]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("values", values_type);
   (void)types.emplace("default_value", default_value_type);

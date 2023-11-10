@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <map>
 #include <vector>
-#include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
 #include "mindspore/core/utils/check_convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -34,8 +33,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
   ResizeNearestNeighborGradGpuKernelMod() {}
   ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     MS_EXCEPTION_IF_NULL(input);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -44,11 +43,11 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     if (is_fp16) {
       MS_EXCEPTION_IF_NULL(work);
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemsetAsync(work, 0, workspace[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        cudaMemsetAsync(work, 0, workspace[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
         "For ResizeNearestNeighborGrad, wrok cudaMemsetAsync failed.");
     } else {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemsetAsync(output, 0, outputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        cudaMemsetAsync(output, 0, outputs[kIndex0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
         "For ResizeNearestNeighborGrad, output cudaMemsetAsync failed.");
     }
     float h_scale = Scaling(output_shape_[kIndex2], input_shape_[kIndex2], align_corners_);
@@ -61,23 +60,16 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_ERROR_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    auto prim = base_operator->GetPrim();
-    MS_EXCEPTION_IF_NULL(prim);
-    align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto out = outputs.at(kIndex0);
     MS_EXCEPTION_IF_NULL(out);
-    auto o_type = out->GetDtype();
+    auto o_type = out->dtype_id();
     is_fp16 = (o_type == kNumberTypeFloat16);
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -113,11 +105,9 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       work_size_ = o_num * sizeof(float);
     }
     workspace_size_list_.push_back(work_size_);
-
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
     return KRET_OK;
   }
-
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   float Scaling(const int in_size, const int out_size, bool align_corners) {

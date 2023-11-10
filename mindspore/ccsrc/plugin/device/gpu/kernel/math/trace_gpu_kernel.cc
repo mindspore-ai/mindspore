@@ -21,10 +21,10 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
-bool TraceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Trace>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool TraceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
+  MS_EXCEPTION_IF_NULL(prim);
+
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -40,9 +40,7 @@ bool TraceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
-int TraceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int TraceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -51,8 +49,8 @@ int TraceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   size_t input_dims = input_shape.size();
   if (input_dims <= kIndex1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims
@@ -66,16 +64,14 @@ int TraceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   matrix_row_ = input_shape[input_dims - kRowindex];
   matrix_col_ = input_shape[input_dims - kColindex];
-  size_t input_elements = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-  size_t input_size = input_elements * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(unit_size_);
   return KRET_OK;
 }
 
 template <typename T>
-bool TraceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool TraceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   size_t sum_size = std::min(matrix_col_, matrix_row_);

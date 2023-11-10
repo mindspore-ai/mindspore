@@ -30,21 +30,16 @@ const size_t kParallelDataNumSameShape = 64 * 1024;
 const size_t kParallelDataNumSameShapeMid = 35 * 1024;
 }  // namespace
 
-bool BucketizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Bucketize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  boundaries_ = kernel_ptr->get_boundaries();
+bool BucketizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  boundaries_ = GetValue<std::vector<float>>(primitive_->GetAttr(ops::kBoundaries));
   return true;
 }
 
-int BucketizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BucketizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -52,9 +47,9 @@ int BucketizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return KRET_OK;
 }
 
-bool BucketizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> & /* workspace */,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool BucketizeCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> & /* workspace */,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (dtype_ != kNumberTypeInt32 && dtype_ != kNumberTypeInt64 && dtype_ != kNumberTypeFloat32 &&
@@ -82,10 +77,10 @@ bool BucketizeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 template <typename T>
-bool BucketizeCpuKernelMod::BucketizeCompute(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_data = reinterpret_cast<int32_t *>(outputs[0]->addr);
+bool BucketizeCpuKernelMod::BucketizeCompute(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto input_data = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = reinterpret_cast<int32_t *>(outputs[0]->device_ptr());
   size_t data_num_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   std::vector<float> boundaries_data = boundaries_;
   std::sort(boundaries_data.begin(), boundaries_data.end());

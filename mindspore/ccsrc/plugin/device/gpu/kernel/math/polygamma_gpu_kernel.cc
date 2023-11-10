@@ -19,10 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool PolygammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Polygamma>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool PolygammaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -44,9 +42,8 @@ bool PolygammaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int PolygammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int PolygammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
@@ -59,23 +56,21 @@ int PolygammaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   ResetResource();
 
-  std::vector<size_t> output_shape = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                         outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> output_shape = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                         outputs.at(kIndex0)->GetDeviceShapeVector().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), size_t(1), std::multiplies<size_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
   size_t calc_shape = output_elements_ * input_size_;
-  input_size_list_.push_back(data_unit_size_);
-  input_size_list_.push_back(calc_shape);
   output_size_list_.push_back(calc_shape);
   return KRET_OK;
 }
 
 template <typename T1, typename T2>
-bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool PolygammaGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T1 *a = GetDeviceAddress<T1>(inputs, 0);
   T2 *input = GetDeviceAddress<T2>(inputs, 1);
   T2 *output = GetDeviceAddress<T2>(outputs, 0);

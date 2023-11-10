@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <vector>
 #include <memory>
-#include "common/common_test.h"
-#include "ops/grad/nllloss_grad.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
-#include "ops/test_ops.h"
+#include "abstract/dshape.h"
+#include "common/common_test.h"
 #include "include/backend/optimizer/helper.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
+#include "ops/ops_func_impl/nllloss_grad.h"
+#include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "utils/ms_context.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,6 +46,8 @@ struct NLLLossGradOpParams {
   TypePtr out_type;
 };
 
+const string kNameNLLLossGrad_ = "NLLLossGrad";
+
 class TestNLLLossGrad : public TestOps, public testing::WithParamInterface<NLLLossGradOpParams> {};
 
 TEST_P(TestNLLLossGrad, dyn_shape) {
@@ -58,14 +62,13 @@ TEST_P(TestNLLLossGrad, dyn_shape) {
   ASSERT_NE(label, nullptr);
   ASSERT_NE(weight, nullptr);
   ASSERT_NE(total_weight, nullptr);
-  auto prim = std::make_shared<Primitive>(kNameNLLLossGrad);
+  auto prim = std::make_shared<Primitive>(kNameNLLLossGrad_);
+  auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
+  auto expect_type = std::make_shared<TensorType>(param.out_type);
   if (param.is_success) {
-    auto expect = std::make_shared<abstract::AbstractTensor>(param.out_type, param.out_shape);
-    auto out_abstract = opt::CppInferShapeAndType(prim, {x, dy, label, weight, total_weight});
-    ASSERT_NE(out_abstract, nullptr);
-    ASSERT_TRUE(*out_abstract == *expect);
+    DoFuncImplInferAndCompare<NLLLossGradFuncImpl>(kNameNLLLossGrad_, {x, dy, label, weight, total_weight}, expect_shape, expect_type);
   } else {
-    ASSERT_ANY_THROW(opt::CppInferShapeAndType(prim, {x, dy, label, weight, total_weight}));
+    ASSERT_ANY_THROW(DoFuncImplInferAndCompare<NLLLossGradFuncImpl>(kNameNLLLossGrad_, {x, dy, label, weight, total_weight}, expect_shape, expect_type));
   }
 }
 
@@ -77,7 +80,7 @@ INSTANTIATE_TEST_CASE_P(
     NLLLossGradOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32, {-1}, kInt32, {-1}, kFloat32, {}, kFloat32, true,
                         {-1, -1}, kFloat32},
     NLLLossGradOpParams{{-2}, kFloat32, {-2}, kFloat32, {-2}, kInt32, {-2}, kFloat32, {}, kFloat32, true,
-                        {-2}, kFloat32},
+                        {-1, -1}, kFloat32},
     NLLLossGradOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {3}, kInt32, {3}, kFloat32, {}, kFloat32, false},
     NLLLossGradOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {2}, kInt32, {2}, kFloat32, {}, kFloat32, false}
  ));

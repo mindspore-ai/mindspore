@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,17 +82,14 @@ void TileCpuKernelMod::TileMultipleCompute() {
   }
 }
 
-bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TileCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input_num_ = inputs.size();
   if (input_num_ != kTileInputsNum) {
     MS_LOG(EXCEPTION) << "Tile's inputs number should be " << kTileInputsNum << ", but got " << input_num_;
   }
 
   multiples_.clear();
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   launch_map_[kNumberTypeInt8] = &TileCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCpuKernelMod::LaunchKernel<int16_t>;
   launch_map_[kNumberTypeInt32] = &TileCpuKernelMod::LaunchKernel<int>;
@@ -120,23 +117,22 @@ bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TileCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
   multiple_shape_ = inputs[kIndex1]->GetShapeVector();
-  multiple_dtype_ = inputs[kIndex1]->GetDtype();
+  multiple_dtype_ = inputs[kIndex1]->dtype_id();
 
   return KRET_OK;
 }
 
-bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool TileCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                              const std::vector<kernel::KernelTensor *> &,
+                              const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() != kTileInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input must be " << kTileInputsNum << ", but got "
                       << inputs.size();
@@ -147,9 +143,10 @@ bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename T>
-void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void TileCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto y_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   multiples_.clear();
   auto multiple_nums = std::accumulate(multiple_shape_.begin(), multiple_shape_.end(), 1, std::multiplies<int64_t>());
   if (multiple_dtype_ == kNumberTypeInt32) {
@@ -176,6 +173,65 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
 
   Tile(x_addr, y_addr, &tile_struct_);
 }
+
+static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeFloat16),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeFloat32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat64)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeFloat64),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt8)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt8),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt16)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt16),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt64)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeInt64),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt8)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeUInt8),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt16)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeUInt16),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt32)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeUInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeUInt64)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeUInt64),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeBool)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeBool),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeComplex64)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeComplex64),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeComplex128)
+                                                       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                       .AddOutputAttr(kNumberTypeComplex128)};
+
+std::vector<KernelAttr> TileCpuKernelMod::GetOpSupport() { return support_list; }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Tile, TileCpuKernelMod);
 }  // namespace kernel

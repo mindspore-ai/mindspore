@@ -25,12 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchAssignBaseMod : public DeprecatedNativeGpuKernelMod {
+class BatchAssignBaseMod : public NativeGpuKernelMod {
  public:
   BatchAssignBaseMod() = default;
   ~BatchAssignBaseMod() override = default;
 
-  virtual bool Init(const CNodePtr &kernel_node) = 0;
+  virtual bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) = 0;
 
  protected:
   void InitSizeLists() {}

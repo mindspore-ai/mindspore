@@ -61,15 +61,16 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
    CreateUniqueWithPadKernelPtr<half, int32_t>}};
 }  // namespace
 
-bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto batch_rank = base_operator->get_batch_rank();
-  if (batch_rank < 0) {
-    return false;
+bool UniqueWithPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+    if (batch_rank < 0) {
+      return false;
+    }
+    batch_rank_ = static_cast<size_t>(batch_rank);
   }
-  batch_rank_ = static_cast<size_t>(batch_rank);
+
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -78,10 +79,9 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UniqueWithPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -92,7 +92,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size();
   }
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   if (batch_rank_ > 0) {
     if (shape.size() != static_cast<size_t>(batch_rank_ + 1)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -101,7 +101,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                         << shape << " and 'batch_rank': " << batch_rank_;
     }
     std::vector<size_t> pad_shape =
-      std::vector<size_t>(inputs[1]->GetDeviceShapeAdaptively().begin(), inputs[1]->GetDeviceShapeAdaptively().end());
+      std::vector<size_t>(inputs[1]->GetDeviceShapeVector().begin(), inputs[1]->GetDeviceShapeVector().end());
     auto pad_nums = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int64_t>());
     auto batch_size = std::accumulate(shape.begin(), shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
     if (pad_nums != static_cast<int64_t>(batch_size)) {
@@ -118,8 +118,8 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_OK;
   }
 
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
-  input_shapes.emplace_back(inputs[1]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
+  input_shapes.emplace_back(inputs[1]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   is_need_retrieve_output_shape_ = false;

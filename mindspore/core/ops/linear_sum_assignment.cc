@@ -47,7 +47,7 @@ abstract::TupleShapePtr LinearSumAssignmentInferShape(const PrimitivePtr &primit
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   constexpr int64_t kNumber2 = 2;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto matrix_shape = shape_map[kShape];
   auto matrix_rank = SizeToLong(matrix_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("cost_matrix rank", matrix_rank, kEqual, kNumber2, op_name);
@@ -65,11 +65,11 @@ TuplePtr LinearSumAssignmentInferType(const PrimitivePtr &primitive, const std::
   const std::set<TypePtr> valid_cost_matrix_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_dimention_limit_types = {kInt64};
   const std::set<TypePtr> valid_maximize_types = {kBool};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("cost_matrix", input_args[kInputIndex0]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("cost_matrix", input_args[kInputIndex0]->GetType(),
                                                    valid_cost_matrix_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("dimension_limit", input_args[kInputIndex1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("dimension_limit", input_args[kInputIndex1]->GetType(),
                                                    valid_dimention_limit_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("maximize", input_args[kInputIndex2]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("maximize", input_args[kInputIndex2]->GetType(),
                                                    valid_maximize_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64});
 }

@@ -51,10 +51,10 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
                                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x1_shape_ptr = input_args[0]->BuildShape();
-  auto x2_indices_shape_ptr = input_args[1]->BuildShape();
-  auto x2_values_shape_ptr = input_args[2]->BuildShape();
-  auto x2_shape_shape_ptr = input_args[3]->BuildShape();
+  auto x1_shape_ptr = input_args[0]->GetShape();
+  auto x2_indices_shape_ptr = input_args[1]->GetShape();
+  auto x2_values_shape_ptr = input_args[2]->GetShape();
+  auto x2_shape_shape_ptr = input_args[3]->GetShape();
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape_ptr)[kShape];
   auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices_shape_ptr)[kShape];
   auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values_shape_ptr)[kShape];
@@ -116,10 +116,10 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
 
 TuplePtr DenseToSparseSetOperationInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x1_type = input_args[0]->BuildType();
-  auto x2_indices_type = input_args[1]->BuildType();
-  auto x2_values_type = input_args[2]->BuildType();
-  auto x2_shape_type = input_args[3]->BuildType();
+  auto x1_type = input_args[0]->GetType();
+  auto x2_indices_type = input_args[1]->GetType();
+  auto x2_values_type = input_args[2]->GetType();
+  auto x2_shape_type = input_args[3]->GetType();
 
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kString};
 

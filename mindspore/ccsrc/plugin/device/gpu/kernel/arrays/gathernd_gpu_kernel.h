@@ -21,7 +21,6 @@
 #include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/gather_nd.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -34,8 +33,8 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
   GatherNdFwdGpuKernelMod() = default;
   ~GatherNdFwdGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -53,20 +52,17 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     const size_t input_num = 2;
     const size_t output_num = 1;
-    kernel_name_ = base_operator->GetPrim()->name();
+
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }

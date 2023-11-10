@@ -29,19 +29,17 @@ class InTopKGpuKernelMod : public NativeGpuKernelMod {
   InTopKGpuKernelMod() {}
   ~InTopKGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
     return kernel_func_(this, inputs, workspace, outputs, cuda_stream);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -50,11 +48,11 @@ class InTopKGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *cuda_stream);
-  using InTopKFunc = std::function<bool(InTopKGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &, void *cuda_stream)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *cuda_stream);
+  using InTopKFunc = std::function<bool(InTopKGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &, void *cuda_stream)>;
   InTopKFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, InTopKFunc>> func_list_;
 

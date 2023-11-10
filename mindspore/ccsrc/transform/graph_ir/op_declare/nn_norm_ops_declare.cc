@@ -23,6 +23,7 @@
 namespace mindspore::transform {
 // SoftmaxV2
 INPUT_MAP(SoftmaxV2) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(SoftmaxV2) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(SoftmaxV2) = {
   {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
@@ -100,9 +101,11 @@ REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
 
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
-ATTR_MAP(LayerNorm) = {{"begin_norm_axis", ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
-                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
-                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+ATTR_MAP(LayerNorm) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(LayerNorm) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
+                             {5, ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
+                             {6, ATTR_DESC(epsilon, AnyTraits<float>())}};
+
 OUTPUT_MAP(LayerNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 REG_ADPT_DESC(LayerNorm, prim::kPrimLayerNorm->name(), ADPT_DESC(LayerNorm))
 
@@ -224,8 +227,9 @@ REG_ADPT_DESC(MultilabelMarginLoss, prim::kPrimMultilabelMarginLoss->name(), ADP
 
 // Roll
 INPUT_MAP(Roll) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Roll) = {{"shift", ATTR_DESC(shifts, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                  {"axis", ATTR_DESC(dims, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Roll) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Roll) = {{kIndex2, ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())},
+                        {kIndex3, ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Roll) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Roll, mindspore::kRollOpName, ADPT_DESC(Roll))
 

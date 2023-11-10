@@ -18,7 +18,7 @@
 #include <numeric>
 #include <algorithm>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/unstack.h"
 
 namespace mindspore::lite {
@@ -159,7 +159,7 @@ int SplitTensorRT::ParseParams(const ITensorHelper &helper) {
     CHECK_NULL_RETURN(split_op);
     axis_ = split_op->get_axis();
     output_num_ = split_op->get_output_num();
-    auto size_splits_ptr = split_op->get_size_splits();
+    auto size_splits_ptr = GetValue<std::vector<int64_t>>(split_op->GetAttr("size_splits"));
     if (!size_splits_ptr.empty()) {
       size_splits_.resize(size_splits_ptr.size());
       std::copy(size_splits_ptr.begin(), size_splits_ptr.end(), size_splits_.begin());

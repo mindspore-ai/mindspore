@@ -44,6 +44,7 @@
 #include "plugin/device/cpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
 #include "backend/common/pass/insert_type_transform_op.h"
+#include "backend/common/pass/flatten_value_sequence_in_pyexecute.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
@@ -67,6 +68,7 @@
 #endif
 #include "include/common/profiler.h"
 #include "plugin/device/cpu/hal/device/cpu_kernel_task.h"
+#include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 
 namespace mindspore {
 namespace device {
@@ -198,6 +200,19 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   if (user_data != nullptr) {
     FillUserData(user_data, device_address.get());
   }
+  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
+  return device_address;
+}
+
+DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto device_address = std::make_shared<CPUDeviceAddress>(kernel_tensor);
+
+  const auto &user_data = kernel_tensor->user_data();
+  if (user_data != nullptr) {
+    FillUserData(user_data, device_address.get());
+  }
+  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
   return device_address;
 }
 
@@ -281,6 +296,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+  pm->AddPass(std::make_shared<opt::FlattenValueSequenceInPyExecute>("flatten_value_sequence_in_pyexecute"));
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
@@ -428,13 +444,14 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 
     // This branch would be removed When KernelMode rectification is complete
     auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
-    auto args = kernel::AbstractArgsFromCNode(node);
-    // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-    // we will put this tensor in args.inputs.data_.
-    auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-    kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
-    kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, true);
     if (discard_cpu_kernel_mod != nullptr) {
+      auto args = kernel::AbstractArgsFromCNode(node);
+      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
+      // we will put this tensor in args.inputs.data_.
+      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
+      kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
+      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, true);
+
       kernel::SetArgsToCNode(node, args);
       discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
       discard_cpu_kernel_mod->Init(node);
@@ -444,13 +461,15 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
-      auto op = kernel::CreateOperatorByCNode(node);
-      auto ret = cpu_kernel->Init_(op, args.inputs, args.outputs);
+      std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+      std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(node);
+      auto ret =
+        cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(node), input_kernel_tensors, output_kernel_tensors);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (!kernel::IfNeedSkipResize(node)) {
-        if (cpu_kernel->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+      if (kernel::CheckResizeCondition(node)) {
+        if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
           MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
                                      << "] resize failed.";
         }
@@ -491,9 +510,9 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << kernel_graph->graph_id();
 }
 
-bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                     size_t /* stream_id */) const {
+bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, size_t /* stream_id */) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
 #ifndef ENABLE_SECURITY
@@ -553,9 +572,9 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
   return true;
 }
 
-bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -570,9 +589,9 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   return ret;
 }
 
-bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);

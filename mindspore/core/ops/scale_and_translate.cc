@@ -43,6 +43,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,22 +51,22 @@ namespace {
 abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto translation_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape) || IsDynamicRank(scale_shape) ||
       IsDynamicRank(translation_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
   }
   // support dynamic shape
   if (IsDynamicShape(images_shape) || IsDynamicShape(size_shape) || IsDynamicShape(scale_shape) ||
       IsDynamicShape(translation_shape)) {
-    return std::make_shared<abstract::Shape>(
-      ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                   abstract::Shape::kShapeDimAny}));
+    return std::make_shared<abstract::TensorShape>(
+      ShapeVector({abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny,
+                   abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny}));
   }
 
   const int64_t kShapeSize = 1;
@@ -91,35 +92,28 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   // check scale greater than zero
-  auto scale_v = input_args[kInputIndex2]->BuildValue();
+  auto scale_abs = input_args[kInputIndex2];
+  auto scale_v = scale_abs->GetValue();
   MS_EXCEPTION_IF_NULL(scale_v);
   if (!scale_v->isa<ValueAny>() && !scale_v->isa<None>()) {
     if (scale_v == nullptr) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
                                << " value is nullptr.";
     }
-    std::vector<float> scale_value;
-    if (!scale_v->isa<tensor::Tensor>()) {
+    if (!CheckAndConvertUtils::IsTensor(scale_abs)) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
                                << " must be a tensor, but got " << scale_v->ToString();
     }
-    auto scale_tensor = scale_v->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(scale_tensor);
-    size_t data_size = scale_tensor->DataSize();
-    auto data_c = static_cast<float *>(scale_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(data_c);
-    for (size_t i = 0; i < data_size; i++) {
-      scale_value.push_back(static_cast<float>(*data_c));
-      ++data_c;
-    }
+    std::vector<float> scale_value = GetArrayValue<float>(scale_v).value().ToVector();
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("scale", scale_value, prim_name);
   }
   //  infer resized_images's shape
-  auto size_v = input_args[kInputIndex1]->BuildValue();
+  auto size_v = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(size_v);
   std::vector<int64_t> size_value;
   if (!size_v->isa<ValueAny>() && !size_v->isa<None>()) {
-    size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
+    auto size_type = input_args[kInputIndex1]->GetType();
+    size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name, size_type);
     // check scale greater than zero
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("size", size_value, prim_name);
     std::vector<int64_t> out_shape;
@@ -127,23 +121,23 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
     (void)out_shape.emplace_back(size_value[kInputIndex0]);
     (void)out_shape.emplace_back(size_value[kInputIndex1]);
     (void)out_shape.emplace_back(images_shape[kInputIndex3]);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TensorShape>(out_shape);
   } else {
     std::vector<int64_t> out_shape;
     (void)out_shape.emplace_back(images_shape[kInputIndex0]);
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(images_shape[kInputIndex3]);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TensorShape>(out_shape);
   }
 }
 
 TypePtr ScaleAndTranslateInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto images_type = input_args[kInputIndex0]->BuildType();
-  auto size_type = input_args[kInputIndex1]->BuildType();
-  auto scale_type = input_args[kInputIndex2]->BuildType();
-  auto translation_type = input_args[kInputIndex3]->BuildType();
+  auto images_type = input_args[kInputIndex0]->GetType();
+  auto size_type = input_args[kInputIndex1]->GetType();
+  auto scale_type = input_args[kInputIndex2]->GetType();
+  auto translation_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> images_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> size_valid_types = {kInt32};
   const std::set<TypePtr> valid_types = {kFloat32};

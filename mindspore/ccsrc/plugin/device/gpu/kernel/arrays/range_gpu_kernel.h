@@ -22,14 +22,14 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "mindspore/core/ops/op_name.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_range_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/range.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputSize = 3;
+constexpr size_t kInputSize = 4;
 
 template <typename T>
 class RangeGpuKernelMod : public NativeGpuKernelMod {
@@ -37,8 +37,8 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
   RangeGpuKernelMod() { ResetResource(); }
   ~RangeGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *range_start = GetDeviceAddress<T>(inputs, 0);
     T *range_end = GetDeviceAddress<T>(inputs, 1);
     T *range_delta = GetDeviceAddress<T>(inputs, 2);
@@ -103,30 +103,23 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     stream_ptr_ = nullptr;
     output_shape_ = 0;
     max_output_length_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_name = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     size_t input_count = inputs.size();
     if (input_count != kInputSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 4, but got " << input_count;
     }
 
-    auto kernel_ptr = std::make_shared<ops::Range>(base_operator->GetPrim());
-
-    max_output_length_ = kernel_ptr->get_maxlen();
+    max_output_length_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
     is_need_retrieve_output_shape_ = true;
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -136,12 +129,15 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     // required synchronize for UpdateOp
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                        "cudaStreamSynchronize failed");
     std::vector<int64_t> output_shape = {output_shape_};
-    outputs_[0]->SetShapeVector(output_shape);
+    outputs[0]->SetShapeVector(output_shape);
+    outputs[0]->set_size(LongToSize(output_shape_) * UnitSizeInBytes(outputs[0]->dtype_id()));
   }
 
  private:

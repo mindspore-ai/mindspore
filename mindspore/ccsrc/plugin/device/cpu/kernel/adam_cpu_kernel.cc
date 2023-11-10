@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,19 +42,19 @@ constexpr float kAdamBlock = 1000;
 }  // namespace
 
 template <typename T>
-void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
-  T *var = static_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = static_cast<T *>(inputs[kIndexM]->addr);
-  T *v = static_cast<T *>(inputs[kIndexV]->addr);
-  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
-  T beta1 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(static_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
-  T *gradient = static_cast<T *>(inputs[kIndexGrad]->addr);
+  T *var = static_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = static_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *v = static_cast<T *>(inputs[kIndexV]->device_ptr());
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->device_ptr());
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->device_ptr());
+  float *lr = static_cast<float *>(inputs[kIndexLr]->device_ptr());
+  T beta1 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta1]->device_ptr())[kScalarIndex]);
+  T beta2 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta2]->device_ptr())[kScalarIndex]);
+  T epsilon = static_cast<T>(static_cast<float *>(inputs[kIndexEpsilon]->device_ptr())[kScalarIndex]);
+  T *gradient = static_cast<T *>(inputs[kIndexGrad]->device_ptr());
   constexpr float ONE = 1.0;
 
   for (int64_t b = 0; b < batch_size_; b++) {
@@ -80,19 +81,19 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
   }
 }
 
-void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
-  float *var = static_cast<float *>(inputs[kIndexVar]->addr);
-  float *m = static_cast<float *>(inputs[kIndexM]->addr);
-  float *v = static_cast<float *>(inputs[kIndexV]->addr);
-  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
-  float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex];
-  float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex];
-  float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex];
-  float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->addr);
+  float *var = static_cast<float *>(inputs[kIndexVar]->device_ptr());
+  float *m = static_cast<float *>(inputs[kIndexM]->device_ptr());
+  float *v = static_cast<float *>(inputs[kIndexV]->device_ptr());
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->device_ptr());
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->device_ptr());
+  float *lr = static_cast<float *>(inputs[kIndexLr]->device_ptr());
+  float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->device_ptr())[kScalarIndex];
+  float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->device_ptr())[kScalarIndex];
+  float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->device_ptr())[kScalarIndex];
+  float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->device_ptr());
   constexpr float ONE = 1.0;
   for (int64_t b = 0; b < batch_size_; b++) {
     float new_lr = lr[b] * std::sqrt(ONE - beta2_power[b]) / (ONE - beta1_power[b]);
@@ -111,21 +112,16 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &in
   }
 }
 
-bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
-  if (prim->HasAttr("use_locking")) {
-    use_locking_ = GetValue<bool>(prim->GetAttr("use_locking"));
+bool AdamCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr("use_locking")) {
+    use_locking_ = GetValue<bool>(primitive_->GetAttr("use_locking"));
   }
-  if (prim->HasAttr("use_nesterov")) {
-    use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
+  if (primitive_->HasAttr("use_nesterov")) {
+    use_nesterov_ = GetValue<bool>(primitive_->GetAttr("use_nesterov"));
   }
 
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  kernel_name_ = prim->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -138,10 +134,8 @@ bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AdamCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -199,9 +193,9 @@ int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-bool AdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamNnacl(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {

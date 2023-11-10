@@ -45,11 +45,8 @@ std::vector<KernelAttr> MapTensorPutGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorPutGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorPutGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
@@ -70,9 +67,8 @@ bool MapTensorPutGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int MapTensorPutGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorPutGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
@@ -88,9 +84,9 @@ int MapTensorPutGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename KeyType, typename ValueType>
-bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
@@ -104,24 +100,15 @@ bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);
-  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                inputs.at(kIndex1)->size / sizeof(KeyType),
-                                static_cast<ValueType *>(inputs.at(kIndex2)->addr), stream_ptr);
+  return hash_table_ptr->Insert(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                inputs.at(kIndex1)->size() / sizeof(KeyType),
+                                static_cast<ValueType *>(inputs.at(kIndex2)->device_ptr()), stream_ptr);
 }
 
 void MapTensorPutGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
   // Return size 1 as the first input size and the output size for MapTensorPut. Real map tensor is assigned by
   // framework.
-  input_size_list_.push_back(kSizeOne);
   output_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_key_type_size_);
-
-  auto values_size = std::accumulate(values_shape.begin(), values_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("values size", values_size);
-  input_size_list_.push_back(values_size * input_value_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MapTensorPut, MapTensorPutGpuKernelMod);

@@ -18,10 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MvlgammaGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::MvlgammaGrad>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool MvlgammaGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -34,13 +32,12 @@ bool MvlgammaGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = kernel_ptr_->get_p();
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   return true;
 }
 
-int MvlgammaGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int MvlgammaGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.
@@ -50,8 +47,8 @@ int MvlgammaGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex1)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
   if (input_elements_ == 0) {
     is_null_input_ = true;
@@ -64,16 +61,14 @@ int MvlgammaGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
   size_t input_size = input_elements_ * unit_size_;
 
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   return KRET_OK;
 }
 
 template <typename T>
-bool MvlgammaGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MvlgammaGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   T *y_grad = GetDeviceAddress<T>(inputs, 0);
   T *x = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);

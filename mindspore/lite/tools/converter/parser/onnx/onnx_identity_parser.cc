@@ -17,7 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_identity_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/identity.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

@@ -49,9 +49,9 @@ inline bool CheckShapePositive(const std::vector<int64_t> &input_shape) {
 abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto shape_shape_ptr = input_args[kInputIndex2]->GetShape();
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_shape_ptr)[kShape];
@@ -86,9 +86,9 @@ abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
 
 TypePtr SparseSoftmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto infer_type_indices = input_args[kInputIndex0]->BuildType();
-  auto infer_type_values = input_args[kInputIndex1]->BuildType();
-  auto infer_type_shape = input_args[kInputIndex2]->BuildType();
+  auto infer_type_indices = input_args[kInputIndex0]->GetType();
+  auto infer_type_values = input_args[kInputIndex1]->GetType();
+  auto infer_type_shape = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> valid_types = {kInt64};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", infer_type_indices);

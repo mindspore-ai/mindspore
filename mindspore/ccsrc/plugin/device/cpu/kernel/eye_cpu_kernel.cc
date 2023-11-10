@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/eye.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,22 +25,13 @@ namespace {
 constexpr size_t kEyeInputsNum = 3;
 constexpr size_t kEyeOutputsNum = 1;
 }  // namespace
-bool EyeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::Eye>(base_operator->GetPrim());
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Eye ops failed!";
-    return false;
-  }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool EyeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &others) {
+int EyeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -49,21 +39,22 @@ int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename S, typename T>
-bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  size_t data_size = outputs[0]->size;
-  S tmp_n = static_cast<S *>(inputs[0]->addr)[0];
-  S tmp_m = static_cast<S *>(inputs[1]->addr)[0];
+bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  size_t data_size = outputs[0]->size();
+  S tmp_n = static_cast<S *>(inputs[0]->device_ptr())[0];
+  S tmp_m = static_cast<S *>(inputs[1]->device_ptr())[0];
   num_n_ = static_cast<int64_t>(tmp_n);
   num_m_ = static_cast<int64_t>(tmp_m);
 
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
-  auto ouput_ptr = outputs[0]->addr;
+  auto ouput_ptr = outputs[0]->device_ptr();
   auto ret = memset_s(ouput_ptr, data_size, 0, data_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
   }
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   T num = static_cast<T>(1);
   for (int64_t i = 0; i < num_min; i++) {
     *(output_addr + (num_m_ + 1) * i) = static_cast<T>(num);

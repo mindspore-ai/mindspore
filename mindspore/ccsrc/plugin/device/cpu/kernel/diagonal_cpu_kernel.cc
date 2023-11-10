@@ -91,18 +91,14 @@ std::vector<T> construct_stride(std::vector<T> t_shape) {
 }
 }  // namespace
 
-bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool DiagonalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'Diagonal', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto prim = base_operator->GetPrim();
-  offset_ = GetValue<int64_t>(prim->GetAttr("offset"));
-  dim1_ = GetValue<int64_t>(prim->GetAttr("dim1"));
-  dim2_ = GetValue<int64_t>(prim->GetAttr("dim2"));
+  offset_ = GetValue<int64_t>(primitive_->GetAttr("offset"));
+  dim1_ = GetValue<int64_t>(primitive_->GetAttr("dim1"));
+  dim2_ = GetValue<int64_t>(primitive_->GetAttr("dim2"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -114,12 +110,11 @@ bool DiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int DiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int DiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape = inputs[0]->GetShapeVector();
@@ -153,7 +148,8 @@ int DiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
 

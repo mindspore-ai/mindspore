@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_concat_parser.h"
 #include <memory>
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

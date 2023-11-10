@@ -31,9 +31,8 @@ constexpr int kMatrixDiagV3InputsNum = 5;
 constexpr int kMatrixDiagV3OutputsNum = 1;
 }  // namespace
 
-bool MatrixDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MatrixDiagV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixDiagV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixDiagV3OutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,17 +42,15 @@ bool MatrixDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto matrix_prim = std::make_shared<ops::MatrixDiagV3>(base_operator->GetPrim());
-  auto align = matrix_prim->get_align();
+  auto align = GetValue<std::string>(primitive_->GetAttr("align"));
   left_align_super_diag_ = (align == "LEFT_LEFT" || align == "LEFT_RIGHT");
   left_align_sub_diag_ = (align == "LEFT_LEFT" || align == "RIGHT_LEFT");
   return true;
 }
 
-int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int MatrixDiagV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -77,9 +74,9 @@ int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename DataType>
-bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (x_size_ == 0 || y_size_ == 0) {
     return true;
   }

@@ -63,6 +63,7 @@ COMMON_INFER_FUNC_REG(Tanh, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Sin, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Reciprocal, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Sign, OneInOneOutCommonInferShape);
+COMMON_INFER_FUNC_REG(Sinc, OneInOneOutCommonInferShape);
 // ----------------------------------OneInOneOutCommonInfer END-----------------------------
 
 // ----------------------------------TowInOneOutCommonInfer-----------------------------

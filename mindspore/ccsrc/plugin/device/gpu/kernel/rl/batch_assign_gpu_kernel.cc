@@ -26,35 +26,33 @@ std::shared_mutex BatchAssignBaseMod::rw_mutex_;
 
 BatchAssignKernelMod::BatchAssignKernelMod() : elements_num_(0), lock_(false) {}
 
-bool BatchAssignKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  lock_ = GetAttr<bool>(kernel_node, "lock");
-  size_t input_num = common::AnfAlgo::GetInputNum(kernel_node);
-  elements_num_ = input_num / kHalf;
-  // Compute the size for each input. There has two input lists.
-  // Each list has the same elements number, shape series， type series.
-  for (size_t i = 0; i < elements_num_; i++) {
-    auto type = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
-    size_t element_size = GetTypeByte(TypeIdToType(type));
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-    for (auto x : shape) {
-      element_size *= LongToSize(x);
-    }
-    input_size_list_.push_back(element_size);
-  }
-  // Set input size for another input list.
-  for (size_t i = 0; i < elements_num_; i++) {
-    input_size_list_.push_back(input_size_list_[i]);
-  }
-  // Set an output for placeholder.
-  output_size_list_.push_back(sizeof(float));
+bool BatchAssignKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  size_t input_num = inputs.size();
+  elements_num_ = (input_num - 1) / kHalf;
+  auto lock_value = primitive_->GetAttr("lock");
+  MS_EXCEPTION_IF_NULL(lock_value);
+  lock_ = GetValue<bool>(lock_value);
   return true;
 }
 
-bool BatchAssignKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &, void *stream) {
+int BatchAssignKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  for (const auto &input : inputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just
+    // return do nothing.
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  output_size_list_.clear();
+  // Set an output for placeholder.
+  output_size_list_.push_back(sizeof(float));
+  return KRET_OK;
+}
+
+bool BatchAssignKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                  const std::vector<KernelTensor *> &, void *stream) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   // Using shared lock for reader so there can be more than one readers in the same time.
   // Using lock for writer to ensure there's only one writer at a time.
@@ -72,14 +70,20 @@ bool BatchAssignKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
     auto source_addr = GetDeviceAddress<int64_t>(inputs, i + elements_num_);
     MS_ERROR_IF_NULL(local_addr);
     MS_ERROR_IF_NULL(source_addr);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemcpyAsync(local_addr, source_addr, input_size_list_[i], cudaMemcpyDeviceToDevice, cuda_stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(local_addr, source_addr, inputs[i]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
       "Overwrite failed");
   }
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(cuda_stream),
-                             "BatchAssignKernel cudaStreamSynchronized failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),
+                                     "BatchAssignKernel cudaStreamSynchronized failed");
   return true;
 }
+
+std::vector<KernelAttr> BatchAssignKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BatchAssign, BatchAssignKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

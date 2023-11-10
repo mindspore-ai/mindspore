@@ -32,37 +32,40 @@ constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-bool TensorToSeqCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TensorToSeqCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
   return true;
 }
 
-int TensorToSeqCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int TensorToSeqCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
+  auto shape0 = inputs[kIndex0]->GetShapeVector();
+  is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
   return KRET_OK;
 }
 
-bool TensorToSeqCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
+bool TensorToSeqCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  const auto input_addr = inputs[0]->addr;
-  auto output_addr = outputs[0]->addr;
-  auto input_size = inputs[0]->size;
-  auto output_size = outputs[0]->size;
+  if (is_empty_tensor_) {
+    return true;
+  }
+  const auto input_addr = inputs[0]->device_ptr();
+  auto output_addr = outputs[0]->device_ptr();
+  auto input_size = inputs[0]->size();
+  auto output_size = outputs[0]->size();
   if (input_size != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size
-                      << "} is not equal to the size of output: {" << outputs[0]->size << "}";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size()
+                      << "} is not equal to the size of output: {" << outputs[0]->size() << "}";
   }
   if (input_size != 0) {
     auto cp_ret = memcpy_s(output_addr, output_size, input_addr, input_size);

@@ -833,9 +833,9 @@ table Rank {
 }
 
 table Range {
-    d_type: long;
-    start: long;
-    limit: long;
+    d_type: long = 0;
+    start: long = 0;
+    limit: long = 0;
     delta: long = 1;
 }
 

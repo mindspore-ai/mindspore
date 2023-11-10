@@ -22,25 +22,18 @@
 
 namespace mindspore {
 namespace kernel {
-bool SetSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SetSizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SetSize>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  validate_indices_ = kernel_ptr->get_validate_indices();
+  validate_indices_ = GetValue<bool>(primitive_->GetAttr(ops::kValidateIndices));
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SetSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SetSizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto values_shape = inputs[kIndex1]->GetShapeVector();
@@ -51,12 +44,12 @@ int SetSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 
-bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::AddressPtr> &inputs) const {
+bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::KernelTensor *> &inputs) const {
   bool valid = true;
   bool different = false;
   bool increasing = true;
-  const auto *indices_t = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  const auto *shape_t = static_cast<int64_t *>(inputs[kIndex2]->addr);
+  const auto *indices_t = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  const auto *shape_t = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
   for (int64_t di = 0; di < dims_; ++di) {
     if (indices_t[(n * dims_) + di] < 0 || indices_t[(n * dims_) + di] >= shape_t[di]) {
       valid = false;
@@ -92,14 +85,14 @@ bool SetSizeCpuKernelMod::IndicesValid(int64_t n, const std::vector<kernel::Addr
 }
 
 template <typename T>
-bool SetSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (outputs[0]->size == 0) {
+bool SetSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  if (outputs[0]->size() == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
     return true;
   }
-  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  auto ret = memset_s(outputs[0]->device_ptr(), outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret << ".";
   }
@@ -109,12 +102,12 @@ bool SetSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     }
   }
 
-  auto output_t = static_cast<int32_t *>(outputs[0]->addr);
-  auto indices_t = static_cast<int64_t *>(inputs[0]->addr);
-  auto vals_t = static_cast<T *>(inputs[1]->addr);
+  auto output_t = static_cast<int32_t *>(outputs[0]->device_ptr());
+  auto indices_t = static_cast<int64_t *>(inputs[0]->device_ptr());
+  auto vals_t = static_cast<T *>(inputs[1]->device_ptr());
   auto vals_num = values_size_;
   std::vector<int64_t> strides(dims_ - 1);
-  auto shape_t = static_cast<int64_t *>(inputs[2]->addr);
+  auto shape_t = static_cast<int64_t *>(inputs[2]->device_ptr());
   if (dims_ > 1) {
     int t = 2;
     strides[dims_ - t] = 1;

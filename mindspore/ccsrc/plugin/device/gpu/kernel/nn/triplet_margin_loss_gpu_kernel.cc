@@ -122,9 +122,9 @@ const std::vector<std::pair<KernelAttr, TripletMarginLossPtrCreatorFunc>> kernel
    CreateTripletMarginLossKernelPtr<uint8_t, float>}};
 }  // namespace
 
-bool TripletMarginLossGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TripletMarginLossGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -134,29 +134,24 @@ bool TripletMarginLossGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-bool TripletMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::TripletMarginLoss>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool TripletMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->p = kernel_ptr->get_p();
-  attr_ptr_->swap = kernel_ptr->get_swap();
-  attr_ptr_->eps = kernel_ptr->get_eps();
-  attr_ptr_->reduction = kernel_ptr->get_reduction();
+  attr_ptr_->p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  attr_ptr_->swap = GetValue<bool>(primitive_->GetAttr(ops::kSwap));
+  attr_ptr_->eps = GetValue<float>(primitive_->GetAttr(ops::kEps));
+  attr_ptr_->reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int TripletMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int TripletMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -183,7 +178,6 @@ int TripletMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

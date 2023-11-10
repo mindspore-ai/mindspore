@@ -112,7 +112,6 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
 
 // {node name | {{attr_name, dst_type}...}}
 const std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
-  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}},
   {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}},
   {kSpaceToBatchNDOpName, {{"block_shape", kNumberTypeInt32}}},
   {kBatchToSpaceNDOpName, {{"block_shape", kNumberTypeInt32}}}};

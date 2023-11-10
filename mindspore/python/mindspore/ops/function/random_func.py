@@ -25,7 +25,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
-from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask, RandpermV2
+from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.common.api import _function_forbid_reuse
 
@@ -620,58 +620,6 @@ def choice_with_mask(input_x, count=256, seed=None):
 def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
-
-
-@_function_forbid_reuse
-def randperm(n, seed=0, offset=0, dtype=mstype.int64):
-    r"""
-    Generates random permutation of integers from 0 to n-1.
-
-    Returns the tensor with the determined shape inferred by n, the random numbers in it drawn from the data range
-    that a given type can represent.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
-            The value of `n` must be greater than zero.
-        seed (int, optional): Random seed. Default: ``0`` . When seed is -1(only negative value), offset is 0,
-            it's determined by time.
-        offset (int, optional): Offset to generate random numbers. Priority is higher than random seed.
-            Default: ``0`` . It must be non-negative.
-        dtype (mindspore.dtype, optional): The type of output.
-            Its value must be one of the following types: int32, int16, int8,
-            uint8, int64, float64, float32, float16. Default: mstype.int64.
-
-    Returns:
-        Tensor. Its shape is specified by the required args `n`. Its type is specified by `dtype`.
-        Otherwise is default.
-
-    Raises:
-        TypeError: If `dtype` is not allowed.
-        ValueError: If `n` is a negative or 0 element.
-        ValueError: If `seed` is a negative element.
-        ValueError: If `n` is larger than the maximal data of the set dtype.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> from mindspore import ops
-        >>> from mindspore import dtype as mstype
-        >>> n = 4
-        >>> seed = 0
-        >>> offset = 0
-        >>> output = ops.randperm(n, seed, offset, dtype=mstype.int64)
-        >>> print(output)
-        [1 0 2 3]
-    """
-    if not isinstance(n, Tensor):
-        n = Tensor(n)
-    randperm_ = RandpermV2(dtype=dtype)
-    randperm_ = _set_prim_op_user_data(randperm_, "random_cache", False)
-    return randperm_(n, seed, offset)
 
 
 @_function_forbid_reuse
@@ -1387,6 +1335,6 @@ __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
     'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like', 'randint',
-    'randint_like', 'multinomial_with_replacement', 'randperm'
+    'randint_like', 'multinomial_with_replacement'
 ]
 __all__.sort()

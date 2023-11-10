@@ -47,19 +47,14 @@ using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-bool GRUGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool GRUGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGruGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGruGradOutputsNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::GRUV2Grad>(base_operator);
-  MS_EXCEPTION_IF_NULL(op_prim);
-  bidirectional_ = op_prim->get_bidirectional();
-  input_size_ = op_prim->get_input_size();
-  hidden_size_ = op_prim->get_hidden_size();
-  num_layers_ = op_prim->get_num_layers();
-  has_bias_ = op_prim->get_has_bias();
+  bidirectional_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kBidirectional));
+  input_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kInputSize));
+  hidden_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kHidden_size));
+  num_layers_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kNumLayers));
+  has_bias_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kHasBias));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -69,16 +64,13 @@ bool GRUGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int GRUGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int GRUGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  input_size_list_[kIndex8] = reserve_size_;
-  auto src_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  auto src_h_shape = inputs[kIndex1]->GetDeviceShapeVector();
   if (src_shape.size() != kDims || src_h_shape.size() != kDims) {
     MS_LOG(ERROR) << "GRU only support 3-D input!,but the src_shape dim is" << src_shape.size()
                   << ", the src_shape dim is" << src_h_shape.size();
@@ -200,23 +192,23 @@ void GRUGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, cons
   AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
 }
 
-void GRUGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[kSrcLayerIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[kSrcIterIdx]->addr);
+void GRUGradCpuKernelMod::SetArgumentHandleOp(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  SetArgumentHandle(DNNL_ARG_SRC_LAYER, inputs[kSrcLayerIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC_ITER, inputs[kSrcIterIdx]->device_ptr());
   SetArgumentHandle(DNNL_ARG_WEIGHTS_LAYER, GetDataHandle(weights_memory_));
   SetArgumentHandle(DNNL_ARG_WEIGHTS_ITER, GetDataHandle(weights_h_memory_));
   SetArgumentHandle(DNNL_ARG_BIAS, GetDataHandle(bias_memory_));
-  SetArgumentHandle(DNNL_ARG_DST_LAYER, inputs[kDstLayerIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_DST_ITER, inputs[kDstIterIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_WORKSPACE, inputs[kWorkSpaceIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC_LAYER, outputs[kDiffSrcLayerIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC_ITER, outputs[kDiffSrcIterIdx]->addr);
+  SetArgumentHandle(DNNL_ARG_DST_LAYER, inputs[kDstLayerIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DST_ITER, inputs[kDstIterIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_WORKSPACE, inputs[kWorkSpaceIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC_LAYER, outputs[kDiffSrcLayerIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC_ITER, outputs[kDiffSrcIterIdx]->device_ptr());
   SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS_LAYER, GetDataHandle(diff_weights_memory_));
   SetArgumentHandle(DNNL_ARG_DIFF_WEIGHTS_ITER, GetDataHandle(diff_weights_h_memory_));
   SetArgumentHandle(DNNL_ARG_DIFF_BIAS, GetDataHandle(diff_bias_memory_));
-  SetArgumentHandle(DNNL_ARG_DIFF_DST_LAYER, inputs[kDiffDstLayerIdx]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER, inputs[kDiffDstIterIdx]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST_LAYER, inputs[kDiffDstLayerIdx]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER, inputs[kDiffDstIterIdx]->device_ptr());
 }
 
 void GRUGradCpuKernelMod::ResetMemory(const dnnl::memory &mem, const string name) const {
@@ -228,16 +220,18 @@ void GRUGradCpuKernelMod::ResetMemory(const dnnl::memory &mem, const string name
   }
 }
 
-bool GRUGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool GRUGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGruGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGruGradOutputsNum, kernel_name_);
-  SetDataHandle(user_weights_memory_, inputs[kIndex2]->addr);
-  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kIndex2]->addr) + weight_size_);
+  SetDataHandle(user_weights_memory_, inputs[kIndex2]->device_ptr());
+  SetDataHandle(user_weights_h_memory_, reinterpret_cast<float *>(inputs[kIndex2]->device_ptr()) + weight_size_);
   Reorder(&user_weights_memory_, &weights_memory_);
   Reorder(&user_weights_h_memory_, &weights_h_memory_);
   if (has_bias_) {
-    SetDataHandle(bias_memory_, reinterpret_cast<float *>(inputs[kIndex2]->addr) + weight_size_ + weight_h_size_);
+    SetDataHandle(bias_memory_,
+                  reinterpret_cast<float *>(inputs[kIndex2]->device_ptr()) + weight_size_ + weight_h_size_);
   } else {
     auto dst_ptr = GetDataHandle(bias_memory_);
     auto size = GetSize(bias_desc_);
@@ -246,14 +240,15 @@ bool GRUGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     }
   }
 
-  SetDataHandle(user_diff_weights_memory_, outputs[kIndex2]->addr);
-  SetDataHandle(user_diff_weights_h_memory_, reinterpret_cast<float *>(outputs[kIndex2]->addr) + weight_size_);
+  SetDataHandle(user_diff_weights_memory_, outputs[kIndex2]->device_ptr());
+  SetDataHandle(user_diff_weights_h_memory_, reinterpret_cast<float *>(outputs[kIndex2]->device_ptr()) + weight_size_);
   ResetMemory(user_diff_weights_memory_, "user weights grad");
   ResetMemory(user_diff_weights_h_memory_, "user weights iter grad");
   ResetMemory(diff_weights_memory_, "weights grad");
   ResetMemory(diff_weights_h_memory_, "weights iter grad");
   if (has_bias_) {
-    SetDataHandle(diff_bias_memory_, reinterpret_cast<float *>(outputs[kIndex2]->addr) + weight_size_ + weight_h_size_);
+    SetDataHandle(diff_bias_memory_,
+                  reinterpret_cast<float *>(outputs[kIndex2]->device_ptr()) + weight_size_ + weight_h_size_);
   }
   auto dst_ptr = GetDataHandle(diff_bias_memory_);
   auto size = GetSize(diff_bias_desc_);

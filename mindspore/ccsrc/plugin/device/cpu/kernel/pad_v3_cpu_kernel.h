@@ -37,17 +37,15 @@ class PadV3CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Pa
   PadV3CpuKernelMod() = default;
   ~PadV3CpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -55,12 +53,12 @@ class PadV3CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Pa
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  private:
   template <typename S>
-  bool GetPaddings(const std::vector<AddressPtr> &inputs);
+  bool GetPaddings(const std::vector<KernelTensor *> &inputs);
 
   template <typename T>
   void ConstantModeCompute(T *input_ptr, T *output_ptr, T constant_values);

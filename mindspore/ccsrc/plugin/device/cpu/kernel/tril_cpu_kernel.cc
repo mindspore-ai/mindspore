@@ -29,26 +29,21 @@ constexpr size_t kTrilOutputsNum = 1;
 constexpr size_t kDim = 2;
 }  // namespace
 
-bool TrilCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool TrilCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Tril>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  diagonal_ = kernel_ptr->get_diagonal();
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  dtype_ = inputs.at(kIndex0)->dtype_id();
+  diagonal_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDiagonal));
   return true;
 }
 
-int TrilCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TrilCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeAdaptively();
+  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be at least 1-D, but got "
@@ -57,8 +52,8 @@ int TrilCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   return KRET_OK;
 }
 
-bool TrilCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool TrilCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTrilInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTrilOutputsNum, kernel_name_);
 
@@ -108,11 +103,12 @@ bool TrilCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 }
 
 template <typename T>
-void TrilCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_addr);
-  MS_EXCEPTION_IF_NULL(output_addr);
+void TrilCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   int64_t input_size = 1;
   for (size_t i = 0; i < input_dims_; ++i) {
