@@ -19,12 +19,12 @@
 
 namespace mindspore::graphkernel {
 bool SymbolEngineBuilder::Run(const FuncGraphPtr &func_graph) {
-  BuildSymbolEngine(func_graph);
+  BuildSymbolEngine(func_graph, multi_engine_);
   return true;
 }
 
-SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg) {
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg);
+SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg, bool multi_engine) {
+  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg, multi_engine);
   fg->set_attr(kAttrSymbolEngine, engine);
   engine->PreBuild();
   engine->Build();
@@ -34,13 +34,13 @@ SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg) {
 SymbolEnginePtr BuildSubSymbolEngine(const FuncGraphPtr &sub_fg, const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(sub_fg);
+  auto engine = std::make_shared<symbol::SymbolEngineImpl>(sub_fg, true);
   sub_fg->set_attr(kAttrSymbolEngine, engine);
   engine->PreBuild();
   if (node->func_graph()->has_attr(kAttrSymbolEngine)) {
     auto main_engine = node->func_graph()->get_attr(kAttrSymbolEngine)->cast_ptr<symbol::SymbolEngineImpl>();
     MS_EXCEPTION_IF_NULL(main_engine);
-    main_engine->BuildSubgraphSymbol(cnode);
+    main_engine->BuildSubgraph(cnode);
   } else {
     engine->Build();
   }

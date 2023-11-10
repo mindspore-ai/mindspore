@@ -249,7 +249,7 @@ class ReshapeOptShape : public opt::PatternProcessPass {
 
 bool BpropGraphOptimizer::Run(const FuncGraphPtr &func_graph) {
   std::vector<opt::PassPtr> passes = {
-    std::make_shared<SymbolEngineBuilder>(),  // build symbol engine for whole graph
+    std::make_shared<SymbolEngineBuilder>(false),  // build symbol engine for whole graph
     std::make_shared<ElimShapecalcReduceReshape>(),
     std::make_shared<ElimReshape>(),
     std::make_shared<ReshapeOptShape>(),

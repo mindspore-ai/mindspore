@@ -38,7 +38,10 @@ struct DependStatus {
 
 class SymbolEngineImpl : public SymbolEngine {
  public:
-  explicit SymbolEngineImpl(const FuncGraphPtr &fg) : name_("SymbolEngine-" + fg->ToString()), func_graph_(fg) {}
+  SymbolEngineImpl(const FuncGraphPtr &fg, bool multi_engine)
+      : name_(std::string(multi_engine ? "" : "Uni") + "SymbolEngine-" + fg->ToString()),
+        func_graph_(fg),
+        multi_engine_(multi_engine) {}
   ~SymbolEngineImpl() = default;
   MS_DECLARE_PARENT(SymbolEngineImpl, SymbolEngine)
 
@@ -46,15 +49,12 @@ class SymbolEngineImpl : public SymbolEngine {
   void PreBuild(bool depend_on_value = false);
   // build symbol engine
   void Build();
-  // build subgraph's symbol engine that can refer to maingraph's info.
-  void BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine);
-  void BuildSubgraphSymbol(const CNodePtr &cnode);
+  void BuildSubgraph(const CNodePtr &cnode);
 
   void BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) override;
-
   bool Infer(const AbstractBasePtrList &inputs) override;
-  ListSymbolPtr QuerySymbolicShape(const AnfNodePtr &node) override;
-  SymbolPtr QuerySymbolicValue(const AnfNodePtr &node) override;
+  ListSymbolPtr QuerySymbolicShape(const AnfNodePtr &node) const override;
+  SymbolPtr QuerySymbolicValue(const AnfNodePtr &node) const override;
   ShapeArray QueryShape(const AnfNodePtr &node) override;
   ShapeArray QueryValue(const AnfNodePtr &node) override;
   bool ShapeEqual(const std::pair<AnfNodePtr, size_t> &, const std::pair<AnfNodePtr, size_t> &) override {
@@ -63,11 +63,15 @@ class SymbolEngineImpl : public SymbolEngine {
   std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node) override;
   void QuerySymbolExpr(const AnfNodePtr &node, std::unordered_map<std::string, std::string> *symbol_expr_map) override;
   std::string ToString() const override { return name_; }
-  void Dump();
+  void Dump() const;
 
  protected:
-  void BuildNodesSymbol(const FuncGraphPtr &func_graph);
+  // build subgraph's symbol engine that can refer to maingraph's info.
+  void BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine);
+  void BuildNodesSymbol(const AnfNodePtrList &nodes);
   void DfsQueryDependStatus(const AnfNodePtr &node, bool depend_on_value);
+  void DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool depend_on_value, const FuncGraphPtr &sub_fg);
+  void DumpCNode(const AnfNodePtr &node, const std::string &id) const;
 
   std::string name_;
   AnfNodePtrList cnodes_;
@@ -78,6 +82,7 @@ class SymbolEngineImpl : public SymbolEngine {
   HashMap<AnfNodePtr, DependStatus> depend_status_map_;
   std::set<std::pair<AnfNodePtr, bool>> visited_;
   FuncGraphWeakPtr func_graph_;
+  bool multi_engine_{false};
 };
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_SYMBOL_ENGINE_IMPL_H_

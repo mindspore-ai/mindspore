@@ -242,7 +242,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
-  pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(true), enable_dyn_level, is_gpu);
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
