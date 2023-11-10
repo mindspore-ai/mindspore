@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 import test_utils
@@ -63,7 +64,6 @@ def test_assign_forward_ascend(mode):
     variable = ms.Parameter(Tensor(np.array([1.0]).astype(np.float32)))
     value = Tensor(np.array([2.0]).astype(np.float32))
     output = assign_forward_func(variable, value)
-    print("output:", output)
 
 
 @pytest.mark.level0

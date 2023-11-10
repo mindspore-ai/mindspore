@@ -87,7 +87,6 @@ def test_grid_sampler_2d_forward(mode):
                              [0, 0, 0]]]])
 
     out = grid_sampler_2d_forward_func(input_x, grid)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -159,7 +158,6 @@ def test_grid_sampler_2d_backward(mode):
                               [0.00000000e+00, 0.00000000e+00],
                               [0.00000000e+00, 0.00000000e+00]]]])
     grads = grid_sampler_2d_backward_func(input_x, grid)
-    print("grads:", grads)
     assert np.allclose(grads[0].asnumpy(), expect_out1, 1e-04, 1e-04)
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
@@ -224,5 +222,4 @@ def test_grid_sampler_2d_vmap(mode):
     nest_vmap = ops.vmap(grid_sampler_2d_forward_vmap,
                          in_axes=in_axes, out_axes=0)
     out = nest_vmap(input_x, grid)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)

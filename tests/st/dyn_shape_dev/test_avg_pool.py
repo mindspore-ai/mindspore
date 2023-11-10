@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+# pylint: disable=unused-variable
 import numpy as np
 import pytest
 import test_utils
 
 from mindspore import ops
 import mindspore as ms
-
-
-# from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 @test_utils.run_with_cell
@@ -76,7 +73,6 @@ def test_avg_pool_backward(mode):
     ms.context.set_context(precompile_only=True)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     grads = avg_pool_backward_func(x)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -97,7 +93,6 @@ def test_avg_pool_vmap(mode):
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4 * 2 * 1).reshape(1, 3, 3, 4, 2, 1).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(avg_pool_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)
-    print("out:", out)
     expect = np.array(
         [[[[[[5., 9.]], [[29., 33.]], [[53., 57.]]]],
           [[[[6., 10.]], [[30., 34.]], [[54., 58.]]]],
@@ -128,4 +123,3 @@ def test_avg_pool_dynamic(mode):
     test_cell = test_utils.to_cell_obj(avg_pool_dyn_shape_func)
     test_cell.set_inputs(x_dyn)
     out = test_cell(x)
-    print("out:", out)

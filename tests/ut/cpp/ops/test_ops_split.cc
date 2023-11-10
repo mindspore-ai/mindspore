@@ -23,9 +23,6 @@
 #include "ops/ops_func_impl/split.h"
 #include "ops/test_value_utils.h"
 
-// #include "ops/test_ops_dyn_cases.h"
-// #include "include/backend/optimizer/helper.h"
-
 namespace mindspore {
 namespace ops {
 struct SplitParams {

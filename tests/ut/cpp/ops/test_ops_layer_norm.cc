@@ -21,8 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-struct LayerNormOpParams
-{
+struct LayerNormOpParams {
   ShapeVector input_x_shape;
   TypePtr input_x_type;
   ShapeVector gamma_shape;
@@ -49,8 +48,6 @@ TEST_P(TestLayerNorm, layer_norm_dyn_shape) {
   auto primitive = std::make_shared<Primitive>("LayerNorm");
   ASSERT_NE(primitive, nullptr);
   const auto &param = GetParam();
-  //auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  //ASSERT_NE(x, nullptr);
   auto input_x = std::make_shared<abstract::AbstractTensor>(param.input_x_type, param.input_x_shape);
   ASSERT_NE(input_x, nullptr);
   auto gamma = std::make_shared<abstract::AbstractTensor>(param.gamma_type, param.gamma_shape);
@@ -64,7 +61,6 @@ TEST_P(TestLayerNorm, layer_norm_dyn_shape) {
     begin_norm_axis = std::make_shared<abstract::AbstractScalar>(std::make_shared<ValueAny>());
   }
   ASSERT_NE(begin_norm_axis, nullptr);
-
   std::shared_ptr<abstract::AbstractScalar> begin_param_axis = nullptr;
   if (param.begin_params_axis_has_value) {
     begin_param_axis = std::make_shared<abstract::AbstractScalar>(static_cast<int64_t>(param.begin_params_axis));
@@ -72,23 +68,20 @@ TEST_P(TestLayerNorm, layer_norm_dyn_shape) {
     begin_param_axis = std::make_shared<abstract::AbstractScalar>(std::make_shared<ValueAny>());
   }
   ASSERT_NE(begin_param_axis, nullptr);
-
   auto epsilon = std::make_shared<abstract::AbstractScalar>(param.epsilon);
   ASSERT_NE(epsilon, nullptr);
-
-  std::vector<abstract::AbstractBasePtr> input_args{std::move(input_x), std::move(gamma), std::move(beta),
-                                                    std::move(begin_norm_axis), std::move(begin_param_axis), 
-                                                    std::move(epsilon)};
+  std::vector<abstract::AbstractBasePtr> input_args{
+    std::move(input_x),          std::move(gamma),  std::move(beta), std::move(begin_norm_axis),
+    std::move(begin_param_axis), std::move(epsilon)};
   auto infer_impl = std::make_shared<LayerNormFuncImpl>();
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shapes_ptr = infer_impl->InferShape(primitive, input_args);
-  std::shared_ptr<abstract::TupleShape> infer_shapes = 
-                                                     std::dynamic_pointer_cast<abstract::TupleShape>(infer_shapes_ptr);
+  std::shared_ptr<abstract::TupleShape> infer_shapes =
+    std::dynamic_pointer_cast<abstract::TupleShape>(infer_shapes_ptr);
   ASSERT_NE(infer_shapes, nullptr);
   auto infer_types_ptr = infer_impl->InferType(primitive, input_args);
   std::shared_ptr<Tuple> infer_types = std::dynamic_pointer_cast<Tuple>(infer_types_ptr);
   ASSERT_NE(infer_types, nullptr);
-
   auto expect_output_x_shape = std::make_shared<abstract::TensorShape>(param.output_x_shape);
   ASSERT_NE(expect_output_x_shape, nullptr);
   auto expect_output_x_type = std::make_shared<TensorType>(param.output_x_type);
@@ -101,7 +94,6 @@ TEST_P(TestLayerNorm, layer_norm_dyn_shape) {
   ASSERT_NE(expect_variance_shape, nullptr);
   auto expect_variance_type = std::make_shared<TensorType>(param.variance_type);
   ASSERT_NE(expect_variance_type, nullptr);
-
   ASSERT_TRUE(*((*infer_shapes)[0]) == *expect_output_x_shape);
   ASSERT_TRUE(*((*infer_shapes)[1]) == *expect_mean_shape);
   ASSERT_TRUE(*((*infer_shapes)[2]) == *expect_variance_shape);
@@ -110,15 +102,74 @@ TEST_P(TestLayerNorm, layer_norm_dyn_shape) {
   ASSERT_TRUE(*((*infer_types)[2]) == *(expect_variance_type->element()));
 }
 
-INSTANTIATE_TEST_CASE_P(
-  TestLayerNormGroup, TestLayerNorm,
-  testing::Values(LayerNormOpParams{{-2}, kFloat32, {3, 4}, kFloat32, {3, 4}, kFloat32, true, 1, true, 1, 0.5,
-                                    {-2}, kFloat32, {-2}, kFloat32, {-2}, kFloat32},
-                  LayerNormOpParams{{2, 3, 4}, kFloat32, {3, 4}, kFloat32, {3, 4}, kFloat32, true, 1, true, 1, 0.5, 
-                                    {2, 3, 4}, kFloat32, {2, 1, 1}, kFloat32, {2, 1, 1}, kFloat32},
-                  LayerNormOpParams{{2, 3, 4}, kFloat32, {3, 4}, kFloat32, {3, 4}, kFloat32, false, 1, true, 1, 0.5, 
-                                    {2, 3, 4}, kFloat32, {-2}, kFloat32, {-2}, kFloat32},
-                  LayerNormOpParams{{2, 3, 4}, kFloat32, {3, 4}, kFloat32, {3, 4}, kFloat32, true, 1, false, 1, 0.5, 
-                                    {2, 3, 4}, kFloat32, {2, 1, 1}, kFloat32, {2, 1, 1}, kFloat32}));
+INSTANTIATE_TEST_CASE_P(TestLayerNormGroup, TestLayerNorm,
+                        testing::Values(LayerNormOpParams{{-2},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          true,
+                                                          1,
+                                                          true,
+                                                          1,
+                                                          0.5,
+                                                          {-2},
+                                                          kFloat32,
+                                                          {-2},
+                                                          kFloat32,
+                                                          {-2},
+                                                          kFloat32},
+                                        LayerNormOpParams{{2, 3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          true,
+                                                          1,
+                                                          true,
+                                                          1,
+                                                          0.5,
+                                                          {2, 3, 4},
+                                                          kFloat32,
+                                                          {2, 1, 1},
+                                                          kFloat32,
+                                                          {2, 1, 1},
+                                                          kFloat32},
+                                        LayerNormOpParams{{2, 3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          false,
+                                                          1,
+                                                          true,
+                                                          1,
+                                                          0.5,
+                                                          {2, 3, 4},
+                                                          kFloat32,
+                                                          {-2},
+                                                          kFloat32,
+                                                          {-2},
+                                                          kFloat32},
+                                        LayerNormOpParams{{2, 3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          {3, 4},
+                                                          kFloat32,
+                                                          true,
+                                                          1,
+                                                          false,
+                                                          1,
+                                                          0.5,
+                                                          {2, 3, 4},
+                                                          kFloat32,
+                                                          {2, 1, 1},
+                                                          kFloat32,
+                                                          {2, 1, 1},
+                                                          kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

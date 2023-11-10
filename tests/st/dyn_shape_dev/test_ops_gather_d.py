@@ -71,7 +71,6 @@ def test_gather_d_backward(mode):
     index = Tensor(np.array([[0, 0], [1, 0]]), ms.int32)
     grads = gather_d_backward_func(x, dim, index)
     expect = [[2., 0.], [1., 1.]]
-    print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect)
 
 

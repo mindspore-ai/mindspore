@@ -56,7 +56,6 @@ def test_pow_op_forward(context_mode, data_type):
     out = pow_forward_func(x, y)
     expect_out = np.array([1., 16., 64.]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -80,7 +79,6 @@ def test_pow_op_backward(context_mode, data_type):
     expect_out = np.array([[2., 32., 48.], [0., 11.0903549, 88.7228394]]).astype(np.float32)
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out[0], rtol=1e-3)
     np.testing.assert_allclose(grads[1].asnumpy(), expect_out[1], rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -103,4 +101,3 @@ def test_pow_op_vmap(context_mode, data_type):
     out = pow_vmap_func(x, y)
     expect_out = np.array([[1., 4., 27.], [27., 4., 1.]]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("vmap:", out)

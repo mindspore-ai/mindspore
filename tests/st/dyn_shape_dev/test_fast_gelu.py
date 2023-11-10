@@ -53,7 +53,6 @@ def test_fastgelu_op_forward(context_mode, data_type):
     out = fastgelu_forward_func(x)
     expect_out = np.array([0.84579575, 1.9356586, 2.9819288]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -72,7 +71,6 @@ def test_fastgelu_op_forward_ascend(context_mode, data_type):
     out = fastgelu_forward_func(x)
     expect_out = np.array([0.845703, 1.9375, 2.982422]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -92,7 +90,6 @@ def test_fastgelu_op_backward(context_mode, data_type):
     grads = fastgelu_backward_func(x)
     expect_out = np.array([1.0677795, 1.0738152, 1.0245484]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-4)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -111,7 +108,6 @@ def test_fastgelu_op_backward_ascend(context_mode, data_type):
     grads = fastgelu_backward_func(x)
     expect_out = np.array([1.069909, 1.072501, 1.022826]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-4)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -131,7 +127,6 @@ def test_fastgelu_op_vmap(context_mode, data_type):
     out = fastgelu_vmap_func(x)
     expect_out = np.array([0.84579575, 1.9356586, 2.9819288]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("vmap:", out)
 
 
 @pytest.mark.level0
@@ -150,4 +145,3 @@ def test_fastgelu_op_vmap_ascend(context_mode, data_type):
     out = fastgelu_vmap_func(x)
     expect_out = np.array([0.845703, 1.9375, 2.982422]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("vmap:", out)

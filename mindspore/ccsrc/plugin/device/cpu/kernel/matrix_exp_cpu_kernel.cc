@@ -41,13 +41,6 @@ const std::vector<std::vector<double>> b18 = {
 
 bool MatrixExpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  //  Todo, dynamic shape
-  //  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
-  //  if (!kernel_ptr) {
-  //    MS_LOG(ERROR) << "cast MatrixExp ops failed!";
-  //    return false;
-  //  }
-  //  kernel_name_ = kernel_ptr->name();
   data_type_ = inputs.at(kIndex0)->dtype_id();
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }

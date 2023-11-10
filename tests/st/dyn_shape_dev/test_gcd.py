@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+# pylint: disable=unused-variable
 import numpy as np
 import pytest
 import test_utils
@@ -49,7 +49,6 @@ def test_gcd_forward(mode):
     x2 = ms.Tensor(np.array([14, 6, 12]), ms.int32)
     expect_out = np.array([7, 2, 3])
     out = gcd_forward_func(x1, x2)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out)
 
 
@@ -92,4 +91,3 @@ def test_gcd_vmap(mode):
     x2 = ms.Tensor(np.array([14, 6, 12]), ms.int32)
     nest_vmap = ops.vmap(gcd_forward_func, in_axes=in_axes, out_axes=0)
     out = nest_vmap(x1, x2)
-    print("out:", out)

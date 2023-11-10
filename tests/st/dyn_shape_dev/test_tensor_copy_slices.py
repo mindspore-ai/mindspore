@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -37,4 +38,3 @@ def test_tensor_copy_slices():
     ms.context.set_context(precompile_only=True)
     net = TensorCopySlicesNet()
     out = net(ms.Tensor(np.zeros((5, 5))), ms.Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
-    print("out:", out)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 import mindspore as ms
@@ -47,7 +48,6 @@ def test_range_forward_tensor_input(mode):
     limit = ms.Tensor([10])
     delta = ms.Tensor([2])
     output = range_forward_func(start, limit, delta)
-    print("output:", output)
     expect_output = np.array([0, 2, 4, 6, 8]).astype(np.int64)
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
@@ -71,7 +71,6 @@ def test_range_forward(mode):
     limit = 10
     delta = 2
     output = range_forward_func(start, limit, delta)
-    print("output:", output)
     expect_output = np.array([0, 2, 4, 6, 8]).astype(np.int64)
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
@@ -94,4 +93,3 @@ def test_range_backward(mode):
     limit = 10
     delta = 2
     output = range_backward_func(start, limit, delta)
-    print("output:", output)

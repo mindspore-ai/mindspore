@@ -70,7 +70,6 @@ def test_notequal_op_forward(context_mode, data_type):
     out = notequal_forward_func(x, y)
     expect_out = np.array([True, True, True]).astype(np.bool)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -90,11 +89,9 @@ def test_notequal_op_infervalue(context_mode):
     out = notequal_infervalue_func1()
     expect_out = np.array([False, False, True]).astype(np.bool)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("out1:", out)
     out = notequal_infervalue_func2()
     expect_out = np.array([True, True, True]).astype(np.bool)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("out2:", out)
 
 
 @pytest.mark.level0
@@ -117,7 +114,6 @@ def test_notequal_op_backward(context_mode, data_type):
     grads = notequal_backward_func(x, y)
     expect_out = np.array([0., 0., 0.]).astype(np.float32)
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out, rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -140,4 +136,3 @@ def test_notequal_op_vmap(context_mode, data_type):
     out = notequal_vmap_func(x, y)
     expect_out = np.array([[False, False, False], [False, False, False]]).astype(np.bool)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("vmap:", out)

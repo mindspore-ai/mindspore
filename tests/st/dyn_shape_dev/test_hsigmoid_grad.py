@@ -50,7 +50,6 @@ def test_hsigmoid_grad_forward(mode):
     np_array = np.array([1.0, 2.0, 3.0]).astype('float32')
     x = Tensor(np_array)
     out = hsigmoid_grad_forward_func(grads, x)
-    print("out: ", out)
     expect = np.array([0.11111111, 0.13888888, 0.]).astype('float32')
     assert np.allclose(out.asnumpy(), expect)
 
@@ -75,7 +74,6 @@ def test_hsigmoid_grad_vmap(mode):
     nest_vmap = ops.vmap(
         ops.vmap(hsigmoid_grad_forward_func, in_axes=0), in_axes=0)
     out = nest_vmap(grads, x)
-    print("vmap out: ", out)
     expect = np.array(
         [[0.11111111, 0.13888888, -0.08333334, 0.16666667]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
@@ -103,7 +101,6 @@ def test_hsigmoid_grad_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hsigmoid_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn)
     out = test_cell(grads, x)
-    print("out:", out)
     expect = np.array([[0.11111111, 0.13888888, 0.]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]), ms.float32)
@@ -135,7 +132,6 @@ def test_hsigmoid_grad_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hsigmoid_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn)
     out = test_cell(grads, x)
-    print("out:", out)
     expect = np.array([[0.11111111, 0.13888888, 0.]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]), ms.float32)

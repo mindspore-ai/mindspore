@@ -59,7 +59,6 @@ def test_onehot_op_forward(context_mode, data_type):
     out = onehot_forward_func(indices, depth, on_value, off_value, -1)
     expect_out = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -84,7 +83,6 @@ def test_onehot_op_backward(context_mode, data_type):
     grads = onehot_backward_func(indices, depth, on_value, off_value, -1)
     expect_out = np.array([0., 0., 0.]).astype(np.float32)
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out, rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -109,4 +107,3 @@ def test_onehot_op_vmap(context_mode, data_type):
     out = onehot_vmap_func(indices, depth, on_value, off_value, -1)
     expect_out = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("vmap:", out)

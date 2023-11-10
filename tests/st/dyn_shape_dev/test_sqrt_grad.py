@@ -49,7 +49,6 @@ def test_sqrt_grad_forward(mode):
     x = ms.Tensor(x_np * x_np)
     expect_out = np.array([[0.0129776, 0.12512207]]).astype(np.float32)
     out = sqrt_grad_forward_func(dy, x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -75,7 +74,6 @@ def test_sqrt_grad_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(
         sqrt_grad_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(dy, x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 

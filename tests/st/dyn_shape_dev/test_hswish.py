@@ -52,7 +52,6 @@ def test_hswish_forward(mode):
     x = ms.Tensor(np.array([-1, -2, 0, 2, 1]).astype(np.float32))
     expect_out = np.array([-0.33333334, -0.33333334, 0., 1.6666666, 0.6666667])
     out = hswish_forward_func(x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -72,7 +71,6 @@ def test_hswish_backward(mode):
     x = ms.Tensor(np.array([-1, -2, 0, 2, 1]).astype(np.float32))
     expect_out = np.array([0.16666667, -0.16666667, 0.5, 1.1666666, 0.8333333])
     grads = hswish_backward_func(x)
-    print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -96,7 +94,6 @@ def test_hswish_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(
         hswish_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -118,12 +115,10 @@ def test_hswish_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hswish_dyn_shape_func)
     test_cell.set_inputs(x_dyn)
     out = test_cell(x)
-    print("out:", out)
     expect = np.array([[-0.33333334, -0.33333334, 0., 1.6666666, 0.6666667]])
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[-2, 0, 2], [-1, 0, 2]]), ms.float32)
     out1 = test_cell(x1)
-    print("out:", out1)
     expect1 = np.array(
         [[-0.33333334, 0., 1.6666667], [-0.33333333, 0., 1.6666667]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
@@ -147,12 +142,10 @@ def test_hswish_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hswish_dyn_shape_func)
     test_cell.set_inputs(x_dyn)
     out = test_cell(x)
-    print("out:", out)
     expect = np.array([[-0.33333334, -0.33333334, 0., 1.6666666, 0.6666667]])
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[-2, 0, 2], [-1, 0, 2]]), ms.float32)
     out1 = test_cell(x1)
-    print("out:", out1)
     expect1 = np.array(
         [[-0.33333334, 0., 1.6666667], [-0.33333333, 0., 1.6666667]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)

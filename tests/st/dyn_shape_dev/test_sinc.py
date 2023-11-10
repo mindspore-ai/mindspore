@@ -66,6 +66,5 @@ def test_sinc_backward(mode):
     context.set_context(mode=mode)
     x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]).astype(np.float32))
     output = sinc_backward_func(x)
-    print("output:\n", output)
     expect_output = np.asarray([-1.3636689, -0.85182726, -1.1727549, -1.3636689]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)

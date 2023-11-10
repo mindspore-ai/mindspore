@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 import mindspore as ms
@@ -48,4 +49,3 @@ def test_prelu_grad(mode):
     x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
     weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
     output = prelu_grad_func(dy, x, weight)
-    print("output:", output)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import math
 import pytest
 import numpy as np
@@ -56,7 +57,6 @@ def test_avg_pool():
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     net = AvgPoolNet()
     out = net(x)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -75,7 +75,6 @@ def test_avg_pool_create_instance_const_args():
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     net = AvgPoolCreateInstanceNet()
     out = net(x, 1, 1, "VALID", "NCHW")
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -94,7 +93,6 @@ def test_avg_pool_create_instance_var_args():
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     net = AvgPoolCreateInstanceNet()
     out = net(x, mutable(1), mutable(1), "VALID", "NCHW")
-    print("out:", out)
 
 
 class PowNet(nn.Cell):
@@ -126,7 +124,6 @@ def test_pow_type_cast():
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowNet()
     out = net(1, 2)
-    print("out: ", out)
 
 
 @pytest.mark.level0
@@ -144,7 +141,6 @@ def test_pow_create_instance_type_cast():
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowCreateInstanceNet()
     out = net(1.0, 2)
-    print("out: ", out)
 
 
 class LSTM(nn.Cell):
@@ -230,4 +226,3 @@ def test_lstm_ops():
     net.lstm.b_ih_list = b_ih_list
     net.lstm.b_hh_list = b_hh_list
     out = net(input_ms, h0, c0)
-    print("out: ", out)

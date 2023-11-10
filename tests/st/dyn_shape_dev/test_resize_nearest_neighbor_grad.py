@@ -50,7 +50,6 @@ def test_resize_nearest_neighbor_grad_op_forward(context_mode, data_type):
     out = resize_nearest_neighbor_grad_forward_func(x, size, align_corners)
     expect_out = np.array([[[[0.2, 3.6], [0.9, -3.2]]]]).astype(data_type)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0

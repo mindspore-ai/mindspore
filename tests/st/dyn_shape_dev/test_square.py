@@ -51,7 +51,6 @@ def test_square_forward(mode):
     x = ms.Tensor(np.array([[1.0, 2.0, 4.0]]).astype(np.float32))
     expect_out = np.array([[1.0, 4.0, 16.0]]).astype(np.float32)
     out = square_forward_func(x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -70,7 +69,6 @@ def test_square_backward(mode):
     x = ms.Tensor(np.array([[1.0, 2.0, 4.0]]).astype(np.float32))
     expect_out = np.array([[2.0, 4.0, 8.0]]).astype(np.float32)
     grads = square_backward_func(x)
-    print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -93,7 +91,6 @@ def test_square_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(
         square_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 

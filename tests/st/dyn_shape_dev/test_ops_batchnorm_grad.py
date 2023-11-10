@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 from mindspore import Tensor, context
@@ -57,7 +58,6 @@ def test_bn_grad_forward(mode):
     reserve = Tensor(np.random.rand(36).astype(np.float32))
     output = batch_norm_grad_forward_func(dout, x, scale, mean, variance,
                                           reserve)
-    print(f"output:\n{output}")
 
 
 @pytest.mark.level0
@@ -80,4 +80,3 @@ def test_bn_grad_backward(mode):
     reserve = Tensor(np.random.rand(36).astype(np.float32))
     grads = batch_norm_grad_backward_func(dout, x, scale, mean, variance,
                                           reserve)
-    print(f"grads:\n{grads}")

@@ -55,7 +55,6 @@ def test_oneslike_op_forward(context_mode, data_type):
     out = oneslike_forward_func(x)
     expect_out = np.array([[1., 1., 1.], [1., 1., 1.]]).astype(np.float32)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -77,7 +76,6 @@ def test_oneslike_op_backward(context_mode, data_type):
     grads = oneslike_backward_func(x)
     expect_out = np.array([[0., 0., 0.], [0., 0., 0.]]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -99,4 +97,3 @@ def test_oneslike_op_vmap(context_mode, data_type):
     out = oneslike_vmap_func(x)
     expect_out = np.array([[1., 1., 1.], [1., 1., 1.]]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("vmap:", out)
