@@ -36,8 +36,8 @@ namespace ascend {
 namespace {
 bool HasOverflowCheck() {
   // Check if overflow check is on. If overflow check is on, cannot use "stop when error" function
-  // (rtStreamSetMode(stream, 1)). Because device take overflow as an error while host not, it will cause
-  // stuck. Can be deleted after driver solve above problem.
+  // (aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE)). Because device take overflow as an error while host not,
+  // it will cause stuck. Can be deleted after driver solve above problem.
   bool ret = false;
 #ifndef ENABLE_SECURITY
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -125,9 +125,9 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   if (!HasOverflowCheck()) {
-    ret = rtStreamSetMode(*stream, 1);
+    ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
     }
   }
   (void)streams_.emplace_back(*stream);
@@ -142,9 +142,9 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   if (!HasOverflowCheck()) {
-    ret = rtStreamSetMode(stream, 1);
+    ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
     }
   }
   *stream_id = streams_.size();
@@ -159,9 +159,9 @@ void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, 
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   if (!HasOverflowCheck()) {
-    ret = rtStreamSetMode(*stream, 1);
+    ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
     }
   }
   (void)streams_.emplace_back(*stream);
@@ -176,9 +176,9 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   if (!HasOverflowCheck()) {
-    ret = rtStreamSetMode(stream, 1);
+    ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
     }
   }
   *stream_id = streams_.size();

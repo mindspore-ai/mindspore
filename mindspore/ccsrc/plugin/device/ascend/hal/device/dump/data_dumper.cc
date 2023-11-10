@@ -229,7 +229,7 @@ void DataDumper::OpDebugRegister() {
     MS_LOG(EXCEPTION) << "[DataDump] Call rt api rtMalloc failed, ret = " << rt_ret;
   }
 
-  rt_ret = rtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, RT_MEMORY_HBM, 0);
+  rt_ret = aclrtMalloc(&op_debug_dump_args_, kOpDebugDevMemSize, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtMalloc failed, ret = " << rt_ret;
   }

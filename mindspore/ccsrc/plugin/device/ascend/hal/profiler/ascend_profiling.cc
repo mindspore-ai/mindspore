@@ -224,38 +224,6 @@ void AscendProfiler::MsprofStopProfiler() const {
     }
   }
 }
-
-void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id,
-                                           const KernelType kernel_type, int32_t kernel_mod_task_id) {
-  uint32_t stream_id;
-  uint32_t task_id;
-  uint32_t aicpu_task_id;
-  uint32_t rt_model_id = 0;
-  std::vector<CNodePtr> cnode_list;
-  std::vector<uint32_t> stream_ids;
-  std::vector<uint32_t> task_ids;
-  std::thread::id t_id = std::this_thread::get_id();
-  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Profiling get task_id and stream_id failed.";
-  }
-  if (kernel_mod_task_id != -1) {
-    task_id = static_cast<uint32_t>(kernel_mod_task_id);
-  }
-  ProfilingReporter reporter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
-  if (task_id <= last_tid_[t_id] && stream_id == last_streamid_[t_id]) {
-    MS_LOG(INFO) << "No task id is allocated to the node <" << kernel->fullname_with_scope() << ">.";
-  } else {
-    if (task_id >= max_op_taskid_limit_ && kernel_type == AICPU_KERNEL) {
-      aicpu_task_id = task_id % max_op_taskid_limit_;
-      reporter.DynamicNodeReport(kernel, stream_id, aicpu_task_id, kernel_type);
-    } else {
-      reporter.DynamicNodeReport(kernel, stream_id, task_id, kernel_type);
-    }
-  }
-  last_tid_[t_id] = task_id;
-  last_streamid_[t_id] = stream_id;
-}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

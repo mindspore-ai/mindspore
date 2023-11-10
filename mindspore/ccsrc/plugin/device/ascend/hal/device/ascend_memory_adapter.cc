@@ -284,7 +284,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
     return AscendGmemAdapter::GetInstance().MmapMemory(size, reinterpret_cast<void *>(ptr));
   }
 
-  auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM, 0);
+  auto ret = aclrtMalloc(reinterpret_cast<void **>(&ptr), size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (ret != ACL_RT_SUCCESS) {
     if (ret == ACL_ERROR_RT_MEMORY_ALLOCATION) {
       auto context_ptr = MsContext::GetInstance();

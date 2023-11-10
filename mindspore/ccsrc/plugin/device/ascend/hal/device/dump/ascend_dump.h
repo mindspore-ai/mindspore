@@ -22,7 +22,7 @@
 #include <map>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/session/session_basic.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #include "include/backend/debug/debugger/debugger.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/common/debug/anf_dump_utils.h"

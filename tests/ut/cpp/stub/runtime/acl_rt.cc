@@ -192,3 +192,13 @@ ACL_FUNC_VISIBILITY aclError aclrtSynchronizeStreamWithTimeout(aclrtStream strea
 }
 ACL_FUNC_VISIBILITY aclError aclrtDestroyContext(aclrtContext context) { return ACL_SUCCESS; }
 ACL_FUNC_VISIBILITY aclError aclrtCreateContext(aclrtContext *context, int32_t deviceId) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtSetStreamFailureMode(aclrtStream stream, uint64_t mode) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtSetExceptionInfoCallback(aclrtExceptionInfoCallback callback) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY uint32_t aclrtGetTaskIdFromExceptionInfo(const aclrtExceptionInfo *info) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY uint32_t aclrtGetStreamIdFromExceptionInfo(const aclrtExceptionInfo *info) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY uint32_t aclrtGetThreadIdFromExceptionInfo(const aclrtExceptionInfo *info) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY uint32_t aclrtGetDeviceIdFromExceptionInfo(const aclrtExceptionInfo *info) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY uint32_t aclrtGetErrorCodeFromExceptionInfo(const aclrtExceptionInfo *info) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtMalloc(void **devPtr, size_t size, aclrtMemMallocPolicy policy) {
+  return ACL_SUCCESS;
+}
