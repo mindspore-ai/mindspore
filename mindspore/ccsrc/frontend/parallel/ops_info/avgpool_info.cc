@@ -97,9 +97,9 @@ Status AvgPoolInfo::GetAttrs() {
 Status AvgPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   MS_EXCEPTION_IF_ZERO("h_strategy", h_strategy);
   MS_EXCEPTION_IF_ZERO("w_strategy", w_strategy);
-  MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[2]);
-  MS_EXCEPTION_IF_ZERO("stride_[3]", stride_[3]);
-  if (outputs_shape_[0][2] % h_strategy != 0) {
+  MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[kIndex2]);
+  MS_EXCEPTION_IF_ZERO("stride_[3]", stride_[kIndex3]);
+  if (outputs_shape_[0][kIndex2] % h_strategy != 0) {
     FILTER_LOG(is_auto_parallel_)
       << name_
       << ": Do not support to split h dimension when out_shape of h dimension is not divisible by strategy "
@@ -107,7 +107,7 @@ Status AvgPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
     return FAILED;
   }
 
-  if (outputs_shape_[0][3] % w_strategy != 0) {
+  if (outputs_shape_[0][kIndex3] % w_strategy != 0) {
     FILTER_LOG(is_auto_parallel_)
       << name_
       << ": Do not support to split w dimension when out_shape of w dimension is not divisible by strategy "
@@ -116,13 +116,13 @@ Status AvgPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   }
 
   if (h_strategy > 1) {
-    if (kernel_size_[2] > stride_[2]) {
+    if (kernel_size_[kIndex2] > stride_[kIndex2]) {
       FILTER_LOG(is_auto_parallel_) << name_ << ": It does not support to split H dimension when kernel_size > stride";
       return FAILED;
     }
 
-    int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
-    if (h_slice_shape % stride_[2] != 0) {
+    int64_t h_slice_shape = inputs_shape_[0][kIndex2] / h_strategy;
+    if (h_slice_shape % stride_[kIndex2] != 0) {
       FILTER_LOG(is_auto_parallel_)
         << name_
         << ": It does not support to split H dimension when kernel_size <= stride but slice shape is not "
@@ -132,13 +132,13 @@ Status AvgPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   }
 
   if (w_strategy > 1) {
-    if (kernel_size_[3] > stride_[3]) {
+    if (kernel_size_[kIndex3] > stride_[kIndex3]) {
       FILTER_LOG(is_auto_parallel_) << name_ << ": It does not support to split W dimension when kernel_size > stride";
       return FAILED;
     }
 
-    int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
-    if (w_slice_shape % stride_[3] != 0) {
+    int64_t w_slice_shape = inputs_shape_[0][kIndex3] / w_strategy;
+    if (w_slice_shape % stride_[kIndex3] != 0) {
       FILTER_LOG(is_auto_parallel_)
         << name_
         << ": It does not support to split W dimension when kernel_size <= stride but slice shape is not "
@@ -164,14 +164,15 @@ Status AvgPoolInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   Dimensions input_strategy = stra[0];
-  if (input_strategy.size() != 4) {
+  const size_t STRATEGY_SIZE = 4;
+  if (input_strategy.size() != STRATEGY_SIZE) {
     FILTER_LOG(is_auto_parallel_) << name_ << ": The size of input strategy must be 4, but got"
                                   << input_strategy.size();
     return FAILED;
   }
 
-  if (input_strategy[2] != 1 || input_strategy[3] != 1) {
-    if (CheckHWStrategy(input_strategy[2], input_strategy[3]) != SUCCESS) {
+  if (input_strategy[kIndex2] != 1 || input_strategy[kIndex3] != 1) {
+    if (CheckHWStrategy(input_strategy[kIndex2], input_strategy[kIndex3]) != SUCCESS) {
       return FAILED;
     }
   }

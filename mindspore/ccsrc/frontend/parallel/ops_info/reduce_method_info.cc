@@ -391,6 +391,7 @@ Status ArgMaxWithValueInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+const size_t ValidInputNum = 3;
 std::vector<int64_t> ArgmaxInfo::reduce_dim() {
   auto axis_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, AXIS);
   if (!axis_opt.has_value()) {
@@ -398,7 +399,7 @@ std::vector<int64_t> ArgmaxInfo::reduce_dim() {
   }
   std::vector<int64_t> dim_list;
   auto prim_name = GetPrimNameFromInfoName(name_);
-  MS_ASSERT(ops::GetOpInputsNum(prim_name) == 3);
+  MS_ASSERT(ops::GetOpInputsNum(prim_name) == ValidInputNum);
   auto input_dim = inputs_shape_.at(0).size();
   int64_t axis = axis_opt.value();
   if (axis < 0) {

@@ -157,7 +157,7 @@ Status BatchNormInfo::InferMirrorOps() {
   }
 
   // Add empty mirror ops
-  for (int i = 0; i < 4; i++) {
+  for (size_t i = 0; i < kIndex4; i++) {
     (void)mirror_ops_.emplace_back(OperatorVector());
   }
   return SUCCESS;
@@ -304,9 +304,9 @@ void BatchNormInfo::InferReplaceOps() {
     MS_LOG(INFO) << name_ << ": The backend is " << backend << ", it does not support SyncBatchNorm operator";
     return;
   }
-
+  const size_t InputNumUpperBound = 5;
   auto prim_name = GetPrimNameFromInfoName(name_);
-  if (ops::GetOpInputsNum(prim_name) > 5) {
+  if (ops::GetOpInputsNum(prim_name) > InputNumUpperBound) {
     MS_LOG(INFO) << name_ << ": The inputs num of " << prim_name << " is " << ops::GetOpInputsNum(prim_name)
                  << ", it does not support SyncBatchNorm operator";
     return;

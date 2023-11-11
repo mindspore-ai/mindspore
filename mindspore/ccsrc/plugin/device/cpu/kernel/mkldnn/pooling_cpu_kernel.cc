@@ -25,6 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kPoolingInputsNum = 1;
+constexpr size_t kAvgPoolInputsNum = 5;
 constexpr size_t kPoolingOutputsNum = 1;
 }  // namespace
 
@@ -32,17 +33,17 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
                                             const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
   if (kernel_name_ == kAvgPoolOpName) {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 5, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAvgPoolInputsNum, kernel_name_);
   } else {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
   if (kernel_name_ == kAvgPoolOpName) {
-    kernel_include_nc = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
-    strides_include_nc = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[3]->GetValueWithCheck<int64_t>());
-    format_ = static_cast<mindspore::Format>(inputs[4]->GetValueWithCheck<int64_t>());
+    kernel_include_nc = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_include_nc = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+    format_ = static_cast<mindspore::Format>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
   } else {
     kernel_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
     strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
@@ -251,7 +252,11 @@ bool PoolingCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
 bool PoolingCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                  const std::vector<kernel::KernelTensor *> &,
                                  const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  if (kernel_name_ == kAvgPoolOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAvgPoolInputsNum, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
