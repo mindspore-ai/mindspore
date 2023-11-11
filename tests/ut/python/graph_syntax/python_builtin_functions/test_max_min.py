@@ -361,22 +361,6 @@ def test_builtin_function_min_with_tensor_0d(mode):
         foo()
 
 
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_builtin_function_min_with_tensor_number(mode):
-    """
-    Feature: Check the arg of min.
-    Description: Cannot contain both tensor and non-tensor type.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        return min(Tensor(1), 4)
-
-    with pytest.raises(TypeError, match="cannot contain both tensor and non-tensor type."):
-        context.set_context(mode=mode)
-        foo()
-
-
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_with_several_elements_one_tensor(mode):
     """

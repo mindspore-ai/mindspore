@@ -2599,10 +2599,12 @@ def ms_max_one_element(x):
         if tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
-            raise TypeError("max() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("max(x)", {}, {"x": x})
         if exist_tensor(x):
             raise TypeError("max() cannot support tensor in list or tuple nested now.")
-    return F._py_interpret("max(x)", {}, {"x": x})
+    if not isinstance(x, (int, float, bool)):
+        return F._py_interpret("max(x)", {}, {"x": x})
+    raise TypeError("The object is not iterable.")
 
 
 def ms_max(*data):
@@ -2619,7 +2621,7 @@ def ms_max(*data):
         if tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
-            raise TypeError("max() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("max(data)", {}, {"data": data})
         # exist tensor in list/tuple
         if exist_tensor(data):
             raise ValueError("The truth value of an array with more than one element is ambiguous.")
@@ -2673,10 +2675,12 @@ def ms_min_one_element(x):
         if tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
-            raise TypeError("min() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("min(x)", {}, {"x": x})
         if exist_tensor(x):
             raise TypeError("min() cannot support tensor in list or tuple nested now.")
-    return F._py_interpret("min(x)", {}, {"x": x})
+    if not isinstance(x, (int, float, bool)):
+        return F._py_interpret("min(x)", {}, {"x": x})
+    raise TypeError("The object is not iterable.")
 
 
 def ms_min(*data):
@@ -2693,7 +2697,7 @@ def ms_min(*data):
         if tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
-            raise TypeError("min() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("min(data)", {}, {"data": data})
         # exist tensor in list/tuple
         if exist_tensor(data):
             raise ValueError("The truth value of an array with more than one element is ambiguous.")
