@@ -54,6 +54,7 @@ constexpr size_t CROP_AND_RESIZE_INPUTS_SIZE = 3;
 constexpr size_t ROI_ALIGN_INPUTS_SIZE = 2;
 constexpr size_t ACTIVATION_ATTR_SIZE = 1;
 constexpr size_t SOFTMAX_ATTR_SIZE = 1;
+constexpr size_t LPNORM_ATTR_SIZE = 4;
 constexpr size_t ACTIVATION_INPUTS_SIZE = 1;
 constexpr size_t ACTIVATION_OUTPUTS_SIZE = 1;
 constexpr size_t EXPANDDIMS_INPUT_SIZE = 2;

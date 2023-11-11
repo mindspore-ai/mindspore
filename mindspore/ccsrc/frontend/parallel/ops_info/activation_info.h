@@ -135,6 +135,19 @@ class LogSoftmaxInfo : public Softmax {
   ~LogSoftmaxInfo() override = default;
 };
 
+class LpNormInfo : public Softmax {
+ public:
+  LpNormInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : Softmax(name, inputs_shape, outputs_shape, attrs) {}
+  ~LpNormInfo() override = default;
+
+ protected:
+  bool keepdims_ = false;
+  Status GetAttrs() override;
+  Status InferTensorMap() override;
+};
+
 class SortInfo : public Softmax {
  public:
   SortInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
@@ -224,6 +237,14 @@ class ReLUInfo : public ActivationOther {
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUCost>()) {}
   ~ReLUInfo() override = default;
+};
+
+class SiLUInfo : public ActivationOther {
+ public:
+  SiLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<SiLUCost>()) {}
+  ~SiLUInfo() override = default;
 };
 
 class identityInfo : public ActivationOther {

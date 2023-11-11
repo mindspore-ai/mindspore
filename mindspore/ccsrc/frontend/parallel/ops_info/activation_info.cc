@@ -230,6 +230,109 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status LpNormInfo::GetAttrs() {
+  if (attrs_.size() < LPNORM_ATTR_SIZE) {
+    MS_LOG(ERROR) << name_ << " : The size of attrs small than " << LPNORM_ATTR_SIZE << ".";
+    return FAILED;
+  }
+
+  auto keep_dims_iter = attrs_.find(KEEP_DIMS);
+  if (keep_dims_iter == attrs_.end()) {
+    MS_LOG(ERROR) << name_ << ": Don't have attr keep_dims.";
+    return FAILED;
+  }
+  // get attr keep_dims_ and axis
+  if (keep_dims_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(keep_dims_iter->second);
+    if (!keep_dims_iter->second->isa<BoolImm>()) {
+      MS_LOG(ERROR) << name_ << ": Keep_dims is not a bool.";
+      return FAILED;
+    }
+    keepdims_ = keep_dims_iter->second->cast<BoolImmPtr>()->value();
+  }
+  auto iter = attrs_.find(AXIS);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {  // the axis is a number
+      int64_t axis_element = iter->second->cast<Int64ImmPtr>()->value();
+      axis_.push_back(axis_element);
+      MS_LOG(INFO) << name_ << " : The axis is int64_t, value is " << axis_element;
+    } else if (iter->second->isa<ValueTuple>()) {  // the axis is a tuple
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(ERROR) << name_ << " : The value_tuple is nullptr.";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+      if (axis_.empty()) {
+        MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
+        return FAILED;
+      }
+      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+    } else if (iter->second->isa<ValueList>()) {  // the axis is a list
+      ValueListPtr value_list = iter->second->cast<ValueListPtr>();
+      if (value_list == nullptr) {
+        MS_LOG(ERROR) << name_ << " : The value_list is nullptr.";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = value_list->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+      if (axis_.empty()) {
+        MS_LOG(ERROR) << name_ << " : The axis list is empty.";
+        return FAILED;
+      } else if (axis_.size() > 1 || axis_[0] != -1) {
+        MS_LOG(ERROR) << name_ << " : current only support axis equals to -1, but got " << ListToString(axis_);
+        return FAILED;
+      }
+      MS_LOG(INFO) << name_ << " : The axis is list, value is " << ListToString(axis_);
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t or tuple int64_t or list int64_t.";
+      return FAILED;
+    }
+  }
+
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
+    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+    return FAILED;
+  }
+
+  // for example: tensor dimension is 4, then axis range [-4, 3]
+  int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return ((element >= dim) || (element < -dim)); });
+  if (it != axis_.end()) {
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status LpNormInfo::InferTensorMap() {
+  inputs_tensor_map_.clear();
+  outputs_tensor_map_.clear();
+
+  Shape input_tensor_map;
+  Strategies strategies = strategy_->GetInputDim();
+  size_t dim = strategies[0].size();
+  for (size_t i = 0; i < dim; ++i) {
+    input_tensor_map.push_back(dim - i - 1);
+  }
+
+  inputs_tensor_map_.push_back(input_tensor_map);  // input
+  Shape output_tensor_map = input_tensor_map;
+  // need reduction by axis
+  output_tensor_map.pop_back();
+  if (keepdims_) {
+    output_tensor_map.push_back(-1);
+  }
+  outputs_tensor_map_.push_back(output_tensor_map);  // output
+  return SUCCESS;
+}
+
 Status CumOpBase::GetAttrs() {
   if (input_value_.size() != CUM_OP_INPUT_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size();
@@ -745,6 +848,7 @@ REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
 REGISTER(TanhInfo);
 REGISTER(SoftmaxInfo);
+REGISTER(LpNormInfo);
 REGISTER(SortInfo);
 REGISTER(LogSoftmaxInfo);
 REGISTER(ReverseV2Info);
@@ -754,6 +858,7 @@ REGISTER(CumminInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(SiLUInfo);
 REGISTER(identityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);
