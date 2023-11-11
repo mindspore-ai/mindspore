@@ -1286,3 +1286,40 @@ def test_tuple_flatten(tag):
         return called_graph_with_tuple(tuple_x_arg, tuple_tuple_y_arg, tensor_z_arg)
 
     return fns[tag]
+
+
+def test_partial_unused_args_eliminate(tag):
+    """
+    Feature: Eliminate the unused args of partial inputs.
+    Description: Construct a partial call.
+    Expectation: The unused args are eliminated.
+    """
+    fns = FnDict()
+    out_channel = 64
+    kernel_size = 7
+    conv = P.Conv2D(out_channel,
+                    kernel_size,
+                    mode=1,
+                    pad_mode="valid",
+                    pad=0,
+                    stride=1,
+                    dilation=1,
+                    group=1)
+
+    @fns
+    def before(x, y, z):
+        def called_graph(a, b, c):
+            return conv(a, b)
+
+        func = F.partial(called_graph, x, y, z)
+        return func
+
+    @fns
+    def after(x, y, z):
+        def called_graph(a, b):
+            return conv(a, b)
+
+        func = F.partial(called_graph, x, y)
+        return func
+
+    return fns[tag]
