@@ -11385,8 +11385,8 @@ class FlashAttentionScore(Primitive):
         next_tokens (int): Next tokens. Default: 65536.
         inner_precise (int): Specify the execution mode, where 0 indicates high precision mode and 1 indicates high
         performance mode. Default: 0.
-        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
-        Currently, only BSH is supported. Default: "BSH".
+        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "BNSD"].
+        Default: "BSH".
         sparse_mode (int): Default 0.
 
     Inputs:
@@ -11428,8 +11428,8 @@ class FlashAttentionScore(Primitive):
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        if input_layout not in ["BSH", "BNSD"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(
             inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
