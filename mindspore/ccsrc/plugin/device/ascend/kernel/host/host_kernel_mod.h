@@ -23,22 +23,25 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 namespace mindspore {
 namespace kernel {
-class HostKernelMod : public AscendKernelMod {
+class HostKernelMod : public KernelMod {
  public:
   HostKernelMod() = default;
   ~HostKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &, uint32_t) override;
-  bool Init(const AnfNodePtr &anf_node);
-  int Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &, const std::vector<KernelTensorPtr> &,
-             const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    return true;
+  }
+
   enum KernelModType GetKernelModType() const override { return KernelModType::HostKernelMod; }
 
- protected:
-  void SyncOutputShape() override{};
-  std::string op_name_;
+  std::vector<KernelAttr> GetOpSupport() override {
+    MS_LOG(EXCEPTION) << "This interface is not supported in host kernel module.";
+  }
 };
 
 using HostKernelModPtr = std::shared_ptr<HostKernelMod>;

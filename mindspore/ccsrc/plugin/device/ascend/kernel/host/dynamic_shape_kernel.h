@@ -26,11 +26,12 @@ class TensorShapeKernelMod : public HostKernelMod {
  public:
   TensorShapeKernelMod() = default;
   ~TensorShapeKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  private:
-  void Execute(void *stream_ptr, const std::vector<AddressPtr> &outputs) const;
+  void Execute(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+               void *stream_ptr) const;
 };
 MS_HOST_REG_KERNEL(DynamicShape, TensorShapeKernelMod);
 MS_HOST_REG_KERNEL(TensorShape, TensorShapeKernelMod);
