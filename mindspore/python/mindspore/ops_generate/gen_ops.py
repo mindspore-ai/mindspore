@@ -17,6 +17,7 @@ Generate operator definition from ops.yaml
 """
 import os
 import re
+import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
@@ -327,9 +328,9 @@ class {class_name}(Primitive):\n"""
         if deprecated_code != "":
             primitive_code += deprecated_code
         primitive_code += f"""    @prim_arg_register
-    def __init__(self,"""
+    def __init__(self"""
         if init_args_with_default:
-            primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
+            primitive_code += ", " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
         call_args = []
         for name in inputs_args:
             call_args.append(f"""{name}={inputs_default[name]}""" if name in inputs_default else name)
@@ -478,6 +479,8 @@ namespace mindspore::ops {
                 dtype = "std::string"
             if dtype == "tuple[int]":
                 dtype = "std::vector<int64_t>"
+            if dtype == "int":
+                dtype = "int64_t"
             lite_ops_h_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name});\n"""
             lite_ops_h_gen += f"""  {dtype} get_{arg_name}() const;\n"""
 
@@ -485,6 +488,7 @@ namespace mindspore::ops {
             lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
 
             op_name = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_cc_gen += f"""REGISTER_PRIMITIVE_C(kName{op_name}, {op_name});\n"""
         lite_ops_cc_gen += f"""MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n\n"""
         lite_ops_h_gen += f"""}};\n\n"""
     lite_ops_h_gen += lite_ops_h_end
@@ -507,18 +511,15 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         args = operator_data.get('args')
         returns = operator_data.get('returns')
         class_name = get_op_name(operator_name, operator_data.get('class'))
-        # gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
-        # opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-        opdef_cc = f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
-                   f"""\n  .args_ =
-    {{"""
-        cc_index_str = f"""\n  .indexes_ =
-    {{"""
+        gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
+        opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
+                   f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
+                   f"""\n  /*.args_=*/ {{"""
+        cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
 
         for i, (arg_name, arg_info) in enumerate(args.items()):
-            cc_index_str += f"""
-      {{"{arg_name}", {i}}},"""
+            cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
@@ -532,24 +533,24 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                 ', '.join('DT_' + type.replace('[', '_').replace(']', '').upper() for type in
                           (ct.strip() for ct in type_cast.split(",")))
 
-            opdef_cc += f"""
-      {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{type_cast_str}}}}},"""
-        opdef_cc += f"""\n    }},"""
-        opdef_cc += f"""\n  .returns_ =
-    {{"""
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
+                        f"""/*.as_init_arg_=*/{init_flag}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
+                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}}},"""
+        opdef_cc += f"""\n  }},"""
+        opdef_cc += f"""\n  /* .returns_ = */ {{"""
 
+        # Process outputs.
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            ref_name = return_info.get('inplace')
-            opdef_cc += f"""
-      {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}, .inplace_input_name_ = "{ref_name}"}},"""
-        opdef_cc += f"""\n    }},"""
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}}},"""
+        opdef_cc += f"""\n  }},"""
 
-        cc_index_str += f"""\n    }},"""
+        cc_index_str += f"""\n  }},"""
         opdef_cc += cc_index_str
-        # cc_func_impl_str = f"""\n  .func_impl_ = g{class_name}FuncImpl,"""
-        # pdef_cc += cc_func_impl_str
+
+        cc_func_impl_str = f"""\n  /*.func_impl_=*/g{class_name}FuncImpl,"""
+        opdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
 
@@ -677,10 +678,10 @@ eum_cc_header = f"""
 
 #include <cstdint>
 
-namespace mindspore::ops {{
+namespace mindspore::MsPyEnum {{
 """
 
-eum_cc_end = f"""}}  // namespace mindspore::ops
+eum_cc_end = f"""}}  // namespace mindspore::MsPyEnum
 #endif  // MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
 """
 
@@ -727,10 +728,12 @@ def generate_enum_files(work_path):
     py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
 
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
-    dst_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py')
-    tmp_dst_arg_handler_path = os.path.join(work_path,
-                                            'mindspore/python/mindspore/ops/auto_generate/tmp_gen_arg_handler.py')
-    os.system(f'cp {src_arg_handler_path} {tmp_dst_arg_handler_path}')
+    dst_arg_handler_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
+    dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'gen_arg_handler.py')
+    tmp_dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'tmp_gen_arg_handler.py')
+    if not os.path.exists(dst_arg_handler_dir):
+        os.makedirs(dst_arg_handler_dir)
+    shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
     with open(tmp_dst_arg_handler_path, 'a') as py_file:
         py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
@@ -793,4 +796,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except Exception as e:
+        print("Auto generate failed, err info:", e)
+        raise e

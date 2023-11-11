@@ -25,7 +25,7 @@ namespace mindspore {
 namespace pynative {
 class Converter {
  public:
-  explicit Converter(const ops::OpDef &op_def);
+  explicit Converter(ops::OpDef &op_def);
   void Parse(py::list args);
   ValuePtr ToTensor(size_t i);
   std::optional<ValuePtr> ToTensorOptional(size_t i);
@@ -47,7 +47,7 @@ class Converter {
 
  private:
   void ThrowException(size_t i);
-  ops::OpDef op_def_;
+  ops::OpDefPtr op_def_;
   py::list *python_args_;
 };
 }  // namespace pynative

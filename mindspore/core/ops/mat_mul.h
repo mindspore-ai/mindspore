@@ -22,10 +22,10 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatMul = "MatMul";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
 class MIND_API MatMul : public BaseOperator {
  public:

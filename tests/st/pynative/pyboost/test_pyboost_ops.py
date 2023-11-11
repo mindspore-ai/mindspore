@@ -20,8 +20,8 @@ from mindspore.ops.composite import GradOperation
 from mindspore.ops import split, interpolate
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
-    cast, add, sub, softmax, sqrt, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square, range
+    cast, add, sub, softmax_, sqrt_, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square_, range
 from mindspore.ops.auto_generate.gen_pyboost_func import pow as pyboost_pow
 from mindspore.ops.auto_generate.gen_pyboost_func import sum as pyboost_sum
 import mindspore
@@ -297,7 +297,7 @@ def test_softmax_ascend():
     """
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
-    output = softmax(x, 0)
+    output = softmax_(x, 0)
     assert np.allclose(output.asnumpy(), [0.03168492, 0.01165623, 0.08612854, 0.6364086, 0.23412167])
 
 
@@ -331,7 +331,7 @@ def test_sqrt_ascend():
     """
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
-    output = sqrt(x)
+    output = sqrt_(x)
     assert np.allclose(output.asnumpy(), [1, 2, 3])
 
 
@@ -686,7 +686,7 @@ def test_square_ascend():
     """
     context.set_context(device_target="Ascend")
     input_x1 = Tensor(np.array([1, 2]).astype(np.float32))
-    output = square(input_x1)
+    output = square_(input_x1)
     assert np.allclose(output.asnumpy(), [1, 4])
 
 

@@ -20,11 +20,11 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSplitWithSize = "SplitWithSize";
 /// \brief Splits the input tensor into output_num of tensors along the given axis and output numbers.
 /// Refer to Python API @ref mindspore.ops.Split for more details.
 class MIND_API SplitWithSize : public BaseOperator {

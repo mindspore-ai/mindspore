@@ -21,11 +21,11 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMean = "Mean";
 /// \brief Mean the second input tensor from the first input tensor element-wise.
 class MIND_API Mean : public BaseOperator {
  public:

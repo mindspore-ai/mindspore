@@ -20,6 +20,7 @@ Bmm:
     cube: True
     aclnn: aclnnBatchMatMul
 
+# to do
 Cast:
   CPU:
     mode: normal
@@ -83,6 +84,7 @@ Transpose:
   Ascend:
     mode: view
 
+#to do
 UpsampleNearest1d:
   CPU:
     mode: normal
@@ -127,6 +129,7 @@ Mul:
     mode: normal
     cube: False
 
+#to do
 SplitTensor:
   CPU:
     mode: normal
@@ -136,6 +139,7 @@ SplitTensor:
     mode: normal
     cube: False
 
+#to do
 SubExt:
   CPU:
     mode: normal
@@ -145,6 +149,7 @@ SubExt:
     mode: normal
     cube: False
 
+#to do
 SplitWithSize:
   CPU:
     mode: normal
@@ -172,6 +177,7 @@ Sqrt:
     mode: normal
     cube: False
 
+#to do
 Stack:
   CPU:
     mode: normal
@@ -191,6 +197,7 @@ Pow:
     cube: False
     aclnn: aclnnPowTensorTensor
 
+# to do
 MatMul:
   CPU:
     mode: normal
@@ -201,6 +208,7 @@ MatMul:
     cube: True
     aclnn: aclnnMatmul
 
+# to do
 Conv2DExt:
   CPU:
     mode: normal
@@ -209,6 +217,7 @@ Conv2DExt:
   Ascend:
     mode: customize
 
+#to do
 GatherExt:
   CPU:
     mode: normal
@@ -218,6 +227,7 @@ GatherExt:
     mode: normal
     cube: False
 
+#to do
 BroadCastToExt:
   CPU:
     mode: view
@@ -235,6 +245,7 @@ Maximum:
     mode: normal
     cube: False
 
+#to do
 Unsqueeze:
   CPU:
     mode: view
@@ -262,6 +273,7 @@ Minimum:
     mode: normal
     cube: False
 
+#to do
 LayerNormExt:
   CPU:
     mode: normal
@@ -291,6 +303,7 @@ Less:
     cube: False
     aclnn: aclnnLtTensor
 
+#to do
 Mean:
   CPU:
     mode: normal
@@ -300,6 +313,7 @@ Mean:
     mode: normal
     cube: False
 
+# to do
 Sum:
   CPU:
     mode: normal
@@ -310,6 +324,7 @@ Sum:
     cube: False
     aclnn: aclnnReduceSum
 
+#to do
 Cat:
   CPU:
     mode: normal
@@ -319,6 +334,7 @@ Cat:
     mode: normal
     cube: False
 
+#to do
 Square:
   CPU:
     mode: normal

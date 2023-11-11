@@ -72,8 +72,7 @@ class BACKEND_EXPORT Op {
   inline void InferOutput(T &...args) {
     input_abs_.clear();
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
-    auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
-    output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
+    output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     outputs_.clear();

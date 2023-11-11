@@ -1,5 +1,5 @@
 #operator layer_norm
-layer_norm:
+layer_norm_ext:
   args:
     input:
       dtype: tensor

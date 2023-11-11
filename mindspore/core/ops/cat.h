@@ -20,11 +20,11 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameCat = "Cat";
 /// \brief Connect tensor in the specified axis.
 /// Refer to Python API @ref mindspore.ops.Cat for more details.
 class MIND_API Cat : public BaseOperator {

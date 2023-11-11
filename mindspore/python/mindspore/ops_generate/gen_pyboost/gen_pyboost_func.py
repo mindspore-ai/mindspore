@@ -269,6 +269,8 @@ def generate_pyboost_functions(work_path, yaml_data):
     pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        if not op_proto.is_pyboost:
+            continue
         op_def_name_str = f"g{op_proto.class_name}"
         prim_name_str = op_proto.class_name
         operator_name = op_proto.operator_name

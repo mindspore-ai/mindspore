@@ -5,6 +5,8 @@
 #include "py_boost_utils.h"
 #include "kernel/common_utils.h"
 #include "runtime/device/device_address_utils.h"
+#include "ops/ops_frontend_func_impl.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace kernel {
@@ -107,48 +109,72 @@ void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const Tens
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }
 
+AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs) {
+  auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
+  AbstractBasePtr output_abs = nullptr;
+  if (frontend_func_impl) {
+    output_abs = frontend_func_impl->InferAbstract(prim, input_abs);
+    if (output_abs != nullptr) {
+      MS_LOG(DEBUG) << "Pynative Infer by InferAbstract, got abstract: " << output_abs->ToString();
+      return output_abs;
+    }
+  }
+
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def) {
+    (void)op_def->func_impl_.CheckValidation(prim, input_abs);
+    auto shape = op_def->func_impl_.InferShape(prim, input_abs);
+    auto type = op_def->func_impl_.InferType(prim, input_abs);
+    output_abs = mindspore::abstract::MakeAbstract(shape, type);
+    MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
+    return output_abs;
+  }
+  MS_LOG(DEBUG) << prim->name() << " infer failed";
+  return nullptr;
+}
+
 void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
   for (const auto &output : outputs) {
     runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
   }
 }
 
-KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
-  // TODO (CARRY) Waiting dyn_shape_dev
-  //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
-  //  tensor->device_info().host_format_, dtype, shape,
-  //                                                                  device_context->device_context_key().device_name_,
-  //                                                                  device_context->device_context_key().device_id_);
-  //  return new_kernel_tensor;
-  auto kernel_tensor = std::make_shared<KernelTensor>(tensor);
-  return kernel_tensor;
-}
-KernelTensorPtr ScalarToKernelTensor(const ScalarPtr &scalar, const DeviceContext *device_context) {
-  // TODO (CARRY) Waiting dyn_shape_dev
-  //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
-  //  tensor->device_info().host_format_, dtype, {},
-  //                                                                  device_context->device_context_key().device_name_,
-  //                                                                  device_context->device_context_key().device_id_);
-  //  return new_kernel_tensor;
-  return std::make_shared<KernelTensor>(scalar);
-}
+// KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
+//   // TODO (CARRY) Waiting dyn_shape_dev
+//   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
+//   //  tensor->device_info().host_format_, dtype, shape,
+//   // device_context->device_context_key().device_name_,
+//   // device_context->device_context_key().device_id_);
+//   //  return new_kernel_tensor;
+//   auto kernel_tensor = std::make_shared<KernelTensor>(tensor);
+//   return kernel_tensor;
+// }
+// KernelTensorPtr ScalarToKernelTensor(const ScalarPtr &scalar, const DeviceContext *device_context) {
+//   // TODO (CARRY) Waiting dyn_shape_dev
+//   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
+//   //  tensor->device_info().host_format_, dtype, {},
+//   // device_context->device_context_key().device_name_,
+//   // device_context->device_context_key().device_id_);
+//   //  return new_kernel_tensor;
+//   return std::make_shared<KernelTensor>(scalar);
+// }
 
-std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context) {
-  std::vector<KernelTensorPtr> kernel_tensors;
-  for (auto &value : values) {
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<Scalar>()) {
-      auto scalar = std::dynamic_pointer_cast<Scalar>(value);
-      kernel_tensors.emplace_back(std::make_shared<KernelTensor>(scalar));
-    } else if (value->isa<tensor::Tensor>()) {
-      auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
-      kernel_tensors.emplace_back(std::make_shared<KernelTensor>(tensor));
-    } else {
-      MS_EXCEPTION(TypeError) << "value type is not supported";
-    }
-  }
-  return kernel_tensors;
-}
+// std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context) {
+//   std::vector<KernelTensorPtr> kernel_tensors;
+//   for (auto &value : values) {
+//     MS_EXCEPTION_IF_NULL(value);
+//     if (value->isa<Scalar>()) {
+//       auto scalar = std::dynamic_pointer_cast<Scalar>(value);
+//       kernel_tensors.emplace_back(std::make_shared<KernelTensor>(scalar));
+//     } else if (value->isa<tensor::Tensor>()) {
+//       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
+//       kernel_tensors.emplace_back(std::make_shared<KernelTensor>(tensor));
+//     } else {
+//       MS_EXCEPTION(TypeError) << "value type is not supported";
+//     }
+//   }
+//   return kernel_tensors;
+// }
 
 template <typename T>
 tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {

@@ -120,18 +120,18 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(const ops::OpDef &op_def) { op_def_ = op_def; }
+Converter::Converter(ops::OpDef &op_def) { op_def_ = &op_def; }
 
 void Converter::Parse(py::list python_args) {
   python_args_ = &python_args;
-  if (op_def_.args_.size() != python_args.size()) {
-    MS_LOG(EXCEPTION) << "For operator " << op_def_.name_ << ", it requires " << op_def_.args_.size()
+  if (op_def_->args_.size() != python_args.size()) {
+    MS_LOG(EXCEPTION) << "For operator " << op_def_->name_ << ", it requires " << op_def_->args_.size()
                       << "parameters, bug got " << python_args.size() << "parameters!";
   }
 }
 
 ValuePtr Converter::ToTensor(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
@@ -157,7 +157,7 @@ std::optional<ValuePtr> Converter::ToTensorOptional(size_t i) {
 
 template <typename T>
 ValueTuplePtr Converter::ToTensorList(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto val_seq = parse::ConvertSequence<py::tuple, ValueTuple, parse::ConvertTensor>(obj);
 
@@ -175,7 +175,7 @@ ValueTuplePtr Converter::ToTensorList(size_t i) {
 }
 
 Int64ImmPtr Converter::ToInt(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertInt(obj);
   if (convert != nullptr) {
@@ -201,7 +201,7 @@ std::optional<Int64ImmPtr> Converter::ToIntOptional(size_t i) {
 
 template <typename T>
 ValueTuplePtr Converter::ToIntList(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::int_, Int64Imm>(obj);
   if (convert != nullptr) {
@@ -218,7 +218,7 @@ ValueTuplePtr Converter::ToIntList(size_t i) {
 }
 
 BoolImmPtr Converter::ToBool(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertBool(obj);
   if (convert != nullptr) {
@@ -236,7 +236,7 @@ BoolImmPtr Converter::ToBool(size_t i) {
 
 template <typename T>
 ValueTuplePtr Converter::ToBoolList(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::bool_, BoolImm>(obj);
   if (convert != nullptr) {
@@ -253,7 +253,7 @@ ValueTuplePtr Converter::ToBoolList(size_t i) {
 }
 
 FP32ImmPtr Converter::ToFloat(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertFloat(obj);
   if (convert != nullptr) {
@@ -271,7 +271,7 @@ FP32ImmPtr Converter::ToFloat(size_t i) {
 
 template <typename T>
 ValueTuplePtr Converter::ToFloatList(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::float_, FP32Imm>(obj);
   if (convert != nullptr) {
@@ -288,7 +288,7 @@ ValueTuplePtr Converter::ToFloatList(size_t i) {
 }
 
 ScalarPtr Converter::ToScalar(size_t i) {
-  const auto &op_arg = op_def_.args_[i];
+  const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertNumber(obj);
   if (convert != nullptr) {
@@ -324,8 +324,8 @@ py::object Converter::Wrap(const TensorPtr &tensor) {
 }
 
 void Converter::ThrowException(size_t i) {
-  MS_LOG(EXCEPTION) << "For op " << op_def_.name_ << ", the " << i << "th arg dtype is not right!"
-                    << "expect dtype: " << CTypeToPythonType(op_def_.args_[i].arg_dtype_)
+  MS_LOG(EXCEPTION) << "For op " << op_def_->name_ << ", the " << i << "th arg dtype is not right!"
+                    << "expect dtype: " << CTypeToPythonType(op_def_->args_[i].arg_dtype_)
                     << "but got dtype: " << py::type((*python_args_)[i]);
 }
 

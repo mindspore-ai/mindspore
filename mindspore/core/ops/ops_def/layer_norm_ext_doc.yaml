@@ -37,5 +37,5 @@ layer_norm_ext:
     output : tvm.relay.Expr
       The normalized data.
     mean_out : 
-    rstd_out : 
-      """
+    rstd_out :
+

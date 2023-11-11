@@ -41,19 +41,22 @@ class OpProto:
         self.returns: List[Arg] = []
         self.indexes: Dict[str, int] = {}
         self.pyboost_function_name: str = ""
+        self.is_pyboost = False
 
     def update_data(
             self,
             operator_name,
             op_args,
             returns,
-            class_name):
+            class_name,
+            is_pyboost):
         self.operator_name = operator_name
         self.class_name = class_name
         self.op_args = op_args
         self.returns = returns
         self.indexes = {arg.arg_name: index for index, arg in enumerate(op_args)}
         self.pyboost_function_name = "Pyboost_" + self.class_name
+        self.is_pyboost = is_pyboost
 
     @staticmethod
     def load_from_yaml(op_name, yaml):
@@ -75,6 +78,10 @@ class OpProto:
             op_args.append(arg)
         if 'returns' not in yaml.keys():
             raise TypeError("op define need key 'returns'")
+
+        is_pyboost = False
+        if 'pyboost' in yaml.keys():
+            is_pyboost = True
         return_dict = yaml['returns']
         class_name = convert_python_func_name_to_c(op_name)
         if 'class' in yaml.keys() and 'name' in yaml['class'].keys():
@@ -88,5 +95,5 @@ class OpProto:
             arg = Arg(return_name, dtype, inplace=inplace)
             return_args.append(arg)
         op_proto = OpProto()
-        op_proto.update_data(op_name, op_args, return_args, class_name)
+        op_proto.update_data(op_name, op_args, return_args, class_name, is_pyboost)
         return op_proto

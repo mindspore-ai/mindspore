@@ -23,11 +23,11 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameConv2DExt = "Conv2DExt";
 class MIND_API Conv2DExt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv2DExt);

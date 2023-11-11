@@ -1198,7 +1198,7 @@ void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
   PyParser::PrepareOpGradInfo(op_run_info);
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
-    DataConvert::ConvertValueToTensor(op_run_info, input_object, index, forward->grad()->top_cell());
+    DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
   }
   forward->ForwardOpGradImpl(op_run_info);
 }

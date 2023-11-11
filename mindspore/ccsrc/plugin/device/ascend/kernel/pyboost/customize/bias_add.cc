@@ -35,7 +35,6 @@ bool BiasAddAscendLaunch(const PrimitivePtr &primitive, const tensor::TensorPtr 
   auto output_device_types = {output_address->type_id()};
 
   kernel::AclKernelModPtr bias_add_kernel = std::make_shared<kernel::AclKernelMod>();
-  bias_add_kernel->SetPrimitive(primitive);
   bias_add_kernel->CreateAclConverter();
   bias_add_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
   ShapeVector input_x_shape = input_x->shape();

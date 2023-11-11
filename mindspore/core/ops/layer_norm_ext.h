@@ -21,11 +21,11 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLayerNormExt = "LayerNormExt";
 /// \brief Applies the Layer Normalization to the input tensor.
 class MIND_API LayerNormExt : public BaseOperator {
  public:

@@ -20,12 +20,11 @@
 #include <vector>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBaddbmm = "Baddbmm";
-
 /// \brief Computes matrix multiplication between two tensors by batch.
 /// Refer to Python API @ref mindspore.ops.Baddbmm for more details.
 class MIND_API Baddbmm : public BaseOperator {

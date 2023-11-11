@@ -19,6 +19,7 @@ class BACKEND_EXPORT PyBoostUtils {
   static DeviceContext *GetDeviceContext(const std::string &device_type);
   static void CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
                                  std::vector<tensor::TensorPtr> *outputs);
+  static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
 };
 KernelTensorPtr BACKEND_EXPORT TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
 KernelTensorPtr BACKEND_EXPORT ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);
@@ -28,7 +29,6 @@ kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> wo
                                                           const DeviceContext *device_context);
 tensor::TensorPtr BACKEND_EXPORT ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 tensor::TensorPtr BACKEND_EXPORT ContiguousTensor(const tensor::TensorPtr &input_tensor);
-
 
 template <typename... Args>
 void PrepareOpInputs(DeviceContext *device_context, Args... args) {
