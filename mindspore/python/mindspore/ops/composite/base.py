@@ -30,7 +30,8 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
-    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_
+    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_, StarredGetItem_,\
+    StarredUnpack_, StarredUnpackMerge_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -1195,3 +1196,48 @@ class _ZipOperation(ZipOperation_):
 
 zip_operation = _ZipOperation('zip_operation')
 """`zip_operation` will generate a tuple of zip iterations of inputs."""
+
+
+class _StarredGetItem(StarredGetItem_):
+    """Generates a list of starred get_item for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredGetItem."""
+        StarredGetItem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_get_item = _StarredGetItem('starred_get_item')
+"""`starred_get_item` will generate a list of starred get_item for inputs."""
+
+
+class _StarredUnpack(StarredUnpack_):
+    """Generates a tuple of starred unpack for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredUnpack."""
+        StarredUnpack_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_unpack = _StarredUnpack('starred_unpack')
+"""`starred_unpack` will generate a tuple of starred unpack for inputs."""
+
+
+class _StarredUnpackMerge(StarredUnpackMerge_):
+    """Generates a tuple of starred unpack merge for inputs."""
+
+    def __init__(self, name):
+        """Initialize _StarredUnpackMerge."""
+        StarredUnpackMerge_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+starred_unpack_merge = _StarredUnpackMerge('starred_unpack_merge')
+"""`starred_unpack_merge` will generate a tuple of starred unpack merge for inputs."""

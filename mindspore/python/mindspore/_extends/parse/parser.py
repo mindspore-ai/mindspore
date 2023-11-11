@@ -86,6 +86,7 @@ AST_SUB_TYPE_LIST = 7                  # ast.List
 AST_SUB_TYPE_SUBSCRIPT = 8             # ast.Subscript
 AST_SUB_TYPE_STARRED = 9               # ast.Starred
 AST_SUB_TYPE_ATTRIBUTE = 10            # ast.Attribute
+AST_SUB_TYPE_DICT = 11                 # ast.Dict
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Syntax support
@@ -692,6 +693,8 @@ def get_ast_type(node):
         ast_type = AST_SUB_TYPE_STARRED
     elif isinstance(node, ast.Attribute):
         ast_type = AST_SUB_TYPE_ATTRIBUTE
+    elif isinstance(node, ast.Dict):
+        ast_type = AST_SUB_TYPE_DICT
     else:
         ast_type = AST_SUB_TYPE_UNKNOWN
     return ast_type

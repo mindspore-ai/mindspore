@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
+#include "frontend/operator/composite/starred_operation.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"

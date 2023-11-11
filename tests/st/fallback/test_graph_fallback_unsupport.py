@@ -239,31 +239,6 @@ def test_compress_with_mutable_input():
     assert (foo(Tensor([1])) == [1, 3, 4]).all()
 
 
-@pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_star_to_compress_input():
-    """
-    Feature: Support JIT Fallback runtime feature.
-    Description: use star to compress assigned input.
-    Expectation: No exception.
-    """
-
-    @jit
-    def foo():
-        x = [1, 2, 3, 4]
-        a, *b = x
-        return a, b
-
-    ret = foo()
-    assert len(ret) == 2
-    assert ret[0] == 1
-    assert ret[1] == [2, 3, 4]
-
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -310,27 +285,6 @@ def test_unpack_interpret_node():
 
     ret = foo([1, 2, 3, 4])
     assert ret == 10
-
-
-@pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_starred_to_unpack_input():
-    """
-    Feature: Support JIT Fallback runtime feature.
-    Description: * operator can not unpack a list.
-    Expectation: No exception.
-    """
-
-    @jit
-    def foo(x):
-        return f"output is {*a,}"
-
-    ret = foo([1, 2, 3, 4])
-    assert ret == "output is (1, 2, 3, 4)"
 
 
 @pytest.mark.level1

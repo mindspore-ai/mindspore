@@ -227,7 +227,8 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
          meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>() ||
          meta_func_graph->isa<prim::GradAux>() || meta_func_graph->isa<prim::PyExecuteGradient>() ||
          meta_func_graph->isa<prim::MutableGradient>() || meta_func_graph->isa<prim::ZerosLike>() ||
-         meta_func_graph->isa<prim::ListAdd>();
+         meta_func_graph->isa<prim::ListAdd>() || meta_func_graph->isa<prim::StarredGetItem>() ||
+         meta_func_graph->isa<prim::StarredUnpack>() || meta_func_graph->isa<prim::StarredUnpackMerge>();
 }
 
 /* inherit relation of MetaFuncGraph

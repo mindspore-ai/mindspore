@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,28 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   }
 
   AbstractBasePtrList key_list = keys->elements();
-  for (size_t index = 0; index < keys_size; index++) {
-    const auto &key = key_list[index];
-    CheckDictKey(key, op_name);
-  }
+  std::unordered_map<std::string, AbstractBasePtr> key_str_value_set;
+  std::vector<AbstractBasePtr> key_set;
   std::vector<AbstractElementPair> key_value;
   AbstractBasePtrList value_list = values->elements();
   for (size_t index = 0; index < keys_size; index++) {
-    (void)key_value.emplace_back(key_list[index], value_list[index]);
+    const auto &key = key_list[index];
+    CheckDictKey(key, op_name);
+    auto key_val = key->BuildValue()->ToString();
+    auto iter = key_str_value_set.find(key_val);
+    // Remove duplicate keys.
+    // {Tensor[1]: x, Tensor[1}: y} the length of dict is 2, means the two keys are not duplicate.
+    if (iter != key_str_value_set.end() && !key->isa<AbstractTensor>()) {
+      iter->second = value_list[index];
+    } else {
+      auto key_str = key->BuildValue()->ToString();
+      key_str_value_set.insert(std::pair<std::string, AbstractBasePtr>(key_str, value_list[index]));
+      key_set.push_back(key);
+    }
+  }
+  for (auto &key : key_set) {
+    auto key_str = key->BuildValue()->ToString();
+    (void)key_value.emplace_back(key, key_str_value_set[key_str]);
   }
   return std::make_shared<AbstractDictionary>(key_value);
 }

@@ -31,6 +31,8 @@ mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_dee
 mindspore/mindspore/ccsrc/pipeline/jit/ps/resource.cc:mindspore::pipeline::GetMethodMap
 mindspore/mindspore/ccsrc/pipeline/jit/ps/fallback.cc:mindspore::fallback::GetJitAnnotationTypeFromComment
 mindspore/mindspore/ccsrc/pipeline/jit/ps/pipeline.cc:mindspore::pipeline::GraphExecutorPy::RunInner
+mindspore/mindspore/ccsrc/pipeline/jit/ps/debug/anf_ir_utils.cc:mindspore::Skip
+mindspore/mindspore/ccsrc/common/debug/anf_ir_dump.cc:mindspore::Skip
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops/function/array_func.py:scatter_nd
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:interpolate

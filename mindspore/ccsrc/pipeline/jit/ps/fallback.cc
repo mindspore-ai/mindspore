@@ -246,6 +246,7 @@ CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string
   auto node =
     fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
   node->set_debug_info(debug_info);
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(node);
   return node;
 }
 
@@ -311,6 +312,7 @@ AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::strin
   auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_tuple, local_value_tuple});
   auto prim = NewValueNode(prim::kPrimPyInterpret);
   auto interpret_node = fg->NewCNode({prim, script_node, global_dict_node, local_dict_node});
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(interpret_node);
   if (replace) {
     fg->ReplaceInOrder(node, interpret_node);
   }
