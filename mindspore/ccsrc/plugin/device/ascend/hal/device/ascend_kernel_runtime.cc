@@ -247,6 +247,31 @@ void AsyncDataDumpUninit() {
 }
 #endif
 
+void AscendKernelRuntime::RegTaskFailCallback(bool is_release) {
+  // Set callback func when exception error
+  auto func = runtime_core_ == nullptr ? TaskExceptionCallback : runtime_core_->GetCallBackFunc();
+  auto rt_ret = is_release ? aclrtSetExceptionInfoCallback(nullptr) : aclrtSetExceptionInfoCallback(func);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
+  }
+}
+
+void AscendKernelRuntime::TaskExceptionCallback(aclrtExceptionInfo *task_fail_info) {
+  if (task_fail_info == nullptr) {
+    MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info is nullptr";
+    return;
+  }
+  auto task_id = aclrtGetTaskIdFromExceptionInfo(task_fail_info);
+  auto stream_id = aclrtGetStreamIdFromExceptionInfo(task_fail_info);
+  auto error_code = aclrtGetErrorCodeFromExceptionInfo(task_fail_info);
+  auto device_id = aclrtGetDeviceIdFromExceptionInfo(task_fail_info);
+  auto tid = aclrtGetThreadIdFromExceptionInfo(task_fail_info);
+  MS_LOG(ERROR) << "Run Task failed, task_id: " << task_id << ", stream_id: " << stream_id << ", tid: " << tid
+                << ", device_id: " << device_id << ", retcode: " << error_code << " (" << GetErrorMsg(error_code)
+                << ")";
+  return;
+}
+
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
 #ifdef ENABLE_DEBUGGER
@@ -280,9 +305,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     mem_manager_->Finalize();
   }
 
-  if (runtime_core_ != nullptr) {
-    runtime_core_->RegTaskFailCallback(true);
-  }
+  RegTaskFailCallback(true);
 
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
@@ -340,8 +363,8 @@ bool AscendKernelRuntime::Init() {
     runtime_core_ = AscendRuntimeManager::Instance().GetAscendRuntime(kAscendVM, device_id_);
     if (runtime_core_ != nullptr) {
       runtime_core_->InitCore();
-      runtime_core_->RegTaskFailCallback();
     }
+    RegTaskFailCallback();
     if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }
@@ -766,30 +789,9 @@ bool AscendKernelRuntime::DestroyHccl() {
 }
 
 void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
-#ifndef ENABLE_SECURITY
-  auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manager);
-  if (!profiler_manager->GetProfilingEnableFlag()) {
-    return;
+  if (runtime_core_ != nullptr) {
+    runtime_core_->KernelLaunchProfilingCore(kernel_name);
   }
-
-  // save task info
-  uint32_t stream_id;
-  uint32_t task_id;
-  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Profiling get task_id stream_id failed";
-  }
-  std::pair<uint32_t, uint32_t> stream_task_pair = {stream_id, task_id};
-  auto try_emplace_ret = stream_id_task_id_op_name_map_.try_emplace(stream_task_pair, kernel_name);
-  if (!try_emplace_ret.second) {
-    MS_LOG(WARNING) << "Profiling duplicate key, task_id:" << stream_task_pair.second
-                    << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
-  }
-  if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
-    MS_LOG(EXCEPTION) << "Too many profiling data";
-  }
-#endif
 }
 
 std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {

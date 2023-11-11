@@ -509,24 +509,21 @@ bool AscendRuntimeCore::LoadDataCore() {
   return true;
 }
 
-void AscendRuntimeCore::RegTaskFailCallback(const bool &is_release) {
-  // Set callback func when exception error
-  auto rt_ret = is_release ? rtRegTaskFailCallbackByModule(kModuleName, nullptr)
-                           : rtRegTaskFailCallbackByModule(kModuleName, TaskFailCallback);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
-  }
-}
+aclrtExceptionInfoCallback AscendRuntimeCore::GetCallBackFunc() { return TaskFailCallback; }
 
-void AscendRuntimeCore::TaskFailCallback(rtExceptionInfo *task_fail_info) {
+void AscendRuntimeCore::TaskFailCallback(aclrtExceptionInfo *task_fail_info) {
   if (task_fail_info == nullptr) {
     MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info is nullptr";
     return;
   }
-  if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW && KernelDumper::stream_task_graphs.size() > 0) {
-    MS_LOG(WARNING) << "Graph in kernelByKernel mode task overflow, "
-                    << "Task overflow infos task_id: " << task_fail_info->taskid
-                    << ", stream_id: " << task_fail_info->streamid;
+  auto task_id = aclrtGetTaskIdFromExceptionInfo(task_fail_info);
+  auto stream_id = aclrtGetStreamIdFromExceptionInfo(task_fail_info);
+  auto error_code = aclrtGetErrorCodeFromExceptionInfo(task_fail_info);
+  auto device_id = aclrtGetDeviceIdFromExceptionInfo(task_fail_info);
+  auto tid = aclrtGetThreadIdFromExceptionInfo(task_fail_info);
+  if (error_code == ACL_ERROR_RT_AICORE_OVER_FLOW && KernelDumper::stream_task_graphs.size() > 0) {
+    MS_LOG(WARNING) << "Graph in kernelByKernel mode task overflow.Task overflow infos task_id: " << task_id
+                    << ", stream_id: " << stream_id;
     return;
   }
   if (current_graph_ == nullptr) {
@@ -536,20 +533,18 @@ void AscendRuntimeCore::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   static std::mutex exception_mutex;
   constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
-  if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
-    auto node = GetErrorNodeInfo(task_fail_info->streamid, task_fail_info->taskid).first;
+  if (error_code == ACL_ERROR_RT_AICORE_OVER_FLOW) {
+    auto node = GetErrorNodeInfo(stream_id, task_id).first;
     if (!node) {
       MS_LOG(WARNING) << "Node run task overflow, node name is unknown.";
     } else {
-      auto key = std::to_string(task_fail_info->streamid) + std::to_string(task_fail_info->taskid) +
-                 std::to_string(current_graph_->graph_id());
+      auto key = std::to_string(stream_id) + std::to_string(task_id) + std::to_string(current_graph_->graph_id());
       if (overflow_tasks_.find(key) == overflow_tasks_.end() || overflow_tasks_[key] == kOverflowThreshold) {
         // print overflow info
         MS_LOG(WARNING) << "Node run task overflow, node name: " << node->fullname_with_scope()
-                        << "Task overflow infos task_id: " << task_fail_info->taskid
-                        << ", stream_id: " << task_fail_info->streamid << ", tid: " << task_fail_info->tid
-                        << ", device_id: " << task_fail_info->deviceid << ", retcode: " << task_fail_info->retcode
-                        << " (" << GetErrorMsg(task_fail_info->retcode) << ")" << trace::DumpSourceLines(node, false);
+                        << "Task overflow infos task_id: " << task_id << ", stream_id: " << stream_id
+                        << ", tid: " << tid << ", device_id: " << device_id << ", retcode: " << error_code << " ("
+                        << GetErrorMsg(error_code) << ")" << trace::DumpSourceLines(node, false);
         overflow_tasks_[key] = 1;
       } else {
         overflow_tasks_[key]++;
@@ -878,6 +873,33 @@ bool AscendRuntimeCore::CheckAndUnloadModelInAdvance(uint32_t model_id) {
     return true;
   }
   return false;
+}
+
+void AscendRuntimeCore::KernelLaunchProfilingCore(const std::string &kernel_name) {
+#ifndef ENABLE_SECURITY
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  if (!profiler_manager->GetProfilingEnableFlag()) {
+    return;
+  }
+
+  // save task info
+  uint32_t stream_id;
+  uint32_t task_id;
+  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Profiling get task_id stream_id failed";
+  }
+  std::pair<uint32_t, uint32_t> stream_task_pair = {stream_id, task_id};
+  auto try_emplace_ret = stream_id_task_id_op_name_map_.try_emplace(stream_task_pair, kernel_name);
+  if (!try_emplace_ret.second) {
+    MS_LOG(WARNING) << "Profiling duplicate key, task_id:" << stream_task_pair.second
+                    << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
+  }
+  if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
+    MS_LOG(EXCEPTION) << "Too many profiling data";
+  }
+#endif
 }
 
 std::vector<rtExceptionInfo> AscendRuntimeCore::task_fail_infos_ = {};

@@ -253,7 +253,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
   }
   std::string proto_json;
   (void)google::protobuf::util::MessageToJsonString(op_mapping_info, &proto_json);
-  rtError_t rt_ret = rtMalloc(&proto_dev_mem_, proto_size, RT_MEMORY_HBM, 0);
+  rtError_t rt_ret = aclrtMalloc(&proto_dev_mem_, proto_size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
@@ -265,7 +265,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     return;
   }
 
-  rt_ret = rtMalloc(&proto_size_dev_mem_, sizeof(size_t), RT_MEMORY_HBM, 0);
+  rt_ret = aclrtMalloc(&proto_size_dev_mem_, sizeof(size_t), ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;

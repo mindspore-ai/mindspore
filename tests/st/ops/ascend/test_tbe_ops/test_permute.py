@@ -16,62 +16,43 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.train import Model
+from mindspore import Tensor, ops
 
 context.set_context(device_target="Ascend")
 
 
 class Net(nn.Cell):
     def __init__(self, perm_in):
+        super().__init__()
         super(Net, self).__init__()
-        self.transpose = P.Transpose()
         self.perm = perm_in
+        self.permute = ops.permute
 
     def construct(self, input_):
-        x = self.transpose(input_, self.perm)
+        x = self.permute(input_, self.perm)
         return x
 
 
-def ms_transpose(input_, perm_in):
-    context.set_context(mode=context.GRAPH_MODE)
-    input_me = Tensor(input_)
-    net = Net(perm_in)
-    net.set_train()
-    model = Model(net)
-    output = model.predict(input_me)
-    print("-------------ms------------------")
-    print(output.asnumpy().dtype)
-    print(output.asnumpy())
-
-
-def test_net():
-    input_ = np.random.randn(8, 24, 1, 1).astype(np.float16)
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_permute_dynamic_perm1(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
     perm = (0, 2, 3, 1)
-    ms_transpose(input_, perm)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_transpose_dynamic(mode):
-    """
-    Feature: test transpose dynamic
-    Description: test transpose dynamic with graph and pynative mode
-    Expectation: none.
-    """
-    context.set_context(mode=mode)
-    perm = (1, 2, 3, 4, 5, -1, 0)
-    in_shape = (2, 4, 8, 16, 1, 16, 30)
+    in_shape = (8, 24, 1, 1)
     np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
-    transpose = Net(perm)
+    permute = Net(perm)
     real_input = Tensor(np_value)
     dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
-    transpose.set_inputs(dyn_input)
-    out = transpose(real_input)
+    permute.set_inputs(dyn_input)
+    out = permute(real_input)
     return out
 
 
@@ -80,21 +61,21 @@ def test_transpose_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_transpose_dynamic_perm1(mode):
+def test_permute_dynamic_perm2(mode):
     """
     Feature: test transpose dynamic
     Description: test transpose dynamic with graph and pynative mode
     Expectation: none.
     """
     context.set_context(mode=mode)
-    perm = (0, 1, 2, 3)
+    perm = (3, 2, 1, 0)
     in_shape = (8, 24, 1, 1)
     np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
-    transpose = Net(perm)
+    permute = Net(perm)
     real_input = Tensor(np_value)
     dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
-    transpose.set_inputs(dyn_input)
-    out = transpose(real_input)
+    permute.set_inputs(dyn_input)
+    out = permute(real_input)
     return out
 
 
@@ -103,21 +84,19 @@ def test_transpose_dynamic_perm1(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_transpose_dynamic_perm2(mode):
+def test_permute_perm(mode):
     """
     Feature: test transpose dynamic
     Description: test transpose dynamic with graph and pynative mode
     Expectation: none.
     """
     context.set_context(mode=mode)
-    perm = (1, 2, 3, -1)
+    perm = (3, 2, 1, 0)
     in_shape = (8, 24, 1, 1)
     np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
-    transpose = Net(perm)
+    permute = Net(perm)
     real_input = Tensor(np_value)
-    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
-    transpose.set_inputs(dyn_input)
-    out = transpose(real_input)
+    out = permute(real_input)
     return out
 
 
@@ -126,19 +105,59 @@ def test_transpose_dynamic_perm2(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_transpose_dynamic_perm3(mode):
+def test_permute_perm2(mode):
     """
     Feature: test transpose dynamic
     Description: test transpose dynamic with graph and pynative mode
     Expectation: none.
     """
     context.set_context(mode=mode)
-    perm = (2, 1, 0, 3)
+    perm = (2, 1, 3, 0)
     in_shape = (8, 24, 1, 1)
     np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
-    transpose = Net(perm)
+    permute = Net(perm)
     real_input = Tensor(np_value)
-    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
-    transpose.set_inputs(dyn_input)
-    out = transpose(real_input)
+    out = permute(real_input)
+    return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_permute_perm3(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (-1, 2, 1, 0)
+    in_shape = (8, 24, 1, 1)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    permute = Net(perm)
+    real_input = Tensor(np_value)
+    out = permute(real_input)
+    return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_permute_perm4(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (-2, 3, 0, 1)
+    in_shape = (8, 24, 1, 1)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    permute = Net(perm)
+    real_input = Tensor(np_value)
+    out = permute(real_input)
     return out

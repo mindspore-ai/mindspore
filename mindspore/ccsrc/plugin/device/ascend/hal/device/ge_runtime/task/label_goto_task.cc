@@ -61,7 +61,7 @@ void LabelGotoTask::Distribute() {
   MS_EXCEPTION_IF_NULL(label_info_);
 
   if (index_value_ == nullptr) {
-    rtError_t rt_ret = rtMalloc(&index_value_, sizeof(uint64_t), RT_MEMORY_HBM, 0);
+    rtError_t rt_ret = aclrtMalloc(&index_value_, sizeof(uint64_t), ACL_MEM_TYPE_HIGH_BAND_WIDTH);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
     }
