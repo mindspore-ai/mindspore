@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
+#include "plugin/device/ascend/optimizer/ir_fission/lp_norm_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
@@ -123,6 +124,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   // just rename primitive name
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<LpNormFission>());
 }
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
