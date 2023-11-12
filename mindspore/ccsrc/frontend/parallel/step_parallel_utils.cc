@@ -872,10 +872,17 @@ void LabelGenMaskMicro(const FuncGraphPtr &root) {
 
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+    if (!IsPrimitiveCNode(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    auto cnode_prim = GetCNodePrimitive(cnode);
+    if (cnode_prim->HasAttr("DISABLE_MERGE_ASSIGN_ADD")) {
+      cnode->AddPrimalAttr("DISABLE_MERGE_ASSIGN_ADD", cnode_prim->GetAttr("DISABLE_MERGE_ASSIGN_ADD"));
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+      continue;
+    }
     auto cast_input = RealInputNode(cnode, 1);
     if (cast_input->isa<Parameter>() && cast_input->cast<ParameterPtr>()->has_default()) {
       MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
@@ -1175,6 +1182,195 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
     }
   }
   return res;
+}
+
+std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipDepend(const AnfNodePtr &node) {
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  std::vector<std::pair<AnfNodePtr, int>> res;
+  std::queue<AnfNodePtr> anf_queue;
+  anf_queue.push(node);
+  while (!anf_queue.empty()) {
+    auto queue_end = anf_queue.front();
+    anf_queue.pop();
+    auto user_set = manager->node_users()[queue_end];
+    for (auto &pair : user_set) {
+      if (IsPrimitiveCNode(pair.first, prim::kPrimDepend)) {
+        if (pair.second == 1) {
+          anf_queue.push(pair.first);
+        }
+        continue;
+      }
+      res.push_back(pair);
+    }
+  }
+  return res;
+}
+
+std::pair<bool, size_t> CanMergeConcatSlice(const std::pair<std::shared_ptr<AnfNode>, int> &pair,
+                                            const CNodePtr &concat_cnode,
+                                            const ShapeVector &concat_output_shape_element, int64_t concat_axis) {
+  if (!IsPrimitiveCNode(pair.first, prim::kPrimStridedSlice)) {
+    return {false, 0};
+  }
+  auto slice_cnode = pair.first->cast<CNodePtr>();
+  MS_LOG(INFO) << "concat slice cnode:" << slice_cnode->fullname_with_scope();
+  auto begin_value = GetValueNode(slice_cnode->input(2));
+  auto end_value = GetValueNode(slice_cnode->input(3));
+  auto strided_value = GetValueNode(slice_cnode->input(4));
+  auto begin = GetValue<std::vector<int64_t>>(begin_value);
+  auto end = GetValue<std::vector<int64_t>>(end_value);
+  auto strided = GetValue<std::vector<int64_t>>(strided_value);
+  if (!std::all_of(strided.begin(), strided.end(), [](auto s) { return s == 1; })) {
+    return {false, 0};
+  }
+  if (!IsPrimitiveCNode(concat_cnode->input(1), prim::kPrimMakeTuple)) {
+    return {false, 0};
+  }
+  auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+  auto concat_input_size = concat_input_node->size();
+  bool can_merge = false;
+  size_t concat_input_index = 0;
+  for (size_t i = 0; i < begin.size(); ++i) {
+    int64_t slice_len = (end[i] - begin[i]);
+    if (i == size_t(concat_axis)) {
+      int64_t slice_index = begin[i] / slice_len;
+      if (slice_len == concat_output_shape_element[i] || size_t(slice_index + 1) >= concat_input_size) {
+        can_merge = false;
+        break;
+      }
+      concat_input_index = size_t(slice_index + 1);
+      can_merge = true;
+    } else if (slice_len != concat_output_shape_element[i]) {
+      can_merge = false;
+      break;
+    }
+  }
+  return {can_merge, concat_input_index};
+}
+
+bool HandleFuncConcatSlice(const FuncGraphManagerPtr &manager, const std::pair<std::shared_ptr<AnfNode>, int> &pair,
+                           const CNodePtr &concat_cnode, const ShapeVector &concat_output_shape_element,
+                           int64_t concat_axis) {
+  auto fg = pair.first->func_graph();
+  auto fg_map = fg->func_graph_cnodes_index();
+  if (fg_map.size() > 1) {
+    return false;
+  }
+  for (auto &fg_use : fg_map) {
+    if (!fg_use.first->first->isa<CNode>() || fg_use.first->second > 0) {
+      continue;
+    }
+    auto call_cnode = fg_use.first->first->cast<CNodePtr>();
+    auto func_users = manager->node_users()[call_cnode];
+    if (func_users.size() > 1) {
+      continue;
+    }
+    for (auto &fg_users : func_users) {
+      auto func_node_users = FuncGraphNodeUsers(fg_users);
+      if (func_node_users.empty()) {
+        continue;
+      }
+      bool have_can_merge = false;
+      std::vector<std::pair<bool, size_t>> input_index;
+      for (const auto &new_pair : func_node_users) {
+        auto can_merge = CanMergeConcatSlice(new_pair, concat_cnode, concat_output_shape_element, concat_axis);
+        input_index.push_back(can_merge);
+        if (can_merge.first) {
+          have_can_merge = true;
+        }
+      }
+      if (!have_can_merge) {
+        continue;
+      }
+      // maketuple->Return
+      auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+      manager->SetEdge(pair.first, pair.second, concat_input_node);
+      // call -> tuplegetitem -> call
+      auto user_func_graph = GetValueNode<FuncGraphPtr>(fg_users.first->cast<CNodePtr>()->input(0));
+      auto user_graph_parameters = user_func_graph->parameters();
+      auto origin_parameter = user_graph_parameters[fg_users.second - 1];
+      auto new_user_graph_parameters(user_graph_parameters);
+      new_user_graph_parameters.erase(new_user_graph_parameters.begin() + fg_users.second - 1);
+      auto fg_users_inputs_all(fg_users.first->cast<CNodePtr>()->inputs());
+      fg_users_inputs_all.erase(fg_users_inputs_all.begin() + fg_users.second);
+      // New concat CNode in user_func_graph
+      std::vector<AnfNodePtr> new_concat_maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      std::vector<AbstractBasePtr> new_maketuple_abstracts;
+      for (size_t i = 0; i < concat_input_node->size() - 1; ++i) {
+        std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), call_cnode,
+                                                      ValuePtrToAnfNodePtr(MakeValue<int64_t>(i))};
+        auto tuple_get_item_node = call_cnode->func_graph()->NewCNode(tuple_get_item_inputs);
+        // replace fg_users->inputs(fg_users.second) to a list fg_users->inputs(fg_users.second+i)
+        fg_users_inputs_all.insert(fg_users_inputs_all.begin() + fg_users.second + i, tuple_get_item_node);
+        auto new_parameter = user_func_graph->add_parameter();
+        new_parameter->set_abstract(concat_input_node->input(i + 1)->abstract()->Clone());
+        new_maketuple_abstracts.push_back(concat_input_node->input(i + 1)->abstract()->Clone());
+        new_user_graph_parameters.insert(new_user_graph_parameters.begin() + fg_users.second - 1 + i, new_parameter);
+        new_concat_maketuple_inputs.push_back(new_parameter);
+      }
+      user_func_graph->set_parameters(new_user_graph_parameters);
+      auto new_call_cnode = fg_users.first->func_graph()->NewCNode(fg_users_inputs_all);
+      manager->Replace(fg_users.first, new_call_cnode);
+      // Handle user_func_graph slice cnode
+      auto new_maketuple_cnode = user_func_graph->NewCNode(new_concat_maketuple_inputs);
+      new_maketuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(new_maketuple_abstracts));
+      std::vector<AnfNodePtr> new_concat_inputs{NewValueNode(prim::kPrimConcat), new_maketuple_cnode};
+      auto new_concat = user_func_graph->NewCNode(new_concat_inputs);
+      new_concat->set_abstract(concat_cnode->abstract()->Clone());
+      auto new_concat_prim = GetCNodePrimitive(new_concat);
+      auto old_concat_prim = GetCNodePrimitive(concat_cnode);
+      new_concat_prim->SetAttrs(old_concat_prim->attrs());
+      if (new_concat_prim->HasAttr("fine_grained_interleaved_index")) {
+        new_concat_prim->EraseAttr("fine_grained_interleaved_index");
+      }
+
+      for (size_t j = 0; j < func_node_users.size(); ++j) {
+        auto new_pair = func_node_users[j];
+        if (!input_index[j].first) {
+          manager->SetEdge(new_pair.first, new_pair.second, new_concat);
+          continue;
+        }
+        manager->Replace(new_pair.first, user_func_graph->parameters()[fg_users.second - 2 + input_index[j].second]);
+      }
+    }
+  }
+  return true;
+}
+
+bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
+  bool merged = false;
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimConcat)) {
+      continue;
+    }
+    auto concat_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(concat_cnode->abstract());
+    auto concat_output_shape = concat_cnode->abstract()->BuildShape();
+    MS_EXCEPTION_IF_NULL(concat_output_shape);
+    MS_EXCEPTION_IF_NULL(concat_output_shape->cast<abstract::ShapePtr>());
+    auto concat_output_shape_element = concat_output_shape->cast<abstract::ShapePtr>()->shape();
+    auto concat_prim = GetCNodePrimitive(concat_cnode);
+    auto concat_axis = GetValue<int64_t>(concat_prim->GetAttr(AXIS));
+    auto next_nodes = GetOutputNodesSkipDepend(node);
+    for (const auto &pair : next_nodes) {
+      if (IsPrimitiveCNode(pair.first, prim::kPrimReturn) && next_nodes.size() == 1) {
+        merged = HandleFuncConcatSlice(manager, pair, concat_cnode, concat_output_shape_element, concat_axis);
+        continue;
+      }
+      auto can_merge = CanMergeConcatSlice(pair, concat_cnode, concat_output_shape_element, concat_axis);
+      if (!can_merge.first) {
+        continue;
+      }
+      auto concat_input_node = concat_cnode->input(1)->cast<CNodePtr>();
+      auto concat_real_input_node = concat_input_node->input(can_merge.second);
+      manager->Replace(pair.first->cast<CNodePtr>(), concat_real_input_node);
+      merged = true;
+    }
+  }
+  return merged;
 }
 
 AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
@@ -1588,7 +1784,7 @@ bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
-static bool IsCommunicationOp(const PrimitivePtr &prim) {
+bool IsCommunicationOp(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
 }
@@ -1941,6 +2137,27 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
   TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
   return tensorlayout_in;
+}
+
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE); }
+
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
+  AnfNodePtr node = forward_graph->get_return();
+  std::vector<std::pair<PrimitivePtr, int64_t>> patterns = {
+    {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
+  for (const auto &pattern : patterns) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsPrimitiveCNode(cnode, pattern.first)) {
+      return nullptr;
+    }
+    auto prev_node_index = pattern.second;
+    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
+      return nullptr;
+    }
+    node = cnode->input(prev_node_index);
+  }
+  return GetValueNode<FuncGraphPtr>(node);
 }
 
 Shape mirror_group_list(const TensorLayoutPtr &layout) {

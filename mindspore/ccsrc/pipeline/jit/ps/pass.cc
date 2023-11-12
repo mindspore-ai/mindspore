@@ -40,13 +40,16 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/parallel/pass/label_micro_interleaved_index.h"
+#include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/assign_add_opt.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -459,6 +462,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
+                         {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
@@ -715,6 +719,18 @@ bool SliceReuseRecomputedActivationPass(const ResourcePtr &resource) {
 bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::LabelMicroInterleavedIndex(resource->func_graph());
+  return true;
+}
+
+bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
+  return true;
+}
+
+bool AssignAddOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::AssignAddOpt(resource->func_graph());
   return true;
 }
 
@@ -1044,6 +1060,8 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"cse_after_recomputation", OptAfterRecomputeGroup},
                                    {"environ_conv", EnvironConversionPass},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
+                                   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
+                                   {"assign_add_opt", AssignAddOpt},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
