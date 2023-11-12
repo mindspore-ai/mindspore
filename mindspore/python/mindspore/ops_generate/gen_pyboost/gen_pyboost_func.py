@@ -387,6 +387,86 @@ def generate_inplace_process_cpp_code(op_proto):
         return ''
 
 
+class OpTemplateConverter:
+    def __init__(self, op_proto):
+        self.op_proto = op_proto
+        self.op_name = self.parse_op_name(op_proto.class_name)
+        self.functional_name = self.parse_functional_name(op_proto.operator_name)
+        self.call_args = self.parse_original_call_args(op_proto.op_args)
+        self.call_args_types = self.parse_call_args_types(op_proto.op_args)
+        self.call_args_with_types = self.parse_call_args_with_types(self.call_args, self.call_args_types)
+        self.need_malloc_tensors = self.parse_need_malloc_tensors(op_proto.op_args, self.call_args)
+        self.call_args_after_convert, self.value_tuple_convert, self.const_number_convert = self.op_args_converter(op_proto.op_args, self.call_args)
+
+
+    def parse_op_name(self, name):
+        op_name = name
+        if op_name.endswith('Ext'):
+            op_name = op_name[:-3]
+        return op_name
+
+    def parse_functional_name(self, name):
+        functional_name = name
+        if functional_name.endswith('ext'):
+            functional_name = functional_name[:-4]
+        return functional_name
+
+    def parse_original_call_args(self, op_args):
+        call_args = []
+        for op_arg in op_args:
+            if pyboost_utils.is_tensor(op_arg):
+                call_arg = op_arg.arg_name + "_tensor"
+            elif pyboost_utils.is_tensor_list(op_arg):
+                call_arg = op_arg.arg_name + "_tensor_list"
+            else:
+                call_arg = op_arg.arg_name
+            call_args.append(call_arg)
+        return call_args
+
+
+    def parse_call_args_types(self, op_args):
+        call_args_types = []
+        for op_arg in op_args:
+            is_optional = False
+            if op_arg.as_init_arg and str(op_arg.init) == 'None':
+                is_optional = True
+            call_args_types.append(get_input_dtype(op_arg.arg_dtype, is_optional))
+        return call_args_types
+
+    def parse_need_malloc_tensors(self, op_args, call_args):
+        need_malloc_tensors = []
+        for op_arg, call_arg in zip(op_args, call_args):
+            if pyboost_utils.is_tensor(op_arg):
+                call_arg = op_arg.arg_name + "_tensor"
+                need_malloc_tensors.append(call_arg)
+
+            if tuple_input_to_cpp_type(op_arg.arg_dtype) and pyboost_utils.is_tensor_list(op_arg):
+                    need_malloc_tensors.append(call_arg + "_vector")
+        return need_malloc_tensors
+
+    def parse_call_args_with_types(self, call_args, call_args_types):
+        call_args_with_types = []
+        for type_name, arg_name in zip(call_args_types, call_args):
+            call_args_with_types.append("const " + type_name + " &" + arg_name)
+        return call_args_with_types
+
+    def op_args_converter(self, op_args, call_args):
+        """Convert ValutePtr to cpp data type"""
+        call_args_after_convert = []
+        value_tuple_convert = []
+        const_number_convert = []
+        for op_arg, call_arg in zip(op_args, call_args):
+            if number_input_to_cpp_type(op_arg.arg_dtype):
+                call_args_after_convert.append(call_arg + "_imm")
+                const_number_convert.append(get_const_number_convert(call_arg, op_arg.arg_dtype))
+            elif tuple_input_to_cpp_type(op_arg.arg_dtype):
+                call_args_after_convert.append(call_arg + "_vector")
+                value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
+            else:
+                call_args_after_convert.append(call_arg)
+        return call_args_after_convert, value_tuple_convert, const_number_convert
+
+
 def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
     Generate pyboost op cpp code from yaml.
@@ -395,70 +475,43 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     clean_auto_generate_dir(work_path, "mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/")
 
     all_op_names = []
-    all_operator_names = []
+    all_functional_names = []
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         prim_name_str = op_proto.class_name
         if prim_name_str not in pyboost_yaml_data.keys():
             continue
-        operator_name = op_proto.operator_name
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
-        op_name_str = prim_name_str
-        if prim_name_str.endswith('Ext'):
-            op_name_str = prim_name_str[:-3]
-        call_args_str = []
-        call_args_after_convert = []
-        call_args_type = []
-        value_tuple_convert = []
-        const_number_convert = []
-        need_malloc_tensors = []
-        for op_arg in op_proto.op_args:
-            call_arg = ''
-            if pyboost_utils.is_tensor(op_arg):
-                call_arg = op_arg.arg_name + "_tensor"
-                need_malloc_tensors.append(call_arg)
-            elif pyboost_utils.is_tensor_list(op_arg):
-                call_arg = op_arg.arg_name + "_tensor_list"
-            else:
-                call_arg = op_arg.arg_name
-            call_args_str.append(call_arg)
-            is_optional = False
-            if op_arg.as_init_arg and str(op_arg.init) == 'None':
-                is_optional = True
-            call_args_type.append(get_input_dtype(op_arg.arg_dtype, is_optional))
-            if number_input_to_cpp_type(op_arg.arg_dtype):
-                call_args_after_convert.append(call_arg + "_imm")
-                const_number_convert.append(get_const_number_convert(call_arg, op_arg.arg_dtype))
-            elif tuple_input_to_cpp_type(op_arg.arg_dtype):
-                call_args_after_convert.append(call_arg + "_vector")
-                value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
-                if pyboost_utils.is_tensor_list(op_arg):
-                    need_malloc_tensors.append(call_arg + "_vector")
-            else:
-                call_args_after_convert.append(call_arg)
+        converter = OpTemplateConverter(op_proto)
+        functional_name = converter.functional_name
+
+        op_name_str = converter.op_name
+
+        call_args_str = converter.call_args
+        call_args_after_convert = converter.call_args_after_convert
+        call_args_type = converter.call_args_types
+        value_tuple_convert = converter.value_tuple_convert
+        const_number_convert = converter.const_number_convert
+        need_malloc_tensors = converter.need_malloc_tensors
 
         all_op_names.append(op_name_str)
-        all_operator_names.append(operator_name)
+        all_functional_names.append(functional_name)
 
-        call_args_with_type = []
-        for type, arg_name in zip(call_args_type, call_args_str):
-            call_args_with_type.append("const " + type + " &" + arg_name)
+        call_args_with_types = converter.call_args_with_types
 
         cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
         op_outputs, call_func_outputs = generate_pyboost_outputs(op_proto)
         inplace_process = generate_inplace_process_cpp_code(op_proto)
 
-        generate_pyboost_base_op_header_code(work_path, op_name_str, operator_name, call_args_with_type,
+        generate_pyboost_base_op_header_code(work_path, op_name_str, functional_name, call_args_with_types,
                                              cpp_func_return)
-        generate_pyboost_ascend_op_header_code(work_path, op_name_str, operator_name, call_args_with_type,
+        generate_pyboost_ascend_op_header_code(work_path, op_name_str, functional_name, call_args_with_types,
                                                cpp_func_return)
         generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str,
-                                               operator_name, op_proto.operator_name, call_args_type, call_args_str,
-                                               op_outputs, call_func_outputs, call_args_with_type, cpp_func_return,
+                                               functional_name, op_proto.operator_name, call_args_type, call_args_str,
+                                               op_outputs, call_func_outputs, call_args_with_types, cpp_func_return,
                                                call_args_after_convert, const_number_convert, value_tuple_convert,
                                                need_malloc_tensors, inplace_process)
-    generate_pyboost_op_register_source_code(work_path, all_op_names, all_operator_names)
+    generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
 def gen_pyboost_py_func(work_path, op_yaml_data, doc_data, pyboost_yaml_data):
