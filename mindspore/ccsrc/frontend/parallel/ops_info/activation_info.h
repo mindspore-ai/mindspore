@@ -113,7 +113,6 @@ class Softmax : public ActivationBase {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status InferMirrorOps() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckLayoutConfig() override;
   Status GetAttrs() override;

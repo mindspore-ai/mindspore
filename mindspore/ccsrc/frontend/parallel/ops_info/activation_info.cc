@@ -155,25 +155,6 @@ Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status Softmax::InferMirrorOps() {
-  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
-    return FAILED;
-  }
-  // No need to insert mirror ops
-  if (mirror_ops_.empty()) {
-    return SUCCESS;
-  }
-
-  int64_t to_be_append = ops::GetOpInputsNum(this->prim_name_) - 1;
-  if (to_be_append <= 0) {
-    return SUCCESS;
-  }
-
-  std::vector<OperatorVector> op_vec(to_be_append);
-  (void)mirror_ops_.insert(mirror_ops_.end(), op_vec.begin(), op_vec.end());
-  return SUCCESS;
-}
-
 Status Softmax::GetAttrs() {
   std::string op_name = GetPrimNameFromInfoName(this->name_);
   std::optional<std::vector<int64_t>> axis_opt = GetArrayValueFromInputs<int64_t>(input_value_, op_name, AXIS);
@@ -380,6 +361,19 @@ Status ActivationBase::InferMirrorOps() {
     std::string group_name = group[0].name();
     MS_LOG(INFO) << name_ << " : Create the mirror ops success, the group name is " << group_name;
   }
+
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  int64_t to_be_append = ops::GetOpInputsNum(this->prim_name_) - mirror_ops_.size();
+  if (to_be_append <= 0) {
+    return SUCCESS;
+  }
+
+  std::vector<OperatorVector> op_vec(to_be_append);
+  (void)mirror_ops_.insert(mirror_ops_.end(), op_vec.begin(), op_vec.end());
 
   return SUCCESS;
 }
