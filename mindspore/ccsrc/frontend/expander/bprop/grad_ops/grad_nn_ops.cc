@@ -716,9 +716,8 @@ REG_BPROP_BUILDER("NLLLoss").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("ResizeBilinear").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit(
-    "ResizeBilinearGrad", {dout, x},
-    {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
+  auto dx = ib->Emit("ResizeBilinearGrad", {dout, x, ib->EmitValue(ib->GetAttr("align_corners")),
+                                            ib->EmitValue(ib->GetAttr("half_pixel_centers"))});
   return {dx};
 });
 

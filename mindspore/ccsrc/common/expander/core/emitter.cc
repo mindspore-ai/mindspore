@@ -165,7 +165,8 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
   MS_EXCEPTION_IF_NULL(node);
   auto [success, dst_shape] = GetIntList(shape);
   if (!success) {
-    return Emit(kReshapeOpName, {node, shape});
+    auto tuple_shape = TensorToTuple(shape);
+    return Emit(kReshapeOpName, {node, tuple_shape});
   }
 
   auto vnode = node->get<ValueNodePtr>();
@@ -367,7 +368,8 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
-  return Emit(prim::kPrimReduceSum->name(), {x, axis, Value(keep_dims), Value(skip_mode)});
+  auto tuple_axis = TensorToTuple(axis);
+  return Emit(prim::kPrimReduceSum->name(), {x, tuple_axis, Value(keep_dims), Value(skip_mode)});
 }
 
 NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) {
@@ -395,7 +397,7 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const Nod
   return Emit(kGatherOpName, {params, indices, axis, Value(batch_dims)});
 }
 NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) {
-  return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
+  return Gather(params, indices, Value(axis), batch_dims);
 }
 
 NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
@@ -483,7 +485,19 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
 
 NodePtr Emitter::TensorToTuple(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return Emit(kTensorToTupleOpName, {node});
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    auto [success, value] = GetIntList(node);
+    if (success) {
+      return EmitValue(MakeValue(value));
+    }
+    return Emit(kTensorToTupleOpName, {node});
+  }
+  if (!abs->isa<abstract::AbstractTuple>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "A Tensor or tuple is expected, but got " << abs->BuildType()->ToString() << ".";
+  }
+  return node;
 }
 
 std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) {

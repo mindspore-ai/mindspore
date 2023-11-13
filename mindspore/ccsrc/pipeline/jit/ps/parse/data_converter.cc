@@ -32,6 +32,7 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/primfunc_utils.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 
 namespace mindspore {

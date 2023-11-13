@@ -95,6 +95,29 @@ PY_DT_LIST_ANY = OpDtype.PY_DT_LIST_ANY.value
 PY_DT_TENSOR = OpDtype.PY_DT_TENSOR.value
 
 
+dtype_to_string = {
+    PY_DT_INT: "int",
+    PY_DT_FLOAT: "float",
+    PY_DT_BOOL: "bool",
+    PY_DT_NUMBER: "number",
+    PY_DT_TENSOR: "Tensor",
+    PY_DT_TUPLE_BOOL: "tuple of bool",
+    PY_DT_TUPLE_INT: "tuple of int",
+    PY_DT_TUPLE_FLOAT: "tuple of float",
+    PY_DT_TUPLE_NUMBER: "tuple of number",
+    PY_DT_TUPLE_TENSOR: "tuple of tensor",
+    PY_DT_TUPLE_STR: "tuple of string",
+    PY_DT_TUPLE_ANY: "tuple of Any",
+    PY_DT_LIST_BOOL: "list of bool",
+    PY_DT_LIST_INT: "list of int",
+    PY_DT_LIST_FLOAT: "list of float",
+    PY_DT_LIST_NUMBER: "list of number",
+    PY_DT_LIST_TENSOR: "list of Tensor",
+    PY_DT_LIST_STR: "list of string",
+    PY_DT_LIST_ANY: "list of Any"
+}
+
+
 def is_tuple(type_id):
     """
     Check type id is tuple.
@@ -151,15 +174,24 @@ def is_instance_in(data, type_id):
     return False
 
 
-def type_it(data, src_type, dst_type):
+def get_support_dtype_list(src_type, dst_type):
     """
-    cast operator argument data type.
+    Get support dtype list.
     """
+    support_list = ""
+    if isinstance(src_type, tuple):
+        for dtype in src_type:
+            support_list += dtype_to_string.get(dtype) + ", "
+    else:
+        support_list += dtype_to_string.get(src_type) + ", "
+    support_list += dtype_to_string.get(dst_type)
+    return support_list
+
+
+def do_type_cast(data, dst_type):
+    """Type conversion."""
     if is_instance_of(data, dst_type):
         return data
-    # Temporarily remove this judgment.
-    # if not is_instance_in(data, src_type):
-    #     raise TypeError(f"For type_it, the {data} should be {src_type}, but got {type(data)}")
     if dst_type == PY_DT_FLOAT:
         if isinstance(data, int):
             return int_to_float(data)
@@ -181,5 +213,14 @@ def type_it(data, src_type, dst_type):
         if isinstance(data, Tensor):
             ret = TensorToScalar()(data)
             return ret
+    raise TypeError("Type conversion failed.")
 
-    raise TypeError("Unsupported type cast.")
+
+def type_it(data, src_type, dst_type):
+    """
+    cast operator argument data type.
+    """
+    if not is_instance_in(data, src_type) and not is_instance_of(data, dst_type):
+        support_list = get_support_dtype_list(src_type, dst_type)
+        raise TypeError(f"For type conversion here, only support <{support_list}>, but got {type(data)}.")
+    return do_type_cast(data, dst_type)

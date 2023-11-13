@@ -8,10 +8,10 @@ nan_to_num:
             init: 0.0
         posinf:
             dtype: float
-            init: 65504
+            init: 65504.0
         neginf:
             dtype: float
-            init: -65504
+            init: -65504.0
     returns:
         output: 
             dtype: tensor
