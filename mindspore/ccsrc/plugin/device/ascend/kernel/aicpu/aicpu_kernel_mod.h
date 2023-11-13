@@ -46,7 +46,7 @@ class AicpuOpKernelMod : public KernelMod {
                                 const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    MS_LOG(EXCEPTION) << "This interface is not support in AicpuOpKernelMod.";
+    MS_LOG(EXCEPTION) << "This interface is not supported in AicpuOpKernelMod.";
   }
 
   void SetNodeDef(const std::string &node_def);
