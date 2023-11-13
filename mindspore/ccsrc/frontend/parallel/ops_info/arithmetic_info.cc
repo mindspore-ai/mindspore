@@ -90,6 +90,10 @@ Status ArithmeticBase::BaseCheckStrategy(const StrategyPtr &strategy) {
 
   for (size_t i = 0; i < input_a_shape.size(); ++i) {
     if ((sub_a_strategy[i] != sub_b_strategy[i]) && (input_a_shape[i] != 1) && (input_b_shape[i] != 1)) {
+      if ((input_a_shape[i] == -1 || input_b_shape[i] == -1) && (sub_a_strategy[i] == 1 || sub_b_strategy[i] == 1)) {
+        MS_LOG(WARNING) << name_ << ": the dim " << i << " is dynamic and broadcast, ignore the check";
+        continue;
+      }
       MS_LOG(ERROR) << name_ << " : Invalid strategy.";
       return FAILED;
     }

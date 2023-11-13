@@ -54,6 +54,7 @@ class TileInfo : public OperatorInfo {
  private:
   std::vector<int64_t> full_multiples_;
   std::vector<int64_t> slice_multiples_;
+  void UpdateDynamicMultiples(const AnfNodePtr &multiples_input_node);
 };
 
 using TileInfoPtr = std::shared_ptr<TileInfo>;

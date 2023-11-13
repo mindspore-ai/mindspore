@@ -151,7 +151,7 @@ class ParallelValidator:
                     if inputs[j] == expect_inputs[i]:
                         return True
                     continue
-                if inputs[j].find(expect_inputs[i]) != -1:
+                if isinstance(expect_inputs[i], str) and inputs[j].find(expect_inputs[i]) != -1:
                     found = True
                     break
             if found is False:

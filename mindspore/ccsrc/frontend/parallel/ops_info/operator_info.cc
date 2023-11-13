@@ -138,7 +138,7 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
     Shape sub_input_shape = inputs_shape.at(i);
     size_t strategy_len = sub_strategy.size();
     size_t inputs_len = sub_input_shape.size();
-    MS_LOG(INFO) << "Compare: sub_input_shape:" << sub_input_shape << " sub_strategy: " << sub_strategy;
+    MS_LOG(DEBUG) << "Compare: sub_input_shape:" << sub_input_shape << " sub_strategy: " << sub_strategy;
     if (strategy_len != inputs_len) {
       MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy len: " << strategy_len
                     << " is not equal to inputs len: " << inputs_len << ", index: " << i;
