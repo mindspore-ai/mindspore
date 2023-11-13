@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,47 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
-
+import pytest
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.ops import operations as P
-
-context.set_context(device_target="Ascend")
+from mindspore.ops.operations.array_ops import IdentityN
 
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.reshape = P.Reshape()
+        self.identity_n = IdentityN()
 
-    def construct(self, tensor, shape):
-        return self.reshape(tensor, shape)
+    def construct(self, x):
+        return self.identity_n(x)
 
 
-def test_net():
-    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-    reshape = Net()
-    output = reshape(Tensor(x), (1, 16))
-    print(output.asnumpy())
+def generate_testcases(nptype, ms_type=None):
+    x = np.random.randn(3, 4, 5, 6).astype(nptype)
+    net = Net()
+    input_tensor = [Tensor(x, ms_type) if ms_type is not None else Tensor(x) for _ in range(3)]
+    output = net(input_tensor)
+    if ms_type == ms.bfloat16:
+        np.testing.assert_almost_equal([el.float().asnumpy() for el in output],
+                                       [el.float().asnumpy() for el in input_tensor])
+    else:
+        np.testing.assert_almost_equal([el.asnumpy() for el in output],
+                                       [el.asnumpy() for el in input_tensor])
+    assert id(input_tensor) != id(output)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_reshape_bfloat16(mode):
+def test_identity_n_bfloat16(mode):
     """
-    Feature: test Reshape forward.
+    Feature: test IdentityN forward.
     Description: test bfloat16 inputs.
-    Expectation: compare the result with exception value.
+    Expectation: success
     """
     context.set_context(mode=mode, device_target="Ascend")
-    x = Tensor(np.random.randn(4096, 1536), mstype.bfloat16)
-    shape = (1, 4096, 12, 128)
-    reshape = Net()
-    output = reshape(x, shape)
-    assert output.shape == shape
+    generate_testcases(np.float32, ms_type=ms.bfloat16)

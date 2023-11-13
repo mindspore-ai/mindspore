@@ -45,4 +45,5 @@ enum DataType {
   MS_STRING_REF = 24;
   MS_DUAL = 25;
   MS_UNKNOWN = 26;
+  MS_BFLOAT16 = 27;
 }
