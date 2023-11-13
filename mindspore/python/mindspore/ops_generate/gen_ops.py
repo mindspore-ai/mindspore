@@ -781,11 +781,10 @@ def main():
 
     # generate ops python files
     generate_ops_py_files(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path), "gen")
-    # generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
-    #                       "gen_inner")
+    generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
+                          "gen_inner")
 
-    # all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
-    all_ops_str = {**safe_load_yaml(ops_yaml_path)}
+    all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
 
     # generate ops c++ files
     generate_ops_cc_files(work_path, all_ops_str)
