@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -63,17 +64,45 @@ Status TileInfo::GetAttrs() {
     }
   }
 
+  // multiple >= 1, or = -1
+  auto it =
+    std::find_if(full_multiples_.begin(), full_multiples_.end(), [](auto ele) { return (ele < -1 || ele == 0); });
+  if (it != full_multiples_.end()) {
+    MS_LOG(ERROR) << name_ << ": the value of multiples must be >= 1 or = -1, but it's " << full_multiples_;
+    return FAILED;
+  }
+
+  if (full_multiples_.size() < inputs_shape_[0].size()) {
+    MS_LOG(ERROR) << name_
+                  << ": the size of multiples must be larger than or equal to the size of input's shape, but the size "
+                     "of multiples is "
+                  << full_multiples_.size() << ", and the size of input's shape is " << inputs_shape_[0].size();
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": full multiples is " << full_multiples_;
   return SUCCESS;
 }
 
-// if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
+// the len of strategy is equal to multiples
+// 1. If multiple > 1,split the multiple.
+// 2. If multiple = 1:
+//    1) If the dimension corresponding to multiple is empty: can not split
+//    2) Otherwise, split the input shape
+// 3. If multiple = -1: can not split
 Status TileInfo::CheckStrategy(const StrategyPtr &strategy) {
   Shape tmp;
   for (size_t i = 0; i < full_multiples_.size(); ++i) {
-    if (full_multiples_[i] != 1) {
+    if (full_multiples_[i] == -1) {
+      tmp.push_back(NO_SPLIT_STRATEGY);
+    } else if (full_multiples_[i] > 1) {
       tmp.push_back(full_multiples_[i]);
     } else {
-      tmp.push_back(inputs_shape_[0][i]);
+      auto len = full_multiples_.size() - inputs_shape_[0].size();
+      if (i < len) {  // the dimension corresponding to multiple is empty
+        tmp.push_back(NO_SPLIT_STRATEGY);
+      } else {
+        tmp.push_back(inputs_shape_[0][i - len]);
+      }
     }
   }
   Shapes multiples = {tmp};
@@ -98,11 +127,10 @@ Status TileInfo::InferDevMatrixShape() {
 
   slice_multiples_ = full_multiples_;
   for (size_t i = 0; i < full_multiples_.size(); ++i) {
-    if (full_multiples_[i] == 1) {
-      continue;
+    if (full_multiples_[i] > 1) {  // split the multiple only when multiple > 1
+      MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[i]", dev_matrix_shape_[i]);
+      slice_multiples_[i] = slice_multiples_[i] / dev_matrix_shape_[i];
     }
-    MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[i]", dev_matrix_shape_[i]);
-    slice_multiples_[i] = slice_multiples_[i] / dev_matrix_shape_[i];
   }
   return SUCCESS;
 }
@@ -115,12 +143,13 @@ Status TileInfo::InferTensorMap() {
     return FAILED;
   }
 
-  // if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
     input_tensor_map.push_back(inputs_shape_[0].size() - i - 1);
   }
+
+  auto len = full_multiples_.size() - inputs_shape_[0].size();
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    if (full_multiples_[i] != 1) {
+    if (full_multiples_[i + len] != 1) {  // split the input shape only when multiple = 1
       input_tensor_map[i] = MAP_NONE;
     }
   }
@@ -157,6 +186,48 @@ Status TileInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+void TileInfo::UpdateDynamicMultiples(const AnfNodePtr &multiples_input_node) {
+  auto strategy = strategy_->GetInputDim()[0];
+  if (std::accumulate(strategy.cbegin(), strategy.cend(), 1, std::multiplies<int64_t>()) == 1) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(multiples_input_node);
+  if (!IsPrimitiveCNode(multiples_input_node, prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << "The dynamic input only support MakeTuple cnode, but got "
+                      << multiples_input_node->fullname_with_scope();
+  }
+
+  auto make_tuple_cnode = multiples_input_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+
+  for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+    if (strategy[i - 1] <= 1) {
+      continue;
+    }
+
+    auto input_node = make_tuple_cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto value_node = GetValueNode(input_node);
+    if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+      auto origin_multiple_ele = GetValue<int64_t>(value_node);
+      if (origin_multiple_ele <= 1) {  // update the multiple only when multiple > 1
+        continue;
+      }
+      if (origin_multiple_ele % strategy[i - 1] != 0) {
+        MS_LOG(EXCEPTION) << name_ << ": the origin shape is " << origin_multiple_ele
+                          << ", can not be div by shard size " << strategy[i - 1];
+      }
+      int64_t replace_multiple = origin_multiple_ele / strategy[i - 1];
+      MS_LOG(INFO) << name_ << ": replace multiple from " << origin_multiple_ele << " to " << replace_multiple
+                   << "the index is " << (i - 1);
+      auto replace_value_ptr = MakeValue(replace_multiple);
+      auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+      make_tuple_cnode->set_input(i, replace_value_node);
+    }
+  }
+}
+
 void TileInfo::UpdateMultiples() {
   for (auto &cnode : cnodes_) {
     MS_EXCEPTION_IF_NULL(cnode);
@@ -164,18 +235,19 @@ void TileInfo::UpdateMultiples() {
       MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
     }
 
-    if (!IsValueNode<ValueTuple>(cnode->input(2))) {
-      MS_LOG(EXCEPTION) << name_ << ": The input[2] of tile cnode is not ValueTuple.";
+    if (IsValueNode<ValueTuple>(cnode->input(2))) {
+      auto func_graph = cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto manager = func_graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+
+      ValuePtr new_multiples = MakeValue(slice_multiples_);
+      AnfNodePtr val = NewValueNode(new_multiples);
+      MS_LOG(INFO) << name_ << ": the new multiples is " << slice_multiples_;
+      cnode->set_input(kIndex2, val);
+    } else {
+      UpdateDynamicMultiples(cnode->input(kIndex2));
     }
-
-    auto func_graph = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto manager = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-
-    ValuePtr new_multiples = MakeValue(slice_multiples_);
-    AnfNodePtr val = NewValueNode(new_multiples);
-    cnode->set_input(kIndex2, val);
   }
 }
 
@@ -196,12 +268,20 @@ std::vector<StrategyPtr> TileInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape multiples_split(full_multiples_.size(), 1);
   Shapes splittable_inputs = {multiples_split};
 
-  // if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
   std::vector<StrategyPtr> sp_vector;
   Shape tmp_input_shape = full_multiples_;
+  auto len = full_multiples_.size() - inputs_shape_[0].size();
   for (size_t i = 0; i < full_multiples_.size(); ++i) {
-    if (full_multiples_[i] == 0) {
-      tmp_input_shape[i] = inputs_shape_[0][i];
+    if (full_multiples_[i] > 1) {
+      continue;
+    } else if (full_multiples_[i] == -1) {
+      tmp_input_shape[i] = NO_SPLIT_STRATEGY;
+    } else {
+      if (i < len) {
+        tmp_input_shape[i] = NO_SPLIT_STRATEGY;
+      } else {
+        tmp_input_shape[i] = inputs_shape_[0][i - len];
+      }
     }
   }
   Shapes tmp_inputs_shape = {full_multiples_};
