@@ -49,7 +49,10 @@ class FillV2Info : public OperatorInfo {
 
  private:
   void ResetInputsShape();
+  void ReplaceDynamicInput(const CNodePtr &cnode, const Shape &strategy);
   Shape GetShapeFromTensor(const tensor::TensorPtr &shape_tensor);
+  Shapes fake_inputs_shape_;  // if dynamic shape, replace -1 to 1
+  bool is_dynamic_shape_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore

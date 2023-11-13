@@ -34,7 +34,8 @@ Status RedistributionLayoutTransfer::CheckValidTransfer() {
                        "in avoid to insert redistribution operators";
       MS_LOG(ERROR) << "from layout" << from_in_.ToString();
       MS_LOG(ERROR) << "to layout" << to_in_.ToString();
-      MS_LOG(EXCEPTION) << "In dynamic shape scene, do not support redistribution";
+      MS_LOG(ERROR) << "In dynamic shape scene, do not support redistribution";
+      return Status::FAILED;
     }
   }
   return Status::SUCCESS;
