@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "deprecated_graph_ir/aoe_util.h"
 #include <dlfcn.h>
 #include <cxxabi.h>
 #include <set>
@@ -21,7 +23,6 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #endif
 #include "include/common/debug/common.h"
-#include "deprecated_graph_ir/aoe_util.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
 
