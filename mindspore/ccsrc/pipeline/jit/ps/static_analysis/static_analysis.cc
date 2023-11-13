@@ -272,6 +272,49 @@ EvalResultPtr ConvertToPyExecuteCall(const CNodePtr &cnode, const AnfNodeConfigP
   return eng->ForwardConfig(conf, fn_conf);
 }
 
+EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto out_node = conf->node();
+  MS_EXCEPTION_IF_NULL(out_node);
+  std::stringstream script_buffer;
+  const auto &cnode_inputs = cnode->inputs();
+  AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+
+  // Handle call function
+  const std::string call_func_str = "__call_func_str__";
+  constexpr size_t call_func_index = 0;
+  script_buffer << call_func_str << "(";
+  (void)local_key_inputs.emplace_back(NewValueNode(call_func_str));
+  (void)local_value_inputs.emplace_back(cnode_inputs[call_func_index]);
+
+  // Handle inputs.
+  const std::string call_prefix = "__input_";
+  for (size_t i = 1; i < cnode_inputs.size(); ++i) {
+    const std::string cur_str = call_prefix + std::to_string(i - 1) + "__";
+    auto cur_node = cnode_inputs[i];
+    if (IsPrimitiveCNode(cur_node, prim::kPrimMakeKeywordArg)) {
+      script_buffer << "**";
+    }
+    script_buffer << cur_str << ",";
+    (void)local_key_inputs.emplace_back(NewValueNode(cur_str));
+    (void)local_value_inputs.emplace_back(cur_node);
+  }
+  script_buffer << ")";
+  const auto &script = script_buffer.str();
+  auto local_key_node = fg->NewCNode(local_key_inputs);
+  auto local_value_node = fg->NewCNode(local_value_inputs);
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+  auto obj_call_node =
+    fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node, out_node->debug_info());
+  MS_LOG(DEBUG) << "Created obj_call_node: " << obj_call_node->DebugString();
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(obj_call_node, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf);
+}
+
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   auto list_func_fg = parse::ParsePythonCode(py_fn);
   if (list_func_fg != nullptr) {
@@ -293,11 +336,7 @@ EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, c
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
     return eng->ForwardConfig(conf, fn_conf);
   } else {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (allow_fallback_runtime) {
-      return ConvertToPyExecuteCall(cnode, conf);
-    }
-    MS_LOG(EXCEPTION) << "The input parameter is a function which MindSpore cannot be compiled, please check the code.";
+    return ConvertToPyInterpretCall(cnode, conf);
   }
 }
 
@@ -656,11 +695,6 @@ AnfNodeConfigPtr AnalysisEngine::GetForwardConfig(const AnfNodeConfigPtr &conf) 
 }
 
 EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  if (!allow_fallback_runtime) {
-    return nullptr;
-  }
-
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
@@ -687,8 +721,8 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
     return nullptr;
   }
 
-  // Forward getattr CNode call to py_execute CNode.
-  return ConvertToPyExecuteCall(cnode, conf);
+  // Forward getattr CNode call to PyInterpreted CNode.
+  return ConvertToPyInterpretCall(cnode, conf);
 }
 
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,

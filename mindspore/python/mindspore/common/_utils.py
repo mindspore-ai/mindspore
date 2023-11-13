@@ -105,3 +105,19 @@ def load_lib(lib_path):
         logger.warning(f'Loading {lib_path} lib error.')
         return False
     return True
+
+
+def _jit_fallback_next_func(xs):
+    """Generate ms_next for xs"""
+    if hasattr(xs, "__next__"):
+        # Convert an iterator to tuple first.
+        xs = tuple(xs)
+    return xs[0], xs[1:]
+
+
+def _jit_fallback_has_next_func(xs):
+    """Determine whether xs has next value"""
+    if hasattr(xs, "__next__"):
+        # Convert an iterator to tuple first.
+        xs = tuple(xs)
+    return len(xs) > 0

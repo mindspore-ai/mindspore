@@ -282,22 +282,9 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     }
   }
 
-  bool interpret_without_internal =
-    (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
-    origin_node->interpret();
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  MS_EXCEPTION_IF_NULL(convert_result);
-  if (allow_fallback_runtime) {
-    AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
-    if (interpreted_output != nullptr) {
-      return interpreted_output;
-    }
-  } else if (!interpret_without_internal && convert_result->isa<InterpretedObject>()) {
-    auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
-    MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " object into graph node."
-                            << ".\nFor more details, please refer to "
-                            << "https://mindspore.cn/docs/zh-CN/master/search.html?q=Do+not+support+to+convert+object"
-                            << "+into+graph+node&check_keywords=yes&area=default\n";
+  AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
+  if (interpreted_output != nullptr) {
+    return interpreted_output;
   }
 
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {

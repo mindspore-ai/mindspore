@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
@@ -57,6 +58,9 @@ CNodePtr CreatePyExecuteCNodeInOrder(const FuncGraphPtr &fg, const AnfNodePtr &s
 CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
                                      const AnfNodePtr &values);
 // Create a PyInterpret CNode by old node or debug_info.
+CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &script_text,
+                                const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
+                                const NodeDebugInfoPtr &debug_info);
 CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
                                        const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
                                        const NodeDebugInfoPtr &debug_info);
@@ -66,6 +70,13 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
 AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                         const AnfNodePtr &node, bool replace);
 AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
+
+// Create primitive cnode to PyInterpret/PyExecute node with specific function name.
+AnfNodePtr ConvertCNodeToPyInterpretForPrim(const CNodePtr &cnode, const string &name);
+AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
+
+// Convert GetAttr node to PyInterpret/PyExecute.
+AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name);
 
 using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
 
@@ -92,8 +103,6 @@ void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool cr
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
 bool HasPyObjectInNode(const AnfNodePtr &node);
 py::object GetPyObjectFromNode(const AnfNodePtr &node);
-
-AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
 
 template <typename T>
 bool HasRealType(const std::shared_ptr<T> &owner) {
