@@ -179,7 +179,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         # used to insert "sys.path.append(xxx)"
         self._net_file_paths = []
         self._tmp_import_strs = []
-        self._tmp_unmodified_strees: {type, str} = {}
+        self._tmp_unmodified_strees: {type, List[SymbolTree]} = {}
         self._tmp_replacers = []
         # Record imported modules and names of each files
         # The meanings of `module` and `name` are like code: from `module` import `nameA`, `nameB`
@@ -1071,20 +1071,76 @@ class SymbolTree(Observer, Observable, NodeManager):
 
         return False
 
-    def update_class_name_of_unmodified_stree(self, stree, code_bodies) -> bool:
+    def deduplicate_unmodified_stree(self, code_bodies):
+        """
+        Init function may be different even if stree is not modified manually, when subnets in stree is
+        initialized by different arguments.
+        In this case, we need to wait for code_bodies being fully generated, so that the name of subnets
+        will be updated, then we can deduplicate again according to ast of init function.
+        """
+        # prepare AstClassFinder and AstReplacer
+        if sys.version_info >= (3, 9):
+            class_finder = AstClassFinder(ast.Module(body=code_bodies, type_ignores=[]))
+            name_replacer = AstReplacer(ast.Module(body=code_bodies, type_ignores=[]))
+        else:
+            class_finder = AstClassFinder(ast.Module(body=code_bodies))
+            name_replacer = AstReplacer(ast.Module(body=code_bodies))
+        # deduplicate all unmodified strees in self._tmp_unmodified_strees
+        deduplicated = False
+        for _, unmodified_strees in self._tmp_unmodified_strees.items():
+            if len(unmodified_strees) <= 1:
+                continue
+            init_func_codes = [astunparse.unparse(stree.get_init_func_ast()) for stree in unmodified_strees]
+            # If the index of an element is not its own, it means that it is a duplicate element
+            to_be_erase = []
+            for idx, code in enumerate(init_func_codes):
+                first_idx = init_func_codes.index(code)
+                if first_idx != idx:
+                    first_stree_cls_name = unmodified_strees[first_idx].get_opt_cls_name()
+                    duplicated_stree_cls_name = unmodified_strees[idx].get_opt_cls_name()
+                    logger.debug(f"replace stree:{duplicated_stree_cls_name} to {first_stree_cls_name}.")
+                    # delete duplicated class from code_bodies
+                    results = class_finder.find_all(duplicated_stree_cls_name)
+                    for ast_cls in results:
+                        code_bodies.remove(ast_cls)
+                    # replace name of duplicated class in code_bodies to first_stree_cls_name
+                    name_replacer.replace_all(duplicated_stree_cls_name, first_stree_cls_name)
+                    # record deduplicated stree
+                    to_be_erase.append(idx)
+                    deduplicated = True
+            # remove class in self._tmp_unmodified_strees
+            for idx in reversed(to_be_erase):
+                unmodified_strees.pop(idx)
+
+        # the name of subnets is updated, so we need to deduplicate again.
+        if deduplicated:
+            self._tmp_replacers.append(name_replacer)
+            self.deduplicate_unmodified_stree(code_bodies)
+
+    def update_unmodified_stree(self, stree, code_bodies) -> bool:
         """
         For the unmodified symbol tree, only one definition code remains in the generated code.
         Everywhere else calling this symbol tree will use the class in this definition code.
         """
         # all modified ast.ClassDef will be exported to code
         if stree.is_modified():
+            logger.debug(f"stree:{stree.get_opt_cls_name()} is modified.")
             return False
         # all un-modified ast.ClassDef only keep one instance
-        first_cls_name = self._tmp_unmodified_strees.get(type(stree.get_origin_network()))
-        if first_cls_name is None:
-            class_ast = stree.get_class_ast()
-            if class_ast:
-                self._tmp_unmodified_strees[type(stree.get_origin_network())] = class_ast.name
+        unmodified_strees = self._tmp_unmodified_strees.get(type(stree.get_origin_network()))
+        if not unmodified_strees:
+            self._tmp_unmodified_strees[type(stree.get_origin_network())] = [stree,]
+            logger.debug(f"stree:{stree.get_opt_cls_name()} is the first stree.")
+            return False
+        # Init function may be different even if stree is not modified, when subnets in stree is
+        # initialized by different arguments.
+        first_stree = unmodified_strees[0]
+        first_stree_cls_name = first_stree.get_opt_cls_name()
+        if astunparse.unparse(stree.get_init_func_ast()) != astunparse.unparse(first_stree.get_init_func_ast()):
+            # init ast may be updated after inserting subtrees of stree, so we need to save unmodified strees
+            # and deduplicate later
+            self._tmp_unmodified_strees[type(stree.get_origin_network())].append(stree)
+            logger.debug(f"init func different, stree:{stree.get_opt_cls_name()}, first_stree:{first_stree_cls_name}.")
             return False
         # Un-modified ast.ClassDef already exist in code_bodies,
         # replace class name to class name of first un-modified ast.ClassDef.
@@ -1092,7 +1148,8 @@ class SymbolTree(Observer, Observable, NodeManager):
             replacer = AstReplacer(ast.Module(body=code_bodies, type_ignores=[]))
         else:
             replacer = AstReplacer(ast.Module(body=code_bodies))
-        replacer.replace_all(stree.get_class_ast().name, first_cls_name)
+        logger.debug(f"replace stree:{stree.get_opt_cls_name()} to {first_stree_cls_name}.")
+        replacer.replace_all(stree.get_class_ast().name, first_stree_cls_name)
         self._tmp_replacers.append(replacer)
         return True
 
@@ -1145,11 +1202,8 @@ class SymbolTree(Observer, Observable, NodeManager):
         # Add subtrees to code_bodies
         for node in stree.get_tree_nodes():
             sub_stree = node.symbol_tree
-            # Ignore TreeNode create by function in the class
-            if isinstance(sub_stree.get_module_ast(), ast.FunctionDef):
-                continue
             # For the unmodified class, update class name to name of first class
-            if self.update_class_name_of_unmodified_stree(sub_stree, code_bodies):
+            if self.update_unmodified_stree(sub_stree, code_bodies):
                 continue
             self.convert_stree_to_code_bodies(node.symbol_tree, code_bodies, insert_pos)
 
@@ -1165,6 +1219,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         self._tmp_replacers.clear()
         code_bodies = []
         self.convert_stree_to_code_bodies(self, code_bodies)
+        self.deduplicate_unmodified_stree(code_bodies)
         if sys.version_info >= (3, 9):
             gencode_module = ast.Module(body=code_bodies, type_ignores=[])
         else:

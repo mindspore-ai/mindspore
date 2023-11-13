@@ -127,3 +127,162 @@ def test_generate_codes_from_symboltree():
     codes = stree.get_code()
     assert codes.count("class SubNetOpt") == 3
     assert codes.count("class SubSubNetOpt") == 2
+
+
+class TransformerEncoderLayer(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class MOE(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.net = TransformerEncoderLayer()
+
+    def construct(self, x):
+        x = self.net(x)
+        return x
+
+
+class IfInInitNetSubNet(nn.Cell):
+    def __init__(self, use_moe):
+        super().__init__()
+        self.use_moe = use_moe
+        if self.use_moe:
+            self.net1 = MOE()
+        else:
+            self.net2 = TransformerEncoderLayer()
+
+    def construct(self, x):
+        if self.use_moe:
+            x = self.net1(x)
+        else:
+            x = self.net2(x)
+        return x
+
+
+class IfInInitNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subnet1 = IfInInitNetSubNet(True)
+        self.subnet2 = IfInInitNetSubNet(False)
+
+    def construct(self, x):
+        x = self.subnet1(x)
+        x = self.subnet2(x)
+        return x
+
+def test_generate_codes_with_if_in_init():
+    """
+    Feature: Python api get_code of Node of Rewrite.
+    Description: Test rewrite generate codes when two subnet in if statement of init func.
+    Expectation: Success.
+    """
+    net = IfInInitNet()
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("class IfInInitNetOpt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNetOpt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNetOpt_1(nn.Cell):") == 1
+    assert codes.count("self.net1 = MOEOpt(self.net1)") == 1
+    assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 1
+    assert codes.count("self.net2 = TransformerEncoderLayerOpt(self.net2)") == 1
+
+
+class IfInInitNetSubNet2(nn.Cell):
+    def __init__(self, use_moe):
+        super().__init__()
+        self.use_moe = use_moe
+        if self.use_moe:
+            self.net = MOE()
+        else:
+            self.net = TransformerEncoderLayer()
+
+    def construct(self, x):
+        if self.use_moe:
+            x = self.net(x)
+        else:
+            x = self.net(x)
+        return x
+
+
+class IfInInitNet2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subnet1 = IfInInitNetSubNet2(True)
+        self.subnet2 = IfInInitNetSubNet2(False)
+
+    def construct(self, x):
+        x = self.subnet1(x)
+        x = self.subnet2(x)
+        return x
+
+def test_generate_codes_with_if_in_init_and_construct_same_func_name():
+    """
+    Feature: Python api get_code of Node of Rewrite.
+    Description: Test rewrite generate codes when two subnet of same func name in if statement of
+    init func and construct func.
+    Expectation: Success.
+    """
+    net = IfInInitNet2()
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("class IfInInitNet2Opt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet2Opt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet2Opt_1(nn.Cell):") == 1
+    assert codes.count("self.net = MOEOpt(self.net)") == 2
+    assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 3
+
+
+class IfInInitNetSubNet3(nn.Cell):
+    def __init__(self, use_moe):
+        super().__init__()
+        self.use_moe = use_moe
+        if self.use_moe:
+            self.net = MOE()
+        else:
+            self.net = TransformerEncoderLayer()
+
+    def construct(self, x):
+        x = self.net(x)
+        return x
+
+
+class IfInInitNet3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subnet1 = IfInInitNetSubNet3(False)
+        self.subnet2 = IfInInitNetSubNet3(True)
+        self.subnet3 = IfInInitNetSubNet3(False)
+
+    def construct(self, x):
+        x = self.subnet1(x)
+        x = self.subnet2(x)
+        x = self.subnet3(x)
+        return x
+
+def test_generate_codes_with_if_in_init_same_func_name():
+    """
+    Feature: Python api get_code of Node of Rewrite.
+    Description: Test rewrite generate codes when two subnet of same func name in if statement of init func.
+    Expectation: Success.
+    """
+    net = IfInInitNet3()
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("class IfInInitNet3Opt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet3Opt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet3Opt_1(nn.Cell):") == 1
+    assert codes.count("class MOEOpt(nn.Cell):") == 1
+    assert codes.count("class TransformerEncoderLayerOpt(nn.Cell):") == 1
+    assert codes.count("self.subnet1 = IfInInitNetSubNet3Opt(self.subnet1)") == 1
+    assert codes.count("self.subnet2 = IfInInitNetSubNet3Opt_1(self.subnet2)") == 1
+    assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
+    assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
+    assert codes.count("self.net = MOEOpt(self.net)") == 1
+    assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 2

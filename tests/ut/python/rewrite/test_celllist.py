@@ -17,7 +17,7 @@
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree, NodeType, Node
 
-class SubNet(nn.Cell):
+class CellListSubNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU()
@@ -25,7 +25,7 @@ class SubNet(nn.Cell):
     def construct(self, x):
         x = self.relu(x)
 
-class MyNet(nn.Cell):
+class CellListNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.conv = nn.Conv2d(16, 16, 3)
@@ -33,7 +33,7 @@ class MyNet(nn.Cell):
         for _ in range(3):
             block = nn.ReLU()
             self.blocks.append(block)
-        self.blocks.append(SubNet())
+        self.blocks.append(CellListSubNet())
 
     def construct(self, x):
         x = self.conv(x)
@@ -48,7 +48,7 @@ def test_celllist():
     Description: parse for statement when the iterator is nn.CellList, then insert, erase and replace nodes in it.
     Expectation: Success.
     """
-    net = MyNet()
+    net = CellListNet()
     stree = SymbolTree.create(net)
 
     # check for nodes
@@ -61,7 +61,7 @@ def test_celllist():
     relu_node = stree.get_node("ReLU")
     relu_node_1 = stree.get_node("ReLU_1")
     relu_node_2 = stree.get_node("ReLU_2")
-    subnet_node = stree.get_node("SubNet")
+    subnet_node = stree.get_node("CellListSubNet")
     assert relu_node is not None
     assert relu_node_1 is not None
     assert relu_node_2 is not None
@@ -83,7 +83,7 @@ def test_celllist():
     assert stree.get_node("new_node1") is not None
     # check codes
     codes = stree.get_code()
-    assert codes.count("self.blocks[3] = SubNetOpt(self.blocks[3])") == 1
+    assert codes.count("self.blocks[3] = CellListSubNetOpt(self.blocks[3])") == 1
     assert codes.count("self.blocks.insert(1, self.new_node0)") == 1
     assert codes.count("del self.blocks[2]") == 2 # del RELU_1 & replace RELU_2
     assert codes.count("self.blocks.insert(3, self.new_node1)") == 1
@@ -91,7 +91,7 @@ def test_celllist():
     assert codes.count("for block in self_blocks:") == 1
     assert codes.count("x = block(x)") == 1
 
-class SubNet1(nn.Cell):
+class ListOfCellSubNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU()
@@ -99,7 +99,7 @@ class SubNet1(nn.Cell):
     def construct(self, x):
         x = self.relu(x)
 
-class MyNet1(nn.Cell):
+class ListOfCellNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.conv = nn.Conv2d(16, 16, 3)
@@ -107,7 +107,7 @@ class MyNet1(nn.Cell):
         for _ in range(3):
             block = nn.ReLU()
             self.blocks.append(block)
-        self.blocks.append(SubNet1())
+        self.blocks.append(ListOfCellSubNet())
 
     def construct(self, x):
         x = self.conv(x)
@@ -121,7 +121,7 @@ def test_list_of_cells():
     Description: parse for statement when the iterator is list of cells, then insert, erase and replace nodes in it.
     Expectation: Success.
     """
-    net = MyNet1()
+    net = ListOfCellNet()
     stree = SymbolTree.create(net)
     # check for nodes
     for_node = stree.get_node("for_node")
@@ -133,7 +133,7 @@ def test_list_of_cells():
     relu_node = stree.get_node("ReLU")
     relu_node_1 = stree.get_node("ReLU_1")
     relu_node_2 = stree.get_node("ReLU_2")
-    subnet_node = stree.get_node("SubNet1")
+    subnet_node = stree.get_node("ListOfCellSubNet")
     assert relu_node is not None
     assert relu_node_1 is not None
     assert relu_node_2 is not None
@@ -155,7 +155,7 @@ def test_list_of_cells():
     assert stree.get_node("new_node1") is not None
     # check codes
     codes = stree.get_code()
-    assert codes.count("self.blocks[3] = SubNet1Opt(self.blocks[3])") == 1
+    assert codes.count("self.blocks[3] = ListOfCellSubNetOpt(self.blocks[3])") == 1
     assert codes.count("self.blocks.insert(1, self.new_node0)") == 1
     assert codes.count("del self.blocks[2]") == 2 # del RELU_1 & replace RELU_2
     assert codes.count("self.blocks.insert(3, self.new_node1)") == 1
