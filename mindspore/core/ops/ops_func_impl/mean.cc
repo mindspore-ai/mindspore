@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/mean.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr MeanFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  return ReduceExtInferShape(primitive, input_args);
 }
 
 TypePtr MeanFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  return ReduceExtInferType(primitive, input_args);
 }
 }  // namespace ops
 }  // namespace mindspore

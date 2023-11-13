@@ -400,7 +400,6 @@ class OpTemplateConverter:
         self.call_args_after_convert, self.value_tuple_convert, self.const_number_convert = \
             self.op_args_converter(op_proto.op_args, self.call_args)
 
-
     def parse_op_name(self, name):
         """
         :param name:
@@ -436,7 +435,6 @@ class OpTemplateConverter:
                 call_arg = op_arg.arg_name
             call_args.append(call_arg)
         return call_args
-
 
     def parse_call_args_types(self, op_args):
         """

@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/gather_ext.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr GatherExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string &op_name = primitive->name();
+  abstract::AbstractTensorPtr input = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  abstract::AbstractTensorPtr index = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
+  auto dims = input->shape()->shape().size();
+  auto dim = GetValue<int64_t>(input_args[1]->BuildValue());
+  if (dim >= static_cast<int64_t>(dims)) {
+    MS_EXCEPTION(ValueError) << "dim:" << dim << "greater than input.size:" << dims;
+  }
+
+  return index->shape();
 }
 
 TypePtr GatherExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  return input_args[kInputIndex0]->GetType()->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

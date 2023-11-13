@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/sum.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr SumFuncImpl::InferShape(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  return ReduceExtInferShape(primitive, input_args);
 }
 
 TypePtr SumFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return nullptr;
+  return ReduceExtInferType(primitive, input_args);
 }
 }  // namespace ops
 }  // namespace mindspore
