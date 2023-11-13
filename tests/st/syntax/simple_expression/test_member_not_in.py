@@ -45,7 +45,7 @@ class MemberNotInSpec(nn.Cell):
         return not_in_v
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -56,7 +56,7 @@ def test_ms_syntax_operator_int_not_in_int():
     Description: test not in operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="argument of type 'int' is not iterable."):
+    with pytest.raises(TypeError, match="argument of type 'int' is not iterable"):
         net = MemberNotIn()
         ret = net(1, 2)
         print(ret)
