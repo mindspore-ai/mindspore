@@ -17,4 +17,5 @@ sub_ext:
       dtype: tensor
   class:
     name: SubExt
-  pyboost: True
+  dispatch:
+    enable: True

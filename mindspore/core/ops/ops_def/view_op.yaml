@@ -10,4 +10,6 @@ view:
       dtype: tensor
   class:
     name: View
-  pyboost: True
+  view: True
+  dispatch:
+    enable: True

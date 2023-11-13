@@ -8,6 +8,8 @@ transpose:
   returns:
     output:
       dtype: tensor
-  pyboost: True
+  view: True
+  dispatch:
+    enable: True
 
 

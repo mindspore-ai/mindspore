@@ -10,4 +10,5 @@ bmm:
       dtype: tensor
   class:
     name: Bmm
-  pyboost: True
+  dispatch:
+    enable: True

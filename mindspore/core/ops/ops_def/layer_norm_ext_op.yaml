@@ -22,4 +22,5 @@ layer_norm_ext:
       dtype: tensor
   class:
     name: LayerNormExt
-  pyboost: True
+  dispatch:
+    enable: True

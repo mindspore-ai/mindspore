@@ -17,7 +17,7 @@
         ${malloc_inputs}
         // Malloc for output tensors
         PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
-        ${op_name}AscendCall(op->primitive(), device_context, ${aclnn_call_args}, outputs);
+        ${customize_func}(op->primitive(), device_context, ${aclnn_call_args}, outputs);
       }
     )
   );

@@ -1,6 +1,3 @@
-import re
-import os
-
 # Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +13,13 @@ import os
 # limitations under the License.
 # ============================================================================
 """Template."""
-
+import re
+import os
 
 class CppTemplate:
+    """
+    template for generate c++ code
+    """
     regular_str = r"(^[^\n\S]*)?\$([^\d\W]\w*|\{,?[^\d\W]\w*\,?})"
     regular_match = re.compile(regular_str, re.MULTILINE)
 
@@ -31,12 +32,15 @@ class CppTemplate:
         self.code_pattern = code_pattern
 
     def replace(self, **kwargs):
-
+        """
+        replace param.
+        :param kwargs:
+        :return:
+        """
         def find(key: str):
             if key in kwargs:
                 return kwargs[key]
-            else:
-                raise TypeError(f"{key} should be in kwargs!")
+            raise TypeError(f"{key} should be in kwargs!")
 
         def add_indent(indent, var):
             return "".join([indent + line + "\n" for data in var for line in str(data).splitlines()]).rstrip()
@@ -58,25 +62,23 @@ class CppTemplate:
             indent = match.group(1)
             key = match.group(2)
             var, start, end = extract_variable(key)
-
             if indent is not None:
                 if not isinstance(var, list):
                     var = [var]
                 return add_indent(indent, var)
 
-            elif isinstance(var, list):
+            if isinstance(var, list):
                 code = ", ".join(str(x) for x in var)
-                if len(var) == 0:
+                if not var:
                     return code
                 return start + code + end
-            else:
-                return str(var)
+            return str(var)
 
         return self.regular_match.sub(match_rule, self.code_pattern)
 
 
 NEW_LINE = "\n"
-WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../../")
+WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
 
 REGISTER_DEFINE_TEMPLATE = CppTemplate(
     "  m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");\n")

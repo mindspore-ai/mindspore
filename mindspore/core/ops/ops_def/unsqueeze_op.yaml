@@ -10,6 +10,8 @@ unsqueeze:
       dtype: tensor
   class:
     name: Unsqueeze
-  pyboost: True
+  view: True
+  dispatch:
+    enable: True
 
 

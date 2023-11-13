@@ -13,6 +13,7 @@ softmax:
     function:
         name: softmax_
         disable: False
-    pyboost: True
+    dispatch:
+        enable: True
 
 

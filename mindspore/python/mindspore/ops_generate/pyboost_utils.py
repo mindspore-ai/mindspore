@@ -1,3 +1,19 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""pyboost utils."""
+
 def is_tensor(op_arg):
     if op_arg.arg_dtype == 'tensor':
         return True
@@ -72,12 +88,17 @@ def get_convert_type_str(dtype: str, optional):
         if dtype in optional_type_convert:
             return optional_type_convert[dtype]
         raise TypeError(f"""Unsupported convert optional type {dtype} for args.""")
-    elif dtype in native_type_convert:
+    if dtype in native_type_convert:
         return native_type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 
 def tuple_input_to_cpp_type(dtype: str):
+    """
+    dtype convert
+    :param dtype:
+    :return:
+    """
     types_map = {
         'tuple[int]': 'int64_t',
         'tuple[float]': 'float',
@@ -142,6 +163,33 @@ def get_input_dtype(dtype: str, optional):
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 
+def is_cube(class_name):
+    cube_set = {'Bmm', 'Baddbmm', 'MatMul'}
+    if class_name in cube_set:
+        return True
+    return False
+
+
+def get_aclnn_interface(class_name):
+    """
+    get aclnn interface name.
+    :param class_name:
+    :return:
+    """
+    aclnn_map = {
+        'Bmm': 'aclnnBatchMatMul',
+        'SiLU': 'aclnnSilu',
+        'Pow': 'aclnnPowTensorTensor',
+        'MatMul': 'aclnnMatmul',
+        'MaskedFill': 'aclnnInplaceMaskedFillTensor',
+        'GreaterEqual': 'aclnnGeTensor',
+        'Less': 'aclnnLtTensor',
+        'Sum': 'aclnnReduceSum',
+    }
+    if class_name in aclnn_map.keys():
+        return aclnn_map[class_name]
+    return "aclnn" + class_name
+
 def get_return_type(dtype: str):
     """
     Convert type
@@ -192,27 +240,16 @@ def convert_python_func_name_to_c(func_name: str) -> str:
 
 
 def get_const_number_convert(arg_name, arg_type):
-    return "auto {}_imm = GetValue<{}>({});\n".format(arg_name, number_input_to_cpp_type(arg_type), arg_name)
+    cpp_type = number_input_to_cpp_type(arg_type)
+    return f"auto {arg_name}_imm = GetValue<{cpp_type}>({arg_name});\n"
 
 
 def get_tuple_input_convert(arg_name, arg_type):
+    """
+    convert tuple input.
+    :param arg_name:
+    :param arg_type:
+    :return:
+    """
     cpp_type = tuple_input_to_cpp_type(arg_type)
-    return "std::vector<{}> {}_vector = ConvertValueTupleToVector<{}>({});\n".format(cpp_type, arg_name, cpp_type,
-                                                                                     arg_name)
-
-
-py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ============================================================================
-"""
+    return f"std::vector<{cpp_type}> {arg_name}_vector = ConvertValueTupleToVector<{cpp_type}>({arg_name});\n"

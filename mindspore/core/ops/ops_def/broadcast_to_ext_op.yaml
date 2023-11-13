@@ -11,6 +11,8 @@ broadcast_to_ext:
       dtype: tensor
   class:
     name: BroadCastToExt
-  pyboost: True
+  view: True
+  dispatch:
+    enable: True
 
 

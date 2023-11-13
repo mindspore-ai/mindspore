@@ -10,6 +10,7 @@ matmul:
       dtype: tensor
   class:
     name: MatMul
-  pyboost: True
+  dispatch:
+    enable: True
 
 

@@ -14,4 +14,6 @@ upsample_nearest1d:
       dtype: tensor
   class:
     name: UpsampleNearest1d
-  pyboost: True
+  dispatch:
+    enable: True
+    Ascend: UpsampleNearest1dAscendCall

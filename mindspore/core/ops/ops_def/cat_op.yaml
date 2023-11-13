@@ -11,4 +11,5 @@ cat:
       dtype: tensor
   class:
     name: Cat
-  pyboost: True
+  dispatch:
+    enable: True

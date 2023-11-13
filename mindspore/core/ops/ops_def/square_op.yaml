@@ -8,5 +8,7 @@ square:
             dtype: tensor
     function:
         name: square_
-    pyboost: True
+    dispatch:
+        enable: True
+        Ascend: SquareAscendCall
 

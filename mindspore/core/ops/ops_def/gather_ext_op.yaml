@@ -12,4 +12,5 @@ gather_ext:
       dtype: tensor
   class:
     name: GatherExt
-  pyboost: True
+  dispatch:
+    enable: True

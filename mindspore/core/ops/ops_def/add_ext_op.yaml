@@ -17,4 +17,5 @@ add_ext:
       dtype: tensor
   class:
     name: AddExt
-  pyboost: True
+  dispatch:
+    enable: True

@@ -28,4 +28,6 @@ conv2d_ext:
       dtype: tensor
   class:
     name: Conv2DExt
-  pyboost: True
+  dispatch:
+    enable: True
+    Ascend: Conv2DAscendCall

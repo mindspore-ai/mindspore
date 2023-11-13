@@ -18,6 +18,9 @@ baddbmm:
       dtype: tensor
   class:
     name: Baddbmm
-  pyboost: True
+  dispatch:
+    enable: True
+
+
 
 

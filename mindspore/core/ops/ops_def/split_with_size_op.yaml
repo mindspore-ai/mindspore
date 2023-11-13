@@ -13,4 +13,5 @@ split_with_size:
       dtype: tuple[tensor]
   class:
     name: SplitWithSize
-  pyboost: True
+  dispatch:
+    enable: True

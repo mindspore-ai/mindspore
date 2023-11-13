@@ -21,9 +21,9 @@ import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
-from gen_pyboost.pyboost_utils import get_pyboost_name
-from gen_pyboost.template import CppTemplate
-from gen_pyboost.gen_pyboost_func import gen_pyboost_code
+from pyboost_utils import get_pyboost_name
+from template import CppTemplate
+from gen_pyboost_func import gen_pyboost_code
 
 
 def get_op_name(operator_name, class_def):
@@ -285,8 +285,10 @@ def generate_pyboost_import_header(yaml_data):
     pyboost_import_header = ''
     import_pyboost = CppTemplate("from mindspore._c_expression import $var\n")
     for operator_name, operator_data in yaml_data.items():
-        is_pyboost = operator_data.get('pyboost')
-        if is_pyboost is not None:
+        is_pyboost = False
+        if 'dispatch' in operator_data.keys():
+            is_pyboost = True
+        if is_pyboost:
             header = import_pyboost.replace(var=get_pyboost_name(operator_name))
             pyboost_import_header += header
     return pyboost_import_header
@@ -302,7 +304,6 @@ def generate_py_primitive(yaml_data):
         class_disable = get_disable_flag(class_def)
         if class_disable:
             continue
-
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
         pyboost_func_name = get_pyboost_name(operator_name)
@@ -338,8 +339,8 @@ class {class_name}(Primitive):\n"""
 {init_code}
 
     def __call__(self, {', '.join(call_args)}):"""
-        is_pyboost = operator_data.get('pyboost')
-        if is_pyboost is not None:
+        is_pyboost = 'dispatch' in operator_data.keys()
+        if is_pyboost:
             primitive_code += f"""
           return _convert_stub({pyboost_func_name}(self, ["""
         else:
@@ -357,7 +358,7 @@ class {class_name}(Primitive):\n"""
         if init_args:
             primitive_code += ', '
             primitive_code += ', '.join([f'self.{arg}' for arg in init_args])
-        if is_pyboost is not None:
+        if is_pyboost:
             primitive_code += """]))"""
         else:
             primitive_code += """)
@@ -763,8 +764,6 @@ def main():
     merge_files(yaml_dir_path, ops_yaml_path, '*op.yaml')
     merge_files(yaml_dir_path, doc_yaml_path, '*doc.yaml')
 
-    pyboost_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/pyboost_op.yaml')
-
     # merge inner ops yaml
     inner_ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops.yaml')
     inner_doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml')
@@ -790,8 +789,7 @@ def main():
     generate_ops_cc_files(work_path, all_ops_str)
     # generate ops label python files
     generate_labels_file(work_path, all_ops_str)
-    gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path),
-                     safe_load_yaml(pyboost_yaml_path))
+    gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path))
 
 
 if __name__ == "__main__":

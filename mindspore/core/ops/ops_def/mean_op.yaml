@@ -17,4 +17,5 @@ mean:
       dtype: tensor
   class:
     name: Mean
-  pyboost: True
+  dispatch:
+    enable: True

@@ -12,6 +12,7 @@ pow:
     returns:
         y:
             dtype: tensor
-    pyboost: True
+    dispatch:
+        enable: True
 
 

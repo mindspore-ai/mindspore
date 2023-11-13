@@ -17,4 +17,5 @@ sum:
       dtype: tensor
   class:
     name: Sum
-  pyboost: True
+  dispatch:
+    enable: True

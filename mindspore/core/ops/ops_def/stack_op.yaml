@@ -10,6 +10,7 @@ stack:
       dtype: tensor
   class:
     name: Stack
-  pyboost: True
+  dispatch:
+    enable: True
 
 
