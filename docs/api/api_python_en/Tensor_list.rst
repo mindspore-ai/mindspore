@@ -123,6 +123,7 @@
     mindspore.Tensor.expand_dims
     mindspore.Tensor.expm1
     mindspore.Tensor.fill_diagonal
+    mindspore.Tensor.fix
     mindspore.Tensor.flatten
     mindspore.Tensor.flip
     mindspore.Tensor.fliplr
@@ -315,6 +316,7 @@
     mindspore.Tensor.T
     mindspore.Tensor.t
     mindspore.Tensor.take
+    mindspore.Tensor.take_along_dim
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
     mindspore.Tensor.tensor_split

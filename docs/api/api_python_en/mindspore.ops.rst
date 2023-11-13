@@ -239,6 +239,7 @@ Element-wise Operations
     mindspore.ops.exp
     mindspore.ops.exp2
     mindspore.ops.expm1
+    mindspore.ops.fix
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_divide
@@ -298,6 +299,8 @@ Element-wise Operations
     mindspore.ops.sub
     mindspore.ops.subtract
     mindspore.ops.t
+    mindspore.ops.take
+    mindspore.ops.take_along_dim
     mindspore.ops.tan
     mindspore.ops.tanhshrink
     mindspore.ops.trapz

@@ -445,6 +445,9 @@ tensor_operator_registry.register('swapaxes', swapaxes)
 tensor_operator_registry.register('swapdims', swapdims)
 tensor_operator_registry.register('repeat_elements', repeat_elements)
 tensor_operator_registry.register('top_k', P.TopK)
+tensor_operator_registry.register('fix', fix)
+tensor_operator_registry.register('take', take)
+tensor_operator_registry.register('take_along_dim', take_along_dim)
 
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

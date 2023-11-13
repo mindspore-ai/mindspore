@@ -443,6 +443,9 @@ from .math_func import (
     dot,
     batch_dot,
     eps,
+    fix,
+    take,
+    take_along_dim
 )
 from .nn_func import (
     adaptive_avg_pool1d,

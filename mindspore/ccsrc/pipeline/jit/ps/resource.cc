@@ -286,6 +286,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"round", std::string("round_")},                                   // P.Round()
        {"roll", std::string("roll")},                                      // P.Roll()
        {"rot90", std::string("rot90")},                                    // rot90()
+       {"fix", std::string("fix")},                                        // trunc()
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
        {"fill_diagonal", std::string("fill_diagonal")},                    // P.FillDiagonal()
@@ -311,6 +312,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"invert", std::string("invert")},                                  // invert()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
+       {"take_along_dim", std::string("take_along_dim")},                  // take_along_dim()
        {"gather", std::string("gather")},                                  // P.Gather()
        {"scatter", std::string("scatter")},                                // P.TensorScatterElements()
        {"scatter_add", std::string("tensor_scatter_add")},                 // P.TensorScatterAdd()

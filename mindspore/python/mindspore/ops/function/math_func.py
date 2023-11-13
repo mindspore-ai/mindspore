@@ -86,6 +86,7 @@ import mindspore.ops.function as F
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.auto_generate import add
 
+from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 
 @constexpr
 def _make_tensor(val, dtype):
@@ -13334,6 +13335,140 @@ def batch_dot(x1, x2, axes=None):
     return final_result
 
 
+def fix(input):
+    """
+    Alias for :func:`mindspore.ops.trunc` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return trunc_(input)
+
+
+def take(input, indices, axis=None, mode='clip'):
+    """
+    Takes elements from a tensor along an axis.
+
+    Args:
+        input (Tensor): The input tensor.
+        indices (Tensor): The indices with shape :math:`(N_j...)` of the values to extract.
+        axis (int, optional): The axis over which to select values. By default,
+            the flattened input tensor is used. Default: ``None`` .
+        mode (str, optional): Support ``'raise'``, ``'wrap'``, ``'clip'``.
+
+            - ``raise``: Raises an error;
+
+            - ``wrap``: Wraps around;
+
+            - ``clip``: Clips to the range. ``'clip'`` mode means that all indices that are
+              too large are replaced by the index that addresses the last element
+              along that axis. Note that this disables indexing with negative numbers.
+
+            Default: ``'clip'`` .
+
+    Returns:
+        Tensor, the indexed result.
+
+    Raises:
+        ValueError: If `axis` is out of range, or `mode` is set to a values other than ('raise', 'wrap', 'clip')
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor(np.array([4, 3, 5, 7, 6, 8]))
+        >>> indices = Tensor(np.array([0, 1, 4]))
+        >>> output = ops.take(a, indices)
+        >>> print(output)
+        [4 3 6]
+    """
+    if mode not in ('raise', 'wrap', 'clip'):
+        raise ValueError(f"For 'ops.take', the argument 'mode' should be one of in ['raise', 'wrap', 'clip'],"
+                         f" but got {mode}.")
+    if axis is None:
+        a = input.ravel()
+        axis = 0
+    else:
+        a = input
+    ndim = a.ndim
+    validator.check_axis_in_range(axis, ndim)
+    axis = axis + ndim if axis < 0 else axis
+
+    shape_a = a.shape
+    shape_indices = indices.shape
+    size_indices = indices.size
+    indices = compile_utils.check_indices(shape_a[axis], indices, mode)
+
+    # reshapes indices to shape (Ni..., Nj..., Nk)
+    shape_ni = shape_a[:axis]
+    shape_nk = shape_a[axis + 1:]
+    shape_out = shape_ni + shape_indices + shape_nk
+    shape_indices = tuple(size_indices if i == axis else 1 for i in range(ndim))
+    indices = indices.reshape(shape_indices)
+    shape_indices = shape_ni + (indices.size,) + shape_nk
+    indices = _broadcast_to(indices, F.shape(indices), shape_indices, F.rank(indices))
+
+    res = F.gather_d(a, axis, indices)
+    return res.reshape(shape_out)
+
+
+def take_along_dim(arr, indices, dim=None):
+    """
+    Takes values from the input array by matching 1d index and data slices.
+
+    This iterates over matching 1d slices oriented along the specified axis in the
+    index and data arrays, and uses the former to look up values in the latter.
+    These slices can be different lengths.
+
+    Args:
+        arr (Tensor): Source array with shape `(Ni…, M, Nk…)`.
+        indices (Tensor): Indices with shape `(Ni…, J, Nk…)` to take along each 1d
+            slice of `arr`. This must match the dimension of `arr`, but dimensions `Ni`
+            and `Nj` only need to broadcast against `arr`.
+        dim (int, optional): The dim to take 1d slices along. If `dim` is None, the input
+            array is treated as if it had first been flattened to 1d.
+
+    Returns:
+        Tensor, the indexed result, with shape `(Ni…, J, Nk…)`.
+
+    Raises:
+        ValueError: If input array and indices have different number of dimensions.
+        TypeError: If the input is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.arange(12).reshape(3, 4))
+        >>> indices = Tensor(np.arange(3).reshape(1, 3))
+        >>> output = ops.take_along_dim(x, indices, 1)
+        >>> print(output)
+        [[ 0  1  2]
+        [ 4  5  6]
+        [ 8  9 10]]
+    """
+    if dim is None:
+        arr = arr.ravel()
+        dim = 0
+        if F.rank(indices) == 0:
+            indices = indices.unsqueeze(0)
+    ndim = F.rank(arr)
+    if ndim != F.rank(indices):
+        raise ValueError('`indices` and `arr` must have the same number of dimensions')
+    dim = _check_dim_in_range(dim, ndim)
+
+    shape_arr = F.shape(arr)
+    shape_indices = F.shape(indices)
+    # broadcasts indices against the shape of arr except at dim
+    indices = _broadcast_to(indices, shape_indices[:dim], shape_arr[:dim], ndim)
+    indices = _broadcast_to(indices, shape_arr[:dim + 1] + shape_indices[dim + 1:], shape_arr, ndim)
+    arr = _broadcast_to(arr, shape_arr, indices.shape, ndim)
+    return F.gather_d(arr, dim, indices)
+
 __all__ = [
     'addn',
     'absolute',
@@ -13611,5 +13746,8 @@ __all__ = [
     'dot',
     'batch_dot',
     'eps',
+    'fix',
+    'take',
+    'take_along_dim'
 ]
 __all__.sort()

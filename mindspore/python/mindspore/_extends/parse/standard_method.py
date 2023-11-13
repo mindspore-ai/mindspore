@@ -1606,68 +1606,17 @@ def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
 
 
 def take(x, indices, axis=None, mode='clip'):
+    r"""
+    Alias for: func: `mindspor.ops.take`.
     """
-    Takes elements from an array along an axis.
+    return F.take(x, indices, axis, mode)
 
-    Args:
-        a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
-        indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
-        axis (int, optional): The axis over which to select values. By default,
-            the flattened input array is used. Defaults to None.
-        mode ('raise', 'wrap', 'clip', optional): Defaults to "clip".
 
-            - edge: Pads with the edge values of `arr`.
-            - raise: Raises an error;
-            - wrap: Wraps around;
-            - clip: Clips to the range. 'clip' mode means that all indices that are
-              too large are replaced by the index that addresses the last element
-              along that axis. Note that this disables indexing with negative numbers.
-
-    Returns:
-        Tensor, the indexed result.
-
-    Raises:
-        ValueError: if axis is out of range.
-        TypeError: if the input is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> a = np.array([4, 3, 5, 7, 6, 8])
-        >>> indices = np.array([0, 1, 4])
-        >>> output = a.take(indices)
-        >>> print(output)
-        [4 3 6]
+def take_along_dim(x, indices, dim=None):
+    r"""
+    Alias for: func: `mindspor.ops.take_along_dim`.
     """
-    if mode not in ('raise', 'wrap', 'clip'):
-        const_utils.raise_value_error(
-            'raise should be one of "raise", "wrap", or "clip"')
-    if axis is None:
-        a = x.ravel()
-        axis = 0
-    else:
-        a = x
-    ndim = a.ndim
-    axis = check_axis_in_range(axis, ndim)
-
-    shape_a = a.shape
-    shape_indices = indices.shape
-    size_indices = indices.size
-    indices = compile_utils.check_indices(shape_a[axis], indices, mode)
-
-    # reshapes indices to shape (Ni..., Nj..., Nk)
-    shape_ni = tuple_slice(shape_a, None, axis)
-    shape_nk = tuple_slice(shape_a, axis + 1, None)
-    shape_out = shape_ni + shape_indices + shape_nk
-    shape_indices = expanded_shape(ndim, size_indices, axis)
-    indices = indices.reshape(shape_indices)
-    shape_indices = shape_ni + (indices.size,) + shape_nk
-    indices = F.broadcast_to(indices, shape_indices)
-
-    res = F.gather_d(a, axis, indices)
-    return res.reshape(shape_out)
+    return F.take_along_dim(x, indices, dim)
 
 
 def ms_type(input, dtype=None):
@@ -4476,3 +4425,9 @@ def outer(input, vec2):
     For details, please refer to :func:`mindspore.ops.vec2`.
     """
     return F.outer(input, vec2)
+
+def fix(input):
+    r"""
+    Alias for: func: `mindspor.ops.trunc`.
+    """
+    return F.fix(input)

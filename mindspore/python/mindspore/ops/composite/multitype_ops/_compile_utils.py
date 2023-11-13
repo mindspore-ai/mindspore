@@ -1862,7 +1862,9 @@ def check_indices(dims, indices, mode, allow_negative_index=True):
     out_of_lowerbounds = F.tensor_lt(indices, lowerbounds)
     out_of_upperbounds = F.tensor_gt(indices, upperbounds)
     if mode == 'raise':
-        const_utils.raise_unimplemented_error('"raise" mode is not implemented')
+        for indice in indices:
+            if indice < 0 or indice >= dims:
+                raise ValueError('indice out of range')
     if mode == 'wrap':
         bounds = F.fill(dtype, shape, dims)
         quotient = F.tensor_floordiv(indices, bounds)

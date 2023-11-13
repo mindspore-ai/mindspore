@@ -239,6 +239,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.exp
     mindspore.ops.exp2
     mindspore.ops.expm1
+    mindspore.ops.fix
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_divide
@@ -298,6 +299,8 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.sub
     mindspore.ops.subtract
     mindspore.ops.t
+    mindspore.ops.take
+    mindspore.ops.take_along_dim
     mindspore.ops.tan
     mindspore.ops.tanhshrink
     mindspore.ops.trapz
