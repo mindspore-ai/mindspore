@@ -1009,6 +1009,22 @@ ValuePtr ConvertTensor(const py::object &obj) {
   return ObjCast<TensorPtr>(obj);
 }
 
+static TensorPtr ConvertTensorValue(const py::object &obj) {
+  if (IsStubTensor(obj)) {
+    auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
+    auto stub = py_stub.cast<stub::StubNodePtr>();
+    if (stub == nullptr) {
+      return py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
+    }
+    auto value = stub->WaitValue();
+    return value->cast<tensor::TensorPtr>();
+  }
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  return obj.cast<TensorPtr>();
+}
+
 static inline void *GetTensorDataPtr(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &device_address = tensor->device_address();
@@ -1135,12 +1151,11 @@ ValuePtr ConvertSequenceBoolToTensor(const py::object &obj) {
 
 template <typename TD, typename TDE, typename IMMTYPE, TypeId tid>
 ValuePtr ConvertTensorToSequence(const py::object &obj) {
-  auto tensor_value = ConvertTensor(obj);
-  if (tensor_value == nullptr) {
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
 
-  auto tensor = tensor_value->cast<tensor::TensorPtr>();
   auto data_type = tensor->data_type();
   if (data_type != tid) {
     return nullptr;
@@ -1164,12 +1179,11 @@ ValuePtr ConvertTensorToSequence(const py::object &obj) {
 
 template <typename TD>
 ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
-  auto tensor_value = ConvertTensor(obj);
-  if (tensor_value == nullptr) {
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
 
-  auto tensor = tensor_value->cast<tensor::TensorPtr>();
   auto shape = tensor->shape();
   if (shape.size() > 1) {
     MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
@@ -1197,12 +1211,11 @@ ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
 
 template <typename TD>
 ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
-  auto tensor_value = ConvertTensor(obj);
-  if (tensor_value == nullptr) {
+  auto float_tensor = ConvertTensorValue(obj);
+  if (float_tensor == nullptr) {
     return nullptr;
   }
 
-  auto float_tensor = tensor_value->cast<tensor::TensorPtr>();
   auto data_type = float_tensor->data_type();
   if (data_type != kNumberTypeFloat64) {
     return nullptr;
@@ -1227,12 +1240,11 @@ ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
 
 template <typename TD>
 ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
-  auto tensor_value = ConvertTensor(obj);
-  if (tensor_value == nullptr) {
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
 
-  auto tensor = tensor_value->cast<tensor::TensorPtr>();
   auto shape = tensor->shape();
   if (shape.size() > 1) {
     MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
@@ -1266,10 +1278,10 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
 }
 
 ValuePtr ConvertTensorToInt(const py::object &obj) {
-  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
-  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
   if (tensor->DataSize() != 1) {
     MS_LOG(INFO) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
     return nullptr;
@@ -1282,10 +1294,10 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
 }
 
 ValuePtr ConvertTensorToFloat(const py::object &obj) {
-  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
-  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
   if (tensor->DataSize() != 1) {
     MS_LOG(INFO) << "Can only convert tensor with one element to float, but got " << tensor->ToString();
     return nullptr;
@@ -1298,12 +1310,8 @@ ValuePtr ConvertTensorToFloat(const py::object &obj) {
 }
 
 ValuePtr ConvertTensorToBool(const py::object &obj) {
-  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
-    return nullptr;
-  }
-  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
-  if (tensor->DataSize() != 1) {
-    MS_LOG(INFO) << "Can only convert tensor with one element to bool, but got " << tensor->ToString();
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
   if (tensor->data_type() != kNumberTypeBool) {
@@ -1314,12 +1322,10 @@ ValuePtr ConvertTensorToBool(const py::object &obj) {
 }
 
 ValuePtr ConvertTensorToNumber(const py::object &obj) {
-  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
-    MS_LOG(INFO) << "Can't convert " << data_converter::PyDataToValue(obj)->ToString();
+  auto tensor = ConvertTensorValue(obj);
+  if (tensor == nullptr) {
     return nullptr;
   }
-
-  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
   if (tensor->DataSize() != 1) {
     MS_LOG(INFO) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
     return nullptr;
