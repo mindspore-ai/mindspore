@@ -4840,13 +4840,13 @@ class Meshgrid(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.meshgrid` for more details.
 
     Args:
-        indexing (str, optional): Cartesian ('xy') or
-            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
+        indexing (str, optional): Cartesian ``'xy'`` or
+            matrix ``'ij'`` indexing of output. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
-            for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
+            for ``'xy'`` indexing and :math:`(M, N)` for ``'ij'`` indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing.
-            Default: 'xy'.
+            :math:`(N, M, P)` for ``'xy'`` indexing and :math:`(M, N, P)` for ``'ij'`` indexing.
+            Default: ``'xy'``.
 
     Inputs:
         - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.

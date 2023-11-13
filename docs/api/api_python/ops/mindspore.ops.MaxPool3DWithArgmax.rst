@@ -49,8 +49,8 @@ mindspore.ops.MaxPool3DWithArgmax
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **ValueError** - `x` 的维度不是5D。
-        - **TypeError** - `ksize` 、 `strides` 、`pads` 、`dilation` 不是int或者tuple。
+        - **TypeError** - `ksize` 、 `strides` 、 `pads` 、 `dilation` 不是int或者tuple。
         - **ValueError** - `ksize` 或 `strides` 的元素值小于1。
         - **ValueError** - `pads` 的元素值小于0。
-        - **ValueError** - `data_format` 不是'NCDHW'。
+        - **ValueError** - `data_format` 不是 ``'NCDHW'`` 。
         - **ValueError** - `argmax_type` 不是mstype.int64或mstype.int32。

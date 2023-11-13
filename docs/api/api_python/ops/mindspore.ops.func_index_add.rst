@@ -13,9 +13,9 @@ mindspore.ops.index_add
           取值范围为[0, b)，其中b的值为 `x` shape在 `axis` 轴上的大小。
         - **y** (Tensor) - 与 `x` 加的Tensor。
         - **axis** (int) - 指定沿哪根轴相加。
-        - **use_lock** (bool) - 是否对参数更新过程加锁保护。如果为True，在更新参数 `x` 的值时使用原子操作以实现加锁保护，如果为
-          False， `x` 的值可能会不可预测。默认值： ``True`` 。
-        - **check_index_bound** (bool) - True表示检查 `indices` 边界，False表示不检查。默认值： ``True`` 。
+        - **use_lock** (bool，可选) - 是否对参数更新过程加锁保护。如果为 ``True`` ，在更新参数 `x` 的值时使用原子操作以实现加锁保护，如果为
+          ``False`` ， `x` 的值可能会不可预测。默认值： ``True`` 。
+        - **check_index_bound** (bool，可选) - ``True`` 表示检查 `indices` 边界， ``False`` 表示不检查。默认值： ``True`` 。
 
     返回：
         相加后的Tensor。shape和数据类型与输入 `x` 相同。
@@ -26,4 +26,4 @@ mindspore.ops.index_add
         - **ValueError** - `axis` 的值超出 `x` shape的维度范围。
         - **ValueError** - `x` shape的维度和 `y` shape的维度不一致。
         - **ValueError** - `indices` shape的维度不是一维或者 `indices` shape的大小与 `y` shape在 `axis` 轴上的大小不一致。
-        - **ValueError** - 除 `axis` 轴外，`x` shape和 `y` shape的大小不一致。
+        - **ValueError** - 除 `axis` 轴外， `x` shape和 `y` shape的大小不一致。

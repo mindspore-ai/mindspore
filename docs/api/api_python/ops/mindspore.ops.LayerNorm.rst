@@ -19,14 +19,14 @@ mindspore.ops.LayerNorm
 
     输入：
         - **input_x** (Tensor) - LayerNorm的输入，shape为 :math:`(N, \ldots)` 的Tensor。支持的数据类型：float16、float32、float64。
-        - **gamma** (Tensor) - 可学习参数 :math:`\gamma` ，shape为 :math:`input_x_shape[begin_params_axis:]` 的Tensor。支持的数据类型：float16、float32、float64。
-        - **beta** (Tensor) - 可学习参数 :math:`\beta` ，shape为 :math:`input_x_shape[begin_params_axis:]` 的Tensor。支持的数据类型：float16、float32、float64。
+        - **gamma** (Tensor) - 可学习参数 :math:`\gamma` ，shape为 `input_x_shape[begin_params_axis:]` 的Tensor。支持的数据类型：float16、float32、float64。
+        - **beta** (Tensor) - 可学习参数 :math:`\beta` ，shape为 `input_x_shape[begin_params_axis:]` 的Tensor。支持的数据类型：float16、float32、float64。
 
     输出：
         tuple[Tensor]，3个Tensor组成的tuple，层归一化输入和更新后的参数。
 
         - **output_x** (Tensor) - 层归一化输入，数据类型和shape与 `input_x` 相同。
-        - **mean** (Tensor) - 输入的均值，其shape的前 `begin_norm_axis` 维与 `input_x` 相同，其余维度为1。假设输入 `input_x` 的shape为 :math:`(x_1, x_2, \ldots, x_R)` , 输出 `mean` 的shape为 :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)` （当 `begin_params_axis=0` 时，`mean` shape为 :math:`(1, \ldots, 1)` ）。
+        - **mean** (Tensor) - 输入的均值，其shape的前 `begin_norm_axis` 维与 `input_x` 相同，其余维度为1。假设输入 `input_x` 的shape为 :math:`(x_1, x_2, \ldots, x_R)` , 输出 `mean` 的shape为 :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)` （当 `begin_params_axis=0` 时， `mean` shape为 :math:`(1, \ldots, 1)` ）。
         - **variance** (Tensor) - 输入的方差，shape同 `mean` 一致。
 
     异常：

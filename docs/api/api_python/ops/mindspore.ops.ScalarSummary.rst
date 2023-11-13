@@ -3,7 +3,7 @@ mindspore.ops.ScalarSummary
 
 .. py:class:: mindspore.ops.ScalarSummary
 
-    将标量数据保存到Summary文件。必须和SummaryRecord或SummaryCollector一起使用，
+    将标量数据保存到Summary文件。必须和 :class:`mindspore.SummaryRecord` 或 :class:`mindspore.SummaryCollector` 一起使用，
     Summary文件的保存路径由SummaryRecord或SummaryCollector指定。Summary文件可以通过MindInsight加载并展示，
     关于MindInsight的详细信息请参考 `MindInsight文档 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/index.html>`_ 。
 

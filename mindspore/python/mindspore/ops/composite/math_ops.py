@@ -94,9 +94,9 @@ def mm(input, mat2):
 
     Args:
         input (Tensor): The first matrix of matrix multiplication.
-          The last dimension of `input` must be the same size as the first dimension of `mat2`.
+            The last dimension of `input` must be the same size as the first dimension of `mat2`.
         mat2 (Tensor): The second matrix of matrix multiplication.
-          The last dimension of `input` must be the same size as the first dimension of `mat2`.
+            The last dimension of `input` must be the same size as the first dimension of `mat2`.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs.
@@ -104,7 +104,7 @@ def mm(input, mat2):
     Raises:
         ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `mat2`.
-        ValueError: If `input` or `mat2` is not a matrix.
+        ValueError: If `input` or `mat2` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -20,4 +20,4 @@ mindspore.ops.hardswish
 
     异常：
         - **TypeError** - `x` 不是一个Tensor。
-        - **TypeError** - `x` 的数据类型int或者float。
+        - **TypeError** - `x` 的数据类型不是int或者float。

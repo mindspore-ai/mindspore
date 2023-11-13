@@ -57,7 +57,7 @@ mindspore.ops.MaxUnpool3D
         - **ValueError** - 如果 `strides` 或 `ksize` 的值是负数。
         - **ValueError** - 如果 `pads` 的值是负数。
         - **ValueError** - 如果  `ksize` 、 `strides` 或 `pads` 是tuple，但长度不是3。
-        - **ValueError** - 如果 `data_format` 不是值为 "NCDHW" 或 "NDHWC" 的str。
+        - **ValueError** - 如果 `data_format` 不是值为 ``'NCDHW'`` 或 ``'NDHWC'`` 的str。
         - **ValueError** - 如果 `output_shape` 的长度不是0或5。
         - **ValueError** - 如果 `output_shape` 不在由 `ksize` 、 `strides` 和 `pads` 计算出的输出尺寸范围内。
 

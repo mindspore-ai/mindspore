@@ -819,11 +819,11 @@ class HyperMap(HyperMap_):
     from `mindspore.ops.Map`, the `HyperMap` supports to apply on nested structure.
 
     Args:
-        ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
+        ops (Union[MultitypeFuncGraph, None], optional): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default is None.
-        reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
-          general users please ignore. `reverse` is the flag to decide if apply the operation reversely.
-          Only supported in graph mode. Default is False.
+        reverse (bool, optional): The optimizer needs to be inverted in some scenarios to improve parallel
+            performance, general users please ignore. `reverse` is the flag to decide if apply
+            the operation reversely. Only supported in graph mode. Default is False.
 
     Inputs:
         - **args** (Tuple[sequence]) -
@@ -902,15 +902,15 @@ class Map(Map_):
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default: ``None`` .
         reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
-          general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
-          Only supported in graph mode. Default is ``False`` .
+            general users please ignore. `Reverse` is the flag to decide if apply the operation reversely.
+            Only supported in graph mode. Default is ``False`` .
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
           and each row of the sequences. e.g. If the length of args is 2, and for `i` in length of each sequence
           `(args[0][i], args[1][i])` will be the input of the operation.
 
-          If `ops` is `None`, the first input is the operation, and the other is inputs.
+          If `ops` is `None`, the first input is the operation, and the other is the sequence.
 
     Outputs:
         Sequence, the sequence of output after applying the ops function. e.g. `ops(args[0][i], args[1][i])`.

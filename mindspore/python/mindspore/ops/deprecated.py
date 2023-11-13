@@ -70,6 +70,9 @@ class BNTrainingUpdate(Primitive):
 class MaxPoolWithArgmax(Primitive):
     """
     Please use MaxPoolWithArgmaxV2 instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.MaxPoolWithArgmaxV2", False)
     @prim_attr_register
@@ -160,6 +163,9 @@ class TensorAdd(_MathBinaryOp):
 class InplaceUpdate(Primitive):
     """
     Please use InplaceUpdateV2 instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.InplaceUpdateV2", False)
     @prim_attr_register

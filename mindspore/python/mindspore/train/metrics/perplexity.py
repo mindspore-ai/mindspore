@@ -30,7 +30,8 @@ class Perplexity(Metric):
     .. math::
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
-    Where :math:`w` represents words in corpus.
+    Where :math:`w` represents words in corpus. The root sign is the reciprocal of the probability of a sentence,
+    and the better the sentence (with a higher probability), the lower the perplexity.
 
     Args:
         ignore_label (Union[int, None]): Index of an invalid label to be ignored when counting. If set to `None`,

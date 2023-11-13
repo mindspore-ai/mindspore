@@ -8,8 +8,8 @@ mindspore.ops.HyperMap
     对序列的每个元素或嵌套序列进行运算。与 `mindspore.ops.Map` 不同，`HyperMap` 能够用于嵌套结构。
 
     参数：
-        - **ops** (Union[MultitypeFuncGraph, None]) -  `ops` 是指定运算操作。如果 `ops` 为 ``None`` ，则运算应该作为 `HyperMap` 实例的第一个入参。默认值为 ``None`` 。
-        - **reverse** (bool) -  在某些场景下，需要逆向以提高计算的并行性能，一般情况下，用户可以忽略。`reverse` 用于决定是否逆向执行运算，仅在图模式下支持。默认值为 ``False`` 。
+        - **ops** (Union[MultitypeFuncGraph, None]，可选) -  `ops` 是指定运算操作。如果 `ops` 为 ``None`` ，则运算应该作为 `HyperMap` 实例的第一个入参。默认值为 ``None`` 。
+        - **reverse** (bool，可选) -  在某些场景下，需要逆向以提高计算的并行性能，一般情况下，用户可以忽略。 `reverse` 用于决定是否逆向执行运算，仅在图模式下支持。默认值为 ``False`` 。
 
     输入：
         - **args** (Tuple[sequence]) -

@@ -19,7 +19,7 @@ mindspore.ops.flatten
     异常：
         - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `order` 不是string类型。
-        - **ValueError** - `order` 是string类型，但不是 'C' 或者 'F'。
+        - **ValueError** - `order` 是string类型，但不是 ``'C'`` 或 ``'F'`` 。
         - **TypeError** - `start_dim` 或 `end_dim` 不是int类型。
-        - **ValueError** - 规范化后，`start_dim` 大于 `end_dim`。
+        - **ValueError** - 规范化后， `start_dim` 大于 `end_dim` 。
         - **ValueError** - `start_dim` 或 `end_dim` 不在 [-input.dim, input.dim-1] 范围内。

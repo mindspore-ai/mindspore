@@ -26,9 +26,11 @@ class CosineSimilarity(Metric):
     Computes representation similarity.
 
     Args:
-        similarity (str): 'dot' or 'cosine'. Default: ``'cosine'`` .
-        reduction (str): ``'none'``, 'sum', ``'mean'`` (all along dim -1). Default: ``'none'`` .
-        zero_diagonal (bool): If True,  diagonals of results will be set to zero. Default: ``True`` .
+        similarity (str): the computation logit. ``'cosine'`` means computing similarity.
+            ``'dot'`` means computing dots of arrays, Default: ``'cosine'`` .
+        reduction (str): Specifies the reduction to be applied to the output. Support ``'none'``,
+            ``'sum'``, ``'mean'`` (all along dim -1). Default: ``'none'`` .
+        zero_diagonal (bool): If ``True``,  diagonals of results will be set to zero. Default: ``True`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -71,7 +73,7 @@ class CosineSimilarity(Metric):
         Updates the internal evaluation result with 'inputs'.
 
         Args:
-            inputs (Union[Tensor, list, numpy.ndarray]): The input matrix.
+            inputs (Union[Tensor, list, numpy.ndarray]): The input matrix including `y` and `y_pred`.
         """
         input_data = self._convert_data(inputs)
 

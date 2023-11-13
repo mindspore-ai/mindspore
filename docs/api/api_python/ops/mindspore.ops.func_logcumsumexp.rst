@@ -3,7 +3,7 @@ mindspore.ops.logcumsumexp
 
 .. py:function:: mindspore.ops.logcumsumexp(input, axis)
 
-    计算输入Tensor `input` 元素的的指数沿轴 `axis` 的累积和的对数。例如，如果 `input` 是 tensor [a, b, c] 并且 `input` 是0，返回值为 [a, log(exp(a) + exp(b)),
+    计算输入Tensor `input` 元素的的指数沿轴 `axis` 的累积和的对数。例如，如果 `input` 是 tensor [a, b, c] 并且 `axis` 是0，返回值为 [a, log(exp(a) + exp(b)),
     log(exp(a) + exp(b) + exp(c))]。
 
     .. warning::

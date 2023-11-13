@@ -6,7 +6,9 @@ mindspore.ops.logical_or
     逐元素计算两个Tensor的逻辑或运算。
     `input` 和 `other` 的输入遵循隐式类型转换规则，使数据类型一致。
     输入必须是两个Tensor或一个Tensor和一个bool。
+
     当输入是两个Tensor时，它们的shape可以广播，数据类型必须是bool。
+
     当输入是一个Tensor和一个bool时，bool对象只能是一个常量，Tensor的数据类型必须是bool。
 
     .. math::
