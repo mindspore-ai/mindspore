@@ -17,7 +17,7 @@ mindspore.nn.TransformerDecoderLayer
         - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
 
     输入：
-        - **tgt** (Tensor) - 目标序列。如果目标序列没有batch，shape是 :math:`(T, E)` ；否则如果 batch_first=False，则shape为 :math:`(T, N, E)` ，如果batch_first=True，则shape为 :math:`(T, N, E)`。 :math:`(T)` 是目标序列的长度。数据类型：float16、float32或者float64。
+        - **tgt** (Tensor) - 目标序列。如果目标序列没有batch，shape是 :math:`(T, E)` ；否则如果 batch_first=False，则shape为 :math:`(T, N, E)` ，如果batch_first=True，则shape为 :math:`(N, T, E)`。 :math:`(T)` 是目标序列的长度。数据类型：float16、float32或者float64。
         - **memory** (Tensor) - TransformerEncoder的最后一层输出序列。数据类型：float16、float32或者float64。
         - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``。
         - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32、float64或者布尔。默认值：``None``。

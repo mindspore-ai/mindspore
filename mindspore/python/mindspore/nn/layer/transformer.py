@@ -267,7 +267,7 @@ class TransformerEncoderLayer(Cell):
     Inputs:
         - **src** (Tensor): the sequence to the encoder layer. For unbatched input, the shape is
           :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
-          `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
+          `batch_first=True` , the shape is :math:`(N, S, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): the mask for the src sequence. The shape is :math:`(S, S)`
@@ -408,7 +408,7 @@ class TransformerDecoderLayer(Cell):
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder layer. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
-          `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
+          `batch_first=True` , the shape is :math:`(N, T, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
@@ -551,12 +551,12 @@ class TransformerEncoder(Cell):
 
     Inputs:
         - **src** (Tensor): The sequence to the encoder. For unbatched input, the shape is
-          :math:`(S, E)` ; otherwise if `batch_first=False` in TransformerEncoderLayer, the shape is
-          :math:`(S, N, E)` and if `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the
-          source sequence length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
-          Supported types: float16, float32, float64.
+          :math:`(S, E)` ; otherwise if `batch_first=False` in :class:`mindspore.nn.TransformerEncoderLayer`,
+          the shape is :math:`(S, N, E)` and if `batch_first=True` , the shape is :math:`(N, S, E)`,
+          where :math:`(S)` is the source sequence length, :math:`(N)` is the batch number and :math:`(E)` is
+          the feature number. Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*nhead, S, S)` , where `nhead` is the arguent in TransformerDecoderLayer.
+          or :math:`(N*nhead, S, S)` , where `nhead` is the arguent in :class:`mindspore.nn.TransformerEncoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional): the mask of the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
@@ -621,13 +621,13 @@ class TransformerDecoder(Cell):
 
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder. For unbatched input, the shape is
-          :math:`(T, E)` ; otherwise if `batch_first=False` in TransformerDecoderLayer, the shape is
-          :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the
-          target sequence length. Supported types: float16, float32, float64.
+          :math:`(T, E)` ; otherwise if `batch_first=False` in :class:`mindspore.nn.TransformerDecoderLayer`,
+          the shape is :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(N, T, E)`,
+          where :math:`(T)` is the target sequence length. Supported types: float16, float32, float64.
         - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional): the mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in TransformerDecoderLayer.
+          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in:class:`mindspore.nn.TransformerDecoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional): the mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
@@ -712,12 +712,12 @@ class Transformer(Cell):
     Inputs:
         - **src** (Tensor): The source sequence to the encoder. For unbatched input, the shape is
           :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
-          `batch_first=True` , the shape is :math:`(S, N, E)`, where :math:`(S)` is the source sequence
+          `batch_first=True` , the shape is :math:`(N, S, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number. Supported
           types: float16, float32, float64.
         - **tgt** (Tensor): The target sequence to the decoder. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
-          `batch_first=True` , the shape is :math:`(T, N, E)`, where :math:`(T)` is the target sequence
+          `batch_first=True` , the shape is :math:`(N, T, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
           or :math:`(N*nhead, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
