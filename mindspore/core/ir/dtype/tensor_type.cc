@@ -96,11 +96,20 @@ std::string TensorType::DumpText() const {
 }
 
 bool TensorType::operator==(const Type &other) const {
+  if (this == &other) {
+    return true;
+  }
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  const auto &other_type = static_cast<const TensorType &>(other);
-  return common::IsEqual(element_type_, other_type.element_type_);
+  return *this == static_cast<const TensorType &>(other);
+}
+
+bool TensorType::operator==(const TensorType &other) const {
+  if (other.isa<AnyType>()) {
+    return false;
+  }
+  return common::IsEqual(element_type_, other.element_type_);
 }
 
 size_t TensorType::hash() const {
@@ -123,6 +132,23 @@ std::string AnyType::DumpText() const {
     return "Any(Tensor)";
   }
   return "Any(Tensor)(" + element()->DumpText() + ")";
+}
+
+bool AnyType::operator==(const Type &other) const {
+  if (this == &other) {
+    return true;
+  }
+  if (!other.isa<AnyType>()) {
+    return false;
+  }
+  return *this == static_cast<const AnyType &>(other);
+}
+
+bool AnyType::operator==(const AnyType &other) const {
+  if (this == &other) {
+    return true;
+  }
+  return common::IsEqual(element(), other.element());
 }
 
 std::string NegligibleType::ToString() const {
