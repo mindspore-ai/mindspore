@@ -26,11 +26,10 @@ from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
 _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "RowTensor", "Tensor", "Tensor", "Bool", "Bool",
-                    "Function", "Bool", "Function", "Bool")
-def _tensor_run_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                     gradient, weight, moment, ps_parameter, cache_enable,
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+                    "RowTensor", "Tensor", "Tensor", "Bool", "Function", "Bool", "Function", "Bool")
+def _tensor_run_opt_with_sparse_dist(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                                     gradient, weight, moment, cache_enable,
                                      distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
@@ -38,10 +37,6 @@ def _tensor_run_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_powe
     values = gradient.values
     if use_sparse_flag:
         success = F.depend(success, distributed_sparse_opt(weight, moment, linear, values, indices))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((values, indices), shapes), weight))
     else:
         success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
     return success
@@ -83,11 +78,10 @@ def _apply_map_tensor_ftrl(l1, l2, lr_power, learning_rate, linear, weight, mome
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
-                    "MapTensor", "MapTensor", "MapTensor", "Bool", "Bool",
-                    "Function", "Bool", "Function", "Bool")
-def _run_map_tensor_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                         gradient, weight, moment, ps_parameter, cache_enable,
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
+                    "MapTensor", "MapTensor", "MapTensor", "Bool", "Function", "Bool", "Function", "Bool")
+def _run_map_tensor_opt_with_sparse_dist(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                                         gradient, weight, moment, cache_enable,
                                          distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
@@ -103,46 +97,36 @@ def _run_map_tensor_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Bool", "Bool",
-                    "Function", "Bool", "Function", "Bool")
-def _tensor_run_opt_dist(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                         gradient, weight, moment, ps_parameter, cache_enable,
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Bool", "Function", "Bool", "Function", "Bool")
+def _tensor_run_opt_dist(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                         gradient, weight, moment, cache_enable,
                          distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
     if use_flag:
         success = F.depend(success, distributed_opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
-                                              (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
     else:
         success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
                     "RowTensor", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                gradient, weight, moment, ps_parameter, cache_enable):
+def _tensor_run_opt_with_sparse(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                                gradient, weight, moment, cache_enable):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
-        success = F.depend(success, pull(push((values, indices), shapes), weight))
-    else:
-        success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
+    success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
-                    "MapTensor", "MapTensor", "MapTensor", "Bool", "Bool")
-def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                    gradient, weight, moment, ps_parameter, cache_enable):
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
+                    "MapTensor", "MapTensor", "MapTensor", "Bool")
+def _run_map_tensor_opt_with_sparse(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                                    gradient, weight, moment, cache_enable):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices, values = gradient.get_data()
@@ -150,18 +134,13 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
     return success
 
 
-@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                    gradient, weight, moment, ps_parameter, cache_enable):
+@_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Bool")
+def _tensor_run_opt(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
+                    gradient, weight, moment, cache_enable):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
-                                              (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
-    else:
-        success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
+    success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     return success
 
 
@@ -338,13 +317,6 @@ class FTRL(Optimizer):
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.use_locking = use_locking
         self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
-        self._ps_pull = P.Pull()
-        self._ps_push = P.Push("Ftrl", [0, 1, 2])
-        self._ps_push.add_prim_attr("init_accum", initial_accum)
-        self._ps_push.add_prim_attr("lr", learning_rate)
-        self._ps_push.add_prim_attr("l1", l1)
-        self._ps_push.add_prim_attr("l2", l2)
-        self._ps_push.add_prim_attr("lr_power", lr_power)
 
         self._init_distributed_opts(use_locking, learning_rate, l1, l2, lr_power)
 
@@ -362,15 +334,13 @@ class FTRL(Optimizer):
         self.assignadd(self.global_step, self.global_step_increase_tensor)
 
         if self.use_dist_optimizer:
-            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                          self.l1, self.l2, self.lr_power, lr),
-                                linear, grads, params, moments, self.ps_parameters, self.cache_enable,
+            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self.l1, self.l2, self.lr_power, lr),
+                                linear, grads, params, moments, self.cache_enable,
                                 self.distributed_opts, self.use_distributed_opt_flags,
                                 self.distributed_sparse_opts, self.use_distributed_sparse_opt_flags)
         else:
-            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                          self.l1, self.l2, self.lr_power, lr),
-                                linear, grads, params, moments, self.ps_parameters, self.cache_enable)
+            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self.l1, self.l2, self.lr_power, lr),
+                                linear, grads, params, moments, self.cache_enable)
         return success
 
     @Optimizer.target.setter

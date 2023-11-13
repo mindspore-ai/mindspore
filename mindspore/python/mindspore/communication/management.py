@@ -91,6 +91,16 @@ def _check_parallel_envs():
                            "please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE.")
 
 
+def _set_envs():
+    """
+    Some environmental variables must be set after `init` is completed.
+    This takes compatibility into account because user scripts may get 'DEVICE_ID' or 'RANK_ID' envs.
+    """
+    os.environ["RANK_ID"] = str(get_rank())
+    os.environ["RANK_SIZE"] = str(get_group_size())
+    os.environ["DEVICE_ID"] = str(get_local_rank())
+
+
 def init(backend_name=None):
     """
     Initialize distributed backends required by communication services, e.g. ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
@@ -187,6 +197,7 @@ def init(backend_name=None):
 
     GlobalComm.INITED = True
     _set_elegant_exit_handle()
+    _set_envs()
 
 
 def release():

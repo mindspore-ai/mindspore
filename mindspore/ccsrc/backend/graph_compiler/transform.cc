@@ -595,14 +595,6 @@ BackendPtr CreateBackend() {
 void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-
-#if defined(__linux__) && defined(WITH_BACKEND)
-  if (ps::PSContext::instance()->is_ps_mode() && !ps::PSContext::instance()->enable_distributed_mindrt()) {
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-    return;
-  }
-#endif
-
   MS_LOG(DEBUG) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }

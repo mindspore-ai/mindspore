@@ -85,6 +85,7 @@ class BACKEND_EXPORT CollectiveManager {
   void set_global_rank_id(uint32_t global_rank_id);
   void set_global_rank_size(uint32_t global_rank_size);
 
+  uint32_t global_rank_id() const;
   uint32_t local_rank_id() const;
 
   bool need_init() const { return need_init_.load(); }
