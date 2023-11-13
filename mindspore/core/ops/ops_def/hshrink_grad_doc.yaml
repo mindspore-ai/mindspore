@@ -7,7 +7,7 @@ hshrink_grad:
                 Currently gradients data type only support float16 and float32.
                 Features (Tensor) - Must be the input `input_x` of the forward operator HSHrink.
                 Currently features data type only support float16 and float32.
-                lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
+                lambd (float): the lambda value for the Hardshrink formulation. Default: 0.5
 
             Returns:
                 backprops - Tensor, with the same shape and data type as `features`.
