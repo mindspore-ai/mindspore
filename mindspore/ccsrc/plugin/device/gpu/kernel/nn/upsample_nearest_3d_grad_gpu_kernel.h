@@ -62,7 +62,7 @@ class UpsampleNearest3DGradGpuKernelMod : public NativeGpuKernelMod {
   int64_t dx_h_{};
   int64_t dx_w_{};
   std::vector<int64_t> none_list_;
-  std::vector<double> scales_{0., 0., 0.};
+  std::vector<float> scales_{0., 0., 0.};
   UpsampleNearest3DGradFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UpsampleNearest3DGradFunc>> func_list_;
 };

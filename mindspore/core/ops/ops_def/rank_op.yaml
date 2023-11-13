@@ -5,7 +5,7 @@ rank:
             dtype: tensor
     returns:
         output:
-            dtype: tensor
+            dtype: int
     class:
         disable: true
     function:

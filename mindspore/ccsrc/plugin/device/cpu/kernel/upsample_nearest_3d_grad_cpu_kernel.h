@@ -62,7 +62,7 @@ class UpsampleNearest3DGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
   std::vector<int64_t> none_list_;
-  std::vector<double> scales_;
+  std::vector<float> scales_;
 };
 }  // namespace kernel
 }  // namespace mindspore

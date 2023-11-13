@@ -90,9 +90,9 @@ int UpsampleTrilinear3DGradCpuKernelMod::Resize(const std::vector<KernelTensor *
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
+    scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<double>>();
+    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<float>>();
     if (scales_.empty()) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
     }

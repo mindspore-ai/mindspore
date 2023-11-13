@@ -58,7 +58,7 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
   std::vector<int64_t> input_shape_{};
   std::vector<int64_t> output_shape_{};
-  std::vector<double> scales_{0., 0., 0.};
+  std::vector<float> scales_{0., 0., 0.};
   std::vector<int64_t> none_list_{};
 };
 }  // namespace kernel

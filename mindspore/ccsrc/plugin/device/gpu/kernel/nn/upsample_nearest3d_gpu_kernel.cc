@@ -62,9 +62,9 @@ int UpsampleNearest3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
+    scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex1]->GetValueWithCheck<std::vector<double>>();
+    scales_ = inputs[kIndex1]->GetValueWithCheck<std::vector<float>>();
   }
   return KRET_OK;
 }

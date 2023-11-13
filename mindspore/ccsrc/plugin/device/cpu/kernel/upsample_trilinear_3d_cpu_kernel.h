@@ -86,7 +86,7 @@ class UpsampleTrilinear3DCpuKernelMod : public NativeCpuKernelMod {
   TypeId x_type_{kTypeUnknown};
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::vector<double> scales_{};
+  std::vector<float> scales_{};
   std::vector<int64_t> none_list_{};
   bool align_corners_{false};
 };
