@@ -42,17 +42,22 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
 
   void set_grad_func(GradFunc &&grad_func) { grad_func_ = std::move(grad_func); }
 
-  void DoGrad() {
-    MS_EXCEPTION_IF_NULL(grad_func_);
-    grad_func_();
-  }
-
   std::shared_ptr<Op> get_op() { return shared_from_this(); }
 
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
+
+  const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
+  const AbstractBasePtr &output_abs() const { return output_abs_; }
+  void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
+  DeviceContext *device_context() const { return device_context_; }
+
+  void DoGrad() {
+    MS_EXCEPTION_IF_NULL(grad_func_);
+    grad_func_();
+  }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
@@ -61,9 +66,6 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     return outputs_[idx];
   }
 
-  const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
-  const AbstractBasePtr &output_abs() const { return output_abs_; }
-  void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
   template <typename T>
   static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
     if (!t.has_value()) {
@@ -71,6 +73,7 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     }
     return t.value()->ToAbstract();
   }
+
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
   template <typename... T>
@@ -90,6 +93,7 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
     PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_, &op->device_sync_promises_);
   }
+
   tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
 
   template <typename... T>
@@ -98,7 +102,6 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     PrepareOpOutputs(device_context_, outputs_);
   }
 
-  DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
 
  protected:

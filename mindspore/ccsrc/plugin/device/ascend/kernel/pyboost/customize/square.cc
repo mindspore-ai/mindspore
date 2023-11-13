@@ -44,7 +44,7 @@ tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<Op> &op, const Ten
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x_tensor, "x_tensor");
+    runtime::DeviceAddressUtils::CreateInputAddress(device_context, x_tensor, "x_tensor");
     // Malloc for output tensors
     PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
     SquareAscendCall(device_context, x_tensor, outputs);

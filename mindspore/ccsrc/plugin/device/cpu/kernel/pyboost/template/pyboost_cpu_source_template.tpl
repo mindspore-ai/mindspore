@@ -14,30 +14,18 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/ops/cast.h"
-${op_includes}
+#include "plugin/device/cpu/kernel/pyboost/auto_generate/${operator_name}.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "plugin/factory/ms_factory.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+${customize_include}
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
+${return_type} ${op_name}CPU::Call(${call_args_with_type}) {
+  ${call_impl}
 }
-
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
-  }
-  return iter->second();
-}
-
-template class OpFactory<Cast>;
-${op_factory_templates}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

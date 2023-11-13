@@ -193,41 +193,31 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
   return nullptr;
 }
 
-void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
+std::vector<device::DeviceAddressPtr> PrepareOpOutputs(DeviceContext *device_context,
+                                                       const std::vector<TensorPtr> &outputs) {
+  std::vector<device::DeviceAddressPtr> output_device_address;
   for (const auto &output : outputs) {
-    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
+    (void)output_device_address.emplace_back(
+      runtime::DeviceAddressUtils::CreateInputAddress(device_context, output, "output"));
   }
+  return output_device_address;
 }
 
-void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
-                      const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
+std::vector<device::DeviceAddressPtr> PrepareOpOutputs(
+  DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
+  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
   auto output_size = outputs.size();
   if (output_size != device_sync_promises.size()) {
     MS_LOG(EXCEPTION) << "outputs size " << output_size << " but device_sync_promises size "
                       << device_sync_promises.size();
   }
+  std::vector<device::DeviceAddressPtr> output_device_address;
   for (size_t i = 0; i < output_size; ++i) {
-    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs[i], device_sync_promises[i],
-                                                           "output");
+    (void)output_device_address.emplace_back(runtime::DeviceAddressUtils::CreateOutputTensorAddress(
+      device_context, outputs[i], device_sync_promises[i], "output"));
   }
+  return output_device_address;
 }
-
-// std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context) {
-//   std::vector<KernelTensorPtr> kernel_tensors;
-//   for (auto &value : values) {
-//     MS_EXCEPTION_IF_NULL(value);
-//     if (value->isa<Scalar>()) {
-//       auto scalar = std::dynamic_pointer_cast<Scalar>(value);
-//       kernel_tensors.emplace_back(std::make_shared<KernelTensor>(scalar));
-//     } else if (value->isa<tensor::Tensor>()) {
-//       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
-//       kernel_tensors.emplace_back(std::make_shared<KernelTensor>(tensor));
-//     } else {
-//       MS_EXCEPTION(TypeError) << "value type is not supported";
-//     }
-//   }
-//   return kernel_tensors;
-// }
 
 template <typename T>
 tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
@@ -277,6 +267,7 @@ tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
   }
   return std::make_shared<tensor::Tensor>(value, type);
 }
+
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
   if (scalar == nullptr) {
     MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
@@ -311,17 +302,6 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the dst type: " << type << " is invalid.";
   }
 }
-kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> workspace_sizes,
-                                                          const DeviceContext *device_context) {
-  kernel::AddressPtrList workspaces;
-  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
-    auto workspace_device_address =
-      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_sizes[i]);
-    (void)workspaces.emplace_back(std::make_shared<kernel::Address>(workspace_device_address->GetMutablePtr(),
-                                                                    workspace_device_address->GetSize()));
-  }
-  return workspaces;
-}
 
 tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -348,9 +328,42 @@ DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device)
   return device_context;
 }
 
-void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  task->Run();
+void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) { task->Run(); }
+
+std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const KernelModPtr &kernel_mod,
+                                                              const device::DeviceContext *device_context,
+                                                              const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  const auto &workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+  std::vector<device::DeviceAddressPtr> add_workspaces;
+  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+    auto kernel_tensor = std::make_shared<KernelTensor>(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
+                                                        device_context->device_context_key().device_name_,
+                                                        device_context->device_context_key().device_id_);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    MS_LOG(DEBUG) << "Create workspace for op: " << op_name << " addr: " << device_address;
+    MS_EXCEPTION_IF_NULL(device_address);
+    (void)add_workspaces.emplace_back(device_address);
+  }
+
+  std::vector<kernel::KernelTensor *> workspaces;
+  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+    auto device_address = add_workspaces[i];
+    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_address->GetPtr() == nullptr &&
+        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+    }
+    (void)workspaces.emplace_back(device_address->kernel_tensor().get());
+    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
+                  << " size:" << workspaces.back()->size();
+  }
+  return workspaces;
 }
+
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

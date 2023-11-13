@@ -707,3 +707,34 @@ def test_range_ascend():
     step = 4.0
     output = pyboost_range(start, end, step)
     assert np.allclose(output.asnumpy(), [0, 4, 8])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_matmul_cpu():
+    """
+    Feature: test cast operator
+    Description: test matmul run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="CPU")
+    input_x1 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    input_x2 = Tensor(np.array([[2, 3], [4, 5]]).astype(np.float32))
+    output = matmul(input_x1, input_x2)
+    assert np.allclose(output.asnumpy(), [[10, 13], [22, 29]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_sin_cpu():
+    """
+    Feature: test sin operator
+    Description: test sin run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="CPU")
+    x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+    output = sin(x)
+    assert np.allclose(output.asnumpy(), [0.5810352, 0.27635565, 0.41687083, 0.5810352])

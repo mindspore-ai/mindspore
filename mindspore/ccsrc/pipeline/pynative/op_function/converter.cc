@@ -102,7 +102,7 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(ops::OpDef &op_def) { op_def_ = &op_def; }
+Converter::Converter(ops::OpDefPtr op_def) { op_def_ = op_def; }
 
 void Converter::Parse(py::list python_args) {
   python_args_ = &python_args;

@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/ops/cast.h"
-${op_includes}
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_${op_name_upper}_GPU_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_${op_name_upper}_GPU_H_
+
+#include "kernel/pyboost/auto_generate/${operator_name}.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
-}
+class ${op_name}GPU : public pyboost::${op_name} {
+ public:
+  ${op_name}GPU() = default;
+  ~${op_name}GPU() = default;
 
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
-  }
-  return iter->second();
-}
+  ${return_type} Call(${call_args_with_type}) override;
+};
 
-template class OpFactory<Cast>;
-${op_factory_templates}
+MS_REG_PYBOOST_OP(GPU, ${op_name});
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_${op_name_upper}_GPU_H_

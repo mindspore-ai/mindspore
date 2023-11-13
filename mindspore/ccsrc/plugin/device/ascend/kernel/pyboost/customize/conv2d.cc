@@ -79,9 +79,9 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<Op> &op, const Ten
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors
-      runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_tensor, "input_tensor");
-      runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, weight_tensor, "weight_tensor");
-      runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, bias_tensor, "bias_tensor");
+      runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
+      runtime::DeviceAddressUtils::CreateInputAddress(device_context, weight_tensor, "weight_tensor");
+      runtime::DeviceAddressUtils::CreateInputAddress(device_context, bias_tensor, "bias_tensor");
       // Malloc for output tensors
       PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
       Conv2DAscendCall(device_context, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector,

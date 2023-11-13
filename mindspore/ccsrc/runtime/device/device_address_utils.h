@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-
 #include "runtime/hardware/device_context.h"
 #include "runtime/pynative/op_compiler.h"
 
@@ -50,14 +49,26 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                           const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
 
-  static device::DeviceAddressPtr CreateInputTensorAddress(const DeviceContext *device_context,
-                                                           const tensor::TensorPtr &tensor,
-                                                           const std::string &input_name,
-                                                           bool need_ret_address = false);
-  static device::DeviceAddressPtr CreateInputTensorAddress(const DeviceContext *device_context,
-                                                           const std::optional<tensor::TensorPtr> &val,
-                                                           const std::string &input_name,
-                                                           bool need_ret_address = false);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const tensor::TensorPtr &tensor, const std::string &input_name);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const std::optional<tensor::TensorPtr> &val,
+                                                     const std::string &input_name);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const ScalarPtr &scalar_value,
+                                                     const std::string &input_name);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const StringImmPtr &string_imm, const std::string &input_name);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const TypePtr &type,
+                                                     const std::string &input_name);
+
+  template <typename T>
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const T &t,
+                                                     const std::string &input_name) {
+    return nullptr;
+  }
+
+  static void CopyConstantToDevice(const device::DeviceContext *device_context,
+                                   const device::DeviceAddressPtr &device_address, const std::string &op_name);
   static std::vector<device::DeviceAddressPtr> CreateInputTensorAddress(const DeviceContext *device_context,
                                                                         const std::vector<tensor::TensorPtr> &tensors,
                                                                         const std::string &input_name,
@@ -74,8 +85,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
-  static device::DeviceAddressPtr CreateScalarAddress(const DeviceContext *device_context,
-                                                      const ScalarPtr &scalar_value);
 };
 device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
 device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,

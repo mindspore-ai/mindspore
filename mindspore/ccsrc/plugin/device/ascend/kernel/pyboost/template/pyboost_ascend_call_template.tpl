@@ -18,7 +18,6 @@
           ${inplace_process}
           // Malloc for output tensors
           PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
-          // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
           ${get_cube_math_type}
           auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
           LAUNCH_ACLNN(${aclnn_name}, device_context, stream_ptr, ${aclnn_call_args}${outputs}${cube_math_type});

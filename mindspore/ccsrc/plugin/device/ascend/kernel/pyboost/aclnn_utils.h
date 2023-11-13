@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
 #include <algorithm>
+#include <string>
 #include <functional>
 #include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
@@ -35,16 +36,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
-  std::vector<T> result;
-  const auto &values = tuple->value();
-  for (const auto &value : values) {
-    (void)result.emplace_back(GetValue<T>(value));
-  }
-  MS_LOG(DEBUG) << "Convert ValueTuple to vector " << result;
-  return result;
-}
 int8_t GetCubeMathType();
 }  // namespace pyboost
 }  // namespace kernel

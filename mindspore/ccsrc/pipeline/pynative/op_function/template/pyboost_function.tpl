@@ -1,7 +1,7 @@
 py::object ${func_name}(const py::args &args) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   auto op_run_info = PyNativeAlgo::PyBoost::Init(args);
-  static Converter converter(ops::${op_def_name});
+  static Converter converter(&ops::${op_def_name});
   py::list input_args = args[kIndex1];
   converter.Parse(input_args);
   ${parser_body}

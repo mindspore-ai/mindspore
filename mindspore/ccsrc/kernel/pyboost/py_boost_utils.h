@@ -39,23 +39,35 @@ class BACKEND_EXPORT PyBoostUtils {
                                  std::vector<tensor::TensorPtr> *outputs);
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
 };
-KernelTensorPtr BACKEND_EXPORT TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
-KernelTensorPtr BACKEND_EXPORT ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);
-std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context);
+
 DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device);
-kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> workspace_sizes,
-                                                          const DeviceContext *device_context);
 tensor::TensorPtr BACKEND_EXPORT ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 tensor::TensorPtr BACKEND_EXPORT ContiguousTensor(const tensor::TensorPtr &input_tensor);
 
 template <typename... Args>
 void PrepareOpInputs(DeviceContext *device_context, Args... args) {
-  [&]() { (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, args, "input"), ...); }();
+  [&]() { (runtime::DeviceAddressUtils::CreateInputAddress(device_context, args, "input"), ...); }();
 }
 
-void BACKEND_EXPORT PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs);
-void BACKEND_EXPORT PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
-                                     const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises);
+std::vector<kernel::KernelTensor *> BACKEND_EXPORT GetWorkspaceKernelTensors(
+  const KernelModPtr &kernel_mod, const device::DeviceContext *device_context, const std::string &op_name);
+
+template <typename T>
+std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
+  std::vector<T> result;
+  const auto &values = tuple->value();
+  for (const auto &value : values) {
+    (void)result.emplace_back(GetValue<T>(value));
+  }
+  MS_LOG(DEBUG) << "Convert ValueTuple to vector " << result;
+  return result;
+}
+
+std::vector<device::DeviceAddressPtr> BACKEND_EXPORT PrepareOpOutputs(DeviceContext *device_context,
+                                                                      const std::vector<TensorPtr> &outputs);
+std::vector<device::DeviceAddressPtr> BACKEND_EXPORT
+PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
+                 const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises);
 void BACKEND_EXPORT DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task);
 }  // namespace pyboost
 }  // namespace kernel

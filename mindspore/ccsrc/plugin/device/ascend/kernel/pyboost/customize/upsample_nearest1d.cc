@@ -49,7 +49,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<Op> &op
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_tensor, "input_tensor");
+    runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
     // Malloc for output tensors
     PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
     UpsampleNearest1dAscendCall(op->primitive(), device_context, input_tensor, output_size_vector, outputs);

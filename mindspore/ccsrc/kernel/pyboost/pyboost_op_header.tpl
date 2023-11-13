@@ -29,7 +29,13 @@ class BACKEND_EXPORT ${op_name} : public pyboost::Op {
   ~${op_name}() override = default;
 
   virtual ${return_type} Call(${call_args}) = 0;
+
+ protected:
+  static const std::string &op_name() {return op_name_;}
+
+  inline static std::string op_name_ = "${op_name}";
 };
+
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

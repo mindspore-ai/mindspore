@@ -16,6 +16,7 @@
 import re
 import os
 
+
 class CppTemplate:
     """
     template for generate c++ code
@@ -37,6 +38,7 @@ class CppTemplate:
         :param kwargs:
         :return:
         """
+
         def find(key: str):
             if key in kwargs:
                 return kwargs[key]
@@ -99,6 +101,7 @@ PYBOOST_BASE_OP_DEFINE_TEMPLATE = CppTemplate.load_from_file(
 PYBOOST_OP_REGISTER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_register.tpl'))
 
+# Ascend op generate
 PYBOOST_ASCEND_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
                  './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_aclnn_header_template.tpl'))
@@ -111,14 +114,59 @@ PYBOOST_ASCEND_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
                  './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_ascend_call_template.tpl'))
 
-PYBOOST_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
+PYBOOST_ASCEND_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_view_call_template.tpl'))
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/'
+                 'pyboost_ascend_view_call_template.tpl'))
 
-PYBOOST_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
+PYBOOST_ASCEND_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
                  './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template'
                  '/pyboost_ascend_customize_call_template.tpl'))
+
+# GPU op generate
+PYBOOST_GPU_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template/pyboost_gpu_header_template.tpl'))
+
+PYBOOST_GPU_OP_SOURCE_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template/pyboost_gpu_source_template.tpl'))
+
+PYBOOST_GPU_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template/pyboost_gpu_call_template.tpl'))
+
+PYBOOST_GPU_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template/pyboost_gpu_view_call_template.tpl'))
+
+PYBOOST_GPU_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template'
+                 '/pyboost_gpu_customize_call_template.tpl'))
+
+# CPU op generate
+PYBOOST_CPU_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template/pyboost_cpu_header_template.tpl'))
+
+PYBOOST_CPU_OP_SOURCE_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template/pyboost_cpu_source_template.tpl'))
+
+PYBOOST_CPU_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template/pyboost_cpu_call_template.tpl'))
+
+PYBOOST_CPU_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template/pyboost_cpu_view_call_template.tpl'))
+
+PYBOOST_CPU_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template'
+                 '/pyboost_cpu_customize_call_template.tpl'))
 
 PYBOOST_PY_FUNC_HEADEAR = ("""
 from mindspore.ops._primitive_cache import _get_cache_prim
