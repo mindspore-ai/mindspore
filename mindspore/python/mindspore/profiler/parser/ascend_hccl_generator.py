@@ -82,8 +82,9 @@ def count_average(data):
 class AscendHCCLGenerator:
     """Generate ascend hccl data from files."""
 
-    def __init__(self, source_path):
+    def __init__(self, source_path, steptrace):
         self.root_path = source_path
+        self.steptrace = steptrace
         self.hccl_raw = []
         self.hccl_data_df = np.dtype(
             [('name', object), ('pid', int), ('tid', int), ('ts', float), ('te', float), ('dur', float), ('ph', object),
@@ -139,15 +140,30 @@ class AscendHCCLGenerator:
 
     def parse(self):
         """Analyse the original hccl data generator hccl data."""
-        file_list = find_files(self.root_path, "hccl_*.json")
 
-        for hccl_file in file_list:
-            _, relative_path = os.path.split(hccl_file)
-            iteration_id = int(relative_path.split('_')[3])
-            with open(hccl_file) as f:
-                _, hccl_detail_data = self._original_data_analyse(json.load(f))
-                raw = self._iteration_analyse(hccl_detail_data, iteration_id)
-                self.hccl_raw.append(raw)
+        for hccl_file in find_files(self.root_path, "hccl_*.json"):
+            with open(hccl_file) as fr:
+                hccl_data = self._original_data_analyse(json.load(fr))
+            for model_id in np.unique(hccl_data['model_id']):
+                hccl_data_model = hccl_data[hccl_data['model_id'] == model_id]
+                for iteration_id in np.unique(hccl_data_model['iteration_id']):
+                    hccl_data_model_iteration = hccl_data_model[hccl_data_model['iteration_id'] == iteration_id]
+
+                    hccl_abstract_data = hccl_data_model_iteration[hccl_data_model_iteration['task_type'] == '']
+                    hccl_detail_data = hccl_data_model_iteration[hccl_data_model_iteration['task_type'] != '']
+                    hccl_abstract_data = np.sort(hccl_abstract_data, order='ts')
+                    hccl_detail_data = np.sort(hccl_detail_data, order='ts')
+
+                    tag = np.searchsorted(hccl_abstract_data['ts'], hccl_detail_data['ts'], side='right') - 1
+
+                    big_hccl_names = []
+                    for name in np.char.split(hccl_abstract_data[tag]['name'].astype(str), sep='/'):
+                        big_hccl_names.append(name[-1])
+
+                    hccl_detail_data['tag'] = big_hccl_names
+
+                    self.hccl_raw.append(self._iteration_analyse(hccl_detail_data, iteration_id))
+
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
         self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
         self.hccl_raw[-1][0] = '-'
@@ -180,9 +196,15 @@ class AscendHCCLGenerator:
 
     def _original_data_analyse(self, original_data):
         """analyse original data"""
+
+        groups_steptrace = {model_id: np.sort(self.steptrace[self.steptrace['Model ID'] == model_id],
+                                              order='Iteration ID')
+                            for model_id in np.unique(self.steptrace['Model ID'])}
+
         target_data = []
         for row in original_data:
-            if row.get('ph') == 'X':
+            model_id = row.get('args', {}).get('model id')
+            if row.get('ph') == 'X' and model_id:
                 name = row.get('name')
                 pid = row.get('pid')
                 tid = row.get('tid')
@@ -203,19 +225,20 @@ class AscendHCCLGenerator:
                 link_info = str(src_rank) + '-' + str(dst_rank)
                 size = row.get('args', {}).get('size(Byte)', 0)
                 size = size if isinstance(size, int) else int(size, 16)
+                steptrace = groups_steptrace.get(model_id, None)
+                if steptrace is None:
+                    logging.warning('Could not find model: %s in hccl json, skip.', model_id)
+                    continue
+                tag = np.searchsorted(steptrace['Iteration End'], te * 1e-3, side='left')
+                iteration_id = steptrace[tag]['Iteration ID']
                 target_data.append(
-                    tuple([name, pid, tid, ts, te, dur, ph, task_type, link_info, transport_type, size, -1]))
+                    tuple([model_id, iteration_id, name, pid, tid,
+                           ts, te, dur, ph, task_type,
+                           link_info, transport_type, size, -1]))
+
         hccl_data = np.array(target_data, dtype=self.hccl_data_df)
 
-        hccl_abstract_data = hccl_data[hccl_data['task_type'] == '']
-        hccl_detail_data = hccl_data[hccl_data['task_type'] != '']
-
-        hccl_abstract_data = hccl_abstract_data[np.argsort(hccl_abstract_data['ts'])]
-        hccl_detail_data = hccl_detail_data[np.argsort(hccl_detail_data['ts'])]
-        hccl_detail_data['ts'] = hccl_detail_data['ts']
-        tag = np.searchsorted(hccl_abstract_data['ts'], hccl_detail_data['ts'], side='right') - 1
-        hccl_detail_data['tag'] = [x[-1] for x in np.char.split(hccl_abstract_data[tag]['name'].astype(str), sep='/')]
-        return hccl_abstract_data, hccl_detail_data
+        return hccl_data
 
     def _iteration_analyse(self, hccl_detail_data, iteration):
         """analyse data by iteration """

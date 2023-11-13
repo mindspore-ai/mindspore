@@ -86,7 +86,7 @@ class AscendClusterGenerator:
                         name = row.get('name', '')
                         ts = row.get('ts', 0)
                         dur = row.get('dur', 0)
-                        msprof_data.append(tuple([name, ts, dur]))
+                        msprof_data.append((name, ts, dur))
         self.msprof_data = np.array(msprof_data, dtype=self.msprof_data_df)
 
     def write(self, step_trace_time_path):
