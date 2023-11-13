@@ -11,7 +11,7 @@ eig:
         Outputs:
           eigen_values (Tensor) - Shape :math:`(*, N)`. Each inner most vector represents eigenvalues of
               the corresponding matrix. The eigenvalues may not have an order.
-          eigen_vectors (Tensor) - If `compute_v` is `False`, it’s an empty tensor. Otherwise, this tensor has
+          eigen_vectors (Tensor) - If `compute_v` is `False`, it's an empty tensor. Otherwise, this tensor has
               shape :math:`(*, N, N)`, whose columns represent normalized (unit length) eigenvectors of corresponding
               eigenvalues.
 
