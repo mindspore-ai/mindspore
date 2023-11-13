@@ -470,6 +470,7 @@ void DeviceContextManager::ClearDeviceContexts() {
     MS_EXCEPTION_IF_NULL(iter.second);
     iter.second->Destroy();
   }
+  backend_to_device_context_.clear();
   device_contexts_.clear();
 }
 
@@ -479,6 +480,20 @@ void DeviceContextManager::BindDeviceCtx() const {
     MS_EXCEPTION_IF_NULL(iter.second->device_res_manager_);
     if (!iter.second->device_res_manager_->BindDeviceToCurrentThread(true)) {
       MS_LOG(EXCEPTION) << "Bind device failed";
+    }
+  }
+}
+
+void DeviceContextManager::SetRegisterDeviceStatelessFuncCb(const std::string &backend,
+                                                            const RegisterStatelessFuncCb &register_func_cb) {
+  register_func_cbs_[backend] = register_func_cb;
+}
+
+void DeviceContextManager::RegisterDeviceStatelessFunc(py::module *m) {
+  for (const auto &f : register_func_cbs_) {
+    const auto &register_cb = f.second;
+    if (register_cb) {
+      register_cb(m);
     }
   }
 }
@@ -498,12 +513,21 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     device_context = (creator_iter->second)(device_context_key);
     MS_EXCEPTION_IF_NULL(device_context);
     device_contexts_[device_context_key_str] = device_context;
+    backend_to_device_context_[name] = device_context;
   } else {
     MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << name
                       << " is available, error message of loading plugins: " << std::endl
                       << GetErrorMsg();
   }
   return device_context.get();
+}
+
+DeviceContextPtr DeviceContextManager::GetDeviceContext(const std::string &device_target) {
+  if (backend_to_device_context_.count(device_target) == 0) {
+    MS_LOG(WARNING) << "Device context of device " << device_target << " is not created yet.";
+    return nullptr;
+  }
+  return backend_to_device_context_[device_target];
 }
 
 void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {

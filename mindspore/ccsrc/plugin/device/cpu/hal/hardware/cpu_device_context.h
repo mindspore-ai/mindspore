@@ -100,8 +100,7 @@ class CPUKernelExecutor : public KernelExecutor {
 
 class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResManager> {
  public:
-  explicit CPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit CPUDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~CPUDeviceContext() override = default;
 
   void Initialize() override;
@@ -112,7 +111,6 @@ class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResM
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
-  bool initialized_;
 };
 }  // namespace cpu
 }  // namespace device

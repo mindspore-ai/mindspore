@@ -24,6 +24,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 namespace mindspore {
 namespace device {
@@ -135,8 +136,7 @@ class GPUKernelExecutor : public KernelExecutor {
 
 class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResManager> {
  public:
-  explicit GPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit GPUDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~GPUDeviceContext() override = default;
 
   // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
@@ -149,9 +149,12 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
 
   DeprecatedInterface *GetDeprecatedInterface() override;
 
+  static uint32_t GetDeviceCount();
+  static std::string GetDeviceName(uint32_t);
+  static cudaDeviceProp GetDeviceProperties(uint32_t device_id);
+
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
-  bool initialized_;
   std::unique_ptr<GPUDeprecatedInterface> deprecated_interface_;
 };
 }  // namespace gpu

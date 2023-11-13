@@ -23,6 +23,7 @@
 #include <cusolverDn.h>
 #include <memory>
 #include <mutex>
+#include <string>
 #ifdef _MSC_VER
 #include <cassert>
 #else
@@ -63,6 +64,8 @@ class GPUdeviceInfo {
  public:
   explicit GPUdeviceInfo(const uint32_t device_id);
   ~GPUdeviceInfo();
+  inline const cudaDeviceProp &properties() const { return prop_; }
+  inline const std::string &name() const { return name_; }
   inline int threads_num() const { return threads_per_block_; }
   inline int threads_num(int size) const { return std::min(size, threads_per_block_); }
   inline int major_sm() const { return major_sm_; }
@@ -86,6 +89,8 @@ class GPUdeviceInfo {
   GPUdeviceInfo(const GPUdeviceInfo &) = delete;
   GPUdeviceInfo &operator=(const GPUdeviceInfo &) = delete;
 
+  cudaDeviceProp prop_;
+  std::string name_;
   int max_blocks_;
   int threads_per_block_;
   int major_sm_;

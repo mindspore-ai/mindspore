@@ -44,6 +44,7 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
+#include "runtime/hardware/device_context_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
@@ -72,6 +73,8 @@ using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
 using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
+using DeviceContextManager = mindspore::device::DeviceContextManager;
+using DeviceContext = mindspore::device::DeviceContext;
 
 constexpr int PROFILER_RECORD_STAMP = 2;
 
@@ -644,6 +647,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the recovery path used to save that need to be persisted.")
     .def("ckpt_path", &RecoveryContext::GetCkptPath, "Get the recovery path used to save checkpoint.")
     .def("set_ckpt_path", &RecoveryContext::SetCkptPath, "Set the recovery path used to save checkpoint.");
+
+  (void)py::class_<DeviceContextManager, std::shared_ptr<DeviceContextManager>>(m, "DeviceContextManager")
+    .def_static("get_instance", &DeviceContextManager::GetInstance, py::return_value_policy::reference,
+                "Get device context manager instance.")
+    .def("get_device_context", &DeviceContextManager::GetDeviceContext, "Return device context object.");
+  (void)py::class_<DeviceContext, std::shared_ptr<DeviceContext>>(m, "DeviceContext")
+    .def("initialized", &DeviceContext::initialized, "Return whether this device backend is successfully initialized.");
+  DeviceContextManager::GetInstance().RegisterDeviceStatelessFunc(&m);
 
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
   (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");

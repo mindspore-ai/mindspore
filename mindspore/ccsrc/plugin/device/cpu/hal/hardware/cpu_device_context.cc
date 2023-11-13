@@ -629,6 +629,10 @@ MSCONTEXT_REGISTER_INIT_FUNC(kCPUDevice, [](MsContext *ctx) -> void {
   }
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call CPU device interfaces.
+void PybindCPUStatelessFunc(py::module *m) { MS_EXCEPTION_IF_NULL(m); }
+REGISTER_DEV_STATELESS_FUNC_CB(kCPUDevice, PybindCPUStatelessFunc);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

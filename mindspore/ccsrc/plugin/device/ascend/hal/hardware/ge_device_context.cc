@@ -562,6 +562,37 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+uint32_t GeDeviceContext::GetDeviceCount() {
+  uint32_t device_count = 0;
+  auto ret = aclrtGetDeviceCount(&device_count);
+  if (ret != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
+  }
+  return device_count;
+}
+
+std::string GeDeviceContext::GetDeviceName(uint32_t) {
+  const char *name = aclrtGetSocName();
+  std::string device_name = (name == nullptr) ? "" : name;
+  return device_name;
+}
+
+AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
+  static AscendDeviceProperties device_properties;
+  if (!device_properties.name.empty()) {
+    return device_properties;
+  }
+
+  const char *name = aclrtGetSocName();
+  device_properties.name = (name == nullptr) ? "" : name;
+
+  size_t free_size;
+  size_t total_size;
+  aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size);
+  device_properties.total_global_memory = total_size;
+  return device_properties;
+}
+
 MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
 #ifdef WITH_BACKEND
 namespace {
@@ -607,6 +638,17 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
   SetContextSocVersion(ctx);
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call Ascend device interfaces.
+void PybindAscendStatelessFunc(py::module *m) {
+  MS_EXCEPTION_IF_NULL(m);
+  (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
+  (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
+               "Get Ascend device name of specified device id.");
+  (void)m->def("ascend_get_device_properties", &GeDeviceContext::GetDeviceProperties,
+               "Get Ascend device properties of specified device id.");
+}
+REGISTER_DEV_STATELESS_FUNC_CB(kAscendDevice, PybindAscendStatelessFunc);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

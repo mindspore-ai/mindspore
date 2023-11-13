@@ -63,7 +63,8 @@ class KernelExecutor;
 // DeviceContext is unified interface of interaction with device.
 class DeviceContext {
  public:
-  explicit DeviceContext(const DeviceContextKey &device_context_key) : device_context_key_(device_context_key) {}
+  explicit DeviceContext(const DeviceContextKey &device_context_key)
+      : device_context_key_(device_context_key), initialized_(false) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -106,6 +107,16 @@ class DeviceContext {
   // todo: delete
   virtual DeprecatedInterface *GetDeprecatedInterface() { return nullptr; }
 
+  // Return whether this device context is initialized.
+  bool initialized() const {
+#ifdef __APPLE__
+    std::lock_guard<SpinLock> spin_lock(init_lock_);
+#else
+    std::lock_guard<std::mutex> lock(init_mutex_);
+#endif
+    return initialized_;
+  }
+
   DeviceContextKey device_context_key_;
   std::unique_ptr<DeviceResManager> device_res_manager_;
   std::unique_ptr<GraphExecutor> graph_executor_;
@@ -117,6 +128,7 @@ class DeviceContext {
 #else
   inline static std::mutex init_mutex_;
 #endif
+  bool initialized_;
 
  private:
   std::shared_ptr<KernelExecutor> kernel_executor_;

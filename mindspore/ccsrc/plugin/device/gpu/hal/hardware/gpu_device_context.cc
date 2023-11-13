@@ -1019,6 +1019,16 @@ DeprecatedInterface *GPUDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+uint32_t GPUDeviceContext::GetDeviceCount() { return IntToUint(CudaDriver::device_count()); }
+
+std::string GPUDeviceContext::GetDeviceName(uint32_t device_id) {
+  return GPUdeviceInfo::GetInstance(device_id)->name();
+}
+
+cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
+  return GPUdeviceInfo::GetInstance(device_id)->properties();
+}
+
 std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
   void *ptr;
   if (CudaDriver::AllocHostPinnedMem(size, &ptr) != size) {
@@ -1042,6 +1052,17 @@ MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
   }
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call GPU device interfaces.
+void PybindGPUStatelessFunc(py::module *m) {
+  MS_EXCEPTION_IF_NULL(m);
+  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp").def_readonly("name", &cudaDeviceProp::name);
+  (void)m->def("gpu_get_device_count", &GPUDeviceContext::GetDeviceCount, "Get GPU device count.");
+  (void)m->def("gpu_get_device_name", &GPUDeviceContext::GetDeviceName, "Get GPU device name of specified device id.");
+  (void)m->def("gpu_get_device_properties", &GPUDeviceContext::GetDeviceProperties,
+               "Get GPU device properties of specified device id.");
+}
+REGISTER_DEV_STATELESS_FUNC_CB(kGPUDevice, PybindGPUStatelessFunc);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
