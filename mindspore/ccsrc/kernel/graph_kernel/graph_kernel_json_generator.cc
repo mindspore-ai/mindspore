@@ -19,6 +19,7 @@
 #include <set>
 #include <functional>
 #include <algorithm>
+#include "abstract/dshape.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph.h"
@@ -371,11 +372,28 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
   return false;
 }
 
-void GraphKernelJsonGenerator::SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json) {
-  if (symbol_engine_ != nullptr) {
-    (*kernel_json)[kJsonKeySymbolicShape] = symbol_engine_->QuerySymbolicShapeStr(node);
-    (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
+void GraphKernelJsonGenerator::SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json,
+                                         const ShapeVector &shape) {
+  if (symbol_engine_ == nullptr) {
+    (*kernel_json)[kJsonKeyShape] = shape;
+    return;
   }
+  auto symbol_shape = symbol_engine_->QuerySymbolicShapeStr(node);
+  if (shape.size() != symbol_shape.size()) {
+    MS_LOG(EXCEPTION) << "The length of tensor shape and symbol shape should be equal but got " << shape.size()
+                      << " and " << symbol_shape.size() << ".";
+  }
+  auto new_shape = shape;
+  for (size_t i = 0; i < new_shape.size(); i++) {
+    auto symbol = symbol_shape[i];
+    if (new_shape[i] == abstract::Shape::kShapeDimAny &&
+        std::all_of(symbol.begin(), symbol.end(), [](char c) { return std::isdigit(c); })) {
+      new_shape[i] = std::stoi(symbol);
+    }
+  }
+  (*kernel_json)[kJsonKeyShape] = new_shape;
+  (*kernel_json)[kJsonKeySymbolicShape] = symbol_shape;
+  (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
 }
 
 bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info,
@@ -412,7 +430,6 @@ bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, c
       input_desc_json[kJsonKeyFormat] = this->cb_->GetInputFormat(anf_node, real_input_index);
       input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
-      SaveSymbolicShape(anf_node->cast<CNodePtr>()->input(real_input_index + 1), &input_desc_json);
       auto input_shape = this->cb_->GetInputShape(anf_node, real_input_index);
       if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_shape, &input_desc_json)) {
         MS_LOG(DEBUG) << "Pick value [" << input_desc_json[kJsonKeyValue] << "] from input[" << real_input_index
@@ -421,7 +438,7 @@ bool GraphKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, c
       if (input_shape.empty()) {
         input_shape.push_back(1);
       }
-      input_desc_json[kJsonKeyShape] = input_shape;
+      SaveShape(anf_node->cast<CNodePtr>()->input(real_input_index + 1), &input_desc_json, input_shape);
       (void)input_list.emplace_back(input_desc_json);
       real_input_index++;
     }
@@ -452,12 +469,11 @@ bool GraphKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, 
     output_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(anf_node, i);
     output_json[kJsonKeyName] = output_name;
     output_json[kJsonKeyTensorName] = "output_" + std::to_string(i) + "_" + std::to_string(GetOutputTensorIdxInc());
-    SaveSymbolicShape(anf_node, &output_json);
     auto output_shape = this->cb_->GetOutputShape(anf_node, i);
     if (output_shape.empty()) {
       output_shape.push_back(1);
     }
-    output_json[kJsonKeyShape] = output_shape;
+    SaveShape(anf_node, &output_json, output_shape);
     outputs_json->push_back(output_json);
   }
   return true;
@@ -1024,10 +1040,9 @@ nlohmann::json GraphKernelJsonGenerator::CreateInputsJson(const std::vector<AnfN
     if (input_shape.empty()) {
       input_shape.push_back(1);
     }
-    input_desc_json[kJsonKeyShape] = input_shape;
     auto cnode = tmp_input.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    SaveSymbolicShape(cnode->input(tmp_input.second.first + 1), &input_desc_json);
+    SaveShape(cnode->input(tmp_input.second.first + 1), &input_desc_json, input_shape);
     (void)inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
   return inputs_json;
@@ -1124,12 +1139,11 @@ nlohmann::json GraphKernelJsonGenerator::CreateOutputsJson(const std::vector<Anf
         GetTensorName(node_json_map.at(tmp_output.first), kJsonKeyOutputDesc, std::make_pair(0, tmp_output.second));
       output_desc_json[kJsonKeyDataType] = dtype;
       output_desc_json[kJsonKeyFormat] = this->cb_->GetOutputFormat(tmp_output.first, tmp_output.second);
-      SaveSymbolicShape(tmp_output.first, &output_desc_json);
       auto output_shape = this->cb_->GetOutputShape(tmp_output.first, tmp_output.second);
       if (output_shape.empty()) {
         output_shape.push_back(1);
       }
-      output_desc_json[kJsonKeyShape] = output_shape;
+      SaveShape(tmp_output.first, &output_desc_json, output_shape);
     }
     (void)outputs_json.emplace_back(output_desc_json);
   }

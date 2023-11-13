@@ -121,7 +121,7 @@ class GraphKernelJsonGenerator {
   std::string GetProcessorByTarget() const;
   size_t GenHashId(const std::string &info) const;
   void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
-  void SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json);
+  void SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json, const ShapeVector &shape);
 
   DumpOption dump_option_;
   std::string kernel_name_;
