@@ -26,6 +26,7 @@
 
 namespace mindspore::expander::bprop {
 namespace {
+const int kConstNumberTwo = 2;
 bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
   if (axis == -1) {
     return true;
@@ -1230,6 +1231,16 @@ REG_BPROP_BUILDER("Softplus").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("SoftplusGrad", {dout, x});
   return {dx};
+});
+
+REG_BPROP_BUILDER("SoftplusGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto dy = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto ddy = ib->Emit("SoftplusGrad", {dout, x});
+  auto d2x = ib->Div(ib->Mul(dout, dy),
+                     ib->Add(ib->Add(ib->Tensor(kConstNumberTwo, ib->GetDtype(dy)), ib->Exp(x)), ib->Exp(-x)));
+  return {ddy, d2x};
 });
 
 REG_BPROP_BUILDER("Softsign").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
