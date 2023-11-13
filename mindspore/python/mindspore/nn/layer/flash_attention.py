@@ -57,7 +57,7 @@ class FlashAttention(Cell):
             Default True
         alibi(bool): This parameter indicates whether the flashattention supports the Alibi.
             Default: False
-        use_mha(bool): Using MHA if True, only take effect under 910B. Default: False.
+        use_mqa(bool): Using MHA if True, only take effect under 910B. Default: False.
 
 
     Inputs:
@@ -104,7 +104,7 @@ class FlashAttention(Cell):
                  high_precision=False,
                  have_attention_mask_batch=True,
                  alibi=False,
-                 use_mha=False
+                 use_mqa=False
                  ):
         super(FlashAttention, self).__init__()
 
@@ -135,7 +135,7 @@ class FlashAttention(Cell):
             self.zeros_like = ops.ZerosLike().shard(((dp, mp, 1, 1),))
             self.zeros = ops.Zeros()
             self.attn_expand_dims = ops.ExpandDims().shard(((dp, 1, 1),))
-            if use_mha:
+            if use_mqa:
                 fa_strategies = ((dp, mp, 1, 1),
                                  (dp, 1, 1, 1),
                                  (dp, 1, 1, 1),
