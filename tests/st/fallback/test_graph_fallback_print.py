@@ -513,7 +513,7 @@ def test_print_exception():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -538,7 +538,8 @@ def test_print_joinedstr():
         sys.stdout.flush()
         time.sleep(0.1)
 
-    patterns = {"Tensor(x): [1 2 3 4 5], dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
+    patterns = {"Tensor(x): Tensor(shape=[5], dtype=Int64, value=[1 2 3 4 5]),"
+                " dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
     check_output(cap.output, patterns)
 
 
