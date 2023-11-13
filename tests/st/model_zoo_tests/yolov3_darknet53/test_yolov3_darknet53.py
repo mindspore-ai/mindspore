@@ -91,7 +91,6 @@ class TimeMonitor(Callback):
 DATA_DIR = "/home/workspace/mindspore_dataset/coco/coco2014/"
 
 
-@pytest.mark.skip(reason="dyn-shape-dev-bug")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
