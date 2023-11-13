@@ -49,7 +49,7 @@ class AclnnKernelMod : public KernelMod {
   void SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
   void SetOutputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
 
-  void ParseGenExecutor(const std::tuple<aclOpExecutor *, CallBackFunc> &args);
+  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
   virtual void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   }
   bool IsNeedRetrieveOutputShape() override { return false; }
@@ -58,11 +58,11 @@ class AclnnKernelMod : public KernelMod {
   void UpdateWorkspace(const uint64_t workspace_size);
 
   void RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
-  void RunOpAsync(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
+  void RunOpSync(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
 
  protected:
   aclOpExecutor *executor_{nullptr};
-  CallBackFunc after_launch_func_{nullptr};
+  CallBackFunc release_func_{nullptr};
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
