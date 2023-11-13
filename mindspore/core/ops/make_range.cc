@@ -77,9 +77,7 @@ abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, con
   AbstractBasePtrList args;
   if (start <= stop) {
     if (step <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', when the argument 'start' " << start
-                        << " is less than or equal to the argument 'stop' " << stop << ", "
-                        << "the argument 'step' must be greater than 0, but the argument 'step' is " << step << ".";
+      return std::make_shared<abstract::AbstractTuple>(args);
     }
 
     for (int64_t i = start; i < stop; i += step) {
@@ -91,10 +89,7 @@ abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, con
     }
   } else {
     if (step >= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', while the argument 'start' " << start
-                        << " is greater than the argument "
-                        << "'stop' " << stop << ", the argument 'step' must be less than 0, "
-                        << "but the argument 'step' is " << step << ".";
+      return std::make_shared<abstract::AbstractTuple>(args);
     }
 
     for (int64_t i = start; i > stop; i += step) {

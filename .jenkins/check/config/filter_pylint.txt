@@ -228,6 +228,7 @@
 "mindspore/tests/st/ops/dynamic_shape/"                                                                 "too-many-arguments"
 "mindspore/tests/st/ops/dynamic_shape/"                                                                 "too-many-locals"
 "mindspore/tests/ut/python/graph_syntax/test_invalid_attribute.py"                                      "misplaced-bare-raise"
+"mindspore/tests/st/fallback/test_graph_fallback_runtime_is_isnot.py"                                   "iteral-comparison"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
