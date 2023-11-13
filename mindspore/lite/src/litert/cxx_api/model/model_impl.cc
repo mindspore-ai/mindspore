@@ -974,13 +974,17 @@ bool ModelImpl::IsValidDoubleNum(const std::string &num_str) {
 }
 
 int ModelImpl::ModelDeObfuscate() {
-  float obf_ratio = 0.0;
+  float obf_ratio = -1.0;
   auto iter = config_info_.find(kBuildSection);
   if (iter != config_info_.end()) {
     auto item_runner = iter->second.find(kObfRatioKey);
     if (item_runner != iter->second.end()) {
       if (IsValidDoubleNum(iter->second.at(kObfRatioKey))) {
-        obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+        float candidate_obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+        if (!lite::FloatCompare(candidate_obf_ratio, 1.0) && !lite::FloatCompare(candidate_obf_ratio, 0.0)) {
+          // obtain legal obf_ratio
+          obf_ratio = candidate_obf_ratio;
+        }
       } else {
         MS_LOG(ERROR) << "Obfuscate ratio should be float but got " << iter->second.at(kObfRatioKey);
         return RET_ERROR;
