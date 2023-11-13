@@ -2282,20 +2282,6 @@ class Stack(PrimitiveWithInfer):
                'dtype': x_type[0],
                'value': infered_value}
 
-        def unpack(x):
-            if isinstance(x, (tuple, list)) and len(x) == 1:
-                return unpack(x[0])
-            return x
-
-        if 'shape_value' in value and value['shape_value'] is not None:
-            input_shape_value = []
-            for item in value['shape_value']:
-                item = unpack(item)
-                item = np.array(item)
-                input_shape_value.append(item)
-            infered_shape_value = np.stack(input_shape_value, axis=self.axis)
-            infered_shape_value = tuple(infered_shape_value.tolist())
-            out['shape_value'] = infered_shape_value
         return out
 
 
@@ -2747,24 +2733,6 @@ class StridedSlice(PrimitiveWithInfer):
             init_func.__enable_zero_dim__ = True
             value = Tensor(dtype=x['dtype'].element_type(), shape=ret_shape, init=init_func)
 
-        if "max_value" in x and "min_value" in x:
-            validator.check_value_type("min_value", x["min_value"], [tuple, list], self.name)
-            validator.check_value_type("max_value", x["max_value"], [tuple, list], self.name)
-            max_value_slice = self._compute_dynamic_slicing_value(x["max_value"], begin_v, end_v, strides_v)
-            min_value_slice = self._compute_dynamic_slicing_value(x["min_value"], begin_v, end_v, strides_v)
-            return {'shape': ret_shape,
-                    'dtype': x['dtype'],
-                    'value': value,
-                    'max_value': max_value_slice,
-                    'min_value': min_value_slice}
-
-        if "shape_value" in x:
-            validator.check_value_type("shape_value", x["shape_value"], [tuple], self.name)
-            shape_value_slice = self._compute_dynamic_slicing_value(x["shape_value"], begin_v, end_v, strides_v)
-            return {'shape': ret_shape,
-                    'dtype': x['dtype'],
-                    'shape_value': shape_value_slice,
-                    'value': value}
         return {'shape': ret_shape,
                 'dtype': x['dtype'],
                 'value': value}
@@ -3014,14 +2982,6 @@ class StridedSlice(PrimitiveWithInfer):
     def _check_and_get_value(self, slice_input, name):
         """Check begin, end, strides. Get its length and value."""
         slice_value = slice_input['value']
-        slice_min = None
-        slice_max = None
-        slice_special_value = None
-        if "min_value" in slice_input and "max_value" in slice_input:
-            slice_min = slice_input["min_value"]
-            slice_max = slice_input["max_value"]
-        elif "shape_value" in slice_input:
-            slice_special_value = slice_input["shape_value"]
         if slice_value is None:
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int32, mstype.int64], self.name)
             slice_shape = slice_input['shape']
@@ -3031,9 +2991,6 @@ class StridedSlice(PrimitiveWithInfer):
             # not support scalar
             slices = {
                 'value': slice_value,
-                'shape_value': slice_special_value,
-                'min_value': slice_min,
-                'max_value': slice_max
             }
             return slices, slice_shape[0]
 
@@ -3054,9 +3011,6 @@ class StridedSlice(PrimitiveWithInfer):
 
         slices = {
             'value': slice_value,
-            'shape_value': slice_special_value,
-            'min_value': slice_min,
-            'max_value': slice_max
         }
         return slices, len(slice_value)
 
@@ -5580,39 +5534,11 @@ class TensorScatterUpdate(_TensorScatterOp):
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def _infer_specified_value(self, input_x_value, indices_value, updates_value):
-        """Calculate min/max value for output of TensorScatterUpdate op"""
-        if isinstance(input_x_value, tuple):
-            input_x_value = list(input_x_value)
-        if isinstance(input_x_value, (Tensor, Tensor_)):
-            input_x_value = input_x_value.asnumpy()
-        if indices_value is None or updates_value is None:
-            return None
-        if isinstance(indices_value, (Tensor, Tensor_)):
-            indices_value = indices_value.asnumpy()
-        if isinstance(updates_value, (Tensor, Tensor_)):
-            updates_value = updates_value.asnumpy()
-        input_x = np.array(input_x_value)
-        updates = np.array(updates_value)
-        for i, indice in enumerate(indices_value):
-            input_x[indice] = updates[i]
-        output = tuple(input_x.tolist())
-        return output
-
-    def _infer_min_value(self, input_x_value, indices_value, updates_value):
-        return self._infer_specified_value(input_x_value, indices_value, updates_value)
-
-    def _infer_max_value(self, input_x_value, indices_value, updates_value):
-        return self._infer_specified_value(input_x_value, indices_value, updates_value)
-
     def infer_dtype(self, input_x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
         args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return input_x_dtype
-
-    def _infer_shape_value(self, input_x_value, indices_value, updates_value):
-        return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
 
 class TensorScatterMax(Primitive):

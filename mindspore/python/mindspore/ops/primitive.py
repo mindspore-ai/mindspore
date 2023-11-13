@@ -657,43 +657,6 @@ class PrimitiveWithInfer(Primitive):
             # fn may return None
             out[track] = fn(*(x[track] for x in args))
 
-        # output does not contain dynamic shape, no need to calculate min/max shape
-
-        def has_dynamic_shape(shp):
-            if isinstance(shp, int):
-                return shp < 0
-            if isinstance(shp, (list, tuple)):
-                return any(has_dynamic_shape(e) for e in shp)
-            return False
-
-        # calculate min/max value for output
-        def get_specified_value(elems, attr):
-            has_specified_value = False
-            ret_vals = []
-            for elem in elems:
-                if attr in elem:
-                    has_specified_value = True
-                    ret_vals.append(elem[attr])
-                else:
-                    ret_vals.append(elem['value'])
-            return has_specified_value, tuple(ret_vals)
-
-        has_min_value, min_values = get_specified_value(args, 'min_value')
-        has_max_value, max_values = get_specified_value(args, 'max_value')
-        if has_min_value and has_max_value:
-            if hasattr(self, '_infer_min_value'):
-                fn_infer_min_value = getattr(self, '_infer_min_value')
-                out['min_value'] = fn_infer_min_value(*min_values)
-            if hasattr(self, '_infer_max_value'):
-                fn_infer_max_value = getattr(self, '_infer_max_value')
-                out['max_value'] = fn_infer_max_value(*max_values)
-        has_shape_value, shape_values = get_specified_value(args, 'shape_value')
-        if has_shape_value and hasattr(self, '_infer_shape_value') and not None in shape_values:
-            fn_infer_shape_value = getattr(self, '_infer_shape_value')
-            out['shape_value'] = fn_infer_shape_value(*shape_values)
-        if not has_dynamic_shape(out['shape']):
-            return out
-
         return out
 
 
