@@ -778,6 +778,13 @@ void TrainSession::CompileOptimizedKernels() {
 }
 
 int TrainSession::FindConstFoldedKernels() {
+  float obf_ratio = ModelRecoverObfuscate();
+  if (obf_ratio != 1.0) {
+    MS_LOG(INFO) << "obfuscated model do not need const folding.";
+    const_fold_kernels_ = this->inference_kernels_;
+    const_output_tensors_ = {};
+    return RET_OK;
+  }
   const_fold_kernels_.clear();
   const_output_tensors_.clear();
   for (auto kernel : this->inference_kernels_) {
