@@ -104,7 +104,7 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
 
   // Ascend ON_THE_FLY quant only support Gather followed by BatchMatMul or MatMul.
   if (ascend_backend_ && dequant_strategy_ == ON_THE_FLY && opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
-    auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+    auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimFFN};
     if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
       MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
                    << cnode->fullname_with_scope() << " dont need weight quant";
