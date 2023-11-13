@@ -46,7 +46,7 @@ class AscendDistributeFakeQuantTransform {
   std::vector<schema::QuantParamT> CalQuantParam(const tensor::TensorPtr &min_value, const tensor::TensorPtr &max_value,
                                                  bool symmetric = false);
 
-  int InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph);
+  int InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph, bool holder = false);
 
   int MatMulWeightTranspose(const FuncGraphPtr &func_graph);
 
