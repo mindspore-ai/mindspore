@@ -65,9 +65,12 @@ class OptGuard {
   /// \brief return the description for the guard
   virtual std::string GetDescript();
   virtual void UpdateConfig(const std::map<std::string, bool> &config);
+  virtual void Backup();
+  virtual void Rollback();
 
  protected:
   std::vector<GuardItemPtr> guardList_;
+  std::vector<GuardItemPtr> backupList_;
   std::map<std::string, bool> config_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;

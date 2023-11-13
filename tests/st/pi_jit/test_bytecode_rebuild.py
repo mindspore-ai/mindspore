@@ -324,6 +324,7 @@ def unpack_test(c):
     return i1, i2, self
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

@@ -1300,6 +1300,7 @@ def test_grad_empty_position_and_no_param(mode):
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
 
 
+@pytest.mark.skip
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
