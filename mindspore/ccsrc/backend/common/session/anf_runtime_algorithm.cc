@@ -1495,53 +1495,6 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   return true;
 }
 
-static inline void GetDefaultShape(ShapeVector *device_shape) {
-  auto ConvertNegOneToDefault = [](int64_t size) {
-    constexpr int64_t kDefaultValueForDynamicDim = 16;
-    return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
-  };
-  auto tmp_shape = *device_shape;
-  (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefault);
-}
-
-// This function get input device shape adaptively in case of dynamic shape and static shape.
-// when shape is dynamic, it firstly get shape value from max_shape. If max_shape is empty, it
-// just return default shape value to avoid calculating error in init of kernels.
-// why do we do this? Because in dynamic shape case, the input shape is unknown when the `init`
-// function executes at the very first time, but we still need to  some helpful shape to make
-// sure the `init` executes correctly.
-ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
-  auto device_shape = GetInputDeviceShape(anf_node, index);
-  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsDynamic(device_shape)) {
-    GetDefaultShape(&device_shape);
-  }
-
-  return device_shape;
-}
-
-// The same to GetInputDeviceShapeAdaptively
-ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto device_shape = GetOutputDeviceShape(anf_node, index);
-  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsDynamic(device_shape)) {
-    GetDefaultShape(&device_shape);
-  }
-
-  return device_shape;
-}
-
-ShapeVector AnfRuntimeAlgorithm::GetDeviceShapeAdaptively(const ShapeVector &shape) {
-  auto device_shape = shape;
-  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsDynamic(device_shape)) {
-    GetDefaultShape(&device_shape);
-  }
-
-  return device_shape;
-}
-
 KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &func_graph = node->func_graph();

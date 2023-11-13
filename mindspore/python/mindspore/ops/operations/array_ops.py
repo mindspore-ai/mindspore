@@ -2798,20 +2798,6 @@ class StridedSlice(PrimitiveWithInfer):
                 slicing_length = 1 + (end + 1 - begin) // stride
         return slicing_length
 
-    @staticmethod
-    def _get_slice_value(begin_v, end_v, strides_v):
-        """Get the slice value from value or shape_value."""
-        begin_value = begin_v['value']
-        end_value = end_v['value']
-        strides_value = strides_v['value']
-        if begin_value is None:
-            begin_value = begin_v['shape_value']
-        if end_value is None:
-            end_value = end_v['shape_value']
-        if strides_value is None:
-            strides_value = strides_v['shape_value']
-        return begin_value, end_value, strides_value
-
     def _is_none_in_tuple(self, x):
         return isinstance(x, tuple) and None in x
 
@@ -2940,8 +2926,9 @@ class StridedSlice(PrimitiveWithInfer):
         ret_shape = []
         i, j = 0, 0
         slice_has_special_value = False
-        begin_value, end_value, strides_value = self._get_slice_value(
-            begin_v, end_v, strides_v)
+        begin_value = begin_v['value']
+        end_value = end_v['value']
+        strides_value = strides_v['value']
         is_dynamic_tuple = (self._is_none_in_tuple(begin_value)
                             or self._is_none_in_tuple(end_value)
                             or self._is_none_in_tuple(strides_value))

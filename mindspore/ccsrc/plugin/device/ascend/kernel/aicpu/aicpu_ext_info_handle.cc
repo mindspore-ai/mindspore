@@ -219,32 +219,6 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const ke
   return UpdateShapeAndType(input_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
-bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node) {
-  if (output_index >= output_num_) {
-    MS_LOG(ERROR) << "output_index:" << output_index << " >= output_num_:" << output_num_ << ", node: " << node_name_;
-    return false;
-  }
-
-  auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
-  auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, output_index);
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (i < max_shape.size() && shape[i] == abstract::Shape::kShapeDimAny) {
-      MS_LOG(INFO) << "Node:" << node_name_ << " update shape from kShapeDimAny to " << max_shape[i];
-      shape[i] = max_shape[i];
-    }
-  }
-
-  if (output_index >= output_shape_and_type_.size()) {
-    MS_LOG(ERROR) << "Invalid output_index: " << output_index
-                  << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
-    return false;
-  }
-  if (shape.empty()) {
-    shape = {1};
-  }
-  return UpdateShapeAndType(shape, NOT_NULL(output_shape_and_type_[output_index]));
-}
-
 bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const kernel::KernelTensor *kernel_tensor) {
   auto output_shape = kernel_tensor->GetShapeVector();
   if (output_index >= output_shape_and_type_.size()) {

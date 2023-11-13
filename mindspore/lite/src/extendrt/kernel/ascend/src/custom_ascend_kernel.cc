@@ -267,7 +267,7 @@ void CustomAscendKernelMod::UpdateOutputKernelTensorInfo() {
     auto &output = outputs_[i];
     output->SetShapeVector(shapes[i]);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), output->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract, output->GetDeviceShapeAdaptively()};
+    TensorInfo tensor_info{formats[i], new_abstract};
     output->SetTensorInfo(tensor_info);
   }
   return;
@@ -289,7 +289,7 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
     auto &input = inputs_[i];
     input->SetShapeVector(shapes[i]);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract, input->GetDeviceShapeAdaptively()};
+    TensorInfo tensor_info{formats[i], new_abstract};
     input->SetTensorInfo(tensor_info);
   }
 }

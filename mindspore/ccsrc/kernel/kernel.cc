@@ -600,16 +600,6 @@ void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
   info.base_->set_shape(base_shape);
 }
 
-const std::vector<int64_t> &KernelTensor::GetDeviceShapeAdaptively() const {
-  const TensorInfo &info = std::get<TensorInfo>(meta_);
-  return info.device_shape_adaptively;
-}
-
-void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_shape_adaptively) {
-  TensorInfo &info = std::get<TensorInfo>(meta_);
-  info.device_shape_adaptively = device_shape_adaptively;
-}
-
 int KernelMod::Resize(const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   return Resize(this->op_, this->inputs_, this->outputs_, inputsOnHost);
 }

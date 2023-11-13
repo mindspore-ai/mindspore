@@ -331,7 +331,6 @@ void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
 
       auto abstract = parameter->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      // Shape contain max_shape and min_shape.
       auto shape = abstract->BuildShape();
       auto new_abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(address->type_id()), shape);
       parameter->set_abstract(new_abs);
