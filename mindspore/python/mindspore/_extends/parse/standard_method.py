@@ -2783,6 +2783,8 @@ def enumerate_(x, start=0):
     x_type = F.typeof(x)
     ret = ()
     op_name = "enumerate"
+    if isinstance(x, (int, float, bool)):
+        raise TypeError(f"For 'enumerate', the 'first input' should be tuple or list or tensor, but got {type(x)}.")
     if check_is_const_int(start, op_name, "start"):
         if check_is_tensor(x_type):
             for i in range(x.shape[0]):
@@ -3216,15 +3218,6 @@ def check_is_tensor(x):
     if isinstance(x, mstype.TensorType):
         return True
     return False
-
-
-@constexpr
-def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
-    """check whether x is list or tuple or tensor."""
-    if isinstance(x, (mstype.List, mstype.Tuple, mstype.TensorType)):
-        return True
-    raise TypeError(
-        f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 
 
 def check_is_const_int(x, op_name, arg_name):
