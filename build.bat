@@ -22,6 +22,7 @@ echo Start build at: %date% %time%
 
 SET BASE_PATH=%CD%
 SET BUILD_PATH=%BASE_PATH%/build
+SET FFMPEG_DLL_PATH=%BASE_PATH%\build\mindspore\ffmpeg_lib
 
 SET threads=8
 SET ENABLE_GITEE=OFF
@@ -29,6 +30,7 @@ SET ENABLE_MSVC=OFF
 set BUILD_TYPE=Release
 set VERSION_STR=''
 set ENABLE_AKG=OFF
+set ENABLE_FFMPEG=OFF
 for /f "tokens=1" %%a in (version.txt) do (set VERSION_STR=%%a)
 
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
@@ -88,6 +90,9 @@ IF "%1%" == "lite" (
         SET CMAKE_ARGS=!CMAKE_ARGS! -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MODE=ON
         set BUILD_TYPE=Debug
     )
+    IF ON == %ENABLE_FFMPEG% (
+        call %BASE_PATH%\cmake\external_libs\ffmpeg.bat
+    )
     cmake !CMAKE_ARGS! -G Ninja ../..
 )
 
@@ -119,7 +124,13 @@ EXIT /b 0
              rd /s /q _CPack_Packages
         )
     )
+    IF EXIST "%FFMPEG_DLL_PATH%" (
+        rd /s /q %FFMPEG_DLL_PATH%
+    )
     cd %BASE_PATH%
 
 @echo off
+IF EXIST "%FFMPEG_DLL_PATH%" (
+        rd /s /q %FFMPEG_DLL_PATH%
+    )
 echo End build at: %date% %time%
