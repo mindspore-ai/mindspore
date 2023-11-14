@@ -41,119 +41,11 @@ class Net(Cell):
 def test_batchmatmul_acl_dynamic_shape():
     """
     Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 128, 64] and [1, 16, 64, 64], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 128, 64).astype(np.float32)
-    inputb = np.random.randn(1, 16, 64, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape1():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
     Description: Input Tensor with [1, 16, 128, 128] and [1, 16, 128, 64], run in ascend.
     Expectation: print output x.
     """
     inputa = np.random.randn(1, 16, 128, 128).astype(np.float32)
     inputb = np.random.randn(1, 16, 128, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape2():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 128, 32] and [1, 16, 32, 64], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 128, 32).astype(np.float32)
-    inputb = np.random.randn(1, 16, 32, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape3():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 128, 256] and [1, 16, 256, 64], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 128, 256).astype(np.float32)
-    inputb = np.random.randn(1, 16, 256, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape4():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 128, 512] and [1, 16, 512, 64], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 128, 512).astype(np.float32)
-    inputb = np.random.randn(1, 16, 512, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape5():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 64, 512] and [1, 16, 512, 64], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 64, 512).astype(np.float32)
-    inputb = np.random.randn(1, 16, 512, 64).astype(np.float32)
-    dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
-    net = Net()
-    net.set_inputs(dynamic_a, dynamic_b)
-    net(Tensor(inputa), Tensor(inputb))
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_batchmatmul_acl_dynamic_shape6():
-    """
-    Feature: Test acl call with pynative mode and dynamic shape.
-    Description: Input Tensor with [1, 16, 128, 512] and [1, 16, 512, 128], run in ascend.
-    Expectation: print output x.
-    """
-    inputa = np.random.randn(1, 16, 128, 512).astype(np.float32)
-    inputb = np.random.randn(1, 16, 512, 128).astype(np.float32)
     dynamic_a = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
     dynamic_b = Tensor(shape=[1, 16, None, None], dtype=mindspore.float32)
     net = Net()
