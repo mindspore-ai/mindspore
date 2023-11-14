@@ -44,22 +44,7 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
                       << anf_node->fullname_with_scope() << "] failed.";
   }
 
-  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
-  MS_EXCEPTION_IF_NULL(build_info);
-  auto input_types = build_info->GetAllInputDeviceTypes();
-  auto output_types = build_info->GetAllOutputDeviceTypes();
-  ShapeArray input_shapes;
-  ShapeArray output_shapes;
-  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(anf_node); ++i) {
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, i);
-    input_shapes.push_back(std::move(shape));
-  }
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf_node); ++i) {
-    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
-    output_shapes.push_back(shape);
-  }
-  kernel_ptr->SetInputsInfo(input_types, input_shapes);
-  kernel_ptr->SetOutputsInfo(output_types, output_shapes);
+  kernel_ptr->SetDTypes(opname);
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);

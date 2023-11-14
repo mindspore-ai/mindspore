@@ -98,29 +98,18 @@ void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *
   }
 }
 
-void AclnnKernelMod::SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes) {
-  input_size_list_.resize(type_ids.size());
-  if (type_ids.size() != shapes.size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Aclnn kernel's input type size is not equal with shape size:" << shapes.size()
-                               << " and type's size:" << type_ids.size();
+void AclnnKernelMod::SetDTypes(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(WARNING) << "Not find op:" << op_name << " in OpDef. The inputs/outputs types maybe empty.";
+    return;
   }
-  input_size_list_.resize(type_ids.size(), 0);
-}
-
-void AclnnKernelMod::SetOutputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes) {
-  if (type_ids.size() != shapes.size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Aclnn kernel's output type size is not equal with shape size:" << shapes.size()
-                               << " and type's size:" << type_ids.size();
-  }
-  output_size_list_.resize(type_ids.size());
-  for (size_t i = 0; i < type_ids.size(); i++) {
-    size_t type_size = GetTypeByte(TypeIdToType(type_ids[i]));
-    size_t tensor_size = shapes[i].empty()
-                           ? type_size
-                           : std::accumulate(shapes[i].begin(), shapes[i].end(), type_size, std::multiplies<size_t>());
-    tensor_size = std::max(tensor_size, type_size);
-    output_size_list_[i] = tensor_size;
-  }
+  auto &args = op_def->args_;
+  auto &returns = op_def->returns_;
+  (void)std::transform(args.begin(), args.end(), std::back_inserter(inputs_dtypes_),
+                       [](const mindspore::ops::OpArg &arg) { return arg.arg_dtype_; });
+  (void)std::transform(returns.begin(), returns.end(), std::back_inserter(outputs_dtypes_),
+                       [](const mindspore::ops::OpArg &arg) { return arg.arg_dtype_; });
 }
 
 }  // namespace kernel
