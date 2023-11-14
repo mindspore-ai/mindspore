@@ -14,13 +14,9 @@
 # ============================================================================
 """msprof PROF data export api file"""
 import os
-import shutil
-from collections import defaultdict
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
-import csv
 from mindspore import log as logger
-from mindspore.profiler.common.util import get_file_path
 
 
 class AscendMsprofExporter:
@@ -56,70 +52,35 @@ class AscendMsprofExporter:
 
         self._check_msprof_env()
 
-    def export(self, model_iteration_dict=None, kind=4):
+    def export(self):
         """start_time is the time to collect PROF data"""
 
-        if not model_iteration_dict:
-            model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
-
-        if model_iteration_dict:
-            for model_id, value in model_iteration_dict.items():
-                max_iteration = max(value)
-                if max_iteration <= kind:
-                    for iteration_id in value:
-                        msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
-                        self._run_cmd(msprof_export_cmd)
-                else:
-                    msprof_export_cmd_summary, msprof_export_cmd_timeline \
-                        = self._msprof_command_generator_tmp(self.prof_root_dir, model_id, max_iteration)
-                    self._run_cmd(msprof_export_cmd_summary)
-                    self._run_cmd(msprof_export_cmd_timeline)
-            self._check_export_files(self.source_path, model_iteration_dict)
+        msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir)
+        self._run_cmd(msprof_export_cmd)
+        self._check_export_files(self.source_path)
 
     def _run_cmd(self, cmd, raise_error=True):
         """run shell command"""
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
-            raise RuntimeError(exc)
+            raise RuntimeError(exc) from exc
         try:
             outs, errs = proc.communicate(timeout=self._time_out)
-        except TimeoutExpired:
+        except TimeoutExpired as err:
             proc.kill()
             msg = "The possible cause is that too much data is collected " \
                   "and the export time is too long."
             logger.error(msg)
-            raise TimeoutError(msg)
+            raise TimeoutError(msg) from err
         logger.info(outs)
         if raise_error and errs != "":
             raise RuntimeError(errs)
         return outs
 
-    def _msprof_command_generator(self, output, model_id=None, iter_id=None):
+    def _msprof_command_generator(self, output):
         """msprof export helper"""
-        export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
-        if isinstance(model_id, int) and model_id >= 0:
-            export_cmd.append("--model-id={}".format(model_id))
-        if isinstance(iter_id, int) and iter_id >= 0:
-            export_cmd.append("--iteration-id={}".format(iter_id))
-        return export_cmd
-
-    def _msprof_command_generator_tmp(self, output, model_id=None, iter_count=None):
-        """msprof export helper"""
-        export_cmd_summary = ["python",
-                              "/usr/local/Ascend/latest/toolkit/tools/profiler/profiler_tool/analysis/msprof/msprof.py",
-                              "export", "summary", "-dir", output]
-        export_cmd_timeliine = ["python",
-                                "/usr/local/Ascend/latest/toolkit/tools/profiler/profiler_tool/"
-                                "analysis/msprof/msprof.py",
-                                "export", "timeline", "-dir", output]
-        if isinstance(model_id, int) and model_id >= 0:
-            export_cmd_summary.extend(["--model-id", str(model_id)])
-            export_cmd_timeliine.extend(["--model-id", str(model_id)])
-        if isinstance(iter_count, int) and iter_count >= 0:
-            export_cmd_summary.extend(["--iteration-count", str(iter_count)])
-            export_cmd_timeliine.extend(["--iteration-count", str(iter_count)])
-        return export_cmd_summary, export_cmd_timeliine
+        return [self._msprof_cmd, "--export=on", "--output={}".format(output)]
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""
@@ -161,46 +122,7 @@ class AscendMsprofExporter:
 
         logger.info("The msprof command has been added to the path!")
 
-    def _generate_step_trace(self, prof_path, device_path):
-        """"generate model_id iteration_id dict"""
-
-        summary_path = os.path.join(device_path, self._summary_dir)
-        timeline_path = os.path.join(device_path, self._timeline_dir)
-
-        msprof_export_cmd = self._msprof_command_generator(prof_path)
-        self._run_cmd(msprof_export_cmd)
-
-        if not os.path.isdir(summary_path):
-            msg = "Path {} is not a existing directory. Make sure there is " \
-                  "valid profiling data directory!".format(summary_path)
-            raise FileNotFoundError(msg)
-
-        step_trace_file = get_file_path(summary_path, self._step_trace_mark)
-
-        if not step_trace_file:
-            logger.info("Do not found step trace csv file in {} .".format(summary_path))
-            return None
-
-        step_trace = defaultdict(list)
-        with open(step_trace_file, newline='', mode='r') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            header = next(reader)
-            for index, value in enumerate(header):
-                if value == 'Model ID':
-                    Model_ID = index
-                if value == 'Iteration ID':
-                    Iteration_ID = index
-            for row in reader:
-                step_trace[int(row[Model_ID])].append(int(row[Iteration_ID]))
-
-        if os.path.isdir(summary_path):
-            shutil.rmtree(summary_path)
-        if os.path.isdir(timeline_path):
-            shutil.rmtree(timeline_path)
-
-        return step_trace
-
-    def _check_export_files(self, source_path, step_trace):
+    def _check_export_files(self, source_path):
         """Check the existence of op_summary & op_statistic files."""
         summary_path = os.path.join(source_path, self._summary_dir)
         if not os.path.isdir(summary_path):
@@ -219,19 +141,4 @@ class AscendMsprofExporter:
             raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
         if not op_statistic:
             raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
-
-        device_id = source_path.split('_')[-1].replace("/", "")
-
-        for model_id, value in step_trace.items():
-            for iteration_id in value:
-                tag = f"_{device_id}_{model_id}_{iteration_id}.csv"
-                op_summary_file_name = self._op_summary_mark + tag
-                op_statistic_file = self._op_statistic_mark + tag
-                if op_summary_file_name not in op_summary:
-                    logger.warning("[Profiler]The file {} was not found, " \
-                                   "perhaps the original data was not collected.".format(op_summary_file_name))
-                if op_statistic_file not in op_statistic:
-                    logger.warning("[Profiler]The file {} was not found, " \
-                                   "perhaps the original data was not collected.".format(op_statistic_file))
-
         logger.info("Finish checking files.")
