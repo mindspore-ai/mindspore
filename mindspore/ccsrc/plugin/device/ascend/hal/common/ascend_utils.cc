@@ -254,9 +254,6 @@ const std::map<std::string, std::string> kAscendSocVersions = {
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
-  // set default backed to GE, and use RefMode as default, should delete when merge to master
-  common::SetEnv("MS_ENABLE_GE", "1");
-  common::SetEnv("MS_ENABLE_REF_MODE", "1");
   // for 1951, if is_heterogenous, return true
   int32_t is_heterogenous = 0;
   (void)rtGetIsHeterogenous(&is_heterogenous);
