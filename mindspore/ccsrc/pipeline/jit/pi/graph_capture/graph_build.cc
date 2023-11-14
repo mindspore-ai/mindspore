@@ -1619,9 +1619,16 @@ static py::object GetPIJitCopiedFunc(const py::object &func, const std::string &
 // build sub-graph
 StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                             GraphBuilder *subgraph) {
+  auto code = subgraph->GetGraph()->GetGuard();
+  if (code != nullptr) {
+    code->GetGuard()->Backup();
+  }
   StopTraceReason break_graph = subgraph->BuildGraph(depth + 1);
 
   if (!ApplyInlinePolicy(subgraph->GetGraph())) {
+    if (code != nullptr) {
+      code->GetGuard()->Rollback();
+    }
     call_node->SetInlineReason(InlineReason::kInlinePolicyDisabled);
     if (subgraph->GetGraph()->GetRetVal()) {
       call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());

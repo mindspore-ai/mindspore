@@ -134,6 +134,19 @@ PyObject *RootTrace::Retrieve(PTraceContext context) {
       Py_DECREF(key);
       return ret;
     }
+    case TraceType::Deref: {
+      PyObject *cell = context->f_localsplus[context->f_code->co_nlocals + idx_];
+      if (cell != nullptr && cell != Py_None) {
+        ret = PyCell_GET(cell);
+        Py_XINCREF(ret);
+      }
+      return ret;
+    }
+    case TraceType::Closure: {
+      ret = context->f_localsplus[context->f_code->co_nlocals + idx_];
+      Py_XINCREF(ret);
+      return ret;
+    }
     case TraceType::BuiltIn: {
       MS_EXCEPTION_IF_CHECK_FAIL(name_.size() > 0, "check trace");
       PyObject *key = PyUnicode_FromString(name_.c_str());
@@ -172,6 +185,12 @@ std::string RootTrace::ToString() {
       } else {
         ret = "f_globals[" + name_ + "]";
       }
+      break;
+    case TraceType::Deref:
+      ret = "f_freevars[" + std::to_string(idx_) + "]";
+      break;
+    case TraceType::Closure:
+      ret = "f_closure[" + std::to_string(idx_) + "]";
       break;
     case TraceType::BuiltIn:
       ret = "f_builtins";
@@ -714,8 +733,8 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                   start = objs[0];
                                                   return PySlice_New(start, stop, step);
                                                 }}},
-  {LOAD_CLOSURE, {ByteCodeUnsupported, nullptr}},
-  {LOAD_DEREF, {ByteCodeUnsupported, nullptr}},
+  {LOAD_CLOSURE, {ByteCodeSupported, nullptr}},
+  {LOAD_DEREF, {ByteCodeSupported, nullptr}},
   {STORE_DEREF, {ByteCodeUnsupported, nullptr}},
   {DELETE_DEREF, {ByteCodeUnsupported, nullptr}},
   {CALL_FUNCTION_KW, {ByteCodeSupported, nullptr}},
@@ -1026,6 +1045,10 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
     }
   }
   switch (opcode) {
+    case LOAD_CLOSURE:
+      return std::make_shared<RootTrace>(obj, TraceType::Closure, opargs, name, module_name);
+    case LOAD_DEREF:
+      return std::make_shared<RootTrace>(obj, TraceType::Deref, opargs, name, module_name);
     case LOAD_GLOBAL:
       return std::make_shared<RootTrace>(obj, TraceType::Global, opargs, name, module_name);
     case LOAD_CONST:

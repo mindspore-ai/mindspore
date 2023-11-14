@@ -342,6 +342,16 @@ void OptGuard::UpdateConfig(const std::map<std::string, bool> &config) {
     }
   }
 }
+
+void OptGuard::Backup() {
+  backupList_.clear();
+  backupList_.insert(backupList_.begin(), guardList_.begin(), guardList_.end());
+}
+
+void OptGuard::Rollback() {
+  backupList_.swap(guardList_);
+  backupList_.clear();
+}
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore
