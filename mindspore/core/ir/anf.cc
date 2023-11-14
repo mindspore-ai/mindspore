@@ -56,11 +56,7 @@ std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_no
 }
 
 void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
-  if (!IS_OUTPUT_ON(mindspore::kDebug)) {
-    return;
-  }
-
-  if (inputs.empty()) {
+  if (!IS_OUTPUT_ON(mindspore::kDebug) || inputs.empty()) {
     return;
   }
 

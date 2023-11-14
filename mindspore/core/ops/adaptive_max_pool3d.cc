@@ -61,8 +61,8 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  ShapeVector out_shape = x_shape;
   if (IsDynamic(output_size_shape)) {
-    auto out_shape = x_shape;
     for (size_t i = LongToSize(SizeToLong(out_shape.size()) - kOutputSizeNumElem); i < out_shape.size(); ++i) {
       out_shape[i] = abstract::Shape::kShapeDimAny;
     }
@@ -78,13 +78,12 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
 
   auto output_size_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(output_size_value);
-  if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType && IsValueKnown(output_size_value)) {
-    auto output_size_type = input_args[1]->GetType();
-    MS_EXCEPTION_IF_NULL(output_size_type);
+  auto output_size_type = input_args[1]->GetType();
+  MS_EXCEPTION_IF_NULL(output_size_type);
+  if (output_size_type->object_type() == kObjectTypeTensorType && IsValueKnown(output_size_value)) {
     auto output_size =
       CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name, output_size_type);
 
-    ShapeVector out_shape = x_shape;
     for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
       if (output_size[LongToSize(kOutputSizeNumElem - i)] <= 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -93,16 +92,13 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
       }
       out_shape[LongToSize(input_num_dims - i)] = output_size[LongToSize(kOutputSizeNumElem - i)];
     }
-    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   } else {
     const size_t kDHWDims = 3;
-    std::vector<int64_t> out_shape = x_shape;
     for (int64_t i = out_shape.size() - kDHWDims; i < SizeToLong(out_shape.size()); ++i) {
       out_shape[LongToSize(i)] = abstract::Shape::kShapeDimAny;
     }
-    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   }
-
+  out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
 }
 

@@ -29,6 +29,19 @@
 
 namespace mindspore {
 namespace opt {
+bool CheckShapeInvalid(const AnfNodePtr &bias_add, const AnfNodePtr &node) {
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(bias_add, 0);
+  auto bias_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(bias_add, 1);
+  if (bias_shape.size() > 1 || x_shape.size() <= 1 || bias_shape[0] != x_shape[1]) {
+    return false;
+  }
+  auto residual_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  if (residual_shape != x_shape) {
+    return false;
+  }
+  return true;
+}
+
 const BaseRef BiasDropoutAddFusion::DefinePattern() const {
   auto dropout = VectorRef({prim::kPrimDropout, VectorRef({prim::kPrimAdd, x_, bias_}), keep_prob_, seed0_, seed1_});
   auto get_item = VectorRef({prim::kPrimTupleGetItem, dropout, index_});
@@ -55,13 +68,7 @@ const AnfNodePtr BiasDropoutAddFusion::Process(const FuncGraphPtr &graph, const 
   auto bias_add = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), 0);
   MS_EXCEPTION_IF_NULL(bias_add);
 
-  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(bias_add, 0);
-  auto bias_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(bias_add, 1);
-  if (bias_shape.size() > 1 || x_shape.size() <= 1 || bias_shape[0] != x_shape[1]) {
-    return nullptr;
-  }
-  auto residual_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  if (residual_shape != x_shape) {
+  if (!CheckShapeInvalid(bias_add, node)) {
     return nullptr;
   }
 

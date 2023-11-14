@@ -421,6 +421,25 @@ std::vector<abstract::AbstractBasePtr> GetInputKernelTensorsForInfer(const std::
 
 std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
                                                               const device::DeviceContext *device_context,
+                                                              size_t workspace_size, size_t workspace_sizes) {
+  std::vector<kernel::KernelTensor *> workspaces;
+  for (size_t i = 0; i < workspace_size && i < workspace_sizes; ++i) {
+    auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
+    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_address->GetPtr() == nullptr &&
+        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+    }
+    (void)workspaces.emplace_back(device_address->kernel_tensor().get());
+    MS_EXCEPTION_IF_NULL(workspaces.back());
+    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
+                  << " size:" << workspaces.back()->size();
+  }
+  return workspaces;
+}
+
+std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                              const device::DeviceContext *device_context,
                                                               const CNodePtr &kernel, bool is_dynamic_shape,
                                                               bool is_dynamic_value) {
   MS_EXCEPTION_IF_NULL(runtime_info);
@@ -456,20 +475,8 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
     device_address->SetSize(workspace_sizes[i]);
   }
 
-  std::vector<kernel::KernelTensor *> workspaces;
-  for (size_t i = 0; i < workspace_size && i < workspace_sizes.size(); ++i) {
-    auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (device_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
-    }
-    (void)workspaces.emplace_back(device_address->kernel_tensor().get());
-    MS_EXCEPTION_IF_NULL(workspaces.back());
-    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
-                  << " size:" << workspaces.back()->size();
-  }
-
+  std::vector<kernel::KernelTensor *> workspaces =
+    GetWorkspaceKernelTensors(runtime_info, device_context, workspace_size, workspace_sizes.size());
   for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
     auto device_address = add_workspaces[i];
     MS_EXCEPTION_IF_NULL(device_address);

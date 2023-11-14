@@ -133,6 +133,20 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   }
 }
 
+size_t GetDynInputNum(const CNodePtr &cnode) {
+  std::vector<int64_t> dyn_input_sizes;
+  // onlt support 1 dyn_input
+  size_t dyn_input_num = 0;
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
+      auto v = val == -1 ? 0 : val;
+      dyn_input_num += LongToSize(v);
+    });
+  }
+  return dyn_input_num;
+}
+
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
   MS_EXCEPTION_IF_NULL(op);
   auto it = cus_input_map_->find(op->GetOpType());
@@ -853,18 +867,12 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetOpAttrList(const OperatorPtr &
 std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const OperatorPtr &op,
                                                                    const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return {};
   }
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return {};
-  }
   auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    return {};
-  }
-  if (!IsValueNode<Primitive>(inputs[0])) {
+  if (inputs.empty() || !IsValueNode<Primitive>(inputs[0])) {
     return {};
   }
 
@@ -883,17 +891,7 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
     }
   }
 
-  std::vector<int64_t> dyn_input_sizes;
-  // onlt support 1 dyn_input
-  size_t dyn_input_num = 0;
-  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
-    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
-      auto v = val == -1 ? 0 : val;
-      dyn_input_num += LongToSize(v);
-    });
-  }
-
+  size_t dyn_input_num = GetDynInputNum(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
     auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
@@ -975,15 +973,11 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
 int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
   // no attribute for lonely node
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return 0;
   }
 
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return 0;
-  }
-
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
     return 0;
@@ -1014,17 +1008,7 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
   }
 
-  std::vector<int64_t> dyn_input_sizes;
-  // onlt support 1 dyn_input
-  size_t dyn_input_num = 0;
-  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
-    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
-      auto v = val == -1 ? 0 : val;
-      dyn_input_num += LongToSize(v);
-    });
-  }
-
+  size_t dyn_input_num = GetDynInputNum(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
     auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;

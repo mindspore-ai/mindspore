@@ -74,6 +74,12 @@ inline void CheckSparseAddSameDtype(const mindspore::TypePtr a_dtype, const mind
   }
 }
 
+inline TypePtr GetTensorTypeElement(const AbstractBasePtr &x) {
+  auto x_type = x->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(x_type);
+  return x_type->element();
+}
+
 abstract::TupleShapePtr SparseAddInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -135,49 +141,27 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto b_shape = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex5, kObjectTypeTensorType);
   auto thresh = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex6, kObjectTypeTensorType);
 
-  MS_EXCEPTION_IF_NULL(a_indices);
-  MS_EXCEPTION_IF_NULL(a_values);
-  MS_EXCEPTION_IF_NULL(a_shape);
-  MS_EXCEPTION_IF_NULL(b_indices);
-  MS_EXCEPTION_IF_NULL(b_values);
-  MS_EXCEPTION_IF_NULL(b_shape);
-  MS_EXCEPTION_IF_NULL(thresh);
-
   // Check dtype
   // a_indices and b_indices should be int64
-  auto a_indices_type_ = a_indices->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(a_indices_type_);
-  auto a_indices_type = a_indices_type_->element();
-  auto b_indices_type_ = b_indices->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(b_indices_type_);
-  auto b_indices_type = b_indices_type_->element();
+  auto a_indices_type = GetTensorTypeElement(a_indices);
+  auto b_indices_type = GetTensorTypeElement(b_indices);
   const std::set<TypePtr> indices_valid_types = {kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->GetType(), indices_valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->GetType(), indices_valid_types, op_name);
   // a_shape and b_shape should be int64
-  auto a_shape_type_ = a_shape->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(a_shape_type_);
-  auto a_shape_type = a_shape_type_->element();
-  auto b_shape_type_ = b_shape->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(b_shape_type_);
-  auto b_shape_type = b_shape_type_->element();
+  auto a_shape_type = GetTensorTypeElement(a_shape);
+  auto b_shape_type = GetTensorTypeElement(b_shape);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->GetType(), indices_valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->GetType(), indices_valid_types, op_name);
   // check a_values and b_values
-  auto a_value_type_ = a_values->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(a_value_type_);
-  auto a_value_type = a_value_type_->element();
-  auto b_value_type_ = b_values->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(b_value_type_);
-  auto b_value_type = b_value_type_->element();
+  auto a_value_type = GetTensorTypeElement(a_values);
+  auto b_value_type = GetTensorTypeElement(b_values);
   const std::set<TypePtr> value_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->GetType(), value_valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->GetType(), value_valid_types, op_name);
   // Check thresh
-  auto thresh_type_ = thresh->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(thresh_type_);
-  auto thresh_type = thresh_type_->element();
+  auto thresh_type = GetTensorTypeElement(thresh);
   const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->GetType(), thresh_valid_types, op_name);
 

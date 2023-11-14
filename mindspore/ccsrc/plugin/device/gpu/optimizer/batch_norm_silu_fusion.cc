@@ -33,31 +33,7 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef BatchNormSiluFusion::DefinePattern() const {
-  VectorRef batch_norm =
-    VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, is_training_, eps_, momentum_, format_, umonad_});
-  VectorRef tuple_get = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
-  VectorRef silu = VectorRef({prim::kPrimSiLU, tuple_get});
-  return silu;
-}
-
-const AnfNodePtr BatchNormSiluFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                              const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
-  auto tuple_get_item = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
-  MS_EXCEPTION_IF_NULL(tuple_get_item);
-
-  // Only fuse output[0] of BatchNorm with SiLU
-  size_t output_index = common::AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(tuple_get_item));
-  if (output_index != 0) {
-    return nullptr;
-  }
-
-  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
-  MS_EXCEPTION_IF_NULL(batch_norm);
-
+std::vector<AnfNodePtr> GetBatchNormInputs(const AnfNodePtr &batch_norm) {
   auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex0);
   auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex1);
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
@@ -85,7 +61,35 @@ const AnfNodePtr BatchNormSiluFusion::Process(const FuncGraphPtr &graph, const A
   prim->AddAttr(mindspore::ops::kActivationType, MakeValue(static_cast<int64_t>(mindspore::ActivationType::SWISH)));
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x,   scale,    bias,   mean,  var,
                                     is_train,           eps, momentum, format, umonad};
-  auto fused_batch_norm_with_silu = graph->NewCNode(inputs);
+  return inputs;
+}
+
+const BaseRef BatchNormSiluFusion::DefinePattern() const {
+  VectorRef batch_norm =
+    VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, is_training_, eps_, momentum_, format_, umonad_});
+  VectorRef tuple_get = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
+  VectorRef silu = VectorRef({prim::kPrimSiLU, tuple_get});
+  return silu;
+}
+
+const AnfNodePtr BatchNormSiluFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                              const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto tuple_get_item = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  MS_EXCEPTION_IF_NULL(tuple_get_item);
+
+  // Only fuse output[0] of BatchNorm with SiLU
+  size_t output_index = common::AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(tuple_get_item));
+  if (output_index != 0) {
+    return nullptr;
+  }
+
+  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
+  MS_EXCEPTION_IF_NULL(batch_norm);
+
+  auto fused_batch_norm_with_silu = graph->NewCNode(GetBatchNormInputs(batch_norm));
   MS_EXCEPTION_IF_NULL(fused_batch_norm_with_silu);
 
   std::vector<TypeId> outputs_type;
