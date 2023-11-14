@@ -1272,8 +1272,7 @@ void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
+    MS_LOG(INFO) << "Can not find " << run_options.name << " sub graph, don't need data init subgraph in INFER mode.";
     return;
   }
   auto graph_runner = transform::GetGraphRunner();
