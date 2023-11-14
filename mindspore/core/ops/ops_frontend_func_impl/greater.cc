@@ -46,7 +46,7 @@ std::map<TypeId, Handler> greater_impl_list = {
   {kNumberTypeInt32, GreaterImpl<int32_t>},   {kNumberTypeInt64, GreaterImpl<int64_t>},
   {kNumberTypeUInt8, GreaterImpl<uint8_t>},   {kNumberTypeFloat, GreaterImpl<float>},
   {kNumberTypeFloat16, GreaterImpl<float16>}, {kNumberTypeFloat32, GreaterImpl<float>},
-  {kNumberTypeFloat64, GreaterImpl<double>}};
+  {kNumberTypeFloat64, GreaterImpl<double>},  {kNumberTypeBFloat16, GreaterImpl<bfloat16>}};
 
 class GreaterFrontendFuncImpl : public OpFrontendFuncImpl {
  public:

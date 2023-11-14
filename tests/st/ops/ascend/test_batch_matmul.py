@@ -18,6 +18,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import functional as F
+from mindspore.common import dtype as mstype
 
 # all cases tested against dchip
 
@@ -78,3 +79,22 @@ def test_bmm_forward_float32_functional_api():
     test_bmm_forward_functional_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     test_bmm_forward_functional_api(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bmm_forward_functional_api_bf16(mode):
+    """
+    Feature: test bmm forward functional api.
+    Description: test bfloat16 inputs.
+    Expectation: the result match with expected result.
+    """
+
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor(np.ones(shape=[2, 4, 1, 3]), dtype=mstype.bfloat16)
+    y = Tensor(np.ones(shape=[2, 4, 3, 4]), dtype=mstype.bfloat16)
+    output = F.bmm(x, y)
+    expected = 3 * np.ones(shape=[2, 4, 1, 4]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.float().asnumpy(), expected)

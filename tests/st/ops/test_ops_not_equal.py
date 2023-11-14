@@ -18,6 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, ops
+from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
@@ -51,3 +52,25 @@ def test_ops_not_equal(mode):
     expect_output_case_2 = np.not_equal(x_np, y_np)
     np.testing.assert_array_equal(output_ms_case_1.asnumpy(), expect_output_case_1)
     np.testing.assert_array_equal(output_ms_case_2.asnumpy(), expect_output_case_2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_f_not_equal_api_bfloat16(mode):
+    """
+    Feature: test ne functional API.
+    Description: testcase for ne functional API.
+    Expectation: the result match with expected result.
+    """
+    ms.set_context(mode=mode, device_target="Ascend")
+    net = Net()
+    x = Tensor(np.array([1.0, 2.5, 3.8]), mstype.bfloat16)
+    y = Tensor(np.array([0.8, 2.5, 4.0]), mstype.bfloat16)
+    tensor_output = net(x, y)
+    tensor_expected = np.array([True, False, True])
+    scalar_output = net(y, 4.0)
+    scalar_expected = np.array([True, True, False])
+    np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)
+    np.testing.assert_array_equal(scalar_output.asnumpy(), scalar_expected)
