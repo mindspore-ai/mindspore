@@ -193,6 +193,9 @@ function Convert() {
         if [[ ${extra_info} =~ "online_convert" ]]; then
           optimize="none"
         fi
+        if [[ ${extra_info} =~ "large_model" ]]; then
+          input_format=""
+        fi
         # start running converter
         echo "Convert ${model_name} ${quant_type} ......"
         echo ${model_name} >> "$4"
