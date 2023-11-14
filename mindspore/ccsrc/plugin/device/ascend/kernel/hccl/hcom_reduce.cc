@@ -19,20 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomReduceKernel::Init(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  HcclKernel::Init(anf_node);
-  if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
-    MS_LOG(ERROR) << "GetHcomDestRank fail!";
-    return false;
-  }
-  MS_LOG(ERROR) << "Count of hcom kernel is " << hccl_count_ << ", root id is " << dest_rank_ << ", type is "
-                << hccl_data_type_list_[0];
-  return true;
-}
-
-bool HcomReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HcomReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid hccl Reduce input, output or data type size (" << inputs.size() << ", " << outputs.size()
                   << ", " << hccl_data_type_list_.size() << ").";
@@ -41,8 +29,8 @@ bool HcomReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   // Only the process with rank: dest_rank_ will receive the reduced output.
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  void *send_buf = inputs[kIndex0]->addr;
-  void *recv_buf = outputs[kIndex0]->addr;
+  void *send_buf = inputs[kIndex0]->device_ptr();
+  void *recv_buf = outputs[kIndex0]->device_ptr();
 
   MS_EXCEPTION_IF_NULL(send_buf);
   MS_EXCEPTION_IF_NULL(recv_buf);

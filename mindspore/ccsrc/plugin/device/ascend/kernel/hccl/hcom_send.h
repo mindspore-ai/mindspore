@@ -29,8 +29,8 @@ class HcomSendKernel : public HcclKernel {
   ~HcomSendKernel() override = default;
 
   /* Inherit from kernelmod */
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  private:
 };
