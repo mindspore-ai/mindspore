@@ -24,17 +24,17 @@ from mindspore.ops.operations import _inner_ops as inner
 
 
 class Net(nn.Cell):
-    def __init__(self, op):
+    def __init__(self, op, axis):
         super(Net, self).__init__()
         if op == "Cummin":
-            self.op = inner.Cummin()
+            self.op = inner.Cummin(axis)
         elif op == "Cummax":
-            self.op = ops.Cummax()
+            self.op = ops.Cummax(axis)
         else:
             raise ValueError("op value error.")
 
-    def construct(self, x, axis):
-        return self.op(x, axis)
+    def construct(self, x):
+        return self.op(x)
 
 
 def cum_minmax_compare(op, x, expected, axis, data_type, is_vmap=False):
@@ -44,18 +44,18 @@ def cum_minmax_compare(op, x, expected, axis, data_type, is_vmap=False):
     # Pynative
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     if not is_vmap:
-        output = Net(op)(Tensor(x), axis)
+        output = Net(op, axis)(Tensor(x))
     else:
-        output = VmapNet(op)(Tensor(x), axis)
+        output = VmapNet(op, axis)(Tensor(x))
     assert np.allclose(output[0].asnumpy(), expected[0], equal_nan=True)
     assert np.allclose(output[1].asnumpy(), expected[1])
 
     # Graph
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     if not is_vmap:
-        output = Net(op)(Tensor(x), axis)
+        output = Net(op, axis)(Tensor(x))
     else:
-        output = VmapNet(op)(Tensor(x), axis)
+        output = VmapNet(op, axis)(Tensor(x))
     assert np.allclose(output[0].asnumpy(), expected[0], equal_nan=True)
     assert np.allclose(output[1].asnumpy(), expected[1])
 
@@ -136,13 +136,13 @@ def test_cumminmax_nan(data_type):
 
 
 class VmapNet(nn.Cell):
-    def __init__(self, op):
+    def __init__(self, op, axis):
         super(VmapNet, self).__init__()
-        self.net = Net(op=op)
-        self.ops = vmap(self.net, in_axes=(0, None), out_axes=0)
+        self.net = Net(op=op, axis=axis)
+        self.ops = vmap(self.net, in_axes=0, out_axes=0)
 
-    def construct(self, x, axis):
-        return self.ops(x, axis)
+    def construct(self, x):
+        return self.ops(x)
 
 
 @pytest.mark.level1

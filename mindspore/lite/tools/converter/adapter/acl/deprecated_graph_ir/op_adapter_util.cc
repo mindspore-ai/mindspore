@@ -89,7 +89,7 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<in
     if (i != 0) {
       buffer << ",";
     }
-    buffer << GetValue<int64_t>(it);
+    buffer << (GetValue<int64_t>(it));
     i++;
   }
   return buffer.str();

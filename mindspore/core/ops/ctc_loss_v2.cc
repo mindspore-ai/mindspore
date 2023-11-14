@@ -131,8 +131,10 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                                  prim_name);
   (void)CheckAndConvertUtils::CheckValue<size_t>("dim of target_lengths", target_lengths_shape.size(), kEqual, kDim1,
                                                  prim_name);
-  (void)CheckAndConvertUtils::CheckValue<int64_t>("input_lengths[0]", input_lengths_shape[0], kEqual, N, prim_name);
-  (void)CheckAndConvertUtils::CheckValue<int64_t>("target_lengths[0]", target_lengths_shape[0], kEqual, N, prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("input_lengths.shape[0]", input_lengths_shape[0], kEqual, N,
+                                                  prim_name);
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("target_lengths.shape[0]", target_lengths_shape[0], kEqual, N,
+                                                  prim_name);
 
   // check blank
   auto blank = GetValue<int64_t>(primitive->GetAttr(kAttrBlank));

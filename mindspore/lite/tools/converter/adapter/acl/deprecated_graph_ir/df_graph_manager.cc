@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "deprecated_graph_ir/df_graph_manager.h"
 #include <sstream>
 #include <set>
-#include "deprecated_graph_ir/df_graph_manager.h"
 #include "deprecated_graph_ir/aoe_util.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/ps/base.h"
