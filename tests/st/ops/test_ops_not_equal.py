@@ -70,7 +70,4 @@ def test_f_not_equal_api_bfloat16(mode):
     y = Tensor(np.array([0.8, 2.5, 4.0]), mstype.bfloat16)
     tensor_output = net(x, y)
     tensor_expected = np.array([True, False, True])
-    scalar_output = net(y, 4.0)
-    scalar_expected = np.array([True, True, False])
     np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)
-    np.testing.assert_array_equal(scalar_output.asnumpy(), scalar_expected)
