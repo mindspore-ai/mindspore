@@ -114,6 +114,24 @@ if(ENABLE_MINDDATA)
             COMPONENT mindspore
         )
     endif()
+
+    if(ENABLE_FFMPEG)
+        install(FILES ${ffmpeg_LIBPATH}/libavcodec.so.59.37.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libavcodec.so.59 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavdevice.so.59.7.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libavdevice.so.59 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavfilter.so.8.44.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libavfilter.so.8 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavformat.so.59.27.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libavformat.so.59 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavutil.so.57.28.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libavutil.so.57 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libswresample.so.4.7.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libswresample.so.4 COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libswscale.so.6.7.100
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.so.6 COMPONENT mindspore)
+    endif()
+
     install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
       DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.5 COMPONENT mindspore)
     install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2

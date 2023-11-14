@@ -35,6 +35,10 @@ MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 link_directories(${MS_CCSRC_BUILD_PATH})
 
 add_definitions(-D ENABLE_MINDDATA)
+if(ENABLE_FFMPEG)
+    add_definitions(-D ENABLE_FFMPEG)
+endif()
+
 link_directories(${MS_CCSRC_BUILD_PATH}/minddata/dataset)
 link_directories(${MS_CCSRC_BUILD_PATH}/minddata/mindrecord)
 
@@ -337,6 +341,10 @@ foreach(comp ${ALL_UT_COMPS})
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                 mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
                 mindspore::icui18n mindspore::z)
+        if(ENABLE_FFMPEG)
+            target_link_libraries(ut_${comp}_tests PRIVATE mindspore::avcodec mindspore::avdevice mindspore::avfilter
+                    mindspore::avformat mindspore::avutil mindspore::swresample mindspore::swscale)
+        endif()
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         target_link_libraries(ut_${comp}_tests PRIVATE  mindspore::z)
     else()
