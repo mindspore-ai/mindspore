@@ -29,38 +29,19 @@
 
 namespace mindspore {
 namespace kernel {
+void MMAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto return_value =
+    GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType());
+  UpdateWorkspace(return_value);
+}
 
 bool MMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-#if 0
-  auto input_device = std::make_shared<device::ascend::AscendDeviceAddress>(
-    inputs[0]->addr, inputs[0]->size, kOpFormat_DEFAULT, input_params_[0].data_type);
-  auto input_device2 = std::make_shared<device::ascend::AscendDeviceAddress>(
-    inputs[1]->addr, inputs[1]->size, kOpFormat_DEFAULT, input_params_[1].data_type);
-  input_device->set_host_shape(input_params_[0].ori_shape);
-  input_device2->set_host_shape(input_params_[1].ori_shape);
-  auto output_device = std::make_shared<device::ascend::AscendDeviceAddress>(
-    outputs[0]->addr, outputs[0]->size, kOpFormat_DEFAULT, output_params_[0].data_type);
-  output_device->set_host_shape(output_params_[0].ori_shape);
-
-  ParseGenExecutor(GEN_EXECUTOR(aclnnMatmul, input_device, input_device2, output_device, OpApiUtil::GetCubeMathType()));
-
-  if (workspace_size_list_.empty()) {
-    RUN_OP_API(aclnnMatmul, stream_ptr, nullptr, 0, executor_, after_launch_func_);
-    return true;
-  }
-
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto res_manager = dynamic_cast<device::ascend::GeDeviceResManager *>(device_context->device_res_manager_.get());
-  MS_EXCEPTION_IF_NULL(res_manager);
-  auto workspaces_addr = res_manager->AllocateMemory(workspace_size_list_[0]);
-
-  RUN_OP_API(aclnnMatmul, stream_ptr, workspaces_addr, workspace_size_list_[0], executor_, after_launch_func_);
-#endif
+  ParseGenExecutor(
+    GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType()));
+  RunOp(stream_ptr, workspace);
   return true;
 }
 }  // namespace kernel

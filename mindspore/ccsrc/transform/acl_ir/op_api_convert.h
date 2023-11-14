@@ -228,6 +228,11 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   return acl_tensor;
 }
 
+inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  MS_LOG(EXCEPTION) << "Current not support tensor list!";
+  return tensor_list;
+}
+
 template <typename T>
 T ConvertType(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
@@ -243,7 +248,7 @@ T ConvertType(T value) {
 }
 
 template <typename... Ts>
-constexpr auto ConvertTypes(Ts &... args) {
+constexpr auto ConvertTypes(const Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
 }
 

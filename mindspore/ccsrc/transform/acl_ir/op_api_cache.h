@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 
-#include "transform/acl_ir/op_api_convert.h"
 #include <string>
+#include "transform/acl_ir/op_api_convert.h"
 
 namespace mindspore::transform {
 typedef aclOpExecutor *(*GetExecCache)(uint64_t, uint64_t *);
@@ -31,30 +31,34 @@ constexpr int g_hash_buf_max_size = g_hash_buf_size + 1024;
 extern thread_local char g_hash_buf[g_hash_buf_size];
 extern thread_local int g_hash_offset;
 
-#define MEMCPY_TO_BUF(data_expression, size_expression)                                                       \
-  if (g_hash_offset + (size_expression) >= g_hash_buf_size) {                                                 \
-    g_hash_offset = g_hash_buf_max_size;                                                                      \
-    return;                                                                                                   \
-  }                                                                                                           \
-  memcpy_sp(g_hash_buf + g_hash_offset, g_hash_buf_size - g_hash_offset, data_expression, (size_expression)); \
-  g_hash_offset += (size_expression);
+inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
+  if (g_hash_offset + size_expression >= g_hash_buf_size) {
+    g_hash_offset = g_hash_buf_max_size;
+    return;
+  }
+  auto ret = memcpy_sp(g_hash_buf + g_hash_offset, g_hash_buf_size - g_hash_offset, data_expression, size_expression);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to memcpy!";
+  }
+  g_hash_offset += size_expression;
+}
 
-void GatherInfo(const mindspore::kernel::KernelTensor *);
+void GatherInfo(mindspore::kernel::KernelTensor *);
 void GatherInfo(const string &);
 void GatherInfo();
 
 template <std::size_t N>
 void GatherInfo(const std::array<bool, N> &value) {
-  MEMCPY_TO_BUF(value.data(), static_cast<int64_t>(value.size() * sizeof(bool)));
+  MemcpyToBuf(value.data(), static_cast<int64_t>(value.size() * sizeof(bool)));
 }
 
 template <typename T>
 void GatherInfo(const T &value) {
-  MEMCPY_TO_BUF(&value, sizeof(T));
+  MemcpyToBuf(&value, sizeof(T));
 }
 
 template <typename T, typename... Args>
-void GatherInfo(const T &arg, Args &... args) {
+void GatherInfo(const T &arg, const Args &... args) {
   GatherInfo(arg);
   GatherInfo(args...);
 }
@@ -62,7 +66,7 @@ void GatherInfo(const T &arg, Args &... args) {
 uint64_t calc_hash_id();
 
 template <typename... Args>
-bool HitCache(const char *aclnn_api, aclOpExecutor *executor, uint64_t *workspace_size, Args &&... args) {
+bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, const Args &... args) {
   static const auto get_exec_cache = transform::GetOpApiFunc("PTAGetExecCache");
   static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");
   static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");
@@ -81,8 +85,8 @@ bool HitCache(const char *aclnn_api, aclOpExecutor *executor, uint64_t *workspac
   GatherInfo(std::string_view(aclnn_api), args...);
   uint64_t hash_id = calc_hash_id();
   set_hash_key_func(hash_id);
-  executor = get_exec_cache_func(hash_id, workspace_size);
-  if (executor == nullptr) {
+  *executor = get_exec_cache_func(hash_id, workspace_size);
+  if (*executor == nullptr) {
     return false;
   }
   return true;
