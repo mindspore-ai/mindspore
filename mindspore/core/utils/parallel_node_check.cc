@@ -33,7 +33,7 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
   "make_dict", "make_slice", "string_eq", "VirtualLoss", "Return", "env_getitem", "TensorShape", "ScalarToTensor",
   "partial", "env_setitem", "env_getitem", "env_add", "Shape",
-  "dot", "im2col", "col2im", "im2col_v1", "state_setitem",
+  "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "TensorDump",
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType",

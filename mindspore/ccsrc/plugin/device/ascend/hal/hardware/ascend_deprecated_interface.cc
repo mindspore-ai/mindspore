@@ -39,6 +39,8 @@
 #include "mindspore/core/utils/singleton.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
+#include "plugin/device/ascend/hal/device/tensordump_utils.h"
+#include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -196,7 +198,7 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
 
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
-      MS_LOG(ERROR) << "Build dateset graph failed.";
+      MS_LOG(ERROR) << "Build dataset graph failed.";
       return false;
     }
 
@@ -329,7 +331,12 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     return std::thread(TensorPrint(path, acl_handle));
   };
   CreateTensorPrintThread(thread_crt);
-  // TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+  if (ms_context_ptr->backend_policy() == "ge") {
+    // TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
+      device_id, "ms_tensor_dump"));
+  }
   return true;
 }
 
@@ -345,7 +352,10 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
-    // TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+    if (ms_context_ptr->backend_policy() == "ge") {
+      // TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+      MbufDataHandlerManager::GetInstance().DestoryHandler();
+    }
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
