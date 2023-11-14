@@ -119,6 +119,22 @@ def test_tensor_convert_type():
     assert out[2] == (3, 3, 3, 3)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_convert_to_ms_tensor():
+    """
+    Feature: MSAdapter
+    Description: Test type conversion
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x):
+        return convert_to_ms_tensor(x)
+
+    out = func(Tensor([1, 2, 3]))
+    assert type(out) is ms.Tensor
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
