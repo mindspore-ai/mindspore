@@ -34,19 +34,7 @@ constexpr auto kPyExecPrefix = "__py_exec_index";
 constexpr auto kPyExecSuffix = "__";
 constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
-constexpr auto kPyExecuteSlice = "[__start__:__stop__:__step__]";
-
-AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
-                                                const AnfNodePtrList &node_inputs, std::string script_str);
-void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src);
-std::string GetNodeExprSrc(const AnfNodePtr &node);
-std::string ConvertToRealStr(const std::string &target);
-std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
-                                                  const std::string &op);
-std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op);
-std::string GeneratePyInterpretScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
-std::string GeneratePyInterpretScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id);
-std::string GeneratePyExecuteScriptForFuncNode(const std::string &func_str);
+constexpr auto kObjectAttrChange = "object_attr_change";
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -64,32 +52,41 @@ CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &scrip
 CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
                                        const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
                                        const NodeDebugInfoPtr &debug_info);
-void SetPyObjectToLocalVariable(const std::string &key, const py::object &value);
+
+// Create primitive cnode to PyInterpret/PyExecute node with specific function name.
+AnfNodePtr ConvertCNodeToPyInterpretForPrim(const CNodePtr &cnode, const string &name);
+AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
+
+// Create PyInterpret node according to input abstract size and corresponding function name.
+AnfNodePtr GeneratePyInterpretWithAbstract(const FuncGraphPtr &fg, const std::vector<std::string> &funcs_str,
+                                           const size_t input_size);
+
+// Generate PyInterpret node for meta function graph.
+AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
+                                                    const py::object &meta_obj, const TypePtrList &types,
+                                                    const std::string &name);
+
+// Convert Python object to PyInterpret/PyExecute node.
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node, bool replace);
 AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                         const AnfNodePtr &node, bool replace);
 AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
 
-// Create primitive cnode to PyInterpret/PyExecute node with specific function name.
-AnfNodePtr ConvertCNodeToPyInterpretForPrim(const CNodePtr &cnode, const string &name);
-AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
-
 // Convert GetAttr node to PyInterpret/PyExecute.
 AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name);
 
+// Function about jit annotation.
 using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
-
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
                                         const FormatedVariableTypeFunc &format_type_func = FormatedVariableTypeFunc());
 bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node);
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
-
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
-
 std::string GetPyObjectPtrStr(const py::object &obj);
-bool EnableFallbackListDictInplace();
 
+// Function about list/dict inplace operation.
+bool EnableFallbackListDictInplace();
 // Generate python object according to abstract.
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
 // Handle python object for abstract using ExtraInfoHolder.
@@ -102,6 +99,7 @@ void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool cr
 // Handle python object for AnfNode.
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj);
 bool HasPyObjectInNode(const AnfNodePtr &node);
+void SetPyObjectToLocalVariable(const std::string &key, const py::object &value);
 py::object GetPyObjectFromNode(const AnfNodePtr &node);
 
 template <typename T>
@@ -133,10 +131,6 @@ template <typename T, typename U>
 std::shared_ptr<U> GetRealShape(const std::shared_ptr<T> &owner) {
   return owner->template user_data<U>("__py_execute_real_shape__");
 }
-
-AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
-                                                    const py::object &meta_obj, const TypePtrList &types,
-                                                    const std::string &name);
 }  // namespace fallback
 
 namespace raiseutils {
