@@ -303,3 +303,27 @@ def test_fallback_enumerate_with_numpy():
 
     out = foo()
     assert operator.eq(out, ((0, 1), (1, 2)))
+
+
+def test_enumerate_int():
+    """
+    Feature: JIT Fallback
+    Description: Test enumerate in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.num = 2023
+
+        def construct(self):
+            index_sum = 0
+            for i, _ in enumerate(self.num):
+                index_sum += i
+            return index_sum
+
+    with pytest.raises(TypeError) as ex:
+        net = Net()
+        net()
+    assert "For 'enumerate', the 'first input' should be tuple or list or tensor, but got <class 'int'>"\
+           in str(ex.value)
