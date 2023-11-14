@@ -792,7 +792,11 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
 
 #ifdef ENABLE_DUMP_IR
 void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
   if (func_graph == nullptr) {
+    return;
+  }
+  if (!need_dump) {
     return;
   }
 

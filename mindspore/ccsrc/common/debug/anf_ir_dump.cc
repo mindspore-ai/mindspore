@@ -41,6 +41,17 @@
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
 namespace mindspore {
+
+enum FormatLevel : int {
+  // When setting to basic level, ir will only contains operator and operands of nodes and title of subgraph with
+  // its debuginfo
+  kBasicLevel = 0,
+  // When setting to advanced level, ir will contains all the info except scope and debug info of nodes.
+  kAdvancedLevel,
+  // When setting to advanced level, ir will contains all the info.
+  kFullyLevel,
+};
+
 std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) {
   auto py_funcs = mt_func_graph->GetPyFunctions();
   if (py_funcs.empty()) {
@@ -814,33 +825,41 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   // Print operands
   DumpOperands(node, para_map, gsub);
 
-  // Print operator attrs
-  AnfNodePtr op = node->input(0);
-  DumpOperateAttrs(op, gsub);
+  if (gsub->format_level > kBasicLevel) {
+    // Print operator attrs
+    AnfNodePtr op = node->input(0);
+    DumpOperateAttrs(op, gsub);
 
-  // Print cnode attrs
-  DumpCNodeAttrs(node, gsub);
+    // Print cnode attrs
+    DumpCNodeAttrs(node, gsub);
 
-  // Print cnode primal attrs
-  DumpCNodePrimalAttrs(node, gsub);
+    // Print cnode primal attrs
+    DumpCNodePrimalAttrs(node, gsub);
 
-  // Print parallel info
-  DumpParallelInfo(node, gsub);
-
-  // Print shape info
-  DumpShape(node, sub_graph, gsub);
-
-  // Print kernel info
-  DumpKernelInfo(node, gsub);
-
-  if (dump_full_name) {
-    gsub->buffer << "      # Fullname with scope: (" << node->fullname_with_scope() << ")" << std::endl;
-  } else {
-    gsub->buffer << "      # Scope: (" << node->scope()->name() << ")" << std::endl;
+    // Print parallel info
+    DumpParallelInfo(node, gsub);
   }
 
-  // Print debug info
-  DumpDebugInfo(node, gsub, dump_location);
+  if (gsub->format_level > kBasicLevel || node == sub_graph->get_return()) {
+    // Print shape info
+    DumpShape(node, sub_graph, gsub);
+
+    // Print kernel info
+    DumpKernelInfo(node, gsub);
+  } else {
+    gsub->buffer << std::endl;
+  }
+
+  // Use environment variables to control extra info.
+  if (gsub->format_level > kAdvancedLevel) {
+    if (dump_full_name) {
+      gsub->buffer << "      # Fullname with scope: (" << node->fullname_with_scope() << ")" << std::endl;
+    } else {
+      gsub->buffer << "      # Scope: (" << node->scope()->name() << ")" << std::endl;
+    }
+    // Print debug info
+    DumpDebugInfo(node, gsub, dump_location);
+  }
 }
 
 void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
@@ -856,6 +875,19 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
     oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
     ++i;
   }
+}
+
+int GetDumpFormatLevel() {
+  static std::string format = common::GetEnv("MS_DEV_DUMP_IR_FORMAT");
+  int format_level = 2;
+  if (format.size() == 1) {
+    try {
+      format_level = std::stoi(format);
+    } catch (const std::invalid_argument &ia) {
+      MS_LOG(DEBUG) << "Invalid argument: " << ia.what() << " when parse " << format;
+    }
+  }
+  return format_level;
 }
 
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
@@ -876,6 +908,7 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
     if (gsub == nullptr) {
       gsub = std::make_shared<SubGraphIRInfo>();
       gsub->local_var = 0;
+      gsub->format_level = GetDumpFormatLevel();
       (*sub_graphs)[sub_graph] = gsub;
     }
     std::vector<AnfNodePtr> parameters = sub_graph->parameters();
@@ -903,22 +936,25 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   if (sub_graphs == nullptr || graph == nullptr) {
     return;
   }
+  int format_level = GetDumpFormatLevel();
   for (const auto &sg : *sub_graphs) {
     MS_EXCEPTION_IF_NULL(sg.first);
     if (*(sg.first->indirect())) {
       oss << "indirect: " << *(sg.first->indirect()) << "\n";
     }
-    oss << "subgraph attr:" << std::endl;
-    for (const auto &attr : sg.first->attrs()) {
-      oss << attr.first << " : ";
-      if (attr.second->isa<BoolImm>()) {
-        oss << GetValue<bool>(attr.second);
-      } else if (attr.second->isa<StringImm>()) {
-        oss << (GetValue<std::string>(attr.second));
+    if (format_level > kBasicLevel) {
+      oss << "subgraph attr:" << std::endl;
+      for (const auto &attr : sg.first->attrs()) {
+        oss << attr.first << " : ";
+        if (attr.second->isa<BoolImm>()) {
+          oss << GetValue<bool>(attr.second);
+        } else if (attr.second->isa<StringImm>()) {
+          oss << (GetValue<std::string>(attr.second));
+        }
+        oss << std::endl;
       }
-      oss << std::endl;
+      oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     }
-    oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       oss << trace::GetDebugInfoStr(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
           << trace::Label(sg.first->debug_info()) << "\n";
@@ -1069,8 +1105,12 @@ void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
 #ifdef ENABLE_DUMP_IR
 void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location,
             const std::string &target_file) {
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
   GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
+    return;
+  }
+  if (!need_dump) {
     return;
   }
   auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
@@ -1151,8 +1191,12 @@ void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool du
 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name,
                   LocDumpMode dump_location) {
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
   GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
+    return;
+  }
+  if (!need_dump) {
     return;
   }
   auto path = Common::AddId(filename, ".ir");
