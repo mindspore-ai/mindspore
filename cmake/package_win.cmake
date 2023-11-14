@@ -140,6 +140,18 @@ if(ENABLE_MINDDATA)
   )
 
   if(MSVC)
+    if(NOT ENABLE_FFMPEG)
+      set(ffmpeg_LIB_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/ffmpeg_lib)
+      file(GLOB FFMPEG_LIB_LIST ${ffmpeg_LIB_PATH}/*.dll)
+      install(
+        FILES ${FFMPEG_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+      )
+    endif()
+  endif()
+
+  if(MSVC)
       if(DEBUG_MODE)
           file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/tinyxml2d.dll)
       else()
