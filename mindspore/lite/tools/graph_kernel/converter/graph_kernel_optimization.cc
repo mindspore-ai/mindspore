@@ -46,6 +46,7 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
 #include "tools/graph_kernel/converter/update_kernel_info.h"
+#include "tools/graph_kernel/converter/mark_ascend_quant_no_fusion.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -78,6 +79,10 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Convert the const parameters to const tensors
   pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1, is_cpu);
+
+  // Prevent AscendQuantOp and AscendAntiQuantOp from been fusied by GraphKernel
+  pm->Add(std::make_shared<MarkAscendQuantNoFusion>(), OptLevel_1, is_ascend);
+
   return pm;
 }
 
