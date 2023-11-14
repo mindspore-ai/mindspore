@@ -60,6 +60,8 @@ def np_inference(cache, update, valid_seq_len):
     ans = cache.copy()
     for b_idx in range(cache.shape[0]):
         s_idx = valid_seq_len[b_idx]
+        if s_idx < 0:
+            continue
         ans[b_idx, :, s_idx, :] = update[b_idx, :, 0, :]
     return ans
 
@@ -70,7 +72,7 @@ def create_numpy_inputs():
     """
     cache = np.random.rand(b, h, s, d).astype(np.float16)
     update = np.random.rand(b, h, us, d).astype(np.float16)
-    valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
+    valid_seq_len = np.random.randint(-1, b, size=b).astype(np.int64)
     batch_index = np.array([1]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
     new_max_seq_len = np.array([s]).astype(np.int64)
