@@ -104,7 +104,7 @@ class MIND_API UniformIntInfer : public abstract::OpInferBase {
                                              kMinInputNum, op_name);
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kLessEqual, kMaxInputNum,
                                              op_name);
-    return kInt32;
+    return std::make_shared<TensorType>(kInt32);
   }
 
   std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
