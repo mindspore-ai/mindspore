@@ -226,17 +226,14 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
   resource->SetResult(kOutput, run);
 }
 
-FuncGraphPtr ConstructGraphForEval(const CNodePtr &node, const abstract::AbstractBasePtrList &args_abs) {
-  auto function_node = node->input(0);
-  auto function = GetValueNode(function_node);
-  MS_EXCEPTION_IF_NULL(function);
-  auto func_abs = function->ToAbstract();
+FuncGraphPtr ConstructGraphForEval(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  auto func_abs = func->ToAbstract();
   if (!func_abs->isa<abstract::AbstractFunction>()) {
-    MS_LOG(EXCEPTION) << "The value : " << function->ToString() << " is not a callable object.";
+    MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";
   }
   // construct a function graph.
   auto infer_graph = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(function)};
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
   std::transform(args_abs.begin(), args_abs.end(), std::back_inserter(inputs),
                  [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
   auto infer_node = infer_graph->NewCNode(inputs);
@@ -301,9 +298,9 @@ abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engi
   return res;
 }
 
-abstract::AnalysisResult AbstractAnalyze(const CNodePtr &cnode, const abstract::AbstractBasePtrList &args_abs,
+abstract::AnalysisResult AbstractAnalyze(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs,
                                          bool clear) {
-  auto infer_graph = ConstructGraphForEval(cnode, args_abs);
+  auto infer_graph = ConstructGraphForEval(func, args_abs);
   auto manager = Manage(infer_graph, true);
   auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
   return AbstractAnalyze(engine, infer_graph, args_abs, false, clear);
@@ -348,8 +345,12 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   return res;
 }
 
-CNodePtr Renormalize(const CNodePtr &node, const abstract::AbstractBasePtrList &args_abs) {
-  auto infer_graph = ConstructGraphForEval(node, args_abs);
+FuncGraphPtr Renormalize(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  auto func_abs = func->ToAbstract();
+  if (!func_abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value: " << func->ToString() << " is not a callable object.";
+  }
+  auto infer_graph = ConstructGraphForEval(func, args_abs);
   auto manager = Manage(infer_graph, true);
   auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
 #ifdef ENABLE_PROFILE
@@ -366,17 +367,7 @@ CNodePtr Renormalize(const CNodePtr &node, const abstract::AbstractBasePtrList &
   MsProfile::StatTime("renormalize.infer", t2 - t1);
   MsProfile::StatTime("renormalize.specialize", t3 - t2);
 #endif
-  // Set the renormalized graph to the origin call node
-  auto ori_inputs = node->inputs();
-  ori_inputs.at(0) = NewValueNode(spec_graph);
-  auto ori_graph = node->func_graph();
-  if (ori_graph != nullptr) {
-    auto spec_node = ori_graph->NewCNode(ori_inputs);
-    spec_node->set_abstract(spec_graph->return_node()->abstract());
-    return spec_node;
-  }
-  node->set_abstract(spec_graph->return_node()->abstract());
-  return node;
+  return spec_graph;
 }
 
 void SetMindIRLoadFlag(const ResourcePtr &resource) {
