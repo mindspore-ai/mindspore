@@ -20,7 +20,7 @@
           // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
           ${get_cube_math_type}
           auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-          EXEC_NPU_CMD(${aclnn_name}, stream_ptr, ${aclnn_call_args}${outputs}${cube_math_type});
+          LAUNCH_ACLNN(${aclnn_name}, device_context, stream_ptr, ${aclnn_call_args}${outputs}${cube_math_type});
           MS_LOG(DEBUG) << "Launch end";
       }
     )

@@ -29,7 +29,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
                                               const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  EXEC_NPU_CMD(aclnnUpsampleNearest1d, stream_ptr, input_tensor, output_size, outputs[0]);
+  LAUNCH_ACLNN(aclnnUpsampleNearest1d, device_context, stream_ptr, input_tensor, output_size, outputs[0]);
   return outputs[0];
 }
 }  // namespace pyboost

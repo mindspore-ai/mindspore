@@ -52,8 +52,8 @@ tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::
     return nullptr;
   }
   auto cube_math_type = GetCubeMathType();
-  EXEC_NPU_CMD(aclnnConvolution, stream_ptr, input_tensor, weight_tensor, bias_tensor, expand_stride, expand_padding,
-               expand_dilation, transposed, output_padding, groups, outputs[0], cube_math_type);
+  LAUNCH_ACLNN(aclnnConvolution, device_context, stream_ptr, input_tensor, weight_tensor, bias_tensor, expand_stride,
+               expand_padding, expand_dilation, transposed, output_padding, groups, outputs[0], cube_math_type);
   MS_LOG(DEBUG) << "Launch end";
   return outputs[0];
 }

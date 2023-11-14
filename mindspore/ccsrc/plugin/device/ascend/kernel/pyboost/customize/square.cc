@@ -31,7 +31,7 @@ tensor::TensorPtr SquareAscendCall(const PrimitivePtr &primitive, const device::
   constexpr int64_t val = 2;
   const auto exponent = std::dynamic_pointer_cast<Scalar>(MakeValue(val));
   MS_EXCEPTION_IF_NULL(exponent);
-  EXEC_NPU_CMD(aclnnPowTensorScalar, stream_ptr, input_tensor, exponent, outputs[0]);
+  LAUNCH_ACLNN(aclnnPowTensorScalar, device_context, stream_ptr, input_tensor, exponent, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
   return outputs[0];
 }

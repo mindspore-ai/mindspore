@@ -21,28 +21,16 @@
 #include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
 
-// TODO: Get kCubeMathType by SOC version
-#define LAUNCH_ACLNN_CUBE(aclnn_api, stream_ptr, ...)                                                        \
-  int8_t cube_math_type = 0;                                                                                 \
-  auto [workspace_size, executor, after_launch_func] = GEN_EXECUTOR(aclnn_api, __VA_ARGS__, cube_math_type); \
-  if (workspace_size == 0) {                                                                                 \
-    RUN_OP_API(aclnn_api, stream_ptr, nullptr, 0, executor, after_launch_func);                              \
-  } else {                                                                                                   \
-    auto workspace_device_address =                                                                          \
-      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context_, workspace_size);                  \
-    RUN_OP_API(aclnn_api, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,   \
-               after_launch_func);                                                                           \
-  }
-
-#define LAUNCH_ACLNN(aclnn_api, stream_ptr, ...)                                                           \
-  auto [workspace_size, executor, after_launch_func] = GEN_EXECUTOR(aclnn_api, __VA_ARGS__);               \
-  if (workspace_size == 0) {                                                                               \
-    RUN_OP_API(aclnn_api, stream_ptr, nullptr, 0, executor, after_launch_func);                            \
-  } else {                                                                                                 \
-    auto workspace_device_address =                                                                        \
-      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context_, workspace_size);                \
-    RUN_OP_API(aclnn_api, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor, \
-               after_launch_func);                                                                         \
+#define LAUNCH_ACLNN(aclnn_api, device_context, stream_ptr, ...)                                                  \
+  auto [workspace_size, executor, release_func] = GEN_EXECUTOR(aclnn_api, __VA_ARGS__);                           \
+  static const std::string aclnn_name = #aclnn_api;                                                               \
+  if (workspace_size == 0) {                                                                                      \
+    RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor, stream_ptr, release_func);                                 \
+  } else {                                                                                                        \
+    auto workspace_device_address =                                                                               \
+      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_size);                        \
+    RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), workspace_size, executor, stream_ptr, \
+                     release_func);                                                                               \
   }
 
 namespace mindspore {
