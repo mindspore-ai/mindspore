@@ -275,6 +275,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                            const FuncGraphPtr &func_graph);
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const;
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
   EvalResultPtr Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_abs_list);
   void Clear();

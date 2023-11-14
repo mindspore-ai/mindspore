@@ -762,3 +762,23 @@ def test_fallback_tensor_with_variable_input():
     ret = foo(Tensor([1, 2, 3]))
     assert ret == Tensor([0])
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
+
+
+@pytest.mark.skip(reason="Function graph cannot convert to object, fix later")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_map_with_variable_input():
+    """
+    Feature: JIT Fallback
+    Description: Generate Tensor with graph.
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x, y):
+        m = map(lambda a, b: a + b, x.asnumpy(), y.asnumpy())
+        return tuple(m)
+
+    ret = foo(Tensor([1, 2, 3]), Tensor([4, 5, 6]))
+    assert ret == (5, 7, 9)

@@ -2584,8 +2584,10 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   }
   auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
   MS_LOG(DEBUG) << "Generate python object for new value node.";
-  py::object py_list_obj = fallback::GeneratePyObj(abs);
-  fallback::AttachPyObjToAbs(abs, py_list_obj, true);
+  if (fallback::EnableFallbackListDictInplace()) {
+    py::object py_list_obj = fallback::GeneratePyObj(abs);
+    fallback::AttachPyObjToAbs(abs, py_list_obj, true);
+  }
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
@@ -2708,6 +2710,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       new_args_abs_list[1] =
         std::make_shared<abstract::AbstractScalar>(empty_global_dict, std::make_shared<External>());
     }
+    check_list_dict_inplace_ =
+      node->has_user_data(fallback::kCheckListDictInplace) && *node->user_data<bool>(fallback::kCheckListDictInplace);
     py::tuple params = MakeParameters(new_args_abs_list, script);
     // Would convert PyInterpret to PyExecute then.
     if (non_const_err_ || fallback::GetJitAnnotationSideEffectFromComment(node)) {
@@ -2796,7 +2800,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(local_abs_val);
       MS_EXCEPTION_IF_NULL(name);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
-      if (local_abs_val->ContainsValueAny()) {
+      bool from_global = check_list_dict_inplace_ && fallback::HasCreateInGraphInExtraInfoHolder(local_abs) &&
+                         !fallback::GetCreateInGraphFromExtraInfoHolder(local_abs);
+      if (local_abs_val->ContainsValueAny() || from_global) {
         const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (allow_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
@@ -2939,6 +2945,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
 
  private:
   mutable bool non_const_err_{false};
+  mutable bool check_list_dict_inplace_{false};
 };
 
 class EmbedEvaluator : public SymbolicPrimEvaluator {

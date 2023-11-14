@@ -618,7 +618,6 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
       default_values.push_back(NewValueNode(kNull));
     } else {
       AnfNodePtr arg_node = ParseExprNode(block, defaults[i]);
-      arg_node = HandleInterpret(block, arg_node, defaults[i]);
       default_values.push_back(arg_node);
     }
   }
@@ -817,7 +816,6 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
 
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
-  lambda_body_node = HandleInterpret(block, lambda_body_node, body_node);
   current_fg->set_output(lambda_body_node);
 
   // Add unused variables as isolate nodes.
@@ -993,9 +991,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfoStr(no_return_node->debug_info(), "", kSourceLineTipDiscard);
-      // Some builtin functions need to be implemented using fallback.
-      auto isolated_node = HandleInterpret(block, no_return_node, value_object);
-      block->AddIsolatedNode(isolated_node);
+      block->AddIsolatedNode(no_return_node);
     } else {
       // Expand the assign statement,
       // e.g.: x.append(y)  -> x = x.append(y)
@@ -1084,42 +1080,12 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
   false_block->UpdateGlobalPyParam(pre_block->global_py_params());
 }
 
-AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
-                                        const py::object &value_object) {
-  MS_EXCEPTION_IF_NULL(return_expr_node);
-  // Handle the case of returning tuple.
-  py::object obj = python_adapter::GetPyObjAttr(value_object, "elts");
-  if (!py::isinstance<py::none>(obj)) {
-    auto elts = py::cast<py::tuple>(obj);
-    if (!elts.empty()) {
-      auto cnode = return_expr_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      // The first input of cnode is MakeTuple.
-      if (cnode->size() != elts.size() + 1) {
-        MS_LOG(INTERNAL_EXCEPTION) << "The size of make_tuple's inputs must be equal to " << (elts.size() + 1) << ".";
-      }
-      for (size_t i = 0; i < elts.size(); i++) {
-        auto input = cnode->input(i + 1);
-        if (input->interpret()) {
-          auto interpreted_node = HandleInterpret(block, input, elts[i]);
-          cnode->set_input(i + 1, interpreted_node);
-        }
-      }
-      return cnode;
-    }
-  }
-
-  // Handle the case of a single return value.
-  return HandleInterpret(block, return_expr_node, value_object);
-}
-
 FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast return";
   MS_EXCEPTION_IF_NULL(block);
   // Parse the return Statements value.
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   AnfNodePtr return_expr_node = ParseExprNode(block, value_object);
-  return_expr_node = HandelReturnExprNode(block, return_expr_node, value_object);
   // Create the `return` CNode.
   auto func_graph = block->func_graph();
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
@@ -1142,12 +1108,10 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   if (left_node == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "DoBinOp process left node failed: " << errcode();
   }
-  left_node = HandleInterpret(block, left_node, left);
   AnfNodePtr right_node = ParseExprNode(block, right);
   if (right_node == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "DoBinOp process right node failed:" << errcode();
   }
-  right_node = HandleInterpret(block, right_node, right);
   // Resolve the op
   const auto &ns = block->GetAstOpNameSpace(op);
   auto op_node = block->MakeResolveAstOpNameSpace(ns);
@@ -1155,8 +1119,6 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Create apply node
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
-  UpdateInterpretForUserNode(new_node, {left_node, right_node});
-  new_node = HandleInterpret(block, new_node, node);
   // Handling % symbol in formatted string values by JIT Fallback.
   // The string AnfNode may be created by ParseJoinedStr or ParseStr.
   // For example, string % var, f"The string is: %s." % str  or "The number is: %d." % num
@@ -1333,7 +1295,6 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
 void Parser::HandleStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes) {
   for (size_t i = 0; i < args.size(); ++i) {
     AnfNodePtr node = ParseExprNode(block, args[i]);
-    node = HandleInterpret(block, node, args[i]);
     (void)str_nodes->emplace_back(node);
   }
 }
@@ -1357,7 +1318,6 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     if (block->CheckHasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
-      error_node = HandleInterpret(block, error_node, name);
       return {NewValueNode(name_id), error_node};
     } else if (exception_types_map.find(name_id) != exception_types_map.end()) {
       auto str_value = std::make_shared<StringImm>("None");
@@ -1381,7 +1341,6 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     if (block->CheckHasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
-      error_node = HandleInterpret(block, error_node, name);
       (void)node_list.emplace_back(error_node);
       return node_list;
     } else if (exception_types_map.find(name_id) != exception_types_map.end()) {
@@ -1713,7 +1672,6 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   }
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, args_context);
-  UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
   MS_LOG(DEBUG) << "call_cnode: " << call_cnode->DebugString()
                 << ", call_function_node: " << call_function_node->DebugString();
@@ -1803,7 +1761,6 @@ void Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args
     } else {
       MS_LOG(DEBUG) << "args[" << i << "]: " << py::str(args[i]);
       AnfNodePtr node = ParseExprNode(block, args[i]);
-      node = HandleInterpret(block, node, args[i]);
       auto internal = node->interpret_internal_type();
       auto interpret_without_internal =
         ((node->interpret() || IsPrimitiveCNode(node, prim::kPrimPyInterpret)) && !internal);
@@ -1837,7 +1794,6 @@ void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
         auto kw_key_c = kw_key.cast<std::string>();
         keys.push_back(NewValueNode(kw_key_c));
         auto ret_node = ParseExprNode(block, kw_value);
-        ret_node = HandleInterpret(block, ret_node, kw_value);
         values.push_back(ret_node);
       }
     }
@@ -2034,14 +1990,6 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     attr_cnode = block->DoResolve(attr_cnode, name_space, symbol);
   }
 
-  // Check whether it is constant, constant does not need interpret.
-  auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
-  py::bool_ is_jit_supported_attr =
-    ast()->CallParserObjMethod(PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE, value_str, common::SafeCStr(attr_str));
-  auto is_supported = py::cast<bool>(is_jit_supported_attr);
-  if (!is_supported) {
-    UpdateInterpretForUserNode(attr_cnode, value_node);
-  }
   if (attr_str == "pop") {
     list_pop_target_obj_ = value_body;
   }
@@ -2103,12 +2051,6 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   auto first_right = comparators[0];
   auto first_op = ops[0];
   auto first_compare_node = ParseSingleCompare(block, first_left, first_right, first_op);
-  auto interpret_without_internal =
-    (first_compare_node->interpret() || IsPrimitiveCNode(first_compare_node, prim::kPrimPyInterpret)) &&
-    !first_compare_node->interpret_internal_type();
-  if (interpret_without_internal) {
-    return HandleInterpret(block, first_compare_node, node, false);
-  }
   if (ops.size() == 1) {
     // For single compare, such as x < y.
     return first_compare_node;
@@ -2122,12 +2064,6 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
     auto cur_right = comparators[i];
     auto cur_op = ops[i];
     auto cur_compare_node = ParseSingleCompare(block, cur_left, cur_right, cur_op);
-    interpret_without_internal =
-      (cur_compare_node->interpret() || IsPrimitiveCNode(cur_compare_node, prim::kPrimPyInterpret)) &&
-      !cur_compare_node->interpret_internal_type();
-    if (interpret_without_internal) {
-      return HandleInterpret(block, cur_compare_node, node, false);
-    }
     (void)compare_nodes.emplace_back(cur_compare_node);
   }
 
@@ -2144,19 +2080,14 @@ AnfNodePtr Parser::ParseSingleCompare(const FunctionBlockPtr &block, const py::o
   MS_LOG(DEBUG) << "Process ast Compare with single comparators";
 
   AnfNodePtr left_node = ParseExprNode(block, left);
-  left_node = HandleInterpret(block, left_node, left, false);
   AnfNodePtr right_node = ParseExprNode(block, right);
-  right_node = HandleInterpret(block, right_node, right, false);
 
   MS_EXCEPTION_IF_NULL(block);
   const auto &ns = block->GetAstOpNameSpace(compare_op);
   auto op_node = block->MakeResolveAstOpNameSpace(ns);
 
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
-  UpdateInterpretForUserNode(new_node, {left_node, right_node});
-
-  return new_node;
+  return block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
 }
 
 AnfNodePtr Parser::ConnectSingleCompare(const FunctionBlockPtr &block, const AnfNodePtr &left_node,
@@ -2193,7 +2124,6 @@ AnfNodePtr Parser::ConnectSingleCompare(const FunctionBlockPtr &block, const Anf
 
   std::vector<AnfNodePtr> call_graph_nodes{switch_app};
   auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
-  UpdateInterpretForUserNode(switch_app_call, {left_node, right_node});
   return switch_app_call;
 }
 
@@ -2248,16 +2178,12 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     b2->func_graph()->set_output(test_node);
 
     AnfNodePtr cond_node = block->ForceToCondNode(test_node);
-    UpdateInterpretForUserNode(cond_node, test_node);
-    cond_node = HandleCondInterpret(block, cond_node, first);
-
     auto switch_app =
       block_fg->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
                                  NewValueNode(false_block->func_graph())});
 
     std::vector<AnfNodePtr> call_graph_nodes{switch_app};
     auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
-    UpdateInterpretForUserNode(switch_app_call, {test_node, rest_node});
     return switch_app_call;
   }
 }
@@ -2312,7 +2238,6 @@ AnfNodePtr Parser::ParseTupleOrListWithStarred(const FunctionBlockPtr &block, co
   py::tuple elts = python_adapter::GetPyObjAttr(node, "elts");
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
-    node_ptr = HandleInterpret(block, node_ptr, elts[i]);
     auto elt_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, elts[i])));
     if (elt_type == AST_SUB_TYPE_STARRED) {
       auto starred_unpack_prim = std::make_shared<prim::StarredUnpack>(NAMED_METAGRAPH_STARRED_UNPACK);
@@ -2370,7 +2295,6 @@ AnfNodePtr Parser::ParseTupleOrList(const FunctionBlockPtr &block, const py::obj
     (void)sequence_vec.emplace_back(sequence_op);
     for (size_t i = 0; i < elts.size(); i++) {
       AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
-      node_ptr = HandleInterpret(block, node_ptr, elts[i]);
       (void)sequence_vec.emplace_back(node_ptr);
     }
     MS_EXCEPTION_IF_NULL(block->func_graph());
@@ -2400,15 +2324,9 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   py::object value_node = python_adapter::GetPyObjAttr(node, "value");
   py::object slice_node = python_adapter::GetPyObjAttr(node, "slice");
   AnfNodePtr value = ParseExprNode(block, value_node);
-  value = HandleInterpret(block, value, value_node);
   AnfNodePtr slice = ParseExprNode(block, slice_node);
-  slice = HandleInterpret(block, slice, slice_node);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
-  UpdateInterpretForUserNode(new_node, {value, slice});
-  new_node = HandleInterpret(block, new_node, node);
-
-  return new_node;
+  return block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
 }
 
 // Process a slice, get the slice value
@@ -2420,16 +2338,10 @@ AnfNodePtr Parser::ParseSlice(const FunctionBlockPtr &block, const py::object &n
   py::object stop = python_adapter::GetPyObjAttr(node, "upper");
   py::object step = python_adapter::GetPyObjAttr(node, "step");
   AnfNodePtr start_node = ParseExprNode(block, start);
-  start_node = HandleInterpret(block, start_node, start);
   AnfNodePtr stop_node = ParseExprNode(block, stop);
-  stop_node = HandleInterpret(block, stop_node, stop);
   AnfNodePtr step_node = ParseExprNode(block, step);
-  step_node = HandleInterpret(block, step_node, step);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  AnfNodePtr slice_node = block->func_graph()->NewCNodeInOrder({op_makeslice, start_node, stop_node, step_node});
-  UpdateInterpretForUserNode(slice_node, {start_node, stop_node, step_node});
-  slice_node = HandleInterpret(block, slice_node, node);
-  return slice_node;
+  return block->func_graph()->NewCNodeInOrder({op_makeslice, start_node, stop_node, step_node});
 }
 
 // Process a extslice
@@ -2469,11 +2381,8 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   py::object operand = python_adapter::GetPyObjAttr(node, "operand");
   AnfNodePtr operand_node = ParseExprNode(block, operand);
-  operand_node = HandleInterpret(block, operand_node, operand);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, operand_node});
-  UpdateInterpretForUserNode(new_node, operand_node);
-  return new_node;
+  return block->func_graph()->NewCNodeInOrder({op_node, operand_node});
 }
 
 // Process a dict ast node expression
@@ -2515,10 +2424,8 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> Parser::GetRealKeysV
       }
     } else {
       AnfNodePtr key_node = ParseExprNode(block, keys[index]);
-      key_node = HandleInterpret(block, key_node, keys[index]);
       inner_key_nodes.push_back(key_node);
       AnfNodePtr value_node = ParseExprNode(block, values[index]);
-      value_node = HandleInterpret(block, value_node, values[index]);
       inner_value_nodes.push_back(value_node);
     }
   }
@@ -2529,28 +2436,6 @@ AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &no
   MS_LOG(DEBUG) << "Process ast Dict";
   auto [key_nodes, value_nodes] = GetRealKeysValues(block, node);
   return ParseDictByKeysAndValues(block, key_nodes, value_nodes);
-}
-
-AnfNodePtr Parser::HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
-                                               const py::object &op_object, const py::object &target_object,
-                                               const py::object &value_object) {
-  MS_EXCEPTION_IF_NULL(augassign_node);
-  if (!augassign_node->interpret()) {
-    return augassign_node;
-  }
-
-  std::string op_text =
-    py::cast<std::string>(ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_SYMBOL, op_object));
-  // Check the symbol in the Augasssign expression.
-  if (op_text.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid augasssign operator, only support `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `<<=`, "
-                      << "`>>=`, `&=`, `|=`, `^=`.";
-  }
-
-  const auto target_text = py::cast<std::string>(ast()->GetAstNodeText(target_object));
-  const auto value_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
-  std::string script_text = target_text + op_text + value_text;
-  return MakeInterpretNode(block, augassign_node, script_text);
 }
 
 // Process a augment assign such as a += b or mat[stride_slice] += b.
@@ -2568,8 +2453,6 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   auto op_node = block->MakeResolveAstOpNameSpace(ns);
 
   AnfNodePtr value_node = ParseExprNode(block, value_object);
-  value_node = HandleInterpret(block, value_node, value_object);
-
   {
     TraceGuard trace_guard(GetLocation(target_object));
     target_node = ParseExprNode(block, target_object);
@@ -2580,11 +2463,6 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
-
-  // Check whether the augassign expression needs to be interpreted.
-  UpdateInterpretForUserNode(augassign_app, {target_node, value_node});
-  augassign_app = HandleInterpretForAugassign(block, augassign_app, op_object, target_object, value_object);
-
   WriteAssignVars(block, target_object, augassign_app);
   return block;
 }
@@ -2806,10 +2684,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   AnfNodePtr bool_node = nullptr;
   if (!is_bool_const_cond) {
     AnfNodePtr condition_node = ParseExprNode(block, test_node);
-    condition_node = HandleInterpret(block, condition_node, test_node);
     bool_node = block->ForceToCondNode(condition_node);
-    UpdateInterpretForUserNode(bool_node, condition_node);
-    bool_node = HandleCondInterpret(block, bool_node, test_node);
   }
 
   FunctionBlockPtr true_block = nullptr;
@@ -2974,14 +2849,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   body_block->UpdateGlobalPyParam(block->global_py_params());
   after_block->UpdateGlobalPyParam(block->global_py_params());
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
-  condition_node = HandleInterpret(header_block, condition_node, test_node);
   AnfNodePtr while_condition_node = nullptr;
   {
     TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(condition_node->debug_info()));
     while_condition_node = header_block->ForceToCondNode(condition_node, true);
   }
-  UpdateInterpretForUserNode(while_condition_node, condition_node);
-  while_condition_node = HandleCondInterpret(header_block, while_condition_node, test_node);
   (void)header_block->ConditionalJump(while_condition_node, body_block, after_block);
 
   body_block->Mature();
@@ -3029,68 +2901,6 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   return ParseForUnroll(block, node);
 }
 
-AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
-                                                  const py::object &iter_obj) {
-  // For interpret iter_node, convert it to list. xs --> list(xs).
-  py::object iter_id = python_adapter::GetPyObjAttr(iter_obj, "id");
-  if (!py::isinstance<py::none>(iter_id)) {
-    // If variable is assigned, for example:
-    //     xs = np.array([1, 2, 3, 4])
-    //     for x in xs
-    const std::string &iter_id_str = iter_id.cast<py::str>();
-    return MakeInterpretNode(block, iter_node, "list(" + iter_id_str + ")");
-  }
-  // If variable is not assigned, for example:
-  //     for x in np.array([1, 2, 3, 4])
-  const auto &interpret_iter_node =
-    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) ? iter_node : HandleInterpret(block, iter_node, iter_obj);
-  constexpr size_t script_index = 1;
-  auto iter_cnode = interpret_iter_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(iter_cnode);
-  auto iter_cnode_inputs = iter_cnode->inputs();
-  auto iter_script_input = iter_cnode_inputs[script_index];
-  if (!IsValueNode<Script>(iter_script_input)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The second input to iter node: " << interpret_iter_node->DebugString()
-                               << " should be a script value node but got: " << iter_script_input->DebugString() << ".";
-  }
-  auto script = iter_script_input->cast<ValueNodePtr>();
-  auto script_val = script->value()->cast<ScriptPtr>();
-  auto script_text = script_val->script();
-  auto new_script_val = NewValueNode(std::make_shared<Script>("list(" + script_text + ")"));
-  iter_cnode_inputs[script_index] = new_script_val;
-  return block->func_graph()->NewCNodeInOrder(iter_cnode_inputs);
-}
-
-CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter_node, const AnfNodePtr &loop_var) {
-  // Create empty global dict node.
-  PyObjectWrapperPtr empty_interpreted_global_dict = std::make_shared<InterpretedObject>(py::dict());
-  auto empty_global_dict_node = NewValueNode(empty_interpreted_global_dict);
-  // Construct local dict node.
-  auto local_dict_key = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), NewValueNode("x"), NewValueNode("i")});
-  auto local_dict_value = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), iter_node, loop_var});
-  auto local_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), local_dict_key, local_dict_value});
-
-  // Construct script text node.
-  auto script = std::make_shared<Script>("x[i]");
-  auto script_node = NewValueNode(script);
-
-  auto prim = NewValueNode(prim::kPrimPyInterpret);
-  auto interpret_get_item = fg->NewCNodeInOrder({prim, script_node, empty_global_dict_node, local_dict_node});
-  interpret_get_item->set_debug_info(iter_node->debug_info());
-  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(interpret_get_item);
-  return interpret_get_item;
-}
-
-void CloneInnerNodeLocation(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto debug_info = node->debug_info();
-  MS_EXCEPTION_IF_NULL(debug_info);
-  auto old_location = debug_info->location();
-  MS_EXCEPTION_IF_NULL(old_location);
-  LocationPtr new_location = std::make_shared<Location>(*old_location);
-  debug_info->set_location(new_location);
-}
-
 // Implement unroll for statement with tuple/getitem.
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
@@ -3107,10 +2917,6 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   MS_LOG(DEBUG) << "Parse Recursive Iter, iter_obj: " << py::str(iter_obj);
   AnfNodePtr origin_iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(origin_iter_node);
-  // Generate node for loop count and convert it to tensor, to make the loop not unroll
-  if (origin_iter_node->interpret() && !IsPrimitiveCNode(origin_iter_node, prim::kPrimPyInterpret)) {
-    origin_iter_node = HandleInterpret(block, origin_iter_node, iter_obj);
-  }
   auto iter_node = block->func_graph()->NewCNodeInOrder({op_iter, origin_iter_node});
   CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   FunctionBlockPtr header_block =
@@ -3122,7 +2928,6 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
-  CloneInnerNodeLocation(cond_node);
 
   // Generate the body of the for statement
   FunctionBlockPtr body_block = MakeFunctionBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
@@ -3131,15 +2936,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
   MS_EXCEPTION_IF_NULL(body_func_graph);
-  bool interpret_without_internal =
-    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
-  CNodePtr target_var = nullptr;
-  if (iter_node->interpret() || interpret_without_internal) {
-    target_var = GenerateInterpretGetItem(body_func_graph, iter_node, loop_var);
-  } else {
-    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
-    CloneInnerNodeLocation(target_var);
-  }
+  auto target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
   header_block->UpdateGlobalPyParam(block->global_py_params());
   body_block->UpdateGlobalPyParam(block->global_py_params());
   WriteAssignVars(body_block, target_node, target_var);
@@ -3149,7 +2946,6 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
   auto add_one = NewValueNode(static_cast<int64_t>(1));
   CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, add_one});
-  CloneInnerNodeLocation(loop_var_inc);
 
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
 
@@ -3206,7 +3002,6 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
-  iter_node = HandleInterpret(header_block, iter_node, iter_obj);
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   ParameterPtr header_iter_param = header_block->func_graph()->add_parameter();
   AnfNodePtr header_len = header_block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
@@ -3322,9 +3117,6 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
 
   AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
-  UpdateInterpretForUserNode(bool_node, condition_node);
-  bool_node = HandleCondInterpret(block, bool_node, test_node);
-
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
   MS_EXCEPTION_IF_NULL(block->func_graph());
@@ -3345,7 +3137,6 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(true_block->func_graph()->debug_info());
   true_block->func_graph()->debug_info()->set_location(GetLocation(bodyNode));
   AnfNodePtr true_node = ParseExprNode(true_block, bodyNode);
-  true_node = HandleInterpret(true_block, true_node, bodyNode);
 
   // Process the orelse branch
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
@@ -3353,7 +3144,6 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(false_block->func_graph()->debug_info());
   false_block->func_graph()->debug_info()->set_location(GetLocation(orelseNode));
   AnfNodePtr false_node = ParseExprNode(false_block, orelseNode);
-  false_node = HandleInterpret(false_block, false_node, orelseNode);
 
   true_block->func_graph()->set_output(true_node);
   false_block->func_graph()->set_output(false_node);
@@ -3378,11 +3168,6 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
   MS_EXCEPTION_IF_NULL(iter_anf_node);
-  bool interpret_without_internal =
-    IsPrimitiveCNode(iter_anf_node, prim::kPrimPyInterpret) && !iter_anf_node->interpret_internal_type();
-  if (iter_anf_node->interpret() || interpret_without_internal) {
-    iter_anf_node = ConvertInterpretIterNodeToList(block, iter_anf_node, iter_node);
-  }
 
   // Create header graph.
   FunctionBlockPtr list_header_block =
@@ -3549,11 +3334,6 @@ FunctionBlockPtr Parser::ParseDictCompIter(const FunctionBlockPtr &block, const 
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
   MS_EXCEPTION_IF_NULL(iter_anf_node);
-  bool interpret_without_internal =
-    IsPrimitiveCNode(iter_anf_node, prim::kPrimPyInterpret) && !iter_anf_node->interpret_internal_type();
-  if (iter_anf_node->interpret() || interpret_without_internal) {
-    iter_anf_node = ConvertInterpretIterNodeToList(block, iter_anf_node, iter_node);
-  }
 
   // Create header graph.
   FunctionBlockPtr dict_header_block =
@@ -3734,7 +3514,6 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
   bool has_interpret_node = false;
   for (size_t i = 0; i < py_values.size(); ++i) {
     AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
-    str_value = HandleInterpret(block, str_value, py_values[i]);
     // If exist interpret node in JoinedStr, all object in py_values will convert to interpret node.
     // Need to parse all elements in py_values in order to put them in local param dict.
     if (!has_interpret_node && IsPrimitiveCNode(str_value, prim::kPrimPyInterpret)) {
@@ -3742,6 +3521,7 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
     }
     (void)value_nodes.emplace_back(str_value);
   }
+  // JoinedStr can not get expr_src for their separate element. So, we convert the whole str directly.
   if (has_interpret_node) {
     return MakeInterpretNode(block, value_nodes[1], script_text);
   }
@@ -3909,8 +3689,6 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
   if (target_node == nullptr) {
     return false;
   }
-  target_node = HandleInterpret(block, target_node, target);
-  MS_EXCEPTION_IF_NULL(target_node);
 
   if (!IsClassParameterMember(target, target_node)) {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
@@ -4034,9 +3812,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   py::object value_obj = python_adapter::GetPyObjAttr(target, "value");
   py::object slice_obj = python_adapter::GetPyObjAttr(target, "slice");
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
-  value_node = HandleInterpret(block, value_node, value_obj);
   AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
-  slice_node = HandleInterpret(block, slice_node, slice_obj);
   MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr setitem_app = block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
   // Getitem apply should return the sequence data structure itself
@@ -4110,25 +3886,6 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   }
 }
 
-void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const {
-  MS_EXCEPTION_IF_NULL(user_node);
-  MS_EXCEPTION_IF_NULL(node);
-  // Do not handle user node with internal type such as Tensor.abs().
-  bool interpret_without_internal = IsPrimitiveCNode(node, prim::kPrimPyInterpret) && !node->interpret_internal_type();
-  if (node->interpret() || interpret_without_internal) {
-    user_node->set_interpret(true);
-    if (node->interpret_internal_type()) {
-      user_node->set_interpret_internal_type(true);
-    }
-  }
-}
-
-void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) const {
-  for (auto &node : nodes) {
-    UpdateInterpretForUserNode(user_node, node);
-  }
-}
-
 bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                               const std::map<std::string, AnfNodePtr> &local_keys,
                               const FuncGraphPtr &func_graph) const {
@@ -4148,29 +3905,13 @@ bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &gl
 }
 
 AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                                   const py::object &value_object, bool force_interpret) {
-  MS_EXCEPTION_IF_NULL(value_node);
-  if (!value_node->interpret() && !force_interpret) {
-    return value_node;
-  }
-  const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
-  return MakeInterpretNode(block, value_node, script_text);
-}
-
-AnfNodePtr Parser::HandleCondInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                                       const py::object &value_object) {
-  std::stringstream buffer;
-  buffer << "bool(";
+                                   const py::object &value_object) {
   MS_EXCEPTION_IF_NULL(value_node);
   if (!value_node->interpret()) {
     return value_node;
   }
   const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
-  buffer << script_text << ")";
-  auto node = MakeInterpretNode(block, value_node, buffer.str());
-  fallback::SetRealType(node, kBool);
-  fallback::SetRealShape(node, std::make_shared<abstract::Shape>(std::vector<int64_t>{-1}));
-  return node;
+  return MakeInterpretNode(block, value_node, script_text);
 }
 
 bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
@@ -4320,7 +4061,6 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   py::object targets_object = python_adapter::GetPyObjAttr(node, "targets");
 
   AnfNodePtr value_node = ParseExprNode(block, value_object);
-  value_node = HandleInterpret(block, value_node, value_object);
 
   py::int_ pcount = python_adapter::CallPyObjMethod(targets_object, "__len__");
   size_t count = LongToSize(pcount);
@@ -4429,7 +4169,6 @@ FunctionBlockPtr Parser::MakeAssertErrorBlock(const FunctionBlockPtr &block, con
   py::object msg_node = python_adapter::GetPyObjAttr(node, "msg");
   if (!py::isinstance<py::none>(msg_node)) {
     AnfNodePtr msg = ParseExprNode(block, msg_node);
-    msg = HandleInterpret(block, msg, msg_node);
     (void)inputs.emplace_back(msg);
   }
   auto str_none = std::make_shared<StringImm>("None");
@@ -4453,9 +4192,6 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
 
   AnfNodePtr bool_node = block->ForceToCondNode(condition_node);
-  UpdateInterpretForUserNode(bool_node, condition_node);
-  bool_node = HandleCondInterpret(block, bool_node, test_node);
-
   TraceGuard guard(std::make_shared<TraceAssert>(block->func_graph()->debug_info()));
   TraceGuard location_guard(GetLocation(node));
   FunctionBlockPtr true_block = MakeFunctionBlock();

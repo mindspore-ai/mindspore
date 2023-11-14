@@ -959,7 +959,12 @@ class ThirdPartyLibraryChecker:
             module = value
         elif (isinstance(value, types.FunctionType) and not hasattr(value, "__jit_function__")) or \
             (isinstance(value, types.MethodType) and not hasattr(value.__func__, "__jit_function__")):
-            if value in _convert_map():
+            value_hashable = True
+            try:
+                hash(value)
+            except TypeError:
+                value_hashable = False
+            if value_hashable and value in _convert_map():
                 return False
             module = inspect.getmodule(value)
             if module is None:
@@ -1143,22 +1148,6 @@ class Parser:
 
         logger.error("Fn type is invalid")
         return None, None
-
-    def is_jit_supported_attribute(self, var, attr):
-        """Check whether the value is a constant."""
-        if var in self.global_namespace:
-            module = self.global_namespace[var]
-            if hasattr(module, attr):
-                value = getattr(module, attr)
-                # Check if value is constant.
-                if isinstance(value, (int, float, bool)):
-                    return True
-                # Check if value in convert_map.
-                if isinstance(value, (tuple, list, dict)) or getattr(value, "__hash__") is None:
-                    return False
-                if inspect.ismodule(module) and value in _convert_map():
-                    return True
-        return False
 
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""

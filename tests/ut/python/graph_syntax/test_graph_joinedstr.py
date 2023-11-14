@@ -73,7 +73,7 @@ def test_joinedstr_basic_numpy_scalar():
         return res
 
     out = joined_net()
-    assert out == "x: [1 2 3 4 5], y: 3"
+    assert out == "x: PythonObject(type: <class 'numpy.ndarray'>, value: [1 2 3 4 5]), y: 3"
 
 
 def test_joinedstr_inner_tensor():

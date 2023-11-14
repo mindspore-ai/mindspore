@@ -37,9 +37,13 @@ namespace mindspore {
 namespace opt {
 namespace {
 CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager);
-AnfNodePtr NewValueNodeWithAbstract(const ValuePtr &value) {
+AnfNodePtr NewValueNodeWithAbstract(const ValuePtr &value, const AbstractBasePtr &abs = nullptr) {
   auto value_node = NewValueNode(value);
-  value_node->set_abstract(value->ToAbstract());
+  if (abs != nullptr) {
+    value_node->set_abstract(abs->Clone());
+  } else {
+    value_node->set_abstract(value->ToAbstract());
+  }
   return value_node;
 }
 
@@ -122,11 +126,27 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnzipLocalDict(const
       MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict should be a dictionary, but got "
                                  << dict_node->DebugString();
     }
+
+    auto abs = dict_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto dict_abs = abs->cast<abstract::AbstractDictionaryPtr>();
+    MS_EXCEPTION_IF_NULL(dict_abs);
+    const auto &elements_pair = dict_abs->elements();
+    const auto &dict_value_value = dict_value->value();
+    if (elements_pair.size() != dict_value_value.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "For node: " << dict_node->DebugString()
+                                 << ", the abstract elements size is: " << elements_pair.size()
+                                 << " and the value elements size is: " << dict_value_value.size()
+                                 << ". Size not matched.";
+    }
+
     std::vector<AnfNodePtr> keys;
     std::vector<AnfNodePtr> values;
-    for (auto item : dict_value->value()) {
+    for (size_t i = 0; i < dict_value_value.size(); ++i) {
+      auto item = dict_value_value[i];
       (void)keys.emplace_back(NewValueNodeWithAbstract(item.first));
-      (void)values.emplace_back(NewValueNodeWithAbstract(item.second));
+      // Key element may contain ExtraInfoHolder, need to clone the abstract.
+      (void)values.emplace_back(NewValueNodeWithAbstract(item.second, elements_pair[i].second));
     }
     return std::make_pair(keys, values);
   }

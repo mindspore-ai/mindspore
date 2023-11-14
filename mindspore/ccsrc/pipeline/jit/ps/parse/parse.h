@@ -276,26 +276,14 @@ class Parser {
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) const;
-  // Set the interpret flag for the node calling the interpret node.
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const;
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) const;
   // Make interpret node.
   AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
-  // Convert interpret iter node to list.
-  AnfNodePtr ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
-                                            const py::object &iter_obj);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                             const py::object &value_object, bool force_interpret = false);
+                             const py::object &value_object);
 
-  AnfNodePtr HandleCondInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                                 const py::object &value_object);
   bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
                                  const string &script_text) const;
-  // Handle interpret for augassign expression.
-  AnfNodePtr HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
-                                         const py::object &op_object, const py::object &target_object,
-                                         const py::object &value_object);
 
   // Generate argument nodes for ast function node.
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &fn_node);
@@ -355,10 +343,6 @@ class Parser {
 
   // Assign value to subscript.
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
-
-  // Interpret the return node.
-  AnfNodePtr HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
-                                  const py::object &value_object);
 
   // Process a bool operation value list.
   AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
