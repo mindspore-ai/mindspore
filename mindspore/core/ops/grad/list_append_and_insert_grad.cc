@@ -29,6 +29,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -88,11 +89,29 @@ class ListAppendAndInsertGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->GetShape();
+    auto input_shape = input_args[0]->GetShape();
+    auto index_value = input_args[1]->GetValue();
+    auto index_opt = GetScalarValue<int64_t>(index_value);
+    if (!index_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
+    }
+    auto index = index_opt.value();
+    auto list_shape = input_shape->cast<abstract::SequenceShapePtr>()->shape();
+    list_shape.erase(list_shape.begin() + index);
+    return std::make_shared<abstract::ListShape>(list_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->GetType();
+    auto input_type = input_args[0]->GetType();
+    auto index_value = input_args[1]->GetValue();
+    auto index_opt = GetScalarValue<int64_t>(index_value);
+    if (!index_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
+    }
+    auto index = index_opt.value();
+    auto list_type = input_type->cast<ListPtr>()->elements();
+    list_type.erase(list_type.begin() + index);
+    return std::make_shared<List>(list_type);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

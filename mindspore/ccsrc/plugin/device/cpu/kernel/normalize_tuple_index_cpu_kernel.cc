@@ -159,7 +159,7 @@ template <typename T>
 bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &workspace,
                                                    const std::vector<KernelTensor *> &outputs) {
-  const auto index_val_addr = static_cast<int64_t *>(inputs[1]->device_ptr());
+  const auto index_val_addr = static_cast<T *>(inputs[1]->device_ptr());
   auto output_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
   const ShapeVector &data_shape = data_shapes_[0];
   output_sizes_.clear();

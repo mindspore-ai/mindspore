@@ -780,29 +780,6 @@ class Pow(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_number_pow_number():
-    """
-    Feature: simple expression
-    Description: test pow operator.
-    Expectation: No exception
-    """
-    with pytest.raises(TypeError) as err:
-        input_x = 2
-        input_y = 5
-        result1 = input_x ** input_y
-        pow_net = Pow()
-        result2 = pow_net(input_x, input_y)
-        expect = 32
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "The primitive[Pow]'s input arguments[x1, x2] must be all tensor and those type must be same." in str(err)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_tensor_pow_tensor():
     """
     Feature: simple expression

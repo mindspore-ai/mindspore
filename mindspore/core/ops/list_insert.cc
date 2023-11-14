@@ -28,6 +28,7 @@
 #include "ir/primitive.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -112,11 +113,31 @@ class ListInsertInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListInsertInnerInfer(primitive, input_args)->GetShape();
+    auto input_shape = input_args[0]->GetShape();
+    auto target_shape = input_args[2]->GetShape();
+    auto index_value = input_args[1]->GetValue();
+    auto index_opt = GetScalarValue<int64_t>(index_value);
+    if (!index_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
+    }
+    auto index = index_opt.value();
+    auto list_shape = input_shape->cast<abstract::SequenceShapePtr>()->shape();
+    list_shape.insert(list_shape.begin() + index, target_shape);
+    return std::make_shared<abstract::ListShape>(list_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListInsertInnerInfer(primitive, input_args)->GetType();
+    auto input_type = input_args[0]->GetType();
+    auto target_type = input_args[2]->GetType();
+    auto index_value = input_args[1]->GetValue();
+    auto index_opt = GetScalarValue<int64_t>(index_value);
+    if (!index_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
+    }
+    auto index = index_opt.value();
+    auto list_type = input_type->cast<ListPtr>()->elements();
+    list_type.insert(list_type.begin() + index, target_type);
+    return std::make_shared<List>(list_type);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
