@@ -70,6 +70,22 @@ if(ENABLE_MINDDATA)
             DESTINATION ${INSTALL_BIN_DIR}
             COMPONENT mindspore
     )
+    if(ENABLE_FFMPEG)
+        file(GLOB_RECURSE FFMPEG_LIB_LIST
+                ${ffmpeg_LIBPATH}/libavcodec*
+                ${ffmpeg_LIBPATH}/libavdevice*
+                ${ffmpeg_LIBPATH}/libavfilter*
+                ${ffmpeg_LIBPATH}/libavformat*
+                ${ffmpeg_LIBPATH}/libavutil*
+                ${ffmpeg_LIBPATH}/libswresample*
+                ${ffmpeg_LIBPATH}/libswscale*
+                )
+        install(
+                FILES ${FFMPEG_LIB_LIST}
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+        )
+    endif()
     file(GLOB_RECURSE OPENCV_LIB_LIST
             ${opencv_LIBPATH}/libopencv_core*
             ${opencv_LIBPATH}/libopencv_imgcodecs*

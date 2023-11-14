@@ -234,6 +234,15 @@ else()
     target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece mindspore::z)
 endif()
 
+if(ENABLE_FFMPEG)
+    add_compile_definitions(ENABLE_FFMPEG)
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(FFMPEG_LIB mindspore::avcodec mindspore::avdevice mindspore::avfilter mindspore::avformat mindspore::avutil
+            mindspore::swresample mindspore::swscale)
+        target_link_libraries(_c_dataengine PUBLIC -Wl,--no-as-needed ${FFMPEG_LIB})
+    endif()
+endif()
+
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core
                                           mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                                           mindspore::sentencepiece_train ${ICU_LIB})
