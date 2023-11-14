@@ -162,10 +162,12 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
+  bool is_cloud = true;
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
     transform::SetExportAir(converter, true);
+    is_cloud = false;
   }
   transform::BuildGraph(anf_graph->ToString(), converter, init_inputs_map);
   transform::GenerateBroadcastGraph(converter, init_inputs_map);
@@ -183,7 +185,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, is_cloud);
   if (IsEnableRefMode()) {
     (void)transform::AddGraph(init_graph, converter->GetInitGraph());
   } else {
