@@ -45,7 +45,7 @@ std::map<TypeId, Handler> minimum_impl_list = {
   {kNumberTypeUInt16, ImplMinimum<uint16_t>}, {kNumberTypeUInt32, ImplMinimum<uint32_t>},
   {kNumberTypeUInt64, ImplMinimum<uint64_t>}, {kNumberTypeFloat16, ImplMinimum<float16>},
   {kNumberTypeFloat32, ImplMinimum<float>},   {kNumberTypeFloat, ImplMinimum<float>},
-  {kNumberTypeFloat64, ImplMinimum<double>}};
+  {kNumberTypeFloat64, ImplMinimum<double>},  {kNumberTypeBFloat16, ImplMinimum<bfloat16>}};
 
 class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -70,7 +70,12 @@ class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
     auto dtype = x1_tensor->data_type();
     auto result_tensor = std::make_shared<tensor::Tensor>(dtype, x1_shape);
     MS_EXCEPTION_IF_NULL(result_tensor);
-    minimum_impl_list[dtype](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = minimum_impl_list.find(dtype);
+    if (iter == minimum_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };

@@ -44,8 +44,9 @@ std::map<TypeId, Handler> less_equal_impl_list = {
   {kNumberTypeInt, ImplLessEqual<int>},         {kNumberTypeInt64, ImplLessEqual<int64_t>},
   {kNumberTypeUInt8, ImplLessEqual<uint8_t>},   {kNumberTypeUInt16, ImplLessEqual<uint16_t>},
   {kNumberTypeUInt32, ImplLessEqual<uint32_t>}, {kNumberTypeUInt64, ImplLessEqual<uint64_t>},
-  {kNumberTypeFloat16, ImplLessEqual<float16>}, {kNumberTypeFloat32, ImplLessEqual<float>},
-  {kNumberTypeFloat, ImplLessEqual<float>},     {kNumberTypeFloat64, ImplLessEqual<double>}};
+  {kNumberTypeFloat16, ImplLessEqual<float16>}, {kNumberTypeBFloat16, ImplLessEqual<bfloat16>},
+  {kNumberTypeFloat32, ImplLessEqual<float>},   {kNumberTypeFloat, ImplLessEqual<float>},
+  {kNumberTypeFloat64, ImplLessEqual<double>}};
 
 class LessEqualFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -68,7 +69,12 @@ class LessEqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
-    less_equal_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = less_equal_impl_list.find(type_id);
+    if (iter == less_equal_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };

@@ -49,6 +49,7 @@ std::map<TypeId, Handler> add_impl_list = {{kNumberTypeBool, ImplAdd<bool>},
                                            {kNumberTypeUInt32, ImplAdd<uint32_t>},
                                            {kNumberTypeUInt64, ImplAdd<uint64_t>},
                                            {kNumberTypeFloat16, ImplAdd<float16>},
+                                           {kNumberTypeBFloat16, ImplAdd<bfloat16>},
                                            {kNumberTypeFloat32, ImplAdd<float>},
                                            {kNumberTypeFloat, ImplAdd<float>},
                                            {kNumberTypeFloat64, ImplAdd<double>},
@@ -78,7 +79,12 @@ class AddFrontendFuncImpl : public OpFrontendFuncImpl {
     auto dtype = x1_tensor->data_type();
     auto result_tensor = std::make_shared<tensor::Tensor>(dtype, x1_shape);
     MS_EXCEPTION_IF_NULL(result_tensor);
-    add_impl_list[dtype](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = add_impl_list.find(dtype);
+    if (iter == add_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };
