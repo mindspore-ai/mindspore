@@ -109,7 +109,7 @@ def test_int8_tensor_and_uint8_tensors_add():
 def test_float_tensor_and_str_add():
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = "ok"
-    with pytest.raises(RuntimeError) as er:
+    with pytest.raises(TypeError) as er:
         ret = x + y
     assert "Failed calling Add with" in str(er.value)
     assert "Add()(x=Tensor, y=string)" in str(er.value)

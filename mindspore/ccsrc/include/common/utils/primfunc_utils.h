@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PRIMFUNC_UTILS_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PRIMFUNC_UTILS_H_
+
+#include <string>
+#include <vector>
 #include "ops/op_def.h"
+#include "abstract/abstract_value.h"
+
 namespace mindspore::ops {
-extern std::unordered_map<std::string, OpDefPtr> gOpDefTable;  // defined in gen_ops_def.cc
-OpDefPtr GetOpDef(const std::string &op_name) {
-  auto it = gOpDefTable.find(op_name);
-  if (it != gOpDefTable.end()) {
-    return it->second;
-  }
-  return nullptr;
-}
-
-void AddOpDef(const std::string &op_name, const OpDefPtr op_def) { (void)gOpDefTable.emplace(op_name, op_def); }
-
-bool IsPrimitiveFunction(const std::string &op_name) { return GetOpDef(op_name) != nullptr; }
+COMMON_EXPORT bool ValidateArgsType(const AbstractBasePtr &abs_arg, OP_DTYPE type_arg);
+COMMON_EXPORT std::string EnumToString(OP_DTYPE dtype);
+COMMON_EXPORT std::string BuildOpErrorMsg(const OpDefPtr &op_def, const std::vector<std::string> &op_type_list);
 }  // namespace mindspore::ops
+
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PRIMFUNC_UTILS_H_

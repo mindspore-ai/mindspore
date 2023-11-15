@@ -99,5 +99,5 @@ def test_transpose_error_1():
             return self.value.transpose(1.0, 0)
 
     net = Net()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         net()
