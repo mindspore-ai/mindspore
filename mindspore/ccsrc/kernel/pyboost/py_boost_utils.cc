@@ -349,10 +349,7 @@ DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device)
 }
 
 void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  runtime::OpExecutor::GetInstance().PushOpRunTask(task);
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
-    runtime::OpExecutor::GetInstance().Wait();
-  }
+  task->Run();
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -1,3 +1,4 @@
+  runtime::OpExecutor::GetInstance().WaitAll();
   MS_LOG(DEBUG) << "Call start";
   InferOutput(${call_args});
 

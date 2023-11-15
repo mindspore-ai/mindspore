@@ -1,5 +1,5 @@
   MS_LOG(DEBUG) << "View Call start";
-  runtime::OpExecutor::GetInstance().Wait();
+  runtime::OpExecutor::GetInstance().WaitAll();
   MS_LOG(DEBUG) << "Wait finished";
   auto storage_info_list = ops::${op_name}Calc(primitive_, {${call_args}});
   if (!storage_info_list.empty()) {
