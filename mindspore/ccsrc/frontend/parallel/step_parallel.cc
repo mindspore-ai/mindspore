@@ -458,8 +458,8 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     next_inputs_tensor_info = next_distribute_operator->outputs_tensor_info();
   }
   if (LongToSize(node_pair.second - 1) >= next_inputs_tensor_info.size()) {
-    MS_LOG(WARNING) << "The index is out of range, the index is " << (node_pair.second - 1) << ", the vector size is "
-                    << next_inputs_tensor_info.size() << "next node is " << next_cnode->DebugString();
+    MS_LOG(INFO) << "The index is out of range, the index is " << (node_pair.second - 1) << ", the vector size is "
+                 << next_inputs_tensor_info.size() << "next node is " << next_cnode->DebugString();
     return;
   }
   TensorInfo tensorinfo_out = next_inputs_tensor_info[LongToSize(node_pair.second - 1)];
