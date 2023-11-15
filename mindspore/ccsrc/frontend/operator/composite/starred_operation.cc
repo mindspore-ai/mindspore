@@ -60,7 +60,7 @@ FuncGraphPtr StarredGetItem::GenerateFuncGraph(const AbstractBasePtrList &args_a
                       << first_input__abs->ToString();
   }
   auto seq_abs = first_input__abs->cast<AbstractSequencePtr>();
-  auto elements = seq_abs->elements();
+  const auto &elements = seq_abs->elements();
   size_t elements_size = elements.size();
 
   auto pos_abs = args_abs_list[position_in_target_index];
