@@ -35,12 +35,12 @@ namespace device {
 namespace ascend {
 struct GeInputData {
   std::vector<GeTensor> ge_inputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> need_update_input;
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
 };
 
 struct GeOutputData {
   std::vector<GeTensor> ge_outputs;
-  std::vector<std::pair<AnfNodePtr, size_t>> graph_outputs;
+  std::vector<std::pair<AnfNodeWeakPtr, size_t>> graph_outputs;
 };
 
 class GeGraphExecutor : public GraphExecutor {
@@ -71,8 +71,8 @@ class GeGraphExecutor : public GraphExecutor {
   GeDeviceResManager *ResManager() const;
   void RunInitGraph(const std::string &graph_name) const;
 
-  mindspore::HashMap<KernelGraphPtr, GeInputData> input_datas_;
-  mindspore::HashMap<KernelGraphPtr, GeOutputData> output_datas_;
+  mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
+  mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;
 };
 }  // namespace ascend
 }  // namespace device
