@@ -2225,10 +2225,9 @@ bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, 
   return true;
 }
 
-tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_node, size_t output_index) {
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  const auto &user_data = device_tensor->user_data();
+tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const DeviceAddressPtr &output_device_address) {
+  MS_EXCEPTION_IF_NULL(output_device_address);
+  const auto &user_data = output_device_address->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
   MS_EXCEPTION_IF_NULL(user_data_type);
@@ -2242,11 +2241,16 @@ tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_
     MS_EXCEPTION_IF_NULL(value_type);
     MS_EXCEPTION_IF_NULL(default_value);
     auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
-    map_tensor->set_device_address(device_tensor);
+    map_tensor->set_device_address(output_device_address);
     return map_tensor;
   }
   MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
   return nullptr;
+}
+
+tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_node, size_t output_index) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  return CreateMapTensor(device_tensor);
 }
 
 bool AnfRuntimeAlgorithm::IsSequenceOutputOfScalar(const AnfNodePtr &node) {

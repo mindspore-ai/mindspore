@@ -86,10 +86,7 @@ bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorEraseOutputNum, kernel_name_);
 
   // The real hash table should be accessed by user data.
-  if (input_user_data_.empty()) {
-    MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-  auto user_data = input_user_data_[kIndex0];
+  auto user_data = inputs[kIndex0]->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
 
   auto hash_table_value_type = user_data->get<TypeId>(kHashTableValueType);

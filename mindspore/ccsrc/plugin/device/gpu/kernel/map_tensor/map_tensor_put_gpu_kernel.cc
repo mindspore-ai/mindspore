@@ -92,11 +92,7 @@ bool MapTensorPutGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
 
   // The real hash table should be accessed by user data.
-  if (input_user_data_.empty()) {
-    MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-
-  auto user_data = input_user_data_[kIndex0];
+  auto user_data = inputs[kIndex0]->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<GPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);

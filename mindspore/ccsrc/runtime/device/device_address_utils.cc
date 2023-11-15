@@ -77,7 +77,7 @@ void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const DeviceContext 
   user_data->set(kHashTableEvictFilter, abstract->evict_filter_value());
   // Create device for map tensor node and the ptr size is 1 byte.
   const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-    {node, index}, nullptr, 1, kOpFormat_DEFAULT, TypeId::kNumberTypeInt8, ShapeVector(),
+    {node, index}, nullptr, 1, kOpFormat_DEFAULT, TypeId::kObjectTypeMapTensorType, ShapeVector(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, user_data);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_LOG(DEBUG) << "Create device tensor:" << device_address << " type:" << device_address->type_id();
@@ -542,7 +542,7 @@ vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddr
       const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
         real_abstract->GetShape()->Clone(), real_abstract->GetType()->Clone(), real_abstract->GetValue(), nullptr,
         address_size, output_format, output_type, shape, device_context->device_context_key().device_name_,
-        device_context->device_context_key().device_id_);
+        device_context->device_context_key().device_id_, cache_output_address->user_data());
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
                     << " addr:" << device_address;
