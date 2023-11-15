@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_
-
-#include "ir/func_graph.h"
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_INVALID_MICRO_DEPEND_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_INVALID_MICRO_DEPEND_H_
+#include <string>
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
-/* namespace to support opt */
 namespace opt {
-void ProcessSendRecvForGE(const FuncGraphPtr &graph);
+class EraseInvalidMicroDepend : public Pass {
+ public:
+  explicit EraseInvalidMicroDepend(const std::string &name = "erase_invalid_micro_depend") : Pass(name) {}
+  ~EraseInvalidMicroDepend() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+};
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_INVALID_MICRO_DEPEND_H_

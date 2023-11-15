@@ -25,9 +25,11 @@
 
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "backend/graph_compiler/transform.h"
+#include "backend/common/pass/erase_invalid_micro_depend.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/callbacks.h"
 #include "include/common/utils/scoped_long_running.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "ir/anf.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
@@ -610,6 +612,30 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   return actor_info;
 }
 
+namespace {
+void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_before_mindrt_unify_mindir_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
+  optimizer->AddPassManager(unify_mindir_pm);
+  (void)optimizer->Optimize(graph);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_end_mindrt_unify_mindir_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+}
+}  // namespace
+
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
@@ -656,6 +682,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
     }
   }
+  DoUnifyMindIRPass(root_graph);
 }
 
 void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
