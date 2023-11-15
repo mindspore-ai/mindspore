@@ -30,7 +30,7 @@ h = 4
 s = 4096
 d = 32
 ub = 1
-us = 3582
+us = s
 ps = s - us
 
 
@@ -63,8 +63,11 @@ def np_inference(cache, update, batch_index):
     """
     zeros_ans = np.zeros(cache.shape, cache.dtype)
     update_s = update.shape[2]
-    cache[batch_index, :] = zeros_ans[batch_index, :]
-    cache[batch_index, :, 0:update_s, :] = update
+    for idx in batch_index:
+        if idx < 0:
+            continue
+        cache[idx, :] = zeros_ans[idx, :]
+        cache[idx, :, 0:update_s, :] = update
     return cache
 
 
@@ -77,7 +80,7 @@ def create_numpy_inputs():
     cache = np.random.rand(*cache_shape).astype(np.float16)
     update = np.random.rand(*update_shape).astype(np.float16)
     valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
-    batch_index = np.array([2]).astype(np.int64)
+    batch_index = np.random.randint(-1, b, size=ub).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
     new_max_seq_len = np.array([s]).astype(np.int64)
     cur_max_seq_len = np.array([s]).astype(np.int64)

@@ -39,22 +39,42 @@ constexpr size_t k910bWS = 16 * 1024 * 1024;
 
 namespace optiling {
 static ge::graphStatus TilingFunc(gert::TilingContext *context) {
-  context->SetTilingKey(kSize2);
-  int64_t seq_len_axis = kAxisTwo;
+  auto past_input = context->GetInputDesc(index0);
+  auto dtype = past_input->GetDataType();
+  auto type_size = ge::GetSizeByDataType(dtype);
+  switch (type_size) {
+    case kSize1:
+      context->SetTilingKey(kSize1);
+      break;
+    case kSize2:
+      context->SetTilingKey(kSize2);
+      break;
+    case kSize4:
+      context->SetTilingKey(kSize4);
+      break;
+    default:
+      return ge::GRAPH_PARAM_INVALID;
+  }
 
-  const gert::StorageShape *cur_shape = context->GetInputShape(index1);
-  int64_t b = cur_shape->GetStorageShape().GetDim(index0);
+  int64_t seq_len_axis = kAxisTwo;
+  const gert::StorageShape *cache_shape = context->GetInputShape(index0);
+  const gert::StorageShape *update_shape = context->GetInputShape(index1);
+  int64_t b = cache_shape->GetStorageShape().GetDim(index0);
+  int64_t ub = update_shape->GetStorageShape().GetDim(index0);
   // s need get when run
-  int64_t d = cur_shape->GetStorageShape().GetDim(index3);
+  int64_t d = update_shape->GetStorageShape().GetDim(index3);
   int64_t h = 0;
+  int64_t s = 0;
   int64_t us = 0;
 
   if (seq_len_axis == kAxisOne) {
-    h = cur_shape->GetStorageShape().GetDim(index2);
-    us = cur_shape->GetStorageShape().GetDim(index1);
+    h = update_shape->GetStorageShape().GetDim(index2);
+    s = cache_shape->GetStorageShape().GetDim(index1);
+    us = update_shape->GetStorageShape().GetDim(index1);
   } else if (seq_len_axis == kAxisTwo) {
-    us = cur_shape->GetStorageShape().GetDim(index2);
-    h = cur_shape->GetStorageShape().GetDim(index1);
+    s = cache_shape->GetStorageShape().GetDim(index2);
+    us = update_shape->GetStorageShape().GetDim(index2);
+    h = update_shape->GetStorageShape().GetDim(index1);
   } else {
     return ge::GRAPH_FAILED;
   }
@@ -72,7 +92,9 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
   tiling.set_core_num(aiv_num);
   tiling.set_b(b);
   tiling.set_h(h);
+  tiling.set_s(s);
   tiling.set_d(d);
+  tiling.set_ub(ub);
   tiling.set_us(us);
   tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
   context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());

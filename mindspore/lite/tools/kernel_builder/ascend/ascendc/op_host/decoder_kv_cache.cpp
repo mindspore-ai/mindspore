@@ -40,9 +40,24 @@ constexpr size_t k910bWS = 16 * 1024 * 1024;
 
 namespace optiling {
 static ge::graphStatus TilingFunc(gert::TilingContext *context) {
-  context->SetTilingKey(kSize2);
-  int64_t seq_len_axis = kAxisTwo;
+  auto past_input = context->GetInputDesc(index0);
+  auto dtype = past_input->GetDataType();
+  auto type_size = ge::GetSizeByDataType(dtype);
+  switch (type_size) {
+    case kSize1:
+      context->SetTilingKey(kSize1);
+      break;
+    case kSize2:
+      context->SetTilingKey(kSize2);
+      break;
+    case kSize4:
+      context->SetTilingKey(kSize4);
+      break;
+    default:
+      return ge::GRAPH_PARAM_INVALID;
+  }
 
+  int64_t seq_len_axis = kAxisTwo;
   const gert::StorageShape *cur_shape = context->GetInputShape(index1);
   int64_t b = cur_shape->GetStorageShape().GetDim(index0);
   // s need get when run
