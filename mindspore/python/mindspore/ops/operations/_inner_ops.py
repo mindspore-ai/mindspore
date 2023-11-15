@@ -2792,3 +2792,130 @@ class FFN(Primitive):
         cls_name = self.name
         validator.check_value_type("activation", activation, [str], cls_name)
         validator.check_value_type("inner_precise", inner_precise, [int], cls_name)
+
+
+class DecoderKVCache(Primitive):
+    r"""
+    The DecoderKVCache is used for decoding the KVCache of transformer network.
+
+    Args:
+        cache (Tensor): The cahe tensor with data type of int8, uint8, int16, uint16, float16, float32 and int32.
+            When seq_len_axis is 2, cache tensor of shape
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, cache tensor of shape
+            :math:`(batch\_size, max\_seq\_length, num_head, hidden\_size)`.
+        update (Tensor]): The tensor which is used to update the cache tensor. Same data type as cache tensor.
+            When seq_len_axis is 2, update tensor of shape
+            :math:`(batch\_size, num_head, update\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, update tensor of shape
+            :math:`(batch\_size, update\_seq\_length, num_head, hidden\_size)`.
+        valid_seq_len (Tensor): The valid_seq_len tensor with data type of int64.
+            Valid_seq_len tensor of shape :math:`(batch\_size)`.
+        batch_index (Tensor): The batch_index tensor with data type of int64.
+            Batch_index tensor of shape :math:`(1)`. Indicate that which batch of cache tensor is going to be update.
+        seq_len_axis (int64): The seq_len_axis indicate which axis is seq_eln, set to '1' or '2'. Default: "2".
+        new_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            New_max_seq_len tensor of shape :math:`(1)`.
+            Indicate that user want to change the shape of cache tensor from
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)` to
+            :math:
+            `(batch\_size * max\_seq\_length / new\_max\_seq\_length, num_head, new\_max\_seq\_length, hidden\_size)`
+            to update the cache tensor. This will not real change the shape of `cache` tensor. Not able for now.
+        cur_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            Cur_max_seq_len tensor of shape :math:`(1)`. Keep the current seq_len of cache tensor. Not abel for now.
+
+    Outputs:
+        With same data type and same shape as `cache` tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> b = 4
+        >>> h = 40
+        >>> max_s = 1024
+        >>> s = 1
+        >>> d = 128
+        >>> cache = Tensor(np.random.randn(b, h, max_s, d).astype(np.float16))
+        >>> update = Tensor(np.random.randn(b, h, s, d).astype(np.float16))
+        >>> valid_seq_len = Tensor(np.random.randn(b).astype(np.int64))
+        >>> batch_index = Tensor(np.random.randn(1).astype(np.int64))
+        >>> new_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> cur_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> decoder_kv_cache = _inner_ops.DecoderKVCache()
+        >>> output = decoder_kv_cache(cache, update, valid_seq_len, batch_index, 2, new_max_seq_len, cur_max_seq_len)
+        >>> print(cache)
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize DecoderKVCache."""
+        self.init_prim_io_names(inputs=["cache", "update", "valid_seq_len", "batch_index", "seq_len_axis",
+                                        "new_max_seq_len", "cur_max_seq_len"],
+                                outputs=["out"])
+        self.add_prim_attr('side_effect_mem', True)
+
+
+class PromptKVCache(Primitive):
+    r"""
+    The PromptKVCache is used for prefill the KVCache of transformer network.
+
+    Args:
+        cache (Tensor): The cahe tensor with data type of int8, uint8, int16, uint16, float16, float32 and int32.
+            When seq_len_axis is 2, cache tensor of shape
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, cache tensor of shape
+            :math:`(batch\_size, max\_seq\_length, num_head, hidden\_size)`.
+        update (Tensor]): The tensor which is used to update the cache tensor. Same data type as cache tensor.
+            When seq_len_axis is 2, update tensor of shape
+            :math:`(batch\_size, num_head, update\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, update tensor of shape
+            :math:`(batch\_size, update\_seq\_length, num_head, hidden\_size)`.
+        valid_seq_len (Tensor): The valid_seq_len tensor with data type of int64.
+            Valid_seq_len tensor of shape :math:`(batch\_size)`.
+        batch_index (Tensor): The batch_index tensor with data type of int64.
+            Batch_index tensor of shape :math:`(1)`. Indicate that which batch of cache tensor is going to be update.
+        seq_len_axis (int64): The seq_len_axis indicate which axis is seq_eln, set to '1' or '2'. Default: "2".
+        new_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            New_max_seq_len tensor of shape :math:`(1)`.
+            Indicate that user want to change the shape of cache tensor from
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)` to
+            :math:
+            `(batch\_size * max\_seq\_length / new\_max\_seq\_length, num_head, new\_max\_seq\_length, hidden\_size)`
+            to update the cache tensor. This will not real change the shape of `cache` tensor. Not able for now.
+        cur_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            Cur_max_seq_len tensor of shape :math:`(1)`. Keep the current seq_len of cache tensor. Not abel for now.
+        align_mode (int64): indicate which axis is seq_eln, 0 is 'right', 1 is 'left'. Default: 0.
+
+    Outputs:
+        With same data type and same shape as `cache` tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> b = 4
+        >>> h = 40
+        >>> max_s = 1024
+        >>> s = 256
+        >>> d = 128
+        >>> cache = Tensor(np.random.randn(b, h, max_s, d).astype(np.float16))
+        >>> update = Tensor(np.random.randn(b, h, s, d).astype(np.float16))
+        >>> valid_seq_len = Tensor(np.random.randn(b).astype(np.int64))
+        >>> batch_index = Tensor(np.random.randn(1).astype(np.int64))
+        >>> new_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> cur_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> prompt_kv_cache = _inner_ops.PromptKVCache(0)
+        >>> output = prompt_kv_cache(cache, update, valid_seq_len, batch_index, 2, new_max_seq_len, cur_max_seq_len)
+        >>> print(cache)
+    """
+    @prim_attr_register
+    def __init__(self, padding_mode="right"):
+        """Initialize PromptKVCache."""
+        self.init_prim_io_names(inputs=["cache", "update", "valid_seq_len", "batch_index", "seq_len_axis",
+                                        "new_max_seq_len", "cur_max_seq_len"],
+                                outputs=["out"])
+        self.add_prim_attr('side_effect_mem', True)
+        self.padding_mode = padding_mode
