@@ -1323,7 +1323,7 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(type_id)));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
 
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);

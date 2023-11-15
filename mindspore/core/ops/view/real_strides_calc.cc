@@ -28,6 +28,7 @@ TensorStorageInfoPtrList RealCalc(const PrimitivePtr &prim, const std::vector<Va
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
   auto input_type = tensor->Dtype();
+  MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> all_types_with_complex = {kBool,    kInt,     kInt8,    kInt16,     kInt32,     kInt64,
                                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,    kFloat,
                                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
