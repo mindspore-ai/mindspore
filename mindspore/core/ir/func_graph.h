@@ -99,6 +99,7 @@ const char FUNC_GRAPH_FLAG_FORCE_INLINE[] = "force_inline";
 const char FUNC_GRAPH_FLAG_DUMP[] = "dump";
 const char FUNC_GRAPH_FLAG_DYNAMIC_SHAPE[] = "dynamic_shape";
 const char FUNC_GRAPH_FLAG_NO_RECURSIVE[] = "no_recursive";
+const char FUNC_GRAPH_FLAG_ARGS_NO_EXPAND[] = "args_no_expand";
 
 const char kFuncGraphFlagUndetermined[] = "undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";

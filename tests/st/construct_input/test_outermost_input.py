@@ -319,7 +319,7 @@ def test_grad_parameter_as_input_and_fv2(mode):
     assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments():
@@ -340,7 +340,7 @@ def test_cell_mixed_arguments():
     assert net(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments_with_grad():
@@ -370,7 +370,72 @@ def test_cell_mixed_arguments_with_grad():
     assert grad_net(Tensor([1]), Tensor([2]), Tensor([3]), d=Tensor([4]), e=Tensor([5])).asnumpy() == [1]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cell_mixed_arguments_with_grad1():
+    """
+    Feature: Support kwargs for top graph.
+    Description: Mixed arguments for grad net and forward net.
+    Expectation: No exception.
+    """
+
+    class GradOperationNet(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+
+        def construct(self, *args, **kwargs):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*args, **kwargs)
+
+    class FNet(nn.Cell):
+        def construct(self, *, a, b):
+            x = a * b
+            return x
+
+    a = np.random.randn(3, 4).astype(np.float32)
+    b = np.random.randn(3, 4).astype(np.float32)
+    ms_grad = GradOperationNet(FNet())(a=Tensor(a), b=Tensor(b))
+    assert np.allclose(ms_grad.asnumpy(), b)
+
+
+def test_cell_mixed_arguments_with_grad2():
+    """
+    Feature: Support kwargs for top graph.
+    Description: Mixed arguments for grad net and forward net.
+    Expectation: No exception.
+    """
+
+    class FNet(nn.Cell):
+        def construct(self, **kwargs):
+            return kwargs["a"] + kwargs["b"]
+
+    class GradOperationNet(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.grad = ops.grad(net, grad_position=(0, 1))
+
+        def construct(self, **kwargs):
+            return self.grad(**kwargs)
+
+    class FNet1(nn.Cell):
+        def construct(self, *, a, b):
+            return a + b
+
+    @jit
+    def grad_kwargs(a, b):
+        out = ops.grad(FNet1(), grad_position=0)(a=a, b=b)
+        return out
+
+    out = GradOperationNet(FNet())(a=Tensor(3), b=Tensor(5))
+    assert out == (1, 1)
+    out1 = grad_kwargs(Tensor(1), Tensor(2))
+    assert all(out1 == Tensor([1, 1]))
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_for_kwargs_with_scalar():
