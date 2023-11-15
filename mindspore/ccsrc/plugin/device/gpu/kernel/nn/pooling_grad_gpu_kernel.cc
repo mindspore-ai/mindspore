@@ -34,6 +34,7 @@ constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
 constexpr auto kAvgPoolGrad = "AvgPoolGrad";
 constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr size_t kAvgPool3DGradKernelSizeIdx = 2;
+constexpr size_t NC_DIM_LEN = 2;
 
 // avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
@@ -313,12 +314,28 @@ void PoolingGradGpuKernelMod::SetPad() {
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(window_me_.begin(), window_me_.end(), std::back_inserter(window),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  const size_t kIdxH = 0;
-  const size_t kIdxW = 1;
-  int window_height = window[kIdxH];
-  int window_width = window[kIdxW];
-  int stride_h = stride[kIdxH];
-  int stride_w = stride[kIdxW];
+  // After dyn-shape-dev modification, length of AvgPoolGrad's 'kernel_size' and 'strides' is 2. N, C dimension is not
+  // included.
+  size_t nc_offset = 0;
+  if (kernel_name_ != kAvgPoolGrad) {
+    nc_offset += NC_DIM_LEN;
+  }
+  size_t IdxH = nc_offset;
+  size_t IdxW = 1 + nc_offset;
+  int window_height = window[IdxH];
+  int window_width = window[IdxW];
+  int stride_h = stride[IdxH];
+  int stride_w = stride[IdxW];
+
+  if (format_attr_ == Format::NHWC) {
+    const size_t kNHWCIdxH = 1;
+    const size_t kNHWCIdxW = 2;
+    window_height = window[kNHWCIdxH];
+    window_width = window[kNHWCIdxW];
+    stride_h = stride[kNHWCIdxH];
+    stride_w = stride[kNHWCIdxW];
+  }
+
   const size_t k2dDim = 2;
   int windowDimA[k2dDim] = {window_height, window_width};
   int paddingA[k2dDim] = {0, 0};
