@@ -13,24 +13,23 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+import pytest
 
 
 class Net(nn.Cell):
     """Net definition"""
 
-    def __init__(self):
+    def __init__(self, input_data):
         super(Net, self).__init__()
         self.assign_add = P.AssignAdd()
-        self.inputdata = Parameter(initializer('normal', [1]), name="global_step")
+        self.inputdata = input_data
         print("inputdata: ", self.inputdata)
 
     def construct(self, x):
@@ -38,15 +37,43 @@ class Net(nn.Cell):
         return self.inputdata
 
 
-def test_net():
-    """
-    Feature: test AssignAdd.
-    Description: test AssignAdd.
-    Expectation: No exception.
-    """
-    net = Net()
-    x = Tensor(np.ones([1]).astype(np.float32) * 100)
+def assign_add_forward_test(ms_type, np_type):
+    variable = Parameter(initializer('ones', [1], ms_type), name="global_step")
+    value = Tensor(np.array([4.0]), ms_type)
+    assign_add = Net(variable)
+    output = assign_add(value)
+    expected = np.array([5.0]).astype(np_type)
+    if ms_type == mindspore.bfloat16:
+        output_np = output.float().asnumpy()
+        np.testing.assert_array_almost_equal(output_np, expected, decimal=3)
+    else:
+        output_np = output.asnumpy()
+        np.testing.assert_array_almost_equal(output_np, expected, decimal=6)
 
-    print("MyPrintResult dataX:", x)
-    result = net(x)
-    print("MyPrintResult data::", result.asnumpy())
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_assign_add_forward_fp32(mode):
+    """
+    Feature: test assign add forward with mstype.float32, on mode GRAPH & PYNATIVE
+    Description: test inputs using given mindspore type and data type
+    Expectation: the result match with the expected result
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    assign_add_forward_test(mindspore.float32, np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_assign_add_forward_bf16(mode):
+    """
+    Feature: test assign add forward with mstype.bfloat16, on mode GRAPH & PYNATIVE
+    Description: test inputs using given mindspore type and data type
+    Expectation: the result match with the expected result
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    assign_add_forward_test(mindspore.bfloat16, np.float32)
