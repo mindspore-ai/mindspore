@@ -66,39 +66,6 @@ std::string GetErrorFormatMessage(const AnfNodePtr &node, const std::string &com
   return err_buf.str();
 }
 
-std::string ConvertUnicodeStrToRealStr(const std::string &target) {
-  constexpr size_t non_script_size = 3;
-  size_t sub_target_len = target.size() - std::strlen(kPyExecPrefix) - non_script_size;
-  auto sub_target = target.substr(std::strlen(kPyExecPrefix) + 2, sub_target_len);
-  std::stringstream script_buffer;
-  sub_target = sub_target + "_";
-  auto pos = sub_target.find("_");
-  constexpr size_t base_16 = 16;
-  while (pos != std::string::npos) {
-    auto cur_str = sub_target.substr(0, pos);
-    if (cur_str.size() == 0) {
-      break;
-    }
-    if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
-      try {
-        script_buffer << char(std::stoll(cur_str, nullptr, base_16));
-      } catch (std::invalid_argument &) {
-        MS_LOG(EXCEPTION) << "Invalid argument";
-      } catch (std::out_of_range const &) {
-        MS_LOG(EXCEPTION) << "Out of range";
-      } catch (...) {
-        MS_LOG(EXCEPTION) << "Other unexpected error";
-      }
-    } else {
-      script_buffer << cur_str;
-    }
-    sub_target = sub_target.substr(pos + 1);
-    pos = sub_target.find("_");
-  }
-  auto real_str = script_buffer.str();
-  return real_str;
-}
-
 TypePtr HandleBaseTypeForAnnotation(const std::string &dtype_str, const std::string &container_type_str,
                                     const FormatedVariableTypeFunc &format_type_func, const AnfNodePtr &node,
                                     const std::string &comment) {
@@ -399,36 +366,6 @@ bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node) {
   return false;
 }
 
-std::string ConvertToRealStr(const std::string &target) {
-  if (target.find(kPyExecPrefix) == string::npos) {
-    return target;
-  }
-  std::string real_str = "";
-  size_t pos = 0;
-  size_t start_pos = target.find(kPyExecPrefix, pos);
-  if (start_pos != std::string::npos) {
-    size_t end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
-
-    while (end_pos != std::string::npos) {
-      if (start_pos > pos) {
-        real_str += target.substr(pos, start_pos - pos);
-      }
-      auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
-      pos = end_pos + std::strlen(kPyExecSuffix);
-      real_str += ConvertUnicodeStrToRealStr(substr);
-      start_pos = target.find(kPyExecPrefix, pos);
-      if (start_pos == std::string::npos) {
-        break;
-      }
-      end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
-    }
-  }
-  if (pos < target.size()) {
-    real_str += target.substr(pos);
-  }
-  return real_str;
-}
-
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) {
   std::stringstream script_buffer;
   script_buffer << kPyExecPrefix << std::to_string(index);
@@ -460,102 +397,6 @@ std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) 
   return script_buffer.str();
 }
 
-std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &script) {
-  // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
-  std::vector<std::string> res;
-  size_t pos = 0;
-  size_t start_pos = script.find(kPyExecPrefix, pos);
-  if (start_pos == string::npos) {
-    return res;
-  }
-  size_t end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
-  while (end_pos != string::npos) {
-    auto substr = script.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
-    pos = end_pos + std::strlen(kPyExecSuffix);
-    res.push_back(substr);
-    MS_LOG(DEBUG) << "Found input: " << substr;
-    start_pos = script.find(kPyExecPrefix, pos);
-    if (start_pos == string::npos) {
-      return res;
-    }
-    end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
-  }
-  return res;
-}
-
-AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
-                                                const AnfNodePtrList &node_inputs, std::string script_str) {
-  // Pack local parameters keys.
-  auto input_str_list = GetPyExecuteInputFromUnicodeStr(script_str);
-  if (input_str_list.empty()) {
-    MS_LOG(ERROR) << "Not found PyExecute input. script: " << script_str;
-    return nullptr;
-  }
-  if (input_str_list.size() != node_inputs.size()) {
-    if (script_str.find(kPyExecuteSlice) == string::npos) {
-      MS_LOG(ERROR) << "Input string size is " << input_str_list.size()
-                    << " and input node size is: " << node_inputs.size() << ". Size not match.";
-      return nullptr;
-    }
-    if (input_str_list.size() == 1 && types.size() > 1 && types[1]->isa<AnyType>()) {
-      // The script is subscript, and slice input is PyExecute node.
-      auto new_slice_str = ConvertRealStrToUnicodeStr("__slice__", 1);
-      script_str = input_str_list[0] + "[" + new_slice_str + "]";
-      input_str_list = {input_str_list[0], new_slice_str};
-    }
-  }
-
-  std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < node_inputs.size(); ++i) {
-    if (types[i]->isa<Slice>()) {
-      (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
-      (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
-      (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
-    } else {
-      auto input_str = input_str_list[i];
-      (void)key_value_names_list.emplace_back(NewValueNode(input_str));
-    }
-  }
-  const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
-
-  // Pack the local parameters values.
-  bool has_list_dict = false;
-  std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < node_inputs.size(); ++i) {
-    auto input = node_inputs[i];
-    if (types[i]->isa<Slice>()) {
-      auto start_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("start")});
-      auto end_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("stop")});
-      auto step_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), input, NewValueNode("step")});
-      (void)key_value_list.emplace_back(start_node);
-      (void)key_value_list.emplace_back(end_node);
-      (void)key_value_list.emplace_back(step_node);
-    } else {
-      (void)key_value_list.emplace_back(input);
-    }
-    if (!has_list_dict && (types[i]->isa<List>() || types[i]->isa<Dictionary>())) {
-      has_list_dict = true;
-    }
-  }
-  const auto key_value_tuple = func_graph->NewCNode(key_value_list);
-
-  if (has_list_dict) {
-    // If the multitype-fg has list or dict input, they may include inplace operation.
-    // So, we directly convert it to PyExecute.
-    auto res = CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
-                                           key_value_name_tuple->debug_info());
-    MS_LOG(DEBUG) << "Generate PyExecute node: " << res->DebugString();
-    return res;
-  }
-
-  // Generate PyInterpret node with
-  auto local_dict = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_value_name_tuple, key_value_tuple});
-  auto res =
-    CreatePyInterpretCNodeInOrder(func_graph, script_str, py::dict(), local_dict, key_value_name_tuple->debug_info());
-  MS_LOG(DEBUG) << "Generate PyInterpret node: " << res->DebugString();
-  return res;
-}
-
 AnfNodePtr GeneratePyExecuteNodeForCallObj(const FuncGraphPtr &func_graph, const py::object &meta_obj,
                                            const AnfNodePtr &node, const std::string &name) {
   if (py::isinstance<py::none>(meta_obj)) {
@@ -565,80 +406,6 @@ AnfNodePtr GeneratePyExecuteNodeForCallObj(const FuncGraphPtr &func_graph, const
   // '__keep_metafg_obj_flag__' is to keep metafg obj rather than convert to prim.
   res->set_user_data("__keep_metafg_obj_flag__", std::make_shared<bool>(true));
   return res;
-}
-
-void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src) {
-  auto node_debug_info = node->debug_info();
-  MS_EXCEPTION_IF_NULL(node_debug_info);
-  auto node_location = node_debug_info->location();
-  MS_EXCEPTION_IF_NULL(node_location);
-  node_location->set_expr_src(expr_src);
-  MS_LOG(DEBUG) << "Set new expr src '" << expr_src << "' for node: " << node->DebugString();
-}
-
-std::string GetNodeExprSrc(const AnfNodePtr &node) {
-  auto node_debug_info = node->debug_info();
-  MS_EXCEPTION_IF_NULL(node_debug_info);
-  auto node_location = node_debug_info->location();
-  MS_EXCEPTION_IF_NULL(node_location);
-  return node_location->expr_src();
-}
-
-std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
-                                                  const std::string &op) {
-  auto real_left = ConvertToRealStr(left);
-  auto real_right = ConvertToRealStr(right);
-  auto unicode_left = ConvertRealStrToUnicodeStr(real_left, 0);
-  auto unicode_right = ConvertRealStrToUnicodeStr(real_right, 1);
-  auto res = unicode_left + " " + op + " " + unicode_right;
-  MS_LOG(DEBUG) << "Generate new script for BinOp/Compare: " << res;
-  return res;
-}
-
-std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op) {
-  auto real_operand = ConvertToRealStr(operand);
-  auto unicode_operand = ConvertRealStrToUnicodeStr(real_operand, 0);
-  auto res = op + " " + unicode_operand;
-  MS_LOG(DEBUG) << "Generate new script for UnaryOp: " << res;
-  return res;
-}
-
-std::string GeneratePyInterpretScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice) {
-  auto real_value = ConvertToRealStr(value);
-  auto unicode_value = ConvertRealStrToUnicodeStr(real_value, 0);
-  std::string res;
-  if (is_slice) {
-    res = unicode_value + kPyExecuteSlice;
-  } else {
-    auto unicode_slice = ConvertRealStrToUnicodeStr(slice, 1);
-    res = unicode_value + "[" + unicode_slice + "]";
-  }
-  MS_LOG(DEBUG) << "Generate new script for SubScript: " << res;
-  return res;
-}
-
-std::string GeneratePyExecuteScriptForFuncNode(const std::string &func_str) {
-  auto real_func_str = ConvertToRealStr(func_str);
-  auto unicode_func_str = ConvertRealStrToUnicodeStr(real_func_str, 0);
-  return unicode_func_str;
-}
-
-std::string GeneratePyInterpretScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id) {
-  auto call_cnode = call_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(call_cnode);
-  std::string new_expr_src = name_id + "(";
-  for (size_t index = 1; index < call_cnode->inputs().size(); ++index) {
-    auto call_input = call_cnode->input(index);
-    auto str = GetNodeExprSrc(call_input);
-    auto real_str = ConvertToRealStr(str);
-    auto unicode_str = ConvertRealStrToUnicodeStr(real_str, index);
-    if (index != call_cnode->inputs().size() - 1) {
-      new_expr_src += unicode_str + ", ";
-    } else {
-      new_expr_src += unicode_str + ")";
-    }
-  }
-  return new_expr_src;
 }
 
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
@@ -924,6 +691,34 @@ AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &n
     CreatePyExecuteCNodeInOrder(fg, script_node, keys_tuple_node, values_tuple_node, cnode->debug_info());
   MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
   return pyexecute_node;
+}
+
+AnfNodePtr GeneratePyInterpretWithAbstract(const FuncGraphPtr &fg, const std::vector<std::string> &funcs_str,
+                                           const size_t input_size) {
+  AnfNodePtrList node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList keys_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  std::stringstream script_buffer;
+  for (size_t i = 0; i < funcs_str.size(); ++i) {
+    script_buffer << funcs_str[i] << "(";
+  }
+  for (size_t i = 0; i < input_size; ++i) {
+    const std::string cur_name = "__input_" + std::to_string(i) + "__";
+    script_buffer << cur_name << ",";
+    (void)keys_inputs.emplace_back(NewValueNode(cur_name));
+    (void)node_inputs.emplace_back(fg->add_parameter());
+  }
+  for (size_t i = 0; i < funcs_str.size(); ++i) {
+    script_buffer << ")";
+  }
+  auto script_text = script_buffer.str();
+  auto script = std::make_shared<parse::Script>(script_text);
+  auto script_node = NewValueNode(script);
+  auto global_dict_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py::dict()));
+  auto keys_tuple = fg->NewCNode(keys_inputs);
+  auto values_tuple = fg->NewCNode(node_inputs);
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), keys_tuple, values_tuple});
+  auto ret_node = fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  return ret_node;
 }
 
 AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name) {

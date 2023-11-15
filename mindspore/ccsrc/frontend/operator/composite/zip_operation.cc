@@ -68,26 +68,8 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
   });
 
   if (convert_to_interpret) {
-    AnfNodePtrList node_inputs{NewValueNode(prim::kPrimMakeTuple)};
-    AnfNodePtrList keys_inputs{NewValueNode(prim::kPrimMakeTuple)};
-    std::stringstream script_buffer;
-    script_buffer << "tuple(zip(";
-    for (size_t i = 0; i < args_abs_list.size(); ++i) {
-      const std::string cur_name = "__zip_input_" + std::to_string(i) + "__";
-      script_buffer << cur_name << ",";
-      (void)keys_inputs.emplace_back(NewValueNode(cur_name));
-      (void)node_inputs.emplace_back(ret_graph->add_parameter());
-    }
-    script_buffer << "))";
-    auto script_text = script_buffer.str();
-    auto script = std::make_shared<parse::Script>(script_text);
-    auto script_node = NewValueNode(script);
-    auto global_dict_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py::dict()));
-    auto keys_tuple = ret_graph->NewCNode(keys_inputs);
-    auto values_tuple = ret_graph->NewCNode(node_inputs);
-    auto local_dict_node = ret_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), keys_tuple, values_tuple});
-    auto ret_node =
-      ret_graph->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+    const std::vector<std::string> funcs_str{"tuple", "zip"};
+    auto ret_node = fallback::GeneratePyInterpretWithAbstract(ret_graph, funcs_str, args_abs_list.size());
     ret_graph->set_output(ret_node);
     return ret_graph;
   }

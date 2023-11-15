@@ -199,14 +199,26 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   MS_EXCEPTION_IF_NULL(out_conf->node());
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-  MS_LOG(DEBUG) << "args_abs_list[0]:" << args_abs_list[0]->ToString();
+  constexpr size_t data_index = 0;
+  auto data_abs = args_abs_list[data_index];
+  MS_EXCEPTION_IF_NULL(data_abs);
+  MS_LOG(DEBUG) << "args_abs_list[0]:" << data_abs->ToString();
+
+  bool convert_to_interpret =
+    data_abs->isa<abstract::AbstractAny>() || data_abs->BuildValue()->isa<parse::InterpretedObject>();
+  if (convert_to_interpret) {
+    const std::string len_func = "__import__('mindspore').common._utils._jit_fallback_len_func";
+    auto interpret_node = fallback::ConvertCNodeToPyInterpretForPrim(cnode, len_func);
+    MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << interpret_node->DebugString();
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(interpret_node, out_conf->context(), out_conf->func_graph());
+    return engine->ForwardConfig(out_conf, fn_conf);
+  }
 
   // Process constants.
-  if (args_abs_list[0]->isa<AbstractScalar>()) {
-    auto const_value = args_abs_list[0]->BuildValue();
+  if (data_abs->isa<AbstractScalar>()) {
+    auto const_value = data_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(const_value);
-    auto const_type = args_abs_list[0]->BuildType();
+    auto const_type = data_abs->BuildType();
     MS_EXCEPTION_IF_NULL(const_type);
     if (const_value->ContainsValueAny()) {
       MS_EXCEPTION(TypeError) << "object of type " << const_type->ToString() << " has no len().";
@@ -224,27 +236,15 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
 
   // Process list, tuple, dict and tensor(pyexecute).
   auto new_cnode = std::make_shared<CNode>(*cnode);
-  if (args_abs_list[0]->isa<AbstractSequence>()) {
+  if (data_abs->isa<AbstractSequence>()) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimSequenceLen));
-  } else if (args_abs_list[0]->isa<AbstractDictionary>()) {
+  } else if (data_abs->isa<AbstractDictionary>()) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimDictLen));
-  } else if (args_abs_list[0]->isa<AbstractAny>()) {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    // Convert pyexecute.
-    if (allow_fallback_runtime) {
-      auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "len");
-      MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-      AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
-      return engine->ForwardConfig(out_conf, fn_conf);
-    } else {
-      MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar in JIT "
-                              << "kStrict mode, but got " << args_abs_list[0]->ToString() << ".";
-    }
-  } else if (args_abs_list[0]->isa<AbstractTensor>()) {
+  } else if (data_abs->isa<AbstractTensor>()) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimArrayLen));
   } else {
     MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar, and numpy"
-                            << " ndarray, but got " << args_abs_list[0]->ToString() << ".";
+                            << " ndarray, but got " << data_abs->ToString() << ".";
   }
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);

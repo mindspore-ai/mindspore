@@ -1666,7 +1666,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_EXCEPTION_IF_NULL(item_arg);
   auto attr_name = GetValue<string>(item_arg->BuildValue());
   AnfNodePtr getattr_node;
-  auto obj_change = cnode->user_data<bool>(kObjectAttrChange);
+  auto obj_change = cnode->user_data<bool>(fallback::kObjectAttrChange);
   if (obj_change != nullptr && *obj_change) {
     // The object is changed by setattr node, directly convert it to PyExecute node.
     getattr_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "getattr");
