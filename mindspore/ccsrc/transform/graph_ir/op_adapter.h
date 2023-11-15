@@ -621,6 +621,11 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<GEType> anyTraitsGE,
+                            const AnyTraits<int64_t> anyTraitsInt) {
+    return static_cast<int64_t>(ConvertAnyUtil(value, anyTraitsGE));
+  }
+
   static std::vector<GeDataType> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<GEType>> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
