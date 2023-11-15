@@ -10,7 +10,9 @@ mindspore.nn.RNN
     .. math::
         h_t = activation(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
 
-    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。
+    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态，
+    :math:`W_{ih}` 是每层RNN输入（input gate）计算的weight， :math:`b_{ih}` 是对应的bias， :math:`W_{hh}` 是每层RNN隐藏状态（hidden state）计算的weight，
+    :math:`b_{hh}` 是对应的bias。
 
     参数：
         - **input_size** (int) - 输入层输入的特征向量维度。
