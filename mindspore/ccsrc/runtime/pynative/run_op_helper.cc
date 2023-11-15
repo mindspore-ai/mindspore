@@ -385,7 +385,7 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<
   std::vector<kernel::KernelTensor *> inputs;
   for (size_t i = 0; i < input_size; ++i) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(nullptr);
+      (void)inputs.emplace_back(std::make_shared<kernel::KernelTensor>().get());
       MS_LOG(DEBUG) << "Input[" << i << "]:"
                     << " is None Input";
       continue;
