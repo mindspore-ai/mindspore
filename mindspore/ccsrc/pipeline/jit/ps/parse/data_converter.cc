@@ -1010,6 +1010,8 @@ ValuePtr ConvertTensor(const py::object &obj) {
 }
 
 static TensorPtr ConvertTensorValue(const py::object &obj) {
+  // The difference between the new ConvertTensorValue function and the existing ConvertTensor is:
+  // If the obj a StubNode, it must be called the WaitValue to convert to a Tensor.
   if (IsStubTensor(obj)) {
     auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
     auto stub = py_stub.cast<stub::StubNodePtr>();

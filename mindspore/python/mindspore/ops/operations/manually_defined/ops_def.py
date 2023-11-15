@@ -927,42 +927,62 @@ def infer_value_for_ReduceSum(input_x, axis, keep_dims, skip_mode):
     return value
 
 
-def infer_value_for_ReduceMax(input_x, axis, keep_dims):
-    """Infer value for ReduceMax op."""
+def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
+    """Infer value for Common Reduce op."""
     value = None
     if input_x is not None and axis is not None:
-        value = input_x.asnumpy()
-        if isinstance(axis, int):
-            pass
-        elif axis:
-            axis = tuple(set(axis))
-        elif axis in ((), []):
-            return input_x
-        else:
-            axis = tuple(range(len(value.shape)))
-        value = np.sum(value, axis, keepdims=keep_dims)
-        value = np.array(value)
-        value = Tensor(value)
+        prim_map = {
+            'ReduceMax': np.max,
+            'ReduceMin': np.min,
+            'ReduceProd': np.prod,
+            'ReduceMean': np.mean,
+            'ReduceAll': np.all,
+            'ReduceAny': np.any,
+        }
+        np_reduce_func = prim_map.get(prim_name, None)
+
+        if np_reduce_func is not None:
+            value = input_x.asnumpy()
+            if isinstance(axis, int):
+                pass
+            elif axis:
+                axis = tuple(set(axis))
+            else:
+                axis = tuple(range(len(value.shape)))
+            value = np_reduce_func(value, axis, keepdims=keep_dims)
+            value = np.array(value)
+            value = Tensor(value)
     return value
+
+
+def infer_value_for_ReduceMax(input_x, axis, keep_dims):
+    """Infer value for ReduceMax op."""
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMax')
 
 
 def infer_value_for_ReduceMin(input_x, axis, keep_dims):
     """Infer value for ReduceMin op."""
-    value = None
-    if input_x is not None and axis is not None:
-        value = input_x.asnumpy()
-        if isinstance(axis, int):
-            pass
-        elif axis:
-            axis = tuple(set(axis))
-        elif axis in ((), []):
-            return input_x
-        else:
-            axis = tuple(range(len(value.shape)))
-        value = np.sum(value, axis, keepdims=keep_dims)
-        value = np.array(value)
-        value = Tensor(value)
-    return value
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMin')
+
+
+def infer_value_for_ReduceProd(input_x, axis, keep_dims):
+    """Infer value for ReduceProd op."""
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceProd')
+
+
+def infer_value_for_ReduceMean(input_x, axis, keep_dims):
+    """Infer value for ReduceMean op."""
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMean')
+
+
+def infer_value_for_ReduceAll(input_x, axis, keep_dims):
+    """Infer value for ReduceAll op."""
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceAll')
+
+
+def infer_value_for_ReduceAny(input_x, axis, keep_dims):
+    """Infer value for ReduceAny op."""
+    return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceAny')
 
 
 def infer_value_for_Diag(input_x):
