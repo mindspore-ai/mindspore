@@ -280,7 +280,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassObject() {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var, ast->obj());
   constexpr auto self_name = "self";
   SymbolPtr symbol = std::make_shared<Symbol>(self_name);  // Must be 'self'.
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
@@ -292,7 +292,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr_or_self
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var, ast->obj());
   SymbolPtr symbol = std::make_shared<Symbol>(attr_or_self);
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
