@@ -62,6 +62,7 @@ std::map<TypeId, Handler> mul_impl_list = {{kNumberTypeBool, ImplMulBool<bool>},
                                            {kNumberTypeUInt32, ImplMul<uint32_t>},
                                            {kNumberTypeUInt64, ImplMul<uint64_t>},
                                            {kNumberTypeFloat16, ImplMul<float16>},
+                                           {kNumberTypeBFloat16, ImplMul<bfloat16>},
                                            {kNumberTypeFloat32, ImplMul<float>},
                                            {kNumberTypeFloat, ImplMul<float>},
                                            {kNumberTypeFloat64, ImplMul<double>},
@@ -91,7 +92,12 @@ class MulFrontendFuncImpl : public OpFrontendFuncImpl {
     auto dtype = x1_tensor->data_type();
     auto result_tensor = std::make_shared<tensor::Tensor>(dtype, x1_shape);
     MS_EXCEPTION_IF_NULL(result_tensor);
-    mul_impl_list[dtype](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = mul_impl_list.find(dtype);
+    if (iter == mul_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };

@@ -45,8 +45,8 @@ std::map<TypeId, Handler> greater_equal_impl_list = {
   {kNumberTypeInt8, GreaterEqualImpl<int8_t>},     {kNumberTypeInt16, GreaterEqualImpl<int16_t>},
   {kNumberTypeInt32, GreaterEqualImpl<int32_t>},   {kNumberTypeInt64, GreaterEqualImpl<int64_t>},
   {kNumberTypeUInt8, GreaterEqualImpl<uint8_t>},   {kNumberTypeFloat, GreaterEqualImpl<float>},
-  {kNumberTypeFloat16, GreaterEqualImpl<float16>}, {kNumberTypeFloat32, GreaterEqualImpl<float>},
-  {kNumberTypeFloat64, GreaterEqualImpl<double>}};
+  {kNumberTypeFloat16, GreaterEqualImpl<float16>}, {kNumberTypeBFloat16, GreaterEqualImpl<bfloat16>},
+  {kNumberTypeFloat32, GreaterEqualImpl<float>},   {kNumberTypeFloat64, GreaterEqualImpl<double>}};
 
 class GreaterEqualFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -69,7 +69,12 @@ class GreaterEqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
-    greater_equal_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = greater_equal_impl_list.find(type_id);
+    if (iter == greater_equal_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };

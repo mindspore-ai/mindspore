@@ -62,6 +62,7 @@ std::map<TypeId, Handler> not_equal_impl_list = {{kNumberTypeBool, NotEqualImpl<
                                                  {kNumberTypeUInt8, NotEqualImpl<uint8_t>},
                                                  {kNumberTypeFloat, NotEqualFloatImpl<float>},
                                                  {kNumberTypeFloat16, NotEqualImpl<float16>},
+                                                 {kNumberTypeBFloat16, NotEqualImpl<bfloat16>},
                                                  {kNumberTypeFloat32, NotEqualImpl<float>},
                                                  {kNumberTypeFloat64, NotEqualImpl<double>},
                                                  {kNumberTypeComplex64, NotEqualImpl<std::complex<float>>},
@@ -88,7 +89,12 @@ class NotEqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
-    not_equal_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = not_equal_impl_list.find(type_id);
+    if (iter == not_equal_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };

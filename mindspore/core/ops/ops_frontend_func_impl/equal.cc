@@ -62,6 +62,7 @@ std::map<TypeId, Handler> equal_impl_list = {{kNumberTypeBool, EqualImpl<bool>},
                                              {kNumberTypeUInt8, EqualImpl<uint8_t>},
                                              {kNumberTypeFloat, EqualFloatImpl<float>},
                                              {kNumberTypeFloat16, EqualImpl<float16>},
+                                             {kNumberTypeBFloat16, EqualImpl<bfloat16>},
                                              {kNumberTypeFloat32, EqualFloatImpl<float>},
                                              {kNumberTypeFloat64, EqualFloatImpl<double>},
                                              {kNumberTypeComplex64, EqualImpl<std::complex<float>>},
@@ -88,7 +89,12 @@ class EqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
-    equal_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto iter = equal_impl_list.find(type_id);
+    if (iter == equal_impl_list.end()) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                              << ", the type is not supported.";
+    }
+    iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };
