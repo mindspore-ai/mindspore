@@ -58,7 +58,6 @@ const AnfNodePtr NanToNumFusion::Process(const FuncGraphPtr &graph, const AnfNod
       }
     }
   }
-
   auto posinf_none = prim->GetAttr("posinf_none");
   if (posinf_none != nullptr && GetValue<bool>(posinf_none)) {
     size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "posinf");

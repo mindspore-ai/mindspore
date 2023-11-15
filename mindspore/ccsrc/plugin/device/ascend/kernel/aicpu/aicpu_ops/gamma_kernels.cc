@@ -72,6 +72,10 @@ uint32_t GammaKernel::DoCompute() {
     }
   }
   // get random generator seed
+  if (seed_ == nullptr || seed2_ == nullptr) {
+    KERNEL_LOG_ERROR("seed and seed2 cannot be null.");
+    return kAicpuKernelStateFailed;
+  }
   uint64_t rng_seed = random::GetRNG(seed_, seed2_);
   std::mt19937 gen(rng_seed);
   for (uint64_t i = 0; i < out_count_; ++i) {

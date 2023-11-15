@@ -40,4 +40,4 @@ randperm_v2:
                 >>> offset = 0
                 >>> output = ops.randperm(n, seed, offset, dtype=mstype.int64)
                 >>> print(output)
-                [1 0 2 3]
+                [0 2 1 3]
