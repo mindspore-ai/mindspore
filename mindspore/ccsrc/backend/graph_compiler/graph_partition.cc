@@ -22,6 +22,7 @@
 #include <stack>
 #include <string>
 #include <utility>
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -29,8 +30,10 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/ccsrc/runtime/hardware/device_context.h"
+#include "mindspore/ccsrc/backend/common/pass/opt_micro_mem.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
+
 namespace mindspore {
 namespace compile {
 namespace {
@@ -771,10 +774,36 @@ void ProcessNodeToSegments(const std::string &cur_flag, const std::string &flag,
   }
 }
 
+void OptimizePartitionGraph(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(DEBUG) << "Status record: start optimize partition graph. graph id: " << graph->ToString();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_before_opt_partition_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto opt_partition_pm = std::make_shared<opt::PassManager>("opt_partition_pm");
+  opt_partition_pm->AddPass(std::make_shared<opt::OptMicroMem>());
+  optimizer->AddPassManager(opt_partition_pm);
+  (void)optimizer->Optimize(graph);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_end_opt_partition_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  MS_LOG(DEBUG) << "Status record: end optimize partition graph. graph id: " << graph->ToString();
+}
 }  // namespace
 
 std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph, bool *multi_target) {
   MS_EXCEPTION_IF_NULL(graph);
+  // optimize before cut graph
+  OptimizePartitionGraph(graph);
   auto nodes = TopoSort(graph->get_return());
   MS_LOG(DEBUG) << "Split all nodes size:" << nodes.size();
   bool contain_multi_target = ContainMultiTarget(nodes);
