@@ -36,6 +36,22 @@
 
 namespace mindspore {
 namespace ops {
+int64_t GetListInsertIndexValue(const ValuePtr &index_value, size_t elements_len, const std::string &prim_name) {
+  auto index_opt = GetScalarValue<int64_t>(index_value);
+  if (!index_opt.has_value()) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the index value should not be none.";
+  }
+  auto index = index_opt.value();
+  if (index < -static_cast<int64_t>(elements_len)) {
+    index = 0;
+  }
+  if (index > static_cast<int64_t>(elements_len)) {
+    index = static_cast<int64_t>(elements_len);
+  }
+  index = index < 0 ? index + static_cast<int64_t>(elements_len) : index;
+  return index;
+}
+
 AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -92,19 +108,7 @@ AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::v
     auto new_abs = std::make_shared<abstract::AbstractList>(abs);
     return CheckAndConvertUtils::BroadenAllSequenceElements(new_abs);
   }
-  int64_t index = 0;
-  if (index_value->isa<Int64Imm>()) {
-    index = GetValue<int64_t>(index_value);
-  } else {
-    index = static_cast<int64_t>(GetValue<int32_t>(index_value));
-  }
-  if (index < -static_cast<int64_t>(elements.size())) {
-    index = 0;
-  }
-  if (index > static_cast<int64_t>(elements.size())) {
-    index = static_cast<int64_t>(elements.size());
-  }
-  index = index < 0 ? index + static_cast<int64_t>(elements.size()) : index;
+  int64_t index = GetListInsertIndexValue(index_value, elements.size(), prim_name);
   (void)abs.insert(abs.begin() + index, target_abs);
   return std::make_shared<abstract::AbstractList>(abs);
 }
@@ -113,29 +117,21 @@ class ListInsertInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    auto input_shape = input_args[0]->GetShape();
-    auto target_shape = input_args[2]->GetShape();
-    auto index_value = input_args[1]->GetValue();
-    auto index_opt = GetScalarValue<int64_t>(index_value);
-    if (!index_opt.has_value()) {
-      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
-    }
-    auto index = index_opt.value();
+    auto input_shape = input_args[kIndex0]->GetShape();
+    auto target_shape = input_args[kIndex2]->GetShape();
+    auto index_value = input_args[kIndex1]->GetValue();
     auto list_shape = input_shape->cast<abstract::SequenceShapePtr>()->shape();
+    auto index = GetListInsertIndexValue(index_value, list_shape.size(), primitive->name());
     list_shape.insert(list_shape.begin() + index, target_shape);
     return std::make_shared<abstract::ListShape>(list_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto input_type = input_args[0]->GetType();
-    auto target_type = input_args[2]->GetType();
-    auto index_value = input_args[1]->GetValue();
-    auto index_opt = GetScalarValue<int64_t>(index_value);
-    if (!index_opt.has_value()) {
-      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the index value should not be none.";
-    }
-    auto index = index_opt.value();
+    auto input_type = input_args[kIndex0]->GetType();
+    auto target_type = input_args[kIndex2]->GetType();
+    auto index_value = input_args[kIndex1]->GetValue();
     auto list_type = input_type->cast<ListPtr>()->elements();
+    auto index = GetListInsertIndexValue(index_value, list_type.size(), primitive->name());
     list_type.insert(list_type.begin() + index, target_type);
     return std::make_shared<List>(list_type);
   }
