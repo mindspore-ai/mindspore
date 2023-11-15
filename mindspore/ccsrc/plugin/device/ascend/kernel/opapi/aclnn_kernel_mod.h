@@ -21,6 +21,7 @@
 #include <string>
 #include <tuple>
 #include "ops/base_operator.h"
+#include "ops/op_def.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/kernel.h"
@@ -46,8 +47,6 @@ class AclnnKernelMod : public KernelMod {
                       const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   virtual void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {}
-  void SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
-  void SetOutputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
 
   void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
   virtual void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -60,9 +59,13 @@ class AclnnKernelMod : public KernelMod {
   void RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
   void RunOpSync(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
 
+  void SetDTypes(const std::string &op_name);
+
  protected:
   aclOpExecutor *executor_{nullptr};
   CallBackFunc release_func_{nullptr};
+  std::vector<mindspore::ops::OP_DTYPE> inputs_dtypes_;
+  std::vector<mindspore::ops::OP_DTYPE> outputs_dtypes_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
