@@ -274,7 +274,8 @@ REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DES
 
 // Eig
 CUST_INPUT_MAP(Eig) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(Eig) = {{"compute_v", ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(Eig) = {{2, ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_ATTR_MAP(Eig) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Eig) = {{0, OUTPUT_DESC(eigen_values)}, {1, OUTPUT_DESC(eigen_vectors)}};
 REG_ADPT_DESC(Eig, prim::kPrimEig->name(), CUST_ADPT_DESC(Eig));
 
