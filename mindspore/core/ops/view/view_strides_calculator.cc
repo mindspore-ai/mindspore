@@ -65,13 +65,19 @@ bool IsContiguous(const ShapeVector &shape, const std::vector<int64_t> &strides)
   if (shape.size() != strides.size()) {
     MS_LOG(EXCEPTION) << "shape.size() != strides.size()";
   }
-  int64_t expected_strides = 1;
-  for (int64_t i = SizeToLong(strides.size() - 1); i >= 0; --i) {
-    if (expected_strides != strides[i]) {
-      return false;
+
+  int64_t z = 1;
+  for (int64_t i = SizeToLong(shape.size() - 1); i >= 0; --i) {
+    const auto &shape_i = shape[i];
+    if (shape_i != 1) {
+      if (strides[i] == z) {
+        z *= shape_i;
+      } else {
+        return false;
+      }
     }
-    expected_strides *= shape[i];
   }
+
   return true;
 }
 
