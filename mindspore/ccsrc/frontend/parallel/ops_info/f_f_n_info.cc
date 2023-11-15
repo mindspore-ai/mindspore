@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/moe_f_f_n_info.h"
+#include "frontend/parallel/ops_info/f_f_n_info.h"
 
 #include <algorithm>
 #include <memory>
@@ -33,12 +33,12 @@
 
 namespace mindspore {
 namespace parallel {
-// MoeFFN five inputs
+// FFN five inputs
 // x:       (bs * seq, h)
-// expert:  (16)
 // weight1: (epert_dim, h, ffn_h)
-// bias1:   (epert_dim, ffn_h)
 // weight2: (expert_dim, ffn_h, h)
+// expert:  (16)
+// bias1:   (epert_dim, ffn_h)
 // ------------------------------
 // output:  (bs * seq, h)
 
@@ -48,16 +48,16 @@ namespace parallel {
 // ffn_h is able to split.
 // expert_dim is able to split.
 
-Status MoeFFNInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status FFNInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
   auto input_strategys = strategy->GetInputDim();
   auto strategy_x = input_strategys.at(0);       // (1,1)
-  auto strategy_expert = input_strategys.at(1);  // (1)
-  auto strategy_w1 = input_strategys.at(2);      // (1,1,4)
-  auto strategy_bias1 = input_strategys.at(3);   // (1,1,4)
-  auto strategy_w2 = input_strategys.at(4);      // (1,4,1)
+  auto strategy_w1 = input_strategys.at(1);      // (1,1,4)
+  auto strategy_w2 = input_strategys.at(2);      // (1,4,1)
+  auto strategy_expert = input_strategys.at(3);  // (1)
+  auto strategy_bias1 = input_strategys.at(4);   // (1,1,4)
 
   if (strategy_expert.at(0) != 1) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy: The expert can't be shard, but got"
@@ -91,10 +91,10 @@ Status MoeFFNInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status MoeFFNInfo::InferDevMatrixShape() {
+Status FFNInfo::InferDevMatrixShape() {
   auto input_strategys = strategy()->GetInputDim();
   auto strategy_x = input_strategys.at(0);
-  auto strategy_w1 = input_strategys.at(2);
+  auto strategy_w1 = input_strategys.at(1);
 
   // (epert_dim, bs * seq_len, h, ffn_h)
   // (3,         2,            1,     0)
@@ -103,7 +103,7 @@ Status MoeFFNInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status MoeFFNInfo::InferTensorMap() {
+Status FFNInfo::InferTensorMap() {
   // x: [bs * seq_length, hidden]
   Shape x_tensor_map{2, 1};
   Shape expert_tensor_map{-1};
@@ -115,10 +115,10 @@ Status MoeFFNInfo::InferTensorMap() {
   Shape weight2_tensor_map{3, 0, 1};
 
   inputs_tensor_map_.emplace_back(x_tensor_map);
-  inputs_tensor_map_.emplace_back(expert_tensor_map);
   inputs_tensor_map_.emplace_back(weight1_tensor_map);
-  inputs_tensor_map_.emplace_back(bias1_tensor_map);
   inputs_tensor_map_.emplace_back(weight2_tensor_map);
+  inputs_tensor_map_.emplace_back(expert_tensor_map);
+  inputs_tensor_map_.emplace_back(bias1_tensor_map);
 
   // out: [bs * seq_length, hidden]
   Shape out_tensor_map{2, 1};
@@ -126,7 +126,7 @@ Status MoeFFNInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status MoeFFNInfo::InferForwardCommunication() {
+Status FFNInfo::InferForwardCommunication() {
   forward_op_.clear();
   size_t dimension = origin_dev_matrix_shape_.size();
   size_t relevant_dimension_index = LAST_INDEX(dimension);
@@ -159,13 +159,13 @@ Status MoeFFNInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
-Status MoeFFNInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status FFNInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::vector<StrategyPtr> MoeFFNInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> FFNInfo::GenerateOpStrategies(int64_t stage_id) {
   std::vector<StrategyPtr> sp_vector;
   return sp_vector;
 }
 
-REGISTER(MoeFFNInfo);
+REGISTER(FFNInfo);
 }  // namespace parallel
 }  // namespace mindspore
