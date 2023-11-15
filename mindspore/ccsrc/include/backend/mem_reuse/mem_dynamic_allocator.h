@@ -133,7 +133,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   const size_t FreeIdleMemsByEagerFree();
 
  private:
-  // Find available memory buf from total pools by status, which contains idle and eager free.
+  // Find available memory buf from specific pool by status, which contains idle and eager free.
   DeviceMemPtr FindAvailableMemBuf(size_t size, bool from_persistent_mem);
   // Find the target status memory buf from total pools by aligned size when memory alloc.
   DeviceMemPtr FindMemBufByStatus(size_t size, bool from_persistent_mem, DynamicMemBufStatus target_status);
