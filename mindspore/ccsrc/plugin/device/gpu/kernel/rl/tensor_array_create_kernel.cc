@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 #include "plugin/device/gpu/kernel/rl/tensor_array_create_kernel.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_tensor_array.h"
