@@ -51,15 +51,15 @@ REG_BPROP_BUILDER("ScalarMod").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto dx = ib->ScalarDiv(dout, y);
-  return {dout, ib->ScalarNeg(ib->ScalarMul(dx, ib->ScalarFloordiv(x, y)))};
+  return {dout, ib->ScalarNeg(ib->ScalarMul(dx, ib->ScalarFloorDiv(x, y)))};
 });
 
-REG_BPROP_BUILDER("ScalarFloordiv").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("scalar_eq").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("scalar_le").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("scalar_lt").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("scalar_ge").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("scalar_gt").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarFloorDiv").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarEq").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarLe").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarLt").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarGe").SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ScalarGt").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("bit_and").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("bit_or").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("ScalarBool").SetBody(ReturnZeros);

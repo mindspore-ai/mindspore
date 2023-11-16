@@ -35,6 +35,7 @@
 #include "ops/math_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/shape_calc.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace expander {
@@ -62,12 +63,12 @@ class COMMON_EXPORT Emitter {
   }
   NodePtr TupleGetItem(const NodePtr &input, const NodePtr &i) { return Emit(kTupleGetItemOpName, {input, i}); }
   NodePtr Len(const NodePtr &input) { return Emit(kSequenceLenOpName, {input}); }
-  NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarAddOpName, {lhs, rhs}); }
-  NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarSubOpName, {lhs, rhs}); }
-  NodePtr ScalarMul(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarMulOpName, {lhs, rhs}); }
-  NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarDivOpName, {lhs, rhs}); }
-  NodePtr ScalarFloordiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarFloordivOpName, {lhs, rhs}); }
-  NodePtr ScalarNeg(const NodePtr &node) { return Emit(kScalarUsubOpName, {node}); }
+  NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarAdd, {lhs, rhs}); }
+  NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarSub, {lhs, rhs}); }
+  NodePtr ScalarMul(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarMul, {lhs, rhs}); }
+  NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarDiv, {lhs, rhs}); }
+  NodePtr ScalarFloorDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarFloorDiv, {lhs, rhs}); }
+  NodePtr ScalarNeg(const NodePtr &node) { return Emit(ops::kNameScalarUsub, {node}); }
   NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
 

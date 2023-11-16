@@ -41,6 +41,8 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+
  private:
   template <typename T, typename S, typename K>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
@@ -54,7 +56,6 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   size_t dense_size_ = 0;
   size_t indices_column_ = 0;
   std::vector<TypeId> types_;
-  ShapeVector dense_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

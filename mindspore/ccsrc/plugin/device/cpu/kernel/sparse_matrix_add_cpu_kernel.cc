@@ -101,6 +101,7 @@ int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
       LongToSize(std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), 1, std::multiplies<int64_t>()));
     outputs[kOutBatch]->SetShapeVector(out_batch_shape);
     outputs[kOutBatch]->set_size(ele_size * UnitSizeInBytes(outputs[kOutBatch]->dtype_id()));
+    ret = KRET_OK;
   }
   return ret;
 }

@@ -1167,6 +1167,7 @@ template <typename TD, typename TDE, typename IMMTYPE, TypeId tid>
 ValuePtr ConvertTensorToSequence(const py::object &obj) {
   auto tensor = ConvertTensorValue(obj);
   if (tensor == nullptr) {
+    MS_LOG(INFO) << "Can not convert python object with type [" << obj.get_type() << "] to Tensor.";
     return nullptr;
   }
 
@@ -1195,6 +1196,7 @@ template <typename TD>
 ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
   auto tensor = ConvertTensorValue(obj);
   if (tensor == nullptr) {
+    MS_LOG(INFO) << "Can not convert python object with type [" << obj.get_type() << "] to Tensor.";
     return nullptr;
   }
 
@@ -1227,6 +1229,7 @@ template <typename TD>
 ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
   auto float_tensor = ConvertTensorValue(obj);
   if (float_tensor == nullptr) {
+    MS_LOG(INFO) << "Can not convert python object with type [" << obj.get_type() << "] to Tensor.";
     return nullptr;
   }
 
@@ -1256,6 +1259,7 @@ template <typename TD>
 ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
   auto tensor = ConvertTensorValue(obj);
   if (tensor == nullptr) {
+    MS_LOG(INFO) << "Can not convert python object with type [" << obj.get_type() << "] to Tensor.";
     return nullptr;
   }
 

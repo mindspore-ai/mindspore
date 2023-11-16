@@ -37,6 +37,8 @@ class SparseMatrixAddCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   }
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
