@@ -402,6 +402,8 @@ class Parser {
                    bool *bool_res) const;
   bool CompareLessEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
                         bool *bool_res) const;
+  std::string FormatScriptForGetAttr(const FunctionBlockPtr &block, const py::object &value_object,
+                                     const AnfNodePtr &node) const;
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;

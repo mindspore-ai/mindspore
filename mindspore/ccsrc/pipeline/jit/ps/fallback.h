@@ -35,10 +35,15 @@ constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
 constexpr auto kPyExecuteSlice = "[__start__:__stop__:__step__]";
 
+AnfNodePtr MakeInterpretNodeWithUnicodeStr(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                           const std::string &format_str);
+AnfNodePtr MakePyExecuteNodeWithUnicodeStr(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                           const std::string &format_str);
 AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
                                                 const AnfNodePtrList &node_inputs, std::string script_str);
 void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src);
 std::string GetNodeExprSrc(const AnfNodePtr &node);
+std::string HandleGetattrFormatStr(const std::string &format_str);
 std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
                                                   const std::string &op);
 std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op);

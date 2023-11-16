@@ -526,6 +526,9 @@ constexpr auto kSliceStep = "step";
 constexpr auto kFuncGraphTypeName = "FuncGraph";
 constexpr auto kKernelGraphTypeName = "KernelGraph";
 
+// graph parse
+constexpr auto kObjectAttrChange = "object_attr_change";
+
 // graph group
 constexpr auto kDefaultGroup = "DefaultGroup";
 constexpr auto kKernelGroup = "KernelGroup";

@@ -446,6 +446,7 @@ std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index) 
   return script_buffer.str();
 }
 
+namespace {
 std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &script) {
   // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
   std::vector<std::string> res;
@@ -467,6 +468,108 @@ std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &scri
     end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
   }
   return res;
+}
+
+int GetFormatStrIndex(const std::string &script) {
+  if (script.substr(0, std::strlen(kPyExecPrefix)) != kPyExecPrefix ||
+      script.substr(script.size() - std::strlen(kPyExecSuffix)) != kPyExecSuffix) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Wrong format script: " << script;
+  }
+  auto script_no_prefix = script.substr(std::strlen(kPyExecPrefix));
+  auto index_end_pos = script_no_prefix.find_first_of('_');
+  if (index_end_pos == string::npos) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Get index failed from script: " << script;
+  }
+  auto index_str = script_no_prefix.substr(0, index_end_pos);
+  if (index_str.size() == 0) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not convert empty string to index number.";
+  }
+  for (const auto &c : index_str) {
+    if (!std::isdigit(c)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Can not convert " << index_str << " to index number.";
+    }
+  }
+  return std::stoi(index_str);
+}
+
+void GetKeysAndValuesFromFormatScript(const AnfNodePtrList &input_nodes, const std::string &format_str,
+                                      const std::shared_ptr<AnfNodePtrList> &keys,
+                                      const std::shared_ptr<AnfNodePtrList> &values) {
+  const auto &input_unicode_list = GetPyExecuteInputFromUnicodeStr(format_str);
+  for (const auto &input_unicode : input_unicode_list) {
+    int index = GetFormatStrIndex(input_unicode);
+    if (index >= SizeToInt(input_nodes.size())) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Index out of range. Current index: " << index
+                                 << ", node inputs size: " << input_nodes.size();
+    }
+    (void)keys->emplace_back(NewValueNode(input_unicode));
+    (void)values->emplace_back(input_nodes[index]);
+  }
+}
+}  // namespace
+
+AnfNodePtr MakeInterpretNodeWithUnicodeStr(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                           const std::string &format_str) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &input_nodes = cnode->inputs();
+  std::shared_ptr<AnfNodePtrList> keys = std::make_shared<AnfNodePtrList>();
+  keys->push_back({NewValueNode(prim::kPrimMakeTuple)});
+  std::shared_ptr<AnfNodePtrList> values = std::make_shared<AnfNodePtrList>();
+  values->push_back({NewValueNode(prim::kPrimMakeTuple)});
+  GetKeysAndValuesFromFormatScript(input_nodes, format_str, keys, values);
+
+  auto script = std::make_shared<parse::Script>(format_str);
+  auto script_node = NewValueNode(script);
+
+  auto global_dict_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py::dict()));
+
+  auto keys_tuple = fg->NewCNode(*keys);
+  auto values_tuple = fg->NewCNode(*values);
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), keys_tuple, values_tuple});
+
+  auto interpret_node =
+    fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  interpret_node->set_debug_info(node->debug_info());
+  return interpret_node;
+}
+
+AnfNodePtr MakePyExecuteNodeWithUnicodeStr(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                           const std::string &format_str) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &input_nodes = cnode->inputs();
+  std::shared_ptr<AnfNodePtrList> keys = std::make_shared<AnfNodePtrList>();
+  keys->push_back({NewValueNode(prim::kPrimMakeTuple)});
+  std::shared_ptr<AnfNodePtrList> values = std::make_shared<AnfNodePtrList>();
+  values->push_back({NewValueNode(prim::kPrimMakeTuple)});
+  GetKeysAndValuesFromFormatScript(input_nodes, format_str, keys, values);
+  auto keys_tuple = fg->NewCNode(*keys);
+  auto values_tuple = fg->NewCNode(*values);
+  return CreatePyExecuteCNode(cnode, NewValueNode(format_str), keys_tuple, values_tuple);
+}
+
+std::string HandleGetattrFormatStr(const std::string &format_str) {
+  const auto &input_unicode_list = GetPyExecuteInputFromUnicodeStr(format_str);
+  constexpr size_t min_size = 2;
+  constexpr size_t max_size = 3;
+  auto input_size = input_unicode_list.size();
+  if (input_size != max_size && input_size != min_size) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Getattr script input size error, the size is: " << input_size;
+  }
+  constexpr size_t attr_index = 1;
+  const auto &attr_str = input_unicode_list[attr_index];
+  if (ConvertUnicodeStrToRealStr((attr_str)) == "__ms_iter__") {
+    constexpr size_t value_index = 0;
+    std::stringstream script_buffer;
+    script_buffer << "tuple(" << input_unicode_list[value_index] << ")";
+    return script_buffer.str();
+  }
+  return format_str;
 }
 
 AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
