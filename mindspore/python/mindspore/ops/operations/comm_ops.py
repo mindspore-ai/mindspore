@@ -998,7 +998,6 @@ class NeighborExchangeV2(Primitive):
         ...     def construct(self, x):
         ...         out = self.neighbor_exchangev2(x)
         ...         return out
-        >>>
         ... class Net1(nn.Cell):
         ...     def __init__(self):
         ...         super(Net1, self).__init__()
