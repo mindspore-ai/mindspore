@@ -28,6 +28,7 @@ from mindspore.ops._tracefunc import PackFunc
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
 
+
 class ScalarDiv(Primitive):
     r"""
     Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
@@ -505,8 +506,10 @@ class ScalarBool(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarBool"""
+
     def __call__(self, x):
         return bool(x)
+
 
 scalar_div = ScalarDiv()
 scalar_mod = ScalarMod()
@@ -799,6 +802,7 @@ class Tile(Primitive):
         """Initialize."""
 
     def check_elim(self, *args):
+        """Function for checking eliminate."""
         base_tensor, multiplier = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "

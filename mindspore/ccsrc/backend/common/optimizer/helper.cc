@@ -15,12 +15,14 @@
  */
 
 #include "include/backend/optimizer/helper.h"
+#include <memory>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include <map>
 #include <set>
 #include <deque>
+#include "kernel/kernel_build_info.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -30,6 +32,7 @@
 #include "base/base_ref.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/kernel_info.h"
@@ -1517,6 +1520,34 @@ AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<A
     }
   }
   MS_LOG(EXCEPTION) << "The InferAbstract function of [" << op_name << "] is not defined.";
+}
+
+AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto value_node = NewValueNode(value);
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value_abs = value->ToAbstract();
+  value_node->set_abstract(value_abs);
+
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  if (kernel_graph != nullptr) {
+    // In kernel graph case, a new value node should set kernel_info and kernel_build_info here for no-kernel-selecting.
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    value_node->set_kernel_info(kernel_info);
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    builder.SetOutputsFormat({kOpFormat_DEFAULT});
+    MS_EXCEPTION_IF_NULL(value->type());
+    auto type_id = value->type()->type_id();
+    builder.SetOutputsDeviceType({type_id});
+    auto object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAbstractObjectType(value_abs));
+    builder.SetOutputsKernelObjectType({object_type});
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), value_node.get());
+
+    kernel_graph->AddValueNodeToGraph(value_node);
+  }
+
+  return value_node;
 }
 }  // namespace opt
 }  // namespace mindspore
