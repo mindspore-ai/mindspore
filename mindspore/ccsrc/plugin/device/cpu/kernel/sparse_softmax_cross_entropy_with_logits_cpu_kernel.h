@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <utility>
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
-#include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
+class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod() = default;
   ~SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod() override = default;
@@ -35,20 +37,36 @@ class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-              const std::vector<KernelTensor *> &outputs) override;
-
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
-    return support_list;
+              const std::vector<KernelTensor *> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
-  void GradPostExecute(const int *labels, const float *losses, float *output) const;
+  void SoftmaxFp32(const float *logits, float *losses);
+
+  template <typename T, typename S>
+  void ForwardPostExecute(const S *labels, const T *losses, T *output) const;
+
+  template <typename T, typename S>
+  void GradPostExecute(const S *labels, const T *losses, T *output);
+
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using SparseSoftmaxCrossEntropyWithLogitsFunc =
+    std::function<bool(SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
+  static std::vector<std::pair<KernelAttr, SparseSoftmaxCrossEntropyWithLogitsFunc>> func_list_;
+  SparseSoftmaxCrossEntropyWithLogitsFunc kernel_func_;
+
   bool is_grad_{false};
   size_t class_num_{0};
   size_t batch_size_{0};
+  ParallelSearchInfo grad_parallel_search_info_;
 };
 }  // namespace kernel
 }  // namespace mindspore
