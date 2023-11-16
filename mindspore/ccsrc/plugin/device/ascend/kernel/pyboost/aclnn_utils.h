@@ -22,15 +22,14 @@
 #include "runtime/device/device_address_utils.h"
 
 #define LAUNCH_ACLNN(aclnn_api, device_context, stream_ptr, ...)                                                  \
-  auto [workspace_size, executor, release_func] = GEN_EXECUTOR(aclnn_api, __VA_ARGS__);                           \
+  auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_api, __VA_ARGS__);                       \
   static const std::string aclnn_name = #aclnn_api;                                                               \
-  if (workspace_size == 0) {                                                                                      \
-    RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor, stream_ptr, release_func);                                 \
+  if (ws_size == 0) {                                                                                             \
+    RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function);                      \
   } else {                                                                                                        \
-    auto workspace_device_address =                                                                               \
-      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_size);                        \
-    RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), workspace_size, executor, stream_ptr, \
-                     release_func);                                                                               \
+    auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, ws_size); \
+    RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr, \
+                     release_function);                                                                           \
   }
 
 namespace mindspore {

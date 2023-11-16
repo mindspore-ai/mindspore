@@ -41,8 +41,6 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
                              CumSum, Less, LessEqual)
-from mindspore._c_expression import pyboost_baddbmm
-from mindspore._c_expression import pyboost_baddbmm, pyboost_square
 from mindspore.common._stub_tensor import _convert_stub
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
