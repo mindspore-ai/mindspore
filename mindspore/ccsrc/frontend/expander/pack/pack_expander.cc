@@ -105,7 +105,7 @@ bool IsTensorSequence(const py::object &arg) {
   }
   py::tuple seq = py::cast<py::tuple>(arg);
   for (size_t i = 0; i < seq.size(); ++i) {
-    if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i])) {
+    if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i]) || IsTensorSequence(seq[i])) {
       return true;
     }
   }
@@ -277,13 +277,7 @@ py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
 
 py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) const {
   auto val = abs->BuildValue();
-  if (IsHasValue(val)) {
-    if (!is_pynative_mode) {
-      auto param = graphs_.top()->add_parameter();
-      param->set_abstract(abs);
-    }
-    return ValueToPyData(val);
-  } else if (abs->isa<abstract::AbstractSequence>()) {
+  if (abs->isa<abstract::AbstractSequence>()) {
     if (!is_pynative_mode) {
       auto param = graphs_.top()->add_parameter();
       param->set_abstract(abs);
@@ -296,7 +290,7 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
       }
       return tuple_node;
     }
-  } else {
+  } else if (abs->isa<abstract::AbstractTensor>() || !IsHasValue(val)) {
     if (!abs->isa<abstract::AbstractTensor>()) {
       MS_LOG(WARNING) << "Input should be Tensor, but get " << abs->ToString() << ".";
     }
@@ -304,6 +298,12 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
     param->set_abstract(abs);
     auto ret = std::make_shared<PackNode>(param);
     return py::cast(ret);
+  } else {
+    if (!is_pynative_mode) {
+      auto param = graphs_.top()->add_parameter();
+      param->set_abstract(abs);
+    }
+    return ValueToPyData(val);
   }
 }
 
