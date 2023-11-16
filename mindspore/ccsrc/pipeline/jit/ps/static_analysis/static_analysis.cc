@@ -382,11 +382,19 @@ EvalResultPtr ConvertCallPyObjCallFunc(const CNodePtr &cnode, const AbstractBase
   MS_EXCEPTION_IF_NULL(warp_obj);
   py::object cls_obj = warp_obj->obj();
   auto class_name = GetClassName(cls_obj);
-  const std::string call_func_name = "__call__";
-  if (!py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+  py::object call_obj = py::none();
+  const std::string construct_func_name = "construct";
+  if (py::hasattr(cls_obj, common::SafeCStr(construct_func_name))) {
+    call_obj = py::getattr(cls_obj, common::SafeCStr(construct_func_name));
+  } else {
+    const std::string call_func_name = "__call__";
+    if (py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+      call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
+    }
+  }
+  if (py::isinstance<py::none>(call_obj)) {
     MS_EXCEPTION(ValueError) << class_name << "is not a callable object";
   }
-  py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
   return ParsePyObjToFunc(call_obj, cnode, conf);
 }
 
