@@ -15,8 +15,7 @@
  */
 #include "plugin/device/cpu/hal/device/cpu_hash_table.h"
 
-#include <memory>
-#include <vector>
+#include <string>
 #include <algorithm>
 
 #include "utils/log_adapter.h"
