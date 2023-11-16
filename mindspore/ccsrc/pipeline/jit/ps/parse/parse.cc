@@ -1686,6 +1686,29 @@ py::object Parser::GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::o
                                      py::str(attr_name));
 }
 
+std::string Parser::FormatScriptForGetAttr(const FunctionBlockPtr &block, const py::object &value_object,
+                                           const AnfNodePtr &node) const {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &cnode_inputs = cnode->inputs();
+  constexpr size_t getattr_min_len = 3;
+  if (cnode_inputs.size() < getattr_min_len) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The num of input to getattr should be at least " << getattr_min_len
+                               << " but got: " << cnode_inputs.size();
+  }
+  constexpr size_t value_index = 1;
+  constexpr size_t attr_index = 2;
+  auto value_node = cnode_inputs[value_index];
+  auto attr_node = cnode_inputs[attr_index];
+  const auto &value_script = fallback::ConvertRealStrToUnicodeStr(fallback::GetNodeExprSrc(value_node), value_index);
+  const auto &attr_script = fallback::ConvertRealStrToUnicodeStr(fallback::GetNodeExprSrc(attr_node), attr_index);
+  std::stringstream script_buffer;
+  script_buffer << "getattr(" << value_script << ", " << attr_script << ")";
+  std::string unicode_script = script_buffer.str();
+  MS_LOG(DEBUG) << "The generated unicode script for getattr is: " << unicode_script;
+  return unicode_script;
+}
+
 // Process function call, eg : f1(x, y) ...
 AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Call";
@@ -1947,6 +1970,7 @@ AnfNodePtr Parser::MakeGetAttrWithInterpret(const std::string &obj_name, const s
   if (setattr_node != nullptr) {
     const auto &interpreted_obj = std::make_shared<InterpretedObject>(getattr_obj);
     AnfNodePtr value_node = NewValueNode(interpreted_obj);
+    value_node->set_user_data<bool>(kObjectAttrChange, std::make_shared<bool>(true));
     auto prev_setattr_fg = setattr_node->func_graph();
     MS_EXCEPTION_IF_NULL(prev_setattr_fg);
     if (prev_setattr_fg != cur_fg) {
@@ -1972,6 +1996,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // Process the node attr
   auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
   AnfNodePtr attr_node = NewValueNode(attr_str);
+  fallback::SetNodeExprSrc(attr_node, attr_str);
 
   // Process the attr body
   py::object value_body = python_adapter::GetPyObjAttr(node, "value");
@@ -2016,6 +2041,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   }
   // Create the apply node
   AnfNodePtr attr_cnode = cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+  const auto &unicode_str = FormatScriptForGetAttr(block, node, attr_cnode);
 
   // Directly resolve the symbol.
   if (IsValueNode<parse::NameSpace>(value_node)) {
@@ -2069,6 +2095,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       (void)getattr_nodes_map_[GetLocation(value_body)->expr_src()][attr_str].emplace_back(attr_cnode);
     }
   }
+  fallback::SetNodeExprSrc(attr_cnode, unicode_str);
   return attr_cnode;
 }
 
