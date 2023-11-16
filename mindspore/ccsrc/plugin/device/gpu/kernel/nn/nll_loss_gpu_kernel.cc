@@ -18,7 +18,6 @@
 #include <map>
 #include <utility>
 #include "kernel/common_utils.h"
-#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
