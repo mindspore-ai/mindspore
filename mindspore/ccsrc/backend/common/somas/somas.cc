@@ -712,6 +712,7 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
+    MS_LOG(DEBUG) << "The output sizes list of node: " << kernel->fullname_with_scope() << " is: " << output_sizes;
     for (const auto &size : output_sizes) {
       auto output_tensor_index = tensor_index;
       tensor_index++;
@@ -825,7 +826,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
     }
     SomasNodePtr pre_somas_node = iter->second.at(0);
     MS_EXCEPTION_IF_NULL(pre_somas_node);
-    if (prenode_index.second > pre_somas_node->output_tensors_.size()) {
+    if (prenode_index.second >= pre_somas_node->output_tensors_.size()) {
       MS_LOG(INTERNAL_EXCEPTION) << "Output index " << prenode_index.second << " exceed input node ["
                                  << prenode_index.first->fullname_with_scope() << "]'s outputs size "
                                  << pre_somas_node->output_tensors_.size();
