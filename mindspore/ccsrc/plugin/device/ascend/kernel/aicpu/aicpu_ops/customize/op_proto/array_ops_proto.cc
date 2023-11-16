@@ -450,7 +450,7 @@ IMPLEMT_COMMON_INFERFUNC(LogSpaceInferShape) {
   v_output_desc.SetShape(ge::Shape(dim_vec));
   int64_t dtype = 1;
   if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {
-    v_output_desc.SetDataType(DT_FLOAT16);
+    v_output_desc.SetDataType(DT_FLOAT);
   } else {
     if (dtype == 1) {
       v_output_desc.SetDataType(DT_FLOAT16);
