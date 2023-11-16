@@ -293,7 +293,6 @@ inline int64_t PadModeStringToInt(const std::string &pad) {
   } else {
     MS_LOG(EXCEPTION) << "Got an invalid pad_mode string: " << pad_mode << ".";
   }
-  return 2;
 }
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

@@ -109,32 +109,7 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
   return fixed_type;
 }
 
-tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index, const AnfNodePtr &node,
-                                  size_t i, void *args) {
-  if (node != nullptr && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
-    MS_EXCEPTION_IF_NULL(args);
-    auto input_list = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
-    MS_EXCEPTION_IF_NULL(input_list);
-    if (i >= input_list->size() || input_list->at(i) == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to get device address by input num:" << i << " for node:" << node->DebugString();
-    }
-    const auto &device_address = input_list->at(i);
-    MS_EXCEPTION_IF_NULL(device_address->kernel_tensor());
-    MS_LOG(DEBUG) << "input node:" << input_node_with_index.first->DebugString()
-                  << " abstract:" << input_node_with_index.first->abstract()->ToString()
-                  << " device address:" << device_address << " type id:" << device_address->kernel_tensor()->dtype_id()
-                  << " shape vector:" << device_address->kernel_tensor()->GetShapeVector();
-    auto type_id = device_address->kernel_tensor()->dtype_id();
-    if (device_address->kernel_tensor()->GetType() != nullptr &&
-        ((device_address->kernel_tensor()->GetType()->isa<Tuple>() &&
-          device_address->kernel_tensor()->GetType()->cast<TuplePtr>()->size() == 0) ||
-         (device_address->kernel_tensor()->GetType()->isa<List>() &&
-          device_address->kernel_tensor()->GetType()->cast<ListPtr>()->size() == 0))) {
-      type_id = TypeId::kNumberTypeInt64;
-    }
-    return std::make_shared<tensor::Tensor>(type_id, device_address->kernel_tensor()->GetShapeVector());
-  }
-
+tensor::TensorPtr CreateTensorFromIndexedNode(const std::pair<AnfNodePtr, size_t> &input_node_with_index) {
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
   auto real_input_index = input_node_with_index.second;
@@ -177,6 +152,35 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
                 << " index:" << input_node_with_index.second << " type:" << type << " shape:" << shape
                 << " abstract:" << abs->ToString();
   return std::make_shared<tensor::Tensor>(type, shape);
+}
+
+tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index, const AnfNodePtr &node,
+                                  size_t i, void *args) {
+  if (node != nullptr && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
+    MS_EXCEPTION_IF_NULL(args);
+    auto input_list = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
+    MS_EXCEPTION_IF_NULL(input_list);
+    if (i >= input_list->size() || input_list->at(i) == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get device address by input num:" << i << " for node:" << node->DebugString();
+    }
+    const auto &device_address = input_list->at(i);
+    MS_EXCEPTION_IF_NULL(device_address->kernel_tensor());
+    MS_LOG(DEBUG) << "input node:" << input_node_with_index.first->DebugString()
+                  << " abstract:" << input_node_with_index.first->abstract()->ToString()
+                  << " device address:" << device_address << " type id:" << device_address->kernel_tensor()->dtype_id()
+                  << " shape vector:" << device_address->kernel_tensor()->GetShapeVector();
+    auto type_id = device_address->kernel_tensor()->dtype_id();
+    if (device_address->kernel_tensor()->GetType() != nullptr &&
+        ((device_address->kernel_tensor()->GetType()->isa<Tuple>() &&
+          device_address->kernel_tensor()->GetType()->cast<TuplePtr>()->size() == 0) ||
+         (device_address->kernel_tensor()->GetType()->isa<List>() &&
+          device_address->kernel_tensor()->GetType()->cast<ListPtr>()->size() == 0))) {
+      type_id = TypeId::kNumberTypeInt64;
+    }
+    return std::make_shared<tensor::Tensor>(type_id, device_address->kernel_tensor()->GetShapeVector());
+  }
+
+  return CreateTensorFromIndexedNode(input_node_with_index);
 }
 
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,

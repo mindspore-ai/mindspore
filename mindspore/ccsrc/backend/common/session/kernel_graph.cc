@@ -1397,6 +1397,23 @@ KernelGraph::~KernelGraph() {
   }
 }
 
+std::vector<abstract::AbstractBasePtr> FetchInputAbstracts(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<abstract::AbstractBasePtr> abstracts{};
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    const auto &input = cnode->inputs()[i];
+    MS_EXCEPTION_IF_NULL(input);
+    const auto &abstract = input->abstract();
+    if (abstract == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid abstract for input:" << input->DebugString()
+                        << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
+    }
+    MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
+    abstracts.emplace_back(abstract);
+  }
+  return abstracts;
+}
+
 void KernelGraph::InferType() {
   MS_LOG(DEBUG) << "Start infer type for graph:" << ToString();
   std::vector<AnfNodePtr> nodes = TopoSort(get_return());
@@ -1414,18 +1431,7 @@ void KernelGraph::InferType() {
     MS_LOG(DEBUG) << "Infer abstract for node:" << node->fullname_with_scope();
 
     // Fetch input abstracts.
-    std::vector<abstract::AbstractBasePtr> abstracts;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      const auto &input = cnode->inputs()[i];
-      MS_EXCEPTION_IF_NULL(input);
-      const auto &abstract = input->abstract();
-      if (abstract == nullptr) {
-        MS_LOG(EXCEPTION) << "Invalid abstract for input:" << input->DebugString()
-                          << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
-      }
-      MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
-      abstracts.emplace_back(abstract);
-    }
+    std::vector<abstract::AbstractBasePtr> abstracts = FetchInputAbstracts(cnode);
 
     // Fetch infer function.
     std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
