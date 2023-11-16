@@ -1215,9 +1215,6 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});
   }
-  for (size_t i = 0; i < ge_inputs.size(); ++i) {
-    MS_LOG(INFO) << "Input " << i << " size " << ge_inputs[i].GetSize() << ", graph: " << kernel_graph->graph_id();
-  }
   return ge_inputs;
 }
 
@@ -1272,8 +1269,7 @@ void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
+    MS_LOG(INFO) << "Can not find " << run_options.name << " sub graph, don't need data init subgraph in INFER mode.";
     return;
   }
   auto graph_runner = transform::GetGraphRunner();
