@@ -18,10 +18,10 @@
 #define MINDSPORE_CORE_OPS_CAST_H_
 #include <memory>
 #include <vector>
-#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
+constexpr auto kNameCast = "Cast";
 namespace ops {
 /// \brief Returns a tensor with the new specified data type.
 /// Refer to Python API @ref mindspore.ops.Cast for more details.

@@ -47,6 +47,7 @@ GVAR_DEF(PrimitivePtr, kPrimArrayToScalar, std::make_shared<Primitive>("array_to
 GVAR_DEF(PrimitivePtr, kPrimBroadcastShape, std::make_shared<Primitive>("broadcast_shape"));
 GVAR_DEF(PrimitivePtr, kPrimArrayMap, std::make_shared<Primitive>("array_map"));
 GVAR_DEF(PrimitivePtr, kPrimArrayReduce, std::make_shared<Primitive>("array_reduce"));
+GVAR_DEF(PrimitivePtr, kPrimCast, std::make_shared<Primitive>("Cast"));
 GVAR_DEF(PrimitivePtr, kPrimConcatD, std::make_shared<Primitive>("ConcatD"));
 GVAR_DEF(PrimitivePtr, kPrimParallelConcat, std::make_shared<Primitive>(kParallelConcatOpName));
 GVAR_DEF(PrimitivePtr, kPrimCountNonZero, std::make_shared<Primitive>("CountNonZero"));
@@ -70,6 +71,7 @@ GVAR_DEF(PrimitivePtr, kPrimArgMax, std::make_shared<Primitive>("Argmax"));
 GVAR_DEF(PrimitivePtr, kPrimArgMin, std::make_shared<Primitive>("ArgMin"));
 GVAR_DEF(PrimitivePtr, kPrimArgminV2, std::make_shared<Primitive>("ArgminV2"));
 GVAR_DEF(PrimitivePtr, kPrimPack, std::make_shared<Primitive>("Pack"));
+GVAR_DEF(PrimitivePtr, kPrimStack, std::make_shared<Primitive>(kStackOpName));
 GVAR_DEF(PrimitivePtr, kPrimUnpack, std::make_shared<Primitive>("Unpack"));
 GVAR_DEF(PrimitivePtr, kPrimUnstack, std::make_shared<Primitive>(kUnstackOpName));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentMax, std::make_shared<Primitive>("UnsortedSegmentMax"));

@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 #include "mindapi/base/types.h"
-#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameStack = "Stack";
 /// \brief Stacks a list of tensors in specified axis. Refer to Python API @ref mindspore.ops.Tile for more details.
 class MIND_API Stack : public BaseOperator {
  public:
