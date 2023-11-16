@@ -60,33 +60,13 @@ if __name__ == '__main__':
 ops.log(Tensor(2.0))= [Tensor(shape=[], dtype=Float32, value= 0.693147), Tensor(shape=[], dtype=Float32, value= 0.693147)]
 ```
 
-当用户在执行计算任务后，再使用fork方式创建多进程时，若使用的模块不是mindspore.multiprocessing，可能会出现线程丢失导致的子进程卡住的问题。
+当用户在执行计算任务后，再使用fork方式创建多进程时，若使用的模块不是mindspore.multiprocessing，可能会出现框架线程丢失导致的子进程卡住的问题。改为使用mindspore.multiprocessing模块的fork方式创建多进程，可以解决该问题。
 
 > 仅在POSIX系统下（如Linux和macOS）支持fork方式创建子进程，Windows下不支持该方式
 
 ``` python
 from mindspore import Tensor, ops
-import multiprocessing # Using native multiprocessing module
-
-def child_process(q):
-    y = ops.log(Tensor(2.0)) # Child process will be stuck here
-    q.put(y)
-    return
-
-if __name__ == '__main__':
-    multiprocessing.set_start_method("fork", force=True)
-    print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
-    q = multiprocessing.Queue()
-    p = multiprocessing.Process(target=child_process, args=(q,))
-    p.start()
-    print("child process:ops.log(Tensor(2.0))=", q.get())
-    p.join()
-```
-
-改为使用mindspore.multiprocessing模块的fork方式创建多进程，可以解决该问题：
-
-``` python
-from mindspore import Tensor, ops
+# Child process may be stuck when using 'import multiprocessing' .
 import mindspore.multiprocessing as multiprocessing
 
 def child_process(q):
@@ -111,29 +91,7 @@ parent process:ops.log(Tensor(2.0))= 0.6931472
 child process:ops.log(Tensor(2.0))= 0.6931472
 ```
 
-当后端为 `Ascend` 时，进程会独占卡资源。若用户在执行计算任务后创建子进程，且子进程使用了父进程的资源执行另一个计算任务，可能会因资源无法访问而报错。
-
-``` python
-from mindspore import Tensor, ops, context
-import mindspore.multiprocessing as multiprocessing
-
-def child_process(q):
-    y = ops.log(Tensor(2.0)) # Child process will fail to acquire resources.
-    q.put(y)
-    return
-
-if __name__ == '__main__':
-    context.set_context(device_target="Ascend")
-    multiprocessing.set_start_method("spawn", force=True)
-    print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
-    q = multiprocessing.Queue()
-    p = multiprocessing.Process(target=child_process, args=(q,))
-    p.start()
-    print("child process:ops.log(Tensor(2.0))=", q.get())
-    p.join()
-```
-
-修改子进程创建方式为fork后，框架会将子进程的后端重置为 `CPU` ，以避免资源冲突。
+当后端为 `Ascend` 时，进程会独占卡资源。若用户在执行计算任务后创建子进程，且子进程使用了父进程的资源执行另一个计算任务，可能会因资源无法访问而报错。修改子进程创建方式为fork后，框架会将子进程的后端重置为 `CPU` ，以避免资源冲突。
 
 ``` python
 from mindspore import Tensor, ops, context
@@ -146,6 +104,7 @@ def child_process(q):
 
 if __name__ == '__main__':
     context.set_context(device_target="Ascend")
+    # Child process may not be able to acquire resources when start_method is set to 'spawn' .
     multiprocessing.set_start_method("fork", force=True)
     print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
     q = multiprocessing.Queue()
@@ -169,6 +128,7 @@ from mindspore import Tensor, ops, context
 import mindspore.multiprocessing as multiprocessing
 
 def child_process(q):
+    # Child process may not be able to acquire resources when using the same resources as parent process.
     context.set_context(device_target="CPU")
     y = ops.log(Tensor(2.0))
     q.put(y)
@@ -182,6 +142,7 @@ if __name__ == '__main__':
     p.start()
     print("child process:ops.log(Tensor(2.0))=", q.get())
     p.join()
+    # Child process may not be able to acquire resources when this compute task is executed before the child-process is created.
     print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
 ```
 

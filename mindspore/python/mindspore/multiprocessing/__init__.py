@@ -25,23 +25,23 @@ __all__ += mp.__all__
 
 
 class Process(mp.Process): # pylint: disable=function-redefined
-    '''
+    """
     Trigger fork callbacks by overriding native multiprocessing methods.
-    '''
+    """
     def run(self):
-        '''
+        """
         Trigger child_at_fork callback function after fork by overriding
         multiprocessing.run method.
-        '''
+        """
         if mp.get_start_method() == "fork":
             fork_utils.child_at_fork()
         super().run()
 
     def start(self):
-        '''
+        """
         Trigger prepare_before_fork and parent_at_fork callback functions
         by overriding multiprocessing.start method.
-        '''
+        """
         if mp.get_start_method() == "fork":
             fork_utils.prepare_before_fork()
             super().start()
@@ -53,9 +53,9 @@ _MsProcess = Process
 
 
 class Pool(mp.pool.Pool): # pylint: disable=function-redefined, abstract-method
-    '''
+    """
     Trigger fork callbacks by overriding native multiprocessing methods.
-    '''
+    """
     def Process(self, *args, **kwds):
         if self._ctx.get_start_method() == "fork":
             return _MsProcess(*args, **kwds)
