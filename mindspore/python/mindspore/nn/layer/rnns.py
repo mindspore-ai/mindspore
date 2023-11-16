@@ -589,6 +589,8 @@ class RNN(_RNNBase):
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
     previous layer at time :math:`t-1` or the initial hidden state at time `0`.
     If :attr:`nonlinearity` is ``'relu'``, then :math:`\text{ReLU}` is used instead of :math:`\tanh`.
+    :math:`W_{ih}` is the learnable input-hidden weights, and :math:`b_{ih}` is the learnable input-hidden bias.
+    :math:`W_{hh}` is the learnable hidden-hidden weights, and :math:`b_{hh}` is the learnable hidden-hidden bias.
 
     Args:
         input_size (int): Number of features of input.
