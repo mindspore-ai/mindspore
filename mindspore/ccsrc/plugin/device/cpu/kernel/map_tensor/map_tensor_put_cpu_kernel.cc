@@ -97,11 +97,6 @@ bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorPutOutputNum, kernel_name_);
 
-  // The real hash table should be accessed by user data.
-  if (input_user_data_.empty()) {
-    MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-
   if (enable_embedding_storage_) {
     auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
     MS_ERROR_IF_NULL(embedding_storage);
@@ -114,7 +109,8 @@ bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
     return true;
   }
 
-  auto user_data = input_user_data_[kIndex0];
+  // The real hash table should be accessed by user data.
+  auto user_data = inputs[kIndex0]->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
   auto hash_table_ptr = user_data->get<device::cpu::CPUHashTable<KeyType, ValueType>>(kUserDataData);
   MS_EXCEPTION_IF_NULL(hash_table_ptr);

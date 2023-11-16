@@ -114,11 +114,7 @@ bool MapTensorGetGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
                                                 const std::vector<KernelTensor *> &workspace,
                                                 const std::vector<KernelTensor *> &outputs) {
   // The real hash table should be accessed by user data.
-  if (output_user_data_.empty()) {
-    MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-
-  auto user_data = output_user_data_[kIndex0];
+  auto user_data = outputs[kIndex0]->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
 
   auto hash_table_value_type = user_data->get<TypeId>(kHashTableValueType);

@@ -303,6 +303,7 @@ void KernelTensor::SetType(const TypePtr &type) {
 
     case kObjectTypeNumber:
     case kObjectTypeString:
+    case kObjectTypeMapTensorType:
     case kObjectTypeUMonad:
     case kObjectTypeIOMonad: {
       dtype_ = type;

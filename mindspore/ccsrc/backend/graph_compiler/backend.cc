@@ -607,6 +607,13 @@ TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_inf
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
 
+  const auto &user_data = address->user_data();
+  bool is_map_tensor_output = user_data && user_data->get<UserDataType>(kUserDataType) &&
+                              *(user_data->get<UserDataType>(kUserDataType)) == UserDataType::kUserTypeHashTable;
+  if (is_map_tensor_output) {
+    return AnfAlgo::CreateMapTensor(address);
+  }
+
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto tensor = std::make_shared<tensor::Tensor>(address->type_id(), address->host_shape());

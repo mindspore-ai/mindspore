@@ -280,6 +280,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   // Check whether the input scalar need converted to tensor.
   static bool IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node);
+  static tensor::TensorPtr CreateMapTensor(const DeviceAddressPtr &output_device_address);
   static tensor::TensorPtr CreateMapTensor(const AnfNodePtr &output_node, size_t output_index);
   // Check all elements of a ndoe's output(tuple/list type) are scalar.
   static bool IsSequenceOutputOfScalar(const AnfNodePtr &node);
