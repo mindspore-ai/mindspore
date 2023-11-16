@@ -48,6 +48,40 @@ int SequenceSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return KRET_OK;
 }
 
+int64_t SliceGetStartPoint(int64_t start, int64_t len, int64_t step) {
+  if (step > 0) {
+    if (start <= -len) {
+      start = 0;
+    } else if (start < 0) {
+      start += len;
+    }
+  } else {
+    if (start >= len) {
+      start = -1;
+    } else if (start >= 0 && start < len) {
+      start -= len;
+    }
+  }
+  return start;
+}
+
+int64_t SliceGetEndPoint(int64_t end, int64_t len, int64_t step) {
+  if (step > 0) {
+    if (end > len) {
+      end = len;
+    } else if (end > -len && end < 0) {
+      end += len;
+    }
+  } else {
+    if (end < -len) {
+      end = -1 - len;
+    } else if (end >= 0 && end < len) {
+      end -= len;
+    }
+  }
+  return end;
+}
+
 template <typename T, typename D0, typename D1, typename D2>
 bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &,
@@ -57,55 +91,46 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   const auto stop_addr = GetDeviceAddress<D1>(inputs, 2);
   const auto step_addr = GetDeviceAddress<D2>(inputs, 3);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-  int64_t len = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
-  int64_t start = start_addr[0];
-  int64_t stop = stop_addr[0];
+  int64_t data_len = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
+  auto len = SizeToLong(inputs[0]->GetType()->cast<TuplePtr>()->size());
+
+  int64_t orig_start = start_addr[0];
+  int64_t orig_stop = stop_addr[0];
   int64_t step = step_addr[0];
+
+  int64_t start = SliceGetStartPoint(orig_start, len, step);
+  int64_t stop = SliceGetEndPoint(orig_stop, len, step);
   if (step > 0) {
-    if (start <= -len) {
-      start = 0;
-    } else if (start < 0) {
-      start += len;
-    }
-    if (stop > len) {
-      stop = len;
-    } else if (stop > -len && stop < 0) {
-      stop += len;
-    }
     if (start >= stop) {
       return true;
     }
-    int64_t idx = 0;
-    for (int64_t i = start; i < stop; i += step) {
-      output_addr[idx] = seq_addr[i];
-      idx++;
-    }
-    return true;
-  }
-
-  if (step < 0) {
-    if (start >= len) {
-      start = -1;
-    } else if (start >= 0 && start < len) {
-      start -= len;
-    }
-    if (stop < -len) {
-      stop = -1 - len;
-    } else if (stop >= 0 && stop < len) {
-      stop -= len;
-    }
+  } else if (step < 0) {
     if (start <= stop) {
       return true;
     }
-
+  } else {
+    MS_EXCEPTION(ValueError) << "For 'SequenceSlice', step cannot be 0.";
+  }
+  int64_t tensor_length = static_cast<int64_t>(data_len / len);
+  if (step > 0) {
+    int64_t idx = 0;
+    for (int64_t i = start; i < stop; i += step) {
+      for (int64_t j = 0; j < tensor_length; j++) {
+        output_addr[idx] = seq_addr[j + i * tensor_length];
+        idx++;
+      }
+    }
+    return true;
+  } else {
     int64_t idx = 0;
     for (int64_t i = start; i > stop; i += step) {
-      output_addr[idx] = seq_addr[i + len];
-      idx++;
+      for (int64_t j = 0; j < tensor_length; j++) {
+        output_addr[idx] = seq_addr[j + i * tensor_length + data_len];
+        idx++;
+      }
     }
     return true;
   }
-  MS_EXCEPTION(ValueError) << "For 'SequenceSlice', step cannot be 0.";
   return false;
 }
 

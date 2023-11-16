@@ -320,12 +320,12 @@ void PoolingGradGpuKernelMod::SetPad() {
   if (kernel_name_ != kAvgPoolGrad) {
     nc_offset += NC_DIM_LEN;
   }
-  size_t IdxH = nc_offset;
-  size_t IdxW = 1 + nc_offset;
-  int window_height = window[IdxH];
-  int window_width = window[IdxW];
-  int stride_h = stride[IdxH];
-  int stride_w = stride[IdxW];
+  size_t height_index = nc_offset;
+  size_t width_index = 1 + nc_offset;
+  int window_height = window[height_index];
+  int window_width = window[width_index];
+  int stride_h = stride[height_index];
+  int stride_w = stride[width_index];
 
   if (format_attr_ == Format::NHWC) {
     const size_t kNHWCIdxH = 1;
