@@ -25,11 +25,11 @@
 
 namespace mindspore {
 struct LLMReq {
-  int64_t req_id = -1;
+  uint64_t req_id = UINT64_MAX;
   uint64_t prompt_length = 0;
   uint64_t prompt_cluster_id = 0;
   uint64_t decoder_cluster_id = 0;
-  int64_t prefix_id = -1;
+  uint64_t prefix_id = UINT64_MAX;
 };
 
 struct LLMEngineStatus {
