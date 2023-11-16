@@ -66,7 +66,7 @@ void TensorSummaryUtils::CreateTDTSummaryThread() {
     ChannelType channel_type{ChannelType::kMbuf};
     acltdtChannelHandle *acl_handle = TDTTensorUtils::GetInstance().CreateChannel(channel_name, &channel_type);
     if (acl_handle == nullptr) {
-      MS_LOG(ERROR) << "CreateChannel failed: " << channel_name;
+      MS_LOG(WARNING) << "CreateChannel failed: " << channel_name;
       continue;
     }
     std::thread t(GetSummaryData, channel_name, acl_handle);
@@ -88,13 +88,7 @@ acltdtChannelHandle *TDTTensorUtils::CreateChannel(std::string name, ChannelType
   uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   acltdtChannelHandle *acl_handle_ = acltdtCreateChannelWithCapacity(device_id, name.c_str(), kMbufCapacitySize);
   if (acl_handle_ == nullptr) {
-    MS_LOG(INFO) << "For Print ops, select TDT channel.";
-    const std::string receive_prefix = "TF_RECEIVE_";
-    acl_handle_ = acltdtCreateChannel(device_id, (receive_prefix + name).c_str());
-    if (acl_handle_ == nullptr) {
-      MS_LOG(EXCEPTION) << "create tdt channel failed";
-    }
-    *channel_type = ChannelType::kTDT;
+    MS_LOG(INFO) << "Mbuf not supported.";
   } else {
     MS_LOG(INFO) << "For Print ops, select MBUF channel.";
   }
