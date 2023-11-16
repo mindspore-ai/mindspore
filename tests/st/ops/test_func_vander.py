@@ -22,8 +22,8 @@ from mindspore import Tensor, ops
 
 
 class Net(nn.Cell):
-    def construct(self, a, N=3):
-        output = ops.vander(a, N)
+    def construct(self, a, N=3, increasing=False):
+        output = ops.vander(a, N, increasing)
         return output
 
 
@@ -46,4 +46,26 @@ def test_vander(mode):
     x = Tensor([1, 2, 3, 5])
     output = net(x)
     expect_output = np.array([[1, 1, 1], [4, 2, 1], [9, 3, 1], [25, 5, 1]])
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_vander_increasing(mode):
+    """
+    Feature: vander
+    Description: Verify the result of vander
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+    x = Tensor([1, 2, 3, 5])
+    output = net(x, increasing=True)
+    expect_output = np.array([[1, 1, 1], [1, 2, 4], [1, 3, 9], [1, 5, 25]])
     assert np.allclose(output.asnumpy(), expect_output)

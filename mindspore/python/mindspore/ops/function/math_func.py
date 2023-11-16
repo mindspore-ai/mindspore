@@ -5381,7 +5381,7 @@ def _check_var_std_input(input, ddof, keepdims, axis, cls_name):
     return axis
 
 
-def vander(x, N=None):
+def vander(x, N=None, increasing=False):
     """
     Generates a Vandermonde matrix. The columns of the output matrix are powers of the input vector.
     The i-th output column is the input vector raised element-wise to the power of :math:`N - i - 1`.
@@ -5390,6 +5390,8 @@ def vander(x, N=None):
         x (Tensor): 1-D input array.
         N (int, optional): Number of columns in the output. Default: ``None``,
             `N` will be assigned as :math:`len(x)`.
+        increasing (bool, optional): Order of the powers of the columns. If ``True`` , the powers increase
+            from left to right, if ``False`` the powers increase from right to left. Default: ``False``.
 
     Returns:
         Tensor, the columns are :math:`x^0, x^1, ..., x^{(N-1)}`.
@@ -5412,11 +5414,11 @@ def vander(x, N=None):
          [9.   3.   1.]
          [25.  5.   1.]]
         >>> a = Tensor([1., 2., 3., 5.])
-        >>> print(ops.vander(a))
+        >>> print(ops.vander(a, increasing=True))
         [[1.    1.   1.   1.]
-         [8.    4.   2.   1.]
-         [27.   9.   3.   1.]
-         [125.  25.  5.   1.]]
+         [1.    2.   4.   8.]
+         [1.    3.   9.   27.]
+         [1.    5.   25.  125.]]
     """
     if not isinstance(x, Tensor):
         raise TypeError(
@@ -5432,7 +5434,10 @@ def vander(x, N=None):
     if N <= 0:
         raise ValueError(
             f"For vander, N must be greater than 0, but got {N}.")
-    exponent = ops.range(Tensor(N - 1), Tensor(-1), Tensor(-1))
+    if increasing:
+        exponent = Tensor(list(range(int(N))))
+    else:
+        exponent = ops.range(Tensor(N - 1), Tensor(-1), Tensor(-1))
     x = F.expand_dims(x, 1)
     exponent = F.expand_dims(exponent, 0)
     return F.tensor_pow(x, exponent)
