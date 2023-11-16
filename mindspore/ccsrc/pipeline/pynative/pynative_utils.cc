@@ -832,39 +832,87 @@ static std::string BuilidPyInputTypeString(const py::object &obj) {
   return ss.str();
 }
 
+inline ValuePtr ConvertScalarToTensor(const ValuePtr &value) {
+  auto fp32_imm = value->cast<FP32ImmPtr>();
+  if (fp32_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(fp32_imm->value());
+  }
+
+  auto bool_imm = value->cast<BoolImmPtr>();
+  if (bool_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(bool_imm->value());
+  }
+
+  auto int64_imm = value->cast<Int64ImmPtr>();
+  if (int64_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(int64_imm->value());
+  }
+
+  MS_LOG(EXCEPTION) << "Unsupported type: " << value->ToString();
+}
+
+inline ValuePtr ConvertBySignature(const py::object &obj, const FrontendOpRunInfoPtr &op_run_info, size_t index) {
+  if (op_run_info->signatures.size() <= index) {
+    return nullptr;
+  }
+
+  if (op_run_info->signatures[index].dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
+    auto convert_func = parse::GetConverterByType(static_cast<int32_t>(ops::DT_NUMBER));
+    MS_EXCEPTION_IF_NULL(convert_func);
+    return convert_func(obj);
+  }
+  return nullptr;
+}
+
+inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
+  std::vector<std::string> op_type_list;
+  for (size_t index = 0; index < op_inputs.size(); ++index) {
+    (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
+  }
+  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+}
+
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
-                         std::vector<ValuePtr> *input_values, size_t *none_init_inputs_num) {
+                         std::vector<ValuePtr> *input_values, const FrontendOpRunInfoPtr &op_run_info) {
   if (op_inputs.size() != op_def->args_.size()) {
     MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
                       << " but got " << op_inputs.size() << ".";
   }
 
   parse::OpDefConvertFunc convert_func;
+  size_t hit_signature_cast_num = 0;
   for (size_t i = 0; i < op_def->args_.size(); i++) {
     auto const &op_arg = op_def->args_[i];
-    if (!op_arg.as_init_arg_) {
-      *none_init_inputs_num += 1;
-    }
-
+    op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
-    if (convert_func == nullptr) {
-      MS_LOG(EXCEPTION) << "Can't find convert function for dtype[" << op_arg.arg_dtype_ << "].";
-    }
-
+    MS_EXCEPTION_IF_NULL(convert_func);
     value = convert_func(op_inputs[i]);
     if (value != nullptr) {
       input_values->emplace_back(value);
       continue;
     }
 
+    // for ops those have signature cast, the Number value must be convert to Tensor with the other arg's dtype
+    // e.g: for Add(Tensor(1.0, dtype=ms.float16), 4.1), 4.1 is casted into a Tensor whose dtype is ms.float16
+    // init arg has no signature
+    if (!op_arg.as_init_arg_) {
+      value = ConvertBySignature(op_inputs[i], op_run_info, i);
+      if (value != nullptr) {
+        // 'value' is a Scalar and will be convert to Tensor in the following step(SetImplicitCast)
+        MS_LOG(DEBUG) << "Convert arg " << i << " with type " << op_inputs[i].get_type()
+                      << " to Number by signature cast, its value is: " << value->ToString();
+        input_values->emplace_back(value);
+        hit_signature_cast_num++;
+        continue;
+      }
+    }
+
+    // type cast has lower priority then signature cast
     if (!op_arg.cast_dtype_.empty()) {
       for (auto cast_dtype : op_arg.cast_dtype_) {
         convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
-        if (convert_func == nullptr) {
-          MS_LOG(EXCEPTION) << "Can't find convert function for src_dtype[" << cast_dtype << "] and dst_dtype["
-                            << op_arg.arg_dtype_ << "].";
-        }
+        MS_EXCEPTION_IF_NULL(convert_func);
         value = convert_func(op_inputs[i]);
         if (value != nullptr) {
           break;
@@ -873,13 +921,13 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     }
 
     if (value == nullptr) {
-      std::vector<std::string> op_type_list;
-      for (size_t index = 0; index < op_inputs.size(); ++index) {
-        (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
-      }
-      MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+      PrintTypeError(op_def, op_inputs);
     }
     input_values->emplace_back(value);
+  }
+
+  if (hit_signature_cast_num == op_run_info->none_init_inputs_num) {
+    PrintTypeError(op_def, op_inputs);
   }
 }
 
@@ -897,8 +945,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
     }
   } else {
     op_run_info->none_init_inputs_num = 0;
-    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value,
-                        &op_run_info->none_init_inputs_num);
+    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value, op_run_info);
   }
   PrepareOpGradInfo(op_run_info);
 }

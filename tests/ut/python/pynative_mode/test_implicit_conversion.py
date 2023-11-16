@@ -47,7 +47,7 @@ def test_bool_tensor_and_int_add():
     x = Tensor(np.array([[True, False], [False, True]], dtype=np.bool_))
     y = 3
     ret_actual = x + y
-    ret_expect = Tensor(np.array([[4, 3], [3, 4]], dtype=np.int32))
+    ret_expect = Tensor(np.array([[4, 3], [3, 4]], dtype=np.int64))
     assert ret_actual.dtype == ret_expect.dtype
     assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
 
