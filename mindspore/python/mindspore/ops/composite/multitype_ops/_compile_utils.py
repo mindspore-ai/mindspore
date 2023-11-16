@@ -1255,7 +1255,8 @@ def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     index = index.reshape(const_utils.generate_padding_shape(index.shape, len(data.shape)))
     index = F.broadcast_to(index, data.shape)
     value = F.cast(value, F.dtype(data))
-    value = value.reshape(const_utils.generate_padding_shape(value.shape, len(data.shape)))
+    while value.ndim < data.ndim:
+        value = value.unsqueeze(-1)
     value = F.broadcast_to(value, data.shape)
     result = F.select(index, value, data)
     return result
