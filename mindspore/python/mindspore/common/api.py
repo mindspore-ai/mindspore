@@ -74,8 +74,6 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
-    if ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) and not data.adapter_flag:
-        return data.tensor
     if isinstance(data, Tensor) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
