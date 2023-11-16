@@ -1189,6 +1189,9 @@ class SymbolTree(Observer, Observable, NodeManager):
         cls = self._get_cls_through_file()
         new_net = cls(self._origin_network)
         self._merge_origin_property(new_net)
+        # update parameters' names to fix duplicated names bug
+        # which occurs after inserting cell to celllist/sequentialcell
+        new_net.update_parameters_name()
         return new_net
 
     def set_saved_file_name(self, file_name: str):
