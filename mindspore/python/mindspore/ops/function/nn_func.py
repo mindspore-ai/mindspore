@@ -4524,6 +4524,19 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
+
+        .. math::
+            D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] - \text{dilation}[0] \times
+            (\text{kernel_size}[0] - 1) - 1}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] - \text{dilation}[1] \times
+            (\text{kernel_size}[1] - 1) - 1}{\text{stride}[1]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] - \text{dilation}[2] \times
+            (\text{kernel_size}[2] - 1) - 1}{\text{stride}[2]} + 1\right\rfloor
+
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
           only when `return_indices` is ``True`` .
 
