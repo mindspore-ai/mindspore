@@ -41,6 +41,8 @@ _info_list = ["epoch_num", "step_num"]
 
 def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
     """Check if there is a file with the same name."""
+    if callable(prefix) or callable(directory):
+        return prefix
     files = os.listdir(directory)
     suffix_num = 0
     pre_len = len(prefix)
@@ -409,18 +411,28 @@ class ModelCheckpoint(Callback):
         self._last_time = time.time()
         self._last_time_for_keep = time.time()
         self._last_triggered_step = 0
+        """a callable for users to set self-defined prefix."""
+        self._prefix_func = None
+        """a callable for users to set self-defined directory."""
+        self._directory_func = None
 
-        if not isinstance(prefix, str) or prefix.find('/') >= 0:
+        if not callable(prefix) and (not isinstance(prefix, str) or prefix.find('/') >= 0):
             raise ValueError("For 'ModelCheckpoint', the argument 'prefix' "
                              "for checkpoint file name is invalid, it must be "
-                             "string and does not contain '/', but got {}.".format(prefix))
+                             "callable or string that does not contain '/', but got {}.".format(prefix))
         self._prefix = prefix
         self._exception_prefix = prefix
 
         if directory is not None:
-            self._directory = _make_directory(directory)
+            if callable(directory):
+                self._directory_func = directory
+            else:
+                self._directory = _make_directory(directory)
         else:
             self._directory = _cur_dir
+
+        if callable(prefix):
+            self._prefix_func = prefix
 
         if _get_recovery_context("enable_recovery"):
             _set_recovery_context(ckpt_path=self._directory)
@@ -436,7 +448,8 @@ class ModelCheckpoint(Callback):
 
         # get existing checkpoint files
         self._manager = CheckpointManager()
-        self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
+        if not callable(directory) and not callable(prefix):
+            self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
         self._append_dict = self._config.append_dict or {}
         self._append_epoch_num = self._append_dict.get("epoch_num") if "epoch_num" in self._append_dict else 0
         self._append_step_num = self._append_dict.get("step_num") if "step_num" in self._append_dict else 0
@@ -452,6 +465,14 @@ class ModelCheckpoint(Callback):
             run_context (RunContext): Context of the train running.
         """
         cb_params = run_context.original_args()
+        if self._prefix_func:
+            self._prefix = self._prefix_func(cb_params)
+            if not isinstance(self._prefix, str) or self._prefix.find('/') >= 0:
+                raise ValueError("For 'ModelCheckpoint', the argument 'prefix' "
+                                 "for checkpoint file name is callable, it must return a "
+                                 "string that does not contain '/', but got {}.".format(self._prefix))
+        if self._directory_func:
+            self._directory = self._directory_func(cb_params)
         _collect_host_info("Callback", "ModelCheckpoint", "step_end", level=1)
         # In disaster recovery scenario, the training process may be rolled back to the last step where
         # the ckpt was successfully saved, so the _last_triggered_step should be updated.
@@ -520,8 +541,11 @@ class ModelCheckpoint(Callback):
         step_num_in_epoch = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
 
         if save_ckpt:
-            cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
-                + str(step_num_in_epoch) + ".ckpt"
+            if self._prefix_func:
+                cur_ckpoint_file = self._prefix + ".ckpt"
+            else:
+                cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
+                    + str(step_num_in_epoch) + ".ckpt"
             # update checkpoint file list.
             self._manager.update_ckpoint_filelist(self._directory, self._prefix)
             # keep checkpoint files number equal max number.
