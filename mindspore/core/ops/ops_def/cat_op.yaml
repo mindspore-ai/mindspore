@@ -12,4 +12,4 @@ cat:
   class:
     name: Cat
   dispatch:
-    enable: True
+    enable: False

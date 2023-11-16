@@ -19,7 +19,7 @@ baddbmm:
   class:
     name: Baddbmm
   dispatch:
-    enable: True
+    enable: False
 
 
 

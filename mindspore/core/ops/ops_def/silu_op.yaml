@@ -9,4 +9,4 @@ silu:
     class:
         name: SiLU
     dispatch:
-        enable: True
+        enable: False

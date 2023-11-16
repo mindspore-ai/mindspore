@@ -21,7 +21,7 @@ import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
-from pyboost_utils import get_pyboost_name
+from pyboost_utils import get_pyboost_name, is_pyboost_enable
 from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
 
@@ -285,9 +285,7 @@ def generate_pyboost_import_header(yaml_data):
     pyboost_import_header = ''
     import_pyboost = CppTemplate("from mindspore._c_expression import $var\n")
     for operator_name, operator_data in yaml_data.items():
-        is_pyboost = False
-        if 'dispatch' in operator_data.keys():
-            is_pyboost = True
+        is_pyboost = is_pyboost_enable(operator_data)
         if is_pyboost:
             header = import_pyboost.replace(var=get_pyboost_name(operator_name))
             pyboost_import_header += header
@@ -339,7 +337,7 @@ class {class_name}(Primitive):\n"""
 {init_code}
 
     def __call__(self, {', '.join(call_args)}):"""
-        is_pyboost = 'dispatch' in operator_data.keys()
+        is_pyboost = is_pyboost_enable(operator_data)
         if is_pyboost:
             primitive_code += f"""
           return _convert_stub({pyboost_func_name}(self, ["""

@@ -18,4 +18,4 @@ mean:
   class:
     name: Mean
   dispatch:
-    enable: True
+    enable: False

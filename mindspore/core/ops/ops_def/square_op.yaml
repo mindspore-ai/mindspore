@@ -9,6 +9,6 @@ square:
     function:
         name: square_
     dispatch:
-        enable: True
+        enable: False
         Ascend: SquareAscendCall
 

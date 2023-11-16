@@ -29,5 +29,5 @@ conv2d_ext:
   class:
     name: Conv2DExt
   dispatch:
-    enable: True
+    enable: False
     Ascend: Conv2DAscendCall

@@ -12,4 +12,4 @@ view:
     name: View
   view: True
   dispatch:
-    enable: True
+    enable: False

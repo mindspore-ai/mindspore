@@ -11,4 +11,4 @@ bmm:
   class:
     name: Bmm
   dispatch:
-    enable: True
+    enable: False

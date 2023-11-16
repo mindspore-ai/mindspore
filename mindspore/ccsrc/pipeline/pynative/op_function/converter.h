@@ -42,6 +42,7 @@ class Converter {
   template <typename T>
   ValueTuplePtr ToFloatList(size_t i);
   ScalarPtr ToScalar(size_t i);
+  StringImmPtr ToString(size_t i);
   TypePtr ToDtype(size_t i);
   py::object Wrap(const TensorPtr &tensor);
 

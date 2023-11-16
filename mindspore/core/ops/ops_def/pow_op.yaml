@@ -13,6 +13,6 @@ pow:
         y:
             dtype: tensor
     dispatch:
-        enable: True
+        enable: False
 
 

@@ -23,4 +23,4 @@ layer_norm_ext:
   class:
     name: LayerNormExt
   dispatch:
-    enable: True
+    enable: False

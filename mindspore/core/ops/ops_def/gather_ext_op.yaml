@@ -13,4 +13,4 @@ gather_ext:
   class:
     name: GatherExt
   dispatch:
-    enable: True
+    enable: False

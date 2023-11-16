@@ -11,6 +11,6 @@ matmul:
   class:
     name: MatMul
   dispatch:
-    enable: True
+    enable: False
 
 

@@ -74,6 +74,13 @@ ScalarPtr ConvertNumber(const py::object &obj) {
   return nullptr;
 }
 
+StringImmPtr ConvertStr(const py::object &obj) {
+  if (!py::isinstance<py::str>(obj)) {
+    return nullptr;
+  }
+  return PyCast<string, StringImm>(obj);
+}
+
 template <typename T, typename U, typename N>
 ValueTuplePtr ConvertList(const py::object &obj) {
   if (!py::isinstance<T>(obj)) {
@@ -271,6 +278,23 @@ ScalarPtr Converter::ToScalar(size_t i) {
   }
   if (!op_arg.cast_dtype_.empty()) {
     convert = ConvertByCastDtype(obj, op_arg)->cast<ScalarPtr>();
+    if (convert != nullptr) {
+      return convert;
+    }
+  }
+  ThrowException(i);
+  return nullptr;
+}
+
+StringImmPtr Converter::ToString(size_t i) {
+  const auto &op_arg = op_def_->args_[i];
+  const py::object &obj = (*python_args_)[i];
+  auto convert = ConvertStr(obj);
+  if (convert != nullptr) {
+    return convert;
+  }
+  if (!op_arg.cast_dtype_.empty()) {
+    convert = ConvertByCastDtype(obj, op_arg)->cast<StringImmPtr>();
     if (convert != nullptr) {
       return convert;
     }

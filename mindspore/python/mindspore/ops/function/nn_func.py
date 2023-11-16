@@ -42,7 +42,6 @@ from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax
-from mindspore.ops.auto_generate.gen_ops_def import upsample_nearest1d
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -2337,10 +2336,13 @@ def interpolate(input,
         # 3D 4D use ResizeNearestNeighborV2, 5D use UpsampleNearest3D
         x_rank = F.rank(x)
         if size is not None and x_rank == 3:
-            if scale_factor == None:
-                x = upsample_nearest1d(x, size, (1.0,))
-            else:
-                x = upsample_nearest1d(x, size, scale_factor)
+            t1 = seq.TupleToTensor()(size[:1], mstype.int32)
+            t2 = Tensor([1], mstype.int32)
+            size = F.concat([t1, t2])
+            x = x.unsqueeze(-1)
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)()(
+                x, size)
+            x = P.Squeeze(-1)(x)
         elif size is not None and x_rank == 4:
             size = seq.TupleToTensor()(size[:2], mstype.int32)
             x = _get_cache_prim(P.ResizeNearestNeighborV2)()(

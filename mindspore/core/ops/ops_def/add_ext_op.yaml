@@ -18,4 +18,4 @@ add_ext:
   class:
     name: AddExt
   dispatch:
-    enable: True
+    enable: False

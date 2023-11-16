@@ -76,6 +76,7 @@ def get_convert_type_str(dtype: str, optional):
         'list[bool]': 'ToBoolList<py::list>',
         'list[tensor]': 'ToTensorList<py::list>',
         'tensor': 'ToTensor',
+        'str': 'ToStr',
         'type': 'ToDtype',
     }
     optional_type_convert = {
@@ -103,6 +104,7 @@ def tuple_input_to_cpp_type(dtype: str):
         'tuple[int]': 'int64_t',
         'tuple[float]': 'float',
         'tuple[bool]': 'bool',
+        'tuple[str]': 'string',
         'tuple[tensor]': 'TensorPtr',
         'list[int]': 'int64_t',
         'list[float]': 'float',
@@ -119,6 +121,7 @@ def number_input_to_cpp_type(dtype: str):
         'int': 'int64_t',
         'float': 'float',
         'bool': 'bool',
+        'str': 'string'
     }
     if dtype in types_map:
         return types_map[dtype]
@@ -144,6 +147,7 @@ def get_input_dtype(dtype: str, optional):
         'list[bool]': 'ValueTuplePtr',
         'list[tensor]': 'ValueTuplePtr',
         'tensor': 'TensorPtr',
+        'str': 'StringImmPtr',
         'type': 'TypePtr',
     }
     optional_type_convert = {
@@ -152,6 +156,7 @@ def get_input_dtype(dtype: str, optional):
         'bool': 'std::optional<BoolImmPtr>',
         'number': 'std::optional<ScalarPtr>',
         'tensor': 'std::optional<TensorPtr>',
+        'str': 'std::optional<StringImmPtr>',
         'type': 'std::optional<TypePtr>',
     }
     if optional:
@@ -253,3 +258,12 @@ def get_tuple_input_convert(arg_name, arg_type):
     """
     cpp_type = tuple_input_to_cpp_type(arg_type)
     return f"std::vector<{cpp_type}> {arg_name}_vector = ConvertValueTupleToVector<{cpp_type}>({arg_name});\n"
+
+
+def is_pyboost_enable(operator_data):
+    dispatch_key = 'dispatch'
+    if dispatch_key in operator_data.keys():
+        enable = operator_data[dispatch_key].get('enable')
+        if enable:
+            return True
+    return False

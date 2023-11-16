@@ -18,4 +18,4 @@ sum:
   class:
     name: Sum
   dispatch:
-    enable: True
+    enable: False

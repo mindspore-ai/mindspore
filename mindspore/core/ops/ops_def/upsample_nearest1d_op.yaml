@@ -15,5 +15,5 @@ upsample_nearest1d:
   class:
     name: UpsampleNearest1d
   dispatch:
-    enable: True
+    enable: False
     Ascend: UpsampleNearest1dAscendCall
