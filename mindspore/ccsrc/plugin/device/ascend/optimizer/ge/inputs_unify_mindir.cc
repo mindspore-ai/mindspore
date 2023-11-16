@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/transform/graph_ir/utils.h"
 
@@ -101,17 +102,18 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
     if (src_type_it == it.second.supported_dtypes.end()) {
       auto iter = kReduceRaiseMap.find(src_type);
       if (iter == kReduceRaiseMap.end()) {
-        MS_LOG(INTERNAL_EXCEPTION) << cnode->fullname_with_scope() << " input(" << it.first
-                                   << ") data type can not add Cast.";
+        MS_LOG(WARNING) << cnode->fullname_with_scope() << " input(" << it.first << ") data type can not add Cast.";
+      } else {
+        auto dst_type_it = std::find(it.second.supported_dtypes.begin(), it.second.supported_dtypes.end(),
+                                     transform::TransformUtil::ConvertDataType(iter->second));
+        if (dst_type_it == it.second.supported_dtypes.end()) {
+          MS_LOG(WARNING) << cnode->fullname_with_scope() << " input(" << it.first << ") data type is not support.";
+        } else {
+          MS_LOG(INFO) << "Convert data type from " << TypeIdToString(src_type) << " to "
+                       << TypeIdToString(iter->second);
+          tensor_node = CreateCastNode(func_graph, tensor_node, TypeIdToType(iter->second));
+        }
       }
-      auto dst_type_it = std::find(it.second.supported_dtypes.begin(), it.second.supported_dtypes.end(),
-                                   transform::TransformUtil::ConvertDataType(iter->second));
-      if (dst_type_it == it.second.supported_dtypes.end()) {
-        MS_LOG(INTERNAL_EXCEPTION) << cnode->fullname_with_scope() << " input(" << it.first
-                                   << ") data type is not support.";
-      }
-      MS_LOG(INFO) << "Convert data type from " << TypeIdToString(src_type) << " to " << TypeIdToString(iter->second);
-      tensor_node = CreateCastNode(func_graph, tensor_node, TypeIdToType(iter->second));
     }
     manager->SetEdge(cnode, it.first, tensor_node);
   }
