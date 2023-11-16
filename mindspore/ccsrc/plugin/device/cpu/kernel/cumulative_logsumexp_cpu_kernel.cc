@@ -40,7 +40,7 @@ bool CumulativeLogsumexpCpuKernelMod::Init(const std::vector<KernelTensor *> &in
   shape_ = inputs[kInputIndex0]->GetShapeVector();
   dtype_ = inputs[kInputIndex0]->dtype_id();
   exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
-  reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
+  reverse_ = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
   return true;
 }
 

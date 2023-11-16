@@ -64,7 +64,6 @@ bool SparseAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  dense_shape_ = inputs.at(kAShapeIdx)->GetShapeVector();
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (inputs.size() != kInputNum) {
@@ -76,12 +75,13 @@ int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     output_size_list_[kSumIndicesIdx] = max_indices_out_size;
     output_size_list_[kSumValuesIdx] = max_value_out_size;
     output_size_list_[kSumShapeIdx] = inputs[kAShapeIdx]->size();
+    ret = KRET_OK;
   }
   auto dims = inputs.at(0)->GetShapeVector()[1];
   if (dims >= 0) {
     indices_column_ = LongToSize(dims);
   }
-  return KRET_OK;
+  return ret;
 }
 
 template <typename T>
@@ -204,8 +204,9 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   outputs[kSumIndicesIdx]->set_size(ele_size * UnitSizeInBytes(outputs[kSumIndicesIdx]->dtype_id()));
   outputs[kSumValuesIdx]->SetShapeVector(out_values_shape);
   outputs[kSumValuesIdx]->set_size(whole_values.size() * UnitSizeInBytes(outputs[kSumValuesIdx]->dtype_id()));
-  outputs[kSumShapeIdx]->SetShapeVector(dense_shape_);
-  ele_size = LongToSize(std::accumulate(dense_shape_.begin(), dense_shape_.end(), 1, std::multiplies<int64_t>()));
+  auto const &dense_shape = inputs.at(kAShapeIdx)->GetShapeVector();
+  outputs[kSumShapeIdx]->SetShapeVector(dense_shape);
+  ele_size = LongToSize(std::accumulate(dense_shape.begin(), dense_shape.end(), 1, std::multiplies<int64_t>()));
   outputs[kSumShapeIdx]->set_size(ele_size * UnitSizeInBytes(outputs[kSumShapeIdx]->dtype_id()));
 
   return true;

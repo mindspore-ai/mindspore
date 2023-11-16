@@ -240,7 +240,7 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
     if ((arg_value->isa<TensorType>()) && arg_type_id == it->second) {
       continue;
     }
-    MS_LOG(DEBUG) << "Do cast for inputs " << i << " " << (*op_inputs)[i + 1]->ToString() << " " << arg_type_id
+    MS_LOG(DEBUG) << "Do cast for inputs [" << i << "]: " << (*op_inputs)[i + 1]->ToString() << " from " << arg_type_id
                   << " to " << it->second << ".";
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
   }

@@ -65,7 +65,21 @@ CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vect
                        TypeId type_id) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> cnode_inputs(node_info.first.begin(), node_info.first.end());
-  cnode_inputs.push_back(NewValueNode(MakeValue<int64_t>(0)));
+  auto axis_value = MakeValue<int64_t>(0);
+  auto axis = NewValueNode(axis_value);
+  axis->set_abstract(axis_value->ToAbstract());
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  axis->set_kernel_info(kernel_info);
+  cnode_inputs.push_back(axis);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat({kOpFormat_DEFAULT});
+  MS_EXCEPTION_IF_NULL(axis_value->type());
+  builder.SetOutputsDeviceType({axis_value->type()->type_id()});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::SCALAR});
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), axis.get());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  kernel_graph->AddValueNodeToGraph(axis);
   auto concat_node = NewCNode(cnode_inputs, func_graph);
 
   ShapeVector shape{node_info.second};
@@ -74,7 +88,7 @@ CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vect
   concat_node->set_abstract(abstract);
 
   size_t input_num = node_info.first.size() - 1;  // One for primitive.
-  std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
+  std::vector<int64_t> dyn_input_size{UlongToLong(input_num), -1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
 }

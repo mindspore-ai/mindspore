@@ -82,20 +82,11 @@ void UpdateDynamicSequenceType(const AnfNodePtr &output_node, const kernel::Kern
   MS_EXCEPTION_IF_NULL(seq_abs);
 
   // Update abstract.
-  if (seq_abs->dynamic_len()) {
-    std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
-    std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());
-    common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, output_node);
-  }
+  std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
+  std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());
+  common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, output_node);
 
-  // Update real type into output kernel tensor.
-  const auto &type = output_kernel_tensor->GetType();
-  MS_EXCEPTION_IF_NULL(type);
-  const auto &seq_type = type->cast<TuplePtr>();
-  MS_EXCEPTION_IF_NULL(seq_type);
-  if (seq_type->dynamic_len()) {
-    output_kernel_tensor->SetType(output_node->abstract()->GetType());
-  }
+  output_kernel_tensor->SetType(output_node->abstract()->GetType());
 }
 
 void OutputActor::Init() {

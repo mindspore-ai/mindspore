@@ -150,6 +150,8 @@ BaseShapePtr LayerNormFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr LayerNormFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kInputIndex0]->GetType();
+  auto gamma_type = input_args[kInputIndex1]->GetType();
+  auto beta_type = input_args[kInputIndex2]->GetType();
   // the beta and gama shape must be x_shape[begin_params_axis:]
 
   auto context = MsContext::GetInstance();
@@ -157,7 +159,7 @@ TypePtr LayerNormFuncImpl::InferType(const PrimitivePtr &primitive,
   std::vector<TypePtr> types_list;
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (is_ascend) {
-    types_list = {x_type, x_type, x_type};
+    types_list = {x_type, gamma_type, beta_type};
   } else {
     types_list = {x_type, kFloat32, kFloat32};
   }
