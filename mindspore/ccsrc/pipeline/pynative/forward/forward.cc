@@ -1286,6 +1286,7 @@ void ForwardExecutor::CreateViewOutputTensor(
   output_tensor->set_contiguous_callback([this](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
                                                 const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
     if (tensor != nullptr) {
+      GilReleaseWithCheck gil_release;
       frontend_queue_->Wait();
       backend_queue_->Wait();
 
