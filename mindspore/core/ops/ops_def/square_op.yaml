@@ -10,5 +10,5 @@ square:
         name: square_
     dispatch:
         enable: False
-        Ascend: SquareAscendCall
+        Ascend: SquareAscend
 

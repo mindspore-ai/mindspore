@@ -65,13 +65,14 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
   const AbstractBasePtr &output_abs() const { return output_abs_; }
   void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
   template <typename T>
-  AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
+  static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
     if (!t.has_value()) {
       return kNone->ToAbstract();
     }
     return t.value()->ToAbstract();
   }
-  AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
+  static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
+
   template <typename... T>
   inline void InferOutput(T &... args) {
     input_abs_.clear();
@@ -81,6 +82,13 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     outputs_.clear();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_, &device_sync_promises_);
+  }
+
+  template <typename... T>
+  static void InferOpOutput(const std::shared_ptr<Op> &op, T &... args) {
+    (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
+    op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
+    PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_, &op->device_sync_promises_);
   }
   tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
 

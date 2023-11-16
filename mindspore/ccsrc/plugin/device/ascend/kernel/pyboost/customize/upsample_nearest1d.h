@@ -21,16 +21,14 @@
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "kernel/pyboost/op_base.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
-                                              const device::DeviceContext *device_context,
-                                              const tensor::TensorPtr &input_tensor,
-                                              const std::vector<int64_t> &output_size,
-                                              const std::vector<float> &scale_factors,
-                                              const std::vector<tensor::TensorPtr> &outputs);
+tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &input_tensor,
+                                                   const ValueTuplePtr &output_size,
+                                                   const ValueTuplePtr &scale_factors);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -22,15 +22,39 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
 tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
                                               const device::DeviceContext *device_context,
                                               const TensorPtr &input_tensor, const std::vector<int64_t> &output_size,
-                                              const std::vector<float> &scale_factors,
                                               const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
   LAUNCH_ACLNN(aclnnUpsampleNearest1d, device_context, stream_ptr, input_tensor, output_size, outputs[0]);
   return outputs[0];
+}
+}  // namespace
+
+tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &input_tensor,
+                                                   const ValueTuplePtr &output_size,
+                                                   const ValueTuplePtr &scale_factors) {
+  Op::InferOpOutput(op, input_tensor, output_size, scale_factors);
+
+  // Convert ValueTuple to std::vector
+  std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
+  // Convert ValuePtr to c++ scalar
+  // No need to conver.
+
+  // Async
+  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
+    auto device_context = op->device_context();
+    const auto &outputs = op->outputs();
+    // Malloc for input tensors
+    runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_tensor, "input_tensor");
+    // Malloc for output tensors
+    PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+    UpsampleNearest1dAscendCall(op->primitive(), device_context, input_tensor, output_size_vector, outputs);
+  }));
+  return op->output(0);
 }
 }  // namespace pyboost
 }  // namespace kernel

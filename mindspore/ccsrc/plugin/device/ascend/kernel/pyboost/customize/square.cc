@@ -23,9 +23,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SquareAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
-                                   const tensor::TensorPtr &input_tensor,
-                                   const std::vector<tensor::TensorPtr> &outputs) {
+namespace {
+void SquareAscendCall(const device::DeviceContext *device_context, const tensor::TensorPtr &input_tensor,
+                      const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
   constexpr int64_t val = 2;
@@ -33,7 +33,23 @@ tensor::TensorPtr SquareAscendCall(const PrimitivePtr &primitive, const device::
   MS_EXCEPTION_IF_NULL(exponent);
   LAUNCH_ACLNN(aclnnPowTensorScalar, device_context, stream_ptr, input_tensor, exponent, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
-  return outputs[0];
+}
+}  // namespace
+
+tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &x_tensor) {
+  Op::InferOpOutput(op, x_tensor);
+  // No need to convert input
+  // Async
+  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor]() {
+    auto device_context = op->device_context();
+    const auto &outputs = op->outputs();
+    // Malloc for input tensors
+    runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x_tensor, "x_tensor");
+    // Malloc for output tensors
+    PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+    SquareAscendCall(device_context, x_tensor, outputs);
+  }));
+  return op->output(0);
 }
 }  // namespace pyboost
 }  // namespace kernel

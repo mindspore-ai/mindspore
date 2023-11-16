@@ -22,6 +22,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "include/common/utils/primfunc_utils.h"
 #include "ops/op_def.h"
+#include "include/common/utils/primfunc_utils.h"
 namespace mindspore {
 namespace pynative {
 class Converter {

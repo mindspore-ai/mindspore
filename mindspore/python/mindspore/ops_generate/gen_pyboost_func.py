@@ -96,15 +96,9 @@ def generate_pyboost_ascend_op_source_code(work_path, op_proto, operator_name,
                                                                 input=call_args_str[0])
         customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
     elif op_proto.ascend != 'default':
-        call_impl = template.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(op_name=op_name_str,
-                                                                     value_tuple_convert=value_tuple_convert,
-                                                                     const_number_convert=const_number_convert,
-                                                                     malloc_inputs=malloc_inputs,
-                                                                     call_args=call_args_str,
-                                                                     aclnn_call_args=call_args_after_convert,
-                                                                     call_tensors=call_args_tensor,
+        call_impl = template.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(call_args=call_args_str,
                                                                      return_values=call_outputs,
-                                                                     customize_func=op_proto.ascend,
+                                                                     customize_func=op_proto.ascend + "Customize",
                                                                      )
         customize_include = "#include \"plugin/device/ascend/kernel/pyboost/customize/{}.h\"".format(
             operator_name.lower())
