@@ -48,8 +48,6 @@ inline const char PY_PRIM_METHOD_INFER_VALUE[] = "infer_value";
 inline const char ATTR_VALUE[] = "value";
 inline const char ATTR_DTYPE[] = "dtype";
 inline const char ATTR_SHAPE[] = "shape";
-inline const char ATTR_MAX_SHAPE[] = "max_shape";
-inline const char ATTR_SHAPE_VALUE[] = "shape_value";
 inline const char ATTR_NO_ELIMINATE[] = "no_eliminate";
 }  // namespace mindspore
 

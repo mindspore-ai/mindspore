@@ -676,32 +676,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ~AbstractTensor() override = default;
   MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
 
-  /// \brief Set min value and max value.
-  ///
-  /// \param[in] min_value The min value of tensor.
-  /// \param[in] max_value The max value of tensor.
-  void set_value_range(const ValuePtr &min_value, const ValuePtr &max_value);
-
-  /// \brief Get the min value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_min_value() const;
-
-  /// \brief Get the max value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_max_value() const;
-
-  /// \brief Set shape value
-  ///
-  /// \param[in] shape_value The shape value of tensor.
-  void set_shape_value(const ValuePtr &shape_value);
-
-  /// \brief Get the shape value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_shape_value() const;
-
   TypePtr BuildType() const override;
 
   BaseShapePtr BuildShape() const override;
@@ -739,9 +713,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 
  protected:
   bool equal_to(const AbstractTensor &other) const;
-  ValuePtr min_value_ = nullptr;
-  ValuePtr max_value_ = nullptr;
-  ValuePtr shape_value_ = nullptr;
   bool is_adapter_ = false;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;

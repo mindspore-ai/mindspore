@@ -118,7 +118,7 @@ void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType 
         ss << TypeIdToString(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i)) << std::endl;
       }
       for (size_t i = 0; i < output_num; ++i) {
-        ss << "InputDesc [" << i << "] is ";
+        ss << "OutputDesc [" << i << "] is ";
         ss << TypeIdToString(common::AnfAlgo::GetOutputInferDataType(node, i)) << std::endl;
       }
       break;

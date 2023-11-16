@@ -150,19 +150,6 @@ void SetStreamDistinctionLabel(const KernelGraphPtr &graph, uint32_t label, bool
   }
 }
 
-TensorPtr GetCNodeOutputStubTensor(const KernelWithIndex &kernel_with_index,
-                                   const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                                   bool *output_is_weight) {
-  MS_EXCEPTION_IF_NULL(output_is_weight);
-  const auto &iter = node_output_info.find(kernel_with_index);
-  if (iter == node_output_info.end()) {
-    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-    MS_LOG(EXCEPTION) << "Can not find output stub tensor of cnode " << kernel_with_index.first->DebugString();
-  }
-  *output_is_weight = iter->second.is_weight;
-  return iter->second.output_stub_tensor;
-}
-
 bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
                         const device::DeviceAddressPtr &dst_device_addr) {
   MS_EXCEPTION_IF_NULL(dst_device_addr);
@@ -603,44 +590,6 @@ void AscendSession::BindAddressToTensor(
     }
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(address);
-  }
-}
-
-void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
-                                          const std::vector<tensor::TensorPtr> &graph_inputs,
-                                          const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                                          InputTensorInfo *input_tensor_info) const {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(input_tensor_info);
-  const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t i = 1; i <= input_tensor_num; i += 1) {
-    const auto &input = cnode->input(i);
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
-    auto real_input = kernel_with_index.first;
-    MS_EXCEPTION_IF_NULL(real_input);
-    tensor::TensorPtr tensor = nullptr;
-    if (real_input->isa<ValueNode>()) {
-      tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-      input_tensor_info->input_tensors_mask.emplace_back(
-        GetValueNode(real_input)->isa<StringImm>() ? kValueNodeMask : kParameterDataTensorMask);
-    } else if (real_input->isa<Parameter>()) {
-      tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
-      auto parameter = real_input->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(parameter);
-      input_tensor_info->input_tensors_mask.emplace_back(parameter->has_default() ? kParameterWeightTensorMask
-                                                                                  : kParameterDataTensorMask);
-    } else if (real_input->isa<CNode>()) {
-      bool output_is_weight = false;
-      tensor = GetCNodeOutputStubTensor(kernel_with_index, node_output_info, &output_is_weight);
-      input_tensor_info->input_tensors_mask.emplace_back(output_is_weight ? kParameterWeightTensorMask
-                                                                          : kParameterDataTensorMask);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
-    }
-    MS_EXCEPTION_IF_NULL(tensor);
-    MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
-                  << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
-    input_tensor_info->input_tensors.emplace_back(tensor);
   }
 }
 

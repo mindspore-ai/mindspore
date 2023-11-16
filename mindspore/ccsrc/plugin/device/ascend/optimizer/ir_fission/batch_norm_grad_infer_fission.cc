@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
-#include <vector>
 #include <string>
-#include "ops/sequence_ops.h"
+#include <vector>
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
 #include "ops/nn_ops.h"
 #include "ops/op_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "ops/sequence_ops.h"
+#include "plugin/device/ascend/optimizer/get_value_helper.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kElsilonIdx = 8;
 constexpr size_t kBatchNormGradInferOutputNum = 3;
 bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -94,8 +96,11 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
                                << trace::DumpSourceLines(bn_grad);
   }
   bn_infer_grad->set_abstract(bn_grad_abstract_tuple->elements()[0]);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_infer_grad);
   bn_infer_grad->set_scope(bn_grad->scope());
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad->cast<CNodePtr>()->input(kElsilonIdx));
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue<float>(epsilon), bn_infer_grad);
+
   return bn_infer_grad;
 }
 
@@ -143,8 +148,11 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
                                              bn_grad_abstract_tuple->elements()[kIndex2]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_grad->set_abstract(abstract_tuple);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);
   bn_training_update_grad->set_scope(bn_grad->scope());
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad->cast<CNodePtr>()->input(kElsilonIdx));
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue<float>(epsilon), bn_training_update_grad);
+
   return bn_training_update_grad;
 }
 

@@ -79,8 +79,7 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 }
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const ShapeVector &device_shape_adaptively, const std::string &format_str,
-                                   bool prev_node_has_getitem = false) {
+                                   const std::string &format_str, bool prev_node_has_getitem = false) {
   MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr tag_abstract = nullptr;
   if (prev_node_has_getitem) {
@@ -114,7 +113,7 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
     // Tensor
     auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract};
     res_tensor->SetTensorInfo(tensor_info);
     res_tensor->SetMetaType(kObjectTypeTensorType);
   }
@@ -155,11 +154,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "need changed type node:" << cnode->DebugString()
                     << "Real input type :" << TypeIdToType(real_input_type)->ToString();
     }
-    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor =
-      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str,
-                         ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
+    auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, format_str,
+                                           ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
     input_tensors.push_back(input_tensor);
   }
 
@@ -180,11 +177,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
                     << "Real output type :" << TypeIdToType(real_output_type)->ToString()
                     << " is dynamic len:" << common::AnfAlgo::IsDynamicSequence(cnode);
     }
-    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    auto output_tensor =
-      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str,
-                         is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
+    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, format_str,
+                                            is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
     output_tensors.push_back(output_tensor);
   }
   return std::make_pair(input_tensors, output_tensors);
@@ -213,8 +208,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
     auto shape = input_device_address->host_shape();
     auto new_abstract =
       std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract};
     input_tensor->SetTensorInfo(tensor_info);
     input_tensor->SetMetaType(kObjectTypeTensorType);
   }
@@ -242,8 +236,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
     }
     auto kernel_tensor_abstract = std::make_shared<abstract::AbstractTensor>(
       TypeIdToType(output_device_address->type_id()), new_abstract->BuildShape());
-    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract};
     output_tensor->SetTensorInfo(tensor_info);
     output_tensor->SetMetaType(kObjectTypeTensorType);
   }

@@ -102,7 +102,6 @@ struct KernelLaunchInfo {
 struct TensorInfo {
   mindspore::Format format;
   abstract::AbstractTensorPtr base_;
-  std::vector<int64_t> device_shape_adaptively;
 };
 struct ScalarInfo {
   abstract::AbstractScalarPtr base_;
@@ -502,9 +501,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   }
   void SetDynOutput(std::unique_ptr<uint8_t[]> &&new_buffer) { dyn_output_data_ = std::move(new_buffer); }
   uint8_t *GetDynOutput() const { return dyn_output_data_.get(); }
-  // deprecated field for dynamic shape
-  const ShapeVector &GetDeviceShapeAdaptively() const;
-  void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
   int32_t GetDeviceId() const { return device_id_; }
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 

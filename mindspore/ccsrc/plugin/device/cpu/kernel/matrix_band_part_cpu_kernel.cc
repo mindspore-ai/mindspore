@@ -205,15 +205,15 @@ bool MatrixBandPartCpuKernelMod::LaunchKernelBroadcast(const T *x_ptr, const LU 
 template <typename T, typename LU>
 bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                               const std::vector<kernel::KernelTensor *> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(inputs[1]);
-  MS_EXCEPTION_IF_NULL(inputs[2]);
-  MS_EXCEPTION_IF_NULL(outputs[0]);
-  const auto x_ptr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  const auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   // Both the lower and upper have done the type check in C++ primitive.
-  const auto lower_ptr = reinterpret_cast<LU *>(inputs[1]->device_ptr());
-  const auto upper_ptr = reinterpret_cast<LU *>(inputs[2]->device_ptr());
-  auto output_ptr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const auto lower_ptr = reinterpret_cast<LU *>(inputs[kIndex1]->device_ptr());
+  const auto upper_ptr = reinterpret_cast<LU *>(inputs[kIndex2]->device_ptr());
+  auto output_ptr = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   if (need_broadcast_) {
     return LaunchKernelBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);

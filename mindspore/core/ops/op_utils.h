@@ -228,14 +228,6 @@ inline ShapeVector GetShapeFromTensor(const AbstractBasePtr &abs) {
   return ConvertBaseShapeToTensorShape(base_shape);
 }
 
-// Infer shape value of make-shape op that only transform shapes, e.g. Concat, Stack, StridedSlice
-// Do not support op with multiple outputs for now
-ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args);
-
-// Infer shape value of compute-shape op that could change the dim value, e.g. Mul, Add, Sub
-// Do not support op with multiple outputs for now
-ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args);
-
 void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp);
 
 void CheckSparseShape(const size_t shape_size, const size_t expected_dim, const std::string &arg_name);

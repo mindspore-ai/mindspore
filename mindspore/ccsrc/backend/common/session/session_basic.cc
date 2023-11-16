@@ -448,7 +448,7 @@ void SessionBasic::InitExecutor(const std::string &device_name, uint32_t device_
   executor_ = ExecutorManager::Instance().GetExecutor(device_name, device_id);
 }
 
-BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const InputTensorInfo &tensor_info,
+BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const InputInfo &input_info,
                                                      const GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
@@ -478,10 +478,10 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   base_op_run_info.device_target = GetOpRunDeviceTarget(primitive);
   base_op_run_info.next_input_index = 0;
   base_op_run_info.expanded_input_values.clear();
-  for (auto const &tensor : tensor_info.input_tensors) {
-    base_op_run_info.expanded_input_values.emplace_back(tensor);
+  for (auto const &value : input_info.input_values) {
+    base_op_run_info.expanded_input_values.emplace_back(value);
   }
-  base_op_run_info.input_masks = tensor_info.input_tensors_mask;
+  base_op_run_info.input_masks = input_info.input_masks;
   base_op_run_info.abstract = abstract;
   base_op_run_info.output_indexes = output_indexes;
   return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive, false, is_gradient_out);
@@ -601,10 +601,11 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
       auto real_input = kernel_with_index.first;
       MS_EXCEPTION_IF_NULL(real_input);
       if (real_input->isa<ValueNode>()) {
-        const auto &tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-        if (tensor == nullptr) {
+        const auto &value = GetValueNodeOutput(real_input, kernel_with_index.second);
+        if (value == nullptr || !value->isa<tensor::Tensor>()) {
           continue;
         }
+        auto tensor = value->cast<tensor::TensorPtr>();
         if (tensor->is_forward_output()) {
           (*forward_op_output_tensor_id)[tensor->id()] += 1;
         }
@@ -725,7 +726,7 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   }
 }
 
-TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const {
+ValuePtr SessionBasic::GetValueNodeOutput(const AnfNodePtr &node, size_t output_index) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
     return nullptr;
@@ -742,15 +743,15 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     }
     auto tensor_value = value_tuple->value()[output_index];
     if (tensor_value->isa<tensor::Tensor>()) {
-      return tensor_value->cast<tensor::TensorPtr>();
+      return tensor_value;
     } else {
-      return opt::CreateTupleTensor(value_tuple);
+      return value;
     }
   } else if (value->isa<tensor::Tensor>()) {
     if (output_index != 0) {
       MS_LOG(EXCEPTION) << "Index should be 0 for Tensor ValueNode, but is " << output_index;
     }
-    return value->cast<TensorPtr>();
+    return value;
   } else if (value->isa<StringImm>()) {
     auto value_string = GetValue<std::string>(value);
     const ShapeVector shape = {1, SizeToLong(value_string.size())};
@@ -762,15 +763,9 @@ TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t 
     return value->cast<tensor::CSRTensorPtr>()->GetTensorAt(output_index);
   } else if (value->isa<tensor::COOTensor>()) {
     return value->cast<tensor::COOTensorPtr>()->GetTensorAt(output_index);
-  } else if (value->isa<Type>()) {
-    int64_t type_id = value->cast<TypePtr>()->type_id();
-    auto tensor = std::make_shared<tensor::Tensor>(type_id, kInt64);
-    tensor->set_user_data(kTensorValueIsType, value);
-    return tensor;
-  } else if (value->isa<Scalar>()) {
-    return ScalarToTensor(value->cast<ScalarPtr>());
   }
-  return nullptr;
+
+  return value;
 }
 
 TensorPtr SessionBasic::GetParameterOutputTensor(const AnfNodePtr &node,
@@ -830,23 +825,22 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::set<int64_t> 
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                      const std::map<AnfNodePtr, size_t> &parameter_index,
-                                     const std::vector<tensor::TensorPtr> &graph_inputs,
-                                     InputTensorInfo *input_tensor_info) const {
+                                     const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(input_tensor_info);
+  MS_EXCEPTION_IF_NULL(input_info);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::set<int64_t> const_input_attr_index = {};
   GetConstValueDepend(cnode, &const_input_attr_index);
-  const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t i = 1; i <= input_tensor_num; i += 1) {
+  const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 1; i <= input_num; i += 1) {
     const auto &input = cnode->input(i);
     auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
     auto real_input = kernel_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
-    tensor::TensorPtr tensor = nullptr;
+    ValuePtr input_value = nullptr;
     if (real_input->isa<ValueNode>()) {
-      tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
+      input_value = GetValueNodeOutput(real_input, kernel_with_index.second);
       const auto &value_ptr = GetValueNode(real_input);
       MS_EXCEPTION_IF_NULL(value_ptr);
       auto is_value_node = value_ptr->isa<StringImm>();
@@ -863,28 +857,31 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       }
 
       if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
-        (void)input_tensor_info->input_tensors_mask.emplace_back(
-          (is_value_node && !is_forward_output) ? kValueNodeMask : kParameterDataTensorMask);
+        auto is_tensor = input_value->isa<tensor::Tensor>();
+        (void)input_info->input_masks.emplace_back(
+          ((is_value_node && !is_forward_output) || !is_tensor) ? kValueNodeMask : kParameterDataTensorMask);
       } else {
-        (void)input_tensor_info->input_tensors_mask.emplace_back(
-          (is_value_node || !is_forward_output) ? kValueNodeMask : kParameterDataTensorMask);
+        (void)input_info->input_masks.emplace_back((is_value_node || !is_forward_output) ? kValueNodeMask
+                                                                                         : kParameterDataTensorMask);
       }
     } else if (real_input->isa<Parameter>()) {
-      tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
-      input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
-                                                                                : kParameterDataTensorMask);
+      auto tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
+      input_value = tensor;
+      input_info->input_masks.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
+                                                                  : kParameterDataTensorMask);
     } else if (real_input->isa<CNode>()) {
-      tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
+      auto tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
+      input_value = tensor;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(real_input)) {
         CheckInputTensorShape(tensor, cnode, i - 1);
       }
-      input_tensor_info->input_kernel.insert(kernel_with_index);
-      input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
-                                                                                : kParameterDataTensorMask);
+      input_info->input_kernel.insert(kernel_with_index);
+      input_info->input_masks.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
+                                                                  : kParameterDataTensorMask);
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
     }
-    MS_EXCEPTION_IF_NULL(tensor);
+    MS_EXCEPTION_IF_NULL(input_value);
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
     BaseShapePtr base_shape = nullptr;
@@ -901,9 +898,12 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     }
     MS_EXCEPTION_IF_NULL(base_shape);
     if (base_shape->IsDynamic()) {
+      // in this case, input_value must be a Tensor
+      auto tensor = input_value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
       tensor->set_base_shape(base_shape);
     }
-    (void)input_tensor_info->input_tensors.emplace_back(tensor);
+    (void)input_info->input_values.emplace_back(input_value);
   }
 }
 
@@ -911,9 +911,9 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
                                                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                                         const std::map<AnfNodePtr, size_t> &parameter_index,
                                                         const std::vector<tensor::TensorPtr> &graph_inputs,
-                                                        InputTensorInfo *input_tensor_info, size_t input_index) const {
+                                                        InputInfo *input_info, size_t input_index) const {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(input_tensor_info);
+  MS_EXCEPTION_IF_NULL(input_info);
   if (input_index >= cnode->inputs().size() - 1) {
     MS_LOG(EXCEPTION) << "Input index is out of range:" << cnode->inputs().size() << ",cnode:" << cnode->DebugString();
   }
@@ -930,7 +930,7 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
     if (common::AnfAlgo::IsBpropCutOpExecInBackend(real_input)) {
       CheckInputTensorShape(tensor, cnode, input_index);
     }
-    input_tensor_info->input_kernel.insert(kernel_with_index);
+    input_info->input_kernel.insert(kernel_with_index);
     return tensor;
   } else {
     MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();

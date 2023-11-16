@@ -72,7 +72,7 @@ class SparseApplyLazyAdamCpuKernelTest : public UT::Common {
   KernelTensor *CreateKernelTensor(const std::vector<int64_t> &shape, const TypePtr &dtype) {
     auto shape_ab = std::make_shared<abstract::Shape>(shape);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(dtype, shape_ab);
-    TensorInfo tensor_info{mindspore::Format::NCHW, new_abstract, shape};
+    TensorInfo tensor_info{mindspore::Format::NCHW, new_abstract};
     KernelTensor *res_tensor = new KernelTensor();
     res_tensor->SetTensorInfo(tensor_info);
     return res_tensor;

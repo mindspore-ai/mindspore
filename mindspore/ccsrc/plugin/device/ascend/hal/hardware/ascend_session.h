@@ -123,10 +123,6 @@ class AscendSession : public SessionBasic {
 #endif
   void AssignStaticMemory(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void UpdateRefOutputMap(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
-  void GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
-                             const std::vector<tensor::TensorPtr> &graph_inputs,
-                             const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                             InputTensorInfo *input_tensor_info) const;
 
   void SelectKernel(const KernelGraphPtr &graph) const;
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const;

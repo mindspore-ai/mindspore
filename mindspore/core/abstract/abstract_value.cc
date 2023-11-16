@@ -541,19 +541,6 @@ AbstractTensor::AbstractTensor(const tensor::TensorPtr &tensor)
 AbstractTensor::AbstractTensor(const TypePtr &element_type, const BaseShapePtr &shape)
     : AbstractUndetermined(element_type, shape) {}
 
-void AbstractTensor::set_value_range(const ValuePtr &min_value, const ValuePtr &max_value) {
-  min_value_ = min_value;
-  max_value_ = max_value;
-}
-
-const ValuePtr &AbstractTensor::get_min_value() const { return min_value_; }
-
-const ValuePtr &AbstractTensor::get_max_value() const { return max_value_; }
-
-void AbstractTensor::set_shape_value(const ValuePtr &shape_value) { shape_value_ = shape_value; }
-
-const ValuePtr &AbstractTensor::get_shape_value() const { return shape_value_; }
-
 std::size_t AbstractTensor::hash() const {
   // We have to exclude value pointer from hash, because CSE (Common Subexpression Elimination)
   // will use this hash to find duplicate ValueNodes that Tensor values are equal.
@@ -1800,15 +1787,7 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
     return false;
   }
   // Check shape.
-  if (!IsEqual(shape(), other.shape())) {
-    return false;
-  }
-  // Check shape value.
-  if (!IsEqual(get_shape_value(), other.get_shape_value())) {
-    return false;
-  }
-  // Check min and max values.
-  return IsEqual(get_min_value(), other.get_min_value()) && IsEqual(get_max_value(), other.get_max_value());
+  return IsEqual(shape(), other.shape());
 }
 
 bool AbstractTensor::operator==(const AbstractTensor &other) const { return equal_to(other); }
@@ -1829,8 +1808,6 @@ AbstractBasePtr AbstractTensor::Clone() const {
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
-  clone->set_value_range(get_min_value(), get_max_value());
-  clone->set_shape_value(get_shape_value());
   clone->set_is_adapter(is_adapter());
   return clone;
 }

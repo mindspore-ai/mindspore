@@ -38,7 +38,7 @@ using device::DeviceContext;
 using session::BackendOpRunInfo;
 using session::CallBackFunc;
 using session::GraphOutputInfo;
-using session::InputTensorInfo;
+using session::InputInfo;
 using session::KernelGraph;
 using session::KernelWithIndex;
 using tensor::TensorPtr;
@@ -151,15 +151,15 @@ class GraphCompiler {
   // and prev kernel node's output.
   void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
-                               const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info);
+                               const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info);
   // Get one input tensor for single control op, such as bprop_cut.
   TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                           const std::map<AnfNodePtr, size_t> &parameter_index,
-                                          const std::vector<TensorPtr> &graph_inputs,
-                                          InputTensorInfo *const input_tensor_info, size_t input_index);
+                                          const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info,
+                                          size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
-  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputInfo &input_info,
                                       bool use_dynamic_shape_process, session::BackendOpRunInfoPtr *op_run_info,
                                       const GraphOutputInfo *const graph_output_info);
 

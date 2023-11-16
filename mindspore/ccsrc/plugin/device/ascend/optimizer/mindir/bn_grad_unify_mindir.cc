@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "ops/nn_op_name.h"
+#include "ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -29,7 +30,10 @@ constexpr auto kX2 = "X2";
 constexpr auto kX3 = "X3";
 constexpr auto kX4 = "X4";
 constexpr auto kX5 = "X5";
-constexpr auto kXs = "Xs";
+constexpr auto kX6 = "X6";
+constexpr auto kX7 = "X7";
+constexpr auto kX8 = "X8";
+constexpr auto kX9 = "X9";
 constexpr auto kMBatchnormGrad = "m_batchnorm_grad";
 constexpr auto kRBatchnormGrad = "r_batchnorm_grad";
 }  // namespace
@@ -55,7 +59,6 @@ AnfNodePtr BuildBatchNormGrad(const PatternMap &m, const AnfNodePtr &new_node) {
                  AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 3UL),
                  AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 4UL)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_bn_grad.get());
-  common::AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
   common::AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);
   return new_bn_grad;
 }
@@ -65,8 +68,13 @@ bool BatchNormGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGra
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  constexpr size_t kIsTraningIdx = 7;
+  auto is_training_input = cnode->input(kIsTraningIdx);
+  MS_EXCEPTION_IF_NULL(is_training_input);
+  auto value = is_training_input->abstract()->GetValue();
+  auto is_training = ops::GetValueWithCheck<bool>(value);
   if (common::AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode) ||
-      (func_graph->has_flag(kAttrMutableKernel) && !GetBoolAttr(cnode, kAttrIsTraining))) {
+      (func_graph->has_flag(kAttrMutableKernel) && !is_training)) {
     return false;
   }
   return true;
@@ -79,13 +87,18 @@ void BatchNormGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
     .AddVar(kX3)
     .AddVar(kX4)
     .AddVar(kX5)
-    .AddSeqVar(kXs)
-    .AddCNode(kMBatchnormGrad, {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5, kXs});
+    .AddVar(kX6)
+    .AddVar(kX7)
+    .AddVar(kX8)
+    .AddVar(kX9)
+    .AddCNode(kMBatchnormGrad,
+              {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5, kX6, kX7, kX8, kX9});
 }
 
 void BatchNormGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
   (void)(*dst_pattern)
-    .AddCNode(kRBatchnormGrad, {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5, kXs},
+    .AddCNode(kRBatchnormGrad,
+              {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5, kX6, kX7, kX8, kX9},
               BuildBatchNormGrad);
 }
 }  // namespace opt
