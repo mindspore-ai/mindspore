@@ -315,6 +315,7 @@ class DfGraphConvertor {
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
   void BuildInitDataGraph(const std::string &name);
   bool IsConstantOp(const OperatorPtr &op) const;
+  void JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const;
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   FuncGraphManagerPtr graph_manager_{nullptr};
