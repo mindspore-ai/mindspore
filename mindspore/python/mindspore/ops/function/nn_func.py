@@ -2112,7 +2112,7 @@ def is_floating_point(input):
         >>> print(output2)
         False
     """
-    return input.dtype in [mstype.float32, mstype.float16, mstype.float64]
+    return input.dtype in [mstype.float32, mstype.bfloat16, mstype.float16, mstype.float64]
 
 
 def hardswish(x):
