@@ -97,20 +97,22 @@ void ChildAtFork() {
     PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().GetGilState()));
   }
 
+  // Trigger ChildAfterFork callbacks in child process.
+  ForkUtils::GetInstance().ChildAtFork();
+}
+
+void SetPDeathSig(int signal) {
 #ifdef __linux__
   // prctl(2) is a Linux specific system call.
   // On other systems the following function call has no effect.
   // This is set to ensure that non-daemonic child processes can
   // terminate if their parent terminates before they do.
-  MS_LOG(DEBUG) << "Set prctl PR_SET_PDEATHSIG.";
-  auto res = prctl(PR_SET_PDEATHSIG, SIGINT);
+  MS_LOG(DEBUG) << "Set prctl PR_SET_PDEATHSIG: " << signal;
+  auto res = prctl(PR_SET_PDEATHSIG, signal);
   if (res < 0) {
-    MS_LOG(DEBUG) << "Set prctl PR_SET_PDEATHSIG failed:(" << errno << ")" << strerror(errno);
+    MS_LOG(WARNING) << "Set prctl PR_SET_PDEATHSIG failed:(" << errno << ")" << strerror(errno);
   }
 #endif
-
-  // Trigger ChildAfterFork callbacks in child process.
-  ForkUtils::GetInstance().ChildAtFork();
 }
 
 void RegForkUtils(py::module *m) {
@@ -118,5 +120,7 @@ void RegForkUtils(py::module *m) {
   (void)m_sub.def("prepare_before_fork", &PrepareBeforeFork, "Callback function called in parent process before fork");
   (void)m_sub.def("parent_at_fork", &ParentAtFork, "Callback function called in parent process after fork");
   (void)m_sub.def("child_at_fork", &ChildAtFork, "Callback function called in child process after fork");
+  (void)m_sub.def("prctl_set_pdeathsig", &SetPDeathSig, py::arg("signal"),
+                  "Set signal to child process after parent process is dead");
 }
 }  // namespace mindspore

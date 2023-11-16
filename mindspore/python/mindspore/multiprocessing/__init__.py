@@ -16,6 +16,7 @@
 mindspore.multiprocessing is a wrapper around the native `multiprocessing` module.
 Some methods are overrode to support fork-based multiprocess.
 """
+import signal
 import multiprocessing as mp
 from multiprocessing import *
 from mindspore._c_expression import fork_utils
@@ -28,13 +29,17 @@ class Process(mp.Process): # pylint: disable=function-redefined
     """
     Trigger fork callbacks by overriding native multiprocessing methods.
     """
+    _child_at_fork_func = None
     def run(self):
         """
         Trigger child_at_fork callback function after fork by overriding
         multiprocessing.run method.
         """
         if mp.get_start_method() == "fork":
+            fork_utils.prctl_set_pdeathsig(signal.SIGINT)
             fork_utils.child_at_fork()
+            if Process._child_at_fork_func and callable(Process._child_at_fork_func):
+                Process._child_at_fork_func() # pylint: disable=not-callable
         super().run()
 
     def start(self):
