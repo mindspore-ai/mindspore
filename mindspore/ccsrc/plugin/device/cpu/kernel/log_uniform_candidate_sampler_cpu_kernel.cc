@@ -121,6 +121,7 @@ bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<AddressPtr> &
                                                  const std::vector<AddressPtr> &outputs) {
   int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->addr);
   auto true_classes_size = input_size_list_.at(0);
+  size_t true_classes_len = static_cast<size_t>(true_classes_size / sizeof(int64_t));
   int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->addr);
   float *true_expected_count = static_cast<float *>(outputs.at(1)->addr);
   float *sampled_expected_count = static_cast<float *>(outputs.at(2)->addr);
@@ -152,7 +153,7 @@ bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<AddressPtr> &
     sampled_expected_count[i] = CalcExpectedCount(Probability(sampled_candidates[i]), num_sampled_, num_tries);
   }
 
-  for (size_t i = 0; i < true_classes_size; i++) {
+  for (size_t i = 0; i < true_classes_len; i++) {
     true_expected_count[i] = CalcExpectedCount(Probability(true_classes[i]), num_sampled_, num_tries);
   }
   return true;
