@@ -7,6 +7,7 @@ if(ENABLE_GPU)
             "*.cc"
             "pyboost/*.cc"
             "pyboost/auto_generate/*.cc"
+            "pyboost/ops/*.cc"
     )
     file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/*.cc"

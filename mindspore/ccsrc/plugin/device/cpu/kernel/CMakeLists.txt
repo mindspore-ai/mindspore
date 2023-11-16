@@ -23,6 +23,7 @@ if(ENABLE_CPU)
         "sequence/*.cc"
         "pyboost/*.cc"
         "pyboost/auto_generate/*.cc"
+        "pyboost/ops/*.cc"
     )
 
     if(NOT ENABLE_MPI)
