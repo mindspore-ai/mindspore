@@ -43,7 +43,7 @@ bool ExtractVolumePatchesKernelMod::Init(const std::vector<KernelTensor *> &inpu
                                          const std::vector<KernelTensor *> &outputs) {
   kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
-  padding_ = GetValue<int>(primitive_->GetAttr(ops::kPadding));
+  padding_ = GetValue<std::string>(primitive_->GetAttr(ops::kPadding));
 
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;

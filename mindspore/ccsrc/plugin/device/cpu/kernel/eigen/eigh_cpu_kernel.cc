@@ -32,10 +32,10 @@ constexpr size_t kOutputsNum = 2;
 
 bool EighCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-
   compute_eigen_vectors_ = GetValue<bool>(primitive_->GetAttr(C_EIEH_VECTOR));
-  lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
-
+  if (primitive_->HasAttr(LOWER)) {
+    lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
+  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
