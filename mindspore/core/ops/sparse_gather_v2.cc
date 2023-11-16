@@ -50,6 +50,48 @@ ShapeVector CalcuateGatherWithBatchDimsOutputShape(int64_t batch_dims, int64_t a
   return out_vec;
 }
 
+std::pair<int64_t, bool> GetAxis(const PrimitivePtr &primitive, const AbstractBasePtr &input) {
+  int64_t axis_val = 0;
+  bool is_axis_dyn = false;
+  const std::string &op_name = primitive->name();
+  // 3rd input is a Tensor when Gather is a dynamic shape operator
+  if (CheckAndConvertUtils::IsTensor(input)) {
+    auto axis_value_ptr = input->GetValue();
+    MS_EXCEPTION_IF_NULL(axis_value_ptr);
+    auto axis_type_ptr = input->GetType();
+    if (axis_value_ptr->isa<tensor::Tensor>()) {
+      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name, axis_type_ptr);
+      if (axis_vec.size() != 1) {
+        MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_vec.size();
+      }
+      axis_val = axis_vec[0];
+    } else {
+      is_axis_dyn = true;
+    }
+  } else if (CheckAndConvertUtils::IsScalar(input)) {
+    auto axis_value = input->GetValue();
+    if (axis_value->ContainsValueAny()) {
+      is_axis_dyn = true;
+    } else {
+      auto axis_val_opt = GetScalarValue<int64_t>(axis_value);
+      axis_val = axis_val_opt.value();
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
+                      << input->type_name() << ".";
+  }
+  return {axis_val, is_axis_dyn};
+}
+
+ShapeVector CalcuateGatherOutputShape(int64_t axis_val, const ShapeVector &ind_vec, const ShapeVector &params_vec) {
+  ShapeVector out_vec;
+  (void)std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
+  (void)copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
+  (void)copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
+  return out_vec;
+}
+
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
@@ -63,63 +105,21 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   }
   auto indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
   auto params = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
-  int64_t axis_val = 0;
-  bool is_axis_dyn = false;
-  // 3rd input is a Tensor when Gather is a dynamic shape operator
-  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
-    auto axis_value_ptr = input_args[kInputIndex2]->GetValue();
-    MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    auto axis_type_ptr = input_args[kInputIndex2]->GetType();
-    if (axis_value_ptr->isa<tensor::Tensor>()) {
-      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name, axis_type_ptr);
-      if (axis_vec.size() != 1) {
-        MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_vec.size();
-      }
-      axis_val = axis_vec[0];
-    } else {
-      is_axis_dyn = true;
-    }
-  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
-    auto axis_value = input_args[kInputIndex2]->GetValue();
-    if (axis_value->ContainsValueAny()) {
-      is_axis_dyn = true;
-    } else {
-      auto axis_val_opt = GetScalarValue<int64_t>(axis_value);
-      axis_val = axis_val_opt.value();
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex2]->type_name() << ".";
-  }
+
+  auto [axis_val, is_axis_dyn] = GetAxis(primitive, input_args[kInputIndex2]);
   auto params_shp = params->GetShape()->GetShapeVector();
   auto indices_shp = indices->GetShape()->GetShapeVector();
-  ShapeVector out_shape = {};
-  constexpr int dynamic_rank_value = -2;
   if (IsDynamicRank(params_shp) || IsDynamicRank(indices_shp) || is_axis_dyn) {
-    out_shape.push_back(dynamic_rank_value);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
   auto params_rank = static_cast<int64_t>(params_shp.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis_val, kIncludeLeft, {-params_rank, params_rank}, op_name);
-  // check axis_val within interval: [0, params_rank)
-  if (!(-params_rank <= axis_val) || !(axis_val < params_rank)) {
-    MS_LOG(EXCEPTION) << "For 'Gather', axis value must be within range [" << -params_rank << ", " << params_rank
-                      << "], but got: " << axis_val << ".";
-  }
   if (axis_val < 0) {
     axis_val += params_rank;
   }
 
-  auto calc_shape = [axis_val](const ShapeVector &ind_vec, const ShapeVector &params_vec) -> ShapeVector {
-    ShapeVector out_vec;
-    (void)std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
-    (void)copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
-    (void)copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
-    return out_vec;
-  };
-  out_shape = calc_shape(indices_shp, params_shp);
+  ShapeVector out_shape = CalcuateGatherOutputShape(axis_val, indices_shp, params_shp);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

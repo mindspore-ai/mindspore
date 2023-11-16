@@ -31,29 +31,10 @@
 
 namespace mindspore {
 namespace opt {
-AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<AnfNodePtr> node_inputs = {
-    NewValueNode(std::make_shared<Primitive>(prim::kPrimBCEWithLogitsLoss->name()))};
-  (void)node_inputs.insert(node_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  CNodePtr new_cnode = func_graph->NewCNode(node_inputs);
-  MS_EXCEPTION_IF_NULL(new_cnode);
+std::vector<AnfNodePtr> GetReduceInputs(const FuncGraphPtr &func_graph, const CNodePtr &new_cnode,
+                                        const std::string &reduction) {
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto predict_inputs_list = cnode->inputs();
-  if (predict_inputs_list.size() <= 1) {
-    MS_LOG(EXCEPTION) << "Node must have more than 2 inputs, but get " << predict_inputs_list.size();
-  }
-  auto predict_input = predict_inputs_list[1];
-  auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
-  auto new_node_shape = {AnfAlgo::GetOutputDetailShape(predict_input, 0)};
-  common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());
-
-  string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
-  MS_LOG(INFO) << "Create reduce node for BCEWithLogitsLoss, reduction attr is: " << reduction;
 
   std::vector<AnfNodePtr> reduce_inputs;
   std::vector<int64_t> axis_shp = {0};
@@ -89,6 +70,34 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
                      keepdims_node};  // ReduceMean(input, axis, keepdims=false)
   } else {
     MS_LOG(INFO) << "Reduction is none, no optimization on current BCEWithLogitsLoss.";
+  }
+  return reduce_inputs;
+}
+
+AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> node_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimBCEWithLogitsLoss->name()))};
+  (void)node_inputs.insert(node_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  CNodePtr new_cnode = func_graph->NewCNode(node_inputs);
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  auto predict_inputs_list = cnode->inputs();
+  if (predict_inputs_list.size() <= 1) {
+    MS_LOG(EXCEPTION) << "Node must have more than 2 inputs, but get " << predict_inputs_list.size();
+  }
+  auto predict_input = predict_inputs_list[1];
+  auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
+  auto new_node_shape = {AnfAlgo::GetOutputDetailShape(predict_input, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());
+
+  string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
+  MS_LOG(INFO) << "Create reduce node for BCEWithLogitsLoss, reduction attr is: " << reduction;
+
+  auto reduce_inputs = GetReduceInputs(func_graph, new_cnode, reduction);
+  if (reduce_inputs.size() == 0) {
     return nullptr;
   }
   auto reduce_node = func_graph->NewCNode(reduce_inputs);

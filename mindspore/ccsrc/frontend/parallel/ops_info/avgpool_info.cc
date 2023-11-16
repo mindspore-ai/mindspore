@@ -73,16 +73,12 @@ Status AvgPoolInfo::GetAttrs() {
     return FAILED;
   }
   auto format_int = format_int_opt.value();
-  std::string format_string;
-  if (format_int == 0) {
-    format_string = "NCHW";
-  } else if (format_int == 1) {
-    format_string = "NHWC";
-  } else {
+  const std::vector<std::string> format = {"NCHW", "NHWC"};
+  if (format_int >= SizeToLong(format.size())) {
     MS_LOG(ERROR) << name_ << ": The data format must be 0 or 1, but got " << format_int;
     return FAILED;
   }
-  format_ = format_string;
+  format_ = format[format_int];
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The format only support 'NCHW', but got " << format_;
     return FAILED;

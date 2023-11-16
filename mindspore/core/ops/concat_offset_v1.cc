@@ -41,37 +41,34 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int64_t kAxisRank = 0;
+const int64_t kXTensorRankOrElemNum = 1;
+const int64_t kXTensorNum = 2;
 abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t kAxisRank = 0;
-  const int64_t kXTensorRankOrElemNum = 1;
-  const int64_t kXTensorNum = 2;
   // check axis shape
   auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto axis_rank = axis_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("input axis shape rank", SizeToLong(axis_rank), kEqual, kAxisRank,
                                            prim_name);
   // check x shape and infer y shape
-  bool is_tuple_x = CheckAndConvertUtils::IsTuple(input_args[kInputIndex1]);
-  bool is_list_x = CheckAndConvertUtils::IsList(input_args[kInputIndex1]);
-  if ((!is_tuple_x) && (!is_list_x)) {
-    MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
-                            << input_args[kInputIndex1]->GetType()->ToString();
-  }
   auto idx_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(idx_shape_ptr);
   size_t idx_size;
   abstract::BaseShapePtrList idx_shapes{};
-  if (is_tuple_x) {
+  if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex1])) {
     auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
     idx_shapes = shape_tuple->shape();
     idx_size = shape_tuple->size();
-  } else {
+  } else if (CheckAndConvertUtils::IsList(input_args[kInputIndex1])) {
     auto shape_list = idx_shape_ptr->cast<abstract::ListShapePtr>();
     idx_shapes = shape_list->shape();
     idx_size = shape_list->size();
+  } else {
+    MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
+                            << input_args[kInputIndex1]->GetType()->ToString();
   }
 
   (void)CheckAndConvertUtils::CheckInteger("input x tensor num", SizeToLong(idx_size), kGreaterEqual, kXTensorNum,
