@@ -615,20 +615,20 @@ def generate_ops_cc_files(work_path, yaml_str):
         op_prim_file.write(cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
-    # # lite_h_ops
-    # lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
-    # tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
-    # lite_ops_h_code, lite_ops_cc_code = generate_lite_ops(yaml_str)
-    # with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
-    #     lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
-    # check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
-    #
-    # # lite_cc_ops
-    # lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
-    # tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
-    # with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
-    #     lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
-    # check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)
+    # lite_h_ops
+    lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
+    tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
+    lite_ops_h_code, lite_ops_cc_code = generate_lite_ops(yaml_str)
+    with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
+        lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
+    check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
+
+    # lite_cc_ops
+    lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
+    tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
+    with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
+        lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
+    check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)
 
     # ops_names
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_name.h')
