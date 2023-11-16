@@ -20,6 +20,7 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "include/common/pybind_api/api_register.h"
+#include "include/common/utils/primfunc_utils.h"
 #include "ops/op_def.h"
 namespace mindspore {
 namespace pynative {
