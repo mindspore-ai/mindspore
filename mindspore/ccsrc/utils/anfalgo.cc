@@ -1605,6 +1605,8 @@ bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
       }
       if (!cnode->input(*i + 1)->isa<ValueNode>()) {
         cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
+        MS_LOG(DEBUG) << "The input index[" << *i << "]"
+                      << " of node: " << cnode->fullname_with_scope() << " is a dynamic value input";
         return true;
       }
     }

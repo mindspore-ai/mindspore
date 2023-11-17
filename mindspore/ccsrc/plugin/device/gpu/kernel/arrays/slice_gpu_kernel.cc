@@ -200,6 +200,174 @@ const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeComplex128),
+   CreateSliceKernelPtr<Complex<double>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateSliceKernelPtr<char, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateSliceKernelPtr<uint64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateSliceKernelPtr<uint32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateSliceKernelPtr<uint16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateSliceKernelPtr<char, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateSliceKernelPtr<uint64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateSliceKernelPtr<uint32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateSliceKernelPtr<uint16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateSliceKernelPtr<Complex<float>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateSliceKernelPtr<Complex<float>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateSliceKernelPtr<Complex<double>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
    CreateSliceKernelPtr<Complex<double>, int64_t>}};
 }  // namespace
 
