@@ -239,6 +239,7 @@ class ShardAxisImpl : public GatherUtil {
   Status InferForwardCommunication() override;
   Status InferReplaceOps() override;
   Status InferReplaceGraph(const CNodePtr &cnode) override;
+  void set_assigned_parallel(bool is_assigned_parallel) { is_assigned_parallel_ = is_assigned_parallel; }
 
  protected:
   // use for split axis
@@ -248,6 +249,7 @@ class ShardAxisImpl : public GatherUtil {
   std::string target_ = DEVICE;
   std::string replace_op_name_;
   bool dynamic_shape_indices_ = false;
+  bool is_assigned_parallel_ = false;
   bool axis_split_forward_allreduce_ = false;  // when axis is split, use reducescatter as default in forward
   int64_t repeated_calculation_num_ = 1;
   Group group_;
