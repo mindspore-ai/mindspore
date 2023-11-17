@@ -307,7 +307,7 @@ def generate_py_primitive(yaml_data):
         pyboost_func_name = get_pyboost_name(operator_name)
         inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
         init_code = '\n'.join(args_assign)
-        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args + init_args,
+        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
                                                   inputs_default)
         deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
 
