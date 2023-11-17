@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/pyboost/customize/square.h"
+#include <memory>
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
 #include "kernel/pyboost/py_boost_utils.h"

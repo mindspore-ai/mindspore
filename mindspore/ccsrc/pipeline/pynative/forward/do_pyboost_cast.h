@@ -36,7 +36,7 @@ class PyBoostCastOperation : public CastBaseOperation {
   ~PyBoostCastOperation() = default;
 
   template <typename... InputArgs>
-  auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &...input_args) {
+  auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &... input_args) {
     // Mixed precision conversion tensors which has cast dtype
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);

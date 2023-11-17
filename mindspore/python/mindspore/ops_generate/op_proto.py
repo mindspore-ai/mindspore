@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Op Proto."""
-from typing import List, Dict
 from pyboost_utils import convert_python_func_name_to_c
 
 class Arg:

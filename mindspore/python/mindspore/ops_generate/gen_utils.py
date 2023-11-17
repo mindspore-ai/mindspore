@@ -165,5 +165,3 @@ def get_assign_str_by_type_it(arg_info, arg_name, dtype):
     else:
         assign_str = arg_name
     return assign_str
-
-

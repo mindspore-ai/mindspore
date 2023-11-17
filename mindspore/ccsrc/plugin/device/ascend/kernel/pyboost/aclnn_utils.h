@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include <functional>
+#include <vector>
 #include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
 

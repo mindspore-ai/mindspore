@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/split_tensor.h"
+#include <set>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 

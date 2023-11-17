@@ -19,12 +19,6 @@ Math Operators with better performance
 
 """
 
-import collections
-from functools import cmp_to_key
-import math
-import numbers
-import numpy as np
-
 from mindspore.ops import auto_generate as P
 
 # define Primitive global variables

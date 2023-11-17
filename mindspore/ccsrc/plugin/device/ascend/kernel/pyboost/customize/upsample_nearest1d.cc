@@ -39,10 +39,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<Op> &op
                                                    const ValueTuplePtr &scale_factors) {
   Op::InferOpOutput(op, input_tensor, output_size, scale_factors);
 
-  // Convert ValueTuple to std::vector
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
-  // Convert ValuePtr to c++ scalar
-  // No need to conver.
 
   // Async
   DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {

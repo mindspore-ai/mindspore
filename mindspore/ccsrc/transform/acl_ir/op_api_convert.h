@@ -233,7 +233,6 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   return acl_tensor;
 }
 
-
 inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
   MS_LOG(EXCEPTION) << "Current not support tensor list!";
   return tensor_list;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/gather_ext.h"
+#include <string>
 #include "utils/check_convert_utils.h"
 #include "ops/op_name.h"
 

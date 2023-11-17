@@ -30,7 +30,7 @@ from mindspore.ops.primitive import constexpr
 from . import (
     math_func,
     nn_func,
-) 
+)
 
 from .math_func import (
     baddbmm

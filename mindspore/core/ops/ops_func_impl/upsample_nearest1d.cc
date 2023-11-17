@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/upsample_nearest1d.h"
+#include <set>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 

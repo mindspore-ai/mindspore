@@ -52,6 +52,10 @@ BaseShapePtr BaddbmmFuncImpl::InferShape(const PrimitivePtr &primitive,
                       << batch1_shape[2] << " , but got:" << batch2_shape[1];
   }
   ShapeVector ret_shape{batch1_shape[0], batch1_shape[1], batch2_shape[2]};
+  if (input_shape != ret_shape) {
+    MS_LOG(EXCEPTION) << "For Baddbmm, input shape " << input_shape << " should be equal to shape of batch1@batch2 "
+                      << ret_shape;
+  }
   return std::make_shared<abstract::TensorShape>(ret_shape);
 }
 

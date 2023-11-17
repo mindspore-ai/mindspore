@@ -102,7 +102,7 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(ops::OpDefPtr op_def) { op_def_ = op_def; }
+Converter::Converter(ops::OpDef *op_def) { op_def_ = op_def; }
 
 void Converter::Parse(py::list python_args) {
   python_args_ = &python_args;
@@ -134,7 +134,7 @@ std::optional<ValuePtr> Converter::ToTensorOptional(size_t i) {
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(std::move(ToTensor(i)));
+  return std::make_optional(ToTensor(i));
 }
 
 template <typename T>
@@ -178,7 +178,7 @@ std::optional<Int64ImmPtr> Converter::ToIntOptional(size_t i) {
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(std::move(ToInt(i)));
+  return std::make_optional(ToInt(i));
 }
 
 template <typename T>

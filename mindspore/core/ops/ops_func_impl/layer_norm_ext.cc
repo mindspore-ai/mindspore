@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/layer_norm_ext.h"
+#include <functional>
+#include <string>
 #include "utils/check_convert_utils.h"
 #include "ops/op_name.h"
 #include "utils/ms_context.h"

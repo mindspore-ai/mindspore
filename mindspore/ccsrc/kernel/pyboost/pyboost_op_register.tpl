@@ -29,8 +29,8 @@ OpFactory<T> &OpFactory<T>::Get() {
 
 template <typename T>
 std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
+  auto iter = op_creator_.find(device);
+  if (iter == op_creator_.end()) {
     MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
   }
   return iter->second();

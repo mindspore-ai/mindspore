@@ -17,9 +17,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-int8_t GetCubeMathType() {
-  return 0;
-}
+int8_t GetCubeMathType() { return 0; }
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

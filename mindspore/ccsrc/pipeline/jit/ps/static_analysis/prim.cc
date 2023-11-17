@@ -87,8 +87,9 @@ mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequenc
 
 inline int64_t OpDtypeToInt(ops::OP_DTYPE dtype) { return static_cast<int64_t>(dtype); }
 
-AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNodePtr &node, const ops::OpInputArg &op_arg,
-                                      const AbstractBasePtr &abs_arg, const FuncGraphPtr &fg) {
+AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNodePtr &node,
+                                      const ops::OpInputArg &op_arg, const AbstractBasePtr &abs_arg,
+                                      const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   // If src_cast_dtype is empty, do no need to do type conversion.
   std::vector<ops::OP_DTYPE> src_cast_dtype_list = op_arg.cast_dtype_;

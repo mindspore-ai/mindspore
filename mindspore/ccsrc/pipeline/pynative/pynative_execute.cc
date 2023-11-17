@@ -45,7 +45,7 @@ std::mutex PyNativeExecutor::instance_lock_;
 namespace {
 enum class AsyncRunOpArgsEnum : size_t { PY_PRIM = 0, PY_INPUTS, PY_ARGS_NUM };
 template <typename T, typename... Args>
-T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &...args) {
+T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
   const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);

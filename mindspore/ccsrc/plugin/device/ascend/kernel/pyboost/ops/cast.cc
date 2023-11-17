@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/kernel/pyboost/ops/cast.h"
 
+#include <memory>
+#include <vector>
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"

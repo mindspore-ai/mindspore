@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/split_with_size.h"
+#include <utility>
+#include <set>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
