@@ -35,8 +35,6 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/python_fallback_running.h"
-//#include "kernel/pyboost/op_register.h"
-//#include "kernel/pyboost/op/baddbmm.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -96,10 +94,6 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 }
 
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
-  // PyBoost Example:
-  // auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
-  // op->set_grad_func([](){});
-  // op->Call();
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   SetCallbackForInputTensor(op_run_info);

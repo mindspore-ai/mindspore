@@ -266,7 +266,7 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
 
 bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
   return !OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name) &&
-    !op_run_info->base_op_run_info.has_dynamic_output;
+         !op_run_info->base_op_run_info.has_dynamic_output;
 }
 
 KernelTaskType GetViewOpTaskType(const std::string &op_name) {
@@ -454,11 +454,6 @@ bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
   auto forward_task = std::make_shared<FrontendTask>(
     [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpFrontend(op_run_info); }, op_run_info);
-  frontend_queue_->Push(forward_task);
-}
-
-void ForwardExecutor::DispatchAnyFrontendTask(std::function<void(void)> &&task) {
-  auto forward_task = std::make_shared<FrontendTask>([task](...) { task(); }, nullptr);
   frontend_queue_->Push(forward_task);
 }
 

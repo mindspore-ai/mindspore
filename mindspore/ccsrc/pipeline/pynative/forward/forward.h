@@ -57,7 +57,6 @@ class ForwardExecutor {
   void DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
                            const session::BackendOpRunInfoPtr &backend_op_run_info);
   void DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info);
-  void DispatchAnyFrontendTask(std::function<void(void)> &&task);
   void RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info);
   // If sub is true, this function will not convert StubTensor to Tensor.
   // Used to reduce the overhead of StubTensor WaitValue.
