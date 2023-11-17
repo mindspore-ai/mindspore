@@ -334,6 +334,22 @@ std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNo
                       : kOpFormat_DEFAULT;
   return ori_format;
 }
+
+std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_to_ms_input,
+                                   const std::vector<int64_t> &dyn_input_sizes, const int &ge_input_size,
+                                   std::vector<int64_t> *new_dyn_input_sizes) {
+  std::vector<int> ge_tensor_orders(ge_input_size, -1);
+  for (int ge_idx = 0; ge_idx < ge_input_size; ++ge_idx) {
+    int ms_idx = ge_input_to_ms_input.at(ge_idx);
+    new_dyn_input_sizes->at(ge_idx) = dyn_input_sizes[ms_idx];
+    int begin_idx = 0;
+    for (int i = 0; i < ms_idx; ++i) {
+      begin_idx += dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i];
+    }
+    ge_tensor_orders[ge_idx] = begin_idx;
+  }
+  return ge_tensor_orders;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -2553,16 +2569,8 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
     }
   }
   std::vector<int64_t> new_dyn_input_sizes(ge_input_size, -1);
-  std::vector<int> ge_tensor_orders(ge_input_size, -1);
-  for (int ge_idx = 0; ge_idx < ge_input_size; ++ge_idx) {
-    int ms_idx = ge_input_to_ms_input.at(ge_idx);
-    new_dyn_input_sizes[ge_idx] = dyn_input_sizes->at(ms_idx);
-    int begin_idx = 0;
-    for (int i = 0; i < ms_idx; ++i) {
-      begin_idx += dyn_input_sizes->at(i) == -1 ? 1 : dyn_input_sizes->at(i);
-    }
-    ge_tensor_orders[ge_idx] = begin_idx;
-  }
+  std::vector<int> ge_tensor_orders =
+    GetGeTensorOrders(ge_input_to_ms_input, *dyn_input_sizes, ge_input_size, &new_dyn_input_sizes);
 
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (HasAbstractMonad(inputs[i])) {
