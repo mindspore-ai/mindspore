@@ -523,7 +523,9 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_convert_item_index_to_positive_,
   });
 
-  OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+  opt::OptPassConfig d_2 = opt::OptPassConfig({irpass.partial_unused_args_eliminate_});
+
+  OptPassGroupMap map_a({{"d_1", d_1}, {"d_2", d_2}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
   return map_a;
 }
