@@ -76,6 +76,7 @@ GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_Mirro
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));
 GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVarsPerChannel,
          std::make_shared<Primitive>("FakeQuantWithMinMaxVarsPerChannel"));
+GVAR_DEF(PrimitivePtr, kPrimQuant, std::make_shared<Primitive>("Quant"));
 
 // RL Ops
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("TensorArrayStack"));

@@ -44,6 +44,7 @@
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/graph/kvcache_quant_pass.h"
 
 namespace mindspore::lite {
 AnfTransformForGe::AnfTransformForGe() = default;
@@ -73,6 +74,9 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
     fusions.push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
   } else {
     MS_LOG(INFO) << "custom op fusion not used.";
+  }
+  if (param->chip_name == "910b") {
+    fusions.push_back(std::make_shared<opt::KVCacheQuantPass>());
   }
 
   for (size_t index = 0; index < fusions.size(); index++) {
