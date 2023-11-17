@@ -110,9 +110,29 @@ auto call(Function f, Tuple t) {
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
 
+template <typename T>
+class ReleaseCall {
+ public:
+  explicit ReleaseCall(T &&param) : converted_params_(param) {}
+  void operator()() {
+    ReleaseConvertTypes(converted_params_);
+    auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();
+    if (release_mem_func) {
+      release_mem_func(nullptr, false);
+    }
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();
+    if (uninit_mem_func) {
+      uninit_mem_func(nullptr, false);
+    }
+  }
+
+ private:
+  T converted_params_;
+};
+
 // For normal generate executor.
 #define GEN_EXECUTOR(aclnn_api, ...)                                                                              \
-  [](const std::string &api_name, const std::string &workspace_api_name, auto &... args) -> auto {                \
+  [](const char *api_name, const std::string &workspace_api_name, const auto &... args) -> auto {                 \
     static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
     if (get_workspace_size_func_ptr == nullptr) {                                                                 \
       MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
@@ -120,11 +140,11 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
     uint64_t workspace_size = 0;                                                                                  \
     transform::aclOpExecutor *executor = nullptr;                                                                 \
     std::function<void()> release_func = nullptr;                                                                 \
-    if (HitCache(api_name.c_str(), executor, &workspace_size, args...)) {                                         \
-      return std::make_tuple(workspace_size, executor, release_func);                                             \
-    }                                                                                                             \
     uint64_t *workspace_size_addr = &workspace_size;                                                              \
     transform::aclOpExecutor **executor_addr = &executor;                                                         \
+    if (HitCache(api_name, executor_addr, workspace_size_addr, args...)) {                                        \
+      return std::make_tuple(workspace_size, executor, release_func);                                             \
+    }                                                                                                             \
     auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
     if (init_mem_func) {                                                                                          \
       init_mem_func(nullptr, false);                                                                              \
@@ -136,20 +156,11 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
     if (workspace_status != 0) {                                                                                  \
       MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
     }                                                                                                             \
-    release_func = [converted_params]() -> void {                                                                 \
-      ReleaseConvertTypes(converted_params);                                                                      \
-      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();                  \
-      if (release_mem_func) {                                                                                     \
-        release_mem_func(nullptr, false);                                                                         \
-      }                                                                                                           \
-      auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();                    \
-      if (uninit_mem_func) {                                                                                      \
-        uninit_mem_func(nullptr, false);                                                                          \
-      }                                                                                                           \
-    };                                                                                                            \
+    auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
+    release_func = std::function<void()>(releas_call);                                                            \
     return std::make_tuple(workspace_size, executor, release_func);                                               \
   }                                                                                                               \
-  (#aclnn_api, #aclnn_api "GetWorkspaceSize", __VA_ARGS__)
+  (aclnn_api.c_str(), aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // For custom generate executor.
 #define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                         \
@@ -181,7 +192,7 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
     return std::make_tuple(workspace_size, executor,                                                              \
                            transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)));      \
   }                                                                                                               \
-  (#aclnn_api "GetWorkspaceSize", __VA_ARGS__)
+  (aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // Async run op.
 #define RUN_OP_API_ASYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream, release_func)  \

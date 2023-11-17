@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
@@ -39,38 +40,112 @@ using OpApiUtil = transform::OpApiUtil;
 
 class AclnnKernelMod : public KernelMod {
  public:
-  AclnnKernelMod() {}
+  explicit AclnnKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {}
   ~AclnnKernelMod() = default;
+
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                      const std::vector<KernelTensor *> &outputs, void *stream_ptr);
-  virtual void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {}
 
-  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
   virtual void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   }
+  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+
+  void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
+
+  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
+
   bool IsNeedRetrieveOutputShape() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
-  void UpdateWorkspace(const uint64_t workspace_size);
+  void UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
 
-  void RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
-  void RunOpSync(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
+  void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
+  void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
 
   void SetDTypes(const std::string &op_name);
 
  protected:
+  template <size_t N, std::size_t... Is>
+  auto GetTupleFrontImpl(const std::vector<KernelTensor *> &vecs, std::index_sequence<Is...>) {
+    return std::make_tuple(vecs[Is]...);
+  }
+
+  template <size_t N>
+  auto GetTupleFront(const std::vector<KernelTensor *> &vecs) {
+    return GetTupleFrontImpl<N>(vecs, std::make_index_sequence<N>());
+  }
+
+  template <typename T, typename... Vecs>
+  std::vector<T> ConcatVecs(const std::vector<T> &vec, const Vecs &... vecs) {
+    std::vector<T> result = vec;
+    (result.insert(result.end(), vecs.begin(), vecs.end()), ...);
+    return result;
+  }
+
+  template <typename T, typename... Vecs>
+  std::vector<T> ConcatVecs(const Vecs &... vecs) {
+    static_assert((std::is_same_v<T, typename Vecs::value_type> && ...), "All vectors must have the same type!");
+    std::vector<T> result;
+    (result.insert(result.end(), vecs.begin(), vecs.end()), ...);
+    return result;
+  }
+
+  template <size_t N, typename... Ts>
+  auto GetKernelTuple(const std::vector<Ts> &... vecs) {
+    const auto &new_vec = ConcatVecs(vecs...);
+    if (new_vec.size() != N) {
+      MS_LOG(EXCEPTION) << "Config op input and output's size must be same, but get " << N << " with "
+                        << new_vec.size();
+    }
+    const auto &result = GetTupleFront<N>(new_vec);
+    return result;
+  }
+
   aclOpExecutor *executor_{nullptr};
   CallBackFunc release_func_{nullptr};
   std::vector<mindspore::ops::OP_DTYPE> inputs_dtypes_;
   std::vector<mindspore::ops::OP_DTYPE> outputs_dtypes_;
+  std::string op_type_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
 using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
+
+#define REGISTER_ACLNN_CLASS(TYPE)                                                                          \
+  template <size_t N>                                                                                       \
+  class Aclnn##TYPE##KernelMod : public AclnnKernelMod {                                                    \
+   public:                                                                                                  \
+    explicit Aclnn##TYPE##KernelMod(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}          \
+    ~Aclnn##TYPE##KernelMod() = default;                                                                    \
+    void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                        \
+                          const std::vector<KernelTensor *> &outputs) override {                            \
+      auto executor_info = GenExecutor(inputs, outputs);                                                    \
+      this->UpdateWorkspace(executor_info);                                                                 \
+    }                                                                                                       \
+    bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,    \
+                const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                    \
+      this->ParseGenExecutor(GenExecutor(inputs, outputs));                                                 \
+      this->RunOp(stream_ptr, workspace);                                                                   \
+      return true;                                                                                          \
+    }                                                                                                       \
+                                                                                                            \
+   private:                                                                                                 \
+    template <typename... Ts>                                                                               \
+    auto GenExecutor(const std::vector<Ts> &... vecs) {                                                     \
+      const auto &op_type = this->op_type_;                                                                 \
+      const auto &res_tuple = this->GetKernelTuple<N>(vecs...);                                             \
+      auto executor_info =                                                                                  \
+        std::apply([&op_type](const auto &... args) { return GEN_EXECUTOR(op_type, args...); }, res_tuple); \
+      return executor_info;                                                                                 \
+    }                                                                                                       \
+  };
+
 #define MS_ACLLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)
+#define MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(NAME, TYPE, N)                    \
+  REGISTER_ACLNN_CLASS(NAME)                                                  \
+  static const KernelRegistrar<AclnnKernelMod> g_##NAME##_AclnnKernelMod_reg( \
+    #NAME, []() { return std::make_shared<Aclnn##NAME##KernelMod<N>>(#TYPE); });
 }  // namespace kernel
 }  // namespace mindspore
 

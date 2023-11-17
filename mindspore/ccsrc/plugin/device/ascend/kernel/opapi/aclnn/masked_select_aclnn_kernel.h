@@ -25,12 +25,12 @@ namespace kernel {
 
 class MaskedSelectAclnnKernelMod : public AclnnKernelMod {
  public:
-  MaskedSelectAclnnKernelMod() {}
+  MaskedSelectAclnnKernelMod() : AclnnKernelMod("aclnnMaskedSelect") {}
   ~MaskedSelectAclnnKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool IsNeedUpdateOutputShapeAndSize() override { return true; }
   void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 

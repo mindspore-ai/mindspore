@@ -24,21 +24,20 @@
 
 namespace mindspore {
 namespace kernel {
-
 void MaskedSelectAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
-  UpdateWorkspace(std::get<0>(return_value));
+  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  UpdateWorkspace(return_value);
 }
 
 bool MaskedSelectAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto res = GEN_EXECUTOR_CUST(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  auto res = GEN_EXECUTOR_CUST(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
   executor_ = std::get<1>(res);
   auto &all_tensor = std::get<2>(res);
-  RunOpSync("aclnnMaskedSelect", stream_ptr, workspace);
+  RunOpSync(stream_ptr, workspace);
 
   // Update output shape.
   outputs_shape_.resize(1);

@@ -22,7 +22,7 @@ thread_local int g_hash_offset = 0;
 
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
-void GatherInfo(const mindspore::kernel::KernelTensor *tensor) {
+void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr) {
     return;
   }
@@ -39,23 +39,27 @@ void GatherInfo(const mindspore::kernel::KernelTensor *tensor) {
   auto shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
   // view shape
-  MEMCPY_TO_BUF(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+  if (!shape.empty()) {
+    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+  }
   // data type
   auto dtype = tensor->dtype_id();
-  MEMCPY_TO_BUF(&dtype, sizeof(int));
+  MemcpyToBuf(&dtype, sizeof(int));
   // separator
-  MEMCPY_TO_BUF(",", 1);
+  MemcpyToBuf(",", 1);
   // strides(current hasn't uncontinus tensor)
-  MEMCPY_TO_BUF(",", 1);
+  MemcpyToBuf(",", 1);
   // offset(current hasn't uncontinus tensor)
-  MEMCPY_TO_BUF(",", 1);
+  MemcpyToBuf(",", 1);
   // storage shape(current hasn't special format)
-  MEMCPY_TO_BUF(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+  if (!shape.empty()) {
+    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+  }
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
 
-void GatherInfo(const string &s) { MEMCPY_TO_BUF(s.c_str(), static_cast<int64_t>(s.size())); }
+void GatherInfo(const string &s) { MemcpyToBuf(s.c_str(), static_cast<int64_t>(s.size())); }
 
 void GatherInfo() {}
 
