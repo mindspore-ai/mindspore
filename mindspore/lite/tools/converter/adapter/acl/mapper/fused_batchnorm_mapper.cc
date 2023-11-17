@@ -28,6 +28,14 @@ STATUS FusedBatchNormMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   src_prim->AddAttr(ops::kIsTraining, MakeValue(false));
+  if (src_prim->HasAttr(ops::kMomentum)) {
+    // set momentum default value
+    src_prim->AddAttr(ops::kMomentum, MakeValue(0.1f));
+  }
+  if (src_prim->HasAttr(ops::kFormat)) {
+    // the attr format has been changed to data_format because of dynamic(defined in gen_lite_ops.h)
+    src_prim->AddAttr(kAttrDataFormat, src_prim->GetAttr(ops::kFormat));
+  }
   return lite::RET_OK;
 }
 

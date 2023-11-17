@@ -69,6 +69,7 @@
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/common/custom_ascend_utils.h"
+#include "tools/optimizer/graph/attr_to_args_pass.h"
 
 namespace mindspore {
 namespace opt {
@@ -684,7 +685,8 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
-  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul};
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul,
+                                         ops::kNameMatMul,    ops::kNameAvgPool,        ops::kNameBatchNorm};
   const std::set<PrimitivePtr> support_ptq_mindir_types = {prim::kPrimQuantDTypeCast, prim::kPrimAddFusion,
                                                            prim::kPrimMulFusion};
   for (auto graph : all_func_graphs) {
@@ -719,6 +721,10 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
 
 STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   if (fmk_type_ == converter::kFmkTypeMs) {
+    if (lite::AdapteMuitiInputNode(func_graph) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Adapter spatial node failed.";
+      return lite::RET_ERROR;
+    }
     MapperForOrgMindIR(func_graph);
     return lite::RET_OK;
   }
@@ -726,7 +732,7 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return lite::RET_ERROR;
   }
-  if (lite::AdapteSpatialNode(func_graph, manager) != lite::RET_OK) {
+  if (lite::AdapteMuitiOutputNode(func_graph, manager) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adapter spatial node failed.";
     return lite::RET_ERROR;
   }
@@ -797,6 +803,17 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
     MS_LOG(ERROR) << "Failed to set graph input shape";
     return lite::RET_ERROR;
   }
+
+  auto args_to_attr_pass = std::make_shared<opt::AttrToArgsPass>();
+  if (args_to_attr_pass == nullptr) {
+    MS_LOG(ERROR) << "create pass failed";
+    return lite::RET_ERROR;
+  }
+  if (!args_to_attr_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "convert args to attr pass failed";
+    return lite::RET_ERROR;
+  }
+
   // call interface of cloud
   ModelConverter model_converter;
   model_converter.set_options(options_);

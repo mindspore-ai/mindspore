@@ -53,7 +53,7 @@ class PrimitiveMapper {
   STATUS AddIntAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
                            const std::string &attr_name, bool empty_shape) const;
 
-  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const;
+  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode) const;
 
   STATUS AdjustAttrFormat(const PrimitivePtr &prim, const std::string &name) const;
 

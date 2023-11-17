@@ -87,20 +87,20 @@ STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &
     }
   }
   auto origin_value = opt::CastToInt(value_ptr);
-  if (origin_value.size() != kCommonAttrValueNum) {
-    MS_LOG(ERROR) << name << " Value num must be two.";
-    return lite::RET_ERROR;
+  if (origin_value.size() == kCommonAttrValueNum) {
+    // expand to 4
+    int64_t format = Format::NCHW;
+    if (prim->GetAttr(ops::kFormat) != nullptr) {
+      format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    }
+    std::vector<int64_t> new_value = {1, 1, static_cast<int64_t>(origin_value[0]),
+                                      static_cast<int64_t>(origin_value[1])};
+    if (format == Format::NHWC) {
+      std::vector<int64_t> tmp = {1, static_cast<int64_t>(origin_value[0]), static_cast<int64_t>(origin_value[1]), 1};
+      new_value.swap(tmp);
+    }
+    prim->AddAttr(name, MakeValue(new_value));
   }
-  int64_t format = Format::NCHW;
-  if (prim->GetAttr(ops::kFormat) != nullptr) {
-    format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-  }
-  std::vector<int64_t> new_value = {1, 1, static_cast<int64_t>(origin_value[0]), static_cast<int64_t>(origin_value[1])};
-  if (format == Format::NHWC) {
-    std::vector<int64_t> tmp = {1, static_cast<int64_t>(origin_value[0]), static_cast<int64_t>(origin_value[1]), 1};
-    new_value.swap(tmp);
-  }
-  prim->AddAttr(name, MakeValue(new_value));
   return lite::RET_OK;
 }
 
@@ -251,7 +251,7 @@ STATUS PrimitiveMapper::AddIntAttrToInput(const FuncGraphPtr &func_graph, const 
   return lite::RET_OK;
 }
 
-STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const {
+STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) const {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(cnode->input(0));
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -261,7 +261,7 @@ STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const
   // add attr input num for dynamic input op
   int64_t num = static_cast<int64_t>(cnode->size());
   if (num > 1) {
-    prim->AddAttr(attr_name, MakeValue(num - 1));
+    prim->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{num - 1, -1}));
   }
   return lite::RET_OK;
 }

@@ -21,17 +21,13 @@
 
 namespace mindspore {
 namespace lite {
-namespace {
-constexpr auto kNameInputNums = "inputNums";
-}
-
 STATUS ConcatMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
   if (RenameNode(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Concat rename failed.";
     return RET_ERROR;
   }
-  if (AddAttrForDynInputPrimitive(cnode, kNameInputNums) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Concat mapper failed.";
     return RET_ERROR;
   }

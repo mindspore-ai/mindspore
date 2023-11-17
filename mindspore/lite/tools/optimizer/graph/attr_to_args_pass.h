@@ -25,10 +25,11 @@
 
 namespace mindspore {
 namespace opt {
-class ArgsToAttrPass : public Pass {
+// The dynamic op defined be yaml has changed the node attrs to args.
+class AttrToArgsPass : public Pass {
  public:
-  explicit ArgsToAttrPass(const std::string &name = "ArgsToAttrPass") : Pass(name) {}
-  ~ArgsToAttrPass() override = default;
+  explicit AttrToArgsPass(const std::string &name = "AttrToArgsPass") : Pass(name) {}
+  ~AttrToArgsPass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace opt
