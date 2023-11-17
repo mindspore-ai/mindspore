@@ -43,12 +43,14 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   uint64_t cluster_id_ = 0;
   std::map<std::string, std::string> options_;
   std::shared_ptr<::llm::LLMEngine> llm_engine_ = nullptr;
+  bool finalized_ = false;
 
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
   Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
   Status InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos);
   void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
   Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
+  Status OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase);
 };
 
 LLMEnginePluginBase *CreateLLMEnginePlugin() { return new LLMEnginePlugin(); }
@@ -119,11 +121,42 @@ Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &
   return kSuccess;
 }
 
+Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase) {
+  Status lite_status = kSuccess;
+  if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
+    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << ", " << phase << " status: LLM_WAIT_PROC_TIMEOUT";
+    lite_status = kLiteLLMWaitProcessTimeOut;
+  } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
+    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_KV_CACHE_NOT_EXIST";
+    lite_status = kLiteLLMKVCacheNotExist;
+  } else if (ge_status == ge::LLM_REPEAT_REQUEST) {
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_REPEAT_REQUEST";
+    lite_status = kLiteLLMRepeatRequest;
+  } else if (ge_status == ge::LLM_REQUEST_ALREADY_COMPLETED) {
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " receive LLM_REQUEST_ALREADY_COMPLETED";
+    lite_status = kLiteLLMRequestAlreadyCompleted;
+  } else if (ge_status == ge::LLM_ENGINE_FINALIZED) {
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_ENGINE_FINALIZED";
+    lite_status = kLiteLLMEngineFinalized;
+  } else if (ge_status == ge::LLM_PARAM_INVALID) {
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_PARAM_INVALID";
+    lite_status = kLiteParamInvalid;
+  } else {
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: " << ge_status;
+    lite_status = kLiteError;
+  }
+  return lite_status;
+}
+
 Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
                              const std::map<std::string, std::string> &options) {
   if (model_infos.empty()) {
     MS_LOG(ERROR) << "Model infos cannot be empty";
     return kLiteError;
+  }
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
   }
   if (llm_engine_ != nullptr) {
     MS_LOG(ERROR) << "LLMEngine has been inited";
@@ -179,6 +212,7 @@ void LLMEnginePlugin::Finalize() {
     MS_LOG(INFO) << "Start to call LLMEngineFinalize";
     auto ge_status = llm_engine_->LLMEngineFinalize();
     llm_engine_ = nullptr;
+    finalized_ = true;
     if (ge_status != ge::GRAPH_SUCCESS) {
       MS_LOG(ERROR) << "Failed to call LLMEngineFinalize, status: " << ge_status;
       return;
@@ -219,40 +253,30 @@ Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor
 Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor> &ge_inputs,
                             std::vector<::ge::Tensor> *outputs) {
   auto time_start = std::chrono::system_clock::now();
-  Status callback_status = kSuccess;
-  bool is_finished = false;
   std::promise<void> promise;
-  auto call_back = [outputs, &is_finished, &promise, &callback_status](ge::Status ge_status,
-                                                                       const std::vector<ge::Tensor> &ge_outputs) {
+  Status lite_status = kSuccess;
+  auto call_back = [outputs, &promise, &lite_status, this](ge::Status ge_status,
+                                                           const std::vector<ge::Tensor> &ge_outputs) {
     if (ge_status == ge::GRAPH_SUCCESS) {
       *outputs = ge_outputs;
-      is_finished = true;
-    } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
-      MS_LOG(WARNING) << "RunPromptAsync or RunDecoderAsync failed, receive LLM_WAIT_PROC_TIMEOUT";
-      callback_status = kLiteLLMWaitProcessTimeOut;
-    } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
-      MS_LOG(WARNING) << "RunPromptAsync or RunDecoderAsync failed, receive LLM_KV_CACHE_NOT_EXIST";
-      callback_status = kLiteLLMKVCacheNotExist;
     } else {
-      MS_LOG(ERROR) << "RunPromptAsync or RunDecoderAsync failed, status: " << ge_status;
-      callback_status = kLiteError;
+      auto func_s = role_ == kLLMRolePrompt ? "RunPromptAsync" : "RunDecoderAsync";
+      lite_status = OnGeStatus(ge_status, func_s, "callback");
     }
     promise.set_value();
     return;
   };
   if (role_ == kLLMRolePrompt) {
     MS_LOG(INFO) << "Start to call llm::LLMEngine::RunPromptAsync";
-    auto ret = llm_engine_->RunPromptAsync(*llm_req, ge_inputs, call_back);
-    if (ret != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Failed to call llm::LLMEngine::RunPromptAsync, status: " << ret;
-      return kLiteError;
+    auto ge_status = llm_engine_->RunPromptAsync(*llm_req, ge_inputs, call_back);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      return OnGeStatus(ge_status, "RunPromptAsync", "return");
     }
   } else {
     MS_LOG(INFO) << "Start to call llm::LLMEngine::RunDecoderAsync";
-    auto ret = llm_engine_->RunDecoderAsync(*llm_req, ge_inputs, call_back);
-    if (ret != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Failed to call llm::LLMEngine::RunDecoderAsync, status: " << ret;
-      return kLiteError;
+    auto ge_status = llm_engine_->RunDecoderAsync(*llm_req, ge_inputs, call_back);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      return OnGeStatus(ge_status, "RunPromptAsync", "return");
     }
   }
   auto future = promise.get_future();
@@ -260,10 +284,10 @@ Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor
   auto time_cost =
     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start).count();
   auto role = (role_ == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder");
-  if (callback_status != kSuccess) {
+  if (lite_status != kSuccess) {
     MS_LOG(WARNING) << "Call LLMEngine RunPromptAsync or RunDecoderAsync Failed, time cost " << time_cost
                     << " us, role " << role;
-    return callback_status;
+    return lite_status;
   }
   MS_LOG(INFO) << "Call LLMEngine RunPromptAsync or RunDecoderAsync Success in " << time_cost << " us, role " << role
                << ", outputs num is: " << outputs->size();
@@ -309,6 +333,10 @@ Status LLMEnginePlugin::MSTensorToGeTensor(const std::vector<MSTensor> &inputs, 
 
 Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
                                 std::vector<MSTensor> *outputs) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
   if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
@@ -343,6 +371,10 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
 }
 
 Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
   if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
@@ -351,15 +383,15 @@ Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
                << req.prompt_length << ", prompt_cluster_id: " << req.prompt_cluster_id;
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
-  auto ret = llm_engine_->LLMReqComplete(llm_req);
-  if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::LLMReqComplete, status: " << ret;
-    return kLiteError;
-  }
-  return kSuccess;
+  auto ge_ret = llm_engine_->LLMReqComplete(llm_req);
+  return OnGeStatus(ge_ret, "LLMReqComplete", "return");
 }
 
 LLMEngineStatus LLMEnginePlugin::FetchStatus() {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return LLMEngineStatus();
+  }
   if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return LLMEngineStatus();
@@ -371,6 +403,10 @@ LLMEngineStatus LLMEnginePlugin::FetchStatus() {
 }
 
 Status LLMEnginePlugin::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
   if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
@@ -387,14 +423,14 @@ Status LLMEnginePlugin::PreloadPromptPrefix(const LLMReq &req, const std::vector
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
   auto ge_ret = llm_engine_->PreloadPromptPrefix(llm_req, ge_inputs);
-  if (ge_ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::PreloadPromptPrefix";
-    return kLiteError;
-  }
-  return kSuccess;
+  return OnGeStatus(ge_ret, "PreloadPromptPrefix", "return");
 }
 
 Status LLMEnginePlugin::ReleasePromptPrefix(const LLMReq &req) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
   if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
@@ -404,12 +440,8 @@ Status LLMEnginePlugin::ReleasePromptPrefix(const LLMReq &req) {
                << req.prefix_id;
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
-  auto ret = llm_engine_->ReleasePromptPrefix(llm_req);
-  if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::ReleasePromptPrefix";
-    return kLiteError;
-  }
-  return kSuccess;
+  auto ge_ret = llm_engine_->ReleasePromptPrefix(llm_req);
+  return OnGeStatus(ge_ret, "ReleasePromptPrefix", "return");
 }
 
 MSTensor LLMEnginePlugin::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr) {
