@@ -323,11 +323,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   (*ge_options)["device_id"] = "0";
 
-  (*ge_options)["ge.exec.formatMode"] = "0";
-  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
-    (*ge_options)["ge.exec.formatMode"] = "1";
-  }
-
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
