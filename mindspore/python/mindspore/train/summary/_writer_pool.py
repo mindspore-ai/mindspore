@@ -31,7 +31,7 @@ from mindspore.train.summary.writer import LineageWriter, SummaryWriter, ExportW
 
 try:
     from multiprocessing import get_context
-    ctx = get_context('forkserver')
+    ctx = get_context('fork')
 except ValueError:
     import multiprocessing as ctx
 

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -170,8 +170,7 @@ class SummaryLandscape:
     It can create landscape in PCA direction or random direction by calculating loss.
 
     Note:
-        1. When using SummaryLandscape, you need to run the code in `if __name__ == "__main__"` .
-        2. SummaryLandscape only supports Linux systems.
+        1. SummaryLandscape only supports Linux systems.
 
     Args:
         summary_dir (str): The path of summary is used to save the model weight,
