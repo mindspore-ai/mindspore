@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/launch_transdata.h"
-#include <algorithm>
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
