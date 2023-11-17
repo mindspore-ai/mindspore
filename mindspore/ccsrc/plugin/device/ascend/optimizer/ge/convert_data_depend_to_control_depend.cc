@@ -16,8 +16,6 @@
 
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 
-#include <memory>
-#include <vector>
 #include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

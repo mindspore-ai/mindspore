@@ -16,10 +16,6 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "mindspore/core/ops/structure_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"

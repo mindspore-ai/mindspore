@@ -89,7 +89,7 @@ bool OptGraphMicroMem(const FuncGraphPtr &graph) {
         not_has_micro = true;
         break;
       }
-      tuple_inputs.emplace_back(cnode_input);
+      (void)tuple_inputs.emplace_back(cnode_input);
     }
     if (not_has_micro) {
       continue;
