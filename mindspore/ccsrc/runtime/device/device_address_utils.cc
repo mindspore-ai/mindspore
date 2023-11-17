@@ -930,8 +930,10 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
 
   auto tensor_size = LongToSize(tensor->data().nbytes());
   const auto &device_format = format.empty() ? GetFormatByTensorShape(device_context, tensor->shape()) : format;
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, device_format,
-                                                                                 tensor->data_type(), tensor->shape());
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   tensor->set_device_address(device_address);
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";

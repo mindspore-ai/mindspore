@@ -241,7 +241,7 @@ def generate_pyboost_outputs(op_proto):
 def generate_ops_header_files(work_path, yaml_data):
     """
     :param work_path:
-    :param yaml:
+    :param yaml_data:
     :return: void
     """
     extern_str = ''

@@ -38,9 +38,9 @@
 
           // Get workspace kernel tensors
           auto workspace_kernel_tensors = GetWorkspaceKernelTensors(gpu_kernel, device_context, op_name());
-  
+          auto stream_ptr = device::gpu::GPUDeviceManager::GetInstance().GetStream(kDefaultStreamIndex);
           // Do kernel launch
-          if (!gpu_kernel->Launch(input_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, nullptr)) {
+          if (!gpu_kernel->Launch(input_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, stream_ptr)) {
             MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name();
           }
           MS_LOG(DEBUG) << "Launch end";
