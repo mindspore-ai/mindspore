@@ -25,10 +25,10 @@ from mindspore.train.serialization import export
 from mindspore.ops.operations._inner_ops import DecoderKVCache
 
 
-b = 4
-h = 4
-s = 4096
-d = 32
+b = 26
+h = 40
+s = 32
+d = 128
 us = 1
 ps = s - us
 
@@ -72,7 +72,7 @@ def create_numpy_inputs():
     """
     cache = np.random.rand(b, h, s, d).astype(np.float16)
     update = np.random.rand(b, h, us, d).astype(np.float16)
-    valid_seq_len = np.random.randint(-1, b, size=b).astype(np.int64)
+    valid_seq_len = np.random.randint(-1, s, size=b).astype(np.int64)
     batch_index = np.array([1]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
     new_max_seq_len = np.array([s]).astype(np.int64)

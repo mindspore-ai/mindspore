@@ -65,20 +65,16 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
   int64_t h = 0;
   int64_t us = 0;
 
-  int64_t bs = 0;
-
   if (seq_len_axis == kAxisOne) {
     // (b, us, h, d) -> (bs, us, d)
     us = cur_shape->GetStorageShape().GetDim(index1);
     h = cur_shape->GetStorageShape().GetDim(index2);
-    bs = b;
     d = h * d;
     h = 1;
   } else if (seq_len_axis == kAxisTwo) {
     // (b, h, us, d) -> (bs, us, d)
     h = cur_shape->GetStorageShape().GetDim(index1);
     us = cur_shape->GetStorageShape().GetDim(index2);
-    bs = b * h;
   } else {
     return ge::GRAPH_FAILED;
   }
@@ -94,7 +90,7 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
 
   TilingData tiling;
   tiling.set_core_num(aiv_num);
-  tiling.set_b(bs);
+  tiling.set_b(b);
   tiling.set_h(h);
   tiling.set_d(d);
   tiling.set_us(us);
