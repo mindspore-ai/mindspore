@@ -50,13 +50,18 @@ class LLMEnginePluginBase {
   LLMEnginePluginBase() = default;
   virtual ~LLMEnginePluginBase() = default;
   virtual Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
-                      const std::map<std::string, std::string> &options) = 0;
+                      const std::map<std::string, std::string> &options, const std::string &batch_mode,
+                      const LLMEngineModelInfo &postprocess_model) = 0;
   virtual void Finalize() = 0;
   virtual Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
+  virtual Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                         std::vector<MSTensor> *outputs) = 0;
   virtual Status CompleteRequest(const LLMReq &req) = 0;
   virtual LLMEngineStatus FetchStatus() = 0;
   virtual Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) = 0;
   virtual Status ReleasePromptPrefix(const LLMReq &req) = 0;
+  virtual Status PullKV(const LLMReq &req) = 0;
+  virtual Status MergeKV(const LLMReq &req, uint32_t batch_index) = 0;
 };
 
 extern "C" MS_API LLMEnginePluginBase *CreateLLMEnginePlugin();
