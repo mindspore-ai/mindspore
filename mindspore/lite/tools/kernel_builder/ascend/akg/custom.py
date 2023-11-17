@@ -27,6 +27,25 @@ from impl.util.util_select_op_base import get_dynamic_param_in_json
 
 BLOCK = 16
 FP16_MAX = 65504
+OP = "op"
+STR = "str"
+NAME = "name"
+TENSOR_NAME = "tensor_name"
+ATTR = "attr"
+VALUE = "value"
+SHAPE = "shape"
+FORMAT = "format"
+DATA_TYPE = "data_type"
+ORI_SHAPE = "ori_shape"
+ORI_FORMAT = "ori_format"
+ORI_DATA_TYPE = "ori_data_type"
+OP_DESC = "op_desc"
+INPUT_DESC = "input_desc"
+OUTPUT_DESC = "output_desc"
+FRACTAL_NZ = "FRACTAL_NZ"
+DEFAULT_FORMAT = "DefaultFormat"
+FLOAT16 = "float16"
+FLOAT32 = "float32"
 
 
 def copy_shape(shape):
@@ -43,20 +62,20 @@ class OpInfer:
     """Base infer class, used to provide supported formats and data type of each op and update each of"""
 
     def __init__(self, op_desc):
-        self.name = op_desc["name"]
+        self.name = op_desc[NAME]
         self.op_desc = op_desc
         self.input_desc = []
         self.output_desc = []
         self.attr = {}
-        if isinstance(op_desc.get("input_desc"), list):
-            for desc in op_desc["input_desc"]:
+        if isinstance(op_desc.get(INPUT_DESC), list):
+            for desc in op_desc[INPUT_DESC]:
                 for item in desc:
                     self.input_desc.append(item)
-        if isinstance(op_desc.get("attr"), list):
-            for item in op_desc["attr"]:
-                self.attr[item["name"]] = item
-        if isinstance(op_desc.get("output_desc"), list):
-            for item in op_desc["output_desc"]:
+        if isinstance(op_desc.get(ATTR), list):
+            for item in op_desc[ATTR]:
+                self.attr[item[NAME]] = item
+        if isinstance(op_desc.get(OUTPUT_DESC), list):
+            for item in op_desc[OUTPUT_DESC]:
                 self.output_desc.append(item)
 
     @staticmethod
@@ -78,26 +97,26 @@ class OpInfer:
         """get the value of attr"""
         if key not in self.attr:
             raise KeyError("Can not find attr '{}' in op '{}'".format(key, self.name))
-        return self.attr.get(key)["value"]
+        return self.attr.get(key)[VALUE]
 
     def set_attr(self, key, value):
         """set the value of attr"""
         if key not in self.attr:
             raise KeyError("Can not find attr '{}' in op '{}'".format(key, self.name))
-        self.attr.get(key)["value"] = value
+        self.attr.get(key)[VALUE] = value
 
     def supported_type(self):
         """get the supported data type of current op"""
         keep_fp32 = False
         for item in self.input_desc:
             # check if type can reduce precision
-            value = item.get("value", None)
-            if item["data_type"] == "float32" and value is not None and abs(value) > FP16_MAX:
+            value = item.get(VALUE, None)
+            if item[DATA_TYPE] == FLOAT32 and value is not None and abs(value) > FP16_MAX:
                 keep_fp32 = True
                 break
-        io_type = ",".join([t["data_type"] for t in self.input_desc] + [t["data_type"] for t in self.output_desc])
-        fp32_type = io_type.replace("float16", "float32")
-        fp16_type = io_type.replace("float32", "float16")
+        io_type = ",".join([t[DATA_TYPE] for t in self.input_desc] + [t[DATA_TYPE] for t in self.output_desc])
+        fp32_type = io_type.replace(FLOAT16, FLOAT32)
+        fp16_type = io_type.replace(FLOAT32, FLOAT16)
         supported_types = [io_type]
         if fp32_type not in supported_types:
             supported_types.append(fp32_type)
@@ -113,20 +132,20 @@ class OpInfer:
 
     def infer_type(self):
         """infer data type"""
-        self.output_desc[0]["data_type"] = self.input_desc[0]["data_type"]
+        self.output_desc[0][DATA_TYPE] = self.input_desc[0][DATA_TYPE]
 
     def infer_format(self):
         """infer format"""
-        self.output_desc[0]["format"] = self.input_desc[0]["format"]
+        self.output_desc[0][FORMAT] = self.input_desc[0][FORMAT]
 
     def infer_shape(self):
         """infer shape"""
-        self.output_desc[0]["shape"] = copy_shape(self.input_desc[0]["shape"])
+        self.output_desc[0][SHAPE] = copy_shape(self.input_desc[0][SHAPE])
 
     def infer_ori_shape(self):
         """infer original shape"""
         for _, desc in enumerate(self.output_desc):
-            desc["ori_shape"] = copy_shape(desc["shape"])
+            desc[ORI_SHAPE] = copy_shape(desc[SHAPE])
 
     def infer(self):
         """infer shape, format and data type"""
@@ -140,8 +159,8 @@ class OpInfer:
     def update(self):
         """update each of"""
         for _, desc in enumerate(self.output_desc):
-            desc["ori_data_type"] = desc["data_type"]
-            desc["ori_format"] = desc["format"]
+            desc[ORI_DATA_TYPE] = desc[DATA_TYPE]
+            desc[ORI_FORMAT] = desc[FORMAT]
         self.infer_ori_shape()
         self.infer()
         self.post_process()
@@ -154,13 +173,13 @@ class Elemwise(OpInfer):
         if self.name == "Reciprocal":
             supported_formats = ["ND,ND"]
             # pad will cause 'divided by 0'
-            if self.is_nz(self.input_desc[0]["shape"]):
+            if self.is_nz(self.input_desc[0][SHAPE]):
                 self.update_format(supported_formats, "FRACTAL_NZ,FRACTAL_NZ")
             return supported_formats
         return ["ND,ND", "FRACTAL_NZ,FRACTAL_NZ", "NC1HWC0,NC1HWC0", "FRACTAL_Z,FRACTAL_Z"]
 
     def infer_ori_shape(self):
-        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
+        self.output_desc[0][ORI_SHAPE] = self.input_desc[0][ORI_SHAPE]
 
 
 class ElemwiseBinaryNoBroadcast(OpInfer):
@@ -171,7 +190,7 @@ class ElemwiseBinaryNoBroadcast(OpInfer):
                 "FRACTAL_Z,FRACTAL_Z,FRACTAL_Z"]
 
     def infer_ori_shape(self):
-        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
+        self.output_desc[0][ORI_SHAPE] = self.input_desc[0][ORI_SHAPE]
 
 
 class ElemwiseBinary(OpInfer):
@@ -211,10 +230,10 @@ class ElemwiseBinary(OpInfer):
         return pad_sh0, pad_sh1, out_shape
 
     def supported_format(self):
-        sh0, sh1 = self.input_desc[0]["shape"], self.input_desc[1]["shape"]
+        sh0, sh1 = self.input_desc[0][SHAPE], self.input_desc[1][SHAPE]
         supported_formats = ["ND,ND,ND"]
-        is_const_0 = ("value" in self.input_desc[0])
-        is_const_1 = ("value" in self.input_desc[1])
+        is_const_0 = (VALUE in self.input_desc[0])
+        is_const_1 = (VALUE in self.input_desc[1])
         if sh0 == sh1 or is_const_0 or is_const_1:
             # No broadcast case
             self.update_format(supported_formats, ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ", "NC1HWC0,NC1HWC0,NC1HWC0",
@@ -244,36 +263,36 @@ class ElemwiseBinary(OpInfer):
     def infer_format(self):
         # select special format
         special_formats = ["FRACTAL", "C0"]
-        format0, format1 = self.input_desc[0]["format"], self.input_desc[1]["format"]
+        format0, format1 = self.input_desc[0][FORMAT], self.input_desc[1][FORMAT]
         for f in special_formats:
             if format0.find(f) != -1:
-                self.output_desc[0]["format"] = format0
+                self.output_desc[0][FORMAT] = format0
                 return
-        self.output_desc[0]["format"] = format1
+        self.output_desc[0][FORMAT] = format1
 
     def infer_shape(self):
-        sh0, sh1 = self.input_desc[0]["shape"], self.input_desc[1]["shape"]
+        sh0, sh1 = self.input_desc[0][SHAPE], self.input_desc[1][SHAPE]
         if sh0 == sh1:
-            self.output_desc[0]["shape"] = copy_shape(sh0)
-        format0, format1 = self.input_desc[0]["format"], self.input_desc[1]["format"]
+            self.output_desc[0][SHAPE] = copy_shape(sh0)
+        format0, format1 = self.input_desc[0][FORMAT], self.input_desc[1][FORMAT]
         if format0 != format1:
             new_sh0 = self.nd2fractal_nz(sh0)
             new_sh1 = self.nd2fractal_nz(sh1)
-            if format0 == "FRACTAL_NZ" and new_sh1:
+            if format0 == FRACTAL_NZ and new_sh1:
                 _, _, out_shape = self.broadcast_shape(sh0, new_sh1)
-                self.output_desc[0]["shape"] = out_shape
+                self.output_desc[0][SHAPE] = out_shape
                 return
-            if format1 == "FRACTAL_NZ" and new_sh0:
+            if format1 == FRACTAL_NZ and new_sh0:
                 _, _, out_shape = self.broadcast_shape(new_sh0, sh1)
-                self.output_desc[0]["shape"] = out_shape
+                self.output_desc[0][SHAPE] = out_shape
                 return
         _, _, out_shape = self.broadcast_shape(sh0, sh1)
-        self.output_desc[0]["shape"] = out_shape
+        self.output_desc[0][SHAPE] = out_shape
 
     def infer_ori_shape(self):
-        sh0, sh1 = self.input_desc[0]["ori_shape"], self.input_desc[1]["ori_shape"]
+        sh0, sh1 = self.input_desc[0][ORI_SHAPE], self.input_desc[1][ORI_SHAPE]
         _, _, out_shape = self.broadcast_shape(sh0, sh1)
-        self.output_desc[0]["ori_shape"] = out_shape
+        self.output_desc[0][ORI_SHAPE] = out_shape
 
 
 class MatMul(OpInfer):
@@ -284,7 +303,7 @@ class MatMul(OpInfer):
         if input_num == 2:
             return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
         if input_num == 3:
-            bias_shape = self.input_desc[2]["shape"]
+            bias_shape = self.input_desc[2][SHAPE]
             if len(bias_shape) == 1 and (bias_shape[-1] == 1 or bias_shape[-1] % BLOCK == 0):
                 return ["FRACTAL_NZ,FRACTAL_NZ,ND,FRACTAL_NZ"]
             return ["ND,ND,ND,ND"]
@@ -300,35 +319,35 @@ class MatMul(OpInfer):
         return res
 
     def infer_shape(self):
-        sh0, sh1 = self.input_desc[0]["shape"], self.input_desc[1]["shape"]
-        format0, format1 = self.input_desc[0]["format"], self.input_desc[1]["format"]
+        sh0, sh1 = self.input_desc[0][SHAPE], self.input_desc[1][SHAPE]
+        format0, format1 = self.input_desc[0][FORMAT], self.input_desc[1][FORMAT]
         trans_a, trans_b = self.get_attr("transpose_a"), self.get_attr("transpose_b")
         if format0 != format1 or len(sh0) != len(sh1):
             raise ValueError("For '{}', input '{}' and '{}' are not supported"
                              .format(self.name, self.input_desc[0], self.input_desc[1]))
-        if format0 != "FRACTAL_NZ" and len(sh0) >= 2:
-            self.output_desc[0]["shape"] = self.nd_infer(sh0, sh1, trans_a, trans_b)
-        elif format0 == "FRACTAL_NZ" and len(sh0) >= 4:
+        if format0 != FRACTAL_NZ and len(sh0) >= 2:
+            self.output_desc[0][SHAPE] = self.nd_infer(sh0, sh1, trans_a, trans_b)
+        elif format0 == FRACTAL_NZ and len(sh0) >= 4:
             m1, m0 = sh0[-3], sh0[-2]
             if trans_a:
                 m1, m0 = sh0[-4], sh0[-1]
             n1, n0 = sh1[-4], sh1[-1]
             if trans_b:
                 n1, n0 = sh1[-3], sh1[-2]
-            self.output_desc[0]["shape"] = sh0[:-4] + [n1, m1, m0, n0]
+            self.output_desc[0][SHAPE] = sh0[:-4] + [n1, m1, m0, n0]
         else:
             raise ValueError("For '{}', input '{}' and '{}' are not supported"
                              .format(self.name, self.input_desc[0], self.input_desc[1]))
 
     def infer_ori_shape(self):
-        sh0, sh1 = self.input_desc[0]["ori_shape"], self.input_desc[1]["ori_shape"]
+        sh0, sh1 = self.input_desc[0][ORI_SHAPE], self.input_desc[1][ORI_SHAPE]
         trans_a, trans_b = self.get_attr("transpose_a"), self.get_attr("transpose_b")
-        self.output_desc[0]["ori_shape"] = self.nd_infer(sh0, sh1, trans_a, trans_b)
+        self.output_desc[0][ORI_SHAPE] = self.nd_infer(sh0, sh1, trans_a, trans_b)
 
     def post_process(self):
-        self.op_desc["attr"].append({"data_type": "str", "name": "left_format", "value": self.input_desc[0]["format"]})
-        self.op_desc["attr"].append({"data_type": "str", "name": "right_format", "value": self.input_desc[1]["format"]})
-        self.op_desc["attr"].append({"data_type": "str", "name": "dst_type", "value": self.output_desc[0]["data_type"]})
+        self.op_desc[ATTR].append({DATA_TYPE: STR, NAME: "left_format", VALUE: self.input_desc[0][FORMAT]})
+        self.op_desc[ATTR].append({DATA_TYPE: STR, NAME: "right_format", VALUE: self.input_desc[1][FORMAT]})
+        self.op_desc[ATTR].append({DATA_TYPE: STR, NAME: "dst_type", VALUE: self.output_desc[0][DATA_TYPE]})
 
 
 class Reduce(OpInfer):
@@ -354,7 +373,7 @@ class Reduce(OpInfer):
         return out_shape
 
     def _get_axis(self, rank):
-        axis_input = self.input_desc[1]["value"]
+        axis_input = self.input_desc[1][VALUE]
         axis = []
         if isinstance(axis_input, int):
             axis = [axis_input + rank if axis_input < 0 else axis_input]
@@ -363,17 +382,17 @@ class Reduce(OpInfer):
         return axis
 
     def supported_type(self):
-        in_type = self.input_desc[0]["data_type"]
-        if in_type == "float16":
+        in_type = self.input_desc[0][DATA_TYPE]
+        if in_type == FLOAT16:
             return ["float16,int64,float16", "float32,int64,float32"]
-        if in_type == "float32":
+        if in_type == FLOAT32:
             return ["float32,int64,float32"]
         io_type = ",".join([in_type, "int64", in_type])
         return [io_type]
 
     def supported_format(self):
         supported_formats = ["ND,DefaultFormat,ND"]
-        shape = self.input_desc[0]["shape"]
+        shape = self.input_desc[0][SHAPE]
         rank = len(shape)
         axis = self._get_axis(rank)
         if self.is_nz(shape):
@@ -382,9 +401,9 @@ class Reduce(OpInfer):
         return supported_formats
 
     def infer_shape(self):
-        ori_format, cur_format = self.input_desc[0]["ori_format"], self.input_desc[0]["format"]
-        if cur_format == "FRACTAL_NZ" and cur_format != ori_format:
-            ori_shape, cur_shape = self.input_desc[0]["ori_shape"], self.input_desc[0]["shape"]
+        ori_format, cur_format = self.input_desc[0][ORI_FORMAT], self.input_desc[0][FORMAT]
+        if cur_format == FRACTAL_NZ and cur_format != ori_format:
+            ori_shape, cur_shape = self.input_desc[0][ORI_SHAPE], self.input_desc[0][SHAPE]
             ori_rank = len(ori_shape)
             rank = len(cur_shape)
             axis = self._get_axis(ori_rank)
@@ -396,17 +415,17 @@ class Reduce(OpInfer):
                     new_axis.extend([rank - 3, rank - 2])
                 else:
                     new_axis.append(i)
-            self.input_desc[1]["value"] = new_axis
-            self.input_desc[1]["shape"] = [len(new_axis)]
-            self.output_desc[0]["shape"] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
+            self.input_desc[1][VALUE] = new_axis
+            self.input_desc[1][SHAPE] = [len(new_axis)]
+            self.output_desc[0][SHAPE] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
         else:
-            self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+            self.output_desc[0][SHAPE] = self.output_desc[0][ORI_SHAPE]
 
     def infer_ori_shape(self):
-        shape = self.input_desc[0]["ori_shape"]
+        shape = self.input_desc[0][ORI_SHAPE]
         rank = len(shape)
         axis = self._get_axis(rank)
-        self.output_desc[0]["ori_shape"] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
+        self.output_desc[0][ORI_SHAPE] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
 
 
 class Reshape(OpInfer):
@@ -417,11 +436,11 @@ class Reshape(OpInfer):
 
     def infer_shape(self):
         """Reshape keeps ND format, so the output shape will not be changed"""
-        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+        self.output_desc[0][SHAPE] = self.output_desc[0][ORI_SHAPE]
 
     def infer_ori_shape(self):
-        shape = self.input_desc[0]["ori_shape"]
-        out_shape = copy_shape(self.input_desc[1]["value"])
+        shape = self.input_desc[0][ORI_SHAPE]
+        out_shape = copy_shape(self.input_desc[1][VALUE])
         if -1 in out_shape:
             idx = out_shape.index(-1)
             tmp = []
@@ -432,11 +451,11 @@ class Reshape(OpInfer):
                 raise ValueError("Find multiple -1 in attr 'shape' {}".format(out_shape))
             tmp_sz = functools.reduce(lambda x, y: x * y, tmp, 1)
             out_shape[idx] = functools.reduce(lambda x, y: x * y, shape, 1) // tmp_sz
-        self.output_desc[0]["ori_shape"] = out_shape
+        self.output_desc[0][ORI_SHAPE] = out_shape
 
     def post_process(self):
-        self.input_desc[1]["ori_value"] = self.input_desc[1]["value"]
-        self.input_desc[1]["value"] = self.output_desc[0]["shape"]
+        self.input_desc[1]["ori_value"] = self.input_desc[1][VALUE]
+        self.input_desc[1][VALUE] = self.output_desc[0][SHAPE]
 
 
 class ExpandDimAndSqueeze(Reshape):
@@ -451,23 +470,23 @@ class ExpandDimAndSqueeze(Reshape):
 
 class Squeeze(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.input_desc[1]["value"])
-        input_shape = copy_shape(self.input_desc[0]["shape"])
+        axis = self.copy_axis(self.input_desc[1][VALUE])
+        input_shape = copy_shape(self.input_desc[0][SHAPE])
         for idx in axis:
             if input_shape[idx] != 1:
                 raise ValueError("The value of attr 'axis' is wrong , the squeezed axis must be 1, but got {}. 'axis': "
                                  "{}, input shape: {}".format(input_shape[idx], axis, input_shape))
             input_shape.pop(idx)
-        self.output_desc[0]["ori_shape"] = input_shape
+        self.output_desc[0][ORI_SHAPE] = input_shape
 
 
 class ExpandDim(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.input_desc[1]["value"])
-        input_shape = copy_shape(self.input_desc[0]["shape"])
+        axis = self.copy_axis(self.input_desc[1][VALUE])
+        input_shape = copy_shape(self.input_desc[0][SHAPE])
         for idx in axis:
             input_shape.insert(idx, 1)
-        self.output_desc[0]["ori_shape"] = input_shape
+        self.output_desc[0][ORI_SHAPE] = input_shape
 
 
 class BroadcastTo(OpInfer):
@@ -478,11 +497,11 @@ class BroadcastTo(OpInfer):
 
     def infer_shape(self):
         """Broadcast op keeps ND format, so the output shape will not be changed"""
-        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+        self.output_desc[0][SHAPE] = self.output_desc[0][ORI_SHAPE]
 
     def infer_ori_shape(self):
-        shape = self.input_desc[0]["ori_shape"]
-        broad_shape = self.get_attr("shape")
+        shape = self.input_desc[0][ORI_SHAPE]
+        broad_shape = self.get_attr(SHAPE)
         if len(broad_shape) < len(shape):
             raise ValueError("The length of attr 'shape' must be >= the length of input shape, but got attr 'shape': "
                              "{}, input shape: {}".format(broad_shape, shape))
@@ -493,13 +512,13 @@ class BroadcastTo(OpInfer):
                 out_shape.append(pad_shape[i])
             else:
                 out_shape.append(b)
-        self.output_desc[0]["ori_shape"] = out_shape
+        self.output_desc[0][ORI_SHAPE] = out_shape
 
     def post_process(self):
-        for item in self.op_desc["attr"]:
-            if item["name"] == "shape":
-                item["ori_value"] = item["value"]
-                item["value"] = self.output_desc[0]["shape"]
+        for item in self.op_desc[ATTR]:
+            if item[NAME] == SHAPE:
+                item["ori_value"] = item[VALUE]
+                item[VALUE] = self.output_desc[0][SHAPE]
 
 
 class Tile(OpInfer):
@@ -510,11 +529,11 @@ class Tile(OpInfer):
 
     def infer_shape(self):
         """Tile op keeps ND format, so the output shape will not be changed"""
-        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+        self.output_desc[0][SHAPE] = self.output_desc[0][ORI_SHAPE]
 
     def infer_ori_shape(self):
-        shape = self.input_desc[0]["ori_shape"]
-        multiples = self.input_desc[1]["value"]
+        shape = self.input_desc[0][ORI_SHAPE]
+        multiples = self.input_desc[1][VALUE]
         if len(multiples) < len(shape):
             raise ValueError("The length of attr 'multiples' must be >= the length of input shape, but got attr "
                              "'multiples': {}, input shape: {}".format(multiples, shape))
@@ -522,7 +541,7 @@ class Tile(OpInfer):
         out_shape = []
         for i, m in enumerate(multiples):
             out_shape.append(m * pad_shape[i])
-        self.output_desc[0]["ori_shape"] = out_shape
+        self.output_desc[0][ORI_SHAPE] = out_shape
 
 
 # Ge will convert dtype bool to int8, and ReLU will be expand to Greater op in expander,
@@ -569,20 +588,20 @@ prims = {
 
 def convert_to_default_format(desc):
     """Convert to DefaultFormat"""
-    default_format = ["ND", "NCHW", "NHWC", "HWCN", "DefaultFormat"]
-    for _, input_desc in enumerate(desc["input_desc"]):
-        if input_desc[0]["format"] in default_format:
-            input_desc[0]["format"] = "DefaultFormat"
-    for _, op_desc in enumerate(desc["op_desc"]):
-        for _, input_desc in enumerate(op_desc["input_desc"]):
-            if input_desc[0]["format"] in default_format:
-                input_desc[0]["format"] = "DefaultFormat"
-        for _, output_desc in enumerate(op_desc["output_desc"]):
-            if output_desc["format"] in default_format:
-                output_desc["format"] = "DefaultFormat"
-    for _, output_desc in enumerate(desc["output_desc"]):
-        if output_desc["format"] in default_format:
-            output_desc["format"] = "DefaultFormat"
+    default_format = ["ND", "NCHW", "NHWC", "HWCN", DEFAULT_FORMAT]
+    for _, input_desc in enumerate(desc[INPUT_DESC]):
+        if input_desc[0][FORMAT] in default_format:
+            input_desc[0][FORMAT] = DEFAULT_FORMAT
+    for _, op_desc in enumerate(desc[OP_DESC]):
+        for _, input_desc in enumerate(op_desc[INPUT_DESC]):
+            if input_desc[0][FORMAT] in default_format:
+                input_desc[0][FORMAT] = DEFAULT_FORMAT
+        for _, output_desc in enumerate(op_desc[OUTPUT_DESC]):
+            if output_desc[FORMAT] in default_format:
+                output_desc[FORMAT] = DEFAULT_FORMAT
+    for _, output_desc in enumerate(desc[OUTPUT_DESC]):
+        if output_desc[FORMAT] in default_format:
+            output_desc[FORMAT] = DEFAULT_FORMAT
 
 
 def update_global_input_desc(info_desc, args):
@@ -590,7 +609,7 @@ def update_global_input_desc(info_desc, args):
 
     def _convert_tbe_type(tbe_type):
         if tbe_type == "float":
-            return "float32"
+            return FLOAT32
         return tbe_type
 
     def _covert_tbe_shape(tbe_shape):
@@ -598,56 +617,56 @@ def update_global_input_desc(info_desc, args):
             return [1]
         return copy_shape(tbe_shape)
 
-    if isinstance(info_desc.get("input_desc"), list):
-        for i, desc in enumerate(info_desc["input_desc"]):
-            desc[0]["ori_data_type"] = desc[0]["data_type"]
-            desc[0]["data_type"] = _convert_tbe_type(args[i]["dtype"])
-            desc[0]["ori_format"] = args[i].get("ori_format", desc[0]["format"])
-            desc[0]["format"] = args[i]["format"]
-            desc[0]["ori_shape"] = _covert_tbe_shape(args[i].get("ori_shape", desc[0]["shape"]))
-            desc[0]["shape"] = list(args[i]["shape"])
+    if isinstance(info_desc.get(INPUT_DESC), list):
+        for i, desc in enumerate(info_desc[INPUT_DESC]):
+            desc[0][ORI_DATA_TYPE] = desc[0][DATA_TYPE]
+            desc[0][DATA_TYPE] = _convert_tbe_type(args[i]["dtype"])
+            desc[0][ORI_FORMAT] = args[i].get(ORI_FORMAT, desc[0][FORMAT])
+            desc[0][FORMAT] = args[i][FORMAT]
+            desc[0][ORI_SHAPE] = _covert_tbe_shape(args[i].get(ORI_SHAPE, desc[0][SHAPE]))
+            desc[0][SHAPE] = list(args[i][SHAPE])
 
 
 def update_global_output_desc(info_desc, tensor_desc):
     """Update the global output of the fused info file"""
-    for i, desc in enumerate(info_desc["output_desc"]):
-        tensor_name = desc["tensor_name"]
+    for i, desc in enumerate(info_desc[OUTPUT_DESC]):
+        tensor_name = desc[TENSOR_NAME]
         if tensor_name not in tensor_desc:
             raise RuntimeError("tensor '{}' not exist in op_desc".format(tensor_name))
-        info_desc["output_desc"][i] = tensor_desc[tensor_name]
+        info_desc[OUTPUT_DESC][i] = tensor_desc[tensor_name]
 
 
 def update_op_input_desc(op_desc, tensor_desc):
     """Update the input of operator"""
-    if not isinstance(op_desc.get("input_desc"), list):
+    if not isinstance(op_desc.get(INPUT_DESC), list):
         return
     inputs_type_orig = []
     inputs_type = []
     const_inputs_idx = []
-    for i, desc in enumerate(op_desc["input_desc"]):
+    for i, desc in enumerate(op_desc[INPUT_DESC]):
         for j, item in enumerate(desc):
-            if "value" in item:
+            if VALUE in item:
                 inputs_type_orig.append(None)
                 inputs_type.append(None)
                 const_inputs_idx.append(i)
-                item["ori_data_type"] = item["data_type"]
-                item["ori_format"] = item["format"]
-                item["ori_shape"] = copy_shape(item["shape"])
+                item[ORI_DATA_TYPE] = item[DATA_TYPE]
+                item[ORI_FORMAT] = item[FORMAT]
+                item[ORI_SHAPE] = copy_shape(item[SHAPE])
             else:
-                inputs_type_orig.append(item["data_type"])
-                tensor_name = item["tensor_name"]
+                inputs_type_orig.append(item[DATA_TYPE])
+                tensor_name = item[TENSOR_NAME]
                 if tensor_name not in tensor_desc:
                     raise RuntimeError("tensor '{}' used without initialization".format(tensor_name))
                 # update op input
                 desc[j] = tensor_desc[tensor_name]
-                inputs_type.append(tensor_desc[tensor_name]["data_type"])
+                inputs_type.append(tensor_desc[tensor_name][DATA_TYPE])
     # update op const input's data type
     for _, idx in enumerate(const_inputs_idx):
-        const_value_type = op_desc["input_desc"][idx][0]["data_type"]
+        const_value_type = op_desc[INPUT_DESC][idx][0][DATA_TYPE]
         if const_value_type in inputs_type_orig:
-            op_desc["input_desc"][idx][0]["data_type"] = inputs_type[inputs_type_orig.index(const_value_type)]
+            op_desc[INPUT_DESC][idx][0][DATA_TYPE] = inputs_type[inputs_type_orig.index(const_value_type)]
         # cache op const input
-        tensor_desc[op_desc["input_desc"][idx][0]["tensor_name"]] = op_desc["input_desc"][idx][0]
+        tensor_desc[op_desc[INPUT_DESC][idx][0][TENSOR_NAME]] = op_desc[INPUT_DESC][idx][0]
 
 
 def cache_input_tensors(tensor_desc, input_desc):
@@ -655,13 +674,13 @@ def cache_input_tensors(tensor_desc, input_desc):
     if isinstance(input_desc, list):
         for desc in input_desc:
             for item in desc:
-                tensor_desc[item["tensor_name"]] = item
+                tensor_desc[item[TENSOR_NAME]] = item
 
 
 def cache_output_tensors(tensor_desc, output_desc):
     """Cache output tensor desc"""
     for item in output_desc:
-        tensor_desc[item["tensor_name"]] = item
+        tensor_desc[item[TENSOR_NAME]] = item
 
 
 def save(filename, contents):
@@ -675,25 +694,25 @@ def update_akg_info(args, info_path, kernel_name=None):
     with open(info_path, 'r') as f:
         info_str = f.read()
         desc = json.loads(info_str)
-        desc["op_ori"] = desc["op"]
-        desc["op"] = kernel_name if kernel_name else desc["op"]
+        desc["op_ori"] = desc[OP]
+        desc[OP] = kernel_name if kernel_name else desc[OP]
         tensor_desc = {}  # {tensor_name: tensor_desc}
 
         # Update input_desc
         update_global_input_desc(desc, args)
         # cache global input
-        cache_input_tensors(tensor_desc, desc.get("input_desc"))
+        cache_input_tensors(tensor_desc, desc.get(INPUT_DESC))
 
         # Update op_desc
-        for _, op_desc in enumerate(desc["op_desc"]):
+        for _, op_desc in enumerate(desc[OP_DESC]):
             update_op_input_desc(op_desc, tensor_desc)
-            op_name = op_desc["name"]
+            op_name = op_desc[NAME]
             if op_name not in prims:
                 raise KeyError("Not supported op: {}".format(op_name))
             prim = prims.get(op_name)(op_desc)
             prim.update()
             # cache op output
-            cache_output_tensors(tensor_desc, op_desc["output_desc"])
+            cache_output_tensors(tensor_desc, op_desc[OUTPUT_DESC])
 
         # Update output_desc
         update_global_output_desc(desc, tensor_desc)
@@ -740,9 +759,9 @@ def search_supported_types_formats(info):
             if opid < len(self.cache):
                 return self.cache[opid]
             desc = self.ops_desc[opid]
-            io_names = [item["tensor_name"] for desc in desc["input_desc"] for item in desc]
-            io_names.append(desc["output_desc"][0]["tensor_name"])
-            op_name = desc["name"]
+            io_names = [item[TENSOR_NAME] for desc in desc[INPUT_DESC] for item in desc]
+            io_names.append(desc[OUTPUT_DESC][0][TENSOR_NAME])
+            op_name = desc[NAME]
             if op_name not in prims:
                 raise KeyError("Not supported op: {}".format(op_name))
             prim = prims.get(op_name)(desc)
@@ -787,8 +806,8 @@ def search_supported_types_formats(info):
                 res.append(t)
         return res
 
-    top_io_names = [t[0]["tensor_name"] for t in info["input_desc"]] + [t["tensor_name"] for t in info["output_desc"]]
-    handle = DfsSearcher(top_io_names, info["op_desc"])
+    top_io_names = [t[0][TENSOR_NAME] for t in info[INPUT_DESC]] + [t[TENSOR_NAME] for t in info[OUTPUT_DESC]]
+    handle = DfsSearcher(top_io_names, info[OP_DESC])
     handle.search_types(0)
     handle.search_formats(0)
     return remove_dup(handle.supported_types), remove_dup(handle.supported_formats)
@@ -801,8 +820,8 @@ def op_select_format(*args, **kwags):
     supported_io_type, supported_io_format = search_supported_types_formats(desc)
     if not supported_io_type or not supported_io_format:
         raise RuntimeError("Select format failed for info: {}".format(info_path))
-    input_num = len(desc["input_desc"])
-    output_num = len(desc["output_desc"])
+    input_num = len(desc[INPUT_DESC])
+    output_num = len(desc[OUTPUT_DESC])
     param_list = []
     for i in range(input_num + output_num):
         dtype_list = [item[i] for item in supported_io_type] * len(supported_io_format)

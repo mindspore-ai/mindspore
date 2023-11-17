@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ import json
 import shutil
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.tbe_topi import get_op_reg_info
+
+O_SUFFIX = ".o"
+JSON_SUFFIX = ".json"
 
 
 def update_attr(attr, new_attr):
@@ -111,8 +114,8 @@ def select_best(src_dirs, dst_dir, op_name):
     max_block_dim = 1
     max_block_dim_idx = -1
     for i, src_dir in enumerate(src_dirs):
-        o_path = os.path.join(src_dir, op_name + ".o")
-        json_path = os.path.join(src_dir, op_name + ".json")
+        o_path = os.path.join(src_dir, op_name + O_SUFFIX)
+        json_path = os.path.join(src_dir, op_name + JSON_SUFFIX)
         if os.path.isfile(o_path) and os.path.isfile(json_path):
             with open(json_path, 'r') as f:
                 json_str = f.read()
@@ -121,10 +124,10 @@ def select_best(src_dirs, dst_dir, op_name):
                     max_block_dim_idx = i
                     max_block_dim = json_dict["blockDim"]
     if max_block_dim_idx >= 0:
-        o_path = os.path.join(src_dirs[max_block_dim_idx], op_name + ".o")
-        json_path = os.path.join(src_dirs[max_block_dim_idx], op_name + ".json")
-        _copy_file(o_path, os.path.join(dst_dir, op_name + ".o"))
-        _copy_file(json_path, os.path.join(dst_dir, op_name + ".json"))
+        o_path = os.path.join(src_dirs[max_block_dim_idx], op_name + O_SUFFIX)
+        json_path = os.path.join(src_dirs[max_block_dim_idx], op_name + JSON_SUFFIX)
+        _copy_file(o_path, os.path.join(dst_dir, op_name + O_SUFFIX))
+        _copy_file(json_path, os.path.join(dst_dir, op_name + JSON_SUFFIX))
         logger.info("{}, best compile result dir: {}".format(op_name, src_dirs[max_block_dim_idx]))
         return True
     logger.info("{}, best compile result dir not found".format(op_name))
