@@ -90,7 +90,8 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options,
+                                const bool &) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
