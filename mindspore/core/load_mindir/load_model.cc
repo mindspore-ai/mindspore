@@ -2230,8 +2230,8 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
   }
   std::map<std::string, mind_ir::GraphProto> sorted_proto;
-  std::for_each(model_proto.functions().begin(), model_proto.functions().end(),
-                [&sorted_proto](const auto &proto) { sorted_proto[proto.name()] = proto; });
+  (void)(std::for_each(model_proto.functions().begin(), model_proto.functions().end(),
+                       [&sorted_proto](const auto &proto) { sorted_proto[proto.name()] = proto; }));
   for (const auto &[name, proto] : sorted_proto) {
     FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[name]);
     if (!ImportNodesForGraph(graph, proto)) {

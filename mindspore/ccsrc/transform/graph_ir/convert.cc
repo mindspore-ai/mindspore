@@ -605,6 +605,19 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
   return false;
 }
 
+void DfGraphConvertor::JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const {
+  if (ref_mode_) {
+    if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
+      *as_ref_data = true;
+    } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
+      *as_constant = true;
+    }
+  } else if (!training_ && !node_will_update) {
+    // parameter will be updated, lite inference mode will treat as variables
+    *as_constant = true;
+  }
+}
+
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
@@ -638,19 +651,10 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
+    auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
     bool as_ref_data = false;
     bool as_constant = false;
-    auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
-    if (ref_mode_) {
-      if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
-        as_ref_data = true;
-      } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
-        as_constant = true;
-      }
-    } else if (!training_ && !node_will_update) {
-      // parameter will be updated, lite inference mode will treat as variables
-      as_constant = true;
-    }
+    JudgeParamTransType(node_will_update, &as_ref_data, &as_constant);
     if (as_ref_data) {
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
       auto variable = std::make_shared<RefData>(name);
