@@ -54,8 +54,8 @@ bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
   auto output_size = outputs[kIndex0]->size();
 
   std::vector<T> out(*ndim_addr, 1);
-  auto shape_size = SizeOf(inputs_[kIndex0]->GetShapeVector());
-  auto out_shape_size = SizeOf(inputs_[kIndex1]->GetShapeVector());
+  auto shape_size = SizeOf(inputs[kIndex0]->GetShapeVector());
+  auto out_shape_size = SizeOf(inputs[kIndex1]->GetShapeVector());
   auto it_num = std::min(shape_size, out_shape_size);
 
   for (size_t i = 0; i < it_num; i++) {
