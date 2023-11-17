@@ -584,7 +584,7 @@ class Div(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -604,7 +604,7 @@ def test_number_div_number():
         expect = -4
         assert np.all(result1 == expect)
         assert np.all(result2 == expect)
-    assert "The primitive[Div]'s input arguments[x] must be Tensor, but got Int64" in str(err)
+    assert "Failed calling Div with" in str(err.value)
 
 
 @pytest.mark.level1
