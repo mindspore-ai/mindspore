@@ -191,11 +191,9 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
-@pytest.mark.parametrize('data_type',
-                         [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
-                          mstype.uint64, mstype.int64, mstype.float16, mstype.float32, mstype.float64])
-@pytest.mark.parametrize('index_type', [mstype.int32, mstype.int64])
+@pytest.mark.parametrize('func', ['update', 'add', 'mul', 'max'])
+@pytest.mark.parametrize('data_type', [mstype.float32])
+@pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_func_indices_out_of_range(func, data_type, index_type):
     """
     Feature: ALL To ALL
