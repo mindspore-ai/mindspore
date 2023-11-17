@@ -1027,11 +1027,7 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weigh
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(j);
   for (size_t i = 0; i < forward_graph_params.size(); ++i) {
-    auto old_para = dyn_cast<Parameter>(forward_graph_params[i]);
-    MS_EXCEPTION_IF_NULL(old_para);
-    auto para = k_child->add_parameter();
-    para->set_name(old_para->name());
-    inputs.push_back(para);
+    inputs.push_back(k_child->add_parameter());
   }
   auto k_app = k_child->NewCNodeInOrder(inputs);
 
@@ -1289,6 +1285,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
     k_child = GetGrad(j, weights, position, forward_graph->parameters(),
                       forward_graph->has_flag("enable_tuple_grad_first"), is_weights_empty_or_none);
+    k_child->set_flag(FUNC_GRAPH_FLAG_ARGS_NO_EXPAND, true);
   }
   grad_fg->set_output(NewValueNode(k_child));
 
