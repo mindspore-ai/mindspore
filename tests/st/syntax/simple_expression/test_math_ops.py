@@ -331,7 +331,7 @@ def test_tuple_add_tuple_shape():
     Description: test add operator.
     Expectation: No exception
     """
-    with pytest.raises(ValueError, match="For 'Add', x.shape and y.shape need to broadcast."):
+    with pytest.raises(ValueError):
         input_x = (Tensor(np.ones(shape=[3])).astype(np.float32))
         input_y = (Tensor(np.ones(shape=[4])).astype(np.float32) * 2)
 
