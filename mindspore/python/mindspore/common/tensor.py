@@ -2683,7 +2683,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def _init_check(self):
         if self.has_init:
             self.init_data()
-        return self
 
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
         """

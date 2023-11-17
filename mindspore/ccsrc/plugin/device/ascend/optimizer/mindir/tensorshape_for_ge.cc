@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/mindir/tensorshape_for_ge.h"
-#include <memory>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
