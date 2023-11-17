@@ -15,10 +15,13 @@
  */
 
 #include "ops/ops_func_impl/bias_add.h"
+
+#include <unordered_map>
 #include <utility>
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -29,6 +32,8 @@ namespace ops {
 namespace {
 constexpr int64_t x_min_rank = 2;
 constexpr int64_t x_max_rank = 5;
+static std::unordered_map<mindspore::Format, int64_t> ChannelDimMap{
+  {Format::NHWC, -1}, {Format::NCHW, 1}, {Format::NCDHW, 1}};
 
 void CheckShapeValid(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -38,9 +43,10 @@ void CheckShapeValid(const PrimitivePtr &primitive, const std::vector<AbstractBa
   const auto &bias_shape = bias_shape_base->GetShapeVector();
   MS_CHECK_VALUE(bias_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                            "rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, primitive));
-  MS_CHECK_VALUE(input_shape.size() >= x_min_rank && input_shape.size() <= x_max_rank,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg("rank of input_x", SizeToLong(input_shape.size()),
-                                                             kIncludeBoth, {x_min_rank, x_max_rank}, primitive));
+  auto input_rank = SizeToLong(input_shape.size());
+  MS_CHECK_VALUE(input_rank >= x_min_rank && input_rank <= x_max_rank,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg("rank of input_x", input_rank, kIncludeBoth,
+                                                             {x_min_rank, x_max_rank}, primitive));
 
   if (IsDynamic(bias_shape)) {
     return;
@@ -52,18 +58,19 @@ void CheckShapeValid(const PrimitivePtr &primitive, const std::vector<AbstractBa
   if (!data_format_opt.has_value()) {
     return;
   }
-  auto data_format = data_format_opt.value();
 
-  if (data_format == Format::NHWC && input_shape[-1] != abstract::Shape::kShapeDimAny &&
-      bias_shape[0] != input_shape[-1]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x["
-                             << (input_shape.size() - 1) << "] shape when data_format is " << data_format << ".";
-  }
-  if ((data_format == Format::NCHW || data_format == Format::NCDHW) &&
-      input_shape[1] != abstract::Shape::kShapeDimAny && bias_shape[0] != input_shape[1]) {
+  auto data_format = static_cast<mindspore::Format>(data_format_opt.value());
+  auto it = ChannelDimMap.find(data_format);
+  if (it == ChannelDimMap.end()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', bias[0] shape should be equal to input_x[1] shape when data_format is "
-                             << data_format << ".";
+                             << "', the data_format must be NCHW, NHWC, or NCDHW, but got: " << data_format << ".";
+  }
+
+  auto channel_dim = (input_rank + it->second) % input_rank;
+  if (input_shape[channel_dim] != abstract::Shape::kShapeDimAny && bias_shape[0] != input_shape[channel_dim]) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x[" << channel_dim
+                             << "] shape when data_format is " << data_format << ", but got bias shape: ." << bias_shape
+                             << ", input_shape: " << input_shape << ".";
   }
 }
 }  // namespace
@@ -113,7 +120,7 @@ int32_t BiasAddFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   if (!data_format_opt.has_value()) {
     return OP_CHECK_RETRY;
   }
-  auto data_format = data_format_opt.value();
+  auto data_format = static_cast<mindspore::Format>(data_format_opt.value());
   if (data_format != Format::NCHW && data_format != Format::NHWC && data_format != Format::NCDHW) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the data_format must be NCHW, NHWC, or NCDHW, but got: " << data_format << ".";

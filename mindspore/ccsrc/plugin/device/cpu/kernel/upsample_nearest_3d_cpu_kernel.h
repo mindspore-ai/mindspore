@@ -60,7 +60,7 @@ class UpsampleNearest3DCpuKernelMod : public NativeCpuKernelMod {
   size_t unit_size_{0};
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::vector<double> scales_;
+  std::vector<float> scales_;
   std::vector<int64_t> none_list_;
 };
 }  // namespace kernel

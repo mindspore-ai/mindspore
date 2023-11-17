@@ -27,6 +27,7 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "mindapi/base/shared_ptr.h"
+#include "mindapi/base/types.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/image_ops.h"
@@ -80,7 +81,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector<int64_t>(kOutputSize, output_size, prim_name);
   }
   if (!IsDynamicRank(output_size)) {
     (void)CheckAndConvertUtils::CheckInteger("elements number of output_size", SizeToLong(output_size.size()), kEqual,
@@ -95,16 +96,10 @@ void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_n
                      const std::vector<int64_t> &input_size, std::vector<int64_t> *const y_shape) {
   auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
-  if (IsValueKnown(scales_value_ptr)) {
-    std::vector<double> scales;
-    if (scales_value_ptr->isa<tensor::Tensor>()) {
-      scales = CheckAndConvertUtils::CheckTensorFloatValue("scales", scales_value_ptr, prim_name);
-    } else if (scales_value_ptr->isa<ValueSequence>()) {
-      scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", scales_value_ptr, prim_name);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', scales should be 1D Tensor[Float] or Tuple[Float].";
-    }
-    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+  auto scales_opt = GetArrayValue<pyfloat>(scales_value_ptr);
+  if (scales_opt.has_value() && !scales_opt.value().HasUnknownValue()) {
+    const auto &scales = scales_opt.value().ToVector();
+    (void)CheckAndConvertUtils::CheckPositiveVector<pyfloat>(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, kVALUE_3,
                                              prim_name);
     for (int64_t idx = 0; idx < kVALUE_3; ++idx) {

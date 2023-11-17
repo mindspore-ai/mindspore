@@ -55,38 +55,22 @@ bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int SparseSplitGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto ret = KernelMod::Resize(inputs, outputs);
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto input_indices_shape = inputs[kIndex1]->GetShapeVector();
+  input_nnz_ = input_indices_shape[0];
+  num_dim_ = input_indices_shape[1];
 
   num_split = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("num_split")));
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    auto input_indices_shape = inputs[kIndex1]->GetShapeVector();
-    auto out_shape = outputs.at(kIndex2)->GetShapeVector();
-    auto out_size = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int64_t>());
-    out_size_ = out_size;
+  workspace_size_list_.push_back(num_split * sizeof(void *));
+  workspace_size_list_.push_back(num_split * sizeof(void *));
+  workspace_size_list_.push_back(num_split * sizeof(void *));
+  workspace_size_list_.push_back(num_split * sizeof(int));
+  workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
 
-    input_nnz_ = input_indices_shape[0];
-    num_dim_ = input_indices_shape[1];
-    input_dtype_ = inputs[kIndex2]->dtype_id();
-
-    output_size_list_.clear();
-    for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * num_dim_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
-    }
-    for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(input_nnz_ * GetTypeByte(TypeIdToType(inputs[Kindex2]->dtype_id())));
-    }
-    for (size_t i = 0; i < num_split; i++) {
-      (void)output_size_list_.emplace_back(num_dim_ * GetTypeByte(TypeIdToType(inputs[Kindex3]->dtype_id())));
-    }
-
-    workspace_size_list_.clear();
-    workspace_size_list_.push_back(num_split * sizeof(void *));
-    workspace_size_list_.push_back(num_split * sizeof(void *));
-    workspace_size_list_.push_back(num_split * sizeof(void *));
-    workspace_size_list_.push_back(num_split * sizeof(int));
-    workspace_size_list_.push_back((num_split + 1) * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
-  }
-  return ret;
+  return KRET_OK;
 }
 
 template <typename DataType, typename IndexType>

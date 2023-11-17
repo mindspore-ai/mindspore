@@ -730,7 +730,7 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
     auto dim = ib->Emit("Rank", {x});
-    auto perm = ib->Range(ib->TensorToScalar(dim));
+    auto perm = ib->Range(dim);
     auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
       return ib->Emit("StridedSlice",
                       {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),

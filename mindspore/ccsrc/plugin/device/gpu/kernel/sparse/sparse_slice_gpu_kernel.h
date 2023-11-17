@@ -64,7 +64,7 @@ class SparseSliceGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, SparseSliceLaunchFunc>> func_list_;
   SparseSliceLaunchFunc kernel_func_;
   cudaStream_t cuda_stream;
-  int64_t real_output_size = 0;
+  int64_t real_output_size_ = 0;
   size_t input_nnz_{0};
   size_t num_dim_{0};
   size_t out_size_{0};

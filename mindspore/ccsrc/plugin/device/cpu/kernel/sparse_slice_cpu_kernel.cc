@@ -56,63 +56,61 @@ bool SparseSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int SparseSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto ret = KernelMod::Resize(inputs, outputs);
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
-    const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
-    const auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
-    const auto input_start_shape = inputs[kIndex3]->GetShapeVector();
-    const auto input_size_shape = inputs[kIndex4]->GetShapeVector();
-
-    if (input_indices_shape.size() != kDim1Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_indices_shape' must be 2D Tensor "
-                        << ", but got " << input_indices_shape.size() << "-D";
-    }
-    if (input_values_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_values_shape' must be 1D Tensor "
-                        << ", but got " << input_values_shape.size() << "-D";
-    }
-    if (input_shape_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_shape_shape' must be 1D Tensor "
-                        << ", but got " << input_shape_shape.size() << "-D";
-    }
-    if (input_start_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_start_shape' must be 1D Tensor "
-                        << ", but got " << input_start_shape.size() << "-D";
-    }
-    if (input_size_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_size_shape' must be 1D Tensor "
-                        << ", but got " << input_size_shape.size() << "-D";
-    }
-    if (input_indices_shape[0] != input_values_shape[0]) {
-      MS_LOG(ERROR)
-        << "For '" << kernel_name_
-        << "', the dim of 'input_indices' must be the same as 'input_values', but got the dim of 'input_indices': "
-        << input_indices_shape[0] << " and the dim of 'input_values': " << input_values_shape[0];
-    }
-    if (!IsSameShape(input_shape_shape, input_start_shape)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape of 'input_shape' must be the same as the shape of 'input_start', but got the "
-                       "shape of 'input_shape': "
-                    << input_shape_shape << " and the shape of 'input_start': " << input_start_shape;
-      return KRET_RESIZE_FAILED;
-    }
-    if (!IsSameShape(input_shape_shape, input_size_shape)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape of 'input_shape' must be the same as the shape of 'input_size', but got the shape "
-                       "of 'input_shape': "
-                    << input_shape_shape << " and the shape of 'input_size': " << input_size_shape;
-      return KRET_RESIZE_FAILED;
-    }
-    nnz_ = input_indices_shape[0];
-    rank_ = input_indices_shape[1];
-
-    output_size_list_.clear();
-    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->dtype_id())));
-    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->dtype_id())));
-    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->dtype_id())));
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  return ret;
+
+  const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
+  const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
+  const auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
+  const auto input_start_shape = inputs[kIndex3]->GetShapeVector();
+  const auto input_size_shape = inputs[kIndex4]->GetShapeVector();
+
+  if (input_indices_shape.size() != kDim1Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_indices_shape' must be 2D Tensor "
+                      << ", but got " << input_indices_shape.size() << "-D";
+  }
+  if (input_values_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_values_shape' must be 1D Tensor "
+                      << ", but got " << input_values_shape.size() << "-D";
+  }
+  if (input_shape_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_shape_shape' must be 1D Tensor "
+                      << ", but got " << input_shape_shape.size() << "-D";
+  }
+  if (input_start_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_start_shape' must be 1D Tensor "
+                      << ", but got " << input_start_shape.size() << "-D";
+  }
+  if (input_size_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_size_shape' must be 1D Tensor "
+                      << ", but got " << input_size_shape.size() << "-D";
+  }
+  if (input_indices_shape[0] != input_values_shape[0]) {
+    MS_LOG(ERROR)
+      << "For '" << kernel_name_
+      << "', the dim of 'input_indices' must be the same as 'input_values', but got the dim of 'input_indices': "
+      << input_indices_shape[0] << " and the dim of 'input_values': " << input_values_shape[0];
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input_shape_shape, input_start_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'input_shape' must be the same as the shape of 'input_start', but got the "
+                     "shape of 'input_shape': "
+                  << input_shape_shape << " and the shape of 'input_start': " << input_start_shape;
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input_shape_shape, input_size_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'input_shape' must be the same as the shape of 'input_size', but got the shape "
+                     "of 'input_shape': "
+                  << input_shape_shape << " and the shape of 'input_size': " << input_size_shape;
+    return KRET_RESIZE_FAILED;
+  }
+  nnz_ = input_indices_shape[0];
+  rank_ = input_indices_shape[1];
+
+  return KRET_OK;
 }
 
 void SparseSliceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,

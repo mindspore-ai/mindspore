@@ -65,7 +65,7 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
   int64_t output_d_{};
   int64_t output_h_{};
   int64_t output_w_{};
-  std::vector<double> scales_{0., 0., 0.};
+  std::vector<float> scales_{0., 0., 0.};
   std::vector<int64_t> none_list_;
 };
 }  // namespace kernel
