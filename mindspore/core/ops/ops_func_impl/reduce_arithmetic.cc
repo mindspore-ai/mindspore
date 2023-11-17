@@ -38,8 +38,7 @@ BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   auto keep_dims = keep_dims_opt.value();
 
-  auto axis_value = input_args[kInputIndex1]->GetValue();
-  auto axis_array_opt = GetArrayValue<int64_t>(axis_value);
+  auto axis_array_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (axis_array_opt.has_value()) {
     // If axis is empty tuple and keep_dims is False, return a zero-dimensional Tensor
     if (axis_array_opt->size() == 0 && !keep_dims) {

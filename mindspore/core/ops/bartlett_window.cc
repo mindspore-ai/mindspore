@@ -56,8 +56,7 @@ abstract::ShapePtr BartlettWindowInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
   if (CheckAndConvertUtils::IsTensor(input_args[0]) && IsValueKnown(input_args[0]->GetValue())) {
-    auto window_length_value_ptr = input_args[0]->GetValue();
-    MS_EXCEPTION_IF_NULL(window_length_value_ptr);
+    auto window_length_value_ptr = input_args[0];
     auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     auto input_type_id = input_type->cast<TensorTypePtr>();

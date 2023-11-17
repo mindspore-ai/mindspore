@@ -41,7 +41,7 @@ BaseShapePtr ResizeNearestNeighborGradFuncImpl::InferShape(const PrimitivePtr &p
     output_shape.insert(output_shape.end(), grads_shape.begin(), grads_shape.begin() + size_size);
   }
 
-  auto size_ptr = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  auto size_ptr = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!size_ptr.has_value()) {
     output_shape.push_back(abstract::TensorShape::kShapeDimAny);
     output_shape.push_back(abstract::TensorShape::kShapeDimAny);

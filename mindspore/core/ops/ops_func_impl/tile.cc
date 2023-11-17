@@ -73,7 +73,7 @@ BaseShapePtr TileFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   // A Tensor or a Tuple should be a value known one now.
-  auto multiples_array_opt = GetArrayValue<int64_t>(multiples_value);
+  auto multiples_array_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   MS_CHECK_VALUE(multiples_array_opt.has_value(),
                  CheckAndConvertUtils::FormatCommMsg("For primitive[Tile], the multiples must has value here."));
   auto multiples_array = multiples_array_opt.value();

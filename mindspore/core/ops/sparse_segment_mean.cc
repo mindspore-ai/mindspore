@@ -83,14 +83,13 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     out_shape[LongToSize(batch_rank)] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    auto segment_ids_value = input_args[kInputIndex2]->GetValue();
-    MS_EXCEPTION_IF_NULL(segment_ids_value);
+    auto segment_ids = input_args[kInputIndex2];
 
     size_t segment_ids_size;
     int64_t segment_num = 0;
     auto segment_ids_type_id = input_args[kInputIndex2]->GetType()->cast<TensorTypePtr>()->element()->type_id();
     if (segment_ids_type_id == kNumberTypeInt32) {
-      auto segment_ids_opt = GetArrayValue<int32_t>(segment_ids_value);
+      auto segment_ids_opt = GetArrayValue<int32_t>(segment_ids);
       if (!segment_ids_opt.has_value()) {
         MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
       }
@@ -98,7 +97,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
       segment_ids_size = segment_ids_data.size();
       segment_num = IntToLong(segment_ids_data[segment_ids_size - 1] + 1);
     } else if (segment_ids_type_id == kNumberTypeInt64) {
-      auto segment_ids_opt = GetArrayValue<int64_t>(segment_ids_value);
+      auto segment_ids_opt = GetArrayValue<int64_t>(segment_ids);
       if (!segment_ids_opt.has_value()) {
         MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
       }

@@ -68,11 +68,8 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
     auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("n shape", SizeToLong(n_shape.size()), kEqual, 0, primitive->name());
     MS_EXCEPTION_IF_NULL(n_value_ptr);
-    if (!n_value_ptr->ContainsValueAny()) {
-      auto n_value_opt = GetArrayValue<int64_t>(n_value_ptr);
-      if (!n_value_opt.has_value()) {
-        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the n_value must be valid";
-      }
+    auto n_value_opt = GetArrayValue<int64_t>(input_args[1]);
+    if (n_value_opt.has_value()) {
       n_val = n_value_opt.value()[0];
     }
   } else if (CheckAndConvertUtils::IsScalar(input_args[1])) {

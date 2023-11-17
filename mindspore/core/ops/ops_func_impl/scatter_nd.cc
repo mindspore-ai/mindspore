@@ -101,9 +101,7 @@ BaseShapePtr ScatterNdFuncImpl::InferShape(const PrimitivePtr &prim,
   const auto &indices_shape = indices_shape_base->GetShapeVector();
   const auto &updates_shape = updates_shape_base->GetShapeVector();
 
-  auto shape_value_ptr = input_args[kInputIndex2]->GetValue();
-  MS_EXCEPTION_IF_NULL(shape_value_ptr);
-  auto shape_tuple_opt = GetArrayValue<int64_t>(shape_value_ptr);
+  auto shape_tuple_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]);
   const int64_t last_dim = indices_shape.back();
   bool last_dim_unknown = last_dim == abstract::Shape::kShapeDimAny || last_dim == abstract::Shape::kShapeRankAny;
   if (shape_base->isa<abstract::DynamicSequenceShape>() || !shape_tuple_opt.has_value()) {

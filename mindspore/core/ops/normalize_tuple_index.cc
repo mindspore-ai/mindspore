@@ -93,8 +93,7 @@ AbstractBasePtr NormalizeSequenceIndex(const ShapeVector &data_shape, const Abst
                                        size_t dim_index, const std::vector<int64_t> &tuple_index_types,
                                        size_t expand_dims_mask) {
   auto output_list_elements = std::vector<int64_t>();
-  auto index_val = index_val_abs->GetValue();
-  auto index_val_opt = GetArrayValue<int64_t>(index_val);
+  auto index_val_opt = GetArrayValue<int64_t>(index_val_abs);
   if (!index_val_opt.has_value()) {
     MS_EXCEPTION(IndexError) << "The sequence element(tuple/list) in tuple index can't be dynamic len.";
   }

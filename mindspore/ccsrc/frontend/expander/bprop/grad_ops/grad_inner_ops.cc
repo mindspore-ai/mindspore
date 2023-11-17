@@ -140,7 +140,7 @@ REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto shift_value = shift->BuildValue();
   MS_EXCEPTION_IF_NULL(shift_value);
-  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift_value);
+  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift->abstract());
   if (!shift_array_opt.has_value()) {
     MS_LOG(EXCEPTION)
       << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"

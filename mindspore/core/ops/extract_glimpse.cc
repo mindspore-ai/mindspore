@@ -97,9 +97,8 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   int64_t batch_cnt = input_shape[0];
   int64_t channels = input_shape.back();
   auto size_value_ptr = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(size_value_ptr);
   if (IsValueKnown(size_value_ptr)) {
-    auto size_value = GetArrayValue<int32_t>(size_value_ptr).value();
+    auto size_value = GetArrayValue<int32_t>(input_args[1]).value();
     g_height = size_value[0];
     g_width = size_value[1];
     if (g_height == 0 || g_width == 0) {

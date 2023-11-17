@@ -1110,7 +1110,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
   auto x_shape = ib->GetShape(x);
   auto out_shape = ib->GetShape(out);
 
-  auto ksizes_opt = ops::GetArrayValue<int64_t>(ksizes->BuildValue());
+  auto ksizes_opt = ops::GetArrayValue<int64_t>(ksizes->abstract());
   int64_t ksizes_row = 1;
   int64_t ksizes_col = 1;
   if (ksizes_opt.has_value()) {

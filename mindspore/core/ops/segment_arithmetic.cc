@@ -96,9 +96,8 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector out_shape(x_shape);
-  auto segment_ids_ptr = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(segment_ids_ptr);
-  if (!segment_ids_ptr->ContainsValueAny() && !segment_ids_ptr->isa<None>()) {
+  auto segment_ids_ptr = input_args[1];
+  if (IsValueKnown(segment_ids_ptr)) {
     auto segment_ids_type = input_args[1]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(segment_ids_type);
     auto segment_ids_type_id = segment_ids_type->element()->type_id();

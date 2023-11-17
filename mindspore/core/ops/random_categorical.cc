@@ -67,18 +67,16 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
                               << TypeIdToString(num_sample_input_type->type_id()) << ".";
     }
   } else if (CheckAndConvertUtils::IsTensor(nun_sample_arg)) {
-    auto num_sample_value_ptr = nun_sample_arg->GetValue();
-    MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
     auto nun_sample_type = nun_sample_arg->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(nun_sample_type);
     if (nun_sample_type->element()->type_id() == kNumberTypeInt64) {
-      auto num_sample_value_opt = GetArrayValue<int64_t>(num_sample_value_ptr);
+      auto num_sample_value_opt = GetArrayValue<int64_t>(nun_sample_arg);
       if (num_sample_value_opt.has_value() || num_sample_value_opt.value().size() == 0) {
         MS_EXCEPTION(TypeError) << "num_sample_value is invalid for RandomCategorical";
       }
       num_sample = num_sample_value_opt.value()[0];
     } else if (nun_sample_type->element()->type_id() == kNumberTypeInt32) {
-      auto num_sample_value_opt = GetArrayValue<int32_t>(num_sample_value_ptr);
+      auto num_sample_value_opt = GetArrayValue<int32_t>(nun_sample_arg);
       if (num_sample_value_opt.has_value() || num_sample_value_opt.value().size() == 0) {
         MS_EXCEPTION(TypeError) << "num_sample_value is invalid for RandomCategorical";
       }

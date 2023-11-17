@@ -52,10 +52,9 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
                              << "', 'a' should be a 0-dim Tensor, but got rank: " << a_shape.size() << ".";
   }
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
-    auto input_a_ptr = input_args[kInputIndex0]->GetValue();
-    MS_EXCEPTION_IF_NULL(input_a_ptr);
-    if (!input_a_ptr->isa<ValueAny>()) {
-      auto intput_a_array = GetArrayValue<int64_t>(input_a_ptr).value();
+    auto input_a_opt = GetArrayValue<int64_t>(input_args[kInputIndex0]);
+    if (input_a_opt.has_value()) {
+      auto intput_a_array = input_a_opt.value();
       input_a = intput_a_array[0];
     } else {
       return std::make_shared<abstract::Shape>(x_shape);

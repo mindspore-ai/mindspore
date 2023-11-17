@@ -69,10 +69,8 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     const std::set<TypePtr> output_size_valid_types = {kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->GetType(), output_size_valid_types,
                                                      op_name);
-    auto set_shape_value = set_shape_tensor->GetValue();
-    MS_EXCEPTION_IF_NULL(set_shape_value);
-    if (!set_shape_value->isa<None>() && !set_shape_value->ContainsValueAny()) {
-      auto value = GetArrayValue<int64_t>(set_shape_value).value().ToVector();
+    if (IsValueKnown(set_shape_tensor)) {
+      auto value = GetArrayValue<int64_t>(set_shape_tensor).value().ToVector();
       for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
         set_shape_value_vec[i] = value[i];
       }

@@ -30,9 +30,9 @@ constexpr auto kExtractImagePatchesInputDims = 4;
 constexpr auto kExtractImagePatchesArgDims = 2;
 }  // namespace
 std::vector<int64_t> CheckAndGetExtractImagePatchesList(string prim_name, string param_name,
-                                                        AbstractBasePtr input_arg) {
+                                                        const AbstractBasePtr &input_arg) {
   std::vector<int64_t> out(2, abstract::Shape::kShapeDimAny);
-  auto arg_value = GetArrayValue<int64_t>(input_arg->GetValue());
+  auto arg_value = GetArrayValue<int64_t>(input_arg);
   if (!arg_value.has_value()) {
     return out;
   }

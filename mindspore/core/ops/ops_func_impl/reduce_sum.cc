@@ -26,8 +26,7 @@ BaseShapePtr ReduceSumFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
   MS_CHECK_VALUE(input_args.size() == 4, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                            "input_args number", SizeToLong(input_args.size()), kEqual, 4, primitive));
-  auto axis_value = input_args[kInputIndex1]->GetValue();
-  auto axis_array_opt = GetArrayValue<int64_t>(axis_value);
+  auto axis_array_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   bool is_empty_axis = axis_array_opt.has_value() && axis_array_opt->size() == 0;
   auto skip_mode_opt = GetScalarValue<bool>(input_args[kInputIndex3]->GetValue());
   if (MS_UNLIKELY(!skip_mode_opt.has_value())) {

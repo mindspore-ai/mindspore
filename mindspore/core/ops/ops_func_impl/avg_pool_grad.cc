@@ -29,7 +29,7 @@ BaseShapePtr GetShapeKXFromTensor(const PrimitivePtr &primitive, const AbstractB
   auto prim_name = primitive->name();
   // The value of the first input is the real "x_origin" shape when 'x_from_tensor' exists.
   auto x_value = x->GetValue();
-  if (x_value->isa<tensor::Tensor>()) {
+  if (CheckAndConvertUtils::IsTensor(x)) {
     auto x_value_array_opt = GetArrayValue<int32_t>(x_value);
     if (!x_value_array_opt.has_value()) {
       return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
