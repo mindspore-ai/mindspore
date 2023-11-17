@@ -59,13 +59,15 @@ class OpRegister {
   ~OpRegister() = default;
 };
 
-#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                                \
-  static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op");                  \
-  static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
-    auto op = std::make_shared<clazz##DEVICE>();                                            \
-    op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \
-    return op;                                                                              \
-  });
+#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                                  \
+  do {                                                                                        \
+    static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op");                  \
+    static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
+      auto op = std::make_shared<clazz##DEVICE>();                                            \
+      op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \
+      return op;                                                                              \
+    });                                                                                       \
+  } while (0)
 
 #define MS_REG_PYBOOST_OP(DEVICE, clazz) MS_REG_PYBOOST_OP_REG(DEVICE, clazz)
 
