@@ -105,8 +105,7 @@ void MapTensorGetGradGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<Ke
                                                             const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The outputs number of kernel MapTensorGetGrad should be 1");
   outputs[0]->SetShapeVector(value_dims_);
-  outputs[0]->set_size(LongToSize(std::accumulate(
-    value_dims_.begin(), value_dims_.end(), UnitSizeInBytes(outputs[0]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[0]->set_size(kSizeOne);
 }
 
 template <typename KeyType>
