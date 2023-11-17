@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "runtime/hardware/device_context.h"
 #include "runtime/pynative/op_compiler.h"
 
@@ -28,11 +29,12 @@ namespace runtime {
 // Extract the methods related to DeviceAddress in GraphCompiler to the DeviceAddressUtils class.
 class BACKEND_EXPORT DeviceAddressUtils {
  public:
+  static void CopyNonTensorDataToDevice(const device::DeviceContext *device_context,
+                                        const device::DeviceAddressPtr &device_address);
   static void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
-  static std::vector<device::DeviceAddressPtr> CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
-                                                                                 const ValuePtr &node_value,
-                                                                                 size_t output_idx,
-                                                                                 const ValueNodePtr &value_node);
+  static device::DeviceAddressPtrList CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
+                                                                        const ValuePtr &node_value, size_t output_idx,
+                                                                        const ValueNodePtr &value_node);
   static void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph,
                                               bool is_gradient_out);
@@ -49,48 +51,78 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                           const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
 
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
-                                                     const tensor::TensorPtr &tensor, const std::string &input_name);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
-                                                     const std::optional<tensor::TensorPtr> &val,
-                                                     const std::string &input_name);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const ScalarPtr &scalar_value,
-                                                     const std::string &input_name);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
-                                                     const StringImmPtr &string_imm, const std::string &input_name);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const TypePtr &type,
-                                                     const std::string &input_name);
+  static device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node,
+                                                        const OpCompilerInfoPtr &op_compiler_info);
+  static device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node,
+                                                         const OpCompilerInfoPtr &op_compiler_info,
+                                                         size_t output_index);
+  static size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node,
+                                    const ShapeVector &shape, const string &format, TypeId dtype, size_t output_index);
 
+  // Overloading
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+                                       const tensor::TensorPtr &tensor);
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+                                       const std::optional<tensor::TensorPtr> &val);
   template <typename T>
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, const T &t,
-                                                     const std::string &input_name) {
-    return nullptr;
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+                                       const std::vector<T> &inputs) {
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      CreateInputTensorAddress(device_context, index, inputs[i]);
+    }
   }
 
-  static void CopyConstantToDevice(const device::DeviceContext *device_context,
-                                   const device::DeviceAddressPtr &device_address, const std::string &op_name);
-  static std::vector<device::DeviceAddressPtr> CreateInputTensorAddress(const DeviceContext *device_context,
-                                                                        const std::vector<tensor::TensorPtr> &tensors,
-                                                                        const std::string &input_name,
-                                                                        bool need_ret_address = false);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const tensor::TensorPtr &tensor);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const std::optional<tensor::TensorPtr> &val);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const ScalarPtr &scalar_value);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const StringImmPtr &string_imm);
+  template <typename T>
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index, const T &t) {
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(abs);
 
-  static void CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                        const std::string &output_name, const std::string &format = "");
+    const auto &shape = abs->GetShape();
+    const auto &type = abs->GetType();
+    const auto &value = abs->GetValueTrack();
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    device_address->set_from_persistent_mem(true);
 
-  static device::DeviceAddressPtr CreateOutputTensorAddress(const DeviceContext *device_context,
-                                                            const tensor::TensorPtr &tensor,
-                                                            const pynative::DeviceAddressPromisePtr &promise,
-                                                            const std::string &output_name,
-                                                            const std::string &format = "");
+    if (device_address->GetPtr() == nullptr) {
+      CopyNonTensorDataToDevice(device_context, device_address);
+    }
+    MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
+                  << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
+                  << ", Value: " << (value ? value->ToString() : "nullptr");
+    return device_address;
+  }
+
+  static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
+  static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs,
+                                        const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises);
+
+  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
+                                                      const abstract::AbstractBasePtr &abs, size_t index,
+                                                      const tensor::TensorPtr &tensor, const string &format = "");
+
+  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
+                                                      const abstract::AbstractBasePtr &abs, size_t index,
+                                                      const tensor::TensorPtr &tensor,
+                                                      const pynative::DeviceAddressPromisePtr &promise,
+                                                      const string &format = "");
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
 };
-device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
-device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,
-                                                size_t output_index);
-size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node, const ShapeVector &shape,
-                           std::string format, TypeId dtype, size_t output_index);
 }  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_COMMON_UTILS_H_

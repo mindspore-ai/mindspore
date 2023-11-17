@@ -4,7 +4,9 @@
   auto storage_info_list = ops::${op_name}Calc(primitive_, {${call_args}});
   if (!storage_info_list.empty()) {
     storage_info_list[0]->data_type = ${input}->data_type();
-    PrepareOpInputs(device_context_, ${call_tensors});
+    // Malloc for input tensors
+    PyBoostUtils::PrepareOpInputs(device_context_, ${call_tensors});
+    // Malloc for output tensors
     PyBoostUtils::CreateOutputTensor(${input}, storage_info_list[0], &outputs_);
     output_abs_ = output(0)->ToAbstract();
   } else {
