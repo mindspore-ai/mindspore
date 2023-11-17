@@ -779,8 +779,8 @@ class TBERegOp(RegOp):
                                          False: indicates that the operator does not support dynamic rank.
                                          Default: ``False`` .
         """
-        self._is_bool(dynamic_rank_support)
-        self.dynamic_rank_support_ = dynamic_rank_support
+        if self._is_bool(dynamic_rank_support):
+            self.dynamic_rank_support_ = dynamic_rank_support
         return self
 
     def real_input_index(self, real_input_index):
@@ -904,8 +904,8 @@ class TBERegOp(RegOp):
         Args:
             need_check_supported (bool): Value of need_check_supported. Default: ``False`` .
         """
-        self._is_bool(need_check_supported)
-        self.need_check_support_ = need_check_supported
+        if self._is_bool(need_check_supported):
+            self.need_check_support_ = need_check_supported
         return self
 
     def is_dynamic_format(self, is_dynamic_format=False):
@@ -915,8 +915,8 @@ class TBERegOp(RegOp):
         Args:
             is_dynamic_format (bool): Value of is_dynamic_format. Default: ``False`` .
         """
-        self._is_bool(is_dynamic_format)
-        self.dynamic_format_ = is_dynamic_format
+        if self._is_bool(is_dynamic_format):
+            self.dynamic_format_ = is_dynamic_format
         return self
 
     def op_pattern(self, pattern=None):
