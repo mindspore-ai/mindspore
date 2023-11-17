@@ -675,7 +675,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     std::mutex mutex;
     std::unique_lock<std::mutex> locker(mutex);
     std::condition_variable thread_blocker;
-    const int64_t kTimeToWait = 2;
+    const int64_t kTimeToWait = 60;
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
     // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
     MsException::Instance().CheckException();
