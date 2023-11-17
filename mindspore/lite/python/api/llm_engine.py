@@ -145,6 +145,30 @@ class LLMWaitProcessTimeOut(RuntimeError):
     """
 
 
+class LLMRepeatRequest(RuntimeError):
+    """
+    Request repeated . Raised in LLMEngine.predict.
+    """
+
+
+class LLMRequestAlreadyCompleted(RuntimeError):
+    """
+    Request has already completed. Raised in LLMEngine.predict.
+    """
+
+
+class LLMEngineFinalized(RuntimeError):
+    """
+    LLMEngine has finalized. Raised in LLMEngine.predict.
+    """
+
+
+class LLMParamInvalid(RuntimeError):
+    """
+    Parameters invalid. Raised in LLMEngine.predict.
+    """
+
+
 class LLMEngine:
     """
     The `LLMEngine` class defines a MindSpore Lite's LLMEngine, used to load and manage Large Language Mode,
@@ -215,6 +239,9 @@ class LLMEngine:
         self.engine_ = LLMEngine_()
         role_inner = LLMRole_.Prompt if self.role == LLMRole.Prompt else LLMRole_.Decoder
         ret = self.engine_.init(model_paths, role_inner, self.cluster_id, options)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
         if not ret.IsOk():
             role_str = 'Prompt' if self.role == LLMRole.Prompt else 'Decoder'
             raise RuntimeError(f"Failed to init LLMEngine, model paths {model_paths}, role {role_str},"
@@ -245,11 +272,15 @@ class LLMEngine:
             TypeError: `inputs` is not a list.
             TypeError: `inputs` is a list, but the elements are not Tensor.
             RuntimeError: schedule and execute inference request failed.
-            RuntimeError: this LLMEngine object has not been inited
+            RuntimeError: this LLMEngine object has not been inited.
             LLMKVCacheNotExist: Key & Value cache does not exist in Prompt cluster specified by
                 `llm_req.prompt_cluster_id`, and the LLM request may have been released in Prompt cluster
                 by calling method LLMEngine.complete_request.
-            LLMWaitProcessTimeOut: Request waiting for processing timed out. Raised in LLMEngine.predict.
+            LLMWaitProcessTimeOut: Request waiting for processing timed out.
+            LLMRepeatRequest: Repeat request.
+            LLMRequestAlreadyCompleted: Request has already completed.
+            LLMEngineFinalized: LLMEngine has finalized.
+            LLMParamInvalid: Parameters invalid.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
@@ -269,6 +300,14 @@ class LLMEngine:
             raise LLMWaitProcessTimeOut("Waiting for processing timeout")
         if status_code == StatusCode.kLiteLLMKVCacheNotExist:
             raise LLMKVCacheNotExist("KV Cache not exist")
+        if status_code == StatusCode.kLiteLLMRepeatRequest:
+            raise LLMRepeatRequest("Repeat request")
+        if status_code == StatusCode.kLiteLLMRequestAlreadyCompleted:
+            raise LLMRequestAlreadyCompleted("Request has already completed")
+        if status_code == StatusCode.kLiteLLMEngineFinalized:
+            raise LLMEngineFinalized("LLMEngine has finalized")
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
         if not outputs:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []
@@ -285,7 +324,7 @@ class LLMEngine:
 
         Raises:
             TypeError: `llm_req` is not a LLMReq.
-            RuntimeError: this LLMEngine object has not been inited
+            RuntimeError: this LLMEngine object has not been inited.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
@@ -301,7 +340,7 @@ class LLMEngine:
             LLMEngineStatus, LLMEngine status.
 
         Raises:
-            RuntimeError: this LLMEngine object has not been inited
+            RuntimeError: this LLMEngine object has not been inited.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
@@ -321,7 +360,8 @@ class LLMEngine:
             TypeError: `inputs` is not a list.
             TypeError: `inputs` is a list, but the elements are not Tensor.
             RuntimeError: preload prompt prefix inference request failed.
-            RuntimeError: this LLMEngine object has not been inited
+            RuntimeError: this LLMEngine object has not been inited.
+            LLMParamInvalid: Parameters invalid.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
@@ -336,6 +376,9 @@ class LLMEngine:
             _inputs.append(element._tensor)
         # pylint: disable=protected-access
         ret = self.engine_.preload_prompt_prefix(llm_req.llm_request_, _inputs)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
         if not ret.IsOk():
             raise RuntimeError(f"Failed to call preload_prompt_prefix, req id {llm_req.req_id}, prompt_cluster_id "
                                f"{llm_req.prompt_cluster_id}, decoder cluster id {llm_req.decoder_cluster_id}, "
@@ -350,13 +393,17 @@ class LLMEngine:
 
         Raises:
             TypeError: `llm_req` is not a LLMReq.
-            RuntimeError: this LLMEngine object has not been inited
+            RuntimeError: this LLMEngine object has not been inited.
+            LLMParamInvalid: Parameters invalid.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
         # pylint: disable=protected-access
         ret = self.engine_.release_prompt_prefix(llm_req.llm_request_)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
         if not ret.IsOk():
             raise RuntimeError(f"Failed to call release_prompt_prefix, req id {llm_req.req_id}, prompt_cluster_id "
                                f"{llm_req.prompt_cluster_id}, decoder cluster id {llm_req.decoder_cluster_id}, "
