@@ -15,8 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
 #include <memory>
-#include <string>
-#include <utility>
 
 #include "ops/ascend_op_name.h"
 #include "ops/math_ops.h"

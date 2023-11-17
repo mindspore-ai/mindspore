@@ -16,8 +16,6 @@
 #include "kernel/oplib/super_bar.h"
 
 #include <vector>
-#include <algorithm>
-#include <stdexcept>
 #include <nlohmann/json.hpp>
 
 #include "nlohmann/detail/iterators/iter_impl.hpp"
