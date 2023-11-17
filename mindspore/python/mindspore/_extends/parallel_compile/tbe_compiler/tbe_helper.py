@@ -65,7 +65,8 @@ class LocalLock:
 
     def __init__(self, lock_file):
         if not os.path.exists(lock_file):
-            write_to_file(lock_file)
+            if not write_to_file(lock_file):
+                raise IOError("write_to_file failed.")
         self.lock_fd = os.open(lock_file, os.O_WRONLY | os.O_CREAT, stat.S_IWUSR | stat.S_IRUSR)
 
     def __del__(self):
