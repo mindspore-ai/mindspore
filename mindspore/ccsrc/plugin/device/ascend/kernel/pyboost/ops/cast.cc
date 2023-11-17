@@ -38,7 +38,7 @@ tensor::TensorPtr CastAscend::Call(const TensorPtr &input_tensor, const TypePtr 
     const auto &outputs = op->outputs();
     // Malloc for input tensors
     std::vector<kernel::KernelTensor *> input_kernel_tensors;
-    (void)runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
+    (void)runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_tensor, "input_tensor");
 
     // Malloc for output tensors
     PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
