@@ -24,6 +24,7 @@ from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
 from mindspore.ops.auto_generate import Identity
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops._tracefunc import PackFunc
 from ..auto_generate import Assign
 
 
@@ -48,6 +49,8 @@ class Load(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['ref', 'u'], outputs=['output'])
 
     def __call__(self, *args):
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return super().__call__(*args)
         return _get_cache_prim(Identity)()(args[0])
 
     def check_dtype(self, variable):
@@ -522,6 +525,8 @@ class Depend(Primitive):
         self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, value, expr):
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return super().__call__(value, expr)
         return value
 
 
