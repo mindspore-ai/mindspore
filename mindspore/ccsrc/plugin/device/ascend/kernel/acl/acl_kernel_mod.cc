@@ -53,6 +53,7 @@ void AclKernelMod::PackageInput(const size_t idx, const std::string &format, Sha
   auto &params = input_params_[idx];
   if (!format.empty()) {
     params.ori_format = format;
+    transform::AclHelper::PaddingOriShape(kernel_name_, idx, format, shape);
   } else {
     params.ori_format = transform::AclHelper::ConvertOriginShapeAndFormat(kernel_name_, idx, params.dev_format, shape);
   }

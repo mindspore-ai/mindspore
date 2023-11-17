@@ -47,6 +47,7 @@ class AclHelper {
                                       std::vector<std::string> *output_reshape_types);
 
   // Convert mindspore's origin information to acl's origin information.
+  static void PaddingOriShape(const std::string &name, size_t idx, const std::string &format, ShapeVector *shape);
   static std::string ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                  ShapeVector *shape);
 
