@@ -354,7 +354,7 @@ class CustomCallback(Callback):
         assert np.allclose(self.except_loss[cb_params.cur_step_num - 1], loss)
 
 
-@pytest.mark.skip(reason="dyn-shape-dev-bug")
+@pytest.mark.skip(reason="r2.3-ge-occasional-coredump")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
