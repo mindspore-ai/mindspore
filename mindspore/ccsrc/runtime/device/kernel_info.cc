@@ -15,7 +15,6 @@
  */
 
 #include "include/backend/kernel_info.h"
-#include <utility>
 
 namespace mindspore {
 namespace device {

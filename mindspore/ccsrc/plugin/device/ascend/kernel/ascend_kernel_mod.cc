@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include <algorithm>
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
