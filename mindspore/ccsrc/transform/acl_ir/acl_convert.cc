@@ -595,7 +595,7 @@ aclDataType AclConverter::ConvertType(TypeId type) {
     AT_ALL_MINDSPORE_TYPE_AND_ACL_DATATYPE_PAIR(DEFINE_ENUM)
 #undef DEFINE_ENUM
   };
-  if (type == kMetaTypeNone) {
+  if (type == kMetaTypeNone || type == kTypeUnknown) {
     return ACL_DT_UNDEFINED;
   }
   if (type <= kNumberTypeBegin || type >= kNumberTypeEnd) {

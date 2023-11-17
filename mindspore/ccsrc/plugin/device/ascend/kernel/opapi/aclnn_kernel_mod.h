@@ -26,6 +26,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/kernel.h"
+#include "include/common/utils/utils.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -37,6 +38,17 @@ using aclTensor = transform::aclTensor;
 using aclOpExecutor = transform::aclOpExecutor;
 using CallBackFunc = std::function<void()>;
 using OpApiUtil = transform::OpApiUtil;
+
+class EmptyKernelTensor {
+ public:
+  EmptyKernelTensor() { tensor_ = new KernelTensor(); }
+  ~EmptyKernelTensor() { delete tensor_; }
+  void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
+  KernelTensor *get() const { return tensor_; }
+
+ private:
+  KernelTensor *tensor_;
+};
 
 class AclnnKernelMod : public KernelMod {
  public:

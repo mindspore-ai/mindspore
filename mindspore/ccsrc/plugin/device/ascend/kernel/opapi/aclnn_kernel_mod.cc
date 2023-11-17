@@ -35,8 +35,9 @@ bool AclnnKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::
 }
 
 int AclnnKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   GetWorkSpaceInfo(inputs, outputs);
-  return KernelMod::Resize(inputs, outputs);
+  return ret;
 }
 
 bool AclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
