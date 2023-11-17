@@ -48,5 +48,5 @@ TensorStorageInfoPtrList UnsqueezeCalc(const PrimitivePtr &prim, const std::vect
   return {new_storage_info};
 }
 
-REG_VIEW_STRIDES_CALC_FUN(Unsqueeze, UnsqueezeCalc);
+// REG_VIEW_STRIDES_CALC_FUN(Unsqueeze, UnsqueezeCalc);
 }  // namespace mindspore::ops

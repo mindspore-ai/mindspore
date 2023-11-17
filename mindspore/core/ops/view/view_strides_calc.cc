@@ -86,5 +86,5 @@ TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<Va
   return ViewCalcImpl(prim, input_tensor, shape);
 }
 
-REG_VIEW_STRIDES_CALC_FUN(View, ViewCalc);
+// REG_VIEW_STRIDES_CALC_FUN(View, ViewCalc);
 }  // namespace mindspore::ops

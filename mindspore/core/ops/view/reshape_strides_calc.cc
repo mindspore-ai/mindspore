@@ -84,5 +84,5 @@ TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector
   return ReshapeCalcImpl(prim, input_tensor, shape);
 }
 
-REG_VIEW_STRIDES_CALC_FUN(Reshape, ReshapeCalc);
+// REG_VIEW_STRIDES_CALC_FUN(Reshape, ReshapeCalc);
 }  // namespace mindspore::ops

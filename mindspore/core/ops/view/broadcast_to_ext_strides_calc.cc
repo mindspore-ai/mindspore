@@ -25,5 +25,5 @@ TensorStorageInfoPtrList BroadCastToExtCalc(const PrimitivePtr &prim, const std:
   return BroadCastToProcess(input_tensor, input_x);
 }
 
-REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);
+// REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);
 }  // namespace mindspore::ops

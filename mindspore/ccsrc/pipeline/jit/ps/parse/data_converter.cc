@@ -19,6 +19,7 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include <utility>
 #include <unordered_map>
+#include <algorithm>
 #include "mindspore/core/ops/structure_ops.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/pipeline.h"
@@ -93,36 +94,36 @@ template <typename T>
 class ByTypeDataConvertFunc : public DataConvertFunc {
  public:
   explicit ByTypeDataConvertFunc(const InstanceConvertFunc &convert_func)
-      : DataConvertFunc(convert_func), check_func_(py::isinstance<T>) {}
+    : DataConvertFunc(convert_func), check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ValuePtr &converted_type)
-      : DataConvertFunc([converted_type](const py::object &, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return converted_type;
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([converted_type](const py::object &, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return converted_type;
+  }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjTypeConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &dtype,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, dtype); }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &dtype,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, dtype); }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjArgsValueConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &,
-                                       const ValuePtrList &args_value_list) -> ValuePtr {
-          return convert_func(obj, args_value_list);
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &,
+                                     const ValuePtrList &args_value_list) -> ValuePtr {
+    return convert_func(obj, args_value_list);
+  }),
+      check_func_(py::isinstance<T>) {}
 
   ~ByTypeDataConvertFunc() override = default;
 
@@ -136,15 +137,15 @@ class ByTypeDataConvertFunc : public DataConvertFunc {
 class ByAttrDataConvertFunc : public DataConvertFunc {
  public:
   ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        attr_name_(attr_name) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      attr_name_(attr_name) {}
 
   ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        attr_name_(attr_name) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      attr_name_(attr_name) {}
 
   ~ByAttrDataConvertFunc() override = default;
 
@@ -158,15 +159,15 @@ class ByAttrDataConvertFunc : public DataConvertFunc {
 class ByFuncDataConvertFunc : public DataConvertFunc {
  public:
   ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        match_func_(match_func) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      match_func_(match_func) {}
 
   ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        match_func_(match_func) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      match_func_(match_func) {}
 
   ~ByFuncDataConvertFunc() override = default;
 
@@ -419,6 +420,10 @@ ValuePtr ConvertMetaFuncGraph(const py::object &obj, bool use_signature = false)
   if (meta == nullptr) {
     MS_LOG(ERROR) << "Resolve MetaFuncGraph error, get ptr is null";
     return nullptr;
+  }
+  auto multi = meta->cast<prim::MultitypeFuncGraphPtr>();
+  if (multi != nullptr) {
+    multi->set_meta_obj(obj);
   }
   if (use_signature) {
     return std::make_shared<prim::DoSignaturePrimitive>(meta->name(), meta);
@@ -1185,7 +1190,7 @@ ValuePtr ConvertTensorToSequence(const py::object &obj) {
     return nullptr;
   }
 
-  auto data = static_cast<TDE *>(tensor->data_c());
+  auto data = static_cast<TDE *>(GetTensorDataPtr(tensor));
   auto size = tensor->DataSize();
   std::vector<ValuePtr> value_list;
   for (size_t i = 0; i < size; i++) {
@@ -1216,11 +1221,11 @@ ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
   auto size = tensor->DataSize();
   std::vector<ValuePtr> value_list;
   if (data_type == kNumberTypeInt64) {
-    auto data = static_cast<int64_t *>(tensor->data_c());
+    auto data = static_cast<int64_t *>(GetTensorDataPtr(tensor));
     std::transform(data, data + size, std::back_inserter(value_list),
                    [](int64_t num) { return std::make_shared<Int64Imm>(num); });
   } else {
-    auto data = static_cast<int32_t *>(tensor->data_c());
+    auto data = static_cast<int32_t *>(GetTensorDataPtr(tensor));
     std::transform(data, data + size, std::back_inserter(value_list),
                    [](int32_t num) { return std::make_shared<Int64Imm>(num); });
   }
@@ -1247,7 +1252,7 @@ ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
     return nullptr;
   }
 
-  auto data = static_cast<double *>(float_tensor->data_c());
+  auto data = static_cast<double *>(GetTensorDataPtr(float_tensor));
   auto size = float_tensor->DataSize();
   std::vector<ValuePtr> value_list(size);
   for (size_t i = 0; i < size; i++) {
@@ -1276,17 +1281,17 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
   auto size = tensor->DataSize();
   std::vector<ValuePtr> value_list(size);
   if (data_type == kNumberTypeInt64) {
-    auto data = static_cast<int64_t *>(tensor->data_c());
+    auto data = static_cast<int64_t *>(GetTensorDataPtr(tensor));
     for (size_t i = 0; i < size; i++) {
       value_list.emplace_back(std::make_shared<Int64Imm>(data[i]));
     }
   } else if (data_type == kNumberTypeFloat64) {
-    auto data = static_cast<double *>(tensor->data_c());
+    auto data = static_cast<double *>(GetTensorDataPtr(tensor));
     for (size_t i = 0; i < size; i++) {
       value_list.emplace_back(ConvertPythonFloatToScalarValue(data[i]));
     }
   } else if (data_type == kNumberTypeBool) {
-    auto data = static_cast<bool *>(tensor->data_c());
+    auto data = static_cast<bool *>(GetTensorDataPtr(tensor));
     for (size_t i = 0; i < size; i++) {
       value_list.emplace_back(std::make_shared<BoolImm>(data[i]));
     }
@@ -1310,7 +1315,7 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
     return nullptr;
   }
-  return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+  return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
 }
 
 ValuePtr ConvertTensorToFloat(const py::object &obj) {
@@ -1326,7 +1331,7 @@ ValuePtr ConvertTensorToFloat(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to float";
     return nullptr;
   }
-  return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+  return ConvertPythonFloatToScalarValue(static_cast<double *>(GetTensorDataPtr(tensor))[0]);
 }
 
 ValuePtr ConvertTensorToBool(const py::object &obj) {
@@ -1338,7 +1343,7 @@ ValuePtr ConvertTensorToBool(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to bool";
     return nullptr;
   }
-  return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+  return std::make_shared<BoolImm>(static_cast<bool *>(GetTensorDataPtr(tensor))[0]);
 }
 
 ValuePtr ConvertTensorToNumber(const py::object &obj) {
@@ -1353,11 +1358,15 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
 
   switch (tensor->data_type()) {
     case kNumberTypeBool:
-      return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+      return std::make_shared<BoolImm>(static_cast<bool *>(GetTensorDataPtr(tensor))[0]);
     case kNumberTypeInt64:
-      return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+      return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeInt32:
+      return std::make_shared<Int32Imm>(static_cast<int32_t *>(GetTensorDataPtr(tensor))[0]);
     case kNumberTypeFloat64:
-      return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+      return ConvertPythonFloatToScalarValue(static_cast<double *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeFloat32:
+      return ConvertPythonFloatToScalarValue(static_cast<float *>(GetTensorDataPtr(tensor))[0]);
     default:
       MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to number";
       return nullptr;
@@ -1391,89 +1400,89 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
 
   // TypeCast1: convert single element to sequence
   {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_TUPLE_INT),
-   ConvertSingleElementToSequence<ValueTuple, ConvertNumber>},
+    ConvertSingleElementToSequence<ValueTuple, ConvertNumber>},
   {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_LIST_INT),
-   ConvertSingleElementToSequence<ValueList, ConvertNumber>},
+    ConvertSingleElementToSequence<ValueList, ConvertNumber>},
   {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TUPLE_INT),
-   ConvertSingleElementToSequence<ValueTuple, ConvertInt>},
+    ConvertSingleElementToSequence<ValueTuple, ConvertInt>},
   {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_LIST_INT),
-   ConvertSingleElementToSequence<ValueList, ConvertInt>},
+    ConvertSingleElementToSequence<ValueList, ConvertInt>},
   {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TUPLE_INT),
-   ConvertSingleElementToSequence<ValueTuple, ConvertFloat>},
+    ConvertSingleElementToSequence<ValueTuple, ConvertFloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_LIST_INT),
-   ConvertSingleElementToSequence<ValueList, ConvertFloat>},
+    ConvertSingleElementToSequence<ValueList, ConvertFloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TUPLE_INT),
-   ConvertSingleElementToSequence<ValueTuple, ConvertBool>},
+    ConvertSingleElementToSequence<ValueTuple, ConvertBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_LIST_INT),
-   ConvertSingleElementToSequence<ValueList, ConvertBool>},
+    ConvertSingleElementToSequence<ValueList, ConvertBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_ANY, mindspore::ops::DT_TUPLE_ANY),
-   ConvertSingleElementToSequence<ValueTuple, ConvertAny>},
+    ConvertSingleElementToSequence<ValueTuple, ConvertAny>},
   {CombineTypesForTypeCast(mindspore::ops::DT_ANY, mindspore::ops::DT_LIST_ANY),
-   ConvertSingleElementToSequence<ValueList, ConvertAny>},
+    ConvertSingleElementToSequence<ValueList, ConvertAny>},
 
   // TypeCast2: convert sequence to sequence, such as py::tuple to ValueList
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_LIST_INT),
-   ConvertSequence<py::tuple, ValueList, ConvertInt>},
+    ConvertSequence<py::tuple, ValueList, ConvertInt>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_LIST_FLOAT),
-   ConvertSequence<py::tuple, ValueList, ConvertFloat>},
+    ConvertSequence<py::tuple, ValueList, ConvertFloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_LIST_BOOL),
-   ConvertSequence<py::tuple, ValueList, ConvertBool>},
+    ConvertSequence<py::tuple, ValueList, ConvertBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_ANY, mindspore::ops::DT_LIST_ANY),
-   ConvertSequence<py::tuple, ValueList, ConvertAny>},
+    ConvertSequence<py::tuple, ValueList, ConvertAny>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_TENSOR, mindspore::ops::DT_LIST_TENSOR),
-   ConvertSequence<py::tuple, ValueList, ConvertTensor>},
+    ConvertSequence<py::tuple, ValueList, ConvertTensor>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TUPLE_INT),
-   ConvertSequence<py::list, ValueTuple, ConvertInt>},
+    ConvertSequence<py::list, ValueTuple, ConvertInt>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TUPLE_FLOAT),
-   ConvertSequence<py::list, ValueTuple, ConvertFloat>},
+    ConvertSequence<py::list, ValueTuple, ConvertFloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TUPLE_BOOL),
-   ConvertSequence<py::list, ValueTuple, ConvertBool>},
+    ConvertSequence<py::list, ValueTuple, ConvertBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_ANY, mindspore::ops::DT_TUPLE_ANY),
-   ConvertSequence<py::list, ValueTuple, ConvertAny>},
+    ConvertSequence<py::list, ValueTuple, ConvertAny>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_TENSOR, mindspore::ops::DT_TUPLE_TENSOR),
-   ConvertSequence<py::list, ValueTuple, ConvertAny>},
+    ConvertSequence<py::list, ValueTuple, ConvertAny>},
 
   // TypeCast3: convert single element to Tensor
   {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TENSOR),
-   ConvertSingleElementToTensor<py::int_, pyint>},
+    ConvertSingleElementToTensor<py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSingleElementToTensor<py::float_, pyfloat>},
+    ConvertSingleElementToTensor<py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TENSOR),
-   ConvertSingleElementToTensor<py::bool_, bool>},
+    ConvertSingleElementToTensor<py::bool_, bool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_TENSOR), ConvertNumberToTensor},
 
   // TypeCast4: convert between sequence and tensor
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::tuple, py::int_, pyint>},
+    ConvertSequenceToTensor<py::tuple, py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::tuple, py::float_, pyfloat>},
+    ConvertSequenceToTensor<py::tuple, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_TENSOR),
-   ConvertSequenceBoolToTensor<py::tuple>},
+    ConvertSequenceBoolToTensor<py::tuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::list, py::int_, pyint>},
+    ConvertSequenceToTensor<py::list, py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::list, py::float_, pyfloat>},
+    ConvertSequenceToTensor<py::list, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TENSOR),
-   ConvertSequenceBoolToTensor<py::list>},
+    ConvertSequenceBoolToTensor<py::list>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_INT),
-   ConvertTensorToSequenceInt<ValueTuple>},
+    ConvertTensorToSequenceInt<ValueTuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_FLOAT),
-   ConvertTensorToSequenceFloat<ValueTuple>},
+    ConvertTensorToSequenceFloat<ValueTuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_BOOL),
-   ConvertTensorToSequence<ValueTuple, bool, BoolImm, kNumberTypeBool>},
+    ConvertTensorToSequence<ValueTuple, bool, BoolImm, kNumberTypeBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_BOOL),
-   ConvertTensorToSequenceAny<ValueTuple>},
+    ConvertTensorToSequenceAny<ValueTuple>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_INT),
-   ConvertTensorToSequenceInt<ValueList>},
+    ConvertTensorToSequenceInt<ValueList>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_FLOAT),
-   ConvertTensorToSequenceFloat<ValueList>},
+    ConvertTensorToSequenceFloat<ValueList>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),
-   ConvertTensorToSequence<ValueList, bool, BoolImm, kNumberTypeBool>},
+    ConvertTensorToSequence<ValueList, bool, BoolImm, kNumberTypeBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),
-   ConvertTensorToSequenceAny<ValueList>},
+    ConvertTensorToSequenceAny<ValueList>},
 
   // TypeCast5: convert tensor to single element
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_INT), ConvertTensorToInt},
