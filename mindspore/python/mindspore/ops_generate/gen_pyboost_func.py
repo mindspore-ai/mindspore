@@ -487,6 +487,7 @@ class OpTemplateConverter:
                 need_malloc_tensors.append(call_arg + "_vector")
         return need_malloc_tensors
 
+    @staticmethod
     def parse_op_name(self, name):
         """
         :param name:
@@ -497,6 +498,7 @@ class OpTemplateConverter:
             op_name = op_name[:-3]
         return op_name
 
+    @staticmethod
     def parse_original_call_args(self, op_args):
         """
         :param op_args:
@@ -513,6 +515,7 @@ class OpTemplateConverter:
             call_args.append(call_arg)
         return call_args
 
+    @staticmethod
     def op_args_converter(self, op_args, call_args):
         """Convert ValutePtr to cpp data type"""
         call_args_after_convert = []
