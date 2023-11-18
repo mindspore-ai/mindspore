@@ -34,10 +34,10 @@ tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                                    const ValueTuplePtr &output_size,
                                                    const ValueTuplePtr &scale_factors) {
-  Op::InferOpOutput(op, input_tensor, output_size, scale_factors);
+  OpRunner::InferOpOutput(op, input_tensor, output_size, scale_factors);
 
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
 

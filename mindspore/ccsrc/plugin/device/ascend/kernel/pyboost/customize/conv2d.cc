@@ -61,11 +61,11 @@ tensor::TensorPtr Conv2DAscendCall(const device::DeviceContext *device_context, 
 }
 }  // namespace
 
-tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                         const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor,
                                         const ValueTuplePtr &stride, const ValueTuplePtr &padding,
                                         const ValueTuplePtr &dilation, const Int64ImmPtr &groups) {
-  Op::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding, dilation, groups);
+  OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding, dilation, groups);
 
   // Convert ValueTuple to std::vector
   std::vector<int64_t> stride_vector = ConvertValueTupleToVector<int64_t>(stride);

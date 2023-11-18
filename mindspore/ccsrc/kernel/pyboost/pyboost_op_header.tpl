@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_${op_name_upper}_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_${op_name_upper}_H_
 
-#include "kernel/pyboost/op_base.h"
+#include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT ${op_name} : public pyboost::Op {
+class BACKEND_EXPORT ${op_name} : public pyboost::OpRunner {
  public:
   ${op_name}() = default;
   ~${op_name}() override = default;

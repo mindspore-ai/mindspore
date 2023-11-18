@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "kernel/pyboost/op_base.h"
+#include "kernel/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
@@ -63,7 +63,7 @@ class OpRegister {
 };
 
 #define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                                \
-  static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op");                  \
+  static_assert(std::is_base_of<OpRunner, clazz>::value, " must be base of OpRunner");      \
   static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
     auto op = std::make_shared<clazz##DEVICE>();                                            \
     op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \

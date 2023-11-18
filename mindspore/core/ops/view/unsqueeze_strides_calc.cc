@@ -47,6 +47,4 @@ TensorStorageInfoPtrList UnsqueezeCalc(const PrimitivePtr &prim, const std::vect
                                         old_tensor_info->ori_strides, IsContiguous(new_shape, new_strides));
   return {new_storage_info};
 }
-
-// REG_VIEW_STRIDES_CALC_FUN(Unsqueeze, UnsqueezeCalc);
 }  // namespace mindspore::ops
