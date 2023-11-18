@@ -32,6 +32,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -40,75 +41,81 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kBNTrainingUpdateInputNum = 7;
+constexpr auto kBNTrainingUpdateInputNum = 8;
 
-int64_t BNTrainingUpdateGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
-  int64_t data_format;
-  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result ||
-      (data_format != static_cast<int64_t>(Format::NHWC) && data_format != static_cast<int64_t>(Format::NCHW) &&
-       data_format != static_cast<int64_t>(Format::NCDHW))) {
+void BNTrainingUpdateCheckFormat(const PrimitivePtr &primitive, const mindspore::Format format) {
+  static std::vector<mindspore::Format> valid_formats{Format::NHWC, Format::NCHW, Format::NCDHW};
+  auto CheckFormat = [format](const mindspore::Format other) { return format == other; };
+  bool is_valid = std::any_of(valid_formats.begin(), valid_formats.end(), CheckFormat);
+  if (MS_UNLIKELY(!is_valid)) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC and NCDHW, but got "
-                      << data_format << ".";
+                      << FormatEnumToString(format) << ".";
   }
-  return data_format;
 }
+
+void BNTrainingUpdateCheckShapes(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  std::vector<ShapeVector> shapes{};
+  for (size_t i = kInputIndex0; i < kInputIndex7; ++i) {
+    auto shape = input_args[i]->GetShape()->GetShapeVector();
+    shapes.emplace_back(std::move(shape));
+  }
+  const auto &input_x_shape = shapes[kInputIndex0];
+  const auto &sum_shape = shapes[kInputIndex1];
+  const auto &square_sum_shape = shapes[kInputIndex2];
+  const auto &scale_shape = shapes[kInputIndex3];
+  const auto &offset_shape = shapes[kInputIndex4];
+  const auto &mean_shape = shapes[kInputIndex5];
+  const auto &variance_shape = shapes[kInputIndex6];
+
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(input_x_shape.size()), kGreaterThan, 1,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("sum rank", SizeToLong(sum_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("square_sum rank", SizeToLong(square_sum_shape.size()), kEqual, 1,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("offset rank", SizeToLong(offset_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("mean rank", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("variance rank", SizeToLong(variance_shape.size()), kEqual, 1, prim_name);
+
+  if (std::any_of(shapes.begin(), shapes.end(), IsDynamic)) {
+    return;
+  }
+  // get format
+  auto format_opt = GetScalarValue<int64_t>(input_args[kInputIndex7]->GetValue());
+  if (MS_UNLIKELY(!format_opt.has_value())) {
+    MS_LOG(EXCEPTION) << "For " << prim_name << ", failed to get format's value.";
+  }
+  auto format = static_cast<mindspore::Format>(format_opt.value());
+  BNTrainingUpdateCheckFormat(primitive, format);
+
+  auto c_axis = format == Format::NHWC ? input_x_shape.size() - kInputIndex1 : kInputIndex1;
+  CheckAndConvertUtils::Check("sum shape", sum_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+  CheckAndConvertUtils::Check("square_sum shape", square_sum_shape[0], kEqual, input_x_shape[c_axis], prim_name,
+                              TypeError);
+
+  CheckAndConvertUtils::Check("scale shape", scale_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+  CheckAndConvertUtils::Check("offset shape", offset_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+  CheckAndConvertUtils::Check("mean shape", mean_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+  CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
+}
+
 abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
-  auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto square_sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
-  auto square_sum_shape_rank = SizeToLong(square_sum_shape.size());
-  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
-  auto offset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
-  auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
-  auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
-  auto data_format_ptr = primitive->GetAttr("format");
-  MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = BNTrainingUpdateGetAndCheckFormat(primitive, data_format_ptr);
-  size_t c_axis = kInputIndex1;
-  if (data_format == static_cast<int64_t>(Format::NHWC)) {
-    c_axis = kInputIndex3;
-  }
-  // input_x rank must be equal to 4
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(input_x_shape.size()), kGreaterThan, 1,
-                                           prim_name);
-  // sum rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("sum rank", SizeToLong(sum_shape.size()), kEqual, 1, prim_name);
-  // square_sum rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("square_sum rank", square_sum_shape_rank, kEqual, 1, prim_name);
-  // scale rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
-  // offset rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("offset rank", SizeToLong(offset_shape.size()), kEqual, 1, prim_name);
-  // mean rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("mean rank", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
-  // variance rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("variance rank", SizeToLong(variance_shape.size()), kEqual, 1, prim_name);
-  // sum shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("sum shape", sum_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // square_sum shape must be equal to input_x_shape[1]
-  CheckAndConvertUtils::Check("square_sum shape", square_sum_shape[0], kEqual, input_x_shape[c_axis], prim_name,
-                              TypeError);
-  if (input_x_shape[c_axis] != -1) {
-    // scale shape must be equal to input_x_shape[1]
-    CheckAndConvertUtils::Check("scale shape", scale_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-    // offset shape must be equal to input_x_shape[1]
-    CheckAndConvertUtils::Check("offset shape", offset_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-    // mean shape must be equal to input_x_shape[1]
-    CheckAndConvertUtils::Check("mean shape", mean_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-    // variance shape must be equal to input_x_shape[1]
-    CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name,
-                                TypeError);
-  }
+  BNTrainingUpdateCheckShapes(primitive, input_args);
+
+  // get out_shapes
   auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto variance_shape_ptr = input_args[kInputIndex6]->GetShape();
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-    input_x_shape_ptr, variance_shape_ptr, variance_shape_ptr, variance_shape_ptr, variance_shape_ptr});
+  std::vector<abstract::BaseShapePtr> out_shapes{input_x_shape_ptr->Clone(), variance_shape_ptr->Clone(),
+                                                 variance_shape_ptr->Clone(), variance_shape_ptr->Clone(),
+                                                 variance_shape_ptr->Clone()};
+
+  return std::make_shared<abstract::TupleShape>(std::move(out_shapes));
 }
 
 TuplePtr BNTrainingUpdateInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
