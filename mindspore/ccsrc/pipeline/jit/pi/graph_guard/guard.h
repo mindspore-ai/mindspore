@@ -72,6 +72,8 @@ class OptGuard {
   std::vector<GuardItemPtr> guardList_;
   std::vector<GuardItemPtr> backupList_;
   std::map<std::string, bool> config_;
+  std::map<std::string, GuardItemPtr> guardMap_;
+  std::map<std::string, GuardItemPtr> backupMap_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;
 
