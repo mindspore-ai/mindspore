@@ -809,15 +809,18 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   c->code = nullptr;
-
+  std::map<std::string, PyObject *> cache;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
   for (auto &oc : c->codehub->GetOptTarget(opt)) {
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
-    if (guard != nullptr && guard->Check(f, print_guard)) {
+    if (guard != nullptr && guard->Check(f, print_guard, &cache)) {
       c->code = oc;
       break;
     }
+  }
+  for (auto item : cache) {
+    Py_XDECREF(item.second);
   }
   MS_LOG(DEBUG) << __FUNCTION__ << (c->code != nullptr ? " success !" : " failed !");
   return c->code != nullptr;

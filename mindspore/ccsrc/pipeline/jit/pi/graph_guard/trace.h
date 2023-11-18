@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 #include <functional>
 #include "pipeline/jit/pi/pydef.h"
 #include "pybind11/pybind11.h"
@@ -52,6 +53,7 @@ typedef struct _TraceContext {
   PyObject *f_locals;
   PyObject *const *f_localsplus;
   PyCodeObject *f_code;
+  std::map<std::string, PyObject *> *cache;
 } TraceContext, *PTraceContext;
 
 class Trace {
@@ -69,14 +71,16 @@ class Trace {
   virtual void Detach();
   /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
   /// \param[out] borrow reference for PyObject
-  virtual PyObject *Retrieve(PTraceContext context) = 0;
+  virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString() = 0;
+  virtual void Cache(PTraceContext context, PyObject *obj);
 
  protected:
   PyObject *obj_;
   std::shared_ptr<Trace> origin_;
   TraceType originType_;
   TraceType curType_;
+  std::string strTrace_;
 };
 using TracePtr = std::shared_ptr<Trace>;
 using TraceVector = std::vector<TracePtr>;
@@ -209,7 +213,8 @@ class UnsupportedTrace : public Trace {
 using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 
 /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
-PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace);
+PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace,
+                             std::map<std::string, PyObject *> *cache = nullptr);
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

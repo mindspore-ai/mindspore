@@ -1556,8 +1556,8 @@ class EqGuard : public GuardItem {
         specialized_(needSpecialize),
         recurse_(recurseDepth) {}
 
-  virtual bool Check(const PyFrameObject *frame) {
-    PyObject *obj = GetObjectFromTrace(frame, var_);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
     bool ret = Check(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
@@ -1588,8 +1588,8 @@ class TypeGuard : public GuardItem {
     }
   }
 
-  virtual bool Check(const PyFrameObject *frame) {
-    PyObject *obj = GetObjectFromTrace(frame, var_);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
     bool ret = Check(obj);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
       Py_DECREF(obj);
@@ -1630,8 +1630,8 @@ class IdGuard : public GuardItem {
  public:
   explicit IdGuard(TracePtr obj) : GuardItem(obj) { refId_ = obj->GetObject(); }
 
-  virtual bool Check(const PyFrameObject *frame) {
-    PyObject *obj = GetObjectFromTrace(frame, var_);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
     bool ret = Check(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
@@ -1691,8 +1691,8 @@ class AttrGuard : public GuardItem {
 
   ~AttrGuard() = default;
 
-  virtual bool Check(const PyFrameObject *frame) {
-    PyObject *obj = GetObjectFromTrace(frame, var_);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
     bool ret = CheckIntern(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
