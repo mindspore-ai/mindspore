@@ -19,7 +19,7 @@
         - **keep_dims** (bool) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 
     输入：
-        - **x** (Tensor) - 输入任意维度的Tensor。将输入Tensor的shape设为 :math:`(x_1, x_2, ..., x_N)` 。数据类型为mindspore.float16或float32。
+        - **x** (Tensor) - 输入任意维度的Tensor。将输入Tensor的shape设为 :math:`(x_1, x_2, ..., x_N)` 。数据类型为float16、float32和float64。
 
     输出：
         tuple (Tensor)，表示2个Tensor组成的tuple，包含对应的索引和输入Tensor的最大值。

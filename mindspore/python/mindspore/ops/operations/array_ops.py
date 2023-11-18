@@ -456,11 +456,10 @@ class Im2Col(Primitive):
 
 class Col2Im(Primitive):
     r"""
-    Combines an array of sliding local blocks into a large containing tensor. It is
+    Rearranges a row vector to an image. It is
     usually used to reconstruct an image from a set of image patches(or sliding local blocks).
 
-    Consider a batched :attr:`input` tensor containing sliding local blocks,
-    e.g., patches of images, of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,
+    Consider an input Tensor of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,
     where :math:`N` is batch dimension, :math:`C` is channel dimension,
     :math:`\prod(\text{kernel_size})` is the block size, and
     :math:`L` is the total number of blocks. This operation combines these
@@ -1696,7 +1695,7 @@ class ArgMaxWithValue(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`.
+          :math:`(x_1, x_2, ..., x_N)`. Supported dtypes: float16, float32 and float64.
 
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
@@ -1708,7 +1707,7 @@ class ArgMaxWithValue(Primitive):
         - **values** (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
 
     Raises:
-        TypeError: If `x` is not Tensor.
+        TypeError: If `x` is not Tensor with dtype float16, float32 or float64.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
