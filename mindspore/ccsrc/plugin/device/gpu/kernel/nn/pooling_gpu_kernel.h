@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"

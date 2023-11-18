@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/max_pool_with_argmax.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {

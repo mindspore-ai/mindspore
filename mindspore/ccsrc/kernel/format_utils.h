@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_KERNEL_FORMAT_UTILS_H_
+#define MINDSPORE_CCSRC_KERNEL_FORMAT_UTILS_H_
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ARGS_TO_ATTR_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ARGS_TO_ATTR_PASS_H_
-
-#include <map>
-#include <memory>
 #include <string>
-#include <vector>
-#include "include/backend/optimizer/pass.h"
+#include "include/backend/visible.h"
+#include "include/api/format.h"
 
 namespace mindspore {
-namespace opt {
-class ArgsToAttrPass : public Pass {
- public:
-  explicit ArgsToAttrPass(const std::string &name = "InferShapePass") : Pass(name) {}
-  ~ArgsToAttrPass() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
-};
-}  // namespace opt
+namespace kernel {
+BACKEND_EXPORT Format GetFormatFromStrToEnum(const std::string &format_str);
+BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);
+}  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ARGS_TO_ATTR_PASS_H_
+
+#endif  // MINDSPORE_CCSRC_KERNEL_FORMAT_UTILS_H_

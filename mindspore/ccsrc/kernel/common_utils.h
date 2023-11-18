@@ -212,8 +212,6 @@ BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTenso
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &outputs);
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
-BACKEND_EXPORT Format GetFormatFromStrToEnum(const std::string &format_str);
-BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);
 // Synchronize the output and input reference map between two kernel attrs.
 void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
 BACKEND_EXPORT std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr);

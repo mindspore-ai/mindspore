@@ -20,6 +20,7 @@
 #include <functional>
 #include "plugin/device/cpu/kernel/utils/cpu_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "ops/conv_pool_op_name.h"
