@@ -37,7 +37,7 @@ std::vector<int64_t> CaculateSplitSize(const AbstractBasePtr &input_abs) {
     MS_LOG(EXCEPTION) << "For SplitWithSize op, split size should be tuple[int], but got "
                       << split_size_value->ToString();
   }
-  std::vector<int64_t> split_size = std::move(GetValue<std::vector<int64_t>>(split_size_value));
+  std::vector<int64_t> split_size = GetValue<std::vector<int64_t>>(split_size_value);
   return split_size;
 }
 }  // namespace
