@@ -22,6 +22,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#define EXPAND_DIMS_CPU_REG(T)                                                                     \
+  KernelAttr().AddInputAttr(T).AddInputAttr(kObjectTypeNumber, kNumberTypeInt64).AddOutputAttr(T), \
+    KernelAttr().AddInputAttr(T).AddInputAttr(kObjectTypeNumber, kNumberTypeInt32).AddOutputAttr(T)
+
 constexpr size_t kMemcpyOutputsNum = 1;
 constexpr auto kReshape = "Reshape";
 constexpr auto kFlatten = "Flatten";
@@ -79,6 +83,20 @@ bool MemcpyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &input
   }
   return true;
 }
+
+std::vector<KernelAttr> MemcpyCpuKernelMod::expand_dims_valid_types_ = {
+  // index int64
+  EXPAND_DIMS_CPU_REG(kNumberTypeFloat64),   EXPAND_DIMS_CPU_REG(kNumberTypeFloat32),
+  EXPAND_DIMS_CPU_REG(kNumberTypeFloat16),
+
+  EXPAND_DIMS_CPU_REG(kNumberTypeInt8),      EXPAND_DIMS_CPU_REG(kNumberTypeInt16),
+  EXPAND_DIMS_CPU_REG(kNumberTypeInt32),     EXPAND_DIMS_CPU_REG(kNumberTypeInt64),
+
+  EXPAND_DIMS_CPU_REG(kNumberTypeUInt8),     EXPAND_DIMS_CPU_REG(kNumberTypeUInt16),
+  EXPAND_DIMS_CPU_REG(kNumberTypeUInt32),    EXPAND_DIMS_CPU_REG(kNumberTypeUInt64),
+
+  EXPAND_DIMS_CPU_REG(kNumberTypeBool),      EXPAND_DIMS_CPU_REG(kNumberTypeComplex64),
+  EXPAND_DIMS_CPU_REG(kNumberTypeComplex128)};
 
 std::vector<KernelAttr> MemcpyCpuKernelMod::common_valid_types_with_bool_complex_ = {
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
@@ -188,7 +206,7 @@ std::vector<KernelAttr> MemcpyCpuKernelMod::GetOpSupport() {
     {kReshape, reshape_valid_types_},
     {kFlatten, common_valid_types_with_bool_complex_},
     {kFlattenGrad, common_two_valid_types_with_bool_complex_},
-    {kExpandDims, common_two_valid_types_with_bool_complex_},
+    {kExpandDims, expand_dims_valid_types_},
     {kSqueeze, common_valid_types_with_bool_complex_},
   };
 

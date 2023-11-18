@@ -1282,12 +1282,12 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   }
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
   auto keep_dims_value = GetValue<bool>(keep_dims->BuildValue());
-  auto grad = keep_dims_value ? dout : ib->Reshape(dout, res[0]);
+  auto grad = keep_dims_value ? dout : ib->Reshape(dout, ib->TensorToTuple(res[0]));
   grad = ib->BroadcastTo(grad, x);
 
   auto permuted = ib->Transpose(x, res[2]);
   auto permuted_shape = ib->Shape(permuted);
-  auto reshaped = ib->Reshape(permuted, res[1]);
+  auto reshaped = ib->Reshape(permuted, ib->TensorToTuple(res[1]));
   auto left = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, false);
   auto right = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, true);
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
@@ -1416,7 +1416,7 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {ib->TupleGetItem(out, 1)})[0];
-  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
+  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), ib->TensorToTuple(res));
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1427,7 +1427,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {out})[0];
-  auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
+  auto multipliers = ib->Reshape(ib->Mul(dout, out), ib->TensorToTuple(res));
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1958,6 +1958,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_reduce_std, {x, axis}, {1});
   res[1] = ib->SequenceToTensor(res[1]);
   res[2] = ib->SequenceToTensor(res[2]);
+  res[0] = ib->TensorToTuple(res[0]);
   auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
     auto std_d_r = ib->Reshape(std_d, res[0]);
     auto std_r = ib->Reshape(std, res[0]);
