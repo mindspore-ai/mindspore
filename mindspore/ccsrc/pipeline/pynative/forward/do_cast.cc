@@ -26,8 +26,6 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const char kOpsFunctionModelName[] = "mindspore.ops.functional";
-
 template <typename S>
 ValuePtr Cast(S in, const TypeId &dst_type_id) {
   switch (dst_type_id) {

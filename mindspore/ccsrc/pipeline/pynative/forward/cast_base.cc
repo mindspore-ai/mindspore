@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace pynative {
+namespace {
+const char kOpsFunctionModelName[] = "mindspore.ops.functional";
+}
 PrimitivePtr CastBaseOperation::GetPrimByTypeId(const TypeId &type_id) const {
   const auto &iter = type_prim_cache_.find(type_id);
   if (iter != type_prim_cache_.end()) {
