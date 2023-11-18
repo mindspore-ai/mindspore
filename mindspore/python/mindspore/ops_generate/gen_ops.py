@@ -546,7 +546,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             ref_name = return_info.get('inplace')
             ref_index_str = -1 if ref_name is None else args_dict[ref_name]
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}, 
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str},
             /*.inplace_input_index_=*/{ref_index_str}}}, """
         opdef_cc += f"""\n  }},"""
 

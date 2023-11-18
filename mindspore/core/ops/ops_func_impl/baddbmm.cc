@@ -22,13 +22,10 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-constexpr size_t kMatSize = 3;
-}
 BaseShapePtr BaddbmmFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (input_args.size() != 5) {
+  if (input_args.size() != kSize5) {
     MS_LOG(EXCEPTION) << "input args size should be 5, but got " << input_args.size();
   }
   auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
@@ -37,21 +34,21 @@ BaseShapePtr BaddbmmFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto batch1_shape = batch1_shape_ptr->GetShapeVector();
   auto batch2_shape_ptr = input_args[kInputIndex2]->GetShape();
   auto batch2_shape = batch2_shape_ptr->GetShapeVector();
-  if (batch1_shape.size() != kMatSize) {
+  if (batch1_shape.size() != kShape3dDims) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', input 'batch1' must be a 3D Tensor, but got:" << batch1_shape.size();
   }
 
-  if (batch2_shape.size() != kMatSize) {
+  if (batch2_shape.size() != kShape3dDims) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', input 'batch2' must be a 3D Tensor, but got:" << batch2_shape.size();
   }
 
-  if (batch1_shape[2] != batch2_shape[1]) {
+  if (batch1_shape[kDim2] != batch2_shape[kDim1]) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', first dimension of 'batch2' must be equal to 'batch1' "
-                      << batch1_shape[2] << " , but got:" << batch2_shape[1];
+                      << batch1_shape[kDim2] << " , but got:" << batch2_shape[kDim1];
   }
-  ShapeVector ret_shape{batch1_shape[0], batch1_shape[1], batch2_shape[2]};
+  ShapeVector ret_shape{batch1_shape[kDim0], batch1_shape[kDim1], batch2_shape[kDim2]};
   if (input_shape != ret_shape) {
     MS_LOG(EXCEPTION) << "For Baddbmm, input shape " << input_shape << " should be equal to shape of batch1@batch2 "
                       << ret_shape;

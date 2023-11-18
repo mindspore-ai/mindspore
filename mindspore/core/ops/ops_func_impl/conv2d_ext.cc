@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/check_convert_utils.h"
+
 #include "ops/ops_func_impl/conv2d_ext.h"
+#include <string>
+#include <set>
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

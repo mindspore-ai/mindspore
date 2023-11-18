@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_UPSAMPLE_NEAREST1D_H_
 
 #include <vector>
+#include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "runtime/hardware/device_context_manager.h"

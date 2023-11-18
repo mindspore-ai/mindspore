@@ -19,11 +19,9 @@
 #include "ops/view/broadcast_to_strides_calc.h"
 namespace mindspore::ops {
 TensorStorageInfoPtrList BroadCastToExtCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto input_x = GetValue<std::vector<int64_t>>(inputs[1]);
+  auto input_x = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
   return BroadCastToProcess(input_tensor, input_x);
 }
-
-// REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);
 }  // namespace mindspore::ops
