@@ -21,8 +21,8 @@
 #include "ops/base_operator.h"
 
 namespace mindspore {
-constexpr auto kNameCast = "Cast";
 namespace ops {
+constexpr auto kNameCast = "Cast";
 /// \brief Returns a tensor with the new specified data type.
 /// Refer to Python API @ref mindspore.ops.Cast for more details.
 class MIND_API Cast : public BaseOperator {
