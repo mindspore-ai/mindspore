@@ -81,9 +81,10 @@ class OpProto:
             raise TypeError("op define need key 'returns'")
 
         is_pyboost = False
-        gpu = 'default'
-        cpu = 'default'
-        ascend = 'default'
+        default_type = 'default'
+        gpu = default_type
+        cpu = default_type
+        ascend = default_type
         dispatch_key = 'dispatch'
         if dispatch_key in yaml.keys():
             is_pyboost = True
@@ -95,8 +96,9 @@ class OpProto:
                 ascend = yaml[dispatch_key]['Ascend']
         return_dict = yaml['returns']
         class_name = convert_python_func_name_to_c(op_name)
-        if 'class' in yaml.keys() and 'name' in yaml['class'].keys():
-            class_name = yaml['class']['name']
+        class_key = 'class'
+        if class_key in yaml.keys() and 'name' in yaml[class_key].keys():
+            class_name = yaml[class_key]['name']
         return_args = []
         for return_name in return_dict.keys():
             inplace = ''
