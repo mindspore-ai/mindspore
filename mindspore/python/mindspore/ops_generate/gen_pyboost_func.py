@@ -74,15 +74,22 @@ def generate_pyboost_op_header_code(header_data: FuncHeaderData):
 
 
 def generate_pyboost_op_source_code(work_path, op_call_template_path, op_source_template_path, op_custom_template_path,
-                                    op_view_template_path,
-                                    code_generate_path, op_proto, operator_name,
-                                    call_args_type,
-                                    call_args_str, op_outputs, call_outputs, call_args_with_type,
-                                    cpp_func_return, call_args_after_convert, const_number_convert,
-                                    value_tuple_convert, need_malloc_tensors, common_inputs,
-                                    inplace_process):
+                                    op_view_template_path, code_generate_path, op_proto, converter):
     """ generate_pyboost_op_source_code """
     # PyBoost source generate
+    operator_name = converter.functional_name
+    call_args_type = converter.call_args_types
+    call_args_str = converter.call_args
+    op_outputs = converter.op_outputs
+    call_outputs = converter.call_func_outputs
+    call_args_with_type = converter.call_args_with_types
+    cpp_func_return = converter.cpp_func_return
+    call_args_after_convert = converter.call_args_after_convert
+    const_number_convert = converter.const_number_convert
+    value_tuple_convert = converter.value_tuple_convert
+    need_malloc_tensors = converter.need_malloc_tensors
+    common_inputs = converter.common_inputs
+    inplace_process = converter.inplace_process
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
         if type == "TensorPtr" or type == "std::optional<TensorPtr>":
@@ -422,6 +429,9 @@ class OpTemplateConverter:
         self.call_args_after_convert, self.value_tuple_convert, self.const_number_convert = \
             self.op_args_converter(op_proto.op_args, self.call_args)
         self.common_inputs = self.parse_common_inputs(self.call_args_after_convert)
+        self.cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
+        self.op_outputs, self.call_func_outputs = generate_pyboost_outputs(op_proto)
+        self.inplace_process = generate_inplace_process_cpp_code(op_proto)
 
     @staticmethod
     def parse_common_inputs(call_args):
@@ -488,7 +498,7 @@ class OpTemplateConverter:
         return need_malloc_tensors
 
     @staticmethod
-    def parse_op_name(self, name):
+    def parse_op_name(name):
         """
         :param name:
         :return: op_name
@@ -499,7 +509,7 @@ class OpTemplateConverter:
         return op_name
 
     @staticmethod
-    def parse_original_call_args(self, op_args):
+    def parse_original_call_args(op_args):
         """
         :param op_args:
         :return: call_args
@@ -516,7 +526,7 @@ class OpTemplateConverter:
         return call_args
 
     @staticmethod
-    def op_args_converter(self, op_args, call_args):
+    def op_args_converter(op_args, call_args):
         """Convert ValutePtr to cpp data type"""
         call_args_after_convert = []
         value_tuple_convert = []
@@ -563,22 +573,11 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
 
         op_name_str = converter.op_name
 
-        call_args_str = converter.call_args
-        call_args_after_convert = converter.call_args_after_convert
-        call_args_type = converter.call_args_types
-        value_tuple_convert = converter.value_tuple_convert
-        const_number_convert = converter.const_number_convert
-        need_malloc_tensors = converter.need_malloc_tensors
-        common_inputs = converter.common_inputs
-
         all_op_names.append(op_name_str)
         all_functional_names.append(functional_name)
 
         call_args_with_types = converter.call_args_with_types
-
-        cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
-        op_outputs, call_func_outputs = generate_pyboost_outputs(op_proto)
-        inplace_process = generate_inplace_process_cpp_code(op_proto)
+        cpp_func_return = converter.cpp_func_return
 
         generate_pyboost_base_op_header_code(work_path, op_name_str, functional_name, call_args_with_types,
                                              cpp_func_return)
@@ -587,10 +586,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
         generate_pyboost_op_header_code(header_data)
         generate_pyboost_op_source_code(work_path, op_call_template_path, op_source_template_path,
                                         op_custom_template_path, op_view_template_path, code_generate_path,
-                                        op_proto, functional_name, call_args_type, call_args_str, op_outputs,
-                                        call_func_outputs, call_args_with_types, cpp_func_return,
-                                        call_args_after_convert, const_number_convert, value_tuple_convert,
-                                        need_malloc_tensors, common_inputs, inplace_process)
+                                        op_proto, converter)
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
