@@ -22,13 +22,10 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-constexpr size_t kMatSize = 3;
-}
 BaseShapePtr BmmFuncImpl::InferShape(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (input_args.size() != 2) {
+  if (input_args.size() != kSize2) {
     MS_LOG(EXCEPTION) << "input args size should be 2, but got " << input_args.size();
   }
   auto prim_name = primitive->name();
@@ -40,25 +37,25 @@ BaseShapePtr BmmFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   auto input_shape = input_shape_ptr->GetShapeVector();
   auto mat2_shape = mat2_shape_ptr->GetShapeVector();
-  if (input_shape.size() != kMatSize) {
+  if (input_shape.size() != kShape3dDims) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', input 'input' must be a 3D Tensor, but got:" << input_shape.size();
   }
 
-  if (mat2_shape.size() != kMatSize) {
+  if (mat2_shape.size() != kShape3dDims) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', input 'mat2' must be a 3D Tensor, but got:" << mat2_shape.size();
   }
 
-  if (input_shape[0] != mat2_shape[0]) {
+  if (input_shape[kDim0] != mat2_shape[kDim0]) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', first dimension of 'mat2' must be equal to 'input' "
-                      << input_shape[0] << " , but got:" << mat2_shape[0];
+                      << input_shape[kDim0] << " , but got:" << mat2_shape[kDim0];
   }
 
-  if (input_shape[2] != mat2_shape[1]) {
+  if (input_shape[kDim2] != mat2_shape[kDim1]) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', first dimension of 'batch2' must be equal to 'batch1' "
-                      << input_shape[2] << " , but got:" << mat2_shape[1];
+                      << input_shape[kDim2] << " , but got:" << mat2_shape[kDim1];
   }
 
-  ShapeVector ret_shape{input_shape[0], input_shape[1], mat2_shape[2]};
+  ShapeVector ret_shape{input_shape[kDim0], input_shape[kDim1], mat2_shape[kDim2]};
   return std::make_shared<abstract::TensorShape>(ret_shape);
 }
 
