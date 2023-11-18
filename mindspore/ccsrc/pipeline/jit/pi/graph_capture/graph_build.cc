@@ -380,7 +380,7 @@ bool GraphBuilder::PruneBranch(const Instr &instr) {
   }
 
   if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-    auto tr = GetTrace(cond, false, true, 0, conf.getIntConfig(GraphJitConfig::kMaxTraceDepth));
+    auto tr = GetTrace(cond, false, true, 0, -1);
     GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->to_str().c_str(),
                     cond->GetGraph()->GetCodeObj()->co_filename, cond->GetLineNo());

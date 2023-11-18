@@ -114,7 +114,11 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::strin
       guardList_.erase(guardList_.begin() + i);
       guardList_.insert(guardList_.begin(), tmp);
       if (print) {
-        GRAPH_JIT_LOG_F("Guard check fail: %s\n", item->ToString().c_str());
+        auto trace = item->GetTrace();
+        auto obj = GetObjectFromTrace(frame, trace);
+        GRAPH_JIT_LOG_F("Guard check fail: %s v.s. %s\n", item->ToString().c_str(),
+                        std::string(py::str(py::cast<py::object>(obj))).c_str());
+        Py_XDECREF(obj);
       } else {
         MS_LOG(DEBUG) << "Guard check fail:" << item->ToString();
       }
@@ -189,7 +193,7 @@ static GuardItemPtr GuardOnGDeduce(TracePtr var, PyObject *obj, const std::map<s
       item = GuardType(var);
     }
   } else if (py::isinstance<mindspore::Cell>(obj)) {
-    item = GuardId(var);
+    item = GuardRepr(var);
   } else if (py::isinstance<mindspore::ParamInfo>(obj)) {
     item = GuardEqual(var, true, INT_MAX);
   } else {
@@ -277,7 +281,7 @@ static GuardItemPtr GuardOnTensor(TracePtr var, const std::map<std::string, bool
     if (var->GetOriginType() == TraceType::Const) {
       item = GuardId(var);
     } else {
-      item = GuardEqual(var, true, INT_MAX);
+      item = GuardEqual(var, false, INT_MAX);
     }
   } else if (var->GetOriginType() == TraceType::Const) {
     item = GuardId(var);

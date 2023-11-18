@@ -67,6 +67,7 @@ class OptGuard {
   virtual void UpdateConfig(const std::map<std::string, bool> &config);
   virtual void Backup();
   virtual void Rollback();
+  virtual bool IsEmpty() { return guardList_.size() == 0; }
 
  protected:
   std::vector<GuardItemPtr> guardList_;
