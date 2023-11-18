@@ -42,6 +42,8 @@ typedef enum _TraceType {
   Item,
   Attr,
   Type,
+  Name,
+  ClassDeref,
   Operation,
   Customized,
   Unsupported,
@@ -95,6 +97,15 @@ class RootTrace : public Trace {
   virtual bool operator==(const Trace &trace);
 
  protected:
+  PyObject *RetrieveGlobal(PTraceContext context);
+  PyObject *RetrieveDeref(PTraceContext context);
+  PyObject *RetrieveClosure(PTraceContext context);
+  PyObject *RetrieveBuiltin(PTraceContext context);
+  PyObject *RetrieveLocal(PTraceContext context);
+  PyObject *RetrieveParam(PTraceContext context);
+  PyObject *RetrieveName(PTraceContext context);
+  PyObject *RetrieveClassDeref(PTraceContext context);
+
   int idx_;
   std::string name_;
   std::string module_name_;
@@ -177,8 +188,8 @@ class OpTrace : public Trace {
   std::string name_;
 };
 using OpTracePtr = std::shared_ptr<OpTrace>;
-TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name = "",
-                       std::string name = "", bool strict = false, bool print = false);
+TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, const std::string &module_name = "",
+                       const std::string &name = "", bool strict = false, bool print = false);
 
 /// \brief retrieve the PyObject with ref count plus 1 which will be minus outside
 typedef std::function<PyObject *(PTraceContext context)> RetrieveFunc;

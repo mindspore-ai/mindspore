@@ -17,8 +17,11 @@
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_STRATEGY_H
 
 #include <Python.h>
+#include <vector>
 #include "pipeline/jit/pi/graph_guard/perf.h"
 #include "pipeline/jit/pi/graph_guard/cache.h"
+
+using PyObjectArray = std::vector<PyObject *>;
 
 namespace mindspore {
 namespace jit {
@@ -35,6 +38,13 @@ class OptStrategy {
                                          double adj_coef = 0.1);
   static ExecKind MakeExecStrategyByComplex(PyCodeObject *code, int threshold);
   static void MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, OptCodePtr except);
+  typedef enum {
+    kCalcUnsupported = 0,
+    kCalcShape,
+    kCalcValue,
+    kCalcCount,
+  } CalcKind;
+  static CalcKind MakeCalcStrategyByInputs(int bytecode, int opargs, const PyObjectArray &objs);
 };
 
 }  // namespace graph
