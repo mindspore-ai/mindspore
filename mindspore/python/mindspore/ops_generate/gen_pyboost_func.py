@@ -73,8 +73,21 @@ def generate_pyboost_op_header_code(header_data: FuncHeaderData):
         check_change_and_replace_file(dst_op_file_path, tmp_op_file_path)
 
 
-def generate_pyboost_op_source_code(work_path, op_call_template_path, op_source_template_path, op_custom_template_path,
-                                    op_view_template_path, code_generate_path, op_proto, converter):
+class TemplatePaths:
+    """
+    template paths for code auto generation
+    """
+
+    def __init__(self, op_call_template_path, op_source_template_path, op_custom_template_path,
+                 op_view_template_path, code_generate_path):
+        self.op_call_template_path = op_call_template_path
+        self.op_source_template_path = op_source_template_path
+        self.op_custom_template_path = op_custom_template_path
+        self.op_view_template_path = op_view_template_path
+        self.code_generate_path = code_generate_path
+
+
+def generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter):
     """ generate_pyboost_op_source_code """
     # PyBoost source generate
     operator_name = converter.functional_name
@@ -90,6 +103,12 @@ def generate_pyboost_op_source_code(work_path, op_call_template_path, op_source_
     need_malloc_tensors = converter.need_malloc_tensors
     common_inputs = converter.common_inputs
     inplace_process = converter.inplace_process
+
+    op_call_template_path = template_paths.op_call_template_path
+    op_source_template_path = template_paths.op_source_template_path
+    op_view_template_path = template_paths.op_view_template_path
+    op_custom_template_path = template_paths.op_custom_template_path
+    code_generate_path = template_paths.code_generate_path
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
         if type == "TensorPtr" or type == "std::optional<TensorPtr>":
@@ -584,9 +603,9 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
         header_data = FuncHeaderData(work_path, op_header_template_path, code_generate_path, op_name_str,
                                      functional_name, call_args_with_types, cpp_func_return)
         generate_pyboost_op_header_code(header_data)
-        generate_pyboost_op_source_code(work_path, op_call_template_path, op_source_template_path,
-                                        op_custom_template_path, op_view_template_path, code_generate_path,
-                                        op_proto, converter)
+        template_paths = TemplatePaths(op_call_template_path, op_source_template_path, op_custom_template_path,
+                                       op_view_template_path, code_generate_path)
+        generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter)
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
