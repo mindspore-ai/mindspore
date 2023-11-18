@@ -33,14 +33,23 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
 using GradFunc = std::function<void()>;
+}
 
+// OpRunner is a base class for operators.
+// OpRunner records the operator's input abstract,
+// output abstract and output Tensors for grad,
+// and it also contains several functional methods for the operator to run.
 class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
  public:
   OpRunner() = default;
   virtual ~OpRunner() = default;
 
+  // For users to implement custom call functions in the "customize" directory.
   std::shared_ptr<OpRunner> get_op() { return shared_from_this(); }
+
+  // set and get methods for class member variables.
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
@@ -57,6 +66,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     return outputs_[idx];
   }
 
+  // Setting up a grad function for an operator if the operator
+  // needs to calculate the differentiation, otherwise the function is not set.
   void set_grad_func(GradFunc &&grad_func) { grad_func_ = std::move(grad_func); }
   void DoGrad() {
     MS_EXCEPTION_IF_NULL(grad_func_);
@@ -73,8 +84,9 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
+  // Member function for Infer and creating output tensors.
   template <typename... T>
-  inline void InferOutput(T &... args) {
+  void InferOutput(T &... args) {
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
@@ -82,6 +94,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_, &device_sync_promises_);
   }
 
+  // A static function used for the "customize" operator to generate the operator's output Tensor.
   template <typename... T>
   static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
     (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
@@ -89,22 +102,22 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_, &op->device_sync_promises_);
   }
 
+  // Some operators do not support non-continuous tensors as inputs.
   tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
 
-  template <typename... T>
-  void DeviceMalloc(T &... args) {
-    PrepareOpInputs(device_context_, args...);
-    PrepareOpOutputs(device_context_, outputs_);
-  }
-
  protected:
+  // Op primitive, may delete latter.
   PrimitivePtr primitive_{nullptr};
-  // Abstract for grad.
+  // Input and output abstracts for grad.
   std::vector<AbstractBasePtr> input_abs_{};
   AbstractBasePtr output_abs_{nullptr};
+  // Forward output for grad.
   std::vector<tensor::TensorPtr> outputs_{};
   DeviceContext *device_context_{nullptr};
+  // Device address promise for multi-stage pipeline.
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;
+  // If the grad_func is not a null pointer,
+  // the operator will calculate the grad.
   GradFunc grad_func_{nullptr};
 };
 using OpPtr = std::shared_ptr<OpRunner>;
