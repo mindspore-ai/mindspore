@@ -105,10 +105,10 @@ OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
 
 OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print) {
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache) {
   for (size_t i = 0; i < guardList_.size(); ++i) {
     GuardItemPtr item = guardList_[i];
-    if (!item->Check(frame)) {
+    if (!item->Check(frame, cache)) {
       // reorder list to speed up check on next run
       GuardItemPtr tmp = item;
       guardList_.erase(guardList_.begin() + i);

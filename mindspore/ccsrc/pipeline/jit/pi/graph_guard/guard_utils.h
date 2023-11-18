@@ -34,7 +34,7 @@ class GuardItem {
  public:
   explicit GuardItem(TracePtr var);
   virtual ~GuardItem() = default;
-  virtual bool Check(const PyFrameObject *frame) = 0;
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache = nullptr) = 0;
   virtual bool Check(PyObject *obj) = 0;
   virtual std::string ToString() = 0;
   virtual void Replace(TracePtr dst, TracePtr src);

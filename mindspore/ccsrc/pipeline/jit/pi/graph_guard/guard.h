@@ -48,7 +48,7 @@ class OptGuard {
   /// \param[in] frame python frame
   /// \param[in] print guard
   /// \param[out] the variables have been modified
-  virtual bool Check(const PyFrameObject *frame, bool print);
+  virtual bool Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache = nullptr);
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
   /// \param[in] var to trace the path to retrieve the object
