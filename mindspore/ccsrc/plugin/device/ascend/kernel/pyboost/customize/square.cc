@@ -37,8 +37,8 @@ void SquareAscendCall(const device::DeviceContext *device_context, const tensor:
 }
 }  // namespace
 
-tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<Op> &op, const TensorPtr &x_tensor) {
-  Op::InferOpOutput(op, x_tensor);
+tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+  OpRunner::InferOpOutput(op, x_tensor);
   // No need to convert input
   // Async
   DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor]() {

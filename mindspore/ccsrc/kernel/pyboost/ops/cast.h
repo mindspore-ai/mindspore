@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_CAST_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_CAST_H_
 
-#include "kernel/pyboost/op_base.h"
+#include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Cast : public pyboost::Op {
+class BACKEND_EXPORT Cast : public pyboost::OpRunner {
  public:
   Cast() = default;
   ~Cast() override = default;

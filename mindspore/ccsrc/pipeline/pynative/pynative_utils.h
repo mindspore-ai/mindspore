@@ -23,7 +23,7 @@
 #include <utility>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "kernel/pyboost/op_base.h"
+#include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 #include "pipeline/pynative/forward/forward_task.h"
 

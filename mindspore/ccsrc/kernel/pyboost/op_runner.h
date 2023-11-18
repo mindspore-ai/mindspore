@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BASE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BASE_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_RUNNER_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_RUNNER_H_
 
 #include <functional>
 #include <memory>
@@ -35,35 +35,32 @@ namespace kernel {
 namespace pyboost {
 using GradFunc = std::function<void()>;
 
-class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
+class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
  public:
-  Op() = default;
-  virtual ~Op() = default;
+  OpRunner() = default;
+  virtual ~OpRunner() = default;
 
-  void set_grad_func(GradFunc &&grad_func) { grad_func_ = std::move(grad_func); }
-
-  std::shared_ptr<Op> get_op() { return shared_from_this(); }
-
+  std::shared_ptr<OpRunner> get_op() { return shared_from_this(); }
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
-
-  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
-
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
   void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
   DeviceContext *device_context() const { return device_context_; }
-
-  void DoGrad() {
-    MS_EXCEPTION_IF_NULL(grad_func_);
-    grad_func_();
-  }
+  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
+  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
       MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
     }
     return outputs_[idx];
+  }
+
+  void set_grad_func(GradFunc &&grad_func) { grad_func_ = std::move(grad_func); }
+  void DoGrad() {
+    MS_EXCEPTION_IF_NULL(grad_func_);
+    grad_func_();
   }
 
   template <typename T>
@@ -78,17 +75,15 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
 
   template <typename... T>
   inline void InferOutput(T &... args) {
-    input_abs_.clear();
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
-    outputs_.clear();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_, &device_sync_promises_);
   }
 
   template <typename... T>
-  static void InferOpOutput(const std::shared_ptr<Op> &op, T &... args) {
+  static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
     (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
     op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
     PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_, &op->device_sync_promises_);
@@ -102,21 +97,18 @@ class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
     PrepareOpOutputs(device_context_, outputs_);
   }
 
-  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
-
  protected:
-  std::vector<tensor::TensorPtr> outputs_{};
-  GradFunc grad_func_;
-  PrimitivePtr primitive_;
-  // Save abstract for grad.
+  PrimitivePtr primitive_{nullptr};
+  // Abstract for grad.
   std::vector<AbstractBasePtr> input_abs_{};
   AbstractBasePtr output_abs_{nullptr};
+  std::vector<tensor::TensorPtr> outputs_{};
   DeviceContext *device_context_{nullptr};
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;
+  GradFunc grad_func_{nullptr};
 };
-using OpPtr = std::shared_ptr<Op>;
-
+using OpPtr = std::shared_ptr<OpRunner>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BASE_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_RUNNER_H_
