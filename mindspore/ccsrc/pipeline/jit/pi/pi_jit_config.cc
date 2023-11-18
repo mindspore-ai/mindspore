@@ -64,6 +64,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"INFER_PRIMITIVE_MASK", &GraphJitConfig::SetInt<GraphJitConfig::kInferPrimitiveMask>},
   {"INFER_PRIMITIVE_MAX", &GraphJitConfig::SetInt<GraphJitConfig::kInferPrimitiveMax>},
   {"STATIC_GRAPH_BYTECODE_MIN", &GraphJitConfig::SetInt<GraphJitConfig::kStaticGraphBytecodeMin>},
+  {"PERF_STATISTICS_COUNT", &GraphJitConfig::SetInt<GraphJitConfig::kPerfStatisticsCount>},
   {"PERF_STATISTICS_SCALE_10000X", &GraphJitConfig::SetInt<GraphJitConfig::kPerfStatisticsScale10000x>},
   {"allowed_inline_modules", &GraphJitConfig::AddAllowedInlineModules},
   {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
@@ -109,6 +110,7 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kInferPrimitiveMask - kIntConf] = 7;
   int_conf[kInferPrimitiveMax - kIntConf] = 0;
   int_conf[kStaticGraphBytecodeMin - kIntConf] = 0;
+  int_conf[kPerfStatisticsCount - kIntConf] = 1;
   int_conf[kPerfStatisticsScale10000x - kIntConf] = 1000;
 
   set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};

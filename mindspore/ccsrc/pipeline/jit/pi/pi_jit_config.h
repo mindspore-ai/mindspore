@@ -61,6 +61,7 @@ class GraphJitConfig {
     kMaxPruneCase,
     kMaxLoopUnrolling,
     kStaticGraphBytecodeMin,
+    kPerfStatisticsCount,
     kPerfStatisticsScale10000x,
     kInferPrimitiveMask,
     kInferPrimitiveMax,
