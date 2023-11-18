@@ -33,9 +33,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
 using GradFunc = std::function<void()>;
-}
 
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
