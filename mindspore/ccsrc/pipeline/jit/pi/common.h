@@ -31,6 +31,7 @@
 #include "pipeline/jit/pi/graph_guard/cache.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/utils/utils.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace jit {

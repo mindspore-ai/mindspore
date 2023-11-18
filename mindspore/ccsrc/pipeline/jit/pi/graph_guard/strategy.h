@@ -30,7 +30,8 @@ class OptStrategy {
     kExecGraph,
     kExecCount,
   } ExecKind;
-  static ExecKind MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, double adj_coef = 0.1);
+  static ExecKind MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, int count,
+                                         double adj_coef = 0.1);
   static ExecKind MakeExecStrategyByComplex(PyCodeObject *code, int threshold);
 };
 

@@ -33,6 +33,7 @@
 #include "pipeline/jit/pi/graph_guard/strategy.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "runtime/pynative/op_executor.h"
 
 namespace mindspore {
 namespace jit {
@@ -618,7 +619,8 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
     TimeRecorder _time_recorder(TimeRecorder::kTimeCompileCapture,
                                 kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
-
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
+                                       "PIJitGapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
     GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
@@ -630,7 +632,8 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
     TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
                                 kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
-
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureCompile,
+                                       "PIJitCompile");
     c->stat = JitCompileResults::GRAPH_BUILDING;
     PyFrameObject *f = reinterpret_cast<PyFrameObject *>(frame.ptr());
     PyFrame_FastToLocals(f);
@@ -676,11 +679,22 @@ static std::vector<py::object> PackArgs(const PyFrameObject *frame) {
 }
 
 static py::object CallGraph(const JitCompileResults *c, const py::object &args, const py::object &kwvargs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureRunGraph,
+                                     "PIJitRunGraph");
   PyObject *py_args = args.ptr();
   PyObject *py_kwvargs = kwvargs.ptr();
   PyObject *res;
-  if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics)) {
-    res = CallFunction(c->code->GetPerf(OptPerf::PerfKind::kPerfGraph), c->code->GetNativeFunc(), py_args, py_kwvargs);
+  if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics) &&
+      c->code->GetPerf(OptPerf::PerfKind::kPerfGraph)->GetStatistics()->GetTotalCount() <
+        c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsCount)) {
+    std::function<PyObject *(PyObject * py_args, PyObject * py_kwvargs)> func = [c](PyObject *py_args,
+                                                                                    PyObject *py_kwvargs) {
+      auto ret = c->code->GetNativeFunc()(py_args, py_kwvargs);
+      runtime::OpExecutor::GetInstance().WaitAll();
+      return ret;
+    };
+    runtime::OpExecutor::GetInstance().WaitAll();
+    res = CallFunction(c->code->GetPerf(OptPerf::PerfKind::kPerfGraph), func, py_args, py_kwvargs);
   } else {
     res = c->code->GetNativeFunc()(py_args, py_kwvargs);
   }
@@ -703,9 +717,16 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
     new_f = f;
   }
 
-  if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics)) {
-    std::function<PyObject *(PyThreadState * tstate, PyFrameObject * f, int exc)> func =
-      [](PyThreadState *tstate, PyFrameObject *f, int exc) { return _PyEval_EvalFrameDefault(tstate, f, exc); };
+  if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics) &&
+      c->code->GetPerf(OptPerf::PerfKind::kPerfPyNative)->GetStatistics()->GetTotalCount() <
+        c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsCount)) {
+    std::function<PyObject *(PyThreadState * tstate, PyFrameObject * f, int exc)> func = [](PyThreadState *tstate,
+                                                                                            PyFrameObject *f, int exc) {
+      auto ret = _PyEval_EvalFrameDefault(tstate, f, exc);
+      runtime::OpExecutor::GetInstance().WaitAll();
+      return ret;
+    };
+    runtime::OpExecutor::GetInstance().WaitAll();
     // use function pointer not std::function
     res = CallFunction(c->code->GetPerf(OptPerf::PerfKind::kPerfPyNative), func, tstate, new_f, 0);
   } else {
@@ -731,9 +752,9 @@ static bool PreferCallGraph(const JitCompileResults *c) {
   if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics)) {
     constexpr auto kStatisticsScale = 10000.0;
     int scale_statistics = c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsScale10000x);
-    stat = OptStrategy::MakeExecStrategyByPerf(c->code->GetPerf(OptPerf::PerfKind::kPerfGraph),
-                                               c->code->GetPerf(OptPerf::PerfKind::kPerfPyNative),
-                                               scale_statistics / kStatisticsScale);
+    stat = OptStrategy::MakeExecStrategyByPerf(
+      c->code->GetPerf(OptPerf::PerfKind::kPerfGraph), c->code->GetPerf(OptPerf::PerfKind::kPerfPyNative),
+      c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsCount), scale_statistics / kStatisticsScale);
   }
   int graph_bytecode_min = c->conf->getIntConfig(GraphJitConfig::kStaticGraphBytecodeMin);
   if (graph_bytecode_min > 0 && stat == OptStrategy::ExecKind::kExecGraph) {
@@ -851,7 +872,13 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       just_compiled = true;
     /* fallthrough */
     case JitCompileResults::GRAPH_CALLABLE: {
-      if (CheckGuard(c, frame)) {
+      bool check_guard;
+      {
+        runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
+                                           "PIJitGuard");
+        check_guard = CheckGuard(c, frame);
+      }
+      if (check_guard) {
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
       }
