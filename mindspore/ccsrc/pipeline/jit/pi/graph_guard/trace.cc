@@ -24,6 +24,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
+#include "pipeline/jit/pi/graph_guard/strategy.h"
 #include "pipeline/jit/pi/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
 
@@ -137,73 +138,149 @@ PyObject *RootTrace::Retrieve(PTraceContext context) {
   }
   switch (curType_) {
     case TraceType::Global: {
-      MS_EXCEPTION_IF_CHECK_FAIL(name_.size() > 0, "check trace");
-      PyObject *globals = context->f_globals;
-      if (!module_name_.empty()) {
-        PyObject *mn = PyUnicode_FromString(module_name_.c_str());
-        PyObject *mm = PyImport_GetModule(mn);  // ensure module is initialized
-        if (mn != nullptr && mm != nullptr) {
-          globals = PyModule_GetDict(mm);
-        }
-        PyErr_Clear();
-        Py_XDECREF(mn);
-        Py_XDECREF(mm);
-      }
-      PyObject *key = PyUnicode_FromString(name_.c_str());
-      ret = PyObject_GetItem(globals, key);
-      if (ret == nullptr) {
-        PyErr_Clear();
-        ret = PyObject_GetItem(context->f_builtins, key);
-        if (ret == nullptr) {
-          PyErr_Clear();
-        }
-      }
-      Py_DECREF(key);
+      ret = RetrieveGlobal(context);
       Cache(context, ret);
       return ret;
     }
     case TraceType::Deref: {
-      PyObject *cell = context->f_localsplus[context->f_code->co_nlocals + idx_];
-      if (cell != nullptr && cell != Py_None) {
-        ret = PyCell_GET(cell);
-        Py_XINCREF(ret);
-        Cache(context, ret);
-      }
+      ret = RetrieveDeref(context);
+      Cache(context, ret);
       return ret;
     }
     case TraceType::Closure: {
-      ret = context->f_localsplus[context->f_code->co_nlocals + idx_];
-      Py_XINCREF(ret);
+      ret = RetrieveClosure(context);
       Cache(context, ret);
       return ret;
     }
     case TraceType::BuiltIn: {
-      MS_EXCEPTION_IF_CHECK_FAIL(name_.size() > 0, "check trace");
-      PyObject *key = PyUnicode_FromString(name_.c_str());
-      ret = PyObject_GetItem(context->f_builtins, key);
-      if (ret == nullptr) {
-        PyErr_Clear();
-        ret = PyObject_GetItem(context->f_globals, key);
-        if (ret == nullptr) {
-          PyErr_Clear();
-        }
-      }
-      Py_DECREF(key);
+      ret = RetrieveBuiltin(context);
       Cache(context, ret);
       return ret;
     }
     case TraceType::Local:
-      ret = context->f_locals;
+      ret = RetrieveLocal(context);
       break;
     case TraceType::Param:
-      ret = context->f_localsplus[idx_];
+      ret = RetrieveParam(context);
       break;
+    case TraceType::Name: {
+      return RetrieveName(context);
+    }
+    case TraceType::ClassDeref: {
+      return RetrieveClassDeref(context);
+    }
     default:
       break;
   }
   if (ret != Py_None && ret != NULL) {
     Py_INCREF(ret);
     Cache(context, ret);
+  }
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveGlobal(PTraceContext context) {
+  MS_EXCEPTION_IF_CHECK_FAIL(name_.size() > 0, "check trace");
+  PyObject *globals = context->f_globals;
+  if (!module_name_.empty()) {
+    PyObject *mn = PyUnicode_FromString(module_name_.c_str());
+    PyObject *mm = PyImport_GetModule(mn);  // ensure module is initialized
+    if (mn != nullptr && mm != nullptr) {
+      globals = PyModule_GetDict(mm);
+    }
+    PyErr_Clear();
+    Py_XDECREF(mn);
+    Py_XDECREF(mm);
+  }
+  PyObject *key = PyUnicode_FromString(name_.c_str());
+  PyObject *ret = PyObject_GetItem(globals, key);
+  if (ret == nullptr) {
+    PyErr_Clear();
+    ret = PyObject_GetItem(context->f_builtins, key);
+    if (ret == nullptr) {
+      PyErr_Clear();
+    }
+  }
+  Py_DECREF(key);
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveDeref(PTraceContext context) {
+  PyObject *ret = nullptr;
+  PyObject *cell = context->f_localsplus[context->f_code->co_nlocals + idx_];
+  if (cell != nullptr && cell != Py_None) {
+    ret = PyCell_GET(cell);
+    Py_XINCREF(ret);
+  }
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveClosure(PTraceContext context) {
+  PyObject *ret = context->f_localsplus[context->f_code->co_nlocals + idx_];
+  Py_XINCREF(ret);
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveBuiltin(PTraceContext context) {
+  MS_EXCEPTION_IF_CHECK_FAIL(name_.size() > 0, "check trace");
+  PyObject *key = PyUnicode_FromString(name_.c_str());
+  PyObject *ret = PyObject_GetItem(context->f_builtins, key);
+  if (ret == nullptr) {
+    PyErr_Clear();
+    ret = PyObject_GetItem(context->f_globals, key);
+    if (ret == nullptr) {
+      PyErr_Clear();
+    }
+  }
+  Py_DECREF(key);
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveLocal(PTraceContext context) { return context->f_locals; }
+
+PyObject *RootTrace::RetrieveParam(PTraceContext context) { return context->f_localsplus[idx_]; }
+
+PyObject *RootTrace::RetrieveName(PTraceContext context) {
+  PyObject *ret = nullptr;
+  PyObject *name = PyTuple_GetItem(context->f_code->co_names, idx_);
+  PyObject *locals = context->f_locals;
+  if (PyDict_CheckExact(locals)) {
+    ret = PyDict_GetItem(locals, name);
+    Py_XINCREF(ret);
+  } else {
+    ret = PyObject_GetItem(locals, name);
+  }
+  if (ret == nullptr) {
+    ret = PyDict_GetItem(context->f_globals, name);
+    Py_XINCREF(ret);
+  }
+  if (ret == nullptr) {
+    if (PyDict_CheckExact(context->f_builtins)) {
+      ret = PyDict_GetItem(context->f_builtins, name);
+      Py_XINCREF(ret);
+    } else {
+      ret = PyObject_GetItem(context->f_builtins, name);
+    }
+  }
+  return ret;
+}
+
+PyObject *RootTrace::RetrieveClassDeref(PTraceContext context) {
+  PyObject *ret = nullptr;
+  Py_ssize_t idx = idx_ - PyTuple_GET_SIZE(context->f_code->co_cellvars);
+  if (idx >= 0 && idx < PyTuple_GET_SIZE(context->f_code->co_freevars)) {
+    PyObject *name = PyTuple_GET_ITEM(context->f_code->co_freevars, idx);
+    if (PyDict_CheckExact(context->f_locals)) {
+      ret = PyDict_GetItem(context->f_locals, name);
+      Py_XINCREF(ret);
+    } else {
+      ret = PyObject_GetItem(context->f_locals, name);
+    }
+    if (!ret) {
+      PyObject *cell = context->f_localsplus[context->f_code->co_nlocals + idx_];
+      ret = PyCell_GET(cell);
+      Py_XINCREF(ret);
+    }
   }
   return ret;
 }
@@ -235,6 +312,16 @@ std::string RootTrace::ToString() {
       break;
     case TraceType::Param:
       ret = "f_localsplus[";
+      ret += std::to_string(idx_);
+      ret += "]";
+      break;
+    case TraceType::Name:
+      ret = "f->f_code->co_names[";
+      ret += std::to_string(idx_);
+      ret += "]";
+      break;
+    case TraceType::ClassDeref:
+      ret = "f->f_classdef[";
       ret += std::to_string(idx_);
       ret += "]";
       break;
@@ -585,10 +672,16 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, std::stri
 
 using PyObjectArray = std::vector<PyObject *>;
 using PythonBytecodeSupportCheckFunc = std::function<bool(int opargs, const PyObjectArray &objs)>;
-using PythonBytecodeExecuteFunc = std::function<PyObject *(int opargs, const PyObjectArray &objs)>;
+using PythonBytecodeExecuteFunc = std::function<PyObject *(int opargs, const PyObjectArray &objs, PTraceContext ctx)>;
 using PythonBytecodeFuncSet = std::pair<PythonBytecodeSupportCheckFunc, PythonBytecodeExecuteFunc>;
 static bool ByteCodeUnsupported(int opargs, const PyObjectArray &objs) { return false; }
 static bool ByteCodeSupported(int opargs, const PyObjectArray &objs) { return true; }
+#define ByteCodeTest(bytecode)                                                                                       \
+  [](int opargs, const PyObjectArray &objs) {                                                                        \
+    return OptStrategy::MakeCalcStrategyByInputs(bytecode, opargs, objs) != OptStrategy::CalcKind::kCalcUnsupported; \
+  }
+#define ByteCodeCheck(bytecode, opargs, objs) \
+  (OptStrategy::MakeCalcStrategyByInputs(bytecode, opargs, objs) == OptStrategy::CalcKind::kCalcValue)
 static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {POP_TOP, {ByteCodeUnsupported, nullptr}},
   {ROT_TWO, {ByteCodeUnsupported, nullptr}},
@@ -597,123 +690,352 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {DUP_TOP_TWO, {ByteCodeUnsupported, nullptr}},
   {NOP, {ByteCodeUnsupported, nullptr}},
   {UNARY_POSITIVE,
-   {ByteCodeSupported, [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Positive(objs[0]); }}},
+   {ByteCodeTest(UNARY_POSITIVE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(UNARY_POSITIVE, opargs, objs)) {
+        return PyNumber_Positive(objs[0]);
+      } else {
+        Py_XINCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {UNARY_NEGATIVE,
-   {ByteCodeSupported, [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Negative(objs[0]); }}},
+   {ByteCodeTest(UNARY_NEGATIVE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(UNARY_NEGATIVE, opargs, objs)) {
+        return PyNumber_Negative(objs[0]);
+      } else {
+        Py_XINCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {UNARY_NOT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * {
-      auto ret = PyObject_IsTrue(objs[0]) ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
+   {ByteCodeTest(UNARY_NOT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(UNARY_NOT, opargs, objs)) {
+        auto ret = PyObject_IsTrue(objs[0]) ? Py_True : Py_False;
+        Py_INCREF(ret);
+        return ret;
+      } else {
+        Py_INCREF(Py_True);
+        return Py_True;
+      }
     }}},
   {UNARY_INVERT,
-   {ByteCodeSupported, [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Invert(objs[0]); }}},
+   {ByteCodeTest(UNARY_INVERT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(UNARY_INVERT, opargs, objs)) {
+        return PyNumber_Invert(objs[0]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_MATRIX_MULTIPLY,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_MatrixMultiply(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_MATRIX_MULTIPLY),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_MATRIX_MULTIPLY, opargs, objs)) {
+        return PyNumber_MatrixMultiply(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_MATRIX_MULTIPLY,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * {
-      return PyNumber_InPlaceMatrixMultiply(objs[0], objs[1]);
+   {ByteCodeTest(INPLACE_MATRIX_MULTIPLY),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_MATRIX_MULTIPLY, opargs, objs)) {
+        return PyNumber_InPlaceMatrixMultiply(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
     }}},
   {BINARY_POWER,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Power(objs[0], objs[1], Py_None); }}},
-  {BINARY_MULTIPLY,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Multiply(objs[0], objs[1]); }}},
-  {BINARY_MODULO,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * {
-      if (PyUnicode_CheckExact(objs[0]) && (!PyUnicode_Check(objs[1]) || PyUnicode_CheckExact(objs[1]))) {
-        return PyUnicode_Format(objs[0], objs[1]);
+   {ByteCodeTest(BINARY_POWER),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_POWER, opargs, objs)) {
+        return PyNumber_Power(objs[0], objs[1], Py_None);
       } else {
-        return PyNumber_Remainder(objs[0], objs[1]);
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
+  {BINARY_MULTIPLY,
+   {ByteCodeTest(BINARY_MULTIPLY),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_MULTIPLY, opargs, objs)) {
+        return PyNumber_Multiply(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
+  {BINARY_MODULO,
+   {ByteCodeTest(BINARY_MODULO),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_MODULO, opargs, objs)) {
+        if (PyUnicode_CheckExact(objs[0]) && (!PyUnicode_Check(objs[1]) || PyUnicode_CheckExact(objs[1]))) {
+          return PyUnicode_Format(objs[0], objs[1]);
+        } else {
+          return PyNumber_Remainder(objs[0], objs[1]);
+        }
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
       }
     }}},
   {BINARY_ADD,
    {[](int opargs, const PyObjectArray &objs) -> bool {
-      return !PyUnicode_CheckExact(objs[0]) || !PyUnicode_CheckExact(objs[1]);
+      return (!PyUnicode_CheckExact(objs[0]) || !PyUnicode_CheckExact(objs[1])) &&
+             OptStrategy::MakeCalcStrategyByInputs(BINARY_ADD, opargs, objs) != OptStrategy::CalcKind::kCalcUnsupported;
     },
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Add(objs[0], objs[1]); }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_ADD, opargs, objs)) {
+        return PyNumber_Add(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_SUBTRACT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Subtract(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_SUBTRACT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_SUBTRACT, opargs, objs)) {
+        return PyNumber_Subtract(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_SUBSCR,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyObject_GetItem(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_SUBSCR),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      return PyObject_GetItem(objs[0], objs[1]);
+    }}},
   {BINARY_FLOOR_DIVIDE,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_FloorDivide(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_FLOOR_DIVIDE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_FLOOR_DIVIDE, opargs, objs)) {
+        return PyNumber_FloorDivide(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_TRUE_DIVIDE,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_TrueDivide(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_TRUE_DIVIDE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_TRUE_DIVIDE, opargs, objs)) {
+        return PyNumber_TrueDivide(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_FLOOR_DIVIDE,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceFloorDivide(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_FLOOR_DIVIDE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_FLOOR_DIVIDE, opargs, objs)) {
+        return PyNumber_InPlaceFloorDivide(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_TRUE_DIVIDE,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceTrueDivide(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_TRUE_DIVIDE),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_TRUE_DIVIDE, opargs, objs)) {
+        return PyNumber_InPlaceTrueDivide(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {GET_AITER, {ByteCodeUnsupported, nullptr}},
   {GET_ANEXT, {ByteCodeUnsupported, nullptr}},
   {BEFORE_ASYNC_WITH, {ByteCodeUnsupported, nullptr}},
   {INPLACE_ADD,
    {[](int opargs, const PyObjectArray &objs) -> bool {
-      return !PyUnicode_CheckExact(objs[0]) || !PyUnicode_CheckExact(objs[1]);
+      return (!PyUnicode_CheckExact(objs[0]) || !PyUnicode_CheckExact(objs[1])) &&
+             OptStrategy::MakeCalcStrategyByInputs(INPLACE_ADD, opargs, objs) !=
+               OptStrategy::CalcKind::kCalcUnsupported;
     },
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceAdd(objs[0], objs[1]); }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_ADD, opargs, objs)) {
+        return PyNumber_InPlaceAdd(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_SUBTRACT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceSubtract(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_SUBTRACT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_SUBTRACT, opargs, objs)) {
+        return PyNumber_InPlaceSubtract(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_MULTIPLY,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceMultiply(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_MULTIPLY),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_MULTIPLY, opargs, objs)) {
+        return PyNumber_InPlaceMultiply(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_MODULO,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceRemainder(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_MODULO),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_MODULO, opargs, objs)) {
+        return PyNumber_InPlaceRemainder(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {STORE_SUBSCR, {ByteCodeUnsupported, nullptr}},
   {DELETE_SUBSCR, {ByteCodeUnsupported, nullptr}},
   {BINARY_LSHIFT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Lshift(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_LSHIFT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_LSHIFT, opargs, objs)) {
+        return PyNumber_Lshift(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_RSHIFT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Rshift(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_RSHIFT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_RSHIFT, opargs, objs)) {
+        return PyNumber_Rshift(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_AND,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_And(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_AND),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_AND, opargs, objs)) {
+        return PyNumber_And(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_XOR,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Xor(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_XOR),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_XOR, opargs, objs)) {
+        return PyNumber_Xor(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {BINARY_OR,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_Or(objs[0], objs[1]); }}},
+   {ByteCodeTest(BINARY_OR),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(BINARY_OR, opargs, objs)) {
+        return PyNumber_Or(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_POWER,
+   {ByteCodeTest(INPLACE_POWER),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_POWER, opargs, objs)) {
+        return PyNumber_InPlacePower(objs[0], objs[1], Py_None);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
+  {GET_ITER,
    {ByteCodeSupported,
-    [](int opargs,
-       const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlacePower(objs[0], objs[1], Py_None); }}},
-  {GET_ITER, {ByteCodeUnsupported, nullptr}},
-  {GET_YIELD_FROM_ITER, {ByteCodeUnsupported, nullptr}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * { return PyObject_GetIter(objs[0]); }}},
+  {GET_YIELD_FROM_ITER,
+   {ByteCodeSupported,
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      PyObject *iterable = objs[0];
+      if (PyCoro_CheckExact(iterable)) {
+        if (!(ctx->f_code->co_flags & (CO_COROUTINE | CO_ITERABLE_COROUTINE))) {
+          return nullptr;
+        }
+      } else if (!PyGen_CheckExact(iterable)) {
+        return PyObject_GetIter(iterable);
+      }
+      Py_INCREF(iterable);
+      return iterable;
+    }}},
   {PRINT_EXPR, {ByteCodeUnsupported, nullptr}},
   {LOAD_BUILD_CLASS, {ByteCodeUnsupported, nullptr}},
   {YIELD_FROM, {ByteCodeUnsupported, nullptr}},
   {GET_AWAITABLE, {ByteCodeUnsupported, nullptr}},
   {INPLACE_LSHIFT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceLshift(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_LSHIFT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_LSHIFT, opargs, objs)) {
+        return PyNumber_InPlaceLshift(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_RSHIFT,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceRshift(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_RSHIFT),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(INPLACE_RSHIFT, opargs, objs)) {
+        return PyNumber_InPlaceRshift(objs[0], objs[1]);
+      } else {
+        Py_INCREF(objs[0]);
+        return objs[0];
+      }
+    }}},
   {INPLACE_AND,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceAnd(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_AND),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     if (ByteCodeCheck(INPLACE_AND, opargs, objs)) {
+                                                                       return PyNumber_InPlaceAnd(objs[0], objs[1]);
+                                                                     } else {
+                                                                       Py_INCREF(objs[0]);
+                                                                       return objs[0];
+                                                                     }
+                                                                   }}},
   {INPLACE_XOR,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceXor(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_XOR),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     if (ByteCodeCheck(INPLACE_XOR, opargs, objs)) {
+                                                                       return PyNumber_InPlaceXor(objs[0], objs[1]);
+                                                                     } else {
+                                                                       Py_INCREF(objs[0]);
+                                                                       return objs[0];
+                                                                     }
+                                                                   }}},
   {INPLACE_OR,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyNumber_InPlaceOr(objs[0], objs[1]); }}},
+   {ByteCodeTest(INPLACE_OR),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     if (ByteCodeCheck(INPLACE_OR, opargs, objs)) {
+                                                                       return PyNumber_InPlaceOr(objs[0], objs[1]);
+                                                                     } else {
+                                                                       Py_INCREF(objs[0]);
+                                                                       return objs[0];
+                                                                     }
+                                                                   }}},
   {RETURN_VALUE, {ByteCodeUnsupported, nullptr}},
   {IMPORT_STAR, {ByteCodeUnsupported, nullptr}},
   {SETUP_ANNOTATIONS, {ByteCodeUnsupported, nullptr}},
@@ -731,55 +1053,64 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {STORE_GLOBAL, {ByteCodeUnsupported, nullptr}},
   {DELETE_GLOBAL, {ByteCodeUnsupported, nullptr}},
   {LOAD_CONST, {ByteCodeSupported, nullptr}},
-  {LOAD_NAME, {ByteCodeUnsupported, nullptr}},
+  {LOAD_NAME, {ByteCodeSupported, nullptr}},
   {BUILD_TUPLE,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *tup = PyTuple_New(opargs);
-                                                  while (--opargs >= 0) {
-                                                    Py_INCREF(objs[opargs]);
-                                                    PyTuple_SET_ITEM(tup, opargs, objs[opargs]);
-                                                  }
-                                                  return tup;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *tup = PyTuple_New(opargs);
+                                                                     while (--opargs >= 0) {
+                                                                       Py_INCREF(objs[opargs]);
+                                                                       PyTuple_SET_ITEM(tup, opargs, objs[opargs]);
+                                                                     }
+                                                                     return tup;
+                                                                   }}},
   {BUILD_LIST,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *list = PyList_New(opargs);
-                                                  while (--opargs >= 0) {
-                                                    Py_INCREF(objs[opargs]);
-                                                    PyList_SET_ITEM(list, opargs, objs[opargs]);
-                                                  }
-                                                  return list;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *list = PyList_New(opargs);
+                                                                     while (--opargs >= 0) {
+                                                                       Py_INCREF(objs[opargs]);
+                                                                       PyList_SET_ITEM(list, opargs, objs[opargs]);
+                                                                     }
+                                                                     return list;
+                                                                   }}},
   {BUILD_SET,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *set = PySet_New(NULL);
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    PySet_Add(set, objs[opargs - i]);
-                                                  }
-                                                  return set;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *set = PySet_New(NULL);
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       PySet_Add(set, objs[opargs - i]);
+                                                                     }
+                                                                     return set;
+                                                                   }}},
   {BUILD_MAP,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *map = _PyDict_NewPresized((Py_ssize_t)opargs);
-                                                  for (Py_ssize_t i = opargs; i > 0; i--) {
-                                                    PyObject *key = objs[2 * (opargs - i)];
-                                                    PyObject *value = objs[2 * (opargs - i) + 1];
-                                                    PyDict_SetItem(map, key, value);
-                                                  }
-                                                  return map;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *map =
+                                                                       _PyDict_NewPresized((Py_ssize_t)opargs);
+                                                                     for (Py_ssize_t i = opargs; i > 0; i--) {
+                                                                       PyObject *key = objs[2 * (opargs - i)];
+                                                                       PyObject *value = objs[2 * (opargs - i) + 1];
+                                                                       PyDict_SetItem(map, key, value);
+                                                                     }
+                                                                     return map;
+                                                                   }}},
   {LOAD_ATTR, {ByteCodeSupported, nullptr}},
   {COMPARE_OP,
-   {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject * { return RichCompare(objs[0], objs[1], opargs); }}},
+   {ByteCodeTest(COMPARE_OP),
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     if (ByteCodeCheck(COMPARE_OP, opargs, objs)) {
+                                                                       return RichCompare(objs[0], objs[1], opargs);
+                                                                     } else {
+                                                                       Py_INCREF(Py_True);
+                                                                       return Py_True;
+                                                                     }
+                                                                   }}},
   {IMPORT_NAME, {ByteCodeUnsupported, nullptr}},
   {IMPORT_FROM, {ByteCodeUnsupported, nullptr}},
   {JUMP_FORWARD, {ByteCodeUnsupported, nullptr}},
@@ -796,19 +1127,56 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {RAISE_VARARGS, {ByteCodeUnsupported, nullptr}},
   {CALL_FUNCTION, {ByteCodeSupported, nullptr}},
   {MAKE_FUNCTION, {ByteCodeUnsupported, nullptr}},
+  {MAKE_FUNCTION,
+   {ByteCodeSupported,
+    [](int opargs, const PyObjectArray &objs,
+       PTraceContext ctx) -> PyObject
+                            * {
+                              int cnt =
+                                !!(opargs & 0x08) + !!(opargs & 0x04) + !!(opargs & 0x02) + !!(opargs & 0x01) + 2;
+                              PyObject *qualname = objs[cnt--];
+                              PyObject *codeobj = objs[cnt--];
+                              PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(
+                                PyFunction_NewWithQualName(codeobj, ctx->f_globals, qualname));
+                              if (opargs & 0x08) {
+                                if (!PyTuple_CheckExact(objs[cnt])) {
+                                  return nullptr;
+                                }
+                                func->func_closure = objs[cnt--];
+                              }
+                              if (opargs & 0x04) {
+                                if (!PyDict_CheckExact(objs[cnt])) {
+                                  return nullptr;
+                                }
+                                func->func_annotations = objs[cnt--];
+                              }
+                              if (opargs & 0x02) {
+                                if (!PyDict_CheckExact(objs[cnt])) {
+                                  return nullptr;
+                                }
+                                func->func_kwdefaults = objs[cnt--];
+                              }
+                              if (opargs & 0x01) {
+                                if (!PyTuple_CheckExact(objs[cnt])) {
+                                  return nullptr;
+                                }
+                                func->func_defaults = objs[cnt--];
+                              }
+                              return reinterpret_cast<PyObject *>(func);
+                            }}},
   {BUILD_SLICE,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *start, *stop, *step;
-                                                  if (opargs == 3)
-                                                    step = objs[2];
-                                                  else
-                                                    step = nullptr;
-                                                  stop = objs[1];
-                                                  start = objs[0];
-                                                  return PySlice_New(start, stop, step);
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *start, *stop, *step;
+                                                                     if (opargs == 3)
+                                                                       step = objs[2];
+                                                                     else
+                                                                       step = nullptr;
+                                                                     stop = objs[1];
+                                                                     start = objs[0];
+                                                                     return PySlice_New(start, stop, step);
+                                                                   }}},
   {LOAD_CLOSURE, {ByteCodeSupported, nullptr}},
   {LOAD_DEREF, {ByteCodeSupported, nullptr}},
   {STORE_DEREF, {ByteCodeUnsupported, nullptr}},
@@ -819,36 +1187,36 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {EXTENDED_ARG, {ByteCodeUnsupported, nullptr}},
   {LIST_APPEND,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyList_Append(objs[0], objs[1]);
-                                                  Py_INCREF(objs[0]);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyList_Append(objs[0], objs[1]);
+                                                                     Py_INCREF(objs[0]);
+                                                                     return objs[0];
+                                                                   }}},
   {SET_ADD,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PySet_Add(objs[0], objs[1]);
-                                                  Py_INCREF(objs[0]);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PySet_Add(objs[0], objs[1]);
+                                                                     Py_INCREF(objs[0]);
+                                                                     return objs[0];
+                                                                   }}},
   {MAP_ADD,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyDict_SetItem(objs[0], objs[2], objs[1]);
-                                                  Py_INCREF(objs[0]);
-                                                  return objs[0];
-                                                }}},
-  {LOAD_CLASSDEREF, {ByteCodeUnsupported, nullptr}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyDict_SetItem(objs[0], objs[2], objs[1]);
+                                                                     Py_INCREF(objs[0]);
+                                                                     return objs[0];
+                                                                   }}},
+  {LOAD_CLASSDEREF, {ByteCodeSupported, nullptr}},
   {SETUP_ASYNC_WITH, {ByteCodeUnsupported, nullptr}},
   {FORMAT_VALUE, {ByteCodeUnsupported, nullptr}},
   {BUILD_CONST_KEY_MAP,
    {[](int opargs, const PyObjectArray &objs) -> bool {
       return PyTuple_CheckExact(objs[opargs]) && PyTuple_GET_SIZE(objs[opargs]) == (Py_ssize_t)opargs;
     },
-    [](int opargs, const PyObjectArray &objs) -> PyObject * {
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       PyObject *keys = objs[opargs];
       PyObject *map = _PyDict_NewPresized((Py_ssize_t)opargs);
       for (Py_ssize_t i = opargs; i > 0; i--) {
@@ -860,14 +1228,24 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
     }}},
   {BUILD_STRING,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *empty = PyUnicode_New(0, 0);
-                                                  PyObject *str = _PyUnicode_JoinArray(empty, objs.data(), opargs);
-                                                  Py_DECREF(empty);
-                                                  return str;
-                                                }}},
-  {LOAD_METHOD, {ByteCodeUnsupported, nullptr}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *empty = PyUnicode_New(0, 0);
+                                                                     PyObject *str =
+                                                                       _PyUnicode_JoinArray(empty, objs.data(), opargs);
+                                                                     Py_DECREF(empty);
+                                                                     return str;
+                                                                   }}},
+  {LOAD_METHOD,
+   {ByteCodeSupported,
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *name =
+                                                                       PyTuple_GetItem(ctx->f_code->co_names, opargs);
+                                                                     PyObject *meth = nullptr;
+                                                                     (void)_PyObject_GetMethod(objs[0], name, &meth);
+                                                                     return meth;
+                                                                   }}},
   {CALL_METHOD, {ByteCodeUnsupported, nullptr}},
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 9)
   {ROT_FOUR, {ByteCodeUnsupported, nullptr}},
@@ -876,56 +1254,62 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {END_ASYNC_FOR, {ByteCodeUnsupported, nullptr}},
   {LOAD_ASSERTION_ERROR, {ByteCodeUnsupported, nullptr}},
   {LIST_TO_TUPLE,
-   {ByteCodeSupported, [](int opargs, const PyObjectArray &objs) -> PyObject * { return PyList_AsTuple(objs[0]); }}},
+   {ByteCodeSupported,
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * { return PyList_AsTuple(objs[0]); }}},
   {IS_OP,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  auto ret = (objs[0] == objs[1]) ^ opargs ? Py_True : Py_False;
-                                                  Py_INCREF(ret);
-                                                  return ret;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     auto ret = (objs[0] == objs[1]) ^ opargs
+                                                                                  ? Py_True
+                                                                                  : Py_False;
+                                                                     Py_INCREF(ret);
+                                                                     return ret;
+                                                                   }}},
   {CONTAINS_OP,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  auto ret = (PySequence_Contains(objs[1], objs[0]) ^ opargs)
-                                                               ? Py_True
-                                                               : Py_False;
-                                                  Py_INCREF(ret);
-                                                  return ret;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     auto ret =
+                                                                       (PySequence_Contains(objs[1], objs[0]) ^ opargs)
+                                                                         ? Py_True
+                                                                         : Py_False;
+                                                                     Py_INCREF(ret);
+                                                                     return ret;
+                                                                   }}},
   {JUMP_IF_NOT_EXC_MATCH, {ByteCodeUnsupported, nullptr}},
   {LIST_EXTEND,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  _PyList_Extend(reinterpret_cast<PyListObject *>(objs[0]), objs[1]);
-                                                  Py_INCREF(objs[0]);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     _PyList_Extend(
+                                                                       reinterpret_cast<PyListObject *>(objs[0]),
+                                                                       objs[1]);
+                                                                     Py_INCREF(objs[0]);
+                                                                     return objs[0];
+                                                                   }}},
   {SET_UPDATE,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  _PySet_Update(objs[0], objs[1]);
-                                                  Py_INCREF(objs[0]);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     _PySet_Update(objs[0], objs[1]);
+                                                                     Py_INCREF(objs[0]);
+                                                                     return objs[0];
+                                                                   }}},
   {DICT_MERGE,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  _PyDict_MergeEx(objs[0], objs[1], 2);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     _PyDict_MergeEx(objs[0], objs[1], 2);
+                                                                     return objs[0];
+                                                                   }}},
   {DICT_UPDATE,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyDict_Update(objs[0], objs[1]);
-                                                  return objs[0];
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyDict_Update(objs[0], objs[1]);
+                                                                     return objs[0];
+                                                                   }}},
 #endif
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   {BREAK_LOOP, {ByteCodeUnsupported, nullptr}},
@@ -937,74 +1321,77 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {SETUP_EXCEPT, {ByteCodeUnsupported, nullptr}},
   {BUILD_LIST_UNPACK,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PyList_New(0);
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    auto none_val = _PyList_Extend(
-                                                      reinterpret_cast<PyListObject *>(sum), objs[opargs - i]);
-                                                    Py_DECREF(none_val);
-                                                  }
-                                                  return sum;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PyList_New(0);
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       auto none_val = _PyList_Extend(
+                                                                         reinterpret_cast<PyListObject *>(sum),
+                                                                         objs[opargs - i]);
+                                                                       Py_DECREF(none_val);
+                                                                     }
+                                                                     return sum;
+                                                                   }}},
   {BUILD_MAP_UNPACK,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PyDict_New();
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    PyDict_Update(sum, objs[opargs - i]);
-                                                  }
-                                                  return sum;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PyDict_New();
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       PyDict_Update(sum, objs[opargs - i]);
+                                                                     }
+                                                                     return sum;
+                                                                   }}},
   {BUILD_MAP_UNPACK_WITH_CALL,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PyDict_New();
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    _PyDict_MergeEx(sum, objs[opargs - i], 2);
-                                                  }
-                                                  return sum;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PyDict_New();
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       _PyDict_MergeEx(sum, objs[opargs - i], 2);
+                                                                     }
+                                                                     return sum;
+                                                                   }}},
   {BUILD_TUPLE_UNPACK,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PyList_New(0);
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    auto none_val = _PyList_Extend(
-                                                      reinterpret_cast<PyListObject *>(sum), objs[opargs - i]);
-                                                    Py_DECREF(none_val);
-                                                  }
-                                                  auto ret = PyList_AsTuple(sum);
-                                                  Py_DECREF(sum);
-                                                  return ret;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PyList_New(0);
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       auto none_val = _PyList_Extend(
+                                                                         reinterpret_cast<PyListObject *>(sum),
+                                                                         objs[opargs - i]);
+                                                                       Py_DECREF(none_val);
+                                                                     }
+                                                                     auto ret = PyList_AsTuple(sum);
+                                                                     Py_DECREF(sum);
+                                                                     return ret;
+                                                                   }}},
   {BUILD_SET_UNPACK,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PySet_New(NULL);
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    _PySet_Update(sum, objs[opargs - i]);
-                                                  }
-                                                  return sum;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PySet_New(NULL);
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       _PySet_Update(sum, objs[opargs - i]);
+                                                                     }
+                                                                     return sum;
+                                                                   }}},
   {BUILD_TUPLE_UNPACK_WITH_CALL,
    {ByteCodeSupported,
-    [](int opargs, const PyObjectArray &objs) -> PyObject
-                                                * {
-                                                  PyObject *sum = PyList_New(0);
-                                                  for (int i = opargs; i > 0; i--) {
-                                                    auto none_val = _PyList_Extend(
-                                                      reinterpret_cast<PyListObject *>(sum), objs[opargs - i]);
-                                                    Py_DECREF(none_val);
-                                                  }
-                                                  auto ret = PyList_AsTuple(sum);
-                                                  Py_DECREF(sum);
-                                                  return ret;
-                                                }}},
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
+                                                                   * {
+                                                                     PyObject *sum = PyList_New(0);
+                                                                     for (int i = opargs; i > 0; i--) {
+                                                                       auto none_val = _PyList_Extend(
+                                                                         reinterpret_cast<PyListObject *>(sum),
+                                                                         objs[opargs - i]);
+                                                                       Py_DECREF(none_val);
+                                                                     }
+                                                                     auto ret = PyList_AsTuple(sum);
+                                                                     Py_DECREF(sum);
+                                                                     return ret;
+                                                                   }}},
   {EXCEPT_HANDLER, {ByteCodeUnsupported, nullptr}},
 #endif
 };
@@ -1039,7 +1426,7 @@ PyObject *OpTrace::Retrieve(PTraceContext context) {
   }
   if (kBytecodeExecuter.find(opcode_) != kBytecodeExecuter.end() && kBytecodeExecuter[opcode_].first(opargs_, params) &&
       kBytecodeExecuter[opcode_].second != nullptr) {
-    ret = kBytecodeExecuter[opcode_].second(opargs_, params);
+    ret = kBytecodeExecuter[opcode_].second(opargs_, params, context);
   } else {
     switch (opcode_) {
       case LOAD_ATTR:
@@ -1109,8 +1496,40 @@ bool OpTrace::operator==(const Trace &trace) {
   return ret;
 }
 
-TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name,
-                       std::string name, bool strict, bool print) {
+static std::map<int, TraceType> kMapBytecodeToTraceType = {
+  {LOAD_CLOSURE, TraceType::Closure}, {LOAD_DEREF, TraceType::Deref},           {LOAD_GLOBAL, TraceType::Global},
+  {LOAD_NAME, TraceType::Name},       {LOAD_CLASSDEREF, TraceType::ClassDeref},
+};
+
+TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name,
+                                 std::string name, bool strict) {
+  switch (opcode) {
+    case LOAD_CLOSURE:
+    case LOAD_DEREF:
+    case LOAD_GLOBAL:
+    case LOAD_NAME:
+    case LOAD_CLASSDEREF:
+      return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
+    case LOAD_CONST:
+      return std::make_shared<ConstTrace>(obj, -1);
+    case CALL_FUNCTION:
+    case CALL_FUNCTION_EX:
+    case CALL_FUNCTION_KW:
+      if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
+        if (strict) {
+          return nullptr;
+        } else {
+          return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
+        }
+      }
+    default:
+      break;
+  }
+  return std::make_shared<OpTrace>(obj, opcode, opargs, params, name);
+}
+
+TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, const std::string &module_name,
+                       const std::string &name, bool strict, bool print) {
   std::vector<PyObject *> vparams;
   for (auto trace : params) {
     if (trace == nullptr) {
@@ -1133,29 +1552,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
       return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
     }
   }
-  switch (opcode) {
-    case LOAD_CLOSURE:
-      return std::make_shared<RootTrace>(obj, TraceType::Closure, opargs, name, module_name);
-    case LOAD_DEREF:
-      return std::make_shared<RootTrace>(obj, TraceType::Deref, opargs, name, module_name);
-    case LOAD_GLOBAL:
-      return std::make_shared<RootTrace>(obj, TraceType::Global, opargs, name, module_name);
-    case LOAD_CONST:
-      return std::make_shared<ConstTrace>(obj, -1);
-    case CALL_FUNCTION:
-    case CALL_FUNCTION_EX:
-    case CALL_FUNCTION_KW:
-      if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
-        if (strict) {
-          return nullptr;
-        } else {
-          return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
-        }
-      }
-    default:
-      break;
-  }
-  return std::make_shared<OpTrace>(obj, opcode, opargs, params, name);
+  return CreateOpTraceByBytecode(obj, opcode, opargs, params, module_name, name, strict);
 }
 
 CustomizedTrace::CustomizedTrace(PyObject *obj, RetrieveFunc rfunc, ToStringFunc sfunc)

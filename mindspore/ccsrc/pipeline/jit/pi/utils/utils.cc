@@ -331,12 +331,12 @@ bool CheckDynamicLength(PyObject *obj) {
 }
 
 bool CheckScalar(PyObject *obj) {
-  return PyLong_Check(obj) || PyFloat_Check(obj) || PyBool_Check(obj) || PyUnicode_Check(obj) || PyBytes_Check(obj) ||
-         PyComplex_Check(obj);
+  return PyLong_CheckExact(obj) || PyFloat_CheckExact(obj) || PyBool_Check(obj) || PyUnicode_CheckExact(obj) ||
+         PyBytes_CheckExact(obj) || PyComplex_CheckExact(obj);
 }
 
 bool CheckContainer(PyObject *obj) {
-  return PyList_Check(obj) || PyTuple_Check(obj) || PySet_Check(obj) || PyDict_Check(obj);
+  return PyList_CheckExact(obj) || PyTuple_CheckExact(obj) || PyAnySet_Check(obj) || PyDict_CheckExact(obj);
 }
 
 bool IsTensorPyObject(PyObject *obj) {

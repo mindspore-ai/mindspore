@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include <opcode.h>
+#include <Python.h>
 #include <algorithm>
+#include <limits>
 #include <string>
 #include <vector>
+#include <map>
+#include "pybind11/pybind11.h"
+#include "pybind_api/ir/primitive_py.h"
+#include "pipeline/jit/pi/utils/utils.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
@@ -106,6 +114,144 @@ void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_co
   }
 }
 
+constexpr int64_t kMaxCalcDim = 1;
+constexpr int64_t kCompareDim = std::numeric_limits<int64_t>::max();
+
+static OptStrategy::CalcKind TensorComputable(PyObject *obj, ssize_t max_dim) {
+  if (py::isinstance<mindspore::tensor::Tensor>(obj) || py::isinstance<mindspore::tensor::MetaTensor>(obj)) {
+    auto tensor_ptr = py::cast<mindspore::tensor::MetaTensorPtr>(obj);
+    auto shape = tensor_ptr->shape();
+    if (!std::any_of(shape.begin(), shape.end(), [max_dim](const int64_t dim) { return dim > max_dim; })) {
+      return OptStrategy::CalcKind::kCalcValue;
+    }
+  }
+  return OptStrategy::CalcKind::kCalcShape;
+}
+
+static OptStrategy::CalcKind StubTensorComputable(PyObject *obj, ssize_t max_dim) {
+  auto stub = PyObject_GetAttrString(obj, "stub");
+  if (stub != nullptr && stub != Py_None) {
+    auto pyObj = py::cast<py::object>(stub);
+    auto ptr = pyObj.cast<mindspore::stub::StubNodePtr>();
+    auto base = ptr->ToAbstract();
+    auto shape = base->BuildShape()->cast<abstract::ShapePtr>();
+    Py_DECREF(stub);
+    if (shape && !shape->IsDynamic()) {
+      if (!std::any_of(shape->shape().begin(), shape->shape().end(),
+                       [max_dim](const int64_t dim) { return dim > max_dim; })) {
+        return OptStrategy::CalcKind::kCalcValue;
+      }
+    } else {
+      return OptStrategy::CalcKind::kCalcUnsupported;
+    }
+  } else {
+    obj = PyObject_GetAttrString(obj, "tensor");
+    auto pyObj = py::cast<py::object>(obj);
+    Py_DECREF(obj);
+    auto tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
+    auto shape = tensor_ptr->shape();
+    if (!std::any_of(shape.begin(), shape.end(), [max_dim](const int64_t dim) { return dim > max_dim; })) {
+      return OptStrategy::CalcKind::kCalcValue;
+    }
+  }
+  return OptStrategy::CalcKind::kCalcShape;
+}
+
+static OptStrategy::CalcKind ObjectComputable(PyObject *obj, ssize_t max_dim = kMaxCalcDim) {
+  if (obj == nullptr) {
+    return OptStrategy::CalcKind::kCalcUnsupported;
+  } else if (obj == Py_None || obj == Py_True || obj == Py_False || obj == Py_Ellipsis || CheckScalar(obj) ||
+             CheckContainer(obj)) {
+    return OptStrategy::CalcKind::kCalcValue;
+  } else if (IsTensorPyObject(obj)) {
+    return TensorComputable(obj, max_dim);
+  } else if (IsStubTensor(py::cast<py::object>(obj))) {
+    return StubTensorComputable(obj, max_dim);
+  } else {
+    return OptStrategy::CalcKind::kCalcUnsupported;
+  }
+}
+
+using CheckPyObjectFunc = OptStrategy::CalcKind (*)(int bytecode, int opargs, const PyObjectArray &objs);
+
+OptStrategy::CalcKind MakeCalcStrategyByObject(int bytecode, int opargs, const PyObjectArray &objs) {
+  return ObjectComputable(objs[0]);
+}
+
+OptStrategy::CalcKind MakeCalcStrategyByMatMul(int bytecode, int opargs, const PyObjectArray &objs) {
+  auto oc1 = ObjectComputable(objs[0]);
+  auto oc2 = ObjectComputable(objs[1]);
+  if (oc1 == OptStrategy::CalcKind::kCalcValue && oc2 == OptStrategy::CalcKind::kCalcValue) {
+    return OptStrategy::CalcKind::kCalcValue;
+  } else {
+    return OptStrategy::CalcKind::kCalcUnsupported;
+  }
+}
+
+OptStrategy::CalcKind MakeCalcStrategyByCompare(int bytecode, int opargs, const PyObjectArray &objs) {
+  if (objs[0] == Py_None || objs[1] == Py_None) {
+    return OptStrategy::CalcKind::kCalcValue;
+  }
+  if (py::isinstance<mindspore::Type>(objs[0]) || PyType_Check(objs[0])) {
+    return OptStrategy::CalcKind::kCalcValue;
+  }
+  if (py::isinstance<mindspore::Type>(objs[1]) || PyType_Check(objs[1])) {
+    return OptStrategy::CalcKind::kCalcValue;
+  }
+  auto oc1 = ObjectComputable(objs[0], kCompareDim);
+  auto oc2 = ObjectComputable(objs[1], kCompareDim);
+  if (oc1 == OptStrategy::CalcKind::kCalcValue && oc2 == OptStrategy::CalcKind::kCalcValue) {
+    return OptStrategy::CalcKind::kCalcValue;
+  } else if (oc1 == OptStrategy::CalcKind::kCalcUnsupported || oc2 == OptStrategy::CalcKind::kCalcUnsupported) {
+    return OptStrategy::CalcKind::kCalcUnsupported;
+  } else {
+    return OptStrategy::CalcKind::kCalcShape;
+  }
+}
+
+static std::map<int, CheckPyObjectFunc> kBytecodeStrategy = {
+  {UNARY_POSITIVE, MakeCalcStrategyByObject},
+  {UNARY_NEGATIVE, MakeCalcStrategyByObject},
+  {UNARY_NOT, MakeCalcStrategyByObject},
+  {UNARY_INVERT, MakeCalcStrategyByObject},
+  {BINARY_LSHIFT, MakeCalcStrategyByObject},
+  {BINARY_RSHIFT, MakeCalcStrategyByObject},
+  {BINARY_AND, MakeCalcStrategyByObject},
+  {BINARY_XOR, MakeCalcStrategyByObject},
+  {BINARY_OR, MakeCalcStrategyByObject},
+  {BINARY_FLOOR_DIVIDE, MakeCalcStrategyByObject},
+  {BINARY_TRUE_DIVIDE, MakeCalcStrategyByObject},
+  {INPLACE_LSHIFT, MakeCalcStrategyByObject},
+  {INPLACE_RSHIFT, MakeCalcStrategyByObject},
+  {INPLACE_AND, MakeCalcStrategyByObject},
+  {INPLACE_XOR, MakeCalcStrategyByObject},
+  {INPLACE_OR, MakeCalcStrategyByObject},
+  {INPLACE_FLOOR_DIVIDE, MakeCalcStrategyByObject},
+  {INPLACE_TRUE_DIVIDE, MakeCalcStrategyByObject},
+  {BINARY_POWER, MakeCalcStrategyByObject},
+  {BINARY_ADD, MakeCalcStrategyByObject},
+  {BINARY_SUBTRACT, MakeCalcStrategyByObject},
+  {BINARY_MULTIPLY, MakeCalcStrategyByObject},
+  {BINARY_MODULO, MakeCalcStrategyByObject},
+  {INPLACE_POWER, MakeCalcStrategyByObject},
+  {INPLACE_ADD, MakeCalcStrategyByObject},
+  {INPLACE_SUBTRACT, MakeCalcStrategyByObject},
+  {INPLACE_MULTIPLY, MakeCalcStrategyByObject},
+  {INPLACE_MODULO, MakeCalcStrategyByObject},
+  {BINARY_MATRIX_MULTIPLY, MakeCalcStrategyByMatMul},
+  {INPLACE_MATRIX_MULTIPLY, MakeCalcStrategyByMatMul},
+  {BINARY_SUBSCR,
+   [](int bytecode, int opargs, const PyObjectArray &objs) { return OptStrategy::CalcKind::kCalcValue; }},
+  {COMPARE_OP, MakeCalcStrategyByCompare},
+};
+
+OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByInputs(int bytecode, int opargs, const PyObjectArray &objs) {
+  auto iter = kBytecodeStrategy.find(bytecode);
+  if (iter != kBytecodeStrategy.end()) {
+    return iter->second(bytecode, opargs, objs);
+  }
+  return CalcKind::kCalcUnsupported;
+}
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore
