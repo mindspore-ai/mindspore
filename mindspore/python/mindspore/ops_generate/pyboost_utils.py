@@ -111,9 +111,7 @@ def tuple_input_to_cpp_type(dtype: str):
         'list[bool]': 'bool',
         'list[tensor]': 'TensorPtr',
     }
-    if dtype in types_map:
-        return types_map[dtype]
-    return None
+    return types_map.get(dtype)
 
 
 def number_input_to_cpp_type(dtype: str):
@@ -123,9 +121,7 @@ def number_input_to_cpp_type(dtype: str):
         'bool': 'bool',
         'str': 'string'
     }
-    if dtype in types_map:
-        return types_map[dtype]
-    return None
+    return types_map.get(dtype)
 
 
 def get_input_dtype(dtype: str, optional):
@@ -133,19 +129,20 @@ def get_input_dtype(dtype: str, optional):
     Convert type
     """
     # add more type here
+    kValueTuplePtr = 'ValueTuplePtr'
     type_convert = {
         'int': 'Int64ImmPtr',
         'float': 'FP32ImmPtr',
         'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
-        'tuple[int]': 'ValueTuplePtr',
-        'tuple[float]': 'ValueTuplePtr',
-        'tuple[bool]': 'ValueTuplePtr',
-        'tuple[tensor]': 'ValueTuplePtr',
-        'list[int]': 'ValueTuplePtr',
-        'list[float]': 'ValueTuplePtr',
-        'list[bool]': 'ValueTuplePtr',
-        'list[tensor]': 'ValueTuplePtr',
+        'tuple[int]': kValueTuplePtr,
+        'tuple[float]': kValueTuplePtr,
+        'tuple[bool]': kValueTuplePtr,
+        'tuple[tensor]': kValueTuplePtr,
+        'list[int]': kValueTuplePtr,
+        'list[float]': kValueTuplePtr,
+        'list[bool]': kValueTuplePtr,
+        'list[tensor]': kValueTuplePtr,
         'tensor': 'TensorPtr',
         'str': 'StringImmPtr',
         'type': 'TypePtr',

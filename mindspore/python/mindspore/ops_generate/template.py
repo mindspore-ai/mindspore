@@ -24,13 +24,13 @@ class CppTemplate:
     regular_str = r"(^[^\n\S]*)?\$([^\d\W]\w*|\{,?[^\d\W]\w*\,?})"
     regular_match = re.compile(regular_str, re.MULTILINE)
 
+    def __init__(self, code_pattern):
+        self.code_pattern = code_pattern
+
     @staticmethod
     def load_from_file(file_path):
         with open(file_path, "r") as f:
             return CppTemplate(f.read())
-
-    def __init__(self, code_pattern):
-        self.code_pattern = code_pattern
 
     def replace(self, **kwargs):
         """
@@ -66,9 +66,9 @@ class CppTemplate:
             var, start, end = extract_variable(key)
             if indent is not None:
                 if not isinstance(var, list):
-                    var = [var]
-                return add_indent(indent, var)
-
+                    return add_indent(indent, [var])
+                else:
+                    return add_indent(indent, var)
             if isinstance(var, list):
                 code = ", ".join(str(x) for x in var)
                 if not var:
