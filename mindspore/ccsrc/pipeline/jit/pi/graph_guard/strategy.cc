@@ -252,6 +252,14 @@ OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByInputs(int bytecode, int op
   }
   return CalcKind::kCalcUnsupported;
 }
+
+OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByShape(const ShapeVector &shape) {
+  if (!std::any_of(shape.begin(), shape.end(), [](const int64_t dim) { return dim > kMaxCalcDim; })) {
+    return CalcKind::kCalcValue;
+  } else {
+    return CalcKind::kCalcShape;
+  }
+}
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore
