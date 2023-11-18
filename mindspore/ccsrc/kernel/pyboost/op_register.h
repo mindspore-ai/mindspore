@@ -26,8 +26,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-static const auto kOneScalar = std::make_shared<Int64Imm>(1);
-
 template <typename T>
 class BACKEND_EXPORT OpFactory {
  public:
@@ -62,15 +60,13 @@ class OpRegister {
   ~OpRegister() = default;
 };
 
-#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                                \
+#define MS_REG_PYBOOST_OP(DEVICE, clazz)                                                    \
   static_assert(std::is_base_of<OpRunner, clazz>::value, " must be base of OpRunner");      \
   static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
     auto op = std::make_shared<clazz##DEVICE>();                                            \
     op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \
     return op;                                                                              \
   });
-
-#define MS_REG_PYBOOST_OP(DEVICE, clazz) MS_REG_PYBOOST_OP_REG(DEVICE, clazz)
 
 #define CREATE_PYBOOST_OP(NAME, DEVICE) \
   mindspore::kernel::pyboost::OpFactory<mindspore::kernel::pyboost::NAME>::Get().Create(#NAME, DEVICE);

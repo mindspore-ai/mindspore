@@ -18,8 +18,8 @@ Generate pyboost function from pyboost_op.yaml
 
 import os
 import pathlib
-import pyboost_utils
 from dataclasses import dataclass
+import pyboost_utils
 from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
     number_input_to_cpp_type, get_const_number_convert, get_tuple_input_convert, get_pyboost_name, is_cube, \
     get_aclnn_interface, get_disable_flag, get_op_name

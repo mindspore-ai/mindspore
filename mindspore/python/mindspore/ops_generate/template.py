@@ -67,8 +67,7 @@ class CppTemplate:
             if indent is not None:
                 if not isinstance(var, list):
                     return add_indent(indent, [var])
-                else:
-                    return add_indent(indent, var)
+                return add_indent(indent, var)
             if isinstance(var, list):
                 code = ", ".join(str(x) for x in var)
                 if not var:
