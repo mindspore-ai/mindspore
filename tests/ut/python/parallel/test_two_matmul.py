@@ -23,6 +23,7 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+from parallel.utils.utils import ParallelValidator
 
 
 def setup_function():
@@ -513,3 +514,40 @@ def test_matmul_in_strategy_is_none_and_out_strategy_is_not_none():
 
     with pytest.raises(ValueError):
         GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+def test_two_matmul_same_input():
+    """
+    Feature: test merge allgather comm
+    Description: a->ag1->reshape->mat1, a->ag2->reshape->mat2, merge ag1, ag2
+    Expectation: compile success
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, matmul1_strategy, matmul2_strategy, relu_strategy):
+            super().__init__()
+            self.matmul1 = P.MatMul(transpose_b=True).shard(matmul1_strategy)
+            self.matmul2 = P.MatMul(transpose_b=True).shard(matmul2_strategy)
+            self.relu = P.ReLU().shard(relu_strategy)
+        def construct(self, x, y, b):
+            x = self.relu(x)
+            out1 = self.matmul1(x, y)
+            out2 = self.matmul2(x, y)
+            return out1 + out2
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    matmul1_strategy = ((4, 1), (2, 1))
+    matmul2_strategy = ((4, 1), (2, 1))
+    relu_strategy = ((8, 1),)
+    net = GradWrap(NetWithLoss(Net(matmul1_strategy, matmul2_strategy, relu_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float32)
+    net.set_train()
+    phase, _ = _cell_graph_executor.compile(net, x, y, b)
+    validator = ParallelValidator(net, phase)
+    # check sub_graph
+    sub_graph = {
+        'AllGather-0': ['Reshape-1'],
+    }
+    assert validator.check_graph_structure(sub_graph)
