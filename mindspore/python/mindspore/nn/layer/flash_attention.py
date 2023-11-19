@@ -255,7 +255,7 @@ class FlashAttention(Cell):
                                               (bsz, head_num, seq_len, seq_len // 8))
             else:
                 drop_mask_bits = None
-            # (B, N, S, D) -> (B, S, H)
+            # (B, S, S) -> (B, 1, S, S)
             attn_mask = self.cast(self.reshape(attn_mask, (bsz, 1, seq_len, seq_len)), mstype.uint8)
             output, _, _ = self.flash_attention(query,
                                                 key,

@@ -246,7 +246,7 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
     if (!kv_split_ && key_strategy[kInputQueryHiddenDimBSH] != 1) {
-      MS_LOG(ERROR) << name_ << ": Under the MHA，the hidden-dim of input 'key' cannot be split.";
+      MS_LOG(ERROR) << name_ << ": Under the MQA，the hidden-dim of input 'key' cannot be split.";
       return FAILED;
     }
     dp_ = query_strategy[kInputQueryBatchDimBSH];
@@ -286,11 +286,11 @@ Status FlashAttentionScoreInfo::InferDevMatrixShape() {
 Status FlashAttentionScoreInfo::InferTensorMap() {
   int64_t head_num_map = kv_split_ ? 0 : -1;
   if (input_layout_ == kInputLayoutBSH) {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // query
+    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});             // query
     (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // key
     (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // value
   } else {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // query
+    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});             // query
     (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // key
     (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // value
   }
