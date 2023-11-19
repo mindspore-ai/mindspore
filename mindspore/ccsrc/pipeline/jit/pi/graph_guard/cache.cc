@@ -51,7 +51,7 @@ std::shared_ptr<OptOption> OptOption::CreateOptionByPoint(void *ptr) {
   return ret;
 }
 
-OptCode::OptCode() : phase_(""), compiled_code_() {
+OptCode::OptCode() : phase_(""), compiled_code_(), call_count_(0) {
   guard_ = std::make_shared<OptGuard>();
   graph_perf_ = std::make_shared<OptPerf>();
   pynative_perf_ = std::make_shared<OptPerf>();
@@ -66,6 +66,8 @@ void OptCode::SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseF
 }
 
 NativeFunc OptCode::GetNativeFunc() const { return compiled_func_->GetFunc(); }
+
+std::string OptCode::GetPhase() const { return phase_; };
 
 void OptCode::SetPythonCode(const py::object &code) {
   MS_EXCEPTION_IF_CHECK_FAIL(code.ptr() != nullptr && PyCode_Check(code.ptr()) && Py_REFCNT(code.ptr()) == 1,
@@ -101,6 +103,10 @@ void OptCode::Copy(OptCodePtr dst) {
   dst->compiled_func_ = compiled_func_;
 }
 
+void OptCode::Inc() { call_count_++; }
+
+uint64_t OptCode::Count() { return call_count_; }
+
 OptCodePtr OptCodeHub::AddOptTarget(OptOptionPtr option) {
   OptCodePtr ret;
   for (auto &item : codeMap_) {
@@ -135,9 +141,50 @@ void OptCodeHub::DelOptTarget(OptOptionPtr option, OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
+      auto its = std::find_if(codeSet_.begin(), codeSet_.end(), [&code](auto &item) {
+        if (item.second == code) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      if (its != codeSet_.end()) {
+        codeSet_.erase(its);
+      }
       break;
     }
   }
+}
+
+void OptCodeHub::DelOptTarget(OptCodePtr code) {
+  for (auto &item : codeMap_) {
+    auto it = std::find(item.second.begin(), item.second.end(), code);
+    if (it != item.second.end()) {
+      item.second.erase(it);
+      if (item.second.size() == 0) {
+        codeMap_.erase(item.first);
+      }
+      auto its = std::find_if(codeSet_.begin(), codeSet_.end(), [&code, this](auto &item) {
+        if (item.second == code) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      if (its != codeSet_.end()) {
+        codeSet_.erase(its);
+      }
+      break;
+    }
+  }
+}
+
+std::vector<OptCodeSet> OptCodeHub::GetAllOptTarget() {
+  std::vector<OptCodeSet> ret;
+  for (auto &item : codeMap_) {
+    ret.push_back(item.second);
+  }
+  return ret;
 }
 
 void OptCodeHub::Regist(std::string key, OptCodePtr code) { codeSet_[key] = code; }

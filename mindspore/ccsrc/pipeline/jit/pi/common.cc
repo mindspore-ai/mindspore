@@ -631,6 +631,9 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
       jcr->codehub->Regist(key, jcr->code);
     }
   }
+
+  OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
+                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount));
 }
 
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);
@@ -819,6 +822,7 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
+  c->code->Inc();
 
   if (graph_preferred) {
     code_size_execute_graph[PyBytes_GET_SIZE(f->f_code->co_code)]++;

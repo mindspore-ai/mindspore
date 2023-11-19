@@ -75,7 +75,10 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   PyCodeObject *GetPythonCode() const;
   void SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc);
   NativeFunc GetNativeFunc() const;
+  std::string GetPhase() const;
   void Copy(std::shared_ptr<OptCode> dst);
+  void Inc();
+  uint64_t Count();
 
  protected:
   std::string phase_;
@@ -85,6 +88,7 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   OptOptionPtr option_;
   OptPerfPtr graph_perf_;
   OptPerfPtr pynative_perf_;
+  uint64_t call_count_;
 };
 using OptCodePtr = std::shared_ptr<OptCode>;
 using OptCodeSet = std::vector<OptCodePtr>;
@@ -97,6 +101,8 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
   virtual OptCodePtr AddOptTarget(OptOptionPtr option);
   virtual OptCodeSet GetOptTarget(OptOptionPtr option);
   virtual void DelOptTarget(OptOptionPtr option, OptCodePtr code);
+  virtual void DelOptTarget(OptCodePtr code);
+  virtual std::vector<OptCodeSet> GetAllOptTarget();
   virtual void Regist(std::string key, OptCodePtr code);
   virtual OptCodePtr Get(std::string key);
 

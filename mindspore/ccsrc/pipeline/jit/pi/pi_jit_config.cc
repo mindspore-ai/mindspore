@@ -68,6 +68,8 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"STATIC_GRAPH_BYTECODE_MIN", &GraphJitConfig::SetInt<GraphJitConfig::kStaticGraphBytecodeMin>},
   {"PERF_STATISTICS_COUNT", &GraphJitConfig::SetInt<GraphJitConfig::kPerfStatisticsCount>},
   {"PERF_STATISTICS_SCALE_10000X", &GraphJitConfig::SetInt<GraphJitConfig::kPerfStatisticsScale10000x>},
+  {"limit_graph_size", &GraphJitConfig::SetInt<GraphJitConfig::kLimitGraphSize>},
+  {"limit_graph_count", &GraphJitConfig::SetInt<GraphJitConfig::kLimitGraphCount>},
   {"allowed_inline_modules", &GraphJitConfig::AddAllowedInlineModules},
   {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
@@ -116,6 +118,8 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kStaticGraphBytecodeMin - kIntConf] = 0;
   int_conf[kPerfStatisticsCount - kIntConf] = 1;
   int_conf[kPerfStatisticsScale10000x - kIntConf] = 1000;
+  int_conf[kLimitGraphSize - kIntConf] = 0;
+  int_conf[kLimitGraphCount - kIntConf] = 0;
 
   set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};
   set_conf[kPSJitStrictCells - kStrListConf] = {};
