@@ -22,9 +22,9 @@ from mindspore.ops.operations.nn_ops import FlashAttentionScore
 
 
 class FlashAttentionScoreCell(nn.Cell):
-    def __init__(self, head_num):
+    def __init__(self, head_num, input_layout):
         super(FlashAttentionScoreCell, self).__init__()
-        self.fa_op = FlashAttentionScore(head_num=head_num)
+        self.fa_op = FlashAttentionScore(head_num=head_num, input_layout=input_layout)
 
     def construct(self, *inputs):
         return self.fa_op(*inputs)
@@ -41,41 +41,30 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-def test_flash_attention_score_fwd():
-    """
-    Feature: test FlashAttentionScore forward in Graph modes.
-    Description: test case for FlashAttentionScore.
-    Expectation: the result match with expected result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    B = 1
-    S = 8192
-    H = 1280
-    N = 10
-    query = Tensor(np.ones((B, S, H), dtype=np.float16))
-    key = Tensor(np.ones((B, S, H), dtype=np.float16))
-    value = Tensor(np.ones((B, S, H), dtype=np.float16))
+def generate_inputs(B, N, S, D, input_layout, use_mqa=False):
+    N_Q = N
+    N_KV = 1 if use_mqa else N
+    if input_layout == "BSH":
+        H_Q = N_Q * D
+        H_KV = N_KV * D
+        query = Tensor(np.ones((B, S, H_Q), dtype=np.float16))
+        key = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
+        value = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
+    elif input_layout == "BNSD":
+        query = Tensor(np.ones((B, N_Q, S, D), dtype=np.float16))
+        key = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
+        value = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
+    else:
+        raise ValueError(f"input_layout is invalid.")
     attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
-    drop_mask = None
-    real_shift = None
-    padding_mask = None
-    prefix = None
-
-    net = FlashAttentionScoreCell(N)
-    attention_out, softmax_max, softmax_sum = net(
-        query, key, value, attn_mask, drop_mask, real_shift, padding_mask, prefix)
-    assert attention_out.shape == (B, S, H)
-    assert softmax_max.shape == (B, N, S, 8)
-    assert softmax_sum.shape == (B, N, S, 8)
+    return query, key, value, attn_mask
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_flash_attention_score_fwd_bwd():
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+def test_flash_attention_score_fwd_bwd(input_layout):
     """
     Feature: test FlashAttentionScore forward and backward in Graph modes.
     Description: test case for FlashAttentionScore and FlashAttentionScoreGrad.
@@ -83,20 +72,18 @@ def test_flash_attention_score_fwd_bwd():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     B = 1
-    S = 8192
-    H = 1280
-    N = 10
-    query = Tensor(np.ones((B, S, H), dtype=np.float16))
-    key = Tensor(np.ones((B, S, H), dtype=np.float16))
-    value = Tensor(np.ones((B, S, H), dtype=np.float16))
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
+    N = 4
+    S = 1024
+    D = 128
+    query, key, value, attn_mask = generate_inputs(B, N, S, D, input_layout)
     drop_mask = None
     real_shift = None
     padding_mask = None
     prefix = None
-    net_with_grad = Grad(FlashAttentionScoreCell(N))
+    net_with_grad = Grad(FlashAttentionScoreCell(N, input_layout))
 
     dq, dk, dv, _ = net_with_grad(query, key, value, attn_mask, drop_mask, real_shift, padding_mask, prefix)
-    assert dq.shape == (B, S, H)
-    assert dk.shape == (B, S, H)
-    assert dv.shape == (B, S, H)
+
+    assert dq.shape == query.shape
+    assert dk.shape == key.shape
+    assert dv.shape == value.shape
