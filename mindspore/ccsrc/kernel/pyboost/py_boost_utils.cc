@@ -37,7 +37,7 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 
     DeviceAddressPromisePtr promise =
-      std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+      std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
     auto future = promise->GetFuture();
     auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
     output_tensor->set_address_future(device_address_future);
