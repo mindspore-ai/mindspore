@@ -34,6 +34,7 @@
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "runtime/pynative/op_executor.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace jit {
@@ -569,7 +570,7 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
   }
 }
 
-static void CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
+static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
   CallableGraph callable = mindspore::jit::graph::Compiler::Compile(*func, *frame, phase);
@@ -590,6 +591,13 @@ static void CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, co
   }
   jcr->code->SetNativeFunc(phase, callable, rFunc);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  return phase;
+}
+
+std::string GraphToString(FuncGraphPtr graph) {
+  std::ostringstream graph_buffer;
+  DumpIR(graph_buffer, graph);
+  return graph_buffer.str();
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
@@ -598,9 +606,31 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
 
-  CallGraphCompiler(jcr, func, frame);
+  std::string phase = CallGraphCompiler(jcr, func, frame);
 
   Py_DECREF(new_func);
+
+  if (jcr->conf->GetBoolConfig(GraphJitConfig::kReuseGraph)) {
+    auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
+    FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
+    std::string key = GraphToString(ms_func_graph);
+    auto code = jcr->codehub->Get(key);
+    if (code != nullptr) {
+      if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
+        std::ostringstream graph_buffer;
+        DumpIR(graph_buffer, ms_func_graph);
+        std::cout << "Graph Duplicated:" << std::endl;
+        std::cout << "  Graph:" << graph_buffer.str() << std::endl;
+        std::cout << "  Bytecode:" << std::endl;
+        Utils::DisFuncObject((PyObject *)(frame->f_code));
+      }
+      // find duplicate graph and reuse it
+      code->Copy(jcr->code);
+    } else {
+      // current graph is a new one and register it
+      jcr->codehub->Regist(key, jcr->code);
+    }
+  }
 }
 
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);

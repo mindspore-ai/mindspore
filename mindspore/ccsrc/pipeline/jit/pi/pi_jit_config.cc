@@ -47,6 +47,8 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"specialize_tensor", &GraphJitConfig::SetBool<GraphJitConfig::kGuardSpecializeTensor>},
   {"guard_detach_object", &GraphJitConfig::SetBool<GraphJitConfig::kGuardDetachObject>},
   {"print_guard", &GraphJitConfig::SetBool<GraphJitConfig::kPrintGuard>},
+  {"reuse_graph", &GraphJitConfig::SetBool<GraphJitConfig::kReuseGraph>},
+  {"print_reuse_graph", &GraphJitConfig::SetBool<GraphJitConfig::kPrintReuseGraph>},
   {"auto_clean_cache", &GraphJitConfig::SetBool<GraphJitConfig::kAutoCleanCache>},
   {"prune_case", &GraphJitConfig::SetBool<GraphJitConfig::kPruneCase>},
   {"loop_unrolling", &GraphJitConfig::SetBool<GraphJitConfig::kLoopUnrolling>},
@@ -88,6 +90,8 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kGuardSpecializeTensor - kBoolConf] = false;
   bool_conf[kGuardDetachObject - kBoolConf] = false;
   bool_conf[kPrintGuard - kBoolConf] = false;
+  bool_conf[kReuseGraph - kBoolConf] = false;
+  bool_conf[kPrintReuseGraph - kBoolConf] = false;
   bool_conf[kAutoCleanCache - kBoolConf] = false;
   bool_conf[kPruneCase - kBoolConf] = true;
   bool_conf[kLoopUnrolling - kBoolConf] = true;

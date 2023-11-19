@@ -30,6 +30,17 @@ namespace jit {
 namespace graph {
 using NativeFunc = std::function<PyObject *(PyObject *, PyObject *)>;
 using ReleaseFunc = std::function<void()>;
+class OptFunc {
+ public:
+  OptFunc(NativeFunc cFunc, ReleaseFunc rFunc);
+  virtual ~OptFunc();
+  NativeFunc GetFunc();
+
+ protected:
+  NativeFunc cFunc_;
+  ReleaseFunc rFunc_;
+};
+using OptFuncPtr = std::shared_ptr<OptFunc>;
 
 /// \brief OptOption is the compilation option for the code
 class OptOption : public std::enable_shared_from_this<OptOption> {
@@ -64,11 +75,11 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   PyCodeObject *GetPythonCode() const;
   void SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc);
   NativeFunc GetNativeFunc() const;
+  void Copy(std::shared_ptr<OptCode> dst);
 
  protected:
   std::string phase_;
-  NativeFunc cFunc_;
-  ReleaseFunc rFunc_;
+  OptFuncPtr compiled_func_;
   py::object compiled_code_;
   OptGuardPtr guard_;
   OptOptionPtr option_;
@@ -86,9 +97,12 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
   virtual OptCodePtr AddOptTarget(OptOptionPtr option);
   virtual OptCodeSet GetOptTarget(OptOptionPtr option);
   virtual void DelOptTarget(OptOptionPtr option, OptCodePtr code);
+  virtual void Regist(std::string key, OptCodePtr code);
+  virtual OptCodePtr Get(std::string key);
 
  protected:
   std::map<OptOptionPtr, OptCodeSet> codeMap_;
+  std::map<std::string, OptCodePtr> codeSet_;
 };
 
 using OptCodeHubPtr = std::shared_ptr<OptCodeHub>;
