@@ -3476,7 +3476,12 @@ void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
   auto nodes = node->inputs();
   bool need_constant = false;
   for (size_t i = 1; i < nodes.size(); ++i) {
-    if (IsPrimitiveCNode(nodes[i], prim::kPrimAllGather) || IsPrimitiveCNode(nodes[i], prim::kPrimDepend)) {
+    auto care_node = nodes[i];
+    while (IsPrimitiveCNode(care_node, prim::kPrimDepend)) {
+      care_node = care_node->cast<CNodePtr>()->input(kIndex1);
+    }
+    if (IsPrimitiveCNode(care_node, prim::kPrimAllGather) &&
+        common::AnfAlgo::IsFromParallelOptimizer(care_node->cast<CNodePtr>())) {
       need_constant = true;
     }
   }
@@ -3489,8 +3494,12 @@ void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
   }
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
-  (void)op->SetAttr("no_need_constant_folding", need_constant);
-  (void)op->SetAttr("_cannot_be_deleted", need_constant);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CellReuseLevel() == CellReuseLevel::kNoCellReuse) {
+    (void)op->SetAttr("no_need_constant_folding", need_constant);
+    (void)op->SetAttr("_cannot_be_deleted", need_constant);
+  }
   op_cache_[node.get()] = op;
 }
 
