@@ -264,7 +264,7 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
 
   // user defined fusion should be greater than 1
   if (opid < kFusionNumThreshold) {
-    opid = opid - kFusionNumThreshold + std::numeric_limits<int64_t>::max();
+    opid = opid - kFusionNumThreshold + std::numeric_limits<int32_t>::max();
   }
   common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
 
