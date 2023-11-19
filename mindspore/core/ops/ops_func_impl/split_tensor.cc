@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t CaculateAxis(const AbstractBasePtr &input_abs) {
+int64_t CaculateSplitAxis(const AbstractBasePtr &input_abs) {
   auto axis_value = input_abs->GetValue();
   if (axis_value == nullptr || axis_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "For SplitTensor op, axis should be int64_t, but got " << axis_value->ToString();
@@ -46,7 +46,7 @@ BaseShapePtr SplitTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-  auto axis = CaculateAxis(input_args[kIndex2]);
+  auto axis = CaculateSplitAxis(input_args[kIndex2]);
   size_t pos = LongToSize(axis);
   std::vector<abstract::BaseShapePtr> output_list;
 
@@ -78,7 +78,7 @@ TypePtr SplitTensorFuncImpl::InferType(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-  auto axis = CaculateAxis(input_args[kIndex2]);
+  auto axis = CaculateSplitAxis(input_args[kIndex2]);
   size_t pos = LongToSize(axis);
 
   auto split_sections = CaculateSplitSections(input_args[kIndex1]);

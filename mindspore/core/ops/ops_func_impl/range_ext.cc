@@ -22,8 +22,9 @@
 #include "ops/ops_func_impl/range_ext.h"
 
 namespace mindspore::ops {
+namespace {
 template <typename T>
-BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr limit_ptr, const ValuePtr delta_ptr) {
+BaseShapePtr CalculateRangeShapeSize(const ValuePtr start_ptr, const ValuePtr limit_ptr, const ValuePtr delta_ptr) {
   ShapeVector out_shape = {};
   auto start_opt = GetScalarValue<T>(start_ptr);
   auto limit_opt = GetScalarValue<T>(limit_ptr);
@@ -63,6 +64,7 @@ BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr limit_p
   (void)out_shape.emplace_back(shape_size);
   return std::make_shared<abstract::TensorShape>(out_shape);
 }
+}  // namespace
 
 BaseShapePtr RangeExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
@@ -72,7 +74,7 @@ BaseShapePtr RangeExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(start_value);
   MS_EXCEPTION_IF_NULL(end_value);
   MS_EXCEPTION_IF_NULL(step_value);
-  return CalculateShapeSize<float>(start_value, end_value, step_value);
+  return CalculateRangeShapeSize<float>(start_value, end_value, step_value);
 }
 
 TypePtr RangeExtFuncImpl::InferType(const PrimitivePtr &primitive,

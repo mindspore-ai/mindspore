@@ -24,7 +24,7 @@ namespace ops {
 namespace {
 constexpr size_t expand_vec_size = 2;
 constexpr size_t kInputArgsSize = 7;
-constexpr size_t kInputDims = 4;
+constexpr size_t kConv2dExtInputDims = 4;
 constexpr size_t kInputIdx = 0;
 constexpr size_t kWightIdx = 1;
 constexpr size_t kStrideIdx = 3;
@@ -46,9 +46,9 @@ BaseShapePtr Conv2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   const auto &input_shape = input_shape_ptr->GetShapeVector();
   const auto &weight_shape = weight_shape_ptr->GetShapeVector();
 
-  if (input_shape.size() != kInputDims || weight_shape.size() != kInputDims) {
-    MS_LOG(EXCEPTION) << "Input and weight shape size must be " << kInputDims << ", but got input_shape:" << input_shape
-                      << ", weight_shape:" << weight_shape;
+  if (input_shape.size() != kConv2dExtInputDims || weight_shape.size() != kConv2dExtInputDims) {
+    MS_LOG(EXCEPTION) << "Input and weight shape size must be " << kConv2dExtInputDims
+                      << ", but got input_shape:" << input_shape << ", weight_shape:" << weight_shape;
   }
 
   auto expande_dim_if_need = [input_args](const size_t &idx, const std::string &input_name) -> std::vector<int64_t> {
