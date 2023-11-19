@@ -44,6 +44,8 @@ class GraphJitConfig {
     kGuardSpecializeTensor,
     kGuardDetachObject,
     kPrintGuard,
+    kReuseGraph,
+    kPrintReuseGraph,
     kAutoCleanCache,
     kPruneCase,
     kLoopUnrolling,
