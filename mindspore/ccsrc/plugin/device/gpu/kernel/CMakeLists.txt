@@ -5,10 +5,17 @@ endif()
 if(ENABLE_GPU)
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "*.cc"
-            "pyboost/*.cc"
-            "pyboost/auto_generate/*.cc"
-            "pyboost/ops/*.cc"
     )
+
+    if(NOT BUILD_LITE)
+        file(GLOB_RECURSE PYBOOST_GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+                "pyboost/*.cc"
+                "pyboost/auto_generate/*.cc"
+                "pyboost/ops/*.cc"
+                )
+        list(APPEND GPU_SRC_LIST "${PYBOOST_GPU_SRC_LIST}")
+    endif()
+
     file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/*.cc"
         "dynamic_akg/*.cc"

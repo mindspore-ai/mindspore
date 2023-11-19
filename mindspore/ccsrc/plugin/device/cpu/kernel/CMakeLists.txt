@@ -21,10 +21,16 @@ if(ENABLE_CPU)
         "utils/*.cc"
         "map_tensor/*.cc"
         "sequence/*.cc"
-        "pyboost/*.cc"
-        "pyboost/auto_generate/*.cc"
-        "pyboost/ops/*.cc"
     )
+
+    if(NOT BUILD_LITE)
+        file(GLOB_RECURSE PYBOOST_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+                "pyboost/*.cc"
+                "pyboost/auto_generate/*.cc"
+                "pyboost/ops/*.cc"
+                )
+        list(APPEND CPU_SRC_LIST "${PYBOOST_CPU_SRC_LIST}")
+    endif()
 
     if(NOT ENABLE_MPI)
         list(REMOVE_ITEM CPU_SRC_LIST "allgather_cpu_kernel.cc")
