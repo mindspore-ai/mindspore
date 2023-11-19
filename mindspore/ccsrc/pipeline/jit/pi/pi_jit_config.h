@@ -67,6 +67,8 @@ class GraphJitConfig {
     kPerfStatisticsScale10000x,
     kInferPrimitiveMask,
     kInferPrimitiveMax,
+    kLimitGraphSize,
+    kLimitGraphCount,
     /* ------------------------------ */
     kStrListConf,
     kAllowedInlineModules,

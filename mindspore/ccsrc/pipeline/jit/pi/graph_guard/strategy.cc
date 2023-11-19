@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
 namespace jit {
@@ -45,6 +46,59 @@ OptStrategy::ExecKind OptStrategy::MakeExecStrategyByComplex(PyCodeObject *co, i
     return ExecKind::kExecGraph;
   }
 }
+
+static bool CompareOptCodeByCount(OptCodePtr a, OptCodePtr b) {
+  if (a->Count() > b->Count()) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count) {
+  if (limit_size <= 0 || limit_count <= 0) {
+    return;
+  }
+  std::vector<OptCodeSet> vec = hub->GetAllOptTarget();
+  for (auto set : vec) {
+    std::sort(set.begin(), set.end(), CompareOptCodeByCount);
+    if (limit_count > 0) {
+      if (set.size() > (size_t)limit_count) {
+        OptCodeSet toDel;
+        toDel.insert(toDel.begin(), set.begin() + limit_count, set.end());
+        for (auto item : toDel) {
+          hub->DelOptTarget(item);
+        }
+      }
+    }
+    if (limit_size > 0) {
+      auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
+      OptCodeSet toDel;
+      for (auto item : set) {
+        if (limit_size == 0) {
+          toDel.push_back(item);
+        }
+        std::string phase = item->GetPhase();
+        if (phase.size() > 0) {
+          FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
+          int node_count = (int)(ms_func_graph->nodes().size());
+          for (auto fg : ms_func_graph->func_graphs_used_total()) {
+            node_count += (int)(fg->nodes().size());
+          }
+          if (limit_size > node_count) {
+            limit_size -= node_count;
+          } else {
+            limit_size = 0;
+          }
+        }
+      }
+      for (auto item : toDel) {
+        hub->DelOptTarget(item);
+      }
+    }
+  }
+}
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore
