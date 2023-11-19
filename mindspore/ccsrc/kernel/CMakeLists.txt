@@ -11,10 +11,16 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "kash/*.cc"
     "oplib/*.cc"
     "environ_manager.cc"
-    "pyboost/*.cc"
-    "pyboost/auto_generate/*.cc"
-    "pyboost/ops/*.cc"
 )
+
+if(NOT BUILD_LITE)
+    file(GLOB_RECURSE PYBOOST_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "pyboost/*.cc"
+        "pyboost/auto_generate/*.cc"
+        "pyboost/ops/*.cc"
+    )
+    list(APPEND KERNEL_SRC_LIST "${PYBOOST_SRC_LIST}")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor -Wno-overloaded-virtual")

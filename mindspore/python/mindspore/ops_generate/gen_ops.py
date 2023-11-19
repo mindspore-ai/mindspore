@@ -504,7 +504,7 @@ namespace mindspore::ops {{"""
     gen_opdef_map = f"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     gen_include = f"""\n
-#include \"gen_ops_def.h\""""
+#include \"ops/auto_generate/gen_ops_def.h\""""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
