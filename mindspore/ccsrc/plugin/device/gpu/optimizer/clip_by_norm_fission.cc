@@ -24,6 +24,7 @@
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -65,23 +66,6 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
     }
   }
   return broadcast_shape;
-}
-
-AnfNodePtr ConvertValueToTensor(const KernelGraphPtr &kernel_graph, const ValueNodePtr &input_node) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  auto value_node = input_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto value = value_node->value();
-  MS_EXCEPTION_IF_NULL(value);
-  tensor::TensorPtr tensor_ptr = CreateTupleTensor(value->cast<ValueTuplePtr>());
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
-  MS_EXCEPTION_IF_NULL(tensor_input);
-  tensor_input->set_abstract(tensor_ptr->ToAbstract());
-  tensor_input = kernel_graph->NewValueNode(tensor_input);
-  kernel_graph->AddValueNodeToGraph(tensor_input);
-  tensor_input->set_scope(input_node->scope());
-  return tensor_input;
 }
 }  // namespace
 
@@ -149,13 +133,11 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
   }
   AnfNodePtr reduce_sum = nullptr;
 
-  auto axis_node = NewValueNode(MakeValue<std::vector<int64_t>>(axis));
-  auto axis_tensor = ConvertValueToTensor(kernel_graph, axis_node);
-  reduce_sum =
-    CreateCNodeBase(func_graph, {square, axis_tensor, NewValueNode(MakeValue(true)), NewValueNode(MakeValue(false))},
-                    kReduceSumOpName, square);
+  auto axis_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue<std::vector<int64_t>>(axis));
+  auto keepdims_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(true));
+  auto skipmode_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(false));
+  reduce_sum = CreateCNodeBase(func_graph, {square, axis_node, keepdims_node, skipmode_node}, kReduceSumOpName, square);
   MS_EXCEPTION_IF_NULL(reduce_sum);
-  common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(true), reduce_sum);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
   reduce_sum->set_abstract(abs);
   return reduce_sum;
