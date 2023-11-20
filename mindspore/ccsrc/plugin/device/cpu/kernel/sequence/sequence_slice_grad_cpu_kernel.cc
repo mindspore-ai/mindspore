@@ -64,7 +64,7 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
 
   // set output to zeros
   for (int64_t i = 0; i < len; i++) {
-    output_addr[i] = (T)0;
+    output_addr[i] = static_cast<T>(0);
   }
 
   if (step > 0) {
