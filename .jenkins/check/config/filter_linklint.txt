@@ -58,3 +58,4 @@ https://github.com/git-lfs/git-lfs/releases/download/v3.1.2/
 https://mindspore.cn*/r2.2/*
 https://www.mindspore.cn*/r2.2/*
 https://www.mindspore.cn/lite/en
+https://mindspore.cn/search/en?inputValue=Index%20values
