@@ -370,6 +370,9 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
     return AbstractBroaden(data);
   }
   auto ret = data->Clone();
+  if (ret->isa<abstract::AbstractAny>()) {
+    return ret;
+  }
   if (!ret->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
                             << " list or tuple, but got: " << ret->ToString();
