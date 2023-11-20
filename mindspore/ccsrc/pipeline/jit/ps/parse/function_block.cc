@@ -345,7 +345,8 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
     resolved_node->set_interpret(true);
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
-      if (ast->CallParserObjMethod(PYTHON_PARSE_IS_CLASS_TENSOR_TYPE, py_obj)) {
+      bool is_class_tensor_type = py::cast<bool>(ast->CallParserObjMethod(PYTHON_PARSE_IS_CLASS_TENSOR_TYPE, py_obj));
+      if (is_class_tensor_type) {
         resolved_node->set_user_data<bool>(kClassTensorType, std::make_shared<bool>(true));
       }
     }
