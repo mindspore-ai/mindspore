@@ -6712,6 +6712,9 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     the elements in these two dimensions will be treated as elements of a matrix,
     and `src` is embedded on the diagonal of the matrix.
 
+    Note:
+        Currently, ``inf`` value of elements in `input` or `src` is not supported.
+
     Args:
         input (Tensor): Input Tensor, whose dimension is larger than 1.
         src (Tensor): The source Tensor to embed.
@@ -6748,16 +6751,39 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     """
     _check_is_tensor("input", input, "diagonal_scatter")
     _check_is_tensor("src", src, "diagonal_scatter")
-    _check_is_int(offset, "offset", "diagonal_scatter")
-    _check_is_int(dim1, "dim1", "diagonal_scatter")
-    _check_is_int(dim2, "dim2", "diagonal_scatter")
     input_diag = input.diagonal(offset, dim1, dim2)
     _check_diagonal_scatter_shape(input_diag.shape, src.shape)
-    embed = ones_like(src)
-    embed = ops.diag_embed(embed, offset, dim1, dim2)
-    embed = input * embed
+    input_shape = input.shape
+    zeros_shape = list(input_shape)
+    m, n = input_shape[dim1], input_shape[dim2]
+    if m == n:
+        src = src - input_diag
+        src = ops.diag_embed(src, offset, dim1, dim2)
+        return input + src
+    if m > n:
+        axis = dim2
+        zeros_shape[axis] = m - n
+    else:
+        axis = dim1
+        zeros_shape[axis] = n - m
+    zeros_tensor = zeros(zeros_shape, dtype=input.dtype)
+    input = concat((input, zeros_tensor), axis)
+    input_diag = input.diagonal(offset, dim1, dim2)
+    if src.shape != input_diag.shape:
+        zeros_shape = []
+        for i, ax in enumerate(src.shape):
+            if ax == input_diag.shape[i]:
+                zeros_shape.append(ax)
+            else:
+                axis = i
+                zeros_shape.append(input_diag.shape[i] - ax)
+        zeros_tensor = zeros(zeros_shape, dtype=src.dtype)
+        src = concat((src, zeros_tensor), axis)
+    src = src - input_diag
     src = ops.diag_embed(src, offset, dim1, dim2)
-    return input + src - embed
+    input = input + src
+    begin = (0,) * input.ndim
+    return slice(input, begin, input_shape)
 
 
 def lstsq(input, A):

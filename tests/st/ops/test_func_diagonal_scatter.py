@@ -22,8 +22,14 @@ import mindspore.ops as ops
 
 
 class Net(nn.Cell):
+    def __init__(self, offset, dim1, dim2):
+        super(Net, self).__init__()
+        self.offset = offset
+        self.dim1 = dim1
+        self.dim2 = dim2
+
     def construct(self, x, src):
-        return ops.diagonal_scatter(x, src, offset=1, dim1=1, dim2=2)
+        return ops.diagonal_scatter(x, src, offset=self.offset, dim1=self.dim1, dim2=self.dim2)
 
 
 @pytest.mark.level1
@@ -50,13 +56,46 @@ def test_ops_diagonal_scatter(mode):
                     [0., 0., 0.]]], ms.float32)
     src = ms.Tensor([[1., 1.],
                      [1., 1.]], ms.float32)
-    net = Net()
+    net = Net(1, 1, 2)
     output = net(x, src)
     expect_output = [[[0., 1., 0.],
                       [0., 0., 1.],
                       [0., 0., 0.]],
-
                      [[0., 1., 0.],
                       [0., 0., 1.],
                       [0., 0., 0.]]]
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_diagonal_scatter_with_rectangular_matrix(mode):
+    """
+    Feature: ops.diagonal_scatter
+    Description: Verify the result of diagonal_scatter with rectangular matrix
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = ms.Tensor([[[0., 0., 0., 0.],
+                    [0., 0., 0., 0.],
+                    [0., 0., 0., 0.]],
+                   [[0., 0., 0., 0.],
+                    [0., 0., 0., 0.],
+                    [0., 0., 0., 0.]]], ms.float32)
+    src = ms.Tensor([[1., 1., 1.],
+                     [1., 1., 1.]], ms.float32)
+    net = Net(0, 1, 2)
+    output = net(x, src)
+    expect_output = [[[1., 0., 0., 0.],
+                      [0., 1., 0., 0.],
+                      [0., 0., 1., 0.]],
+                     [[1., 0., 0., 0.],
+                      [0., 1., 0., 0.],
+                      [0., 0., 1., 0.]]]
     assert np.allclose(output.asnumpy(), expect_output)
