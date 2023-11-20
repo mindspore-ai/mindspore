@@ -49,7 +49,6 @@ class AicpuOpKernelMod : public KernelMod {
     MS_LOG(EXCEPTION) << "This interface is not supported in AicpuOpKernelMod.";
   }
 
-  void SetNodeDef(const std::string &node_def);
   void SetExtInfo(const std::string &ext_info, size_t input_num, size_t output_num);
   void SetNodeName(const std::string &node_name);
   void SetCustSo(const std::string &cust_so);

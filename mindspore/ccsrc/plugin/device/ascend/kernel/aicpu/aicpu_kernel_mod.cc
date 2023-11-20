@@ -29,6 +29,7 @@
 #include "acl/acl_rt.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_proto_util.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
@@ -78,7 +79,6 @@ AicpuOpKernelMod::~AicpuOpKernelMod() {
   ext_info_.clear();
 }
 
-void AicpuOpKernelMod::SetNodeDef(const std::string &node_def) { (void)node_def_str_.assign(node_def); }
 void AicpuOpKernelMod::SetNodeName(const std::string &node_name) { node_name_ = node_name; }
 void AicpuOpKernelMod::SetCustSo(const std::string &cust_so) {
   node_so_ = cust_so;
@@ -268,7 +268,10 @@ int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
     }
   } else {
     // update output size after InferShape.
-    KernelMod::Resize(inputs, outputs);
+    auto ret = KernelMod::Resize(inputs, outputs);
+    if (ret != KRET_OK) {
+      return ret;
+    }
   }
 
   need_skip_execute_ = [this, &inputs]() -> bool {
@@ -286,10 +289,14 @@ int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   }();
 
   if (need_skip_execute_) {
-    return 0;
+    return KRET_OK;
   }
   if (IsOutputAllEmptyTensor(outputs)) {
-    return 0;
+    return KRET_OK;
+  }
+
+  if (!CreateNodeDefBytes(primitive_, inputs, outputs, &node_def_str_)) {
+    return KRET_RESIZE_FAILED;
   }
 
   MS_LOG(DEBUG) << "UpdateExtInfo of " << node_scope_name_ << " start";
@@ -297,12 +304,11 @@ int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   auto output_num = outputs.size();
   if (input_num == 0 && output_num == 0) {
     MS_LOG(INFO) << "Node:" << node_scope_name_ << " no need to update output shape";
-    return 0;
+    return KRET_OK;
   }
 
   if (ext_info_handler_ == nullptr || ext_info_.empty()) {
     MS_LOG(EXCEPTION) << "The ext_info_handler_ is nullptr or  ext_info_ is empty.";
-    return 0;
   }
 
   for (uint32_t i = 0; i < input_num; ++i) {
@@ -316,9 +322,8 @@ int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
       MS_LOG(EXCEPTION) << "Update output shape failed, node:" << node_scope_name_ << " output:" << i;
     }
   }
-  outputs_.clear();
 
-  return 0;
+  return KRET_OK;
 }
 
 bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
