@@ -308,8 +308,7 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   // If obj is nn.CellList, convert it to sequence.
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  if (is_celllist || !allow_fallback_runtime) {
+  if (is_celllist) {
     for (size_t it = 0; it < list.size(); ++it) {
       ValuePtr out = nullptr;
       bool success = ConvertData(list[it], &out, use_signature);
@@ -544,14 +543,17 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
       // Check JIT forbidden API
       CheckJITForbiddenAPI(obj);
       const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-      if (allow_fallback_runtime) {
-        // Check if the function is from a third-party library.
-        py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-        bool is_third_party_function =
-          python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY, obj).cast<bool>();
-        if (is_third_party_function) {
+      // Check if the function is from a third-party library.
+      py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+      bool is_third_party_function =
+        python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY, obj).cast<bool>();
+      if (is_third_party_function) {
+        if (allow_fallback_runtime) {
           MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
           return std::make_shared<InterpretedObject>(obj);
+        } else {
+          MS_EXCEPTION(ValueError) << "Converting the function from third-party library:" << py::str(obj)
+                                   << " need set jit_syntax_level to LAX.";
         }
       }
     }

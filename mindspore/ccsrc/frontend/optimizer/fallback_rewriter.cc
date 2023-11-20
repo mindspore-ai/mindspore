@@ -1463,6 +1463,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the raise statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real raise operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1540,6 +1542,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertScalarCast(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the ScalarCast statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     constexpr size_t x_index = 1;
@@ -1650,6 +1654,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertIsInstance(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the isinstance statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real isinstance operator.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1673,6 +1679,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertJoinedStr(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the JoinedStr statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real JoinedStr operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1717,6 +1725,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the print statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1801,6 +1811,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertMakeRange(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the range statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1816,6 +1828,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertIsAndIsNot(const CNodePtr &cnode, bool is) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the is/is_not statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
