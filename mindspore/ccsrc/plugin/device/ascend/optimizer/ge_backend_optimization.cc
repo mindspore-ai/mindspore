@@ -51,6 +51,7 @@
 #include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/scalar_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/tuple_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
@@ -222,6 +223,7 @@ void GEDynamicUnifyMindIR(const FuncGraphPtr &func_graph) {
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::MakeTupleUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::InputsUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ScalarUnifyMindIR>());
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::TupleUnifyMindIR>());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   optimizer->AddPassManager(dynamic_unify_mindir_pm);
   (void)optimizer->Optimize(func_graph);
