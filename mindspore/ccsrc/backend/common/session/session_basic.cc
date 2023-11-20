@@ -738,6 +738,10 @@ ValuePtr SessionBasic::GetValueNodeOutput(const AnfNodePtr &node, size_t output_
   if (value->isa<ValueTuple>()) {
     auto value_tuple = value->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
+    if (value_tuple->value().empty()) {
+      // empty tuple
+      return value;
+    }
     if (output_index >= value_tuple->size()) {
       MS_LOG(EXCEPTION) << "Index " << output_index << "is out of value tuple range";
     }
@@ -822,6 +826,18 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::set<int64_t> 
   }
 }
 
+static inline BaseShapePtr GetShapeFromTuple(const abstract::AbstractTuplePtr &tuple_abs, const size_t index) {
+  MS_EXCEPTION_IF_NULL(tuple_abs);
+  const auto &elements = tuple_abs->elements();
+  if (!elements.empty()) {
+    auto tuple_abs_elem = elements[index];
+    MS_EXCEPTION_IF_NULL(tuple_abs_elem);
+    return tuple_abs_elem->GetShape();
+  }
+  // empty tuple
+  return tuple_abs->GetShape();
+}
+
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                      const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -889,10 +905,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     MS_EXCEPTION_IF_NULL(real_input_abs);
     if (real_input_abs->isa<abstract::AbstractTuple>()) {
       auto tuple_abs = real_input_abs->cast<abstract::AbstractTuplePtr>();
-      MS_EXCEPTION_IF_NULL(tuple_abs);
-      auto tuple_abs_elem = tuple_abs->elements()[kernel_with_index.second];
-      MS_EXCEPTION_IF_NULL(tuple_abs_elem);
-      base_shape = tuple_abs_elem->BuildShape();
+      base_shape = GetShapeFromTuple(tuple_abs, kernel_with_index.second);
     } else {
       base_shape = real_input_abs->BuildShape();
     }
