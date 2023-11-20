@@ -81,8 +81,12 @@ bool SequenceGreaterEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
       break;
     }
   }
-  output_addr[0] = flag;
-  return true;
+  if (output_addr != nullptr) {
+    output_addr[0] = flag;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 #define ADD_KERNEL(x_dtype, y_dtype, x_type, y_type)                  \
