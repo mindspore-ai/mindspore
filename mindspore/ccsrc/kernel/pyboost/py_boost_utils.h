@@ -126,6 +126,11 @@ std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
   return result;
 }
 
+kernel::KernelModPtr BACKEND_EXPORT CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
+                                                    DeviceContext *device_context,
+                                                    const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs);
+
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

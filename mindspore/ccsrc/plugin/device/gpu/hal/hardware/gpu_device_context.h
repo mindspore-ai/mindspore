@@ -84,6 +84,7 @@ class GPUKernelExecutor : public KernelExecutor {
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override;
 
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 

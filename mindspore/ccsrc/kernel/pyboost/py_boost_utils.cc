@@ -169,6 +169,17 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
   return device_context;
 }
 
+kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
+                                     DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (!kernel_mod->Init(prim, inputs, outputs)) {
+    MS_LOG(EXCEPTION) << "KernelMod Init Failed: " << op_name;
+  }
+  return kernel_mod;
+}
+
 device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,
                                                                  const TensorStorageInfoPtr &old_storage_info) {
   MS_EXCEPTION_IF_NULL(old_device_address);

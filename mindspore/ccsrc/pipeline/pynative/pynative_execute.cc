@@ -35,6 +35,7 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/python_fallback_running.h"
+#include "kernel/kernel_mod_cache.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -186,6 +187,7 @@ void PyNativeExecutor::ClearRes() const {
   runtime::OpExecutor::GetInstance().Wait();
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
+  kernel::KernelModCache::GetInstance().ClearAllCache();
   pynative::autograd::ClearPyNativeAutoGradStaticRes();
 
   // Maybe exit in runop step

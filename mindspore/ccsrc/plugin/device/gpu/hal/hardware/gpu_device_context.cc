@@ -794,6 +794,10 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
 }
 
+kernel::KernelModPtr GPUKernelExecutor::CreateKernelMod(const std::string &op_name) const {
+  return kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Create(op_name);
+}
+
 void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
   CreateGPUKernel(nodes);

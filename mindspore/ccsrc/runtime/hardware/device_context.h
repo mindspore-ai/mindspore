@@ -274,6 +274,7 @@ class BACKEND_EXPORT KernelExecutor {
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
+  virtual kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const { MS_LOG(EXCEPTION) << "Unrealized"; };
 
   // Adjust kernel graph before run graph.
   virtual void PreprocessBeforeRun(const FuncGraphPtr &graph) const {}
