@@ -3,10 +3,10 @@ maximum:
     args:
         x:
             dtype: tensor
-            type_cast: number
+            #type_cast: number
         y:
             dtype: tensor
-            type_cast: number
+            #type_cast: number
     args_signature:
         dtype_group: (x, y)
     returns:
