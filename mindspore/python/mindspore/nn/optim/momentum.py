@@ -29,33 +29,19 @@ from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
-@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter, cache_enable):
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
-    if ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("ApplyMomentum", [])
-        shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
-        success = F.depend(True, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
-    else:
-        success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
+    success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
     return success
 
 
-@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
-                        "Function", "Bool")
-def _tensor_run_opt_ext_dist(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter, cache_enable,
+@_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Function", "Bool")
+def _tensor_run_opt_ext_dist(opt, momentum, learning_rate, gradient, weight, moment,
                              distributed_opt, use_flag):
     """Apply momentum optimizer to the weight parameter using Tensor."""
     if use_flag:
         success = F.depend(True, distributed_opt(weight, moment, learning_rate, gradient, momentum))
-    elif ps_parameter and not cache_enable:
-        op_shape = P.Shape()
-        _ps_pull = P.Pull()
-        _ps_push = P.Push("ApplyMomentum", [])
-        shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
-        success = F.depend(True, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
     else:
         success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
     return success
@@ -224,19 +210,19 @@ class Momentum(Optimizer):
         if self.use_dist_optimizer:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),
-                                                 lr, gradients, params, moments, self.ps_parameters, self.cache_enable,
+                                                 lr, gradients, params, moments,
                                                  self.distributed_opts, self.use_distributed_opt_flags)
             else:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum, lr),
-                                                 gradients, params, moments, self.ps_parameters, self.cache_enable,
+                                                 gradients, params, moments,
                                                  self.distributed_opts, self.use_distributed_opt_flags)
         else:
             if self.is_group_lr:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),
-                                                 lr, gradients, params, moments, self.ps_parameters, self.cache_enable)
+                                                 lr, gradients, params, moments)
             else:
                 success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum, lr),
-                                                 gradients, params, moments, self.ps_parameters, self.cache_enable)
+                                                 gradients, params, moments)
         return success
 
 
