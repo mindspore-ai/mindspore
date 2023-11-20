@@ -494,8 +494,10 @@ class RegOp:
             self._is_string(arg[0])
             self._is_string(arg[1])
             if len(arg) == 3:
-                self._is_string(arg[2])
-            dtype_format.append(arg)
+                if self._is_string(arg[2]):
+                    dtype_format.append(arg)
+            else:
+                dtype_format.append(arg)
         self.dtype_format_.append(tuple(dtype_format))
         return self
 
@@ -891,8 +893,8 @@ class TBERegOp(RegOp):
         Args:
             dynamic_compile_static (bool): Value of dynamic compile static. Default: ``False`` .
         """
-        self._is_bool(dynamic_compile_static)
-        self.dynamic_compile_static_ = dynamic_compile_static
+        if self._is_bool(dynamic_compile_static):
+            self.dynamic_compile_static_ = dynamic_compile_static
         return self
 
     def need_check_supported(self, need_check_supported=False):
