@@ -219,23 +219,6 @@ std::string GetAscendPath() {
   return path_tmp.substr(0, pos);
 }
 
-std::string GetAICoreNumber() {
-  constexpr int32_t kModelTypeAiCore = 4;  // enum DEV_MODULE_TYPE { MODULE_TYPE_AICORE = 4 }
-  constexpr int32_t kInfoTypeCoreNum = 3;  // enum DEV_INFO_TYPE { INFO_TYPE_CORE_NUM = 3 }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  int64_t aicore_number = 0;
-  auto rt_ret = rtGetDeviceInfo(device_id, kModelTypeAiCore, kInfoTypeCoreNum, &aicore_number);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(WARNING) << "Get aicore number for device " << device_id
-                    << " failed, will compile tbe op with empty core_num.";
-    return "";
-  }
-  MS_LOG(DEBUG) << "AiCore number of device " << device_id << " is " << aicore_number;
-  return std::to_string(aicore_number);
-}
-
 std::string GetErrorMsg(uint32_t rt_error_code) {
   auto find_iter = error_msg.find(rt_error_code);
   if (find_iter == error_msg.end()) {
