@@ -37,28 +37,13 @@ std::vector<AnfNodePtr> GetReduceInputs(const FuncGraphPtr &func_graph, const CN
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   std::vector<AnfNodePtr> reduce_inputs;
-  std::vector<int64_t> axis_shp = {0};
-  auto axis_tensor = std::make_shared<tensor::Tensor>(kInt64->type_id(), axis_shp);
-  MS_EXCEPTION_IF_NULL(axis_tensor);
-  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, kInt64};
-  axis_tensor->set_device_info(device_info);
-  ValueNodePtr axis_node = std::make_shared<ValueNode>(axis_tensor);
-  MS_EXCEPTION_IF_NULL(axis_node);
-  axis_node->set_abstract(axis_tensor->ToAbstract());
-  axis_node = kernel_graph->NewValueNode(axis_node);
-  kernel_graph->AddValueNodeToGraph(axis_node);
+  std::vector<int64_t> empty_axis;
+  auto axis_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(empty_axis));
 
   // keepdims node
-  auto false_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<BoolImm>(false), kBool);
-  ValueNodePtr keepdims_node = std::make_shared<ValueNode>(MakeValue(false));
-  keepdims_node->set_abstract(false_abs);
-  keepdims_node = kernel_graph->NewValueNode(keepdims_node);
-  kernel_graph->AddValueNodeToGraph(keepdims_node);
+  auto keepdims_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(false));
   // skipmode node
-  ValueNodePtr skipmode_node = std::make_shared<ValueNode>(MakeValue(false));
-  skipmode_node->set_abstract(false_abs);
-  skipmode_node = kernel_graph->NewValueNode(skipmode_node);
-  kernel_graph->AddValueNodeToGraph(skipmode_node);
+  auto skipmode_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(false));
 
   common::AnfAlgo::SetNodeAttr(kAttrReduction, MakeValue("none"), new_cnode);
   // set reduction to None.

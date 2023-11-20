@@ -293,6 +293,14 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool NeedEraseCache(const PrimitivePtr &prim);
 
   static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+
+  static inline ValueNodePtr ConvertValueToNode(const KernelGraphPtr &kernel_graph, const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    MS_EXCEPTION_IF_NULL(value);
+    auto value_node = kernel_graph->NewValueNode(value->ToAbstract(), value);
+    kernel_graph->AddValueNodeToGraph(value_node);
+    return value_node;
+  }
 };
 }  // namespace session
 
