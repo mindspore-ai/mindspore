@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv_single_in_fusion_pass.h"
-#include <memory>
-#include <string>
 #include <vector>
 #include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"

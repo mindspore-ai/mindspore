@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_dropoutdomaskv3_fusion_pass.h"
-#include <memory>
-#include <string>
-#include <vector>
 #include "ops/nn_op_name.h"
 #include "ops/math_ops.h"
 #include "ops/framework_ops.h"

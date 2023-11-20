@@ -16,9 +16,6 @@
 #include "backend/common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include <iomanip>
-#include <algorithm>
-#include <memory>
-#include <ostream>
 
 #include "utils/log_adapter.h"
 
