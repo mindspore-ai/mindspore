@@ -6433,7 +6433,7 @@ class Tril(Primitive):
 
     Args:
         diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: ``0`` ,
-            indicating the main didiagonal.
+            indicating the main diagonal.
 
     Inputs:
         - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
