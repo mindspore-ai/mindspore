@@ -1815,7 +1815,7 @@ class UnsortedSegmentSum(Primitive):
           The shape is :math:`(x_1, x_2, ..., x_R)`.
         - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
           Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
+        - **num_segments** (Union[int, Tensor]) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Outputs:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
@@ -1858,10 +1858,10 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
           Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
+        - **num_segments** (Union[int, Tensor]) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1920,10 +1920,10 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
           Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
+        - **num_segments** (Union[int, Tensor]) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2039,13 +2039,12 @@ class UnsortedSegmentProd(Primitive):
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           With float16, float32 or int32 data type.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
-          Data type must be int32.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`,
-          must be greater than 0.
+        - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
+          Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R. Data type must be int32.
+        - **num_segments** (Union[int, Tensor]) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -4687,14 +4687,13 @@ def unsorted_segment_min(x, segment_ids, num_segments):
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
             Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4738,14 +4737,13 @@ def unsorted_segment_max(x, segment_ids, num_segments):
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
             Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4780,16 +4778,15 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 
     Args:
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
-        segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
-                              the value must be non-negative tensor. The data type must be int32.
-        num_segments (int): The value specifies the number of distinct `segment_ids`.
+        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R. The data type must be int32.
+        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
 
     Returns:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Raises:
         TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6290,7 +6287,6 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
 
     Raises:
         TypeError: If `num_segments` is not an int or 0-D Tensor.
-        ValueError: If length of shape of `segment_ids` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
