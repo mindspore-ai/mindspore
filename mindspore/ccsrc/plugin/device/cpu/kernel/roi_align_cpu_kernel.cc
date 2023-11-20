@@ -225,8 +225,15 @@ bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
         continue;
       }
       int offset = -1;
-      int c, ph, pw, roi_bin_grid_h, roi_bin_grid_w;
-      T bin_size_h, bin_size_w, roi_start_h, roi_start_w;
+      int c;
+      int ph;
+      int pw;
+      int roi_bin_grid_h;
+      int roi_bin_grid_w;
+      T bin_size_h;
+      T bin_size_w;
+      T roi_start_h;
+      T roi_start_w;
 
       bin_box(SizeToInt(thread_idx), rois, roi_cols_, spatial_scale, sample_num_, roi_end_mode_, channels_, height_,
               width_, pooled_height_, pooled_width_, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w,
@@ -245,8 +252,14 @@ bool ROIAlignCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                       static_cast<T>(ix + .5f) * bin_size_w / static_cast<T>(roi_bin_grid_w);
           // bilinear interpolate by shifted y / x
           // calculate bilinear interpolation
-          int x_low = 0, y_low = 0, x_high = 0, y_high = 0;
-          T w1, w2, w3, w4;
+          int x_low = 0;
+          int y_low = 0;
+          int x_high = 0;
+          int y_high = 0;
+          T w1;
+          T w2;
+          T w3;
+          T w4;
           bilinear_interpolate(height_, width_, y, x, &x_low, &y_low, &x_high, &y_high, &w1, &w2, &w3, &w4);
           if (x_low >= 0 && x_high >= 0 && y_low >= 0 && y_high >= 0 && y_low < height_ && y_high < height_ &&
               x_low < width_ && x_high < width_) {

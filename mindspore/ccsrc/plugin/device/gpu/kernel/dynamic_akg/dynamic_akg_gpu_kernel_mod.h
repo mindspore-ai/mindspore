@@ -24,18 +24,18 @@
 #include <memory>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
+#include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_mod.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-struct GpuKernelMeta {
-  CUfunction func_addr_;
-  CUmodule module_;
-  std::vector<uint32_t> thread_info_;
-  GpuKernelMeta(CUfunction funcAddr, CUmodule module, const std::vector<uint32_t> &thread_info)
-      : func_addr_(funcAddr), module_(module), thread_info_(thread_info) {}
-};
-using GpuKernelMetaPtr = std::shared_ptr<GpuKernelMeta>;
+constexpr auto kMappingUpdated = "updated";
+constexpr auto kBlockIdxX = "blockIdx.x";
+constexpr auto kBlockIdxY = "blockIdx.y";
+constexpr auto kBlockIdxZ = "blockIdx.z";
+constexpr auto kThreadIdxX = "threadIdx.x";
+constexpr auto kThreadIdxY = "threadIdx.y";
+constexpr auto kThreadIdxZ = "threadIdx.z";
 
 class DynamicAkgGpuKernelManager {
  public:

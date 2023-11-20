@@ -36,7 +36,10 @@ bool DepthToSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::DepthToSpace>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   block_size_ = LongToSize(kernel_ptr->get_block_size());
-
+  const int64_t min_block_size = 2;
+  if (block_size_ < min_block_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', block_size cannot be less than 2, but got " << block_size_;
+  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
