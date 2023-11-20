@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_NESTED_TUPLE_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_NESTED_TUPLE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_MAKETUPLE_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_MAKETUPLE_
 
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class UnfoldNestedTuple : public PatternProcessPass {
+class UnfoldMaketuple : public PatternProcessPass {
  public:
-  explicit UnfoldNestedTuple(bool multigraph = true) : PatternProcessPass("unfold_nested_tuple", multigraph) {}
-  ~UnfoldNestedTuple() override = default;
-
+  explicit UnfoldMaketuple(bool multi_graph = true) : PatternProcessPass("unfold_maketuple", multi_graph) {}
+  ~UnfoldMaketuple() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_NESTED_TUPLE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_MAKETUPLE_

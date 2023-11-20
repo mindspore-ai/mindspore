@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/unfold_nested_tuple.h"
+#include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 
 #include <algorithm>
 #include <map>
@@ -23,6 +23,7 @@
 #include <vector>
 #include <utility>
 #include "ops/sequence_ops.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -30,13 +31,12 @@ namespace opt {
 namespace {
 bool IsNestedTuple(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) || IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!abs->isa<abstract::AbstractTuple>()) {
+  if (!abs || !abs->isa<abstract::AbstractTuple>()) {
     return false;
   }
   auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
@@ -53,18 +53,18 @@ bool IsNestedTuple(const AnfNodePtr &node) {
 void GetUnfoldElements(const abstract::AbstractTuplePtr &abs_tuple, std::vector<AbstractBasePtr> *unfold_abs_elements) {
   MS_EXCEPTION_IF_NULL(abs_tuple);
   auto tuple_elements = abs_tuple->elements();
-  std::vector<AbstractBasePtr> elements;
   for (size_t i = 0; i < tuple_elements.size(); ++i) {
+    std::vector<AbstractBasePtr> elements;
     auto tuple_element = tuple_elements[i];
     if (tuple_element->isa<abstract::AbstractTuple>()) {
       auto abs_tuple_1 = tuple_element->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(abs_tuple_1);
       GetUnfoldElements(abs_tuple_1, &elements);
     } else {
-      unfold_abs_elements->push_back(tuple_element);
+      elements.push_back(tuple_element);
     }
+    unfold_abs_elements->insert(unfold_abs_elements->end(), elements.begin(), elements.end());
   }
-  unfold_abs_elements->insert(unfold_abs_elements->end(), elements.begin(), elements.end());
 }
 
 size_t GetElementsSize(const CNodePtr &cnode, int64_t origin_index) {
@@ -109,59 +109,53 @@ int64_t GetUnfoldIndex(const CNodePtr &cnode, int64_t origin_index) {
   return begin_idx;
 }
 
-AnfNodePtr UnfoldNestedOutputNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+void UnfoldNestedOutputNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  AnfNodePtr new_node = func_graph->NewCNode(inputs);
   std::vector<AbstractBasePtr> unfold_abs_elements;
   auto abs = node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::AbstractTuple>()) {
     MS_LOG(ERROR) << "Node: " << node->fullname_with_scope() << "'s output is not a tuple.";
-    return nullptr;
+    return;
   }
   auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abs_tuple);
   // Unfold the nested tuple.
   GetUnfoldElements(abs_tuple, &unfold_abs_elements);
-  new_node->set_abstract(std::make_shared<abstract::AbstractTuple>(unfold_abs_elements));
-  return new_node;
+  // Unfold the output, because GE converter cannot process the nested output.
+  // If input is neated MakeTuple, the next unfold_maketuple pass will unfold the input.
+  node->set_abstract(std::make_shared<abstract::AbstractTuple>(unfold_abs_elements));
 }
 
-void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &new_node,
-                                const AnfNodePtr &tuple_node, int64_t unfold_idx) {
+void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                const AnfNodePtr &tuplegetitem_node, int64_t unfold_idx) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(new_node);
-  MS_EXCEPTION_IF_NULL(tuple_node);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto tuple_cnode = tuple_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(tuplegetitem_node);
+  auto tuple_cnode = tuplegetitem_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(tuple_cnode);
   auto idx_node = tuple_cnode->input(kInputNodeOutputIndexInTupleGetItem);
   auto tuplegetitem_idx = AnfUtils::GetIntValue(idx_node);
-  auto abs = tuple_node->abstract();
+  auto abs = tuplegetitem_node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
 
-  if (IsNestedTuple(tuple_node)) {
-    MS_LOG(INFO) << "No need to process nested TupleGetItem node.";
+  if (IsNestedTuple(tuplegetitem_node)) {
+    // TupleGetItem node with nested tuple output is not used currently.
+    MS_LOG(INFO) << "No need to process nested TupleGetItem node currently.";
   } else if (!abs->isa<abstract::AbstractTuple>()) {
     if (tuplegetitem_idx == unfold_idx) {
       MS_LOG(DEBUG) << "The unfold index of TupleGetItem is same as the origin index.";
       return;
     }
     auto new_axis_node = NewValueNode(unfold_idx);
-    tuple_cnode->set_input(kRealInputNodeIndexInTupleGetItem, new_axis_node);
+    tuple_cnode->set_input(kInputNodeOutputIndexInTupleGetItem, new_axis_node);
   } else {
     auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs_tuple);
     std::vector<AnfNodePtr> unfold_tuplegetitem_nodes{NewValueNode(std::make_shared<Primitive>(kMakeTupleOpName))};
     for (const auto &element : abs_tuple->elements()) {
       std::vector<AnfNodePtr> tuplegetitem_node_inputs{NewValueNode(std::make_shared<Primitive>(kTupleGetItemOpName))};
-      tuplegetitem_node_inputs.push_back(new_node);
+      tuplegetitem_node_inputs.push_back(node);
       auto new_axis_node = NewValueNode(unfold_idx);
       ++unfold_idx;
       tuplegetitem_node_inputs.push_back(new_axis_node);
@@ -171,14 +165,21 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
     }
     AnfNodePtr new_maketuple_node = func_graph->NewCNode(unfold_tuplegetitem_nodes);
     new_maketuple_node->set_abstract(abs);
-    manager->Replace(tuple_node, new_maketuple_node);
+    auto used_node_list = GetRealNodeUsedList(func_graph, tuplegetitem_node);
+    for (size_t j = 0; j < used_node_list->size(); ++j) {
+      auto used_node = used_node_list->at(j).first;
+      MS_EXCEPTION_IF_NULL(used_node);
+      if (!used_node->isa<CNode>()) {
+        continue;
+      }
+      utils::cast<CNodePtr>(used_node)->set_input(IntToSize(used_node_list->at(j).second), new_maketuple_node);
+    }
   }
 }
 
-void ProcessSucceedNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &new_node) {
+void ProcessSucceedNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(new_node);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &users = manager->node_users();
@@ -209,33 +210,23 @@ void ProcessSucceedNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, 
   }
 
   for (const auto &nodes_pair : need_process_tuplegetitem_nodes) {
-    auto tuple_node = nodes_pair.first;
+    auto tuplegetitem_node = nodes_pair.first;
     auto unfold_idx = nodes_pair.second;
-    ProcessSucceedTupleGetItem(func_graph, node, new_node, tuple_node, unfold_idx);
+    ProcessSucceedTupleGetItem(func_graph, node, tuplegetitem_node, unfold_idx);
   }
 }
 }  // namespace
 
-const BaseRef UnfoldNestedTuple::DefinePattern() const {
-  VarPtr V = std::make_shared<CondVar>(UnVisited);
-  VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({V, Xs});
-}
-
-const AnfNodePtr UnfoldNestedTuple::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                            const EquivPtr &) const {
+bool UnfoldNestedOutput::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>() || !IsNestedTuple(node)) {
-    return nullptr;
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  for (auto node : node_list) {
+    if (node != nullptr && node->isa<CNode>() && IsNestedTuple(node)) {
+      UnfoldNestedOutputNode(node);
+      ProcessSucceedNode(func_graph, node);
+    }
   }
-  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  AnfNodePtr new_node = UnfoldNestedOutputNode(func_graph, node);
-  ProcessSucceedNode(func_graph, node, new_node);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(node, new_node);
-  return nullptr;
+  return true;
 }
 }  // namespace opt
 }  // namespace mindspore

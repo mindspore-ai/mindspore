@@ -336,53 +336,6 @@ std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNo
   return ori_format;
 }
 
-bool IsTupleInput(const AnfNodePtr &input) {
-  MS_EXCEPTION_IF_NULL(input);
-  auto abs = input->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractSequence>()) {
-    return true;
-  }
-  return false;
-}
-
-void GetUnfoldInput(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_nodes) {
-  std::vector<AnfNodePtr> nodes;
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  for (size_t idx = 1; idx < inputs.size(); ++idx) {
-    auto input_node = inputs[idx];
-    if (IsTupleInput(input_node)) {
-      GetUnfoldInput(input_node, &nodes);
-    } else {
-      nodes.push_back(input_node);
-    }
-  }
-  unfold_nodes->insert(unfold_nodes->end(), nodes.begin(), nodes.end());
-}
-
-bool IsNestedTuple(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-
-  auto abs = node->abstract();
-  if (abs != nullptr && abs->isa<abstract::AbstractSequence>()) {
-    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    const auto &elements = abs_seq->elements();
-    bool is_nested = std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &item) {
-      return item != nullptr && item->isa<abstract::AbstractSequence>();
-    });
-
-    MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " is nested tuple: " << is_nested
-                  << ", debug name: " << node->DebugString() << ".";
-
-    return is_nested;
-  }
-
-  return false;
-}
-
 std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_to_ms_input,
                                    const std::vector<int64_t> &dyn_input_sizes, const int &ge_input_size,
                                    std::vector<int64_t> *new_dyn_input_sizes) {
@@ -2433,37 +2386,7 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
     CNodePtr cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     size_t tuplegetitem_idx = common::AnfAlgo::GetTupleGetItemOutIndex(cnode);
-    auto abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    if (abs->isa<abstract::AbstractSequence>()) {
-      // TupleGetItem has tuple output, its input must be a nested tuple.
-      std::vector<AnfNodePtr> unfold_nodes;
-      CNodePtr input_cnode = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_cnode);
-      if (LongToSize(tuplegetitem_idx) >= input_cnode->inputs().size()) {
-        MS_LOG(EXCEPTION) << "TupleGetitem node: " << node->fullname_with_scope() << "'s index: " << tuplegetitem_idx
-                          << " is out of range, [0," << input_cnode->inputs().size() << ").";
-      }
-      auto real_maketuple_node = input_cnode->input(tuplegetitem_idx + kIndex1);
-      GetUnfoldInput(real_maketuple_node, &unfold_nodes);
-      for (const AnfNodePtr &unfold_node : unfold_nodes) {
-        OutHandler input_handle;
-        auto op = Convert(unfold_node);
-        input_handle.op = op;
-        input_handle.node = unfold_node;
-        return_handles.push_back(input_handle);
-      }
-      return return_handles;
-    } else if (IsNestedTuple(input)) {
-      // TupleGetItem has single output, but its input is nested tuple, its real index is changed.
-      AnfNodePtr real_node = common::AnfAlgo::VisitKernelWithReturnType(node, tuplegetitem_idx).first;
-      MS_EXCEPTION_IF_NULL(real_node);
-      auto op = Convert(real_node);
-      OutHandler input_handle;
-      input_handle.op = op;
-      input_handle.node = real_node;
-      return std::vector<OutHandler>{input_handle};
-    } else if (tuplegetitem_idx >= handles.size()) {
+    if (tuplegetitem_idx >= handles.size()) {
       MS_LOG(EXCEPTION) << "Node output index " << tuplegetitem_idx << " is out of range [0," << handles.size()
                         << "), node: " << node->fullname_with_scope()
                         << ", input node: " << input->fullname_with_scope();
