@@ -83,7 +83,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
 
   if (IsMemoryPoolRecycle()) {
-    mem_bufs_.insert(device_addr);
+    (void)mem_bufs_.insert(device_addr);
   }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
@@ -382,7 +382,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   }
 
   if (IsMemoryPoolRecycle()) {
-    mem_bufs_.erase(device_addr);
+    (void)mem_bufs_.erase(device_addr);
   }
   MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/reduce_eltwise_fusion_pass.h"
-#include <vector>
 #include "ops/math_op_name.h"
 #include "ops/array_op_name.h"
 #include "ops/framework_ops.h"
