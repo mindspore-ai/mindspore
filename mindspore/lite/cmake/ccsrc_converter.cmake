@@ -18,6 +18,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${CCSRC_DIR}/backend/common/optimizer/visitor.cc
             ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
             ${CCSRC_DIR}/backend/operator/ops_backend_infer_function.cc
+            ${CCSRC_DIR}/kernel/kernel.cc
             ${CCSRC_DIR}/kernel/kernel_factory.cc
             ${CCSRC_DIR}/kernel/format_utils.cc
             ${CCSRC_DIR}/utils/convert_utils.cc
@@ -30,7 +31,6 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/common/profiler.cc
                 ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
                 ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
-                ${CCSRC_DIR}/kernel/kernel.cc
                 ${CCSRC_DIR}/kernel/ops_utils.cc
                 ${CCSRC_DIR}/kernel/common_utils.cc
                 ${CCSRC_DIR}/kernel/framework_utils.cc
