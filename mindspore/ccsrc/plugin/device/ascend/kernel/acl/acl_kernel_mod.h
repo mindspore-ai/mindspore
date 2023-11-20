@@ -59,7 +59,7 @@ class AclKernelMod : public KernelMod {
   void PackageOutput(const size_t idx, const ShapeVector &shape);
   void SetNeedConvertHostTensor(const bool convert_flag) { need_convert_host_tensor_ = convert_flag; }
   void CreateAclConverter();
-  void SetValueDependArgs(const std::set<int64_t> &indices) { value_depend_args_ = indices; }
+  void SetValueDependArgs(const std::set<int64_t> &indices);
   std::string GetFormatFromInput(const std::vector<KernelTensor *> &inputs);
 
   const std::set<int64_t> &GetValueDependArgs() const { return value_depend_args_; }
