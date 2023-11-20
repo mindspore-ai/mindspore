@@ -787,6 +787,22 @@ def test_reproducibility_of_random_transforms(fix_randomness, transform_type, mu
         assert np.array_equal(data_first_time, data_second_time) == expect_equal
 
 
+def test_map_pullmode_exception():
+    """
+    Feature: Test map in pull mode
+    Description: Test map in pull mode and raise exception as expected
+    Expectation: Success
+    """
+    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
+
+    # define map operations
+    data_set = data_set.map(lambda x: (x + x), input_columns=["image"], output_columns=["image1", "image2"])
+
+    with pytest.raises(RuntimeError) as e:
+        data_set.output_shapes()
+    assert "number of columns returned in 'map' operations should match the number of 'output_columns'" in str(e.value)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -806,3 +822,4 @@ if __name__ == '__main__':
     test_generator_or_map_with_pyfunc_use_global_executor()
     test_randomness_across_workers(fix_randomness=True, transform_type="cpp", multiprocessing=False)
     test_reproducibility_of_random_transforms(fix_randomness=False, transform_type="python", multiprocessing=True)
+    test_map_pullmode_exception()
