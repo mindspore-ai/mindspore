@@ -256,6 +256,7 @@ class FlashAttention(Cell):
                                                 attn_mask,
                                                 drop_mask_bits,
                                                 None,
+                                                None,
                                                 None)
             output = self.transpose_4d_post(self.reshape(output, (bsz, seq_len, head_num, head_dim)), (0, 2, 1, 3))
 
