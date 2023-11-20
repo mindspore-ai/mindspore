@@ -75,6 +75,10 @@ class LLMEngine {
   ~LLMEngine();
   ge::Status LLMEngineInitialize(const std::vector<ge::ModelBufferData> &,
                                  const std::map<ge::AscendString, ge::AscendString> &);
+
+  ge::Status LLMEngineInitializeV2(const std::map<ge::AscendString, std::vector<ge::ModelBufferData>> &,
+                                   const std::map<ge::AscendString, ge::AscendString> &);
+
   static LLMEngineStatus FetchLLMEngineStatus();
   int64_t FetchLlmEngineQueueStatus();
   // API2：execute prompt
@@ -99,6 +103,11 @@ class LLMEngine {
 
   // Release kv cache of prompt prefix model
   ge::Status ReleasePromptPrefix(const LLMReq &);
+
+  ge::Status PullKv(const LLMReq &);
+  ge::Status MergeKv(const uint64_t req_id, const int32_t batch_index);
+
+  ge::Status RunDecoder(const std::vector<uint64_t> &, const std::vector<ge::Tensor> &, std::vector<ge::Tensor> &);
 
  private:
   std::shared_ptr<PromptManager> prompt_manager_;

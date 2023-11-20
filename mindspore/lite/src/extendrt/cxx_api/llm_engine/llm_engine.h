@@ -47,13 +47,17 @@ class MS_API LLMEngine {
   LLMEngine();
   ~LLMEngine() = default;
   Status Init(const std::vector<std::string> &model_paths, LLMRole role, uint64_t cluster_id,
-              const std::map<std::string, std::string> &options);
+              const std::map<std::string, std::string> &options, const std::string &batch_mode,
+              const std::string &postprocess_model_path);
   void Finalize();
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status CompleteRequest(const LLMReq &req);
   LLMEngineStatus FetchStatus();
   Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs);
   Status ReleasePromptPrefix(const LLMReq &req);
+  Status PullKV(const LLMReq &req);
+  Status MergeKV(const LLMReq &req, uint32_t batch_index);
 
  private:
   std::shared_ptr<LLMEnginePluginBase> plugin_ = nullptr;
