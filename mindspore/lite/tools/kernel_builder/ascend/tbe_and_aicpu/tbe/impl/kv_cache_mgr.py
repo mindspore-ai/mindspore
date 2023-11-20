@@ -129,8 +129,8 @@ class TilingHelper:
         self.cur_bs = self.cur_shape[0] * self.cur_shape[1]
         self.each_core_bs_num = ceil_div(self.cur_bs, self.core_num)
         self.core_num, self.last_core_bs_num = get_loop_info(self.cur_bs, self.each_core_bs_num)
-        self.each_core_cur_elements = ceil_div(self.cur_elements, self.core_num)
-        self.cur_ub_elements = self.each_core_cur_elements
+        self.cur_ub_elements = self.each_core_bs_num * self.update_seq_length * self.size_per_head
+        self.last_cure_ub_elements = self.last_core_bs_num * self.update_seq_length * self.size_per_head
 
 
 class KVCacheImpl(TilingHelper):
@@ -154,8 +154,12 @@ class KVCacheImpl(TilingHelper):
         cur_ub = self.tik_inst.Tensor(self.ub_type, (self.cur_ub_elements,), name="valid_cur_ub",
                                       scope=tik.scope_ubuf)
         cur_gm_offset = core_idx * self.cur_ub_elements
-        self.tik_inst.data_move(cur_ub, self.cur_gm[cur_gm_offset:], 0, 1,
-                                self.cur_ub_elements * self.gm_dtype_size // 32, 0, 0)
+        with self.tik_inst.if_scope(core_idx != self.core_num -1):
+            self.tik_inst.data_move(cur_ub, self.cur_gm[cur_gm_offset:], 0, 1,
+                                    self.cur_ub_elements * self.gm_dtype_size // 32, 0, 0)
+        with self.tik_inst.else_scope():
+            self.tik_inst.data_move(cur_ub, self.cur_gm[cur_gm_offset:], 0, 1,
+                                    self.last_cure_ub_elements * self.gm_dtype_size // 32, 0, 0)
         return cur_ub
 
     def valid_index_ub_load(self):
@@ -173,7 +177,7 @@ class KVCacheImpl(TilingHelper):
 
         valid_idx = self.tik_inst.Scalar(dtype="int32")
         with self.tik_inst.for_range(0, each_core_bs_num) as each_core_bs_idx:
-            bs_idx = core_idx * each_core_bs_num + each_core_bs_idx
+            bs_idx = core_idx * self.each_core_bs_num + each_core_bs_idx
             # because we fused bs * num_head, we need get the real bs_idx
             valid_idx.set_as(index_ub[bs_idx // self.num_head])
             with self.tik_inst.if_scope(valid_idx >= 0):
