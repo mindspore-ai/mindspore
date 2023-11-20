@@ -57,10 +57,50 @@ ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, con
   return baseValue;
 }
 
-// None indicates that the optional input is not passed
-bool IsOptionalInputNotPass(const AbstractBasePtr &input) {
-  MS_EXCEPTION_IF_NULL(input);
-  return input->BuildType()->type_id() == kMetaTypeNone;
+bool CheckTenSorShape(const ShapeVector &tensor_shape, const std::vector<ShapeVector> &expect_shapes) {
+  for (size_t i = 0; i < expect_shapes.size(); i++) {
+    const auto &expect_shape = expect_shapes[i];
+    if (tensor_shape.size() != expect_shape.size()) {
+      continue;
+    }
+
+    bool is_match = true;
+    for (size_t j = 0; j < expect_shape.size(); j++) {
+      if (expect_shape[j] == abstract::Shape::kShapeDimAny || tensor_shape[j] == abstract::Shape::kShapeDimAny) {
+        continue;
+      }
+      if (expect_shape[j] != tensor_shape[j]) {
+        is_match = false;
+        break;
+      }
+    }
+    if (is_match) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void CheckOptinalInputShape(const string &op_name, const std::vector<AbstractBasePtr> &input_args, ShapeValueDType b,
+                            ShapeValueDType q_s, ShapeValueDType kv_s) {
+  std::vector<ShapeVector> expect_mask_shapes = {{q_s, kv_s}, {1, q_s, kv_s}, {b, q_s, kv_s}, {b, 1, q_s, kv_s}};
+  auto atten_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
+    input_args[kPromptFlashAttentionInputAttnMaskIndex]->BuildShape())[kShape];
+  if (!atten_mask_shape.empty() && !IsDynamicRank(atten_mask_shape)) {
+    if (!CheckTenSorShape(atten_mask_shape, expect_mask_shapes)) {
+      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], atten_mask shape:  " << atten_mask_shape
+                        << " dont match any of expect shape: " << expect_mask_shapes;
+    }
+  }
+
+  auto padding_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
+    input_args[kPromptFlashAttentionInputPaddingMaskIndex]->BuildShape())[kShape];
+  if (!padding_mask_shape.empty() && !IsDynamicRank(padding_mask_shape)) {
+    if (!CheckTenSorShape(padding_mask_shape, expect_mask_shapes)) {
+      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], padding_mask shape:  " << padding_mask_shape
+                        << " dont match any of expect shape: " << expect_mask_shapes;
+    }
+  }
 }
 
 abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
@@ -80,13 +120,9 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
     input_args[kPromptFlashAttentionInputKeyIndex]->BuildShape())[kShape];
   auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
     input_args[kPromptFlashAttentionInputValueIndex]->BuildShape())[kShape];
-  auto atten_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kPromptFlashAttentionInputAttnMaskIndex]->BuildShape())[kShape];
-
   bool qeury_rank_is_dyn = IsDynamicRank(query_shape);
   bool key_rank_is_dyn = IsDynamicRank(key_shape);
   bool value_rank_is_dyn = IsDynamicRank(value_shape);
-  bool atten_mask_rank_is_dyn = IsDynamicRank(atten_mask_shape);
   size_t temp_rank = input_layout == "BSH" ? kInputQueryBSHRank : kInputQueryBNSDRank;
   if (qeury_rank_is_dyn) {
     query_shape = std::vector(temp_rank, abstract::Shape::kShapeDimAny);
@@ -97,29 +133,24 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
   if (value_rank_is_dyn) {
     value_shape = std::vector(temp_rank, abstract::Shape::kShapeDimAny);
   }
-  if (atten_mask_rank_is_dyn) {
-    atten_mask_shape = std::vector(temp_rank, abstract::Shape::kShapeDimAny);
-  }
+
   CheckAndConvertUtils::CheckInteger("rank of query", query_shape.size(), kEqual, temp_rank, op_name);
   CheckAndConvertUtils::CheckInteger("rank of key", key_shape.size(), kEqual, temp_rank, op_name);
   CheckAndConvertUtils::CheckInteger("rank of value", value_shape.size(), kEqual, temp_rank, op_name);
-  auto atten_mask_shape_size = atten_mask_shape.size();
-  if (atten_mask_shape_size != kInputQueryBSHRank && atten_mask_shape_size != kInputQueryBNSDRank) {
-    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the rank of atten_mask should be 3 or 4, but got "
-                      << SizeToLong(atten_mask_shape_size);
-  }
   ShapeVector attention_out_shape(temp_rank, abstract::Shape::kShapeDimAny);
+  ShapeValueDType dim_b = query_shape[0];
+  ShapeValueDType dim_q_s = query_shape[query_shape.size() - 2];
+  ShapeValueDType dim_kv_s = value_shape[value_shape.size() - 2];
   if (input_layout == "BSH") {
     auto b_index = 0;
     auto s_index = 1;
     auto h_index = 2;
-
     attention_out_shape[b_index] =
       GetDimension({query_shape[b_index], key_shape[b_index], value_shape[b_index]}, op_name, "B");
-    attention_out_shape[s_index] =
-      GetDimension({query_shape[s_index], atten_mask_shape[atten_mask_shape_size - 2]}, op_name, "Q_S");
-    (void)GetDimension({key_shape[s_index], value_shape[s_index], atten_mask_shape[atten_mask_shape_size - 1]}, op_name,
-                       "KV_S");
+    dim_b = attention_out_shape[b_index];
+    attention_out_shape[s_index] = GetDimension({query_shape[s_index]}, op_name, "Q_S");
+    dim_q_s = attention_out_shape[s_index];
+    dim_kv_s = GetDimension({key_shape[s_index], value_shape[s_index]}, op_name, "KV_S");
     attention_out_shape[h_index] =
       GetDimension({query_shape[h_index], key_shape[h_index], value_shape[h_index]}, op_name, "H");
     auto h_dim = attention_out_shape[h_index];
@@ -132,15 +163,14 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
     auto n_index = 1;
     auto s_index = 2;
     auto d_index = 3;
-
     attention_out_shape[b_index] =
       GetDimension({query_shape[b_index], key_shape[b_index], value_shape[b_index]}, op_name, "B");
+    dim_b = attention_out_shape[b_index];
     attention_out_shape[n_index] =
       GetDimension({query_shape[n_index], key_shape[n_index], value_shape[n_index]}, op_name, "N");
-    attention_out_shape[s_index] =
-      GetDimension({query_shape[s_index], atten_mask_shape[atten_mask_shape_size - 2]}, op_name, "Q_S");
-    (void)GetDimension({key_shape[s_index], value_shape[s_index], atten_mask_shape[atten_mask_shape_size - 1]}, op_name,
-                       "KV_S");
+    attention_out_shape[s_index] = GetDimension({query_shape[s_index]}, op_name, "Q_S");
+    dim_q_s = attention_out_shape[s_index];
+    dim_kv_s = GetDimension({key_shape[s_index], value_shape[s_index]}, op_name, "KV_S");
     attention_out_shape[d_index] =
       GetDimension({query_shape[d_index], key_shape[d_index], value_shape[d_index]}, op_name, "D");
     auto n_dim = attention_out_shape[n_index];
@@ -152,6 +182,7 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
     attention_out_shape.resize(1);
     attention_out_shape[0] = abstract::Shape::kShapeRankAny;
   }
+  CheckOptinalInputShape(op_name, input_args, dim_b, dim_q_s, dim_kv_s);
   abstract::BaseShapePtrList output_shape_ptr_list(kPromptFlashAttentionOutputsNum);
   output_shape_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] =
     std::make_shared<abstract::Shape>(attention_out_shape);
@@ -164,12 +195,8 @@ TuplePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vect
   (void)types.emplace("query", input_args[kPromptFlashAttentionInputQueryIndex]->BuildType());
   (void)types.emplace("key", input_args[kPromptFlashAttentionInputKeyIndex]->BuildType());
   (void)types.emplace("value", input_args[kPromptFlashAttentionInputValueIndex]->BuildType());
-  (void)types.emplace("attn_mask", input_args[kPromptFlashAttentionInputAttnMaskIndex]->BuildType());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  if (!IsOptionalInputNotPass(input_args[kPromptFlashAttentionInputPaddingMaskIndex])) {
-    MS_LOG(EXCEPTION) << "For " << op_name << ": 'padding_mask' must be None currently.";
-  }
   TypePtrList output_type_ptr_list(kPromptFlashAttentionOutputsNum);
   output_type_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] = type;
   return std::make_shared<Tuple>(output_type_ptr_list);

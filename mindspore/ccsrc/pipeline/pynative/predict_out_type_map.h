@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace pynative {
 using PredictOutTypeMap = mindspore::HashMap<std::string, TypePtr>;
+const TypePtr kTupleTensor1 = std::make_shared<Tuple>(TypePtrList{kTensorType});
 const TypePtr kTupleTensor2 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType});
 const TypePtr kTupleTensor3 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType, kTensorType});
 const TypePtr kTupleTensor4 = std::make_shared<Tuple>(TypePtrList{kTensorType, kTensorType, kTensorType, kTensorType});
@@ -286,7 +287,8 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
                                                        {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3}};
+                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"PromptFlashAttention", kTupleTensor1}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);
 
