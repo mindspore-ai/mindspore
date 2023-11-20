@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <map>
-#include <vector>
-#include <algorithm>
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_reduce.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"

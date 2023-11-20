@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/ge_runtime/task/profiler_task.h"
-#include <limits>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
