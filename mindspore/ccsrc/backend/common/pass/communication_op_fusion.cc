@@ -105,7 +105,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
         MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope() << ", instance_name: " << prim->instance_name()
                      << ", segment: " << segment_info;
         fusion = segment_info + 2;
-        prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+        (void)prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
         MS_LOG(INFO) << "Now cnode : " << cnode->fullname_with_scope()
                      << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));
       }
@@ -118,7 +118,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
         if (segment_info != 0) {
           int64_t fusion_interval = 100;
           fusion = segment_info + fusion_interval;
-          prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+          (void)prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
         }
         MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope()
                      << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));

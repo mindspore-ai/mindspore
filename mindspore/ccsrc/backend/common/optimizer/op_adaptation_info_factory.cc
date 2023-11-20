@@ -15,7 +15,6 @@
  */
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 
-#include <memory>
 #include "kernel/oplib/oplib.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/anfalgo.h"
