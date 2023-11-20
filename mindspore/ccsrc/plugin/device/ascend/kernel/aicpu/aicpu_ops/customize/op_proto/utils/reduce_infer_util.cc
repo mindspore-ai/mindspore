@@ -207,7 +207,7 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
   // case1: input is {-2}， set the output {-2}
   if (input_shape.IsUnknownDimNum()) {
     OP_LOGD(TbeGetName(op).c_str(), "input is {-2}, so output {-2}");
-    std::vector<int64_t> output_shape(1, -2);
+    std::vector<int64_t> output_shape(1, ge::UNKNOWN_DIM_NUM);
     tensordesc_output->SetShape(GeShape(output_shape));
     return true;
   }

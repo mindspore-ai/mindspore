@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/nn/binary_cross_entropy_grad_kernel.h"
-#include <map>
 #include "mindspore/core/ops/grad/binary_cross_entropy_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
 

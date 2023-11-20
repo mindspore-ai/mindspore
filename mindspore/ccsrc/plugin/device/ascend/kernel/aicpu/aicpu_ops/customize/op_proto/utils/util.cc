@@ -597,7 +597,8 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 static bool BroadCastShapeToOutShape(const GeShape &shape, GeShape &shape_output) {
   size_t shape_len = shape.GetDimNum();
   size_t shape_y_len = shape_output.GetDimNum();
-  int64_t dim1, dim2;
+  int64_t dim1;
+  int64_t dim2;
 
   if (shape_len > shape_y_len) {
     shape_output.SetDimNum(shape_len);
@@ -1140,7 +1141,8 @@ std::string to_string(const vector<pair<int64_t, int64_t>> &ranges) { return ops
 bool DynamicShapeInfer::CatchFormatAndShape() {
   inputs = op_desc->GetAllInputName();
   outputs = op_desc->GetAllOutputName();
-  GeTensorDescPtr tensor_desc_input, tensor_desc_output;
+  GeTensorDescPtr tensor_desc_input;
+  GeTensorDescPtr tensor_desc_output;
 
   // get and save current input shape&format, and assign origin ones to them
   std::string input_name;
@@ -1186,7 +1188,8 @@ bool DynamicShapeInfer::CatchFormatAndShape() {
 
 bool DynamicShapeInfer::UpdateFormatAndShape() {
   const int64_t opImplType = EN_IMPL_CUSTOM_TBE;
-  GeTensorDescPtr tensor_desc_input, tensor_desc_output;
+  GeTensorDescPtr tensor_desc_input;
+  GeTensorDescPtr tensor_desc_output;
   // assign output's after infershape to origin shape
   for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
     tensor_desc_output = op_desc->MutableOutputDesc(it->first);
@@ -1197,8 +1200,10 @@ bool DynamicShapeInfer::UpdateFormatAndShape() {
   }
 
   // transfer input's origin shape to current shape
-  Format ori_input_format, cur_input_format;
-  GeShape ori_infer_shape, current_shape;
+  Format ori_input_format;
+  Format cur_input_format;
+  GeShape ori_infer_shape;
+  GeShape current_shape;
   std::string input_name;
   for (map<std::string, uint32_t>::iterator it = inputs.begin(); it != inputs.end(); ++it) {
     input_name = it->first;
@@ -1238,8 +1243,10 @@ bool DynamicShapeInfer::UpdateFormatAndShape() {
   }
 
   // transfer output's origin shape to current shape
-  Format ori_output_format, cur_output_format;
-  GeShape ori_infer_out_shape, current_out_shape;
+  Format ori_output_format;
+  Format cur_output_format;
+  GeShape ori_infer_out_shape;
+  GeShape current_out_shape;
   std::string output_name;
   for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
     output_name = it->first;
@@ -1312,7 +1319,7 @@ bool IsUnknownRank(const Operator &op, const std::string &tensor_name, const std
 }
 
 bool IsUnknownRankShape(const std::vector<int64_t> &shape_vec) {
-  if (shape_vec.size() == 1 && shape_vec[0] == -2) {
+  if (shape_vec.size() == 1 && shape_vec[0] == ge::UNKNOWN_DIM_NUM) {
     return true;
   }
   return false;

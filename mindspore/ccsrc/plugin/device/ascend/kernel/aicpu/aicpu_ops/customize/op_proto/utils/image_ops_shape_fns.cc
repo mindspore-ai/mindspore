@@ -19,6 +19,7 @@
  * \brief
  */
 #include "image_ops_shape_fns.h"
+#include <set>
 #include "error_util.h"
 #include "graph/utils/op_desc_utils.h"
 #include "op_log.h"
@@ -34,7 +35,8 @@ graphStatus ColorspaceShapeFn(Operator &op, const std::string &output_name) {
     return GRAPH_PARAM_INVALID;
   }
   int64_t dim = op.GetInputDesc(0).GetShape().GetDims().back();
-  if (dim != 3) {
+  constexpr int64_t kLastDimSize = 3;
+  if (dim != kLastDimSize) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input[images] last dimension must be size 3.");
@@ -47,15 +49,16 @@ graphStatus ColorspaceShapeFn(Operator &op, const std::string &output_name) {
 
 graphStatus ResizeShapeFn(Operator &op, const std::string &input_name, const std::string &size_input_name,
                           const std::string &output_name) {
+  constexpr int kInputDim = 4;
   if (op.GetInputDesc(0).GetShape().GetDims() == UNKNOWN_RANK) {
-    std::vector<int64_t> output_shape(4, UNKNOWN_DIM);
+    std::vector<int64_t> output_shape(kInputDim, UNKNOWN_DIM);
     TensorDesc td = op.GetOutputDescByName(output_name.c_str());
     td.SetShape(Shape(output_shape));
     op.UpdateOutputDesc(output_name.c_str(), td);
     return GRAPH_SUCCESS;
   }
   Shape shape;
-  graphStatus status = WithRank(op.GetInputDesc(0), 4, shape, op);
+  graphStatus status = WithRank(op.GetInputDesc(0), kInputDim, shape, op);
   if (status != GRAPH_SUCCESS) {
     AscendString op_name;
     op.GetName(op_name);
@@ -82,7 +85,8 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
     return GRAPH_PARAM_INVALID;
   }
   auto size_dims = op.GetInputDescByName(size_input_name.c_str()).GetShape().GetDims();
-  if (size_dims[0] != 2) {
+  constexpr int kInputSize = 2;
+  if (size_dims[0] != kInputSize) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input size must be 1-D tensor of 2 elements.");
@@ -159,7 +163,8 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
 
 graphStatus EncodeImageShapeFn(Operator &op) {
   Shape unused_shape;
-  if (WithRank(op.GetInputDesc(0), 3, unused_shape, op) != GRAPH_SUCCESS) {
+  constexpr int kInputRank = 3;
+  if (WithRank(op.GetInputDesc(0), kInputRank, unused_shape, op) != GRAPH_SUCCESS) {
     AscendString op_name;
     op.GetName(op_name);
     OP_LOGE(op_name.GetString(), "input rank must be 3 .");
@@ -180,7 +185,8 @@ graphStatus DecodeImageShapeFn(Operator &op) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("Get attr[channels] failed"));
     return GRAPH_FAILED;
   }
-  if (channels != 0 && channels != 1 && channels != 3 && channels != 4) {
+  const std::set<int> allowed_channel_size{0, 1, 3, 4};
+  if (allowed_channel_size.count(channels) == 0) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("attr[Channels] must be 0,1,3,or 4"));
     return GRAPH_FAILED;
   }

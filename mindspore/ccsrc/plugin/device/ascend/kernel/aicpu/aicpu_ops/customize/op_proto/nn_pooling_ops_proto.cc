@@ -319,7 +319,7 @@ IMPLEMT_INFERFUNC(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape) {
   int64_t hOut = (inputShape[3] - kernelList[3]) / stridesList[3] + 1;
   int64_t wOut = (inputShape[4] - kernelList[4]) / stridesList[4] + 1;
   int64_t alignedBmLine;
-  alignedBmLine = (wOut * hOut % 16 == 0) ? (wOut * hOut) : (((int64_t)(wOut * hOut / 16) + 1) * 16);
+  alignedBmLine = (wOut * hOut % 16 == 0) ? (wOut * hOut) : ((static_cast<int64_t>(wOut * hOut / 16) + 1) * 16);
   std::vector<int64_t> argShapeVec;
   argShapeVec.push_back(inputShape[0]);
   argShapeVec.push_back(dOut);
