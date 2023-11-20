@@ -151,7 +151,7 @@ def generate_py_op_signature(args_signature, args_name, args_default):
         if arg_name in same_dtype_groups:
             signature_code += f""", """ + signature_get_dtype_label(same_dtype_groups[arg_name])
         if arg_name in args_default:
-            signature_code += f""", default=""" + args_default[arg_name]
+            signature_code += f""", default=""" + str(args_default[arg_name])
         signature_code += f"""),\n"""
     signature_code += f"""    )\n\n"""
     return signature_code
@@ -211,9 +211,10 @@ def generate_py_op_func(yaml_data, doc_data):
             init_value = arg_info.get('init')
 
             if init_value is None:
-                default_value = arg_info.get('default')
-                default_value = '=' + default_value if default_value else ''
-                func_args.append(arg_name + default_value)
+                default_key = 'default'
+                default_value = arg_info.get(default_key)
+                default_value_str = '=' + str(default_value) if default_key in arg_info else ''
+                func_args.append(arg_name + default_value_str)
                 input_args.append(arg_name)
             else:
                 if init_value == 'NO_VALUE':
@@ -247,12 +248,12 @@ def process_args(args):
     args_handlers = {}
     for arg_name, arg_info in args.items():
         dtype = arg_info.get('dtype')
-
         init_value = arg_info.get('init')
         if init_value is None:
             inputs_name.append(arg_name)
-            default_value = arg_info.get('default')
-            if default_value:
+            default_key = 'default'
+            default_value = arg_info.get(default_key)
+            if default_key in arg_info.keys():
                 inputs_default[arg_name] = default_value
 
             arg_handler = arg_info.get('arg_handler')

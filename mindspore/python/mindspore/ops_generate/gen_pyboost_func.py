@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import pyboost_utils
 from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
     number_input_to_cpp_type, get_const_number_convert, get_tuple_input_convert, get_pyboost_name, is_cube, \
-    get_aclnn_interface, get_disable_flag, get_op_name
+    get_aclnn_interface, get_disable_flag, get_op_name, is_optional_param
 import template
 from template import CppTemplate
 from op_proto import OpProto
@@ -305,7 +305,7 @@ def generate_parser_func(op_proto: OpProto) -> str:
     convert_template = CppTemplate("auto $arg_name = converter.${convert_func}($arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
-        is_optional = (arg.as_init_arg and str(arg.init) == 'None')
+        is_optional = is_optional_param(arg)
         convert_type_str = get_convert_type_str(arg.arg_dtype, is_optional)
         parser_func_str += convert_template.replace(arg_name=arg.arg_name, convert_func=convert_type_str,
                                                     arg_index=pyboost_utils.get_index(index))
@@ -353,7 +353,7 @@ def generate_pyboost_functions(work_path, yaml_data):
             cast_arg = ''
             cast_str = 'cast_'
             if pyboost_utils.is_tensor(op_arg):
-                if op_arg.as_init_arg and str(op_arg.init) == 'None':
+                if op_arg.as_init_arg and str(op_arg.default) == 'None':
                     convert_stub_output_name = op_arg.arg_name + '_optional'
                     convert_stub_str += convert_to_tensor_optional_template.replace(output=convert_stub_output_name,
                                                                                     input=op_arg.arg_name)
@@ -471,9 +471,7 @@ class OpTemplateConverter:
         """
         call_args_types = []
         for op_arg in op_args:
-            is_optional = False
-            if op_arg.as_init_arg and str(op_arg.init) == 'None':
-                is_optional = True
+            is_optional = is_optional_param(op_arg)
             call_args_types.append(get_input_dtype(op_arg.arg_dtype, is_optional))
         return call_args_types
 
@@ -645,8 +643,9 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             init_value = arg_info.get('init')
 
             if init_value is None:
-                default_value = arg_info.get('default')
-                default_value = '=' + default_value if default_value else ''
+                default_key = 'default'
+                default_value = arg_info.get(default_key)
+                default_value = '=' + str(default_value) if default_key in arg_info else ''
                 func_args.append(arg_name + default_value)
                 input_args.append(arg_name)
             else:

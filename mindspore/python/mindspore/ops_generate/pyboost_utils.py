@@ -14,6 +14,13 @@
 # ============================================================================
 """pyboost utils."""
 
+
+def is_optional_param(op_arg):
+    if op_arg.as_init_arg and str(op_arg.default) == 'None':
+        return True
+    return False
+
+
 def is_tensor(op_arg):
     if op_arg.arg_dtype == 'tensor':
         return True
