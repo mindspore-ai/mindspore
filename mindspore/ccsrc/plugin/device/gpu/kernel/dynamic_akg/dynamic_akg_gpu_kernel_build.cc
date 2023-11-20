@@ -15,8 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_build.h"
-#include <memory>
-#include <string>
+
 #include "kernel/framework_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_utils.h"

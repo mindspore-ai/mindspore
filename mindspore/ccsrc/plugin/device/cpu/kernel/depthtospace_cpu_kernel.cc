@@ -32,6 +32,10 @@ constexpr size_t kDepthToSpaceInputDimension = 4;
 bool DepthToSpaceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   block_size_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBlockSize)));
+  const int64_t min_block_size = 2;
+  if (block_size_ < min_block_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', block_size cannot be less than 2, but got " << block_size_;
+  }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

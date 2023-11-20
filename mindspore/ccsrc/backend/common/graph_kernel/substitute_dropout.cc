@@ -15,11 +15,6 @@
  */
 #include "backend/common/graph_kernel/substitute_dropout.h"
 
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <memory>
-
 #include "mindspore/core/ops/nn_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
