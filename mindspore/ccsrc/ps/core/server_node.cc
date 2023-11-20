@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 #include "ps/core/server_node.h"
-
-#include <atomic>
-#include <map>
-#include <string>
-#include <utility>
-
 #include "proto/comm.pb.h"
 #include "ps/core/comm_util.h"
 #include "ps/core/communicator/tcp_client.h"
