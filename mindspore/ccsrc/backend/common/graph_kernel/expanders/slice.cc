@@ -35,8 +35,8 @@ class Slice : public OpDesc {
     ShapeVector end;
     ShapeVector strides;
     for (size_t i = 0; i < begin.size(); ++i) {
-      strides.emplace_back(1);
-      end.emplace_back(begin[i] + size[i]);
+      strides.push_back(1);
+      end.push_back(begin[i] + size[i]);
     }
     auto result = gb.StridedSlice(input_x, begin, end, strides);
     return {result};
