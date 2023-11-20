@@ -434,6 +434,29 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
 }
 #endif
 
+inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) {
+  auto depend_list = mindspore::ops::GetInputDependValueList(op_prim);
+  if (!op_info.dyn_input_sizes.empty()) {
+    auto list_tmp = depend_list;
+    depend_list.clear();
+    for (const auto item : list_tmp) {
+      int64_t bias = 0;
+      for (int64_t i = 0; i < item; i++) {
+        auto idx = static_cast<size_t>(i);
+        if (op_info.dyn_input_sizes[idx] == -1) {
+          bias += 1;
+        } else {
+          bias += op_info.dyn_input_sizes[idx];
+        }
+      }
+      depend_list.emplace(bias);
+      MS_LOG(DEBUG) << "Adjust depend list from " << item << " to " << bias << " for op: " << op_prim->name();
+    }
+  }
+
+  return depend_list;
+}
+
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
@@ -467,6 +490,8 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       graph_info.append(element.second->ToString());
     });
   }
+
+  const auto &depend_list = GetDependList(op_info, op_prim);
   for (size_t index = 0; index < op_info.expanded_input_values.size(); ++index) {
     auto const &value = op_info.expanded_input_values[index];
     if (value->isa<tensor::Tensor>()) {
@@ -497,10 +522,8 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
         graph_info += p_address->format();
         graph_info += p_address->padding_type();
       }
-      // For constant input or op depend input value
-      const auto &depend_list = mindspore::ops::GetInputDependValueList(op_prim);
-      if (op_info.input_masks[index] == kValueNodeMask ||
-          (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
+
+      if (depend_list.find(index) != depend_list.end()) {
         graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
       }
     } else {
