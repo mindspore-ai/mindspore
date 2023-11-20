@@ -16,7 +16,7 @@ import ast
 import inspect
 
 from mindspore.nn import Cell, Conv2d, BatchNorm2d, ReLU
-from mindspore.rewrite.ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
+from mindspore.rewrite.ast_helpers.ast_flattener import AstFlattener
 from mindspore.rewrite import SymbolTree
 from mindspore.ops import operations as P
 
@@ -47,12 +47,12 @@ def _get_ast():
 
 def test_flatten():
     """
-    Feature: Class FlattenRecursiveStmt.
-    Description: Apply FlattenRecursiveStmt on a simple network.
+    Feature: Class AstFlattener.
+    Description: Apply AstFlattener on a simple network.
     Expectation: Success.
     """
     ast_node = _get_ast()
-    frs = FlattenRecursiveStmt()
+    frs = AstFlattener()
     frs.transform(ast_node)
     assert len(ast_node.body) == 1
     ast_class = ast_node.body[0]

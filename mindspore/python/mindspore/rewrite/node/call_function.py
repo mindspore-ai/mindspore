@@ -16,10 +16,10 @@
 import ast
 from .node import Node
 from .node_manager import NodeManager
+from .control_flow import ControlFlow
 from ..api.scoped_value import ScopedValue
 from ..api.node_type import NodeType
 from ..ast_helpers import AstModifier
-from .control_flow import ControlFlow
 
 
 class CallFunction(Node, NodeManager):

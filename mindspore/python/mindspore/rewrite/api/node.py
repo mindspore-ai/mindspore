@@ -210,15 +210,7 @@ class Node:
             >>> print([user.get_name() for user in users])
             ['relu']
         """
-        belong_symbol_tree: SymbolTreeImpl = self._node.get_belong_symbol_tree()
-        if belong_symbol_tree is None:
-            return []
-        unique_results = []
-        for node_user in belong_symbol_tree.get_node_users(self._node):
-            node = node_user[0]
-            if node not in unique_results:
-                unique_results.append(node)
-        return [Node(node_impl) for node_impl in unique_results]
+        return [Node(node_impl) for node_impl in self._node.get_users()]
 
     def set_arg(self, index: int, arg: Union[ScopedValue, str]):
         """

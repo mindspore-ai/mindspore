@@ -19,9 +19,8 @@ import inspect
 
 from mindspore.nn import Cell
 from .symbol_tree import SymbolTree
-from .parsers.parser_register import ParserRegister
-from .parsers.parser import Parser
-from .ast_transformers import FlattenRecursiveStmt
+from ..parsers import Parser, ParserRegister
+from ..ast_helpers import AstFlattener
 
 
 class SymbolTreeBuilder:
@@ -54,7 +53,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        ast_root = FlattenRecursiveStmt().transform(ast_root, [SymbolTreeBuilder.entry_function])
+        ast_root = AstFlattener().transform(ast_root, [SymbolTreeBuilder.entry_function])
         return ast_root
 
     def build(self) -> SymbolTree:

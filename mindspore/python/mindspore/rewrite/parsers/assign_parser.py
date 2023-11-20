@@ -22,19 +22,14 @@ import inspect
 from mindspore import log as logger
 from mindspore.nn import Cell, SequentialCell, CellList
 from mindspore.ops import Primitive
-from mindspore.rewrite.parsers.parser_register import ParserRegister, reg_parser
-from mindspore.rewrite.namespace import is_subtree, is_functional, get_functional
-from mindspore.rewrite.symbol_tree import SymbolTree
-from mindspore.rewrite.node.node import Node, TreeNode
-from mindspore.rewrite.node.node_manager import NodeManager
-from mindspore.rewrite.node.call_function import CallFunction
-from mindspore.rewrite.node.cell_container import CellContainer
-from mindspore.rewrite.parsers.parser import Parser
-from mindspore.rewrite.api.scoped_value import ScopedValue
-from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder
-from mindspore.rewrite.ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
-from mindspore.rewrite.ast_helpers import AstReplacer, AstConverter
-from ..common import error_str
+from . import Parser, ParserRegister, reg_parser
+from ..symbol_tree import SymbolTree
+from ..node import Node, TreeNode, NodeManager, CallFunction, CellContainer
+from ..api.scoped_value import ScopedValue
+from ..ast_helpers import AstFlattener, AstReplacer, AstConverter
+from ..common.error_log import error_str
+from ..common.namespace import is_subtree, is_functional, get_functional
+
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports
@@ -214,6 +209,7 @@ class AssignParser(Parser):
             cell_name = type(cell).__name__
             is_sub_tree = is_subtree(cell)
             if is_sub_tree:
+                from ..symbol_tree import SymbolTreeBuilder
                 stb = SymbolTreeBuilder(cell)
                 new_stree = stb.build()
                 sub_node = TreeNode.create_tree_node(new_stree, None, targets, cell_name, call_args,
@@ -265,7 +261,7 @@ class AssignParser(Parser):
         node = CallFunction(targets, func_scope_name, args, kwargs, node_name, ast_assign, ast_functiondef,
                             stree, instance)
         # expand ast codes
-        ast_functiondef = FlattenRecursiveStmt().transform(ast_functiondef, [func_scope_name.value], stree)
+        ast_functiondef = AstFlattener().transform(ast_functiondef, [func_scope_name.value], stree)
         # parse ast codes into CallFunction Node
         parser = ParserRegister.instance().get_parser(ast.FunctionDef)
         parser.process(stree, ast_functiondef, node_manager=node)
@@ -333,6 +329,7 @@ class AssignParser(Parser):
         if isinstance(func_inst, Cell):
             if is_subtree(func_inst):
                 # Instance of function is user custom network, create sub-symboltree
+                from ..symbol_tree import SymbolTreeBuilder
                 stb = SymbolTreeBuilder(func_inst)
                 new_stree = stb.build()
                 AssignParser._update_field_in_init(func_scope, func_name, stree, new_stree)

@@ -15,11 +15,10 @@
 """Parse bodies of ast.FunctionDef which is construct function to nodes of SymbolTree."""
 import ast
 from mindspore import log as logger
-from .parser_register import ParserRegister, reg_parser
-from .parser import Parser
+from . import Parser, ParserRegister, reg_parser
 from ..symbol_tree import SymbolTree
+from ..node import NodeManager
 from ..api.node_type import NodeType
-from ..node.node_manager import NodeManager
 
 
 class FunctionDefParser(Parser):

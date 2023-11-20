@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,5 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Transformers for optimizing ast."""
-from .flatten_recursive_stmt import FlattenRecursiveStmt
+"""
+Definitions and methods of SymbolTree.
+"""
+from .symbol_tree import SymbolTree, Position
+from .symbol_tree_builder import SymbolTreeBuilder
+from .symbol_tree_dumper import SymbolTreeDumper

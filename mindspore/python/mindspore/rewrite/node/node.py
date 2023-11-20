@@ -22,15 +22,13 @@ import sys
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
 from mindspore import log as logger
-from ... import _checkparam as Validator
-from ..ast_helpers import AstModifier
 from ..api.scoped_value import ScopedValue, ValueType
 from ..api.node_type import NodeType
-from ..namespace import is_subtree
-from ..ast_helpers.ast_replacer import AstReplacer
-from ..ast_helpers.ast_converter import AstConverter
-from ..ast_creator_register import ast_creator_registry
-from ..common import error_str
+from ..common.namespace import is_subtree
+from ..common.error_log import error_str
+from ..ast_helpers import AstModifier, AstReplacer, AstConverter
+from ... import _checkparam as Validator
+
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports
@@ -98,7 +96,7 @@ class Node:
         self._instance = instance
         self._name = name
         self._func_name: Optional[ScopedValue] = func_name
-        self._targets: [ScopedValue] = targets
+        self._targets: [ScopedValue] = targets if targets is not None else []
         self._args_num = len(args) if args is not None else 0
         self._kwargs_num = len(kwargs) if kwargs is not None else 0
         self._normalized_args_keys = []  # for saving args' order
@@ -228,20 +226,6 @@ class Node:
         return cls(NodeType.MathOps, ast_node, targets, op_type, args, None, name, None)
 
     @staticmethod
-    def create_assign_node(targets, func_name, args, kwargs):
-        """Create a ast.Assign type node."""
-        # create targets
-        ast_targets = [ast_creator_registry.get("Name")(targets)]
-        # create call
-        ast_func = ast_creator_registry.get("Attribute")(func_name)
-        ast_args = ast_creator_registry.get("Args")(args)
-        ast_kwargs = ast_creator_registry.get("KwArgs")(kwargs) if kwargs else []
-        ast_value = ast_creator_registry.get("Call")(func=ast_func, args=ast_args, keywords=ast_kwargs)
-        # create assign
-        ast_node = ast_creator_registry.get("Assign")(targets=ast_targets, value=ast_value)
-        return ast_node
-
-    @staticmethod
     def _create_call_function(function: FunctionType, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
                               kwargs: {str: ScopedValue}=None):
         """
@@ -334,7 +318,7 @@ class Node:
         else:
             func_name = node_name
         if is_sub_net and is_subtree(op):
-            from ..symbol_tree_builder import SymbolTreeBuilder
+            from ..symbol_tree import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()
             replacer = AstReplacer(stree.get_class_ast())
@@ -687,6 +671,22 @@ class Node:
                 continue
             inputs.append(arg_provider[0])
         return inputs
+
+    def get_users(self) -> ['Node']:
+        """
+        Get user nodes of current node in topological order.
+
+        Returns:
+            A list of instances of Node as user nodes.
+        """
+        users = []
+        for target_users in self.get_target_users().values():
+            if not target_users:
+                continue
+            for (user, _) in target_users:
+                if user not in users:
+                    users.append(user)
+        return users
 
     def get_targets(self) -> [ScopedValue]:
         """
@@ -1125,10 +1125,7 @@ class Node:
                 self._normalized_args_keys.append(arg_key)
         return normalized_args
 
-    ##########################################################################################################
     # Synchronize rewrite node args to ast node
-    ##########################################################################################################
-
     def _sync_assign_func_to_ast(self):
         """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
         if self._ast_node is None:
@@ -1388,10 +1385,7 @@ class Node:
             self._sync_control_flow_args_to_ast()
 
 
-##########################################################################################################
 # Child classes
-##########################################################################################################
-
 class TreeNode(Node):
     """Tree type Node who holds a handler of SymbolTree."""
 

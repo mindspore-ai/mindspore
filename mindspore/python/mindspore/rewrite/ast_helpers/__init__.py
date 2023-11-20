@@ -22,6 +22,4 @@ from .ast_finder import AstFinder, StrChecker, CheckPropertyIsUsed, GetPropertyO
 from .ast_replacer import AstReplacer
 from .ast_modifier import AstModifier
 from .ast_converter import AstConverter
-from .ast_creator import ast_args_creator, ast_assign_creator, ast_attributer_creator, ast_call_creator, \
-    ast_create_arg_value, ast_index_creator, ast_keyword_creator, ast_kwargs_creator, ast_name_creator, \
-    ast_num_creator, ast_str_creator, ast_subscript_creator
+from .ast_flattener import AstFlattener

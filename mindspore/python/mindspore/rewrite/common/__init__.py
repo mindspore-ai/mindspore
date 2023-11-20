@@ -16,5 +16,3 @@
 `common` package of MindSpore Rewrite package.
 Define some common instruments.
 """
-
-from .rewrite_elog import error_str

@@ -13,36 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree nodes topological relationship manager."""
-from typing import Tuple, List
+from typing import Tuple
 from mindspore import log as logger
-from ..api.scoped_value import ScopedValue
 from .node import Node
+from ..api.scoped_value import ScopedValue
 from ..common.observable import Observable
 from ..common.event import Event
 
 
 class TopoManager(Observable):
     """SymbolTree topological-relationship manager."""
-
-    @staticmethod
-    def get_node_users(node: Node) -> List[Tuple[Node, int]]:
-        """
-        Get all nodes which depend on node.
-
-        Args:
-            node (Node): An instance of node.
-
-        Returns:
-            A list of nodes represents node users.
-        """
-        results = []
-        for users in node.get_target_users().values():
-            if not users:
-                continue
-            for user in users:
-                if user not in results:
-                    results.append(user)
-        return results
 
     @staticmethod
     def on_update_target(node: Node, index: int, old_target: ScopedValue, new_target: ScopedValue):

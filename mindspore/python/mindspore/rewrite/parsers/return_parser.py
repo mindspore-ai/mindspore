@@ -15,12 +15,10 @@
 """Parse ast.Return output-node of SymbolTree."""
 import ast
 
+from . import Parser, reg_parser
 from ..symbol_tree import SymbolTree
-from ..node.node import Node
-from ..node.node_manager import NodeManager
-from .parser import Parser
-from .parser_register import reg_parser
-from ..common import error_str
+from ..node import Node, NodeManager
+from ..common.error_log import error_str
 
 
 class ReturnParser(Parser):

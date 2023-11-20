@@ -15,12 +15,10 @@
 """Parse ast.If in construct function to node of SymbolTree."""
 
 import ast
-from ..symbol_tree import SymbolTree
-from .parser import Parser
-from .parser_register import ParserRegister, reg_parser
+from . import Parser, ParserRegister, reg_parser
 from ..node import NodeManager, ControlFlow
-from ..ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
-from ..ast_helpers import AstFinder, AstConverter
+from ..symbol_tree import SymbolTree
+from ..ast_helpers import AstFinder, AstConverter, AstFlattener
 
 
 class IfParser(Parser):
@@ -43,7 +41,7 @@ class IfParser(Parser):
             NotImplementedError: If test of ast.If can not be eval.
         """
         # expand codes in ast.if
-        ast_if = FlattenRecursiveStmt().transform_if(node, stree)
+        ast_if = AstFlattener().transform_if(node, stree)
         # parse ast codes of if branch into ControlFlow Node
         try:
             args = [AstConverter.create_scopedvalue(node.test),]
@@ -71,8 +69,8 @@ class IfParser(Parser):
             else_node.set_body_node(if_node)
             if_node.set_orelse_node(else_node)
         # record eval result of ast.If's test
-        if ast_if in FlattenRecursiveStmt.ast_if_test_cache:
-            origin_test_ast = FlattenRecursiveStmt.ast_if_test_cache[ast_if]
+        if ast_if in AstFlattener.ast_if_test_cache:
+            origin_test_ast = AstFlattener.ast_if_test_cache[ast_if]
             # replace self.xxx to self._origin_network.xxx
             ast_attributes = AstFinder(origin_test_ast).find_all(ast.Attribute)
             for ast_attr in ast_attributes:

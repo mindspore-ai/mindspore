@@ -15,8 +15,8 @@
 """Convert ast node to other type."""
 from typing import Union, List
 import ast
-from mindspore.rewrite.api.scoped_value import ScopedValue
-from mindspore.rewrite.common import error_str
+from ..api.scoped_value import ScopedValue
+from ..common.error_log import error_str
 
 
 class AstConverter():

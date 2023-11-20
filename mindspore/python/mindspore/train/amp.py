@@ -100,7 +100,7 @@ def _allow_mix_precision(node, allowed_list, dtype) -> bool:
     node_inst = node.get_instance()
     if node_inst in allowed_list:
         return True
-    if node.get_targets() is None:
+    if not node.get_targets():
         return False
     if not issubclass(node.get_instance_type(), (Primitive, nn.Cell)):
         return False
@@ -332,7 +332,7 @@ def _insert_cast_operator_black_list(stree, black_list, dtype):
     if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
         return
     for node in stree.nodes(all_nodes=True):
-        if node.get_targets() is None:
+        if not node.get_targets():
             continue
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             _insert_cast_for_cell_container(node, dtype, allowed_list, black_list=black_list)

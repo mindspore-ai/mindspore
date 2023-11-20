@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Define the namespace of MindSpore op definition."""
-from .._extends.parse.namespace import CellNamespace
+from ..._extends.parse.namespace import CellNamespace
 
 
 _ms_common_ns = CellNamespace('mindspore.common')

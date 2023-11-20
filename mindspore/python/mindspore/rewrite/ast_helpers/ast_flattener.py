@@ -23,7 +23,7 @@ from mindspore import log as logger
 
 FLATTEN_BLACK_LIST = ["set_vertex_attr",]
 
-class FlattenRecursiveStmt(ast.NodeTransformer):
+class AstFlattener(ast.NodeTransformer):
     """Ast optimizer for flatten recursive call."""
 
     # Record origin test ast, used to judge direction of static if control flow.
@@ -31,7 +31,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
 
     def __init__(self):
         """
-        Constructor of FlattenRecursiveStmt.
+        Constructor of AstFlattener.
 
         Returns:
             An instance of ast optimizer for flatten recursive call.
@@ -138,7 +138,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
 
     def _flatten_statement(self, node: ast.AST, target_names) -> [ast.AST]:
         """Flatten recursive statement according to different node type."""
-        if FlattenRecursiveStmt._check_flatten_black_list(node):
+        if AstFlattener._check_flatten_black_list(node):
             return []
         flatten_config = self._flatten_table.get(type(node))
         if flatten_config is None:
@@ -207,15 +207,15 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
     def _visit_ast_bodies(self, ast_body: List[ast.AST]):
         """Traverse nodes in ast_body and flatten nodes recursive."""
         # Flatten continuous assign statements in ast_body
-        FlattenRecursiveStmt._flatten_continuous_assign(ast_body)
+        AstFlattener._flatten_continuous_assign(ast_body)
         # save target names, used when create new assign ast node
         target_names = self._save_target_names(ast_body)
         index = len(ast_body) - 1
         while index >= 0:
             child = ast_body[index]
             # Record origin test ast, used to judge direction of static if control flow.
-            if isinstance(child, ast.If) and child not in FlattenRecursiveStmt.ast_if_test_cache:
-                FlattenRecursiveStmt.ast_if_test_cache[child] = copy.deepcopy(child.test)
+            if isinstance(child, ast.If) and child not in AstFlattener.ast_if_test_cache:
+                AstFlattener.ast_if_test_cache[child] = copy.deepcopy(child.test)
 
             stmt = child.value if isinstance(child, (ast.Assign, ast.Expr)) else child
             results = self._flatten_statement(stmt, target_names)
@@ -233,7 +233,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         return node
 
     def transform(self, ast_root, transform_functions=None, stree=None):
-        """Interface of FlattenRecursiveStmt."""
+        """Interface of AstFlattener."""
         self._transform_functions = transform_functions if transform_functions else ["construct"]
         self._symbol_tree = stree
         ast_root = self.visit(ast_root)
@@ -241,7 +241,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         return ast_root
 
     def transform_if(self, ast_if: ast.If, stree=None):
-        """Interface of FlattenRecursiveStmt."""
+        """Interface of AstFlattener."""
         self._transform_functions = []
         self._symbol_tree = stree
         self._visit_ast_bodies(ast_if.body)
@@ -251,7 +251,7 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         return ast_if
 
     def transform_for(self, ast_for: ast.For, stree=None):
-        """Interface of FlattenRecursiveStmt."""
+        """Interface of AstFlattener."""
         self._transform_functions = []
         self._symbol_tree = stree
         self._visit_ast_bodies(ast_for.body)

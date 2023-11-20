@@ -19,12 +19,10 @@ import ast
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore._extends.parse.namespace import CellNamespace
+from . import Parser, ParserRegister, ModuleParser, reg_parser
+from ..node import NodeManager
 from ..symbol_tree import SymbolTree
-from .parser import Parser
-from .parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstReplacer, AstConverter
-from ..parsers.module_parser import ModuleParser
-from ..node.node_manager import NodeManager
 
 
 class ClassDefParser(Parser):

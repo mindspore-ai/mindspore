@@ -15,9 +15,9 @@
 """SymbolTree dumper."""
 import inspect
 
-from .node.node import Node
-from .api.node_type import NodeType
-from .api.scoped_value import ScopedValue, ValueType
+from ..node import Node
+from ..api.node_type import NodeType
+from ..api.scoped_value import ScopedValue, ValueType
 
 
 class SymbolTreeDumper:

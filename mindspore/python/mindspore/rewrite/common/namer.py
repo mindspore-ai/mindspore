@@ -16,8 +16,8 @@
 
 from typing import Union, Tuple
 
-from .node.node import Node
-from .api.node_type import NodeType
+from ..node import Node
+from ..api.node_type import NodeType
 
 
 class Namer:

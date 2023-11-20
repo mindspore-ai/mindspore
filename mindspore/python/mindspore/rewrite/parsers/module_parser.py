@@ -21,12 +21,11 @@ import copy
 import inspect
 
 from mindspore import log as logger
+from . import Parser, ParserRegister, reg_parser
+from ..node import NodeManager
 from ..symbol_tree import SymbolTree
-from .parser import Parser
-from .parser_register import ParserRegister, reg_parser
 from ..ast_helpers import AstFinder
-from ..common import error_str
-from ..node.node_manager import NodeManager
+from ..common.error_log import error_str
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports

@@ -15,11 +15,11 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 import ast
 
-from mindspore.rewrite.parsers.parser import Parser
-from mindspore.rewrite.symbol_tree import SymbolTree
-from mindspore.rewrite.parsers.parser_register import reg_parser
-from ..common import error_str
-from ..node.node_manager import NodeManager
+from . import Parser, reg_parser
+from ..node import NodeManager
+from ..symbol_tree import SymbolTree
+from ..common.error_log import error_str
+
 
 class NameParser(Parser):
     """Parse ast.Name in construct function to node of SymbolTree."""

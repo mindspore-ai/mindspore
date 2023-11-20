@@ -15,11 +15,10 @@
 """Parse ast.arguments to input-node of SymbolTree."""
 import ast
 
-from .parser import Parser
-from .parser_register import reg_parser
+from . import Parser, reg_parser
 from ..symbol_tree import SymbolTree
-from ..common import error_str
-from ..node.node_manager import NodeManager
+from ..node import NodeManager
+from ..common.error_log import error_str
 
 
 class ArgumentsParser(Parser):
