@@ -94,6 +94,11 @@ class AclConverter {
   static aclFormat ConvertFormat(const std::string &format);
   std::string GetFormatFromInputAttrMap(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
 
+  static std::pair<aclTensorDesc *, aclDataBuffer *> CreateTensorDesc(const tensor::TensorPtr &tensor,
+                                                                      const ShapeVector &dev_shape,
+                                                                      const std::string &dev_format,
+                                                                      const std::string &desc_name);
+
  private:
   friend class AttrConverter;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AddressPtr &address,

@@ -47,10 +47,11 @@ enum OP_DTYPE : int64_t {
   DT_LIST_TENSOR,
   DT_LIST_STR,
   DT_LIST_ANY,
+  DT_TYPE,
   DT_END,
 };
 
-struct OpArg {
+struct OpInputArg {
   std::string arg_name_;
   OP_DTYPE arg_dtype_;
   bool as_init_arg_;  // true if this is a primitive init arg.
@@ -58,10 +59,16 @@ struct OpArg {
   std::vector<OP_DTYPE> cast_dtype_;
 };
 
+struct OpOutputArg {
+  std::string arg_name_;
+  OP_DTYPE arg_dtype_;
+  int64_t inplace_input_index_;
+};
+
 struct OpDef {
   std::string name_;
-  std::vector<OpArg> args_;
-  std::vector<OpArg> returns_;
+  std::vector<OpInputArg> args_;
+  std::vector<OpOutputArg> returns_;
   std::unordered_map<std::string, size_t> indexes_;
   OpFuncImpl &func_impl_;
 };

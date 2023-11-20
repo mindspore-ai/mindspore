@@ -8,3 +8,5 @@ silu:
             dtype: tensor
     class:
         name: SiLU
+    dispatch:
+        enable: False

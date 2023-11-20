@@ -21,6 +21,9 @@ import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
+from pyboost_utils import get_pyboost_name, is_pyboost_enable
+from template import CppTemplate
+from gen_pyboost_func import gen_pyboost_code
 
 
 def get_op_name(operator_name, class_def):
@@ -275,6 +278,20 @@ def process_args(args):
     return inputs_name, inputs_default, args_name, args_assign, init_args_with_default, args_handlers
 
 
+def generate_pyboost_import_header(yaml_data):
+    """
+    Generate python primitive
+    """
+    pyboost_import_header = ''
+    import_pyboost = CppTemplate("from mindspore._c_expression import $var\n")
+    for operator_name, operator_data in yaml_data.items():
+        is_pyboost = is_pyboost_enable(operator_data)
+        if is_pyboost:
+            header = import_pyboost.replace(var=get_pyboost_name(operator_name))
+            pyboost_import_header += header
+    return pyboost_import_header
+
+
 def generate_py_primitive(yaml_data):
     """
     Generate python primitive
@@ -285,12 +302,13 @@ def generate_py_primitive(yaml_data):
         class_disable = get_disable_flag(class_def)
         if class_disable:
             continue
-
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
+        pyboost_func_name = get_pyboost_name(operator_name)
         inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
         init_code = '\n'.join(args_assign)
-        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args, inputs_default)
+        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
+                                                  inputs_default)
         deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
 
         labels = operator_data.get('labels')
@@ -318,8 +336,14 @@ class {class_name}(Primitive):\n"""
         primitive_code += f"""):
 {init_code}
 
-    def __call__(self, {', '.join(call_args)}):
-        return super().__call__("""
+    def __call__(self, {', '.join(call_args)}):"""
+        is_pyboost = is_pyboost_enable(operator_data)
+        if is_pyboost:
+            primitive_code += f"""
+          return _convert_stub({pyboost_func_name}(self, ["""
+        else:
+            primitive_code += f"""
+          return super().__call__("""
         if inputs_args:
             args_with_handler = []
             for arg in inputs_args:
@@ -332,7 +356,10 @@ class {class_name}(Primitive):\n"""
         if init_args:
             primitive_code += ', '
             primitive_code += ', '.join([f'self.{arg}' for arg in init_args])
-        primitive_code += """)
+        if is_pyboost:
+            primitive_code += """]))"""
+        else:
+            primitive_code += """)
 """
 
         gen_py += primitive_code
@@ -477,7 +504,7 @@ namespace mindspore::ops {{"""
     gen_opdef_map = f"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     gen_include = f"""\n
-#include \"ops/op_def.h\""""
+#include \"ops/auto_generate/gen_ops_def.h\""""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
@@ -490,8 +517,9 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
 
-        # Process inputs.
+        args_dict = {}
         for i, (arg_name, arg_info) in enumerate(args.items()):
+            args_dict[arg_name] = i
             cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
@@ -515,8 +543,11 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         # Process outputs.
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
+            ref_name = return_info.get('inplace')
+            ref_index_str = -1 if ref_name is None else args_dict.get(ref_name)
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}}},"""
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str},
+            /*.inplace_input_index_=*/{ref_index_str}}}, """
         opdef_cc += f"""\n  }},"""
 
         cc_index_str += f"""\n  }},"""
@@ -545,6 +576,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops_generate.arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 from mindspore.ops.auto_generate.gen_enum_def import OpDtype
+from mindspore.common._stub_tensor import _convert_stub
 """
 
 
@@ -554,12 +586,12 @@ def generate_ops_py_files(work_path, yaml_str, doc_str, file_pre):
     """
     py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/{file_pre}_ops_def.py')
     tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_def.py')
-
+    pyboost_import_header = generate_pyboost_import_header(yaml_str)
     py_prim = generate_py_primitive(yaml_str)
     py_func = generate_py_op_func(yaml_str, doc_str)
 
     with open(tmp_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + ops_py_header + py_prim + py_func)
+        py_file.write(py_licence_str + ops_py_header + pyboost_import_header + py_prim + py_func)
     check_change_and_replace_file(py_path, tmp_py_path)
 
 
@@ -730,6 +762,7 @@ def main():
     # merge ops yaml
     ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
     doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops_doc.yaml')
+
     yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
     merge_files(yaml_dir_path, ops_yaml_path, '*op.yaml')
     merge_files(yaml_dir_path, doc_yaml_path, '*doc.yaml')
@@ -754,10 +787,12 @@ def main():
                           "gen_inner")
 
     all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
+
     # generate ops c++ files
     generate_ops_cc_files(work_path, all_ops_str)
     # generate ops label python files
     generate_labels_file(work_path, all_ops_str)
+    gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path))
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@
 #include <iterator>
 #include <numeric>
 #include "kernel/format_utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {

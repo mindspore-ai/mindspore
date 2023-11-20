@@ -81,16 +81,17 @@ class DataConverter {
 };
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj);
-
-// using OpDefConvertFunc = std::function<ValuePtr(const py::object &obj)>;
-typedef ValuePtr (*OpDefConvertFunc)(const py::object &);
-OpDefConvertFunc GetConverterByType(int32_t dtype);
-
 constexpr int32_t kTypeShiftBits = 16;
 constexpr auto kDstMask = (1 << kTypeShiftBits) - 1;
 inline int32_t CombineTypesForTypeCast(const mindspore::ops::OP_DTYPE &src, const mindspore::ops::OP_DTYPE &dst) {
   return (static_cast<int32_t>(src) << kTypeShiftBits) | static_cast<int32_t>(dst);
 }
+// using OpDefConvertFunc = std::function<ValuePtr(const py::object &obj)>;
+typedef ValuePtr (*OpDefConvertFunc)(const py::object &);
+OpDefConvertFunc GetConverterByType(int32_t dtype);
+ValuePtr ConvertTensor(const py::object &obj);
+template <typename TS, typename TD, OpDefConvertFunc func>
+ValuePtr ConvertSequence(const py::object &obj);
 }  // namespace parse
 }  // namespace mindspore
 

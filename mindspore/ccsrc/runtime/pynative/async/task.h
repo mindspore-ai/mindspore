@@ -26,6 +26,7 @@ enum TaskType {
   kUnknownTask = 0,
   kDeviceOpTask,
   kDeviceOpBuildTask,
+  kPyBoostOpTask,
   kBpropTask,
   kFrontendTask,
   kBackendTask,

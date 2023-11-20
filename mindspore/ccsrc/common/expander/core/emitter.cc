@@ -303,6 +303,16 @@ NodePtr Emitter::Fill(int64_t value, const ShapeVector &shape, TypeId data_type)
   return Tensor(data_type, shape, &data[0], TypeId::kNumberTypeInt64);
 }
 
+NodePtr Emitter::ScalarToTensor(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value = node->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  auto scalar = value->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar);
+  auto tensor = mindspore::ScalarToTensor(scalar);
+  return EmitValue(tensor);
+}
+
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                                  bool keep_dim, bool skip_mode) const {
   if (IsDynamic(shape)) {

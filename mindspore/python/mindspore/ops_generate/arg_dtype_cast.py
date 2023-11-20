@@ -69,6 +69,8 @@ def tuple_to_tensor(data):
 def list_to_tensor(data, dst_type):
     return ops.tuple_to_array(list_to_tuple(data, dst_type))
 
+# type
+PY_DT_TYPE = OpDtype.PY_DT_TYPE.value
 
 # scalar
 PY_DT_INT = OpDtype.PY_DT_INT.value

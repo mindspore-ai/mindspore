@@ -105,7 +105,8 @@ op_dtype:
   PY_DT_LIST_TENSOR: 19
   PY_DT_LIST_STR: 20
   PY_DT_LIST_ANY: 21
-  PY_DT_END: 22
+  PY_DT_TYPE: 22
+  PY_DT_END: 23
 
 # enum Format
 py_format:

@@ -692,7 +692,7 @@ __all__ = [
     "IndexPut",
     "MaskedScatter",
     "Ormqr",
-    "RandpermV2"
+    "RandpermV2",
 ]
 
 __custom__ = [

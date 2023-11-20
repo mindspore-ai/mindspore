@@ -90,6 +90,11 @@ void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> 
   async_queue_.Push(op_run_task);
 }
 
+void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::PyBoostDeviceTask> &op_run_task) {
+  MS_EXCEPTION_IF_NULL(op_run_task);
+  async_queue_.Push(op_run_task);
+}
+
 void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task) {
   async_queue_.Push(op_run_task);
 }

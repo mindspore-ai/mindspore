@@ -12,6 +12,10 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/*.cc"
         "rts/*.cc"
         "hccl/*.cc"
+        "pyboost/*.cc"
+        "pyboost/call/*.cc"
+        "pyboost/auto_generate/*.cc"
+        "pyboost/ops/*.cc"
         "bisheng/bisheng_kernel_mod.cc"
         "bisheng/bisheng_kernel_build.cc"
         "bisheng/custom_bisheng_kernel.cc"
@@ -37,6 +41,9 @@ file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/*.cc"
         "hccl/*.cc"
         "opapi/*.cc"
+        "pyboost/*.cc"
+        "pyboost/auto_generate/*.cc"
+        "pyboost/ops/*.cc"
         "ascend_kernel_mod.cc"
         )
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})

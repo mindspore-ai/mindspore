@@ -1060,6 +1060,13 @@ ValuePtr ConvertStr(const py::object &obj) {
 
 ValuePtr ConvertAny(const py::object &obj) { return parse::data_converter::PyDataToStubNode(obj); }
 
+ValuePtr ConvertDtype(const py::object &obj) {
+  if (!py::isinstance<mindspore::Type>(obj)) {
+    MS_LOG(EXCEPTION) << "Get arg is not mindspore type " << py::str(obj);
+  }
+  return obj.cast<TypePtr>();
+}
+
 template <typename TS, typename TD, OpDefConvertFunc func>
 ValuePtr ConvertSequence(const py::object &obj) {
   if (!py::isinstance<TS>(obj)) {
@@ -1377,6 +1384,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   {(int32_t)mindspore::ops::DT_TENSOR, ConvertTensor},
   {(int32_t)mindspore::ops::DT_STR, ConvertStr},
   {(int32_t)mindspore::ops::DT_ANY, ConvertAny},
+  {(int32_t)mindspore::ops::DT_TYPE, ConvertDtype},
   {(int32_t)mindspore::ops::DT_TUPLE_BOOL, ConvertSequence<py::tuple, ValueTuple, ConvertBool>},
   {(int32_t)mindspore::ops::DT_TUPLE_INT, ConvertSequence<py::tuple, ValueTuple, ConvertInt>},
   {(int32_t)mindspore::ops::DT_TUPLE_FLOAT, ConvertSequence<py::tuple, ValueTuple, ConvertFloat>},

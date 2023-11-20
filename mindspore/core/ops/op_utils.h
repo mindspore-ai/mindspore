@@ -48,6 +48,7 @@
   } while (0)
 
 namespace mindspore::ops {
+constexpr auto kBitSize = 64;
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
 // ArrayValue functions as a std::vector that verifies unknown values. ArrayValue uses std::vector<T> to hold the
@@ -203,6 +204,8 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::string &prim_name);
 TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args,
                             const std::set<TypePtr> &check_list);
+abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+TypePtr ReduceExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args);
 
 template <typename T>
 api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {

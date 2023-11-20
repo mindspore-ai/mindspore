@@ -302,6 +302,64 @@ bool IsDynamicShapeSkipExecute(const bool skip_mode, const ShapeVector &axes_sha
   }
   return false;
 }
+int64_t MakeWrapDim(int64_t dim, int64_t dim_post_expr) {
+  // this will make range [-1, 0]
+  if (dim_post_expr <= 0) {
+    dim_post_expr = 1;
+  }
+
+  if (dim < 0) {
+    dim += dim_post_expr;
+  }
+
+  return dim;
+}
+
+std::bitset<kBitSize> MakeDimMask(std::vector<int64_t> dims, int64_t ndim) {
+  std::bitset<kBitSize> mask = std::bitset<kBitSize>();
+  if (dims.empty()) {
+    mask.flip();
+  } else {
+    for (int64_t dim : dims) {
+      mask.set(MakeWrapDim(dim, ndim));
+    }
+  }
+
+  return mask;
+}
+
+abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto input_shape_ptr = input_args[0]->BuildShape();
+  const auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
+  int64_t ndim = input_shape.size();
+  auto dim = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
+  auto keepdim = GetValue<bool>(input_args[2]->BuildValue());
+  std::bitset<kBitSize> mask = MakeDimMask(dim, ndim);
+  auto shape = input_shape;
+
+  for (int dim_temp = static_cast<int64_t>(shape.size()) - 1; dim_temp >= 0; dim_temp--) {
+    if (mask[dim_temp]) {
+      if (keepdim) {
+        shape[dim_temp] = 1;
+      } else {
+        shape.erase(shape.begin() + dim_temp);
+      }
+    }
+  }
+  return std::make_shared<abstract::Shape>(shape);
+}
+
+TypePtr ReduceExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto dtype_ptr = input_args[3]->BuildValue();
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_args[0]->BuildType(),
+                                             common_valid_types_with_complex_and_bool, prim->name());
+  auto dtype_type_ptr = dtype_ptr->cast<TypePtr>();
+  if (dtype_type_ptr->type_id() == kMetaTypeNone) {
+    return input_args[0]->BuildType();
+  } else {
+    return dtype_ptr->cast<TypePtr>();
+  }
+}
 
 abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args,

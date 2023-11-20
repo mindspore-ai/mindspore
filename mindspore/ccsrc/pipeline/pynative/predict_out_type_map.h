@@ -160,6 +160,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LambNextMVWithDecay", kTupleTensor4},
                                                        {"LambNextRight", kTupleTensor2},
                                                        {"LayerNorm", kTupleTensor3},
+                                                       {"LayerNormExt", kTupleTensor3},
                                                        {"LayerNormBetaGammaBackprop", kTupleTensor2},
                                                        {"LayerNormBetaGammaBackpropV2", kTupleTensor2},
                                                        {"LayerNormGrad", kTupleTensor3},
@@ -286,7 +287,9 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
                                                        {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3}};
+                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"SplitTensor", kTypeAny},
+                                                       {"SplitWithSize", kTypeAny}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);
 

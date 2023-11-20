@@ -309,7 +309,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       auto address_list = CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
       // Deal with tensor and tuple
       if (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end()) {
-        for (auto address : address_list) {
+        for (const auto &address : address_list) {
           address->UpdateFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
           MS_LOG(DEBUG) << "Find node " << value_node->DebugString() << " has init args";
         }
@@ -503,6 +503,21 @@ size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr
   size_t type_size = GetTypeByte(TypeIdToType(dtype));
   size_t tensor_size = type_size * SizeOf(device_shape);
   return tensor_size;
+}
+
+std::string GetFormatByTensorShape(const DeviceContext *device_context, const ShapeVector &tensor_shape) {
+  if (device_context->GetDeviceType() != device::DeviceType::kAscend) {
+    return kOpFormat_DEFAULT;
+  }
+
+  switch (tensor_shape.size()) {
+    case kShape4dDims:
+      return kOpFormat_NCHW;
+    case kShape5dDims:
+      return kOpFormat_NCDHW;
+    default:
+      return kOpFormat_ND;
+  }
 }
 
 vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddress(
@@ -752,5 +767,228 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   new_device_address->set_padding_type(old_device_address->padding_type());
   return new_device_address;
 }
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const tensor::TensorPtr &tensor,
+                                                                const std::string &input_name) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+  const auto &abs = tensor->ToAbstract();
+  auto shape = abs->GetShape();
+  auto type = abs->GetType();
+  auto value = abs->GetValueTrack();
+  auto size = LongToSize(tensor->data().nbytes());
+  auto format = GetFormatByTensorShape(device_context, tensor->shape());
+  auto dtype_id = common::AnfAlgo::GetOutputInferDataType(type, 0);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    shape, type, value, nullptr, size, format, dtype_id, tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  MS_LOG(DEBUG) << "Create kernel tensor for op << input: " << input_name << ", Shape: " << shape->ToString()
+                << ", Type: " << type->ToString() << ", Value: " << (value ? value->ToString() : "nullptr")
+                << ", host shape: " << tensor->shape();
+
+  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  device_address->set_from_persistent_mem(tensor->is_parameter());
+  tensor->set_device_address(device_address);
+
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed, input_name:" << input_name;
+  }
+
+  // Default format no need to padding shape
+  if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), dtype_id,
+                                        tensor->data_c(), format)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  }
+  MS_LOG(DEBUG) << "input_name:" << input_name << " ptr:" << device_address->GetPtr();
+  return device_address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const std::optional<tensor::TensorPtr> &val,
+                                                                const std::string &input_name) {
+  if (!val.has_value()) {
+    return nullptr;
+  }
+  return CreateInputAddress(device_context, val.value(), input_name);
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const StringImmPtr &string_imm,
+                                                                const std::string &input_name) {
+  device::DeviceAddressPtr address = nullptr;
+  const auto &abs = string_imm->ToAbstract();
+  auto shape = abs->GetShape();
+  auto type = abs->GetType();
+  auto value = abs->GetValueTrack();
+  auto tensor_value = GetValue<std::string>(string_imm);
+  // Allocate one more byte to '/0'
+  size_t size = tensor_value.size() + 1;
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    shape, type, value, nullptr, size, kOpFormat_DEFAULT, kObjectTypeString, ShapeVector(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_LOG(DEBUG) << "Create addr for node:" << input_name << " addr:" << address;
+  address->set_from_persistent_mem(true);
+  if (address->GetPtr() == nullptr) {
+    CopyConstantToDevice(device_context, address, input_name);
+  }
+  return address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const TypePtr &type, const std::string &input_name) {
+  const auto &abs = type->ToAbstract();
+  auto shape = abs->GetShape();
+  auto value = abs->GetValueTrack();
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
+  MS_LOG(DEBUG) << "Create kernel tensor for op input: " << input_name << ", Shape: " << shape->ToString()
+                << ", Type: " << type->ToString() << ", Value: " << (value ? value->ToString() : "nullptr");
+  auto address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  return address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const ScalarPtr &scalar_value,
+                                                                const std::string &input_name) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(scalar_value);
+  const auto &abs = scalar_value->ToAbstract();
+  auto shape = abs->GetShape();
+  auto type = abs->GetType();
+  auto value = abs->GetValueTrack();
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    shape, type, value, nullptr, GetTypeByte(TypeIdToType(type->type_id())), kOpFormat_DEFAULT, type->type_id(),
+    ShapeVector(), device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_LOG(DEBUG) << "Create addr for node:" << input_name << " addr:" << address;
+  address->set_from_persistent_mem(true);
+  if (address->GetPtr() == nullptr) {
+    CopyConstantToDevice(device_context, address, input_name);
+  }
+  return address;
+}
+
+std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateInputTensorAddress(
+  const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors, const std::string &input_name,
+  bool need_ret_address) {
+  std::vector<device::DeviceAddressPtr> result;
+  result.reserve(tensors.size());
+  (void)std::transform(tensors.begin(), tensors.end(), std::back_inserter(result),
+                       [&](const TensorPtr &tensor) { return CreateInputAddress(device_context, tensor, input_name); });
+  return result;
+}
+
+void DeviceAddressUtils::CopyConstantToDevice(const device::DeviceContext *device_context,
+                                              const device::DeviceAddressPtr &device_address,
+                                              const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  // Break copy data to device address if has the device_address has flag ignore.
+  if (TEST_FLAG(device_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
+    MS_LOG(DEBUG) << "Node " << op_name << " with address " << device_address
+                  << " has flag ignore device address, so skip copy tensor to device";
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  if ((device_address->GetPtr() == nullptr) &&
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  }
+
+  // Copy data from host to device.
+  const auto &kernel_tensor = device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto data_size = kernel_tensor->size();
+  if (data_size == 0) {
+    MS_LOG(INFO) << "Op " << op_name << " is empty.";
+    return;
+  }
+  const void *node_value = kernel_tensor->GetValuePtr();
+  MS_EXCEPTION_IF_NULL(node_value);
+  auto data_type_id = kernel_tensor->dtype_id();
+  auto format = kernel_tensor->GetStringFormat();
+  if (!device_address->SyncHostToDevice({}, data_size, data_type_id, node_value, format)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  }
+}
+
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                                   const std::string &output_name, const std::string &format) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto addr = tensor->device_address();
+  if (addr != nullptr) {
+    return;
+  }
+
+  auto tensor_size = LongToSize(tensor->data().nbytes());
+  const auto &device_format = format.empty() ? GetFormatByTensorShape(device_context, tensor->shape()) : format;
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  tensor->set_device_address(device_address);
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  }
+  MS_LOG(DEBUG) << "output_name:" << output_name << " ptr:" << device_address->GetPtr();
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
+                                                                       const tensor::TensorPtr &tensor,
+                                                                       const pynative::DeviceAddressPromisePtr &promise,
+                                                                       const std::string &output_name,
+                                                                       const std::string &format) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(promise);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  const auto &abs = tensor->ToAbstract();
+  auto shape = abs->GetShape();
+  auto type = abs->GetType();
+  auto value = abs->GetValueTrack();
+  auto size = LongToSize(tensor->data().nbytes());
+  auto dtype_id = common::AnfAlgo::GetOutputInferDataType(type, 0);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    shape, type, value, nullptr, size, format, dtype_id, tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  MS_LOG(DEBUG) << "Create kernel tensor for op << input: " << output_name << ", Shape: " << shape->ToString()
+                << ", Type: " << type->ToString() << ", Value: " << (value ? value->ToString() : "nullptr")
+                << ", host shape: " << tensor->shape();
+
+  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+  promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
+
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed, input_name:" << output_name;
+  }
+  MS_LOG(DEBUG) << "input_name:" << output_name << " ptr:" << device_address->GetPtr();
+  return device_address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,
+                                                                    const size_t &workspace_size) {
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto device_address =
+    device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_size, "", kTypeUnknown, ShapeVector());
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetPtr() == nullptr &&
+      !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+  }
+
+  return device_address;
+}
+
 }  // namespace runtime
 }  // namespace mindspore

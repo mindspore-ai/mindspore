@@ -23,6 +23,9 @@
 #include <utility>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "kernel/pyboost/op_runner.h"
+#include "kernel/pyboost/op_register.h"
+#include "pipeline/pynative/forward/forward_task.h"
 
 #ifndef MS_UNLIKELY
 #ifdef _MSC_VER
@@ -57,6 +60,9 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
+  static TensorPtr StubNodeToTensor(const ValuePtr &value);
+  static std::optional<tensor::TensorPtr> StubNodeToTensorOptional(const std::optional<ValuePtr> &value);
+  static ValueTuplePtr StubNodeToValueTuple(const ValuePtr &v);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);
@@ -110,6 +116,41 @@ struct DataConvert {
                                            size_t input_index);
 };
 
+struct PyBoost {
+  static FrontendOpRunInfoPtr Init(const py::args &args);
+  static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
+  static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
+  static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info);
+  template <typename T>
+  static ValuePtr OptionalToValue(const std::optional<T> &val) {
+    if (!val.has_value()) {
+      return kNone;
+    }
+    return val.value();
+  }
+
+  template <typename T>
+  static T OptionalToValue(const T &val) {
+    return val;
+  }
+
+  template <typename... T>
+  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
+    MS_EXCEPTION_IF_NULL(op_run_info);
+    // For auto grad use
+    op_run_info->op_grad_info->input_value = {OptionalToValue(t)...};
+    op_run_info->input_size = sizeof...(t);
+    if (op_run_info->base_op_run_info.op_name == kCast) {
+      return std::make_tuple(t...);
+    }
+    const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
+    const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
+    return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
+  }
+};
+
 // Some common functions used in both jit and PackFunc grad
 struct GradCommon {
   static bool IsRealOp(const AnfNodePtr &cnode);
@@ -118,6 +159,8 @@ struct GradCommon {
   static void SetForward(const AnfNodePtrList &node_list);
 };
 };  // namespace PyNativeAlgo
+
+void DispatchOp(const std::shared_ptr<FrontendTask> &task);
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_

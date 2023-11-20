@@ -8,3 +8,7 @@ sqrt:
             dtype: tensor
     function:
         name: sqrt_
+    dispatch:
+        enable: False
+
+

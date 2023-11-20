@@ -8,3 +8,7 @@ square:
             dtype: tensor
     function:
         name: square_
+    dispatch:
+        enable: False
+        Ascend: SquareAscend
+

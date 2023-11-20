@@ -12,3 +12,7 @@ pow:
     returns:
         y:
             dtype: tensor
+    dispatch:
+        enable: False
+
+

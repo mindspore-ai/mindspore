@@ -20,6 +20,7 @@ import glob
 import hashlib
 import yaml
 
+
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,6 +73,7 @@ def get_type_str(type_str):
         'list[bool]': 'OpDtype.PY_DT_LIST_ANY',
         'list[tensor]': 'OpDtype.PY_DT_LIST_ANY',
         'tensor': 'OpDtype.PY_DT_TENSOR',
+        'type': 'OpDtype.PY_DT_TYPE',
     }
     if type_str in type_kind_dict:
         return type_kind_dict[type_str]

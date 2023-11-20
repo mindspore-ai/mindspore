@@ -13,3 +13,8 @@ masked_fill:
     returns:
         output:
             dtype: tensor
+            inplace: input
+    dispatch:
+        enable: False
+
+

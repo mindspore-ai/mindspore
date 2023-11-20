@@ -42,6 +42,7 @@ using mindspore::profiler::ProfilerManager;
 
 namespace mindspore {
 namespace pynative {
+enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 namespace {
 const mindspore::HashMap<std::string, mindspore::HashMap<size_t, std::string>> kSliceOpInputToAttr = {
   {kBroadcastToOpName, {{0, ops::kShape}}}};
@@ -50,7 +51,6 @@ const std::set<std::string> kViewOpForComplexToOtherType = {"Real", "Imag"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
 constexpr auto kOpNameCustom = "Custom";
-enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 // Shallow Copy Value and change shape
 ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &value) {
@@ -220,7 +220,7 @@ void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::Ten
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 
     DeviceAddressPromisePtr promise =
-      std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+      std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
     auto future = promise->GetFuture();
     auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
     output_tensor->set_address_future(device_address_future);
@@ -383,6 +383,23 @@ GradExecutorPtr ForwardExecutor::grad() const {
   auto grad_executor = grad_executor_.lock();
   MS_EXCEPTION_IF_NULL(grad_executor);
   return grad_executor;
+}
+
+void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
+  Init();
+  // Used for async run
+  op_run_info->requires_grad = grad()->RequiresGrad();
+  if (op_run_info->requires_grad) {
+    op_run_info->base_op_run_info.use_dynamic_shape_process = grad()->use_dynamic_shape_process();
+  } else {
+    op_run_info->base_op_run_info.use_dynamic_shape_process =
+      grad()->forward_use_dynamic_shape_process() || grad()->use_dynamic_shape_process();
+  }
+  auto new_prim = std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim);
+  new_prim->EnableSharedMutex();
+  op_run_info->op_grad_info->op_prim = new_prim;
+  op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
+  op_run_info->cell_obj_id = GetCurrentCellObjId();
 }
 
 void ForwardExecutor::ReInit() {
@@ -649,6 +666,7 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
       PyNativeAlgo::DataConvert::MarkInputs(op_run_info, input_object, index, top_cell);
     }
   }
+
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
     if (task_type == KernelTaskType::kNORMAL_VIEW_TASK && !op_run_info->requires_grad) {
       MS_LOG(DEBUG) << "End";
@@ -765,6 +783,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   PrepareOpInputs(op_run_info);
+
   if (EnableBackendAsync(op_run_info) && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
     PrepareOpOutputs(op_run_info);
     const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
@@ -1182,12 +1201,13 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   }
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
+
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
     if (input_tensor->address_future() != nullptr) {
       DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, true);
     } else {
       DeviceAddressPromisePtr promise =
-        std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+        std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
       auto future = promise->GetFuture();
       auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
       input_tensor->set_address_future(device_address_future);
@@ -1221,6 +1241,7 @@ void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
 
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
+
   if (!ScopedFallbackRunning::on() && enable_async()) {
     static auto contiguous_func = [this](const tensor::TensorPtr &tensor) { RunContiguousTask(tensor, true); };
 

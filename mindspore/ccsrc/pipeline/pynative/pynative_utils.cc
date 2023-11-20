@@ -36,6 +36,7 @@
 #include "ops/sequence_op_name.h"
 #include "ops/structure_ops.h"
 #include "ops/other_ops.h"
+#include "pipeline/pynative/predict_out_type_map.h"
 
 namespace mindspore {
 namespace pynative {
@@ -507,6 +508,36 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (utils::isa<stub::StubNode>(v)) {
+    auto stub = utils::cast<stub::StubNodePtr>(v);
+    return stub->WaitValue()->cast<tensor::TensorPtr>();
+  } else if (v->isa<tensor::Tensor>()) {
+    return v->cast<tensor::TensorPtr>();
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
+}
+
+std::optional<tensor::TensorPtr> Common::StubNodeToTensorOptional(const std::optional<ValuePtr> &value) {
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(StubNodeToTensor(value.value()));
+}
+
+ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
+  if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    std::vector<ValuePtr> tensor_list;
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
+                         [](const ValuePtr &value) { return StubNodeToTensor(value); });
+    return std::make_shared<ValueTuple>(tensor_list);
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
+}
+
 void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                  const std::string &device_target, bool is_dynamic_shape,
                                  mindspore::HashSet<size_t> *input_to_attr_index) {
@@ -764,6 +795,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   }
   prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = prim;
+  op_run_info->base_op_run_info.op_name = prim->name();
   op_run_info->signatures = prim->signatures();
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }
@@ -1090,6 +1122,87 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
+FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
+  if (args.size() != kIndex2) {
+    MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
+                      << ", but got " << args.size();
+  }
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward_executor = pynative_executor->forward_executor();
+  const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
+  PyParser::SetPrim(op_run_info, args[kIndex0]);
+  pynative_executor->StoreAsyncStatus(op_run_info);
+  forward_executor->InitOpRunInfo(op_run_info);
+  return op_run_info;
+}
+
+void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
+  std::vector<ValuePtr> output_values;
+  for (auto &output_tensor : outputs) {
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    if (op_run_info->requires_grad) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    }
+    (void)output_values.emplace_back(output_tensor);
+  }
+  auto result_value = std::make_shared<ValueTuple>(output_values);
+  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    op_run_info->real_out = result_value->value().front();
+  } else {
+    op_run_info->real_out = result_value;
+  }
+}
+
+void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract) {
+  if (op_run_info->stub_output == nullptr) {
+    return;
+  }
+
+  auto success = op_run_info->stub_output->SetAbstract(abstract);
+  if (!success) {
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                            << PredictOutType(op_run_info) << ", infer type is " << abstract->BuildType()
+                            << ", the name of operator is [" << op_name
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
+  MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
+
+  op_run_info->stub_output->SetValue(op_run_info->real_out);
+}
+
+void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // Set result to python
+  op_run_info->base_op_run_info.abstract = op->output_abs();
+  MakeOutputValue(op_run_info, op->outputs());
+  UpdateStubOutput(op_run_info, op->output_abs());
+
+  // Update op run info for auto grad
+  if (op_run_info->requires_grad) {
+    op_run_info->op_grad_info->input_abs = op->input_abs();
+    op_run_info->op_grad_info->out_value = op_run_info->real_out;
+    op_run_info->op_grad_info->out_abs = op->output_abs();
+    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
+  }
+}
+
+void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward = pynative_executor->forward_executor();
+
+  PyParser::PrepareOpGradInfo(op_run_info);
+  for (size_t index = 0; index < op_run_info->input_size; ++index) {
+    const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
+    DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
+  }
+  forward->ForwardOpGradImpl(op_run_info);
+}
+
 void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                            size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1371,5 +1484,13 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
   }
 }
 }  // namespace PyNativeAlgo
+
+void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
+  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+  forward_executor->frontend_queue()->Push(task);
+  if (!forward_executor->enable_async()) {
+    forward_executor->frontend_queue()->Wait();
+  }
+}
 }  // namespace pynative
 }  // namespace mindspore
