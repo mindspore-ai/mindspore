@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/graph_kernel/uss_atomic_add.h"
-#include <memory>
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/kernel_graph.h"
 
