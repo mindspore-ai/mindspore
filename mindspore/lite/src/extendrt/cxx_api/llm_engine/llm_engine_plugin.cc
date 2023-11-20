@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "extendrt/cxx_api/llm_engine/llm_engine_plugin.h"
+#include <algorithm>
 #include "mindspore/lite/src/extendrt/cxx_api/dlutils.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #include "mindspore/ccsrc/transform/graph_ir/transform_util.h"
@@ -30,13 +31,20 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   LLMEnginePlugin();
   ~LLMEnginePlugin();
   Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
-              const std::map<std::string, std::string> &options) override;
+              const std::map<std::string, std::string> &options, const std::string &batch_mode,
+              const LLMEngineModelInfo &postprocess_model) override;
   void Finalize() override;
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
+
+  Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                 std::vector<MSTensor> *outputs) override;
   Status CompleteRequest(const LLMReq &req) override;
   LLMEngineStatus FetchStatus() override;
   Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) override;
   Status ReleasePromptPrefix(const LLMReq &req) override;
+
+  Status PullKV(const LLMReq &req) override;
+  Status MergeKV(const LLMReq &req, uint32_t batch_index) override;
 
  private:
   LLMRole role_ = kLLMRolePrompt;
@@ -47,7 +55,8 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
 
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
   Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
-  Status InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos);
+  Status CheckModelInfos(const std::vector<LLMEngineModelInfo> &model_infos);
+  void InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess);
   void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
   Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
   Status OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase);
@@ -59,7 +68,7 @@ LLMEnginePlugin::LLMEnginePlugin() {}
 
 LLMEnginePlugin::~LLMEnginePlugin() { LLMEnginePlugin::Finalize(); }
 
-Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos) {
+Status LLMEnginePlugin::CheckModelInfos(const std::vector<LLMEngineModelInfo> &model_infos) {
   for (size_t i = 1; i < model_infos.size(); i++) {
     if (model_infos[i].input_shapes != model_infos[0].input_shapes) {
       MS_LOG(ERROR) << "Model " << i << " input shapes " << model_infos[i].input_shapes << " != that "
@@ -82,6 +91,10 @@ Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &
       return kLiteError;
     }
   }
+  return kSuccess;
+}
+
+void LLMEnginePlugin::InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess) {
   auto shape_as_string = [](const ShapeVector &shape) {
     std::string str;
     for (size_t i = 0; i < shape.size(); i++) {
@@ -100,30 +113,39 @@ Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &
   std::string input_dtypes;
   std::string ref_input_shapes;
   std::string ref_input_dtypes;
-  for (auto &item : model_infos[0].input_shapes) {
+  for (auto &item : model_info.input_shapes) {
     input_shapes += shape_as_string(item) + ";";
   }
-  for (auto &item : model_infos[0].input_dtypes) {
+  for (auto &item : model_info.input_dtypes) {
     input_dtypes += dtype_as_string(item) + ";";
   }
-  for (auto &item : model_infos[0].ref_input_shapes) {
+  for (auto &item : model_info.ref_input_shapes) {
     ref_input_shapes += shape_as_string(item) + ";";
   }
-  for (auto &item : model_infos[0].ref_input_dtypes) {
+  for (auto &item : model_info.ref_input_dtypes) {
     ref_input_dtypes += dtype_as_string(item) + ";";
   }
   auto erase_comma = [](const std::string &str) { return str.empty() ? str : str.substr(0, str.size() - 1); };
-  options_["llm.InputShapes"] = erase_comma(input_shapes);
-  options_["llm.InputDtypes"] = erase_comma(input_dtypes);
-  options_["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
-  options_["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
-  options_["llm.OutputNums"] = std::to_string(model_infos[0].output_count);
-  return kSuccess;
+  if (!postprocess) {
+    options_["llm.InputShapes"] = erase_comma(input_shapes);
+    options_["llm.InputDtypes"] = erase_comma(input_dtypes);
+    options_["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
+    options_["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
+    options_["llm.OutputNums"] = std::to_string(model_info.output_count);
+  } else {
+    options_["llm.PostProcessInputShapes"] = erase_comma(input_shapes);
+    options_["llm.PostProcessInputDtypes"] = erase_comma(input_dtypes);
+    options_["llm.PostProcessOutputNums"] = std::to_string(model_info.output_count);
+    options_["llm.PostProcessOmCachePath"] = model_info.weight_dir;
+  }
 }
 
 Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase) {
-  Status lite_status = kSuccess;
-  if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
+  Status lite_status;
+  if (ge_status == ge::GRAPH_SUCCESS) {
+    MS_LOG(INFO) << "End call llm::LLMEngine::" << func_s;
+    lite_status = kSuccess;
+  } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
     MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << ", " << phase << " status: LLM_WAIT_PROC_TIMEOUT";
     lite_status = kLiteLLMWaitProcessTimeOut;
   } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
@@ -149,7 +171,8 @@ Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func
 }
 
 Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
-                             const std::map<std::string, std::string> &options) {
+                             const std::map<std::string, std::string> &options, const std::string &batch_mode,
+                             const LLMEngineModelInfo &postprocess_model) {
   if (model_infos.empty()) {
     MS_LOG(ERROR) << "Model infos cannot be empty";
     return kLiteError;
@@ -166,10 +189,12 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
   role_ = role;
   cluster_id_ = cluster_id;
   options_ = options;
-  if (InitInputOptions(model_infos) != kSuccess) {
+  if (CheckModelInfos(model_infos) != kSuccess) {
     return kLiteError;
   }
+  InitInputOptions(model_infos[0], false);
   options_["llm.Role"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
+  options_["llm.batch_mode"] = batch_mode;
   auto option_it = options_.find("llm.OmCachePath");
   if (option_it == options_.end()) {
     std::string cache_path;
@@ -190,17 +215,38 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
     model_buffers.push_back(buff);
     MS_LOG(INFO) << "Model " << item.name << ", model buffer size " << item.om_data->Size();
   }
+  if (postprocess_model.om_data != nullptr) {
+    InitInputOptions(postprocess_model, true);
+  }
   std::map<ge::AscendString, ge::AscendString> init_options;
   for (auto &option : options_) {
     init_options[ge::AscendString(option.first.c_str())] = ge::AscendString(option.second.c_str());
     MS_LOG(INFO) << "LLMEngineInitialize option " << option.first << " = " << option.second;
   }
   auto llm_engine = std::make_shared<llm::LLMEngine>(cluster_id);
-  MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitialize";
-  auto ge_status = llm_engine->LLMEngineInitialize(model_buffers, init_options);
-  if (ge_status != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to call LLMEngineInitialize, status: " << ge_status;
-    return kLiteError;
+  if (postprocess_model.om_data == nullptr) {
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitialize";
+    auto ge_status = llm_engine->LLMEngineInitialize(model_buffers, init_options);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineInitialize, status: " << ge_status;
+      return kLiteError;
+    }
+  } else {
+    std::map<ge::AscendString, std::vector<ge::ModelBufferData>> model_buffers_map;
+    model_buffers_map["inference"] = model_buffers;
+    ge::ModelBufferData postprocess_buff;
+    postprocess_buff.data =
+      std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(postprocess_model.om_data->data_c()), [](uint8_t *) {});
+    postprocess_buff.length = postprocess_model.om_data->Size();
+    MS_LOG(INFO) << "Model " << postprocess_model.name << ", model buffer size " << postprocess_model.om_data->Size();
+    model_buffers_map["postprocess"] = {postprocess_buff};
+
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitializeV2";
+    auto ge_status = llm_engine->LLMEngineInitializeV2(model_buffers_map, init_options);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineInitializeV2, status: " << ge_status;
+      return kLiteError;
+    }
   }
   llm_engine_ = llm_engine;
   MS_LOG(INFO) << "LLMEngine Init end";
@@ -351,7 +397,7 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
   TransLLMReq(req, &llm_req);
   MS_LOG(INFO) << "Start to call predict, req_id " << llm_req.GetReqId() << ", prompt_length "
                << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
-               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId();
+               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix id " << llm_req.GetPrefixId();
   std::vector<::ge::Tensor> ge_outputs;
   ret = Run(&llm_req, ge_inputs, &ge_outputs);
   if (ret != kSuccess) {
@@ -368,6 +414,64 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
     outputs->push_back(ms_tensor);
   }
   return kSuccess;
+}
+
+Status LLMEnginePlugin::Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                                std::vector<MSTensor> *outputs) {
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  std::vector<::ge::Tensor> ge_inputs;
+  auto ret = MSTensorToGeTensor(inputs, &ge_inputs);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Failed to transform MSTensor to Ge Tensor";
+    return ret;
+  }
+  std::vector<uint64_t> req_ids;
+  (void)std::transform(req.begin(), req.end(), std::back_inserter(req_ids),
+                       [](const LLMReq &item) { return item.req_id; });
+  MS_LOG(INFO) << "Start to call predict, req_ids " << req_ids;
+  std::vector<::ge::Tensor> ge_outputs;
+  auto ge_ret = llm_engine_->RunDecoder(req_ids, ge_inputs, ge_outputs);
+  if (ge_ret != ge::GRAPH_SUCCESS) {
+    return OnGeStatus(ge_ret, "RunDecoder", "return");
+  }
+  for (size_t i = 0; i < ge_outputs.size(); i++) {
+    auto &ge_tensor = ge_outputs[i];
+    auto ms_tensor = ConvertGeTensorNoCopy(&ge_tensor);
+    if (ms_tensor == nullptr) {
+      MS_LOG(ERROR) << "Failed to converter output " << i << " GE Tensor to ME Tensor";
+      return kLiteError;
+    }
+    MS_LOG(INFO) << "Output " << i << " shape " << ms_tensor.Shape() << ", datatype " << ms_tensor.DataType();
+    outputs->push_back(ms_tensor);
+  }
+  return kSuccess;
+}
+
+Status LLMEnginePlugin::PullKV(const LLMReq &req) {
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  llm::LLMReq llm_req;
+  TransLLMReq(req, &llm_req);
+  MS_LOG(INFO) << "Start to call PullKv, req_id " << llm_req.GetReqId() << ", prompt_length "
+               << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
+               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix id " << llm_req.GetPrefixId();
+  auto ge_ret = llm_engine_->PullKv(llm_req);
+  return OnGeStatus(ge_ret, "PullKv", "return");
+}
+
+Status LLMEnginePlugin::MergeKV(const LLMReq &req, uint32_t batch_index) {
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  MS_LOG(INFO) << "Start to call MergeKV, req_id " << req.req_id << ", batch_index " << batch_index;
+  auto ge_ret = llm_engine_->MergeKv(req.req_id, batch_index);
+  return OnGeStatus(ge_ret, "MergeKV", "return");
 }
 
 Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
