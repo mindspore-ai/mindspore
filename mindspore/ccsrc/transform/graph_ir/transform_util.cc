@@ -23,6 +23,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
+#include "transform/graph_ir/op_adapter_util.h"
 
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
@@ -361,6 +362,11 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
   }
   MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
   return tensor_ptr;
+}
+
+GeTensorPtr TransformUtil::ConvertScalar(const ValuePtr &val) {
+  auto ge_tensor = ConvertAnyUtil(val, AnyTraits<ValueAny>());
+  return make_shared<GeTensor>(ge_tensor);
 }
 
 std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,
