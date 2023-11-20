@@ -96,6 +96,12 @@ void AscendDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+void AscendDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs,
+                                             const std::vector<void *> &keep_addrs,
+                                             const std::vector<size_t> &keep_addr_sizes) const {
+  AscendMemoryPool::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
+}
+
 bool AscendDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(runtime_instance_);

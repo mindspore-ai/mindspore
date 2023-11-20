@@ -89,6 +89,8 @@ class TestDeviceResManager : public device::DeviceResManager {
   virtual void FreeMemory(DeviceAddress *const &address) const {}
   virtual void *AllocateMemory(size_t size) const { return nullptr; }
   virtual void FreeMemory(void *const ptr) const {}
+  virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                               const std::vector<size_t> &keep_addr_sizes) const {}
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                TypeId type_id, const ShapeVector &shape,
                                                const UserDataPtr &user_data = nullptr) const {

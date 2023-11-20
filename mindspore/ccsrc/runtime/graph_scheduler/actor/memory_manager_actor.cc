@@ -296,9 +296,17 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(op_context);
 
+  std::vector<void *> keep_addrs;
+  for (auto &output_address : somas_info->graph_output_device_addresses_) {
+    MS_EXCEPTION_IF_NULL(output_address);
+    (void)keep_addrs.emplace_back(output_address->GetMutablePtr());
+  }
+
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kGraphOutput);
   // Free the whole block memory.
   if (somas_info->base_address_ != nullptr) {
-    device_context->device_res_manager_->FreeMemory(somas_info->base_address_);
+    device_context->device_res_manager_->FreePartMemorys({somas_info->base_address_}, keep_addrs,
+                                                         somas_info->graph_output_address_sizes_);
     somas_info->base_address_ = nullptr;
 
     for (auto &merged_base_address : somas_info->merged_base_addresses_) {
@@ -307,17 +315,25 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
       }
     }
-    return;
+  } else {
+    // Free the merged blocks memory.
+    std::vector<void *> free_addrs;
+    for (auto &merged_base_address : somas_info->merged_base_addresses_) {
+      if (merged_base_address.second == nullptr) {
+        std::string error_info = " There should have megred block base address for " + from_aid.Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      }
+      (void)free_addrs.emplace_back(merged_base_address.second);
+      merged_base_address.second = nullptr;
+    }
+    device_context->device_res_manager_->FreePartMemorys(free_addrs, keep_addrs,
+                                                         somas_info->graph_output_address_sizes_);
   }
 
-  // Free the merged blocks memory.
-  for (auto &merged_base_address : somas_info->merged_base_addresses_) {
-    if (merged_base_address.second == nullptr) {
-      std::string error_info = " There should have megred block base address for " + from_aid.Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
-    }
-    device_context->device_res_manager_->FreeMemory(merged_base_address.second);
-    merged_base_address.second = nullptr;
+  // Somas decrease the ref count.
+  for (auto &output_address : somas_info->graph_output_device_addresses_) {
+    output_address->set_from_mem_pool(true);
+    FreeMemoryByRefCount(output_address, device_context, from_aid.Name());
   }
 
   PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, from_aid.Name(), false);

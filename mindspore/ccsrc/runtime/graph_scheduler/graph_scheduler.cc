@@ -870,14 +870,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
                    << " debug string:" << origin_output_with_index.first->DebugString()
                    << " with index:" << origin_output_with_index.second;
 
-      // Check the memory allocator validity of graph output.
-      if ((output_actor != nullptr) && (output_actor->type() == KernelTransformType::kKernelActor)) {
-        auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
-        MS_EXCEPTION_IF_NULL(kernel_info);
-        auto is_somas = kernel_info->IsTensorEnableSomas(kernel_info->somas_output_result(), output_index);
-        MS_EXCEPTION_IF_CHECK_FAIL((!is_somas),
-                                   (output_kernel->fullname_with_scope() + " can't use somas for graph output."));
-      }
+      SchedulerHelper::AddSomasInfoForGraphOutput(output_actor, output_kernel, output_index, graph_id);
     }
   }
 }
