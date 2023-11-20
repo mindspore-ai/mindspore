@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/common.h"
 #include <algorithm>
 #include <iomanip>
+#include <regex>
 #include <list>
 #include <map>
 #include <string>
@@ -597,7 +598,16 @@ static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *f
 std::string GraphToString(FuncGraphPtr graph) {
   std::ostringstream graph_buffer;
   DumpIR(graph_buffer, graph);
-  return graph_buffer.str();
+  auto ret = graph_buffer.str();
+  std::regex regAddress("(0x)([0-9a-f]+)");
+  ret = std::regex_replace(ret, regAddress, "");
+  std::regex regFunc(std::string("(") + graph->ToString() + std::string(")"));
+  ret = std::regex_replace(ret, regFunc, "");
+  std::regex regVar("(\\%[0-9]+\\()([A-Za-z0-9_]+)(\\))");
+  ret = std::regex_replace(ret, regVar, "$1$3");
+  std::regex regNode("CNode_([0-9]+)");
+  ret = std::regex_replace(ret, regNode, "");
+  return ret;
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
@@ -614,26 +624,35 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
     auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
     FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
     std::string key = GraphToString(ms_func_graph);
-    auto code = jcr->codehub->Get(key);
-    if (code != nullptr) {
-      if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
-        std::ostringstream graph_buffer;
-        DumpIR(graph_buffer, ms_func_graph);
-        std::cout << "Graph Duplicated:" << std::endl;
-        std::cout << "  Graph:" << graph_buffer.str() << std::endl;
-        std::cout << "  Bytecode:" << std::endl;
-        Utils::DisFuncObject((PyObject *)(frame->f_code));
+    auto vCode = jcr->codehub->Get(key);
+    bool bFind = false;
+    for (auto code : vCode) {
+      FuncGraphPtr func_graph = graph_executor->GetFuncGraph(code->GetPhase());
+      FuncGraphPairMapEquiv equiv_graph;
+      NodeMapEquiv equiv_node;
+      if (func_graph != nullptr && Isomorphic(ms_func_graph, func_graph, &equiv_graph, &equiv_node)) {
+        if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
+          std::ostringstream graph_buffer;
+          DumpIR(graph_buffer, ms_func_graph);
+          std::cout << "Graph Duplicated:" << std::endl;
+          std::cout << "  Graph:" << graph_buffer.str() << std::endl;
+          std::cout << "  Bytecode:" << std::endl;
+          Utils::DisFuncObject(reinterpret_cast<PyObject *>(frame->f_code));
+        }
+        // find duplicate graph and reuse it
+        code->Copy(jcr->code);
+        bFind = true;
+        break;
       }
-      // find duplicate graph and reuse it
-      code->Copy(jcr->code);
-    } else {
+    }
+    if (!bFind) {
       // current graph is a new one and register it
-      jcr->codehub->Regist(key, jcr->code);
+      jcr->codehub->Register(key, jcr->code);
     }
   }
 
   OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
-                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount));
+                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount), jcr->code);
 }
 
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);

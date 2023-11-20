@@ -103,12 +103,12 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
   virtual void DelOptTarget(OptOptionPtr option, OptCodePtr code);
   virtual void DelOptTarget(OptCodePtr code);
   virtual std::vector<OptCodeSet> GetAllOptTarget();
-  virtual void Regist(std::string key, OptCodePtr code);
-  virtual OptCodePtr Get(std::string key);
+  virtual void Register(std::string key, OptCodePtr code);
+  virtual OptCodeSet Get(std::string key);
 
  protected:
   std::map<OptOptionPtr, OptCodeSet> codeMap_;
-  std::map<std::string, OptCodePtr> codeSet_;
+  std::map<std::string, OptCodeSet> codeSet_;
 };
 
 using OptCodeHubPtr = std::shared_ptr<OptCodeHub>;
