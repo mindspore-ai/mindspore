@@ -188,8 +188,12 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
     return nullptr;
   }
   // set ori shape and format.
-  desc->SetOriginShape(ori_ge_shape);
-  desc->SetOriginFormat(ori_ge_format);
+  // note: if ori_shape and ori_format have been set. the set_shape and set_format will run as device info, otherwise
+  // the set_shape and set_format will run as host info.
+  if (!std::any_of(ori_shape.cbegin(), ori_shape.cend(), [](const auto &dim) { return dim < 0; })) {
+    desc->SetOriginShape(ori_ge_shape);
+    desc->SetOriginFormat(ori_ge_format);
+  }
   desc->SetDataType(data_type);
 
   // set device shape and format, if value is empty, use ori shape and format replace.
