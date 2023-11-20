@@ -72,8 +72,9 @@ std::vector<KernelAttr> PriorityReplayBufferCreateGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool PriorityReplayBufferCreateGpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PriorityReplayBufferCreateGpuKernel::Launch(const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
@@ -106,17 +107,22 @@ bool PriorityReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &
   return true;
 }
 
-bool PriorityReplayBufferPushGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PriorityReplayBufferPushGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   float *priority = default_priority_ ? nullptr : GetDeviceAddress<float>(inputs, num_item_);
-
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
 
-  return prioriory_replay_buffer_->Push(inputs, priority, stream);
+  std::vector<AddressPtr> inputs_addr;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto input_addr = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
+    inputs_addr.push_back(input_addr);
+  }
+  return prioriory_replay_buffer_->Push(inputs_addr, priority, stream);
 }
 
 std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {
@@ -142,14 +148,16 @@ bool PriorityReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *>
   return true;
 }
 
-bool PriorityReplayBufferSampleGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PriorityReplayBufferSampleGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto beta = GetDeviceAddress<float>(inputs, 0);
   auto indices = GetDeviceAddress<size_t>(outputs, 0);
   auto weights = GetDeviceAddress<float>(outputs, 1);
   std::vector<AddressPtr> transition;
-  for (size_t i = 2; i < outputs.size(); i++) {
-    transition.push_back(outputs[i]);
+  for (size_t i = 2; i < outputs.size(); ++i) {
+    auto output_addr = std::make_shared<Address>(outputs[i]->device_ptr(), outputs[i]->size());
+    transition.push_back(output_addr);
   }
 
   return prioriory_replay_buffer_->Sample(batch_size_, beta, indices, weights, transition,
@@ -187,8 +195,9 @@ bool PriorityReplayBufferUpdateGpuKernel::Init(const std::vector<KernelTensor *>
   return true;
 }
 
-bool PriorityReplayBufferUpdateGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PriorityReplayBufferUpdateGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto indices = GetDeviceAddress<size_t>(inputs, 0);
   auto priorities = GetDeviceAddress<float>(inputs, 1);
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
@@ -213,9 +222,9 @@ bool PriorityReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *
   return true;
 }
 
-bool PriorityReplayBufferDestroyGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PriorityReplayBufferDestroyGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   PriorityReplayBufferFactory::GetInstance().Delete(handle_);
 
   // Apply host to device memory copy since it is not performance critical path.

@@ -161,8 +161,9 @@ int GruGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
 }
 
 template <typename T>
-bool GruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool GruGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   VARIABLE_NOT_USED(stream_ptr);
 

@@ -33,8 +33,8 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
   bool LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &inputs,
                         const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
                         const kernel::AddressPtr &outputs);
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(EXCEPTION) << "This api is not external";
   }
 

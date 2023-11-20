@@ -60,7 +60,7 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
         outputs[i]->set_size(out_shapes_[i].size() * UnitSizeInBytes(outputs[i]->dtype_id()));
       } else {
         outputs[i]->SetShapeVector({});
-        outputs[i]->set_size(0);
+        outputs[i]->set_size(UnitSizeInBytes(outputs[i]->dtype_id()));
       }
     }
   }

@@ -156,13 +156,13 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto [indices_out, new_value_shape, new_idx_advanced] = RemoveExpandedDims::ConstRemoveExpandedDims(
     has_true, has_false, has_sequence, broadcast_shape, rem_ndim, value_shape, data_shape, empty_indices_out,
     idx_advanced, new_tuple_index_types, static_cast<size_t>(expand_dims));
-  abstract::AbstractBasePtrList elems;
-  std::transform(new_value_shape.begin(), new_value_shape.end(), std::back_inserter(elems),
-                 [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
-
   auto indices_out_tensor = std::make_shared<tensor::Tensor>(indices_out);
-  AbstractBasePtrList abs_list{indices_out_tensor->ToAbstract(), std::make_shared<abstract::AbstractTuple>(elems),
-                               std::make_shared<abstract::AbstractScalar>(new_idx_advanced)};
+  ShapeVector value_shape_len{SizeToLong(new_value_shape.size())};
+  auto value_shape_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, value_shape_len, new_value_shape.data(),
+                                                             new_value_shape.size() * sizeof(ShapeValueDType));
+  auto idx_advanced_tensor = std::make_shared<tensor::Tensor>(new_idx_advanced);
+  AbstractBasePtrList abs_list{indices_out_tensor->ToAbstract(), value_shape_tensor->ToAbstract(),
+                               idx_advanced_tensor->ToAbstract()};
   return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
 MIND_API_OPERATOR_IMPL(RemoveExpandedDims, BaseOperator);

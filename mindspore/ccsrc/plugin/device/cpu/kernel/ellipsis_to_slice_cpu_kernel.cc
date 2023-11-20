@@ -58,13 +58,13 @@ int EllipsisToSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   return KRET_OK;
 }
 
-bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
-  const auto input_addr1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  auto output_addr0 = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_addr1 = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
+  const auto input_addr1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  auto output_addr0 = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_addr1 = reinterpret_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   size_t dim_size = data_shape.size();
   size_t slice_nums = data_shapes_[1][1];
@@ -116,9 +116,9 @@ bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   return true;
 }
 
-bool EllipsisToSliceCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool EllipsisToSliceCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
