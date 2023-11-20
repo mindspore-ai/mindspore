@@ -162,6 +162,48 @@ std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulCpuKernelMod::SparseTen
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, std::complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, std::complex<double>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32),

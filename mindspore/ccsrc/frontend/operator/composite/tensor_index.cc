@@ -131,12 +131,9 @@ static ValueNodePtr MakeGatherNode() {
 }
 
 static ValueNodePtr MakeReshapeNode() {
-  auto reshape_prim = std::make_shared<Primitive>(kPrimReshape->name());
-  const std::vector<std::string> &reshape_input_names = {"tensor", "shape"};
-  const std::vector<std::string> &reshape_output_names = {"output"};
-  reshape_prim->SetAttrs(
-    {{kAttrInputNames, MakeValue(reshape_input_names)}, {kAttrOutputNames, MakeValue(reshape_output_names)}});
-  return NewValueNode(reshape_prim);
+  auto reshape_with_check =
+    prim::GetPythonOps("reshape_with_check", "mindspore.ops.composite.multitype_ops._compile_utils");
+  return NewValueNode(reshape_with_check);
 }
 
 static ValueNodePtr MakeExpandDimsNode() {

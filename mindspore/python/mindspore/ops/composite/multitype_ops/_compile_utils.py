@@ -26,6 +26,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
     TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo, \
     SelectView, CopyWithSlice
+from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.initializer import Zero
@@ -1189,6 +1190,12 @@ def _tuple_index_transfer(broadcast_shape, final_shape, new_shape, x, all_empty_
         return x
     item = _broadcast(broadcast_shape, x)
     return _broadcast(final_shape, F.reshape(item, new_shape))
+
+
+def reshape_with_check(x, new_shape):
+    if isinstance(new_shape, Tensor):
+        new_shape = TensorToTuple()(new_shape)
+    return F.reshape(x, new_shape)
 
 
 class _TensorIndexSetitem(base.TensorIndexSetitem_):

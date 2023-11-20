@@ -41,11 +41,6 @@ bool PSROIPoolingV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG_ERROR << "Can not match kernel based on given attr!";
     return false;
   }
-
-  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
-    return false;
-  }
   return true;
 }
 
@@ -128,9 +123,10 @@ int PSROIPoolingV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   workspace_size_list_.clear();
   output_size_list_.clear();
 
-  for (auto tensor_ptr : outputs) {
-    output_size_list_.push_back(tensor_ptr->size());
-  }
+  auto output_type = outputs[kIndex0]->dtype_id();
+  auto output_ele_size = GetTypeByte(TypeIdToType(output_type));
+  auto output_ele = batch_size_ * group_size_ * group_size_ * output_channels_;
+  output_size_list_.push_back(static_cast<size_t>(output_ele) * output_ele_size);
 
   return KRET_OK;
 }
