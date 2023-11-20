@@ -78,9 +78,9 @@ def test_len_mutable():
     def foo():
         return len(mutable(2))
 
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(TypeError) as e:
         foo()
-    assert "'Int' object has no attribute '__len__'" in str(e.value)
+    assert "'Int' object is not iterable" in str(e.value)
 
 
 @pytest.mark.level0
