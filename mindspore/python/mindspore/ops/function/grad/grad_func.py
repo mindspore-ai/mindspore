@@ -37,7 +37,6 @@ oneslike = P.OnesLike()
 def _check_has_aux_type(inputs):
     if not isinstance(inputs, bool):
         raise TypeError("The 'has_aux' must be bool type.")
-    return True
 
 
 @constexpr
