@@ -305,12 +305,13 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph);
-  if (device_contexts_.empty() || device_contexts_[0] == nullptr ||
-      device_contexts_[0]->device_res_manager_ == nullptr) {
+  if (device_contexts_.empty()) {
     MS_LOG(ERROR) << "Invalid device context for actor:" << GetAID();
     return false;
   }
   auto device_context = device_contexts_[0];
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto &input_nodes = graph->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if (i >= node_device_tensors_.size()) {

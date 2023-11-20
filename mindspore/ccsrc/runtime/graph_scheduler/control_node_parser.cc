@@ -1694,6 +1694,75 @@ void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodeP
   }
 }
 
+void ControlNodeParser::FetchDeviceContextByNode(const std::vector<KernelWithIndex> &output_nodes,
+                                                 std::vector<const DeviceContext *> *return_device_contexts,
+                                                 const FuncGraphPtr &func_graph, const DeviceContext *default_context) {
+  MS_EXCEPTION_IF_NULL(return_device_contexts);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(default_context);
+  for (const auto &output_node : output_nodes) {
+    MS_EXCEPTION_IF_NULL(output_node.first);
+    if (output_node.first->isa<Parameter>()) {
+      // If the output is parameter, get the device context type from the formal parameter.
+      const auto &iter = find(func_graph->parameters().begin(), func_graph->parameters().end(), output_node.first);
+      if (iter == func_graph->parameters().end()) {
+        MS_LOG(EXCEPTION) << "Invalid parameter:" << output_node.first->DebugString()
+                          << " for func_graph:" << func_graph->ToString();
+      }
+      const auto &func_graph_iter = func_graph_to_device_contexts_.find(func_graph);
+      if (func_graph_iter == func_graph_to_device_contexts_.end()) {
+        MS_LOG(EXCEPTION) << "Cannot find device context for funcgraph:" << func_graph->ToString();
+      }
+      size_t index = LongToSize(iter - func_graph->parameters().begin());
+      MS_EXCEPTION_IF_NULL(func_graph_iter->second[index]);
+      (void)return_device_contexts->emplace_back(func_graph_iter->second[index]);
+    } else if (output_node.first->isa<ValueNode>()) {
+      // If the output is parameter, used the default context type.
+      (void)return_device_contexts->emplace_back(default_context);
+    } else if (common::AnfAlgo::IsCallNode(output_node.first)) {
+      // If the output is call node, get the device context type by the output of funcgraph.
+      const auto &func_graphs = call_node_to_func_graphs_[output_node.first];
+      std::vector<const DeviceContext *> call_device_contexts;
+      for (const auto &graph : func_graphs) {
+        MS_EXCEPTION_IF_NULL(graph);
+        const auto &node = graph->return_node();
+        MS_EXCEPTION_IF_NULL(node);
+        const auto &iter = control_node_to_device_contexts_.find(node);
+        if (iter != control_node_to_device_contexts_.end()) {
+          call_device_contexts = iter->second;
+          break;
+        }
+      }
+      // Since funcgraph has been topo-sorted according to the calling relationship, when there is a call node in
+      // the output, the output type of the funcgraph called by it should have been determined, if not, an exception
+      // will be thrown.
+      if (call_device_contexts.empty() || call_device_contexts.size() <= output_node.second) {
+        MS_LOG(WARNING) << "Cannot find device context for call node:" << output_node.first->DebugString()
+                        << " device contexts size:" << call_device_contexts.size() << " index:" << output_node.second;
+        (void)return_device_contexts->emplace_back(default_context);
+      } else {
+        MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
+        (void)return_device_contexts->emplace_back(call_device_contexts[output_node.second]);
+      }
+    } else if (common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimPartial) ||
+               common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimSwitch)) {
+      (void)return_device_contexts->emplace_back(default_context);
+    } else if (output_node.first->isa<CNode>()) {
+      // If the output is a cnode, get the device context type by the kernel.
+      const auto &iter = front_to_backend_kernels_.find(output_node);
+      if (iter == front_to_backend_kernels_.end()) {
+        MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+        (void)return_device_contexts->emplace_back(default_context);
+        continue;
+      }
+      MS_EXCEPTION_IF_NULL(iter->second.second);
+      (void)return_device_contexts->emplace_back(iter->second.second);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid node for return:" << output_node.first->DebugString();
+    }
+  }
+}
+
 void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *default_context) {
   MS_EXCEPTION_IF_NULL(default_context);
   // Collect the call realationship between funcgraphs.
@@ -1720,70 +1789,9 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
     if (inputs.size() <= kReturnInputPos) {
       MS_LOG(EXCEPTION) << "Invalid return node:" << cnode->DebugString();
     }
-    const auto output_nodes = FetchInputNodeByNode(inputs[kReturnInputPos]);
     std::vector<const DeviceContext *> return_device_contexts;
-
-    for (const auto &output_node : output_nodes) {
-      MS_EXCEPTION_IF_NULL(output_node.first);
-      if (output_node.first->isa<Parameter>()) {
-        // If the output is parameter, get the device context type from the formal parameter.
-        const auto &iter = find(func_graph->parameters().begin(), func_graph->parameters().end(), output_node.first);
-        if (iter == func_graph->parameters().end()) {
-          MS_LOG(EXCEPTION) << "Invalid parameter:" << output_node.first->DebugString()
-                            << " for func_graph:" << func_graph->ToString();
-        }
-        const auto &func_graph_iter = func_graph_to_device_contexts_.find(func_graph);
-        if (func_graph_iter == func_graph_to_device_contexts_.end()) {
-          MS_LOG(EXCEPTION) << "Cannot find device context for funcgraph:" << func_graph->ToString();
-        }
-        size_t index = LongToSize(iter - func_graph->parameters().begin());
-        MS_EXCEPTION_IF_NULL(func_graph_iter->second[index]);
-        (void)return_device_contexts.emplace_back(func_graph_iter->second[index]);
-      } else if (output_node.first->isa<ValueNode>()) {
-        // If the output is parameter, used the default context type.
-        (void)return_device_contexts.emplace_back(default_context);
-      } else if (common::AnfAlgo::IsCallNode(output_node.first)) {
-        // If the output is call node, get the device context type by the output of funcgraph.
-        const auto &func_graphs = call_node_to_func_graphs_[output_node.first];
-        std::vector<const DeviceContext *> call_device_contexts;
-        for (const auto &graph : func_graphs) {
-          MS_EXCEPTION_IF_NULL(graph);
-          const auto &node = graph->return_node();
-          MS_EXCEPTION_IF_NULL(node);
-          const auto &iter = control_node_to_device_contexts_.find(node);
-          if (iter != control_node_to_device_contexts_.end()) {
-            call_device_contexts = iter->second;
-            break;
-          }
-        }
-        // Since funcgraph has been topo-sorted according to the calling relationship, when there is a call node in
-        // the output, the output type of the funcgraph called by it should have been determined, if not, an exception
-        // will be thrown.
-        if (call_device_contexts.empty() || call_device_contexts.size() <= output_node.second) {
-          MS_LOG(WARNING) << "Cannot find device context for call node:" << output_node.first->DebugString()
-                          << " device contexts size:" << call_device_contexts.size() << " index:" << output_node.second;
-          (void)return_device_contexts.emplace_back(default_context);
-        } else {
-          MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
-          (void)return_device_contexts.emplace_back(call_device_contexts[output_node.second]);
-        }
-      } else if (common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimPartial) ||
-                 common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimSwitch)) {
-        (void)return_device_contexts.emplace_back(default_context);
-      } else if (output_node.first->isa<CNode>()) {
-        // If the output is a cnode, get the device context type by the kernel.
-        const auto &iter = front_to_backend_kernels_.find(output_node);
-        if (iter == front_to_backend_kernels_.end()) {
-          MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
-          (void)return_device_contexts.emplace_back(default_context);
-          continue;
-        }
-        MS_EXCEPTION_IF_NULL(iter->second.second);
-        (void)return_device_contexts.emplace_back(iter->second.second);
-      } else {
-        MS_LOG(EXCEPTION) << "Invalid node for return:" << output_node.first->DebugString();
-      }
-    }
+    FetchDeviceContextByNode(FetchInputNodeByNode(inputs[kReturnInputPos]), &return_device_contexts, func_graph,
+                             default_context);
     control_node_to_device_contexts_[return_node] = return_device_contexts;
   }
 }
