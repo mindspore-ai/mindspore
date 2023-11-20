@@ -36,11 +36,14 @@ if platform.system() == "Linux":
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
 BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
+KEY_NAME = "name"
+ASCEND_CUSTOM_OPP_PATH = "ASCEND_CUSTOM_OPP_PATH"
+
 
 def _get_reg_info_attr(op_info, attr_name, default_value=None):
     """get attr value"""
     for _, item in enumerate(op_info.get("attr", [])):
-        if item.get("name") == attr_name:
+        if item.get(KEY_NAME) == attr_name:
             return item.get("defaultValue")
     return default_value
 
@@ -66,12 +69,12 @@ class _CustomInstaller:
     @staticmethod
     def _set_env(custom_opp_path):
         """set custom file path to env"""
-        if not os.environ.get("ASCEND_CUSTOM_OPP_PATH"):
-            os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path
+        if not os.environ.get(ASCEND_CUSTOM_OPP_PATH):
+            os.environ[ASCEND_CUSTOM_OPP_PATH] = custom_opp_path
         else:
-            paths = os.environ["ASCEND_CUSTOM_OPP_PATH"].split(':')
+            paths = os.environ[ASCEND_CUSTOM_OPP_PATH].split(':')
             if custom_opp_path not in paths:
-                os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path + ':' + os.environ["ASCEND_CUSTOM_OPP_PATH"]
+                os.environ[ASCEND_CUSTOM_OPP_PATH] = custom_opp_path + ':' + os.environ[ASCEND_CUSTOM_OPP_PATH]
 
     @staticmethod
     def _create_dir(*dir_names):
@@ -153,12 +156,12 @@ class _CustomInstaller:
         # attr
         attrs_name = []
         for _, item in enumerate(self.op_info.get("attr", [])):
-            attr_name = item.get("name")
+            attr_name = item.get(KEY_NAME)
             attrs_name.append(attr_name)
             key = "attr_" + attr_name
             op_info[key] = {}
             for k, v in item.items():
-                if k != "name":
+                if k != KEY_NAME:
                     op_info[key][k] = v
         if attrs_name:
             op_info["attr"] = {"list": ",".join(attrs_name)}
@@ -171,7 +174,7 @@ class _CustomInstaller:
             item = inputs[i] if i < input_num else outputs[i - input_num]
             key = "input" if i < input_num else "output"
             key += str(item.get("index"))
-            op_info[key] = {"name": item.get("name"),
+            op_info[key] = {KEY_NAME: item.get(KEY_NAME),
                             "paramType": item.get("paramType", "required"),
                             "shape": item.get("shape", "all")}
             dtype, formats = _get_dtype_format(i)

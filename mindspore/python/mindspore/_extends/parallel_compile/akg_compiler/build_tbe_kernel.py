@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,20 @@ from tbe.dsl import build as tbe_build
 import tbe.common.context.op_context as op_context
 from impl.dynamic.add import _add_check_format, _infer_shape
 
+SHAPE = "shape"
+FORMAT = "format"
+DATA_TYPE = "data_type"
+NEW_SHAPE = "new_shape"
+ORI_SHAPE = "ori_shape"
+ORI_FORMAT = "ori_format"
+DST_TYPE = "dst_type"
+DST_ORI_SHAPE = "dst_ori_shape"
+INPUT_DESC = "input_desc"
+OUTPUT_DESC = "output_desc"
+ENABLE_VECTOR_2X = "enable_vector_2x"
+ENABLE_GROUP_INPLACE = "enable_group_inplace"
+
+
 def initialize(kernel_meta_parent_dir):
     """Initialize the TBE compile environment."""
     os.environ["CONTEXT_MODELCOMPILING"] = "TRUE"
@@ -49,14 +63,14 @@ def update_config(config, op_names):
     change_type_dict = {"MatMul": (True, False),
                         "BatchMatMul": (True, False)}
     config["bool_storage_as_1bit"] = True
-    config["enable_group_inplace"] = False
-    config["enable_vector_2x"] = True
+    config[ENABLE_GROUP_INPLACE] = False
+    config[ENABLE_VECTOR_2X] = True
     for op in op_names:
         if op in bool_storage_as_1bit_oplist:
             config["bool_storage_as_1bit"] = False
         enable_group_inplace, enable_vector_2x = change_type_dict.get(op, (False, True))
-        config["enable_group_inplace"] = config["enable_group_inplace"] or enable_group_inplace
-        config["enable_vector_2x"] = config["enable_vector_2x"] and enable_vector_2x
+        config[ENABLE_GROUP_INPLACE] = config[ENABLE_GROUP_INPLACE] or enable_group_inplace
+        config[ENABLE_VECTOR_2X] = config[ENABLE_VECTOR_2X] and enable_vector_2x
 
 
 def add_new_shape(names, shapes, new_shapes, inputs):
@@ -70,11 +84,11 @@ def add_new_shape(names, shapes, new_shapes, inputs):
             continue
         if name not in inputs:
             raise RuntimeError("Can not support reshape on output tensor {}".format(name))
-        if "new_shape" not in inputs[name]:
-            inputs[name]["new_shape"] = new_shapes[i]
-        elif new_shapes[i] != inputs[name]["new_shape"]:
+        if NEW_SHAPE not in inputs[name]:
+            inputs[name][NEW_SHAPE] = new_shapes[i]
+        elif new_shapes[i] != inputs[name][NEW_SHAPE]:
             raise RuntimeError("Find different new_shape {} and {} for {}"
-                               .format(inputs[name]["new_shape"], new_shapes[i], name))
+                               .format(inputs[name][NEW_SHAPE], new_shapes[i], name))
 
 
 class TransShape:
@@ -93,21 +107,21 @@ class TransShape:
             if v.get("value") is not None:
                 continue
             names.append(k)
-            shapes.append(v["shape"])
-            ori_shapes.append(v["ori_shape"] if v.get("ori_shape") else None)
-            formats.append(v["format"])
-            ori_formats.append(v["ori_format"])
+            shapes.append(v[SHAPE])
+            ori_shapes.append(v[ORI_SHAPE] if v.get(ORI_SHAPE) else None)
+            formats.append(v[FORMAT])
+            ori_formats.append(v[ORI_FORMAT])
         if len(shapes) == 2 and len(shapes[0]) != len(shapes[1]):
-            format_pattern = _add_check_format({"shape": shapes[0], "format": formats[0]},
-                                               {"shape": shapes[1], "format": formats[1]})
+            format_pattern = _add_check_format({SHAPE: shapes[0], FORMAT: formats[0]},
+                                               {SHAPE: shapes[1], FORMAT: formats[1]})
             ori_shape0 = ori_shapes[0] if ori_shapes[0] is not None else infer_ori_shape(
                 shapes[0], formats[0], ori_formats[0])
             ori_shape1 = ori_shapes[1] if ori_shapes[1] is not None else infer_ori_shape(
                 shapes[1], formats[1], ori_formats[1])
             new_shapes = [None, None]
             new_shapes[0], new_shapes[1] = _infer_shape(format_pattern,
-                                                        {"shape": shapes[0], "ori_shape": ori_shape0},
-                                                        {"shape": shapes[1], "ori_shape": ori_shape1})
+                                                        {SHAPE: shapes[0], ORI_SHAPE: ori_shape0},
+                                                        {SHAPE: shapes[1], ORI_SHAPE: ori_shape1})
             new_shapes[0], new_shapes[1], _ = shape_util.broadcast_shapes(new_shapes[0], new_shapes[1],
                                                                           param_name_input1="input0",
                                                                           param_name_input2="input1")
@@ -118,7 +132,7 @@ class TransShape:
         """deal with batch_matmul."""
         for k, v in op_inputs.items():
             # batch dimension of BatchMatMul must be fused to 1D
-            shape = v["shape"]
+            shape = v[SHAPE]
             if len(shape) > 5:
                 new_shape = [functools.reduce(lambda x, y: x * y, shape[:-4])] + shape[-4:]
                 add_new_shape(k, shape, new_shape, inputs)
@@ -134,6 +148,10 @@ class TransShape:
 
 def infer_ori_shape(shape, cur_format, ori_format):
     """Given current format and shape, infer the shape with ori_format."""
+
+    def _shape_error(current_shape, current_format):
+        raise ValueError("Invalid shape {} for format {}".format(current_shape, current_format))
+
     if cur_format == ori_format:
         return shape
     default_formats = ["DefaultFormat", "ND", "NCHW"]
@@ -144,7 +162,7 @@ def infer_ori_shape(shape, cur_format, ori_format):
     if cur_format == "FRACTAL_NZ" and ori_format in default_formats:
         dims = len(shape)
         if dims < 4:
-            raise ValueError("Invalid shape {} for format {}".format(shape, cur_format))
+            _shape_error(shape, cur_format)
         ori_shape = shape[:dims - 4]
         m = shape[-3] * shape[-2]
         n = shape[-4] * shape[-1]
@@ -154,13 +172,13 @@ def infer_ori_shape(shape, cur_format, ori_format):
 
     if cur_format == "NC1HWC0" and ori_format in default_formats:
         if len(shape) != 5:
-            raise ValueError("Invalid shape {} for format {}".format(shape, cur_format))
+            _shape_error(shape, cur_format)
         ori_shape = [shape[0], shape[1] * shape[4], shape[2], shape[3]]
         return ori_shape
 
     if cur_format == "NHWC" and ori_format in default_formats:
         if len(shape) != 4:
-            raise ValueError("Invalid shape {} for format {}".format(shape, cur_format))
+            _shape_error(shape, cur_format)
         ori_shape = [shape[0], shape[3], shape[1], shape[2]]
         return ori_shape
 
@@ -201,7 +219,7 @@ def get_input_desc(input_desc):
     res = {}
     for desc in input_desc:
         for item in desc:
-            item["shape"] = [1] if not item["shape"] else item["shape"]
+            item[SHAPE] = [1] if not item[SHAPE] else item[SHAPE]
             res[item["tensor_name"]] = item
     return res
 
@@ -214,7 +232,7 @@ def get_inputs_tensor(input_desc, all_tensors):
             name = item["tensor_name"]
             if item.get("value") is not None:
                 # const value
-                all_tensors[name] = tvm.const(item["value"], item["data_type"])
+                all_tensors[name] = tvm.const(item["value"], item[DATA_TYPE])
             if all_tensors.get(name) is None:
                 raise ValueError("Tensor [{}] not found.".format(name))
             inputs.append(all_tensors[name])
@@ -236,17 +254,17 @@ def get_op_attrs(op, fusion_op_name):
     op_name = op["name"]
     op_attrs = get_attr_dict(op.get("attr"))
     if op_name == "BatchMatMul":
-        op_attrs["dst_type"] = op["output_desc"][0]["data_type"]
-        op_attrs["dst_ori_shape"] = op["output_desc"][0].get("ori_shape")
-        if op_attrs.get("dst_ori_shape") is None:
-            op_attrs["dst_ori_shape"] = infer_ori_shape(op["output_desc"][0]["shape"],
-                                                        op["output_desc"][0]["format"],
-                                                        op["output_desc"][0]["ori_format"])
+        op_attrs[DST_TYPE] = op[OUTPUT_DESC][0][DATA_TYPE]
+        op_attrs[DST_ORI_SHAPE] = op[OUTPUT_DESC][0].get(ORI_SHAPE)
+        if op_attrs.get(DST_ORI_SHAPE) is None:
+            op_attrs[DST_ORI_SHAPE] = infer_ori_shape(op[OUTPUT_DESC][0][SHAPE],
+                                                      op[OUTPUT_DESC][0][FORMAT],
+                                                      op[OUTPUT_DESC][0][ORI_FORMAT])
     elif op_name == "MatMul":
-        op_attrs["dst_type"] = op["output_desc"][0]["data_type"]
-        op_attrs["dst_format"] = op["output_desc"][0]["format"]
+        op_attrs[DST_TYPE] = op[OUTPUT_DESC][0][DATA_TYPE]
+        op_attrs["dst_format"] = op[OUTPUT_DESC][0][FORMAT]
     elif op_name == "Cast":
-        op_attrs["dst_type"] = op["output_desc"][0]["data_type"]
+        op_attrs[DST_TYPE] = op[OUTPUT_DESC][0][DATA_TYPE]
     op_attrs["fusion_op_name"] = fusion_op_name
     return op_attrs
 
@@ -255,17 +273,17 @@ def create_placeholders(inputs):
     """Create placeholders."""
     tensors = {}
     for k, v in inputs.items():
-        dtype = v["data_type"]
+        dtype = v[DATA_TYPE]
         if dtype == "bool":
             dtype = "int8"
-        shape = v["shape"]
-        if "new_shape" in v:
-            shape = v["new_shape"]
+        shape = v[SHAPE]
+        if NEW_SHAPE in v:
+            shape = v[NEW_SHAPE]
         attr = {
-            "format": v.get("format"),
+            FORMAT: v.get(FORMAT),
             "sub_format": v.get("sub_format", ""),
-            "ori_shape": v.get("ori_shape"),
-            "ori_format": v.get("ori_format"),
+            ORI_SHAPE: v.get(ORI_SHAPE),
+            ORI_FORMAT: v.get(ORI_FORMAT),
             "addr_type": v.get("addr_type", 0),
             "valid_shape": v.get("valid_shape", []),
             "slice_offset": v.get("slice_offset", []),
@@ -275,8 +293,8 @@ def create_placeholders(inputs):
             "L1_valid_size": v.get("L1_valid_size", -1),
             "range": v.get("range", [])
         }
-        if attr.get("ori_shape") is None:
-            attr["ori_shape"] = infer_ori_shape(v.get("shape"), v.get("format"), attr.get("ori_format"))
+        if attr.get(ORI_SHAPE) is None:
+            attr[ORI_SHAPE] = infer_ori_shape(v.get(SHAPE), v.get(FORMAT), attr.get(ORI_FORMAT))
         tensors[k] = tvm.placeholder(shape=shape, name=k, dtype=dtype, attrs=attr)
     return tensors
 
@@ -288,8 +306,8 @@ def same_shape(inputs):
     base_shape = -1
     for _, v in inputs.items():
         if base_shape == -1:
-            base_shape = v["shape"]
-        if v["shape"] != base_shape:
+            base_shape = v[SHAPE]
+        if v[SHAPE] != base_shape:
             return False
     return True
 
@@ -297,17 +315,17 @@ def same_shape(inputs):
 def create_input_tensors(json_dict):
     """Create input placeholders."""
     fold_dim = True
-    inputs = get_input_desc(json_dict.get("input_desc", []))
+    inputs = get_input_desc(json_dict.get(INPUT_DESC, []))
     for op in json_dict["op_desc"]:
         op_name = op["name"]
         pattern = get_op_reg_info(op_name, "pattern")
-        op_inputs = get_input_desc(op.get("input_desc", []))
+        op_inputs = get_input_desc(op.get(INPUT_DESC, []))
         TransShape.run(op_name, pattern, op_inputs, inputs)
         if pattern != OpPattern.ELEMWISE or not same_shape(op_inputs):
             fold_dim = False
     if fold_dim:
         for k, v in inputs.items():
-            shape = v["shape"]
+            shape = v[SHAPE]
             new_shape = [functools.reduce(lambda x, y: x * y, shape[:])]
             add_new_shape(k, shape, new_shape, inputs)
     return create_placeholders(inputs)
@@ -323,28 +341,28 @@ def create_fusion_op_name(op_names):
 
 
 def update_format(json_dict):
-    """Some format like DefaultFormat is not recognized in TBE, need to covert these formats."""
+    """Some format like DefaultFormat is not recognized in TBE, need to convert these formats."""
 
     def _update_input_format(input_desc):
         for desc in input_desc:
             for item in desc:
-                if item["format"] == "DefaultFormat":
-                    item["format"] = "ND"
-                if item.get("ori_format") is None or item["ori_format"] == "DefaultFormat":
-                    item["ori_format"] = "NCHW"
+                if item[FORMAT] == "DefaultFormat":
+                    item[FORMAT] = "ND"
+                if item.get(ORI_FORMAT) is None or item[ORI_FORMAT] == "DefaultFormat":
+                    item[ORI_FORMAT] = "NCHW"
 
     def _update_output_format(output_desc):
         for item in output_desc:
-            if item["format"] == "DefaultFormat":
-                item["format"] = "ND"
-            if item.get("ori_format") is None or item["ori_format"] == "DefaultFormat":
-                item["ori_format"] = "NCHW"
+            if item[FORMAT] == "DefaultFormat":
+                item[FORMAT] = "ND"
+            if item.get(ORI_FORMAT) is None or item[ORI_FORMAT] == "DefaultFormat":
+                item[ORI_FORMAT] = "NCHW"
 
-    _update_input_format(json_dict.get("input_desc", []))
-    _update_output_format(json_dict["output_desc"])
+    _update_input_format(json_dict.get(INPUT_DESC, []))
+    _update_output_format(json_dict[OUTPUT_DESC])
     for op in json_dict["op_desc"]:
-        _update_input_format(op.get("input_desc", []))
-        _update_output_format(op["output_desc"])
+        _update_input_format(op.get(INPUT_DESC, []))
+        _update_output_format(op[OUTPUT_DESC])
 
 
 def gen_args_remap(orig_inputs_name, orig_outputs_name, inputs_name, outputs_name, inplace_names):
@@ -440,8 +458,8 @@ def build(json_str, kernel_meta_parent_dir):
     """Build kernel."""
     json_dict = json.loads(json_str)
     update_format(json_dict)
-    inputs_name = get_inputs_name(json_dict.get("input_desc", []))
-    outputs_name, inplace_names = get_outputs_info(json_dict["output_desc"])
+    inputs_name = get_inputs_name(json_dict.get(INPUT_DESC, []))
+    outputs_name, inplace_names = get_outputs_info(json_dict[OUTPUT_DESC])
     op_names = get_all_op_name(json_dict["op_desc"])
     fusion_op_name = create_fusion_op_name(op_names)
 
@@ -457,7 +475,7 @@ def build(json_str, kernel_meta_parent_dir):
         for op in json_dict["op_desc"]:
             op_name = op["name"]
             # get op input tensor
-            op_inputs = get_inputs_tensor(op.get("input_desc", []), all_tensors)
+            op_inputs = get_inputs_tensor(op.get(INPUT_DESC, []), all_tensors)
             # get op attrs
             op_attrs = get_op_attrs(op, fusion_op_name)
             # op compute
@@ -465,10 +483,10 @@ def build(json_str, kernel_meta_parent_dir):
             # update op output tensor
             if not isinstance(op_outputs, (list, tuple)):
                 op_outputs = [op_outputs]
-            if len(op["output_desc"]) != len(op_outputs):
+            if len(op[OUTPUT_DESC]) != len(op_outputs):
                 raise ValueError("len(op[\"output_desc\"] is not equal to the number of real output tensors in op[{}]: "
-                                 "{} vs {}".format(op_name, len(op["output_desc"]), len(op_outputs)))
-            for i, desc in enumerate(op["output_desc"]):
+                                 "{} vs {}".format(op_name, len(op[OUTPUT_DESC]), len(op_outputs)))
+            for i, desc in enumerate(op[OUTPUT_DESC]):
                 all_tensors[desc["tensor_name"]] = op_outputs[i]
 
         # Collect input, output tensors
