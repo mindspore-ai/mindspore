@@ -95,6 +95,12 @@ HyperMap::HyperMap(const HyperMap &h)
   Init();
 }
 
+void HyperMap::SetObjectForFnLeaf(const py::object &leaf_object) {
+  if (fn_leaf_ != nullptr) {
+    fn_leaf_->set_meta_obj(leaf_object);
+  }
+}
+
 AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                               const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);

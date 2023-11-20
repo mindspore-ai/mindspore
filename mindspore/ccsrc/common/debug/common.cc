@@ -306,6 +306,7 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
       s << filename.substr(i);
     }
   }
+  ++g_id_;
   return s.str();
 }
 
@@ -407,7 +408,8 @@ bool Common::CheckInterval() {
     try {
       interval = std::stoi(interval_str);
     } catch (const std::invalid_argument &ia) {
-      MS_LOG(DEBUG) << "Invalid argument: " << ia.what() << " when parse " << interval_str;
+      MS_LOG(ERROR) << "Invalid argument: " << ia.what() << " when parse " << interval_str
+                    << ". Please set this env variable to int value.";
       return true;
     }
   } else {
@@ -423,7 +425,6 @@ bool Common::CheckInterval() {
 bool Common::CheckIfPrintIrPass(const std::string &pass_name) {
   static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
   static std::set<std::string> tokens;
-  ++g_id_;
   if (input_name.size() == 0) {
     return CheckInterval();
   }
