@@ -220,7 +220,7 @@ bool ValueProblem::operator==(const ValueProblem &other) const { return err_type
 
 std::string ValueNamedTuple::ToString() const {
   std::ostringstream buffer;
-  buffer << "namedtuple[" << type_name_ << "](";
+  buffer << "namedtuple[" << sub_class_name_ << "](";
   for (size_t i = 0; i < keys_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(keys_[i]);
     MS_EXCEPTION_IF_NULL(elements_[i]);
