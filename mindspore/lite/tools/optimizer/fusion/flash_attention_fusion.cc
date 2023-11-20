@@ -51,27 +51,27 @@ constexpr int64_t kNumPadSize = 8;
 
 bool IsGQAPattern(const CNodePtr qk_matmul, const CNodePtr v_matmul) {
   auto k_reshape = qk_matmul->input(kNumIndex2)->cast<CNodePtr>();
-  if (CheckPrimitiveType(k_reshape, prim::kPrimReshape)) {
+  if (!CheckPrimitiveType(k_reshape, prim::kPrimReshape)) {
     return false;
   }
   auto k_tile = k_reshape->input(kNumIndex1)->cast<CNodePtr>();
-  if (CheckPrimitiveType(k_tile, prim::kPrimTile)) {
+  if (!CheckPrimitiveType(k_tile, prim::kPrimTile)) {
     return false;
   }
   auto k_expend_dim = k_tile->input(kNumIndex1)->cast<CNodePtr>();
-  if (CheckPrimitiveType(k_expend_dim, prim::kPrimExpandDims)) {
+  if (!CheckPrimitiveType(k_expend_dim, prim::kPrimExpandDims)) {
     return false;
   }
   auto v_reshape = v_matmul->input(kNumIndex2)->cast<CNodePtr>();
-  if (CheckPrimitiveType(v_reshape, prim::kPrimReshape)) {
+  if (!CheckPrimitiveType(v_reshape, prim::kPrimReshape)) {
     return false;
   }
   auto v_tile = v_reshape->input(kNumIndex1)->cast<CNodePtr>();
-  if (CheckPrimitiveType(v_tile, prim::kPrimTile)) {
+  if (!CheckPrimitiveType(v_tile, prim::kPrimTile)) {
     return false;
   }
   auto v_expend_dim = v_tile->input(kNumIndex1)->cast<CNodePtr>();
-  if (CheckPrimitiveType(v_expend_dim, prim::kPrimExpandDims)) {
+  if (!CheckPrimitiveType(v_expend_dim, prim::kPrimExpandDims)) {
     return false;
   }
   return true;
