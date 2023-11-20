@@ -478,7 +478,7 @@ def bincount(input, weights=None, minlength=0):
     else:
         length = P.Cast()(minlength, mstype.int32)
     idx = F.arange(length).expand_dims(-1)
-    idx_mapping = equal(input, idx)
+    idx_mapping = equal(input, idx.astype(input.dtype))
     if weights is not None:
         if input.shape != weights.shape:
             raise ValueError('for bincount `input` and `weights` must have the same length')
