@@ -19,7 +19,6 @@ from mindspore import nn, value_and_grad
 import torch
 
 
-@pytest.mark.skip(reason="dyn-shape-dev-bug")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

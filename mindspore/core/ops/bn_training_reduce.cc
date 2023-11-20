@@ -34,6 +34,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -42,40 +43,47 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t BNTrainingReduceGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
-  int64_t data_format;
-  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result ||
-      (data_format != static_cast<int64_t>(Format::NHWC) && data_format != static_cast<int64_t>(Format::NCHW) &&
-       data_format != static_cast<int64_t>(Format::NCDHW))) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC or NCDHW, but got "
-                      << data_format << ".";
+void BNTrainingReduceCheckFormat(const PrimitivePtr &primitive, const mindspore::Format format) {
+  static std::vector<mindspore::Format> valid_formats{Format::NHWC, Format::NCHW, Format::NCDHW};
+  auto CheckFormat = [format](const mindspore::Format other) { return format == other; };
+  bool is_valid = std::any_of(valid_formats.begin(), valid_formats.end(), CheckFormat);
+  if (MS_UNLIKELY(!is_valid)) {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC and NCDHW, but got "
+                      << FormatEnumToString(format) << ".";
   }
-  return data_format;
 }
+
 abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
-  auto shape = input_shape[kShape];
-
+  auto prim_name = primitive->name();
+  auto shape = input_args[0]->GetShape()->GetShapeVector();
   constexpr auto kMinInputDim = 1;
-  (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kGreaterThan, kMinInputDim,
-                                           primitive->name());
-  auto data_format_ptr = primitive->GetAttr("format");
-  MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = BNTrainingReduceGetAndCheckFormat(primitive, data_format_ptr);
-  size_t c_axis = kInputIndex1;
-  constexpr auto kNHWCInputDim = 4;
-  if (data_format == static_cast<int64_t>(Format::NHWC) && shape.size() == kNHWCInputDim) {
-    c_axis = kInputIndex3;
-  }
-  ShapeVector batch = {shape[c_axis]};
-  abstract::ShapePtr sum_shape;
-  abstract::ShapePtr square_sum_shape;
+  (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kGreaterThan, kMinInputDim, prim_name);
 
-  sum_shape = std::make_shared<abstract::Shape>(batch);
-  square_sum_shape = std::make_shared<abstract::Shape>(batch);
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{sum_shape, square_sum_shape});
+  ShapeVector sum_shape{abstract::TensorShape::kShapeDimAny};
+  ShapeVector square_sum_shape{abstract::TensorShape::kShapeDimAny};
+  if (!IsDynamicRank(shape)) {
+    // get format
+    auto format_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
+    if (MS_UNLIKELY(!format_opt.has_value())) {
+      MS_LOG(EXCEPTION) << "For " << prim_name << ", failed to get format's value.";
+    }
+    auto format = static_cast<mindspore::Format>(format_opt.value());
+    BNTrainingReduceCheckFormat(primitive, format);
+
+    auto c_axis = kInputIndex1;
+    if (format == Format::NHWC && !IsDynamicRank(shape)) {
+      c_axis = shape.size() - kInputIndex1;
+    }
+    sum_shape[0] = shape[c_axis];
+    square_sum_shape[0] = shape[c_axis];
+  }
+
+  std::vector<abstract::BaseShapePtr> out_shape_list{
+    std::make_shared<abstract::TensorShape>(std::move(sum_shape)),
+    std::make_shared<abstract::TensorShape>(std::move(square_sum_shape))};
+
+  return std::make_shared<abstract::TupleShape>(std::move(out_shape_list));
 }
 
 TypePtr BNTrainingReduceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

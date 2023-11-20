@@ -55,23 +55,29 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
     MS_LOG(INFO) << "BatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
     return false;
   }
+
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName))};
-  bn_training_reduce_inputs.push_back(bn_cnode->input(kIndex1));
+    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(kIndex1),
+    bn_cnode->input(kIdxFormat)};
+
   auto bn_training_reduce = NewCNode(bn_training_reduce_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
+
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   bn_training_reduce->set_kernel_info(kernel_info);
+
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1),
                 common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
   auto shapes = {AnfAlgo::GetOutputDetailShape(bn_cnode, 1), AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
+
   bn_training_reduce->set_scope(bn_cnode->scope());
   if (is_dynamic) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
   }
   CreateMultipleOutputsOfAnfNode(graph, bn_training_reduce, kBNTrainingReduceOutputNum, bn_training_reduce_outputs);
+
   return true;
 }
 
@@ -84,6 +90,7 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(INTERNAL_EXCEPTION) << "BN1 outputs has wrong input size" << trace::DumpSourceLines(bn_cnode);
   }
+
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
   std::vector<AnfNodePtr> bn_training_update_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateOpName))};
@@ -94,6 +101,8 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex3));
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex4));
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex5));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIdxFormat));
+
   auto bn_training_update = NewCNode(bn_training_update_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_training_update);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -116,6 +125,7 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
   }
   common::AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
+
   return bn_training_update;
 }
 
