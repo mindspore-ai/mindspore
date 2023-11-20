@@ -97,9 +97,9 @@ void Trace::Detach() {
 PyObject *Trace::Retrieve(PTraceContext context) {
   if (context->cache != nullptr) {
     std::string strTrace = this->ToString();
-    auto &cache = *(context->cache);
-    if (cache.find(strTrace) != cache.end()) {
-      auto item = cache[strTrace];
+    auto cache = context->cache;
+    if (cache->find(strTrace) != cache->end()) {
+      auto item = (*cache)[strTrace];
       Py_XINCREF(item);
       return item;
     }
@@ -108,16 +108,13 @@ PyObject *Trace::Retrieve(PTraceContext context) {
 }
 
 void Trace::Cache(PTraceContext context, PyObject *obj) {
-  if (context->cache != nullptr) {
+  if (context->cache != nullptr && obj != nullptr) {
     std::string strTrace = this->ToString();
-    auto &cache = *(context->cache);
-    if (cache.find(strTrace) == cache.end()) {
-      Py_XINCREF(obj);
-      cache[strTrace] = obj;
-    } else {
-      Py_XDECREF(cache[strTrace]);
-      cache[strTrace] = obj;
+    if (context->cache->find(strTrace) != context->cache->end()) {
+      Py_XDECREF((*(context->cache))[strTrace]);
     }
+    Py_XINCREF(obj);
+    (*(context->cache))[strTrace] = obj;
   }
 }
 
@@ -170,8 +167,8 @@ PyObject *RootTrace::Retrieve(PTraceContext context) {
       if (cell != nullptr && cell != Py_None) {
         ret = PyCell_GET(cell);
         Py_XINCREF(ret);
+        Cache(context, ret);
       }
-      Cache(context, ret);
       return ret;
     }
     case TraceType::Closure: {
@@ -231,7 +228,7 @@ std::string RootTrace::ToString() {
       ret = "f_closure[" + std::to_string(idx_) + "]";
       break;
     case TraceType::BuiltIn:
-      ret = "f_builtins";
+      ret = "f_builtins[" + name_ + "]";
       break;
     case TraceType::Local:
       ret = "f_locals";
@@ -398,17 +395,16 @@ PyObject *ConstTrace::Retrieve(PTraceContext context) {
   }
   if (obj_ != NULL) {
     Py_INCREF(obj_);
-    Cache(context, obj_);
     return obj_;
   }
   if (index_ >= 0 && index_ < PyTuple_GET_SIZE(context->f_code->co_consts)) {
     ret = PyTuple_GET_ITEM(context->f_code->co_consts, index_);
     Py_INCREF(ret);
+    Cache(context, ret);
   } else {
     ret = obj_;
     Py_INCREF(ret);
   }
-  Cache(context, ret);
   return ret;
 }
 
@@ -435,7 +431,11 @@ std::string ConstTrace::ToString() {
     return strTrace_;
   }
   std::string ret = "co_consts";
-  ret = ret + "[" + std::to_string(index_) + "]";
+  if (index_ != -1) {
+    ret = ret + "[" + std::to_string(index_) + "]";
+  } else {
+    ret = ret + "[-1](" + std::string(py::str(obj_)) + ")";
+  }
   strTrace_ = ret;
   return ret;
 }
@@ -476,10 +476,12 @@ std::string TypeTrace::ToString() {
   if (strTrace_.size() > 0) {
     return strTrace_;
   }
-  std::string ret = "type";
+  std::string ret = "type(type:";
+  ret += std::string(py::str(reinterpret_cast<PyObject *>(pType_)));
   if (origin_ != NULL) {
-    ret += "(" + origin_->ToString() + ")";
+    ret += ", origin:" + origin_->ToString();
   }
+  ret += ")";
   strTrace_ = ret;
   return ret;
 }
@@ -1066,7 +1068,11 @@ std::string OpTrace::ToString() {
     return strTrace_;
   }
   std::string ret = "operation ";
-  ret += Utils::GetOpName(opcode_) + "(";
+  ret += Utils::GetOpName(opcode_) + "(arg:";
+  ret += std::to_string(opargs_);
+  if (name_.size() != 0 || params_.size() > 0) {
+    ret += ",";
+  }
   if (name_.size() != 0) {
     ret += std::string("name:") + name_;
     if (params_.size() > 0) {
@@ -1135,7 +1141,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
     case LOAD_GLOBAL:
       return std::make_shared<RootTrace>(obj, TraceType::Global, opargs, name, module_name);
     case LOAD_CONST:
-      return std::make_shared<ConstTrace>(obj, opargs);
+      return std::make_shared<ConstTrace>(obj, -1);
     case CALL_FUNCTION:
     case CALL_FUNCTION_EX:
     case CALL_FUNCTION_KW:
@@ -1220,8 +1226,11 @@ std::string UnsupportedTrace::ToString() {
   if (strTrace_.size() > 0) {
     return strTrace_;
   }
-  std::string ret = "unsupported(";
+  std::string ret = "unsupported ";
+  ret += Utils::GetOpName(op_) + "(arg:";
+  ret += std::to_string(arg_);
   if (params_.size() > 0) {
+    ret += ",";
     for (auto t : params_) {
       ret += t->ToString() + ",";
     }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/cache.h"
+#include <algorithm>
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
@@ -65,9 +66,15 @@ void OptCode::SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseF
   compiled_func_ = std::make_shared<OptFunc>(cFunc, rFunc);
 }
 
-NativeFunc OptCode::GetNativeFunc() const { return compiled_func_->GetFunc(); }
+NativeFunc OptCode::GetNativeFunc() const {
+  if (compiled_func_ != nullptr) {
+    return compiled_func_->GetFunc();
+  } else {
+    return nullptr;
+  }
+}
 
-std::string OptCode::GetPhase() const { return phase_; };
+std::string OptCode::GetPhase() const { return phase_; }
 
 void OptCode::SetPythonCode(const py::object &code) {
   MS_EXCEPTION_IF_CHECK_FAIL(code.ptr() != nullptr && PyCode_Check(code.ptr()) && Py_REFCNT(code.ptr()) == 1,
@@ -141,15 +148,17 @@ void OptCodeHub::DelOptTarget(OptOptionPtr option, OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
-      auto its = std::find_if(codeSet_.begin(), codeSet_.end(), [&code](auto &item) {
-        if (item.second == code) {
-          return true;
-        } else {
-          return false;
+      for (auto &vCode : codeSet_) {
+        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code](const auto &item) {
+          if (item == code) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (its != vCode.second.end()) {
+          vCode.second.erase(its);
         }
-      });
-      if (its != codeSet_.end()) {
-        codeSet_.erase(its);
       }
       break;
     }
@@ -164,15 +173,17 @@ void OptCodeHub::DelOptTarget(OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
-      auto its = std::find_if(codeSet_.begin(), codeSet_.end(), [&code, this](auto &item) {
-        if (item.second == code) {
-          return true;
-        } else {
-          return false;
+      for (auto &vCode : codeSet_) {
+        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code, this](const auto &item) {
+          if (item == code) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (its != vCode.second.end()) {
+          vCode.second.erase(its);
         }
-      });
-      if (its != codeSet_.end()) {
-        codeSet_.erase(its);
       }
       break;
     }
@@ -181,19 +192,17 @@ void OptCodeHub::DelOptTarget(OptCodePtr code) {
 
 std::vector<OptCodeSet> OptCodeHub::GetAllOptTarget() {
   std::vector<OptCodeSet> ret;
-  for (auto &item : codeMap_) {
-    ret.push_back(item.second);
-  }
+  std::transform(codeMap_.begin(), codeMap_.end(), ret.begin(), [](const auto &item) { return item.second; });
   return ret;
 }
 
-void OptCodeHub::Regist(std::string key, OptCodePtr code) { codeSet_[key] = code; }
+void OptCodeHub::Register(std::string key, OptCodePtr code) { codeSet_[key].push_back(code); }
 
-OptCodePtr OptCodeHub::Get(std::string key) {
+OptCodeSet OptCodeHub::Get(std::string key) {
   if (codeSet_.find(key) != codeSet_.end()) {
     return codeSet_[key];
   } else {
-    return nullptr;
+    return {};
   }
 }
 }  // namespace graph

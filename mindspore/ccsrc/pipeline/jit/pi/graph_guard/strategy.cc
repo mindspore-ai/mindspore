@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include <algorithm>
+#include <string>
+#include <vector>
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
@@ -49,19 +52,23 @@ OptStrategy::ExecKind OptStrategy::MakeExecStrategyByComplex(PyCodeObject *co, i
 
 static bool CompareOptCodeByCount(OptCodePtr a, OptCodePtr b) {
   if (a->Count() > b->Count()) {
-    return false;
-  } else {
     return true;
+  } else {
+    return false;
   }
 }
 
-void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count) {
-  if (limit_size <= 0 || limit_count <= 0) {
+void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, OptCodePtr except) {
+  if (limit_size <= 0 && limit_count <= 0) {
     return;
   }
   std::vector<OptCodeSet> vec = hub->GetAllOptTarget();
   for (auto set : vec) {
     std::sort(set.begin(), set.end(), CompareOptCodeByCount);
+    auto it = std::find(set.begin(), set.end(), except);
+    if (it != set.end()) {
+      set.erase(it);
+    }
     if (limit_count > 0) {
       if (set.size() > (size_t)limit_count) {
         OptCodeSet toDel;
@@ -81,9 +88,9 @@ void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_co
         std::string phase = item->GetPhase();
         if (phase.size() > 0) {
           FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
-          int node_count = (int)(ms_func_graph->nodes().size());
+          int node_count = static_cast<int>(ms_func_graph->nodes().size());
           for (auto fg : ms_func_graph->func_graphs_used_total()) {
-            node_count += (int)(fg->nodes().size());
+            node_count += static_cast<int>(fg->nodes().size());
           }
           if (limit_size > node_count) {
             limit_size -= node_count;
