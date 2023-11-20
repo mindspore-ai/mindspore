@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/pass/custom_op_const_input_to_attr.h"
-
-#include <memory>
-
 #include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "backend/common/pass/const_input_to_attr.h"
