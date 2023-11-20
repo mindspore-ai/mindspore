@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
-#include <unordered_set>
 #include <set>
 #include <string>
 #include "ops/nn_optimizer_op_name.h"

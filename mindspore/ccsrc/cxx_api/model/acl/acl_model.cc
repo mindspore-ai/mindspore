@@ -15,9 +15,6 @@
  */
 
 #include "cxx_api/model/acl/acl_model.h"
-#include <memory>
-#include <string>
-#include <set>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"

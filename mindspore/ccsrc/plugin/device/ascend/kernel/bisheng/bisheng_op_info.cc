@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/bisheng/bisheng_op_info.h"
-#include <memory>
-#include <utility>
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "kernel/oplib/op_info_utils.h"
