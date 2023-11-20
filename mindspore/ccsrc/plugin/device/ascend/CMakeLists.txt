@@ -109,6 +109,13 @@ if(ENABLE_DEBUGGER)
     endif()
 endif()
 
+if(NOT ENABLE_SECURITY)
+    if(ENABLE_D)
+        target_link_libraries(mindspore_ascend PRIVATE _mindspore_debug_obj)
+        target_link_libraries(mindspore_ascend PRIVATE -lstdc++fs)
+    endif()
+endif()
+
 if(ENABLE_D)
     find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

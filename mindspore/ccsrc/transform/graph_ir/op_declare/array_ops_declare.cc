@@ -48,6 +48,7 @@ REG_ADPT_DESC(TensorSummary, "TensorSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(ScalarSummary, "ScalarSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(ImageSummary, "ImageSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(HistogramSummary, "HistogramSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(TensorDump, kNameTensorDump, ADPT_DESC(OutfeedEnqueueOpV2))
 #endif
 
 // Data
