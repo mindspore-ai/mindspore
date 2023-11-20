@@ -9,6 +9,8 @@ mindspore.ops.PrimitiveWithCheck
 
     如果未定义__check__()，则可以定义check_shape()和check_dtype()来描述形状和类型的检查逻辑。可以定义infer_value()方法（如PrimitiveWithInfer），用于常量传播。
 
+    了解更多如何自定义算子，请查看 `自定义算子 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html>`_ 。
+
     参数：
         - **name** (str) - 当前Primitive的名称。
 

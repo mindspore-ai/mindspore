@@ -10,9 +10,6 @@ mindspore.ops.NextAfter
     - 如果 :math:`a < b` ，那么 :math:`a` 指向 :math:`b` 的下一个可表示值就是 :math:`a+eps` 。
     - 如果 :math:`a > b` ，那么 :math:`a` 指向 :math:`b` 的下一个可表示值就是 :math:`a-eps` 。
 
-    .. math::
-        out_{i} =  nextafter({x1_{i}, x2_{i}})
-
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 

@@ -645,16 +645,17 @@ class Cdist(Primitive):
 
 class LpNorm(Primitive):
     r"""
-    Returns the matrix norm or vector norm of a given tensor.
+    Return the p-norm of a matrix or vector.
 
     .. math::
-        output = \sum(abs(input)**p)**(1/p)
+        output = \|input\|_{p}=\left(\sum_{i=1}^{n}\left|input\right|^{p}\right)^{1 / p}
 
     Args:
         axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
         p(int, optional): The order of norm. Default: ``2`` .
         keep_dims(bool, optional): Whether the output tensors have dim retained or not. Default: ``False`` .
-        epsilon(float, optional): A value added to the denominator for numerical stability. Default: ``1e-12`` .
+        epsilon(float, optional): The lower bound value, when the calculated norm is less than this value,
+            replace this result with `epsilon`. Default: ``1e-12`` .
 
     Inputs:
         - **input** (Tensor) - Input tensor of type float16, float32.

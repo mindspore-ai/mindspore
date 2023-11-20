@@ -7,10 +7,6 @@ next_after:
             then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
             the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
         
-            .. math::
-
-            out_{i} =  nextafter({input_{i}, other_{i}})
-        
             Args:
                 input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
                     any number of additional dimensions. Must be one of the following types: float32, float64.

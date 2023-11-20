@@ -3,16 +3,16 @@ mindspore.ops.LpNorm
 
 .. py:class:: mindspore.ops.LpNorm(axis, p=2, keep_dims=False, epsilon=1e-12)
 
-    返回输入Tensor的矩阵范数或向量范数。
+    返回输入矩阵或向量的p-范数。
 
     .. math::
-        output = \sum(abs(input)**p)**(1/p)
+        output = \|input\|_{p}=\left(\sum_{i=1}^{n}\left|input\right|^{p}\right)^{1 / p}
 
     参数：
         - **axis** (int,list,tuple) - 指定计算范数的维度。
         - **p** (int，可选) - 范数的阶。默认值： ``2`` 。
         - **keep_dims** (bool，可选) - 输出Tensor是否保留原有的维度。默认值： ``False`` 。
-        - **epsilon** (float，可选) - 添加到分母上的值，以确保数值稳定性。默认值： ``1e-12`` 。
+        - **epsilon** (float，可选) - 范数下界，当计算的范数小于此值时，用 `epsilon` 替换该结果。默认值： ``1e-12`` 。
 
     输入：
         - **input** (Tensor) - 输入Tensor，数据类型为float16或float32。

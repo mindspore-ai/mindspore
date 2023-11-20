@@ -6,7 +6,7 @@ mindspore.ops.Median
     输出Tensor指定维度 `axis` 上的中值与其对应的索引。如果 `global_median` 为True，则计算Tensor中所有元素的中值。
 
     .. warning::
-        - 如果 `input` 的中值不唯一，则 `indices` 不一定包含第一个出现的中值。该算子的具体实现方式和后端类型相关，CPU和GPU的返回值可能不相同。
+        - 如果 `input` 的中值不唯一时（输入中有重复值且重复值恰好为中值）， `indices` 不一定包含第一个出现的中值。 `indices` 包含的索引与该算子的具体实现方式和后端类型相关，因此某些情况下，CPU和GPU的返回值可能不相同。
         - 如果 `global_median` 为 ``True`` , 第二个输出 `indices` 无意义。
 
     参数：

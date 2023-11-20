@@ -211,7 +211,8 @@ class StandardLaplace(Primitive):
             random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
-        - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed
+        - **shape** (Union[tuple[int], Tensor[int]]) - The shape of random tensor to be generated.
+          Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
 
     Outputs:

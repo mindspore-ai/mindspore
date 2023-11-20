@@ -480,6 +480,9 @@ class PrimitiveWithCheck(Primitive):
     If __check__() is not defined, check_shape() and check_dtype() can be defined to describe the check logic of
     the shape and type. Method infer_value() can also be defined (such as PrimitiveWithInfer) for constant propagation.
 
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
+
     Args:
         name (str): Name of the current Primitive.
 
@@ -570,6 +573,9 @@ class PrimitiveWithInfer(Primitive):
     infer_dtype(), and infer_value(). If __infer__() is defined in primitive, the __infer__() has the highest priority
     to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe the infer
     logic of the shape and type. The infer_value() is used for constant propagation.
+
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
 
     Args:
         name (str): Name of the current Primitive.

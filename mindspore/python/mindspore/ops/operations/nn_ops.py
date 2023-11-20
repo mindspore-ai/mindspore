@@ -2670,7 +2670,9 @@ class RNNTLoss(PrimitiveWithInfer):
         blank_label (int): blank label. Default: ``0`` .
 
     Inputs:
-        - **acts** (Tensor) - Tensor of shape :math:`(B, T, U, V)`. Data type must be float16 or float32.
+        - **acts** (Tensor) - Tensor of shape :math:`(B, T, U, V)`, where :math:`B` is batch,
+          :math:`T` is sequence length, :math:`U` is label length and :math:`V` is output dim.
+          Data type must be float16 or float32.
         - **labels** (Tensor) - Tensor of shape :math:`(B, U-1)`. Data type is int32.
         - **input_lengths** (Tensor) - Tensor of shape :math:`(B,)`. Data type is int32.
         - **label_lengths** (Tensor) - Tensor of shape :math:`(B,)`. Data type is int32.
