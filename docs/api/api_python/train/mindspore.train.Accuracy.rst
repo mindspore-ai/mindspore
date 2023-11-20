@@ -42,5 +42,5 @@ mindspore.train.Accuracy
               - 对于 ``'multilabel'`` 情况， `y_pred` 和 `y` 只能是值为0或1的one-hot编码格式，其中值为1的索引表示正类别。 `y_pred` 和 `y` 的shape都是 :math:`(N, C)` 。
 
         异常：
-            - **ValueError** - inputs的数量不等于2。
+            - **ValueError** - `inputs` 的数量不等于2。
             - **ValueError** - 当前输入的 `y_pred` 和历史 `y_pred` 类别数不匹配。
