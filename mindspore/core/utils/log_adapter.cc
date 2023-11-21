@@ -471,7 +471,7 @@ class LogConfigLexer {
     auto iter = single_char_map.find(ch);
     if (iter != single_char_map.end()) {
       if (ptr != nullptr) {
-        *ptr = std::string() + ch;
+        *ptr = std::string(1, ch);
       }
       ++cur_idx_;
       return iter->second;
