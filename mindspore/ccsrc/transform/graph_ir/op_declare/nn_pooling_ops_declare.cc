@@ -130,10 +130,10 @@ REG_ADPT_DESC(MaxPoolGradGrad, kNameMaxPoolGradGrad, ADPT_DESC(MaxPoolGradGrad))
 // avgpoolgrad
 INPUT_MAP(AvgPoolGrad) = {{kIndex1, INPUT_DESC(orig_input_shape)}, {kIndex2, INPUT_DESC(input_grad)}};
 ATTR_MAP(AvgPoolGrad) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(AvgPoolGrad) = {{kIndex3, ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
-                               {kIndex4, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
-                               {kIndex5, ATTR_DESC(padding, AnyTraits<GEPadMod>())},
-                               {kIndex6, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+INPUT_ATTR_MAP(AvgPoolGrad) = {{kIndex4, ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                               {kIndex5, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                               {kIndex6, ATTR_DESC(padding, AnyTraits<GEPadMod>())},
+                               {kIndex7, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
 OUTPUT_MAP(AvgPoolGrad) = {{kIndex0, OUTPUT_DESC(out_grad)}};
 REG_ADPT_DESC(AvgPoolGrad, kNameAvgPoolGrad, ADPT_DESC(AvgPoolGrad))
 REG_ADPT_DESC(AvgPoolGradGe, kNameAvgPoolGradGe, ADPT_DESC(AvgPoolGrad))
