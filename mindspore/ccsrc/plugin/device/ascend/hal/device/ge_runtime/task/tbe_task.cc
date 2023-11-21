@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/ge_runtime/task/tbe_task.h"
-#include <vector>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"

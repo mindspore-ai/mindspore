@@ -16,7 +16,6 @@
 
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include <map>
-#include <fstream>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_dump_utils.h"
