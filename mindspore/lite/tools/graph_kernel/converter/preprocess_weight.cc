@@ -52,8 +52,8 @@ class IndexCalc {
     int64_t prod = 1LL;
     int64_t result = 0LL;
     for (int i = SizeToInt(shape_.size()) - 1; i >= 0; i--) {
-      result += index[i] * prod;
-      prod *= shape_[i];
+      result += index[static_cast<size_t>(i)] * prod;
+      prod *= shape_[static_cast<size_t>(i)];
     }
     return result;
   }
@@ -68,12 +68,12 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
   cnode->set_input(0, NewValueNode(prim));
   auto cb = Callback::Instance();
   // the weight should be a 4D tensor of format OHWI
-  auto weight_shape = cb->GetInputShape(cnode, kConv2dWeightIndex - 1);
+  auto weight_shape = cb->GetInputShape(cnode, 1);
   if (weight_shape.size() != kShapeRank) {
     return nullptr;
   }
   auto c_out = weight_shape[kWeightChannelOutAxis];
-  auto input_shape = cb->GetInputShape(cnode, kConv2dDataIndex - 1);
+  auto input_shape = cb->GetInputShape(cnode, 0);
   auto c_in = input_shape[kDepthWiseChannelAxis];
   int64_t c_out_o;
   int64_t c_out_i;
@@ -93,10 +93,10 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
     src_simd_size = GkUtils::GetChannelInConvFormat(GetValue<std::string>(prim->GetAttr("tuned_src_format")));
   }
   std::tie(c_in_o, c_in_i) = TilingChannel(c_in, src_simd_size);
-  prim->AddAttr("weight_coo", MakeValue(c_out_o));
-  prim->AddAttr("weight_coi", MakeValue(c_out_i));
-  prim->AddAttr("weight_cio", MakeValue(c_in_o));
-  prim->AddAttr("weight_cii", MakeValue(c_in_i));
+  (void)prim->AddAttr("weight_coo", MakeValue(c_out_o));
+  (void)prim->AddAttr("weight_coi", MakeValue(c_out_i));
+  (void)prim->AddAttr("weight_cio", MakeValue(c_in_o));
+  (void)prim->AddAttr("weight_cii", MakeValue(c_in_i));
 
   if (prim->HasAttr("is_depth_wise")) {
     c_in_o = 1;

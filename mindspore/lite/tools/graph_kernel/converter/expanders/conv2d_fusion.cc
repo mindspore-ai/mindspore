@@ -70,19 +70,13 @@ class Conv2DFusion : public OpDesc {
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &data = inputs[0];
     const auto &weight = inputs[1];
-    auto data_shape = data->shape;
     auto data_format = data->format;
 
     // pad_top, pad_bottom, pad_left, pad_right
     std::vector<int64_t> pads = GetValue<std::vector<int64_t>>(attrs_["pad_list"]);
-    auto n = data_shape[0];
-    auto h = data_shape[1];
-    auto w = data_shape[2];
     auto c_i_i = GetValue<int64_t>(attrs_["weight_cii"]);
-    auto c_i_o = GetValue<int64_t>(attrs_["weight_cio"]);
     auto c_o_i = GetValue<int64_t>(attrs_["weight_coi"]);
 
-    ShapeVector data_rs_shape{n, h, w, c_i_o, c_i_i};
     std::string conv_format = "NCHW" + std::to_string(c_i_i) + "c";
     auto data_tp = gb.Emit("LayoutTransform", {data},
                            {{"src_format", MakeValue(data_format)}, {"dst_format", MakeValue(conv_format)}});
@@ -107,7 +101,7 @@ class Conv2DFusion : public OpDesc {
     // update attrs after pad
     auto updated_attrs = attrs_;
     updated_attrs["pad_mode"] = MakeValue("VALID");
-    auto pad_val = MakeValue((int64_t)0);
+    auto pad_val = MakeValue<int64_t>(0LL);
     updated_attrs["pad_list"] = MakeValue({pad_val, pad_val, pad_val, pad_val});
     updated_attrs["data_format"] = MakeValue(kOpFormat_NC1HWC0);
     std::string conv_out_format = "NCHW" + std::to_string(c_o_i) + "c";
