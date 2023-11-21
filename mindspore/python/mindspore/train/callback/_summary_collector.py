@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,12 +77,11 @@ class SummaryCollector(Callback):
     SummaryCollector also enables the summary operator to collect data to summary files.
 
     Note:
-        1. When using SummaryCollector, you need to run the code in `if __name__ == "__main__"` .
-        2. Multiple SummaryCollector instances in callback list are not allowed.
-        3. Not all information is collected at the training phase or at the eval phase.
-        4. SummaryCollector always record the data collected by the summary operator.
-        5. SummaryCollector only supports Linux systems.
-        6. The Summary is not supported when compile source with `-s on` option.
+        1. Multiple SummaryCollector instances in callback list are not allowed.
+        2. Not all information is collected at the training phase or at the eval phase.
+        3. SummaryCollector always record the data collected by the summary operator.
+        4. SummaryCollector only supports Linux systems.
+        5. The Summary is not supported when compile source with `-s on` option.
 
     Args:
         summary_dir (str): The collected data will be persisted to this directory.
