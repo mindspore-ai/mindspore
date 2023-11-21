@@ -62,9 +62,10 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
 
   CNodePtr CreateIncreFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
-                                                 const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                 float scale_value) const;
-
+                                                 const AnfNodePtr &atten_mask, int64_t num_heads, float scale_value,
+                                                 int64_t num_key_value_heads) const;
+  CNodePtr CreateFlashAttentionNodeForWanXin(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                             const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForSD(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForPg(const std::string &pattern_name, const FuncGraphPtr &func_graph,
@@ -89,6 +90,7 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                         const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
                                         const CNodePtr &attention_mask_mul) const;
 
+  const VectorRef DefineFlashAttentionPatternForWanXin() const;
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
   const VectorRef DefineFlashAttentionPatternForSDBSH() const;
   const VectorRef DefineFlashAttentionPatternForPg() const;
