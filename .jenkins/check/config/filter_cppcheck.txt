@@ -65,6 +65,7 @@
 "mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.cc"  "constParameter"
 "mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.cc"  "oppositeInnerCondition"
 "mindspore/mindspore/ccsrc/transform/graph_ir/op_declare/image_ops_declare.cc"                         "unknownMacro"
+"mindspore/mindspore/ccsrc/backend/common/expander/fallback/nn_ops.cc"                                           "unknownMacro"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"

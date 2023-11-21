@@ -503,6 +503,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nanquantile", std::string("nanquantile")},                        // nanquantile()
        {"orgqr", std::string("orgqr")},                                    // orgqr()
        {"outer", std::string("outer")},                                    // outer()
+       {"softmax", std::string("softmax")},                                // softmax()
      }},
     {kObjectTypeRowTensorType,
      {

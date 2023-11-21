@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr SoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
-  const auto &x_shape_ptr = input_args[kInputIndex0]->GetShape();
+  const auto &x_shape_ptr = input_args.at(kInputIndex0)->GetShape();
   return x_shape_ptr->Clone();
 }
 

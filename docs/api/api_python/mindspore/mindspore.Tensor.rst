@@ -299,6 +299,7 @@ mindspore.Tensor
     mindspore.Tensor.size
     mindspore.Tensor.slice_scatter
     mindspore.Tensor.slogdet
+    mindspore.Tensor.softmax
     mindspore.Tensor.sort
     mindspore.Tensor.split
     mindspore.Tensor.sqrt
