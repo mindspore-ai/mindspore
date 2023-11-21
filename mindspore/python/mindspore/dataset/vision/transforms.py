@@ -3953,8 +3953,9 @@ class RandomSolarize(ImageTensorOperation):
     Args:
         threshold (tuple, optional): Range of random solarize threshold. Default: ``(0, 255)``.
             Threshold values should always be in (min, max) format,
-            where min and max are integers in the range [0, 255], and min <= max.
-            If min=max, then invert all pixel values above min(max).
+            where min and max are integers in the range [0, 255], and min <= max. The pixel values
+            belonging to the [min, max] range will be reversed.
+            If min=max, then invert all pixel values greater than or equal min(max).
 
     Raises:
         TypeError : If `threshold` is not of type tuple.
@@ -4548,7 +4549,8 @@ class Solarize(ImageTensorOperation):
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
             be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
-            If a single value is provided or min=max, then invert all pixel values above min(max).
+            The pixel values belonging to the [min, max] range will be reversed.
+            If a single value is provided or min=max, then invert all pixel values greater than or equal min(max).
 
     Raises:
         TypeError: If `threshold` is not of type float or Sequence[float, float].
