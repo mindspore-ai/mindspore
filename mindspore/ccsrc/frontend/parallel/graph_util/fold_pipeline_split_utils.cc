@@ -39,6 +39,13 @@
 
 namespace mindspore {
 namespace parallel {
+
+namespace {
+constexpr int kBackwardEnd = 1;
+constexpr int kForwardStart = 2;
+constexpr int kForwardEnd = 3;
+}  // namespace
+
 const std::set<PrimitivePtr> END_NODE_BLACK_LIST = {
   prim::kPrimDepend,    prim::kPrimTupleGetItem, prim::kPrimAdd,    prim::kPrimSoftmaxCrossEntropyWithLogits,
   prim::kPrimMakeTuple, prim::kPrimUpdateState,  prim::kPrimReshape};
@@ -191,13 +198,13 @@ void ReorderForFoldPipelineForward(const std::vector<PipelinePair> &pair_vector,
 
   auto stage_num = g_device_manager->stage_num();
   auto stage_id = g_device_manager->stage_id();
-  *start_of_forward = pair_vector[2].first[0];
-  for (size_t i = 1; i < pair_vector[2].first.size(); ++i) {
-    auto prior_node_begin = pair_vector[3].first[i - 1];
-    auto prior_node_end = pair_vector[3].second[i - 1];
-    auto post_node_begin = pair_vector[2].first[i];
-    auto post_node_end = pair_vector[2].second[i];
-    if (IsFirstStage() && (i > (size_t)micro_max)) {
+  *start_of_forward = pair_vector[kForwardStart].first[0];
+  for (size_t i = 1; i < pair_vector[kForwardStart].first.size(); ++i) {
+    auto prior_node_begin = pair_vector[kForwardEnd].first[i - 1];
+    auto prior_node_end = pair_vector[kForwardEnd].second[i - 1];
+    auto post_node_begin = pair_vector[kForwardStart].first[i];
+    auto post_node_end = pair_vector[kForwardStart].second[i];
+    if (IsFirstStage() && (i > IntToSize(micro_max))) {
       auto receive_node = post_node_begin;
       post_node_begin = FindNodeFirstUser(root, post_node_begin);
 
@@ -212,12 +219,12 @@ void ReorderForFoldPipelineForward(const std::vector<PipelinePair> &pair_vector,
 
       InsertDepend(before_send_node, receive_node, manager, root);
     }
-    if (enable_1f1b && ComputeLastSegForwardEndIdx(pair_vector[2], i, micro_max, stage_num, stage_id)) {
+    if (enable_1f1b && ComputeLastSegForwardEndIdx(pair_vector[kForwardStart], i, micro_max, stage_num, stage_id)) {
       continue;
     }
 
     InsertDepend(prior_node_end, post_node_begin, manager, root);
-    *end_of_forward = pair_vector[3].second[i];
+    *end_of_forward = pair_vector[kForwardEnd].second[i];
   }
   (*end_of_forward)->cast<CNodePtr>()->AddPrimalAttr(FORWARD_END, MakeValue(true));
   (*end_of_forward)->cast<CNodePtr>()->AddPrimalAttr(SEGMENT_MAX, MakeValue(seg_max));
@@ -280,7 +287,7 @@ void ReorderForBackwardLastSeg(const std::vector<PipelinePair> &pair_vector, con
         InsertDepend(prior_node1, post_node1, manager, root);
       }
       std::shared_ptr<AnfNode> post_node2;
-      post_node2 = FindNodeFirstUser(root, pair_vector[2].first[last_seg_index + i]);
+      post_node2 = FindNodeFirstUser(root, pair_vector[kForwardStart].first[last_seg_index + i]);
       auto prior_node2 = pair_vector[1].second[LongToSize(SizeToLong(i) - cur_stage_fwd_max_idx)];
       InsertDepend(prior_node2, post_node2, manager, root);
     }
@@ -301,9 +308,9 @@ void ReorderForBackwardLastSeg(const std::vector<PipelinePair> &pair_vector, con
   if (!IsLastStage()) {
     std::shared_ptr<AnfNode> prior_node5;
     if ((micro_max + 1 > cur_stage_fwd_max_idx)) {
-      prior_node5 = pair_vector[3].second[LongToSize(last_seg_index + cur_stage_fwd_max_idx - 1)];
+      prior_node5 = pair_vector[kForwardEnd].second[LongToSize(last_seg_index + cur_stage_fwd_max_idx - 1)];
     } else {
-      prior_node5 = pair_vector[3].second[LongToSize(last_seg_index + micro_max)];
+      prior_node5 = pair_vector[kForwardEnd].second[LongToSize(last_seg_index + micro_max)];
     }
     auto post_node5 = pair_vector[0].first[0];
     InsertDepend(prior_node5, post_node5, manager, root);
@@ -328,7 +335,7 @@ void ReorderForBackwardOtherSeg(const PipelinePair &backward_start_pair, const P
     auto post_node_begin = backward_start_pair.first[i];
     auto post_node_end = backward_start_pair.second[i];
 
-    if (IsLastStage() && (i > (size_t)micro_max)) {
+    if (IsLastStage() && (i > IntToSize(micro_max))) {
       auto receive_node = post_node_begin;
       post_node_begin = FindNodeFirstUser(root, post_node_begin);
       int64_t insert_idx = SizeToLong(i) - (micro_max + 1) + (stage_num - 1);
@@ -406,7 +413,7 @@ void ReorderForFoldPipelineBackward(const std::vector<PipelinePair> &pair_vector
     auto post_node_begin = pair_vector[0].first[i];
     auto post_node_end = pair_vector[0].second[i];
 
-    if (IsLastStage() && (i > (size_t)micro_max)) {
+    if (IsLastStage() && (i > IntToSize(micro_max))) {
       auto receive_node = post_node_begin;
       post_node_begin = FindNodeFirstUser(root, post_node_begin);
       auto insert_idx = i - (micro_max + 1) + (stage_num - 1);
@@ -524,7 +531,8 @@ void FoldPipelineReorder(const FuncGraphPtr &root) {
           InsertDepend(pre_end_of_backward, start_of_forward, root->manager(), root);
         }
         pre_end_of_backward = end_of_backward;
-        ReorderForParams(backward_params_pair, forward_params_pair, sub_pair_vector[1][s], sub_pair_vector[2][s], root);
+        ReorderForParams(backward_params_pair, forward_params_pair, sub_pair_vector[kBackwardEnd][s],
+                         sub_pair_vector[kForwardStart][s], root);
       }
     } else {
       ReorderForFoldPipelineForward(pair_vector, seg_max, micro_max, root, &start_of_forward, &end_of_forward,
