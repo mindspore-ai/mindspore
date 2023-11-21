@@ -669,6 +669,45 @@ def generate_labels_file(work_path, yaml_str):
         py_file.write(py_licence_str + "\n" + py_labels + "\n")
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
+def generate_aclnn_reg_code(yaml_data):
+    """generate aclnn register code"""
+    reg_code = f"""
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
+
+namespace mindspore {{
+namespace kernel {{
+"""
+    for operator_name, operator_data in yaml_data.items():
+        dispatch = operator_data.get("dispatch")
+        if not dispatch or not dispatch.get("enable"):
+            continue
+        Ascend = dispatch.get("Ascend")
+        if Ascend is not None: # KernelMod is provided by yaml, don't auto generate it.
+            continue
+        class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+        op_class = operator_data.get("class")
+        if op_class and op_class.get("name") is not None:
+            class_name = op_class.get("name")
+        inputs_outputs_num = len(operator_data.get("args")) + len(operator_data.get("returns"))
+        reg_code += f"""
+MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, aclnn{class_name}, {inputs_outputs_num})"""
+    reg_code += f"""
+}}  // namespace kernel
+}}  // namespace mindspore
+"""
+    return reg_code
+
+def generate_aclnn_reg_file(work_path, yaml_str):
+    """
+    Generate nnacl kernelmod register
+    """
+    tmp_register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/tmp_aclnn_kernel_register.cc'
+    register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_kernel_register.cc'
+    reg_code = generate_aclnn_reg_code(yaml_str)
+    with open(tmp_register_file, 'w') as reg_file:
+        reg_file.write(cc_license_str + reg_code)
+    check_change_and_replace_file(register_file, tmp_register_file)
+
 
 eum_py_header = f"""
 \"\"\"Operator argument enum definition.\"\"\"
@@ -792,7 +831,10 @@ def main():
     generate_ops_cc_files(work_path, all_ops_str)
     # generate ops label python files
     generate_labels_file(work_path, all_ops_str)
+    # generate pyboost code
     gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path))
+    # generate aclnn kernelmod register
+    generate_aclnn_reg_file(work_path, all_ops_str)
 
 
 if __name__ == "__main__":
