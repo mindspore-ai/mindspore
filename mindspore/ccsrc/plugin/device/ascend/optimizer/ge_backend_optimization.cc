@@ -22,6 +22,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "backend/common/pass/erase_visit_attr.h"
+#include "backend/common/pass/add_parallel_group_id_attr.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
@@ -162,6 +163,7 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<AddParallelGroupIdAttr>());
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
