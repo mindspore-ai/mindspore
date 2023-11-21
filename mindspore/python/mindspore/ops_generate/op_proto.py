@@ -16,12 +16,12 @@
 from pyboost_utils import convert_python_func_name_to_c
 
 class Arg:
-    def __init__(self, arg_name, arg_dtype, type_cast, as_init_arg=False, init=-1, inplace=''):
+    def __init__(self, arg_name, arg_dtype, type_cast, as_init_arg=False, default=-1, inplace=''):
         self.arg_name = arg_name
         self.arg_dtype = arg_dtype
         self.type_cast = type_cast
         self.as_init_arg = as_init_arg
-        self.init = init
+        self.default = default
         self.inplace = inplace
 
 
@@ -65,26 +65,26 @@ class OpProto:
             raise TypeError("op define need key 'args'")
         args_dict = yaml.get('args')
         op_args = []
+        default_str = 'default'
         for arg_name in args_dict.keys():
             arg_dtype = args_dict[arg_name]['dtype']
-            init = None
+            default = None
             as_init_arg = False
             type_cast = []
-            if 'init' in args_dict[arg_name]:
-                init = args_dict[arg_name]['init']
+            if default_str in args_dict[arg_name]:
+                default = args_dict[arg_name][default_str]
                 as_init_arg = True
             if 'type_cast' in args_dict[arg_name]:
                 type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
-            arg = Arg(arg_name, arg_dtype, type_cast, as_init_arg, init)
+            arg = Arg(arg_name, arg_dtype, type_cast, as_init_arg, default)
             op_args.append(arg)
         if 'returns' not in yaml.keys():
             raise TypeError("op define need key 'returns'")
 
         is_pyboost = False
-        default_type = 'default'
-        gpu = default_type
-        cpu = default_type
-        ascend = default_type
+        gpu = default_str
+        cpu = default_str
+        ascend = default_str
         dispatch_key = 'dispatch'
         if dispatch_key in yaml.keys():
             is_pyboost = True
