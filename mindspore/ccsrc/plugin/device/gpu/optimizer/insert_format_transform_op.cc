@@ -86,6 +86,7 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
   builder.SetOutputsDeviceType({output_type});
   builder.SetKernelType(UNKNOWN_KERNEL_TYPE);
   builder.SetProcessor(kernel::Processor::CUDA);
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
 }
 
