@@ -2165,8 +2165,6 @@ def concat(tensors, axis=0):
 
     Tutorial Examples:
         - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/r2.2/beginner/tensor.html#tensor-operation>`_
-        - `FGSM Network Adversarial Attack - Implementing FGSM
-          <https://mindspore.cn/tutorials/application/en/r2.2/cv/fgsm.html#implementing-fgsm>`_
         - `Vision Transformer Image Classification - Building ViT as a whole
           <https://mindspore.cn/tutorials/application/en/r2.2/cv/vit.html#building-vit-as-a-whole>`_
         - `Sentiment Classification Implemented by RNN - Dense
