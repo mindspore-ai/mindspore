@@ -349,7 +349,7 @@ class AttentionNet2(Cell):
         self.weight = Parameter(weight, "w1")
         self.add = P.Add().shard(strategy2)
         self.bias = Parameter(bias, "bias")
-        self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)
+        self.reshape = P.Reshape()
         self.transpose = P.Transpose().shard(strategy3)
         self.realdiv = P.RealDiv().shard(strategy4)
 
@@ -363,9 +363,9 @@ class AttentionNet2(Cell):
         return out
 
 
-def test_attention_reshape_dst_shape_is_not_a_value_node():
+def test_attention_reshape_dst_shape_is_not_value_node():
     """
-    Feature: test attention parallel, the dst shape of reshape is not a value node
+    Feature: test attention parallel, the dst shape of reshape is not value node, only one dim is dynamic for reshape
     Description: no redistribution
     Expectation: compile success
     """
@@ -430,3 +430,180 @@ def test_modify_inputs_of_stridedslice_and_reshape():
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('MakeTuple-1', [4])
     assert validator.check_node_inputs_has('MakeTuple-2', [4])
+
+
+class ConcatStridedSliceNet(Cell):
+    def __init__(self, strategy1=None, strategy2=None):
+        super().__init__()
+        self.slice = P.StridedSlice().shard(strategy2)
+        self.concat = P.Concat().shard(strategy1)
+        self.begin = (0, 0)
+        self.strides = (1, 1)
+        self.end_1 = Tensor([4], dtype=ms.int64)
+        self.end_2 = Tensor([4], dtype=ms.int64)
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        end_1 = self.relu(self.end_1)
+        end_2 = self.relu(self.end_2)
+        end = self.concat((end_1, end_2))
+        out = self.slice(x, self.begin, end, self.strides)
+        return out
+
+
+def test_concat_is_the_input_of_stridedslice():
+    """
+    Feature: test concat is the input of stridedslice
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=True)
+    strategy1 = ((1,), (1,))
+    strategy2 = ((1, 1),)
+    net = ConcatStridedSliceNet(strategy1, strategy2)
+    input_x = Tensor(np.ones([64, 64]), dtype=ms.float32)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('StridedSlice-0', ['Concat-0'])
+
+
+class ConcatPadV3Net(Cell):
+    def __init__(self, strategy1=None, strategy2=None):
+        super().__init__()
+        self.pad = P.PadV3().shard(strategy2)
+        self.concat = P.Concat().shard(strategy1)
+        self.pad_1 = Tensor([0], dtype=ms.int64)
+        self.pad_2 = Tensor([0], dtype=ms.int64)
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        pad_1 = self.relu(self.pad_1)
+        pad_2 = self.relu(self.pad_2)
+        paddings = self.concat((pad_1, pad_2))
+        out = self.pad(x, paddings, 0)
+        return out
+
+
+def test_concat_is_the_input_of_padv3():
+    """
+    Feature: test concat is the input of padv3
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      dataset_strategy=((1, 8, 1, 1),))
+    strategy1 = ((1,), (1,))
+    strategy2 = ((1, 8, 1, 1), (1,), ())
+    net = ConcatPadV3Net(strategy1, strategy2)
+
+    input_x = Tensor(shape=[1, 32, None, 128], dtype=ms.float32)
+    net.set_inputs(input_x)
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Concat-0'])
+
+
+def test_dynamic_fillv2():
+    """
+    Feature: test dynamic fillv2
+    Description: no redistribution
+    Expectation: compile success
+    """
+    class DynamicFillNet(Cell):
+        def __init__(self, strategy1, strategy2, strategy3):
+            super().__init__()
+            self.fill = P.FillV2().shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
+            self.v = Tensor(1, dtype=ms.float32)
+            self.add = P.Add().shard(strategy3)
+
+        def construct(self, x):
+            out1 = self.relu(x)
+            s = P.Shape()(out1)[0]
+            out2 = self.fill((s, 16), self.v)
+            out = self.add(out1, out2)
+            return out
+
+    strategy1 = ((1, 8), ())
+    strategy2 = ((1, 8),)
+    strategy3 = ((1, 8), (1, 8))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      dataset_strategy=strategy2)
+    context.set_context(save_graphs=True)
+
+    x = Tensor(shape=[None, 2], dtype=ms.float32)
+    net = DynamicFillNet(strategy1, strategy2, strategy3)
+    net.set_inputs(x)
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('MakeTuple-1', [2])
+
+
+def test_dynamic_tile():
+    """
+    Feature: test dynamic tile
+    Description: no redistribution
+    Expectation: compile success
+    """
+    class DynamicTileNet(Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.tile = P.Tile().shard(strategy1)
+            self.relu1 = P.ReLU().shard(strategy2)
+            self.relu2 = P.ReLU().shard(strategy1)
+
+        def construct(self, x):
+            out = self.relu1(x)
+            s = P.Shape()(out)[0]
+            out = self.tile(out, (1, 16, s, 1, 1))
+            out = self.relu2(out)
+            return out
+
+    strategy1 = ((1, 8, 1, 1, 1),)
+    strategy2 = ((1, 1, 1, 1, 1),)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy2)
+    context.set_context(save_graphs=True)
+
+    net = DynamicTileNet(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(shape=[None, 8, 1, None, 128], dtype=ms.float32)
+    net.set_inputs(x)
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('MakeTuple-1', [2])
+
+
+def test_dynamic_mul_broadcast():
+    """
+    Feature: test dynamic mul broadcast
+    Description: no redistribution
+    Expectation: compile success
+    """
+    class DynamicMulNet(Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.mul = P.Mul().shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
+
+        def construct(self, x, y):
+            out = self.mul(x, y)
+            out = self.relu(out)
+            return out
+
+    strategy1 = ((1, 8, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 8, 1, 1),)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy1)
+    context.set_context(save_graphs=True)
+
+    net = DynamicMulNet(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(shape=[None, 64, None, 128], dtype=ms.float32)
+    y = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+
+    net.set_inputs(x, y)
+    phase = compile_net(net, x, y)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('ReLU-0', ['Mul-0'])
