@@ -127,9 +127,7 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   }
   gather_shape0.erase(gather_shape0.begin() + gather_axis);
   (void)gather_shape0.insert(gather_shape0.begin() + gather_axis, gather_shape1.begin(), gather_shape1.end());
-  if (gather_shape0 != old_shape) {
-    return RET_NO_CHANGE;
-  }
+  MS_CHECK_TRUE_RET(gather_shape0 == old_shape, RET_NO_CHANGE);
   gather_node->inputIndex.at(opt::kInputIndexOne) = reshape1_node->inputIndex.at(opt::kInputIndexZero);
   gather_node->outputIndex.at(opt::kOutputIndexZero) = reshape2_node->outputIndex.at(opt::kOutputIndexZero);
   // cannot delete node here, otherwise will destroy order in other pattern's node index
