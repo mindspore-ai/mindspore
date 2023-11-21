@@ -62,6 +62,7 @@ cust_op_lists = [
     "dataformatvecpermute",
     "depthtospace",
     "diag",
+    "diagonal",
     "diagpart",
     "div",
     "divnonan",

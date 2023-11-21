@@ -44,11 +44,11 @@ TEST_F(TestViewSplit, SplitFunction) {
   size_t expect_offset_2 = 3;
   size_t expect_size = 2;
   ASSERT_EQ(storage_list.size(), expect_size);
-  ASSERT_FALSE(storage_list[0]->is_contiguous);
+  ASSERT_TRUE(storage_list[0]->is_contiguous);
   ASSERT_TRUE(storage_list[0]->shape == expect_shape);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides);
   ASSERT_TRUE(storage_list[0]->storage_offset == expect_offset_1);
-  ASSERT_FALSE(storage_list[1]->is_contiguous);
+  ASSERT_TRUE(storage_list[1]->is_contiguous);
   ASSERT_TRUE(storage_list[1]->shape == expect_shape);
   ASSERT_TRUE(storage_list[1]->strides == expect_strides);
   ASSERT_TRUE(storage_list[1]->storage_offset == expect_offset_2);

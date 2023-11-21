@@ -20,8 +20,10 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
+namespace {
 constexpr size_t kSqueezeCalcInputsNum = 1;
-constexpr auto kSqueezedDim = 1;
+constexpr auto kSqueezedNum = 1;
+}  // namespace
 TensorStorageInfoPtrList SqueezeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
   if (CheckInputsNull(inputs, kSqueezeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
     return {};
@@ -58,7 +60,7 @@ TensorStorageInfoPtrList SqueezeCalc(const PrimitivePtr &prim, const std::vector
       // If shape dims contain unknown dim, ignore it.
       if (oldShape[LongToSize(wrap_dim)] != abstract::Shape::kShapeDimAny) {
         const std::string ith_shape = "input_x.shape[" + std::to_string(wrap_dim) + "]";
-        (void)CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, oldShape[wrap_dim], kEqual, kSqueezedDim, "Squeeze");
+        (void)CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, oldShape[wrap_dim], kEqual, kSqueezedNum, "Squeeze");
       }
       seen_dims[wrap_dim] = true;
     }
@@ -68,7 +70,7 @@ TensorStorageInfoPtrList SqueezeCalc(const PrimitivePtr &prim, const std::vector
   ShapeVector newShape;
   StridesVecotr newStrides;
   for (size_t i = 0; i < ndims; i++) {
-    if (!seen_dims[i] || oldShape[i] != kSqueezedDim) {
+    if (!seen_dims[i] || oldShape[i] != kSqueezedNum) {
       newShape.push_back(oldShape[i]);
       newStrides.push_back(oldStrides[i]);
     }
