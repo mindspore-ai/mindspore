@@ -16,8 +16,6 @@
 
 #include "backend/common/graph_kernel/reduce_fake_out_mem.h"
 
-#include <memory>
-#include <set>
 #include <vector>
 
 #include "ir/anf.h"

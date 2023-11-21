@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/cholesky_inverse_cpu_kernel.h"
-#include <algorithm>
-#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/cholesky_inverse_.h"
 
