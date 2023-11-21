@@ -23,9 +23,15 @@ INPUT_MAP(PromptFlashAttention) = {
   {1, INPUT_DESC(query)},
   {2, INPUT_DESC(key)},
   {3, INPUT_DESC(value)},
-  {4, INPUT_DESC(atten_mask)},         // optional input
-  {5, INPUT_DESC(padding_mask)},       // optional input
-  {6, INPUT_DESC(actual_seq_lengths)}  // optional input
+  {4, INPUT_DESC(atten_mask)},             // optional input
+  {5, INPUT_DESC(actual_seq_lengths)},     // optional input
+  {6, INPUT_DESC(actual_seq_lengths_kv)},  // optional input
+  {7, INPUT_DESC(padding_mask)},           // optional input
+  {8, INPUT_DESC(deq_scale1)},             // optional input
+  {9, INPUT_DESC(quant_scale1)},           // optional input
+  {10, INPUT_DESC(deq_scale2)},            // optional input
+  {11, INPUT_DESC(quant_scale2)},          // optional input
+  {12, INPUT_DESC(quant_offset2)},         // optional input
 };
 ATTR_MAP(PromptFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<int64_t>())},
                                   {"pre_tokens", ATTR_DESC(pre_tokens, AnyTraits<int64_t>())},

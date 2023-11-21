@@ -49,6 +49,26 @@ constexpr int kNumMultiple16 = 16;
 constexpr int64_t kNumDValue = 40;
 constexpr int64_t kNumPadSize = 8;
 
+bool IsGQAPattern(const CNodePtr qk_matmul, const CNodePtr v_matmul) {
+  auto k_reshape = qk_matmul->input(kNumIndex2)->cast<CNodePtr>();
+  if (!CheckPrimitiveType(k_reshape, prim::kPrimReshape)) {
+    return false;
+  }
+  auto k_tile = k_reshape->input(kNumIndex1)->cast<CNodePtr>();
+  if (!CheckPrimitiveType(k_tile, prim::kPrimTile)) {
+    return false;
+  }
+  auto v_reshape = v_matmul->input(kNumIndex2)->cast<CNodePtr>();
+  if (!CheckPrimitiveType(v_reshape, prim::kPrimReshape)) {
+    return false;
+  }
+  auto v_tile = v_reshape->input(kNumIndex1)->cast<CNodePtr>();
+  if (!CheckPrimitiveType(v_tile, prim::kPrimTile)) {
+    return false;
+  }
+  return true;
+}
+
 bool PFACheckShape(float scale_value, int64_t q_seq_len = 0, int64_t k_seq_len = 0, int64_t v_seq_len = 0,
                    int64_t d_value = 0) {
   if (scale_value < 0) {
@@ -894,7 +914,9 @@ CNodePtr FlashAttentionFusion::CreateGQACNodeForBNSD(const FuncGraphPtr &func_gr
     return CreatePromptFlashAttentionCnodeForBNSD(
       func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
   } else {
-    MS_LOG(WARNING) << "seq len is 1, now not support incre flash attention.";
+    MS_LOG(INFO) << "seq len is 1, incre flash attention.";
+    return CreateIncreFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
+                                                 input_tensor_q_shape[kNumIndex1], scale_value, num_key_value_heads);
   }
   return nullptr;
 }
@@ -1315,10 +1337,10 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV1(const s
   auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
   auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
   auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+  MS_LOG(INFO) << "q shape: " << pfa_q_shape << ", k shape: " << pfa_k_shape << ", v shape: " << pfa_v_shape;
 
   // process for GQA
-  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
-      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+  if (IsGQAPattern(matmul_1, matmul_2)) {
     MS_LOG(INFO) << "create GQA node for bnsd.";
     return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
@@ -1347,10 +1369,10 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV2(const s
   auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
   auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
   auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+  MS_LOG(INFO) << "q shape: " << pfa_q_shape << ", k shape: " << pfa_k_shape << ", v shape: " << pfa_v_shape;
 
   // process for GQA
-  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
-      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+  if (IsGQAPattern(matmul_1, matmul_2)) {
     MS_LOG(INFO) << "create GQA node for bnsd.";
     return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
@@ -1380,8 +1402,8 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForBaiChuanPattern(const 
   auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
   auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
   auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
-  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
-      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+  MS_LOG(INFO) << "q shape: " << pfa_q_shape << ", k shape: " << pfa_k_shape << ", v shape: " << pfa_v_shape;
+  if (IsGQAPattern(matmul_1, matmul_2)) {
     MS_LOG(INFO) << "create GQA node for BNSD.";
     return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
