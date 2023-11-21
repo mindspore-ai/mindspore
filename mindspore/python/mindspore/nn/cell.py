@@ -47,13 +47,6 @@ from mindspore._c_expression import PackExpander
 from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision, PackFunc
 
 
-def _check_args(args):
-    """Check the input args's type"""
-    for item in args:
-        if isinstance(item, Tensor) and item.has_init:
-            item.init_data()
-
-
 class Cell(Cell_):
     """
     The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
@@ -168,6 +161,7 @@ class Cell(Cell_):
         self.ge_sync_data = False
         self._is_check_and_refresh = False
         self._amp_level = ""
+        self._init_flag = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -655,6 +649,14 @@ class Cell(Cell_):
 
         return cast_inputs
 
+    def _init_check(self):
+        if self._init_flag:
+            return
+        for param in self.get_parameters(expand=False):
+            if param.has_init:
+                param.init_data()
+        self._init_flag = True
+
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             raise AttributeError("For 'Cell', the method 'construct' is not defined.")
@@ -688,7 +690,7 @@ class Cell(Cell_):
             # There many Casts in parameter_broadcast. Enable build faster.
             self._do_parameter_broadcast()
 
-        _check_args(args)
+        self._init_check()
         self._check_cell_flags_in_pynative()
 
         if self.requires_grad and _pynative_executor.enable_grad():

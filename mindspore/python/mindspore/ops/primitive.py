@@ -22,7 +22,6 @@ from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
-from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
@@ -938,9 +937,6 @@ class _RunOpHook:
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if not _RunOpHook.current:
-        for arg in args:
-            if isinstance(arg, Parameter) and arg.has_init:
-                arg.init_data()
         stub = _pynative_executor.run_op_async(obj, op_name, args)
         return _convert_stub(stub)
     return _RunOpHook.current.hook(obj, args)
