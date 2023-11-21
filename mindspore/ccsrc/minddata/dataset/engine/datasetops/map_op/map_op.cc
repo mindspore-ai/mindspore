@@ -729,6 +729,15 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     }
     i_row = std::move(o_row);
   }
+
+  // Sanity check a row in result_table
+  if (!i_row.empty() && out_columns_.size() != i_row.size()) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid columns, the number of columns returned in 'map' operations should match "
+      "the number of 'output_columns', but got the number of columns returned in 'map' operations: " +
+      std::to_string(i_row.size()) + ", the number of 'output_columns': " + std::to_string(out_columns_.size()) + ".");
+  }
+
   if (in_columns_.size() == out_columns_.size()) {
     // assign transformed tensor back to the original
     for (size_t i = 0; i < to_process_indices_.size(); i++) {
