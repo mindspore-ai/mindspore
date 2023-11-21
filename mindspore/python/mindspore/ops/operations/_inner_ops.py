@@ -426,7 +426,9 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
         self.add_prim_attr("no_eliminate", True)
-        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        valid_type = [mstype.float16, mstype.float32, mstype.float64,
+                      mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
         args = {"dtype": dtype}
         validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
