@@ -22,6 +22,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
+#include "backend/common/pass/erase_visit_attr.h"
 #include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
@@ -35,6 +36,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
+#include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
 #include "plugin/device/ascend/optimizer/mindir/avg_pool_grad_unify_mindir.h"
@@ -56,6 +58,9 @@ namespace mindspore {
 namespace opt {
 void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   MS_EXCEPTION_IF_NULL(unify_mindir_pm);
+  (*unify_mindir_pm)->AddPass(std::make_shared<EraseVisitAttr>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<RenormSplit>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<EraseVisitAttr>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<HistogramFixedWidthFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ClipByNormFission>());
