@@ -27,6 +27,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "mindspore/ccsrc/include/transform/graph_ir/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -186,6 +187,18 @@ std::string AclKernelMod::DebugString() const {
     ss << MsTensorDescString(param) << std::endl;
   }
   return ss.str();
+}
+
+void AclKernelMod::SetValueDependArgs(const std::set<int64_t> &indices) {
+  auto info = transform::GeAdapterManager::GetInstance().GetInfo(kernel_name_, true);
+  MS_EXCEPTION_IF_NULL(info);
+
+  value_depend_args_.clear();
+  for (auto item : indices) {
+    if (info->input_attr_map().count(item) == 0) {
+      value_depend_args_.emplace(item);
+    }
+  }
 }
 
 bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
