@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ std::pair<bool, std::vector<CNodePtr>> ForwardSearchCNode(const CNodePtr &start_
       break;
     }
     cur_node = visited.front();
-    MS_LOG(WARNING) << "[CAME] fwd current node: " << cur_node->DebugString();
+    MS_LOG(INFO) << "[CAME] fwd current node: " << cur_node->DebugString();
     visited.pop_front();
     auto node_set = node_user_map.at(cur_node->cast<AnfNodePtr>());
     for (auto item : node_set) {
@@ -154,22 +154,22 @@ CameCommHandler::CameCommHandler(ParameterPtr origin, const std::vector<AnfNodeP
   if (!opt_shard_group_name.empty()) {
     is_opt_shard = true;
   }
-  MS_LOG(INFO) << "CAME processing parameter";
-  MS_LOG(INFO) << "tensor shape:" << tensor_layout->tensor_shape().ToString();
-  MS_LOG(INFO) << "slice shape:" << tensor_layout->slice_shape().ToString();
+  MS_LOG(DEBUG) << "CAME processing parameter";
+  MS_LOG(DEBUG) << "tensor shape:" << tensor_layout->tensor_shape().ToString();
+  MS_LOG(DEBUG) << "slice shape:" << tensor_layout->slice_shape().ToString();
 
-  MS_LOG(INFO) << "opt shard slice shape:";
+  MS_LOG(DEBUG) << "opt shard slice shape:";
   for (const auto &item : tensor_layout->opt_shard_slice_shape()) {
-    MS_LOG(INFO) << item;
+    MS_LOG(DEBUG) << item;
   }
-  MS_LOG(INFO) << "opt shard group:" << tensor_layout->opt_shard_group();
-  MS_LOG(INFO) << "opt shard step:" << tensor_layout->opt_weight_shard_step();
+  MS_LOG(DEBUG) << "opt shard group:" << tensor_layout->opt_shard_group();
+  MS_LOG(DEBUG) << "opt shard step:" << tensor_layout->opt_weight_shard_step();
 
-  MS_LOG(INFO) << "device arrangement:" << tensor_layout->device_arrangement().ToString();
-  MS_LOG(INFO) << "original device arrangement:" << tensor_layout->device_arrangement_origin().ToString();
+  MS_LOG(DEBUG) << "device arrangement:" << tensor_layout->device_arrangement().ToString();
+  MS_LOG(DEBUG) << "original device arrangement:" << tensor_layout->device_arrangement_origin().ToString();
 
-  MS_LOG(INFO) << "tensor map:" << tensor_layout->tensor_map().ToString();
-  MS_LOG(INFO) << "original tensor map:" << tensor_layout->origin_tensor_map().ToString();
+  MS_LOG(DEBUG) << "tensor map:" << tensor_layout->tensor_map().ToString();
+  MS_LOG(DEBUG) << "original tensor map:" << tensor_layout->origin_tensor_map().ToString();
 
   FindCameParams();
 }
@@ -188,23 +188,23 @@ void CameCommHandler::FindCameParams() {
     MS_EXCEPTION_IF_NULL(param);
     const std::string param_name = param->name();
     if (param_name == exp_row_name) {
-      MS_LOG(INFO) << "[CAME] found exp_avg_sq_row: " << param_name;
+      MS_LOG(DEBUG) << "[CAME] found exp_avg_sq_row: " << param_name;
       exp_avg_sq_row = param;
       cur_found_param_count++;
     } else if (param_name == exp_col_name) {
-      MS_LOG(INFO) << "[CAME] found exp_avg_sq_col: " << param_name;
+      MS_LOG(DEBUG) << "[CAME] found exp_avg_sq_col: " << param_name;
       exp_avg_sq_col = param;
       cur_found_param_count++;
     } else if (param_name == exp_insta_row_name) {
-      MS_LOG(INFO) << "[CAME] found exp_avg_insta_row: " << param_name;
+      MS_LOG(DEBUG) << "[CAME] found exp_avg_insta_row: " << param_name;
       exp_avg_insta_row = param;
       cur_found_param_count++;
     } else if (param_name == exp_insta_col_name) {
-      MS_LOG(INFO) << "[CAME] found exp_avg_insta_col: " << param_name;
+      MS_LOG(DEBUG) << "[CAME] found exp_avg_insta_col: " << param_name;
       exp_avg_insta_col = param;
       cur_found_param_count++;
     } else if (param_name == exp_avg_name) {
-      MS_LOG(INFO) << "[CAME] found exp_avg: " << param_name;
+      MS_LOG(DEBUG) << "[CAME] found exp_avg: " << param_name;
       exp_avg = param;
       cur_found_param_count++;
     }
@@ -246,6 +246,7 @@ std::pair<Status, RankList> CameCommHandler::GetDimRankList(const int64_t rank, 
   RankList rank_list;
   if (dev_matrix.GetDevicesAlongDim(LongToUlong(device_dim), &rank_list) != SUCCESS) {
     MS_LOG(ERROR) << "Get devices along dim failed";
+    return {FAILED, rank_list};
   }
   return {SUCCESS, rank_list};
 }
@@ -399,6 +400,9 @@ CNodePtr CameCommHandler::FindReduceMean4() {
 
 void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce_mean, const RankList &comm_rank_list) {
   // construct all reduce cnode and insert to the first input
+  if (!reduce_mean) {
+    return;
+  }
   FuncGraphPtr func_graph = reduce_mean->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
@@ -408,7 +412,10 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
 
   MS_LOG(INFO) << "Insert All Reduce and RealDiv to node" << reduce_mean->DebugString();
   // insert all reduce
-  std::vector<AnfNodePtr> all_reduce_input = {NewValueNode(prim::kPrimAllReduce), reduce_mean->input(1)};
+  OperatorName allreduce_op_name = ALL_REDUCE;
+  OperatorAttrs all_reduce_op_attrs;
+  ValuePtr allreduce_pyop_instance = CreateOpInstance(all_reduce_op_attrs, allreduce_op_name, "came_norm_allreduce");
+  std::vector<AnfNodePtr> all_reduce_input = {NewValueNode(allreduce_pyop_instance), reduce_mean->input(1)};
   auto all_reduce_node = func_graph->NewCNode(all_reduce_input);
   auto all_reduce_prim = GetCNodePrimitive(all_reduce_node);
   auto all_reduce_attrs = all_reduce_prim->attrs();
@@ -417,13 +424,14 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
   std::string group_name = CreateCommGroupFromRankList(comm_rank_list);
   MS_LOG(INFO) << "[CAME] came allreduce opt shard group: " << group_name;
   all_reduce_attrs["group"] = MakeValue<std::string>(group_name);
-  all_reduce_attrs["fusion"] = 0;
+  int64_t fusion_id = 0;
+  all_reduce_attrs["fusion"] = MakeValue(fusion_id);
   all_reduce_prim->SetAttrs(all_reduce_attrs);
   // insert real div
   OperatorName operator_name = REAL_DIV;
   OperatorAttrs operator_attrs;
 
-  ValuePtr pyop_instance = CreateOpInstance(operator_attrs, operator_name, "reduce_mean_pre_div");
+  ValuePtr pyop_instance = CreateOpInstance(operator_attrs, operator_name, "came_norm_realdiv");
   MS_EXCEPTION_IF_NULL(pyop_instance);
 
   size_t group_rank_size = comm_rank_list.size();
