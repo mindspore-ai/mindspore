@@ -1,10 +1,12 @@
 approvers:
 - limingqi107 #
+- ZPaC
 - wilfchen
 - laiyongqiang
 - guoqi1024
 - baochong
 - kingxian
+- zhaizhiqiang
 
 options:
     no_parent_owners: true
