@@ -1220,6 +1220,9 @@ std::pair<bool, size_t> CanMergeConcatSlice(const std::pair<std::shared_ptr<AnfN
   auto begin_value = GetValueNode(slice_cnode->input(2));
   auto end_value = GetValueNode(slice_cnode->input(3));
   auto strided_value = GetValueNode(slice_cnode->input(4));
+  if (!begin_value || !end_value || !strided_value) {
+    return {false, 0};
+  }
   auto begin = GetValue<std::vector<int64_t>>(begin_value);
   auto end = GetValue<std::vector<int64_t>>(end_value);
   auto strided = GetValue<std::vector<int64_t>>(strided_value);
