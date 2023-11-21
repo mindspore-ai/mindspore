@@ -61,9 +61,18 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
     {kDynamicBroadcastTo,
-     {{KernelAttr()
+     {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeFloat32),
        &BroadcastToCpuKernelMod::LaunchKernel<float>},
       {KernelAttr()
@@ -120,7 +129,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
          .AddInputAttr(kNumberTypeUInt64)
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeUInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>}}}};
 
 bool BroadcastToCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {

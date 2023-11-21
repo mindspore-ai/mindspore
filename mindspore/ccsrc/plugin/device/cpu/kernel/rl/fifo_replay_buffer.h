@@ -33,10 +33,10 @@ class FIFOReplayBuffer {
   ~FIFOReplayBuffer();
 
   // Push a transition to replay buffer. If the replay buffer is full, the oldest one will be overridden.
-  bool Push(const std::vector<AddressPtr> &inputs);
+  bool Push(const std::vector<KernelTensor *> &inputs);
 
   // Emplace a transition to replay buffer.
-  bool Emplace(const size_t &pos, const std::vector<AddressPtr> &inputs);
+  bool Emplace(const size_t &pos, const std::vector<KernelTensor *> &inputs);
 
   // Get a transition by the index.
   std::vector<AddressPtr> GetItem(size_t idx);
