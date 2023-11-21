@@ -28,7 +28,7 @@ BatchAssignKernelMod::BatchAssignKernelMod() : elements_num_(0), lock_(false) {}
 
 bool BatchAssignKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
-  elements_num_ = (input_num - 1) / kHalf;
+  elements_num_ = input_num / kHalf;
   auto lock_value = primitive_->GetAttr("lock");
   MS_EXCEPTION_IF_NULL(lock_value);
   lock_ = GetValue<bool>(lock_value);

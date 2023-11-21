@@ -48,19 +48,11 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                << "], the component of shape can't be less than -1, but got " << shape_vec;
     }
     auto self_computed_dim_count = std::count(shape_vec.begin(), shape_vec.end(), -1);
-    if (self_computed_dim_count == 0) {
-      if (!IsDynamic(input_shape_vec)) {
-        auto input_element =
-          std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
-        auto shape_number = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<int64_t>());
-        if (input_element != shape_number) {
-          MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                                   << "], the accumulate of x_shape must be equal to out_shape, but got x_shape: "
-                                   << input_shape_vec << ", and out_shape: " << shape_vec;
-        }
-      }
-      return std::make_shared<abstract::Shape>(shape_vec);
-    } else if (self_computed_dim_count == 1) {
+    if (self_computed_dim_count > 1) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
+                               << "], at most one component of shape can be -1, but got " << shape_vec;
+    }
+    if (self_computed_dim_count == 1) {
       if (!IsDynamic(input_shape_vec)) {
         // If shape has an element -1, and the input shape is known, the -1 dim can be inferred from the remaining
         // dimensions and the number of elements in the input.
@@ -75,12 +67,19 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
           }
         }
         shape_vec[index] = computed_dim_value;
-        return std::make_shared<abstract::Shape>(shape_vec);
       }
-    } else {
-      MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                               << "], at most one component of shape can be -1, but got " << shape_vec;
     }
+    if (!IsDynamic(input_shape_vec)) {
+      auto input_element =
+        std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
+      auto shape_number = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<int64_t>());
+      if (input_element != shape_number) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
+                                 << "], the accumulate of x_shape must be equal to out_shape, but got x_shape: "
+                                 << input_shape_vec << ", and out_shape: " << shape_vec;
+      }
+    }
+    return std::make_shared<abstract::Shape>(shape_vec);
   }
 
   ShapeVector output_shape;
