@@ -32,7 +32,7 @@ OBF_RATIOS_WIDTH = 0
 OBF_RATIOS_INSERT_INDEX = 0
 
 
-def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
+def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./', obfuscate_scale=100):
     """
     obfuscate the plaintext checkpoint files. Usually used in conjunction with
     :func:`mindspore.load_obf_params_into_net`.
@@ -51,6 +51,8 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
             target modules by itself. If found, the searched target module would be used, otherwise suggested target
             modules would be given with warning log. Default: ``None``.
         saved_path (str): The directory path for saving obfuscated ckpt files. Default: ``'./'``.
+        obfuscate_scale (Union[float, int]): Obfuscate scale of weights. The generated random obf_ratios will be in
+            range of (1 / obfuscate_scale, obfuscate_scale). Default: 100.
 
     Raises:
         TypeError: If `network` is not nn.Cell.
@@ -91,6 +93,9 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     if not _check_valid_target(network, to_split_modules):
         raise ValueError("The obfuscate module path {} is not exist, please check the input 'target_modules'."
                          .format(to_split_modules))
+    if (not isinstance(obfuscate_scale, (float, int))) or (obfuscate_scale <= 1):
+        raise ValueError("obfuscate_scale must be float or int, and larger than 1, but got {}."
+                         .format(obfuscate_scale))
     # generate and save obf_ratios to saved_path
     path_list = to_split_modules[0].split('/')
     target_list = to_split_modules[1].split('|')
@@ -102,7 +107,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     obf_ratios = []
     secrets_generator = secrets.SystemRandom()
     for _ in range(number_of_ratios):
-        secure_float = secrets_generator.uniform(0.01, 100)
+        secure_float = secrets_generator.uniform(1 / obfuscate_scale, obfuscate_scale)
         obf_ratios.append(secure_float)
     # start obfuscate ckpt
     ckpt_dir_files = os.listdir(ckpt_files)
@@ -159,7 +164,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_
     return None
 
 
-def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
+def load_obf_params_into_net(network, target_modules, obf_ratios, data_parallel_num=1, **kwargs):
     """
     load obfuscate ratios into obfuscated network. Usually used in conjunction with :func:`mindspore.obfuscate_ckpt`
     interface.
@@ -173,6 +178,7 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
             If target_modules has the third value, it should be in the format of 'obfuscate_layers:all' or
             'obfuscate_layers:int', which represents the number of layers need to be obfuscated of duplicate layers
             (such as transformer layers or resnet blocks).
+        data_parallel_num (int): The data parallel number of parallel training. Default: 1.
         obf_ratios (Tensor): The obf ratios generated when execute :func:`mindspore.obfuscate_ckpt`.
         kwargs (dict): Configuration options dictionary.
 
@@ -218,6 +224,8 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
         raise ValueError("obf_ratios can not be empty.")
     if not _check_valid_target(network, target_modules):
         raise ValueError("{} is not exist, please check the input 'target_modules'.".format(target_modules))
+    if (not isinstance(data_parallel_num, int)) or (data_parallel_num <= 0):
+        raise ValueError("data_parallel_num must be positive number, but got {}.".format(data_parallel_num))
     if len(target_modules) >= 1 and target_modules[0] == '/':
         target_modules[0] = ''
     path_list = target_modules[0].split('/')
@@ -232,7 +240,7 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
         OBF_RATIOS_LENGTH = MAX_OBF_RATIOS_NUM // OBF_RATIOS_WIDTH
         number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
     MAX_OBF_RATIOS_NUM = number_of_ratios
-    rewrite_network = _obfuscate_network(network, path_list, target_list, **kwargs)
+    rewrite_network = _obfuscate_network(network, path_list, target_list, data_parallel_num=data_parallel_num, **kwargs)
     setattr(rewrite_network, 'obf_ratios', obf_ratios)
     return rewrite_network
 
@@ -425,7 +433,7 @@ def _remove_digit(item):
     return param_path
 
 
-def _obfuscate_network(model, path_list, target_list, **kwargs):
+def _obfuscate_network(model, path_list, target_list, data_parallel_num=1, **kwargs):
     """obfuscate original network, including add mul operation and add inputs for passing obf_ratio."""
 
     def _insert_input(stree: SymbolTree, arg_name: str = 'y_obf'):
@@ -438,7 +446,6 @@ def _obfuscate_network(model, path_list, target_list, **kwargs):
         # the insert input node name would be 'input_y_obf'
         new_input_node = last_input.create_input(arg_name)
         stree.insert(position, new_input_node)
-        return new_input_node
 
     def _insert_mul(stree: SymbolTree, node: Node, index: int):
         """add mul operation for original network"""
@@ -448,7 +455,12 @@ def _obfuscate_network(model, path_list, target_list, **kwargs):
         sv: ScopedValue = ScopedValue.create_naming_value(v + f'[{index}]')
         arg_list.append(sv)
         target_list = node.get_targets().copy()
-        new_mul_node = node.create_call_cell(cell=ops.Mul(), targets=target_list, args=arg_list, name='mul')
+        if data_parallel_num > 1:
+            logger.info("Data parallel number is: {}".format(data_parallel_num))
+            new_mul_node = node.create_call_cell(cell=ops.Mul().shard(((data_parallel_num, 1), ())),
+                                                 targets=target_list, args=arg_list, name='mul')
+        else:
+            new_mul_node = node.create_call_cell(cell=ops.Mul(), targets=target_list, args=arg_list, name='mul')
         position = stree.after(node)
         stree.insert(position, new_mul_node)
 
