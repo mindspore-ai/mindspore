@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/adapter/acl/mapper/multinomial_mapper.h"
-#include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
