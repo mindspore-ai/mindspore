@@ -179,6 +179,25 @@ def generate_py_op_deprecated(deprecated):
     return deprecated
 
 
+def _process_description(description):
+    """
+    Process description.
+    """
+    if not description:
+        return description
+    lines = description.split("\n")
+    if len(lines) == 1:
+        return description
+    # Add line indentation to other lines after the first line
+    for i in range(1, len(lines)):
+        indent = "    " if lines[i] else ""
+        lines[i] = indent + lines[i]
+    # Remove trailing blank lines
+    lines = lines if lines[-1] != "" else lines[:-1]
+    description = "\n".join(lines)
+    return description
+
+
 def generate_py_op_func(yaml_data, doc_data):
     """
     Generate operator python function api.
@@ -223,6 +242,7 @@ def generate_py_op_func(yaml_data, doc_data):
                     func_args.append(f"""{arg_name}={init_value}""")
                     init_args.append(arg_name)
 
+        description = _process_description(description)
         function_code = f"""\n
 def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"

@@ -2,38 +2,38 @@ eye:
   description: |
       Creates a tensor with ones on the diagonal and zeros in the rest.
 
-          Note:
-            An anti-diagonal Tensor can be produced by Eye and ReverseV2 operators,
-            but ReverseV2 only supports Ascend and GPU platforms currently.
+      Note:
+        An anti-diagonal Tensor can be produced by Eye and ReverseV2 operators,
+        but ReverseV2 only supports Ascend and GPU platforms currently.
 
-          Args:
-            n (int): The number of rows of returned tensor. Constant value only.
-            m (int): The number of columns of returned tensor. Constant value only.
-            dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
-              The data type can be bool or Number.
+      Args:
+        n (int): The number of rows of returned tensor. Constant value only.
+        m (int): The number of columns of returned tensor. Constant value only.
+        dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+          The data type can be bool or Number.
 
-          Returns:
-            Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
-            the user's Inputs `n` and `m`. And the data type depends on Inputs `dtype`.
+      Returns:
+        Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
+        the user's Inputs `n` and `m`. And the data type depends on Inputs `dtype`.
 
-          Raises:
-            TypeError: If `m` or `n` is not an int.
-            ValueError: If `m` or `n` is less than 0.
+      Raises:
+        TypeError: If `m` or `n` is not an int.
+        ValueError: If `m` or `n` is less than 0.
 
-          Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+      Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
-          Examples:
-            >>> import mindspore
-            >>> from mindspore import ops
-            >>> output = ops.eye(2, 2, mindspore.int32)
-            >>> print(output)
-            [[1 0]
-             [0 1]]
-            >>> print(output.dtype)
-            Int32
-            >>> output = ops.eye(1, 2, mindspore.float64)
-            >>> print(output)
-            [[1. 0.]]
-            >>> print(output.dtype)
-            Float64
+      Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> output = ops.eye(2, 2, mindspore.int32)
+        >>> print(output)
+        [[1 0]
+         [0 1]]
+        >>> print(output.dtype)
+        Int32
+        >>> output = ops.eye(1, 2, mindspore.float64)
+        >>> print(output)
+        [[1. 0.]]
+        >>> print(output.dtype)
+        Float64

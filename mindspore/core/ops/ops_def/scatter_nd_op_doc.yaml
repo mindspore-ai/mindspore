@@ -2,81 +2,81 @@ scatter_nd:
     description: |
         Scatters a tensor into a new tensor depending on the specified indices.
 
-            Refer to :func:`mindspore.ops.scatter_nd` for more details.
+        Refer to :func:`mindspore.ops.scatter_nd` for more details.
 
-            Args:
-                - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
-                      The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
-                - **updates** (Tensor) - The source Tensor to be scattered.
-                      It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
-                - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
-                      The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than or equal to 2.
-                      In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-                      And the value of any element in `shape` must be greater than or equal to 1.
-                      In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
+        Args:
+            - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
+                  The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+            - **updates** (Tensor) - The source Tensor to be scattered.
+                  It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
+            - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
+                  The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than or equal to 2.
+                  In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
+                  And the value of any element in `shape` must be greater than or equal to 1.
+                  In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
 
-            Returns:
-                Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
+        Returns:
+            Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-                >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
-                ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
-                ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
-                ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
-                >>> shape = (4, 4, 4)
-                >>> output = ops.scatter_nd(indices, updates, shape)
-                >>> print(output)
-                [[[1. 1. 1. 1.]
-                  [2. 2. 2. 2.]
-                  [3. 3. 3. 3.]
-                  [4. 4. 4. 4.]]
-                 [[0. 0. 0. 0.]
-                  [0. 0. 0. 0.]
-                  [0. 0. 0. 0.]
-                  [0. 0. 0. 0.]]
-                 [[1. 1. 1. 1.]
-                  [2. 2. 2. 2.]
-                  [3. 3. 3. 3.]
-                  [4. 4. 4. 4.]]
-                 [[0. 0. 0. 0.]
-                  [0. 0. 0. 0.]
-                  [0. 0. 0. 0.]
-                  [0. 0. 0. 0.]]]
-                >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-                >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
-                >>> shape = (3, 3)
-                >>> output = ops.scatter_nd(indices, updates, shape)
-                >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
-                >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
-                >>> # [
-                >>> #     [0. 0. 0.]
-                >>> #     [0. 0. 0.]
-                >>> #     [0. 0. 0.]
-                >>> # ]
-                >>> # Step 2: Modify the data at the specified location according to the indicators
-                >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
-                >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
-                >>> # [
-                >>> #     [0. 3.2. 0.]
-                >>> #     [0. 0.   0.]
-                >>> #     [0. 0.   0.]
-                >>> # ]
-                >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
-                >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
-                >>> # [
-                >>> #     [0. 3.2. 0.]
-                >>> #     [0. 1.1  0.]
-                >>> #     [0. 0.   0.]
-                >>> # ]
-                >>> # The final result is as follows:
-                >>> print(output)
-                [[0. 3.2 0.]
-                 [0. 1.1 0.]
-                 [0. 0.  0.]]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+            >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
+            ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
+            ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
+            ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
+            >>> shape = (4, 4, 4)
+            >>> output = ops.scatter_nd(indices, updates, shape)
+            >>> print(output)
+            [[[1. 1. 1. 1.]
+              [2. 2. 2. 2.]
+              [3. 3. 3. 3.]
+              [4. 4. 4. 4.]]
+             [[0. 0. 0. 0.]
+              [0. 0. 0. 0.]
+              [0. 0. 0. 0.]
+              [0. 0. 0. 0.]]
+             [[1. 1. 1. 1.]
+              [2. 2. 2. 2.]
+              [3. 3. 3. 3.]
+              [4. 4. 4. 4.]]
+             [[0. 0. 0. 0.]
+              [0. 0. 0. 0.]
+              [0. 0. 0. 0.]
+              [0. 0. 0. 0.]]]
+            >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+            >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
+            >>> shape = (3, 3)
+            >>> output = ops.scatter_nd(indices, updates, shape)
+            >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
+            >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
+            >>> # [
+            >>> #     [0. 0. 0.]
+            >>> #     [0. 0. 0.]
+            >>> #     [0. 0. 0.]
+            >>> # ]
+            >>> # Step 2: Modify the data at the specified location according to the indicators
+            >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
+            >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
+            >>> # [
+            >>> #     [0. 3.2. 0.]
+            >>> #     [0. 0.   0.]
+            >>> #     [0. 0.   0.]
+            >>> # ]
+            >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
+            >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
+            >>> # [
+            >>> #     [0. 3.2. 0.]
+            >>> #     [0. 1.1  0.]
+            >>> #     [0. 0.   0.]
+            >>> # ]
+            >>> # The final result is as follows:
+            >>> print(output)
+            [[0. 3.2 0.]
+             [0. 1.1 0.]
+             [0. 0.  0.]]

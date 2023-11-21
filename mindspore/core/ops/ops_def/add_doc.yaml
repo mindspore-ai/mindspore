@@ -2,53 +2,53 @@ add:
     description: |
         Adds other value to input Tensor.
 
-            .. math::
+        .. math::
 
-                out_{i} = input_{i} + other_{i}
+            out_{i} = input_{i} + other_{i}
 
-            Note:
-                - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-                  they must be able to broadcast to a common shape.
-                - The two inputs can not be bool type at the same time,
-                  [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
-                - The two inputs comply with the implicit type conversion rules to make the data types
-                  consistent.
+        Note:
+            - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+              they must be able to broadcast to a common shape.
+            - The two inputs can not be bool type at the same time,
+              [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
+            - The two inputs comply with the implicit type conversion rules to make the data types
+              consistent.
 
-            Args:
-                input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-                    a bool or a tensor whose data type is
-                    `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-                    `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-                other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-                    the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-                    When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
+        Args:
+            input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+                a bool or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
+                When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
 
-            Returns:
-                Tensor, the shape is the same as the one of the input `input` , `other` after broadcasting,
-                and the data type is the one with higher precision or higher digits among the two inputs.
+        Returns:
+            Tensor, the shape is the same as the one of the input `input` , `other` after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
 
-            Raises:
-                TypeError: If `input` and `other` is not one of the following: Tensor, number.Number, bool.
+        Raises:
+            TypeError: If `input` and `other` is not one of the following: Tensor, number.Number, bool.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> # case 1: x and y are both Tensor.
-                >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-                >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
-                >>> output = ops.add(x, y)
-                >>> print(output)
-                [5. 7. 9.]
-                >>> # case 2: x is a scalar and y is a Tensor
-                >>> x = Tensor(1, mindspore.int32)
-                >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
-                >>> output = ops.add(x, y)
-                >>> print(output)
-                [5. 6. 7.]
-                >>> # the data type of x is int32, the data type of y is float32,
-                >>> # and the output is the data format of higher precision float32.
-                >>> print(output.dtype)
-                Float32
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> # case 1: x and y are both Tensor.
+            >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+            >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+            >>> output = ops.add(x, y)
+            >>> print(output)
+            [5. 7. 9.]
+            >>> # case 2: x is a scalar and y is a Tensor
+            >>> x = Tensor(1, mindspore.int32)
+            >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+            >>> output = ops.add(x, y)
+            >>> print(output)
+            [5. 6. 7.]
+            >>> # the data type of x is int32, the data type of y is float32,
+            >>> # and the output is the data format of higher precision float32.
+            >>> print(output.dtype)
+            Float32

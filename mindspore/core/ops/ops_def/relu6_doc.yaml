@@ -2,31 +2,31 @@ relu6:
     description: |
         Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 
-            .. math::
+        .. math::
 
-                \text{ReLU6}(x) = \min(\max(0,x), 6)
+            \text{ReLU6}(x) = \min(\max(0,x), 6)
 
-            It returns :math:`\min(\max(0,x), 6)` element-wise.
+        It returns :math:`\min(\max(0,x), 6)` element-wise.
 
-            Args:
-                x (Tensor): Input Tensor of float16 or float32 data type.
+        Args:
+            x (Tensor): Input Tensor of float16 or float32 data type.
 
-            Returns:
-                Tensor, with the same dtype and shape as the `x`.
+        Returns:
+            Tensor, with the same dtype and shape as the `x`.
 
-            Raises:
-                TypeError: If dtype of `x` is neither float16 nor float32.
-                TypeError: If `x` is not a Tensor.
+        Raises:
+            TypeError: If dtype of `x` is neither float16 nor float32.
+            TypeError: If `x` is not a Tensor.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-                >>> result = ops.relu6(x)
-                >>> print(result)
-                [[0. 4. 0.]
-                 [2. 0. 6.]]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> result = ops.relu6(x)
+            >>> print(result)
+            [[0. 4. 0.]
+             [2. 0. 6.]]

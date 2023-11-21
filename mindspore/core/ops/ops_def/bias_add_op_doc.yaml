@@ -3,33 +3,33 @@ bias_add:
         Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
         consistent with the shape of the input Tensor.
 
-            Args:
-                - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
-                - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-                  `input_x`.
-                - **data_format** (str, optional): The format of input and output data.
-                                   It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
-                                   Default is ``"NCHW"`` .
+        Args:
+            - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
+            - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+                `input_x`.
+            - **data_format** (str, optional): The format of input and output data.
+                                It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
+                                Default is ``"NCHW"`` .
 
-            Returns:
-                Tensor, with the same shape and data type as `input_x`.
+        Returns:
+            Tensor, with the same shape and data type as `input_x`.
 
-            Raises:
-                TypeError: If `data_format` is not a str.
-                ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
-                TypeError: If `input_x` or `bias` is not a Tensor.
-                TypeError: If dtype of `input_x` or `bias` is inconsistent.
-                TypeError: If dimension of `input_x` is not in the range [2, 5].
+        Raises:
+            TypeError: If `data_format` is not a str.
+            ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
+            TypeError: If `input_x` or `bias` is not a Tensor.
+            TypeError: If dtype of `input_x` or `bias` is inconsistent.
+            TypeError: If dimension of `input_x` is not in the range [2, 5].
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
-                >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
-                >>> output = ops.bias_add(input_x, bias)
-                >>> print(output.shape)
-                (2, 3)
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+            >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
+            >>> output = ops.bias_add(input_x, bias)
+            >>> print(output.shape)
+            (2, 3)

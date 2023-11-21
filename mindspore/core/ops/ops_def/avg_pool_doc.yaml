@@ -2,54 +2,54 @@ avg_pool:
   description: |
     Average pooling operation.
 
-        Args:
-            x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-            kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
-                is an int number that represents height and width of the kernel, or a tuple
-                of two int numbers that represent height and width respectively. Default: 1.
-            strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-                the height and width of movement are both strides, or a tuple of two int numbers that
-                represent height and width of movement respectively. Default: 1.
-            pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
-                Default: 'valid'.
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
+            Default: 'valid'.
 
-                - same: The height and width of the output are the same as the input divided by 'strides'
-                and rounded up.
+            - same: The height and width of the output are the same as the input divided by 'strides'
+            and rounded up.
 
-                - valid: Returns the output of the valid calculation without filling. Redundant pixels that
-                do not satisfy the calculation will be discarded.
-            data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
-                Default: 'NCHW'.
+            - valid: Returns the output of the valid calculation without filling. Redundant pixels that
+            do not satisfy the calculation will be discarded.
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
-        Returns:
-            output(Tensor), with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+    Returns:
+        output(Tensor), with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
-        Raises:
-            TypeError: If `kernel_size` or `strides` is neither int nor tuple.
-            ValueError: If `kernel_size` or `strides` is less than 1.
-            ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
-            ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
-            ValueError: If length of shape of `x` is not equal to 4.
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If length of shape of `x` is not equal to 4.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> class Net(nn.Cell):
-            ...     def __init__(self):
-            ...         super(Net, self).__init__()
-            ...
-            ...     def construct(self, x):
-            ...         result = ops.avg_pool_(x, kernel_size=2, strides=1, pad_mode="VALID", data_format="NCHW")
-            ...         return result
-            ...
-            >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
-            >>> net = Net()
-            >>> output = net(x)
-            >>> print(output)
-            [[[[ 2.5   3.5   4.5]
-            [ 6.5   7.5   8.5]]
-            [[14.5  15.5  16.5]
-            [18.5  19.5  20.5]]
-            [[26.5  27.5  28.5]
-            [30.5  31.5  32.5]]]]
+    Examples:
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...
+        ...     def construct(self, x):
+        ...         result = ops.avg_pool_(x, kernel_size=2, strides=1, pad_mode="VALID", data_format="NCHW")
+        ...         return result
+        ...
+        >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+        >>> net = Net()
+        >>> output = net(x)
+        >>> print(output)
+        [[[[ 2.5   3.5   4.5]
+        [ 6.5   7.5   8.5]]
+        [[14.5  15.5  16.5]
+        [18.5  19.5  20.5]]
+        [[26.5  27.5  28.5]
+        [30.5  31.5  32.5]]]]

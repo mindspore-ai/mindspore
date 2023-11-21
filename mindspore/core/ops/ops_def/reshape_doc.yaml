@@ -2,32 +2,32 @@ reshape:
     description: |
         Rearranges the input Tensor based on the given shape.
 
-            The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
-            the number of elements in the input.
+        The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+        the number of elements in the input.
         
-            Args:
-                input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-                shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
-                    integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
+        Args:
+            input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+            shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
+                integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
         
-            Returns:
-                Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+        Returns:
+            Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
         
-            Raises:
-                ValueError: Given a shape tuple, if it has several -1; or if the product
-                    of its elements is less than or equal to 0 or cannot be divided by the product
-                    of the input tensor shape; or if it does not match the input's array size.
+        Raises:
+            ValueError: Given a shape tuple, if it has several -1; or if the product
+                of its elements is less than or equal to 0 or cannot be divided by the product
+                of the input tensor shape; or if it does not match the input's array size.
         
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
         
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-                >>> output = ops.reshape(input, (3, 2))
-                >>> print(output)
-                [[-0.1  0.3]
-                 [ 3.6  0.4]
-                 [ 0.5 -3.2]]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> output = ops.reshape(input, (3, 2))
+            >>> print(output)
+            [[-0.1  0.3]
+             [ 3.6  0.4]
+             [ 0.5 -3.2]]

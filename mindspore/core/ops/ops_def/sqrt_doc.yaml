@@ -2,30 +2,30 @@ sqrt:
     description: |  
         Returns square root of a tensor element-wise.
 
-            Note:
-                When there are some negative number, it will return a Tensor whose specific position is nan.
+        Note:
+            When there are some negative number, it will return a Tensor whose specific position is nan.
 
-            .. math::
+        .. math::
 
-                out_{i} =  \sqrt{x_{i}}
+            out_{i} =  \sqrt{x_{i}}
 
-            Args:
-                - **x** (Tensor) - The input tensor.
+        Args:
+            - **x** (Tensor) - The input tensor.
 
-            Returns:
-                Tensor, has the same shape and data type as the `x`.
+        Returns:
+            Tensor, has the same shape and data type as the `x`.
 
-            Raises:
-                TypeError: If `x` is not a Tensor.
+        Raises:
+            TypeError: If `x` is not a Tensor.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
-                >>> output = ops.sqrt(x)
-                >>> print(output)
-                [1. 2. 3.]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
+            >>> output = ops.sqrt(x)
+            >>> print(output)
+            [1. 2. 3.]

@@ -2,26 +2,26 @@ ceil:
     description: |
         Rounds a tensor up to the closest integer element-wise.
 
-            Refer to :func:`mindspore.ops.ceil` for more details.
+        Refer to :func:`mindspore.ops.ceil` for more details.
 
-            Inputs:
-                - **x** (Tensor) - The input tensor with a dtype of float16 or float32.
+        Inputs:
+            - **x** (Tensor) - The input tensor with a dtype of float16 or float32.
 
-            Outputs:
-                Tensor, has the same shape as `x`.
+        Outputs:
+            Tensor, has the same shape as `x`.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-                >>> output = ops.ceil(x)
-                >>> print(output)
-                [ 2.  3. -1.]
-                >>> x = Tensor(2.1, mindspore.float32)
-                >>> output = ops.ceil(x)
-                >>> print(output)
-                3.0
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+            >>> output = ops.ceil(x)
+            >>> print(output)
+            [ 2.  3. -1.]
+            >>> x = Tensor(2.1, mindspore.float32)
+            >>> output = ops.ceil(x)
+            >>> print(output)
+            3.0
