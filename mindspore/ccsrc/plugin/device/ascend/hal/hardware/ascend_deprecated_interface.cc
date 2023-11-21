@@ -413,7 +413,8 @@ void SetContextSocVersion(MsContext *ctx) {
   const std::map<std::string, std::string> kAscendSocVersions = {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"}};
   // Get default soc version.
   static std::string version;
   if (version.empty()) {

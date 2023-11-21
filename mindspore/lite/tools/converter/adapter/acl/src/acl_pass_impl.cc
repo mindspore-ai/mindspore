@@ -96,7 +96,8 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
-const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
+                                                       "Ascend910B4"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
