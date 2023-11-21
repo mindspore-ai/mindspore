@@ -93,6 +93,5 @@ def test_real_div_vmap(mode):
     y = Tensor(np.array([[[4.0, 5.0, 6.0]]]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(real_div_forward_func, in_axes=(0, 0)), in_axes=(0, 0))
     output = nest_vmap(x, y)
-    print("output:", output)
     expect_out = real_div_forward_func(x, y)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())

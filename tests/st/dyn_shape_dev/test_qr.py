@@ -48,7 +48,6 @@ def test_qr_forward(mode):
                          [4, 270, -90],
                          [-8, 17, -32]]).astype(np.float32))
     output_q, output_r = qr_forward_func(x, False)
-    print("output_q:\n", output_q)
     print("output_r:\n", output_r)
     expect_output_q = np.asarray([[-0.912871, 0.16366126, 0.37400758],
                                   [-0.18257418, -0.9830709, -0.01544376],

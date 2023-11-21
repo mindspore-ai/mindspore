@@ -49,7 +49,6 @@ def test_hswish_grad_forward(mode):
         [0.16666667, -0.16666667, 0.5, 1.1666666, 0.8333333]).astype(np.float32))
     expect_out = np.array([0.02777778, 0.02777778, 0.25, 1.361111, 0.6944444])
     out = hswish_grad_forward_func(y_grad, x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -75,7 +74,6 @@ def test_hswish_grad_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(
         hswish_grad_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(y_grad, x)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
@@ -100,14 +98,12 @@ def test_hswish_grad_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hswish_grad_dyn_shape_func)
     test_cell.set_inputs(y_grad_dyn, x_dyn)
     out = test_cell(y_grad, x)
-    print("out:", out)
     expect = np.array([[0.02777778, 0.02777778, 0.25, 1.361111, 0.6944444]])
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[-2, 0, 2], [-1, 0, 2]]), ms.float32)
     y_grad1 = ms.Tensor(np.array(
         [[-0.33333334, 0., 1.6666667], [-0.33333333, 0., 1.6666667]]).astype(np.float32))
     out1 = test_cell(y_grad1, x1)
-    print("out:", out1)
     expect1 = np.array(
         [[0.05555556, 0., 1.9444447], [-0.05555555, 0., 1.9444447]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
@@ -134,14 +130,12 @@ def test_hswish_grad_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hswish_grad_dyn_shape_func)
     test_cell.set_inputs(y_grad_dyn, x_dyn)
     out = test_cell(y_grad, x)
-    print("out:", out)
     expect = np.array([[0.02777778, 0.02777778, 0.25, 1.361111, 0.6944444]])
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     x1 = ms.Tensor(np.array([[-2, 0, 2], [-1, 0, 2]]), ms.float32)
     y_grad1 = ms.Tensor(np.array(
         [[-0.33333334, 0., 1.6666667], [-0.33333333, 0., 1.6666667]]).astype(np.float32))
     out1 = test_cell(y_grad1, x1)
-    print("out:", out1)
     expect1 = np.array(
         [[0.05555556, 0., 1.9444447], [-0.05555555, 0., 1.9444447]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)

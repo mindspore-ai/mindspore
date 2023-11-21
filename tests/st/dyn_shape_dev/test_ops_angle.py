@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 from mindspore import Tensor, context
@@ -37,4 +38,3 @@ def test_Angle_op_cpu(data_type):
     x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
     context.set_context(mode=context.GRAPH_MODE, precompile_only=True)
     output = angle_forward_func(x)
-    print(f"output:{output}")

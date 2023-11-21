@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 import mindspore as ms
@@ -45,7 +46,6 @@ def test_randperm_v2_forward(mode):
     """
     context.set_context(mode=mode)
     output = randperm_v2_forward_func(4)
-    print("output:", output)
     np.testing.assert_equal(output.shape, (4,))
     np.testing.assert_equal(output.dtype, mstype.float16)
 
@@ -64,4 +64,3 @@ def test_randperm_v2_backward(mode):
     """
     context.set_context(mode=mode)
     output = randperm_v2_backward_func(4)
-    print("output:", output)

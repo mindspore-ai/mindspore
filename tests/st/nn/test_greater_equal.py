@@ -45,7 +45,6 @@ def test_greater_equal_forward():
     y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
     expect_out = np.array([True, True, False])
     out = greater_equal_forward_func(x, y)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out)
 
 
@@ -64,7 +63,6 @@ def test_greater_equal_backward():
     y = ms.Tensor(np.array([1, 1, 4]), ms.float32)
     expect_out = np.array([0, 0, 0])
     grads = greater_equal_backward_func(x, y)
-    print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect_out)
 
 
@@ -85,5 +83,4 @@ def test_greater_equal_vmap():
     nest_vmap = ops.vmap(ops.vmap(
         greater_equal_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x, y)
-    print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out)

@@ -88,6 +88,5 @@ def test_sin_vmap(mode):
     x = Tensor(np.array([[[0.62, 0.28, 0.43, 0.62]]]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(sin_forward_func))
     output = nest_vmap(x)
-    print("output:", output)
     expect_out = sin_forward_func(x)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())

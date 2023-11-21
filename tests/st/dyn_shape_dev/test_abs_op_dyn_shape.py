@@ -30,12 +30,10 @@ def eltwise_case(prim_func, expect_func, expect_grad_func, mode, inputs_np=None)
     # inputs data
     input_args = get_inputs_tensor(inputs_np)
     # forward:
-    print("start forward test:", flush=True)
     output = prim_func(*input_args)
     expect_output = expect_func(*inputs_np)
     compare(output, expect_output)
     # backward:
-    print("start backward test:", flush=True)
     output_grad = ops.grad(prim_func)(*input_args)
     expect_grad = expect_grad_func(inputs_np, expect_output)
     compare(output_grad, expect_grad)

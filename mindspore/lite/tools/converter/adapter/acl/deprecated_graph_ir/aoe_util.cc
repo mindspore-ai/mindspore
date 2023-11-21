@@ -25,6 +25,7 @@
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
+#include "deprecated_graph_ir/aoe_util.h"
 
 namespace mindspore {
 namespace transform {

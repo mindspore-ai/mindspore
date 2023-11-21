@@ -55,7 +55,6 @@ def test_gelu_grad_forward(mode):
     x = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))
     y = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))
     out = gelu_grad_forward_func(dy, x, y)
-    print("out: ", out)
     expect = np.array([1.1728112, 1.1796116, 1.0233028]).astype('float32')
     assert np.allclose(out.asnumpy(), expect)
 
@@ -82,7 +81,6 @@ def test_gelu_grad_dynamic(mode):
     test_cell = test_utils.to_cell_obj(gelu_grad_dyn_shape_func)
     test_cell.set_inputs(dy_dyn, x_dyn, y_dyn)
     out = test_cell(dy, x, y)
-    print("out:", out)
     expect = np.array([1.1728112, 1.1796116, 1.0233028]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     dy1 = Tensor(

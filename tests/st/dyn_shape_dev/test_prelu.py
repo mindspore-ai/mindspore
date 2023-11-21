@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=unused-variable
 import pytest
 import numpy as np
 import mindspore as ms
@@ -47,7 +48,6 @@ def test_prelu_forward(mode):
     x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
     weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
     output = prelu_forward_func(x, weight)
-    print("output:", output)
     expect_output = np.array([[[-0.6, -0.5],
                                [-2.4, -1.8],
                                [0.6, 0.3]],
@@ -74,4 +74,3 @@ def test_prelu_backward(mode):
     x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
     weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
     output = prelu_backward_func(x, weight)
-    print("output:", output)

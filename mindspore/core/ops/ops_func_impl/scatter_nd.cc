@@ -33,13 +33,11 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const BaseShapePtr &indices_s
   const auto &indices_shape = indices_shape_base->GetShapeVector();
   const auto &updates_shape = updates_shape_base->GetShapeVector();
   if (IsDynamicRank(indices_shape)) return;
-
   MS_CHECK_VALUE(indices_shape.size() >= kIndicesMinRank,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("rank(indices)", SizeToLong(indices_shape.size()),
                                                              kGreaterEqual, kIndicesMinRank, prim));
 
   if (IsDynamicRank(out_shape) || IsDynamicRank(updates_shape) || IsDynamicShape(indices_shape)) return;
-
   size_t n = LongToSize(indices_shape.back());
   if (n > out_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name()
@@ -59,7 +57,6 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const BaseShapePtr &indices_s
   }
 
   if (IsDynamicShape(out_shape) || IsDynamicShape(updates_shape)) return;
-
   // updates.shape = indices.shape[:-1] + shape[indices.shape[-1]:]
   bool constrain = true;
   for (size_t i = 0; i + 1 < indices_shape.size(); ++i) {

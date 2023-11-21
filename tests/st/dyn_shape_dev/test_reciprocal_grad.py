@@ -42,7 +42,6 @@ def test_reciprocal_grad(mode):
     y = Tensor(np.array([1., 0.5, 0.25]).astype(np.float32))
     dy = Tensor(np.array([1., 1., 1.]).astype(np.float32))
     output = reciprocal_grad_func(y, dy)
-    print("output:\n", output)
     expect_output = np.asarray([-1., -0.25, -0.0625]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)
 
@@ -65,7 +64,6 @@ def test_reciprocal_grad_vmap(mode):
     dy = Tensor(np.array([[[1., 1., 1.]]]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(reciprocal_grad_func))
     output = nest_vmap(y, dy)
-    print("output:", output)
     expect_out = reciprocal_grad_func(y, dy)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
 
@@ -91,7 +89,6 @@ def test_reciprocal_grad_dynamic(mode):
     y1 = Tensor(np.array([1., 0.5, 0.25]).astype(np.float32))
     dy1 = Tensor(np.array([1., 1., 1.]).astype(np.float32))
     output1 = test_cell(y1, dy1)
-    print("output1:", output1)
     expect_output1 = np.asarray([-1., -0.25, -0.0625]).astype(np.float32)
     np.testing.assert_array_almost_equal(output1.asnumpy(), expect_output1, decimal=4)
     y2 = Tensor(np.array([[1.0, 0.5],
@@ -99,7 +96,6 @@ def test_reciprocal_grad_dynamic(mode):
     dy2 = Tensor(np.array([[1., 1.],
                            [1., 1.]]).astype(np.float32))
     output2 = test_cell(y2, dy2)
-    print("output2:", output2)
     expect_output2 = np.asarray([[-1., -0.25],
                                  [-0.0625, -0.04]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output2.asnumpy(), expect_output2, decimal=4)

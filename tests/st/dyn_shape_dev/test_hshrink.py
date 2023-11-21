@@ -77,7 +77,6 @@ def test_hshrink_backward(context_mode):
     input_x = Tensor(np_array)
     lambd = 0.5
     grads = hshrink_backward_func(input_x, lambd)
-    print("grads: ", grads)
     expect = np.array([[0., 1., 1.], [0., 0., 1]]).astype('float32')
     assert np.allclose(grads.asnumpy(), expect)
 
@@ -102,7 +101,6 @@ def test_hshrink_vmap(context_mode):
     lambd = 0.5
     nest_vmap = ops.vmap(ops.vmap(hshrink_forward_func, in_axes=in_axes), in_axes=in_axes)
     out = nest_vmap(input_x, lambd)
-    print("vmap out: ", out)
     expect = np.array(
         [[[0, 1., 2.], [0., 0., -2.1233]]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
@@ -129,7 +127,6 @@ def test_hshrink_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hshrink_dyn_shape_func)
     test_cell.set_inputs(x_dyn, lambd)
     out = test_cell(input_x, lambd)
-    print("out:", out)
     expect = np.array([[0., 1., 2.], [0., 0., -2.1233]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     input_x1 = Tensor(np.array(
@@ -138,7 +135,6 @@ def test_hshrink_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hshrink_dyn_shape_func)
     test_cell.set_inputs(x_dyn, lambd)
     out1 = test_cell(input_x1, lambd)
-    print("out:", out)
     expect1 = np.array(
         [[0., 0., 0., 1.], [0., 1.0776, -2.1233, 0]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
@@ -165,7 +161,6 @@ def test_hshrink_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hshrink_dyn_shape_func)
     test_cell.set_inputs(x_dyn, lambd)
     out = test_cell(input_x, lambd)
-    print("out:", out)
     expect = np.array([[0., 1., 2.], [0., 0., -2.1233]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
     input_x1 = Tensor(np.array(
@@ -174,7 +169,6 @@ def test_hshrink_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hshrink_dyn_shape_func)
     test_cell.set_inputs(x_dyn, lambd)
     out1 = test_cell(input_x1, lambd)
-    print("out:", out)
     expect1 = np.array(
         [[0., 0., 0., 1.], [0., 1.0776, -2.1233, 0]]).astype('float32')
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)

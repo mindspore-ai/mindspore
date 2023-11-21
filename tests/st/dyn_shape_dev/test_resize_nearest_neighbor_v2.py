@@ -56,7 +56,6 @@ def test_resize_nearest_neighbor_v2_op_forward(context_mode, data_type):
     out = resize_nearest_neighbor_v2_forward_func(x, size, align_corners, half_pixel_centers)
     expect_out = np.array([[[[-0.1, 3.6], [0.4, -3.2]]]]).astype(data_type)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -80,7 +79,6 @@ def test_resize_nearest_neighbor_v2_op_backward(context_mode, data_type):
     grads = resize_nearest_neighbor_v2_backward_func(x, size, align_corners, half_pixel_centers)
     expect_out = np.array([[[[1., 0., 1.], [1., 0., 1.]]]]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-4)
-    print("grads:", grads)
 
 
 @pytest.mark.level0

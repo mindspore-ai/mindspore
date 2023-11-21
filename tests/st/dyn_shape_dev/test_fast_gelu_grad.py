@@ -49,7 +49,6 @@ def test_fastgelugrad_op_forward(context_mode, data_type):
     out = fastgelugrad_forward_func(dy, x)
     expect_out = np.array([1.06778, 2.14763, 3.073645]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -69,7 +68,6 @@ def test_fastgelugrad_op_forward_ascend(context_mode, data_type):
     out = fastgelugrad_forward_func(dy, x)
     expect_out = np.array([1.069909, 2.145001, 3.068479]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -90,7 +88,6 @@ def test_fastgelugrad_op_vmap(context_mode, data_type):
     out = fastgelugrad_vmap_func(dy, x)
     expect_out = np.array([1.06778, 2.14763, 3.073645]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("vmap:", out)
 
 
 @pytest.mark.level0
@@ -110,4 +107,3 @@ def test_fastgelugrad_op_vmap_ascend(context_mode, data_type):
     out = fastgelugrad_vmap_func(dy, x)
     expect_out = np.array([1.069909, 2.145001, 3.068479]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
-    print("vmap:", out)

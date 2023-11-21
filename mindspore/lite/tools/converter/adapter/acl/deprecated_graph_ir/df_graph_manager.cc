@@ -21,6 +21,7 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/ps/base.h"
 #include "utils/phase.h"
+#include "deprecated_graph_ir/df_graph_manager.h"
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
 #endif

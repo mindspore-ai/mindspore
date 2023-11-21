@@ -66,7 +66,6 @@ def test_reciprocal_backward(mode):
     context.set_context(mode=mode)
     x = Tensor(np.array([1.0, 2.0, 4.0]).astype(np.float32))
     output = reciprocal_backward_func(x)
-    print("output:\n", output)
     expect_output = np.asarray([-1., -0.25, -0.0625]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)
 
@@ -88,7 +87,6 @@ def test_reciprocal_vmap(mode):
     x = Tensor(np.array([[[1.0, 2.0, 4.0]]]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(reciprocal_forward_func))
     output = nest_vmap(x)
-    print("output:", output)
     expect_out = reciprocal_forward_func(x)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
 

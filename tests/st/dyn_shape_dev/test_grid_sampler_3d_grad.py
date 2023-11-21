@@ -92,7 +92,6 @@ def test_grid_sampler_3d_grad_forward(mode):
                             [[[[2.54000244e+01, 5.07999573e+01, 1.01599991e+02]]],
                              [[[2.64499817e+01, 5.28999634e+01, 1.05799973e+02]]]]])
     out = grid_sampler_3d_grad_forward_func(grad, input_x, grid)
-    print("out:", out)
     assert np.allclose(out[0].asnumpy(), expect_out1, 1e-04, 1e-04)
     assert np.allclose(out[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
@@ -167,6 +166,5 @@ def test_grid_sampler_3d_grad_vmap(mode):
     nest_vmap = ops.vmap(grid_sampler_3d_grad_forward_vmap,
                          in_axes=in_axes, out_axes=0)
     out = nest_vmap(grad, input_x, grid)
-    print("out:", out)
     assert np.allclose(out[0].asnumpy(), expect_out1, 1e-04, 1e-04)
     assert np.allclose(out[1].asnumpy(), expect_out2, 1e-04, 1e-04)

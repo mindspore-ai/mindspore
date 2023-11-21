@@ -42,7 +42,6 @@ def test_geqrf_forward(mode):
                             [-0.236068, 1.3416407]])
     expect_out2 = np.array([1.8944271, 0.])
     out = geqrf_forward_func(x)
-    print("out:", out)
     assert np.allclose(out[0].asnumpy(), expect_out1)
     assert np.allclose(out[1].asnumpy(), expect_out2)
 
@@ -72,6 +71,5 @@ def test_geqrf_vmap(mode):
                              [0.00000000e+00]],
                             [[0.00000000e+00],
                              [0.00000000e+00]]])
-    print("out:", out)
     assert np.allclose(out[0].asnumpy(), expect_out1)
     assert np.allclose(out[1].asnumpy(), expect_out2)

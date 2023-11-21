@@ -55,7 +55,6 @@ def test_neg_op_forward(context_mode, data_type):
     out = neg_forward_func(x)
     expect_out = np.array([-1., -2., 1., -2., 0., 3.5]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -77,7 +76,6 @@ def test_neg_op_backward(context_mode, data_type):
     grads = neg_backward_func(x)
     expect_out = np.array([-1., -1., -1., -1., -1., -1.]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -99,4 +97,3 @@ def test_neg_op_vmap(context_mode, data_type):
     out = neg_vmap_func(x)
     expect_out = np.array([-1., -2., 1., -2., 0., 3.5]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("vmap:", out)

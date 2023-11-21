@@ -51,7 +51,6 @@ def test_diag_forward(mode):
     context.set_context(mode=mode)
     input_x = ms.Tensor(np.array([1, 2, 5]), ms.float16)
     out = diag_forward_func(input_x)
-    print("out:", out)
     expect = np.array([[1, 0, 0],
                        [0, 2, 0],
                        [0, 0, 5]]).astype(np.float16)

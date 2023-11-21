@@ -52,7 +52,6 @@ def test_hshrink_grad_forward(context_mode):
     features = Tensor(np_array)
     lambd = 0.5
     out = hshrink_grad_forward_func(gradients, features, lambd)
-    print("out: ", out)
     expect = np.array([[0., 1., 2.], [0., 0., -2.1233]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect)
 
@@ -80,7 +79,6 @@ def test_hshrink_grad_vmap(context_mode):
     nest_vmap = ops.vmap(
         ops.vmap(hshrink_grad_forward_func, in_axes=in_axes), in_axes=in_axes)
     out = nest_vmap(gradients, features, lambd)
-    print("vmap out: ", out)
     expect = np.array(
         [[0., 1., 2.], [0., 0., -2.1233]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
@@ -108,7 +106,6 @@ def test_hshrink_grad_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hshrink_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn, lambd)
     out = test_cell(gradients, features, lambd)
-    print("out:", out)
     expect = np.array([[0., 1., 2.], [0., 0., -2.1233]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
@@ -120,7 +117,6 @@ def test_hshrink_grad_dynamic(mode):
     test_cell = test_utils.to_cell_obj(hshrink_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn, lambd)
     out = test_cell(gradients1, features1, lambd)
-    print("out:", out)
     expect = np.array(
         [[0., 1., 2., 0], [0., 0., -2.1233, 0.6]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
@@ -148,7 +144,6 @@ def test_hshrink_grad_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hshrink_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn, lambd)
     out = test_cell(gradients, features, lambd)
-    print("out:", out)
     expect = np.array([[0., 1., 2.], [0., 0., -2.1233]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
@@ -160,7 +155,6 @@ def test_hshrink_grad_dynamic_rank(mode):
     test_cell = test_utils.to_cell_obj(hshrink_grad_dyn_shape_func)
     test_cell.set_inputs(grads_dyn, x_dyn, lambd)
     out = test_cell(gradients1, features1, lambd)
-    print("out:", out)
     expect = np.array(
         [[0., 1., 2., 0], [0., 0., -2.1233, 0.6]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)

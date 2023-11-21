@@ -50,7 +50,6 @@ def test_softmax_op(mode):
     assert out.asnumpy().shape == expect_shape
     logits = Tensor(np.array([1, 2, 3, 4, 5]), mstype.float32)
     output = softmax_forward_func(logits)
-    print(output)
     expect_out = np.array([0.01165623, 0.03168492, 0.08612854, 0.23412167, 0.6364086]).astype(np.float32)
     assert np.allclose(output.asnumpy(), expect_out, 1e-04, 1e-04)
 

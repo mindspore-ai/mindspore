@@ -107,7 +107,6 @@ def test_grid_sampler_2d_grad_forward(mode):
                               [0.00000000e+00, 0.00000000e+00],
                               [0.00000000e+00, 0.00000000e+00]]]])
     out = grid_sampler_2d_grad_forward_func(grad, input_x, grid)
-    print("out:", out)
     assert (expect_out1 == out[0].asnumpy()).all()
     assert (expect_out2 == out[1].asnumpy()).all()
 
@@ -196,6 +195,5 @@ def test_grid_sampler_2d_grad_vmap(mode):
     nest_vmap = ops.vmap(grid_sampler_2d_forward_vmap,
                          in_axes=in_axes, out_axes=0)
     out = nest_vmap(grad, input_x, grid)
-    print("out:", out)
     assert (expect_out1 == out[0].asnumpy()).all()
     assert (expect_out2 == out[1].asnumpy()).all()

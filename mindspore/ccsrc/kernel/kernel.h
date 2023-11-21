@@ -674,7 +674,6 @@ class BACKEND_EXPORT KernelMod {
   // Initialization for the kernel mod.
   inline bool Init_(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
                     const std::vector<KernelTensorPtr> &outputs) {
-    // MS_EXCEPTION_IF_NULL(op);
     this->op_ = op;
     inputs_ = inputs;
     outputs_ = outputs;

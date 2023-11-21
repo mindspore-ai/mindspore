@@ -76,7 +76,6 @@ def test_gelu_backward(mode):
     np_array = np.array([1.0, 2.0, 3.0]).astype('float32')
     x = Tensor(np_array)
     grads = gelu_backward_func(x)
-    print("grads: ", grads)
     expect = np.array([1.0829641, 1.0860993, 1.0115843]).astype('float32')
     assert np.allclose(grads.asnumpy(), expect)
 
@@ -99,7 +98,6 @@ def test_gelu_vmap(mode):
     x = Tensor(np_array)
     nest_vmap = ops.vmap(ops.vmap(gelu_forward_func, in_axes=0), in_axes=0)
     out = nest_vmap(x)
-    print("vmap out: ", out)
     expect = np.array(
         [[0.345714, 0.26216117, -0.11462908, -0.08414857]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)

@@ -50,7 +50,6 @@ def test_nonzero_op_forward(context_mode, data_type):
     out = nonzero_forward_func(x)
     expect_out = np.array([[0], [1], [2], [3], [4]]).astype(np.int64)
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -72,4 +71,3 @@ def test_nonzero_op_backward(context_mode, data_type):
     grads = nonzero_backward_func(x)
     expect_out = np.array([0., 0., 0., 0., 0.]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-3)
-    print("grads:", grads)
