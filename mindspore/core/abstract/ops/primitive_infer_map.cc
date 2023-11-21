@@ -126,7 +126,7 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
     auto dyn_size = GetValue<int64_t>((*dyn_input_list)[i]);
     MS_LOG(DEBUG) << "The input " << i << " dynamic input size is " << dyn_size;
     if (dyn_size == -1) {
-      (void)rec_depend_list.emplace(i);
+      (void)rec_depend_list.emplace(start_index);
       continue;
     }
     while (dyn_size >= 0) {
