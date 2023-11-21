@@ -49,9 +49,10 @@ int RemakeTupleIndexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
   return KRET_OK;
 }
 
-bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &outputs) {
-  auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->addr);
+bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->device_ptr());
   size_t ellipse_position = 0;
   size_t not_ellipsis_position_cnt = 0;
   for (size_t i = 0; i < 8; i++) {
@@ -64,15 +65,16 @@ bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   std::vector<char *> inputs_host;
 
   for (size_t i = 0; i < ellipse_position; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + i]->device_ptr()));
   }
   size_t ellipse_count = valid_tensor_num_ - not_ellipsis_position_cnt;
   for (size_t i = 0; i < ellipse_count; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->addr));
+    (void)inputs_host.emplace_back(
+      reinterpret_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->device_ptr()));
   }
   size_t remain_dims = valid_tensor_num_ - inputs_host.size();
   for (size_t i = 0; i < remain_dims; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + ellipse_position + i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + ellipse_position + i]->device_ptr()));
   }
   // multi-threading
   size_t copy_time = output_size_list_[0] / sizeof(int64_t);

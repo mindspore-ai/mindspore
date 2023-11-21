@@ -71,8 +71,9 @@ std::vector<KernelAttr> ReservoirReplayBufferCreateGpuKernel::GetOpSupport() {
   return support_list;
 }
 
-bool ReservoirReplayBufferCreateGpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ReservoirReplayBufferCreateGpuKernel::Launch(const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
@@ -102,15 +103,21 @@ bool ReservoirReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> 
   return true;
 }
 
-bool ReservoirReplayBufferPushGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ReservoirReplayBufferPushGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
 
-  return reservior_replay_buffer_->Push(inputs, stream);
+  std::vector<AddressPtr> inputs_addr;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto input_addr = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
+    inputs_addr.push_back(input_addr);
+  }
+  return reservior_replay_buffer_->Push(inputs_addr, stream);
 }
 
 std::vector<KernelAttr> ReservoirReplayBufferPushGpuKernel::GetOpSupport() {
@@ -136,9 +143,15 @@ bool ReservoirReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *
   return true;
 }
 
-bool ReservoirReplayBufferSampleGpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  return reservior_replay_buffer_->Sample(batch_size_, outputs, reinterpret_cast<cudaStream_t>(stream_ptr));
+bool ReservoirReplayBufferSampleGpuKernel::Launch(const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  std::vector<AddressPtr> outputs_addr;
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto output_addr = std::make_shared<Address>(outputs[i]->device_ptr(), outputs[i]->size());
+    outputs_addr.push_back(output_addr);
+  }
+  return reservior_replay_buffer_->Sample(batch_size_, outputs_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 }
 
 std::vector<KernelAttr> ReservoirReplayBufferSampleGpuKernel::GetOpSupport() {
@@ -153,9 +166,9 @@ bool ReservoirReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor 
   return true;
 }
 
-bool ReservoirReplayBufferDestroyGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ReservoirReplayBufferDestroyGpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   ReservoirReplayBufferFactory::GetInstance().Delete(handle_);
 
   // Apply host to device memory copy since it is not performance critical path.

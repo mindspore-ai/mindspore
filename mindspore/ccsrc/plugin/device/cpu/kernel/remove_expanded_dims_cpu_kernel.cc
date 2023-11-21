@@ -66,12 +66,12 @@ int RemoveExpandedDimsCpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   return KRET_OK;
 }
 
-bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
-  const auto has_false_val_addr = reinterpret_cast<size_t *>(inputs[kIndex2]->addr);
-  const auto broadcast_shape_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
-  const auto idx_advanced_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
+bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  const auto has_false_val_addr = reinterpret_cast<size_t *>(inputs[kIndex2]->device_ptr());
+  const auto broadcast_shape_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  const auto idx_advanced_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->device_ptr());
 
   bool has_false = has_false_val_addr[0] > 0;
   ShapeVector broadcast_shape;
@@ -82,9 +82,9 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 
   int64_t idx_advanced = idx_advanced_val_addr[0];
-  auto indices_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto new_value_shape_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto new_idx_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto indices_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto new_value_shape_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto new_idx_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   ShapeVector value_shape = data_shapes_[1];
   size_t valid_tensor_nums = 0;
@@ -112,9 +112,9 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   return true;
 }
 
-bool RemoveExpandedDimsCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool RemoveExpandedDimsCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

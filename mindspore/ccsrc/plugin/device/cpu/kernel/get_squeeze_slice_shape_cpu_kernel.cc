@@ -55,10 +55,10 @@ int GetSqueezeSliceShapeCpuKernelMod::Resize(const std::vector<KernelTensor *> &
   return KRET_OK;
 }
 
-bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
 
   ShapeVector data_shape = data_shapes_[0];
   std::vector<size_t> ini_index;
@@ -93,9 +93,9 @@ bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   return true;
 }
 
-bool GetSqueezeSliceShapeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool GetSqueezeSliceShapeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

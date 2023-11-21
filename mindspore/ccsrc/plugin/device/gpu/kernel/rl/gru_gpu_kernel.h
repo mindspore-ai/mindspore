@@ -31,8 +31,9 @@
 namespace mindspore {
 namespace kernel {
 class GruGpuKernelMod;
-using GruGpuKernelFunc = std::function<bool(GruGpuKernelMod *, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+using GruGpuKernelFunc =
+  std::function<bool(GruGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                     const std::vector<KernelTensor *> &, void *)>;
 
 class GruGpuKernelMod : public NativeGpuKernelMod {
  public:
@@ -62,8 +63,8 @@ class GruGpuKernelMod : public NativeGpuKernelMod {
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
   ~GruGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -74,8 +75,8 @@ class GruGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   void InitResource() override;
 
  private:

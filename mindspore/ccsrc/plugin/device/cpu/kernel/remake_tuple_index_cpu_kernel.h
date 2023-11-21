@@ -31,23 +31,23 @@ class RemakeTupleIndexCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   using RemakeTupleIndexFunc =
-    std::function<bool(RemakeTupleIndexCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(RemakeTupleIndexCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
   static std::vector<std::pair<KernelAttr, RemakeTupleIndexFunc>> func_list_;
   RemakeTupleIndexFunc kernel_func_;
