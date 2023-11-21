@@ -16,12 +16,6 @@
 
 #include "backend/common/graph_kernel/adapter/graph_kernel_expander_cloud.h"
 
-#include <string>
-#include <utility>
-#include <vector>
-#include <map>
-#include <algorithm>
-
 #include "mindspore/core/ops/random_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

@@ -22,6 +22,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore::pyexecute {
 PyDataConverter py_data_convert_handler{nullptr};
@@ -29,19 +30,6 @@ PyDataConverter py_data_convert_handler{nullptr};
 void set_pydata_converter(const PyDataConverter &pydata_converter) { py_data_convert_handler = pydata_converter; }
 
 namespace {
-bool IsStubTensor(const py::handle &obj) { return py::hasattr(obj, stub::PY_ATTR_STUB); }
-
-tensor::TensorPtr ConvertStubTensor(const py::handle &obj) {
-  auto py_stub = py::getattr(obj, stub::PY_ATTR_STUB);
-  auto stub = py_stub.cast<stub::StubNodePtr>();
-  if (stub == nullptr) {
-    return py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
-  }
-  auto func_sync = obj.attr(stub::PY_ATTR_SYNC);
-  auto res = func_sync();
-  return res.cast<tensor::TensorPtr>();
-}
-
 void TensorToRawMemory(const tensor::TensorPtr &tensor, DeviceAddress *const device_address) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_address);

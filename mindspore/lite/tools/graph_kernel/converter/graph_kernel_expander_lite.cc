@@ -16,13 +16,6 @@
 
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 
-#include <utility>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <string>
-#include <unordered_set>
-
 #include "mindspore/core/ops/conv_pool_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
@@ -297,7 +290,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
 
 void GraphKernelExpanderLite::PreProcessAllNode(const CNodePtr &node) {
   if (Callback::Instance()->GetTargetFromContext() == "CPU" && !AnfUtils::IsGraphKernel(node)) {
-    BasicOpInferShape().InferShape(node);
+    BasicOpInferShape().Infer(node);
   }
 }
 }  // namespace mindspore::graphkernel

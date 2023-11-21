@@ -15,12 +15,6 @@
  */
 #include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
 
-#include <algorithm>
-#include <set>
-#include <utility>
-#include <fstream>
-#include <string>
-
 #include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"

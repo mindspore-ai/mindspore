@@ -82,8 +82,9 @@ class ReduceFusion : public OpDesc {
       auto sum_res = gb.ReduceSum(input_x, axis, keep_dims);
       auto coeff = gb.Tensor(GetValue<float>(attrs_["coeff"]), input_x->type);
       auto result = gb.Mul(sum_res, coeff);
-      int64_t reduce_size = std::accumulate(axis.begin(), axis.end(), 1,
-                                            [input_x](int64_t a, int64_t idx) { return a * input_x->shape[idx]; });
+      int64_t reduce_size = std::accumulate(axis.begin(), axis.end(), 1LL, [input_x](int64_t a, int64_t idx) {
+        return a * input_x->shape[LongToSize(idx)];
+      });
       auto reduce_size_value = gb.Tensor(reduce_size, input_x->type);
       auto mean_res = gb.Div(result, reduce_size_value);
       return {mean_res};

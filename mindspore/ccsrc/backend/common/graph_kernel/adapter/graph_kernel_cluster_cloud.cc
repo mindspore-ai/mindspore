@@ -15,11 +15,6 @@
  */
 #include "backend/common/graph_kernel/adapter/graph_kernel_cluster_cloud.h"
 
-#include <algorithm>
-#include <utility>
-#include <string>
-#include <vector>
-
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
