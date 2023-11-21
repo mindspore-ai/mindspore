@@ -79,7 +79,8 @@ TypePtr DiagonalInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   auto prim_name = primitive->name();
   auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto x_dtype = x->GetType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("input type", x_dtype, common_valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("input type", x_dtype, common_valid_types_with_bool,
+                                                    primitive->name());
 }
 }  // namespace
 AbstractBasePtr DiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

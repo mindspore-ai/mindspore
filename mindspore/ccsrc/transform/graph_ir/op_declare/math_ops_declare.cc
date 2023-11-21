@@ -350,4 +350,12 @@ ATTR_MAP(Real) = EMPTY_ATTR_MAP;
 INPUT_ATTR_MAP(Real) = {{kIndex2, ATTR_DESC(Tout, AnyTraits<GEType>())}};
 OUTPUT_MAP(Real) = {{kIndex0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real))
+
+// Diagonal
+CUST_INPUT_MAP(Diagonal) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Diagonal) = {{"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                           {"dim1", ATTR_DESC(dim1, AnyTraits<int64_t>())},
+                           {"dim2", ATTR_DESC(dim2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Diagonal) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal))
 }  // namespace mindspore::transform

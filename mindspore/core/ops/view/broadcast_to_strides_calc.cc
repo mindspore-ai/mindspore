@@ -16,6 +16,7 @@
 
 #include "ops/view/broadcast_to_strides_calc.h"
 #include <memory>
+#include <string>
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
@@ -71,7 +72,8 @@ bool BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &
   return true;
 }
 
-TensorStorageInfoPtrList BroadCastToProcess(const tensor::TensorPtr input_tensor, const std::vector<int64_t> &input_x) {
+TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tensor::TensorPtr input_tensor,
+                                            const std::vector<int64_t> &input_x) {
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
@@ -122,7 +124,7 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
   auto value_ptr = prim->GetAttr(kShape);
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
-  return BroadCastToProcess(input_tensor, input_x);
+  return BroadCastToProcess(prim, input_tensor, input_x);
 }
 
 REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);

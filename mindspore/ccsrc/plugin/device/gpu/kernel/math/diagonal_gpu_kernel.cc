@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/diagonal_cpu_kernel.h"
+#include "plugin/device/gpu/kernel/math/diagonal_gpu_kernel.h"
+#include <functional>
+#include <string>
 #include <algorithm>
-#include <utility>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/abstract/utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,51 +27,6 @@ namespace {
 constexpr size_t kDiagonalInputsNum = 1;
 constexpr size_t kDiagonalOutputsNum = 1;
 constexpr int64_t N2 = 2;
-template <typename T>
-class PositionIterator {
- public:
-  PositionIterator() {}
-  ~PositionIterator() {}
-  PositionIterator(std::vector<T> stt, std::vector<T> sh) {
-    MS_EXCEPTION_IF_CHECK_FAIL(stt.size() == sh.size(), "Inputs of PositionIterator must have same size.");
-    for (unsigned int i = 0; i < sh.size(); i++) {
-      MS_EXCEPTION_IF_CHECK_FAIL(sh[i] > 0, "The elements of input [sh] must be positive.");
-      MS_EXCEPTION_IF_CHECK_FAIL(
-        stt[i] < sh[i], "Each element of input [stt] must be less than the corresponding element of input [sh].");
-    }
-    pos_ = stt;
-    shape_ = sh;
-  }
-  PositionIterator operator++() {
-    pos_[shape_.size() - 1] += 1;
-    for (unsigned int i = shape_.size() - 1; i > 0; i--) {
-      if (pos_[i] / shape_[i] != 0) {
-        pos_[i - 1] += pos_[i] / shape_[i];
-        pos_[i] = pos_[i] % shape_[i];
-      }
-    }
-    return *this;
-  }
-
-  bool is_end() const {
-    if (pos_.empty() || shape_.empty()) {
-      return true;
-    }
-    if (pos_[0] != shape_[0]) {
-      return false;
-    }
-    return true;
-  }
-
-  std::vector<T> get_pos() { return pos_; }
-
-  std::vector<T> get_shape() { return shape_; }
-
- private:
-  std::vector<T> pos_;
-  std::vector<T> shape_;
-};
-
 template <typename T>
 T mul_sum(std::vector<T> v1, std::vector<T> v2) {
   T output = 0;
@@ -91,7 +48,7 @@ std::vector<T> construct_stride(std::vector<T> t_shape) {
 }
 }  // namespace
 
-bool DiagonalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+bool DiagonalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'Diagonal', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -110,7 +67,7 @@ bool DiagonalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   return true;
 }
 
-int DiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+int DiagonalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
@@ -118,6 +75,7 @@ int DiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
   input_shape = inputs[0]->GetShapeVector();
+  output_shape = outputs[0]->GetShapeVector();
   int64_t input_size = input_shape.size();
   if (input_size < N2) {
     MS_LOG(ERROR) << "For 'Diagonal', input must be at least 2-dimensional, but got : " << input_size << ".";
@@ -139,101 +97,59 @@ int DiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For 'Diagonal', dim1 and dim2 cannot be identical, but got : dim1 =" << dim1_
                   << " and dim2 = " << dim2_ << ".";
   }
-  if (offset_ >= 0) {
-    dsize = std::max<int64_t>(std::min(input_shape[dim1_], input_shape[dim2_] - offset_), 0);
-  } else {
-    dsize = std::max<int64_t>(std::min(input_shape[dim1_] + offset_, input_shape[dim2_]), 0);
-  }
+
   return KRET_OK;
 }
 
 template <typename T>
-bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+bool DiagonalGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDiagonalInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDiagonalOutputsNum, kernel_name_);
 
-  const T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  const T *input = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input);
-  T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  if (dsize > 0) {
-    MS_EXCEPTION_IF_NULL(output);
-  }
-  // Get some information of input
-  size_t input_size = input_shape.size();
-  // Compute
-  std::vector<int64_t> x_stride = construct_stride<int64_t>(input_shape);
-  if (input_size > N2) {
-    // set the vx_shape and vx_stride
-    std::vector<int64_t> vx_shape, vx_stride;
-    for (unsigned int tmp_dim = 0; tmp_dim < input_size; tmp_dim++) {
-      if (tmp_dim != dim1_ && tmp_dim != dim2_) {
-        vx_shape.push_back(input_shape[tmp_dim]);
-        vx_stride.push_back(x_stride[tmp_dim]);
-      }
-    }
-    // set the y_shape, y_stride, vy_stride
-    std::vector<int64_t> y_shape = vx_shape;
-    y_shape.push_back(dsize);
-    std::vector<int64_t> y_stride = construct_stride<int64_t>(y_shape);
-    std::vector<int64_t> vy_stride = y_stride;
-    vy_stride.pop_back();
-    // diagonal
-    std::vector<int64_t> v_start(vx_shape.size(), 0);
-    for (PositionIterator<int64_t> myiter(v_start, vx_shape); !myiter.is_end(); (void)++myiter) {
-      auto p = myiter.get_pos();
-      int64_t base_pos1 = mul_sum<int64_t>(p, vx_stride);
-      int64_t outbase_pos = mul_sum<int64_t>(p, vy_stride);
-      for (int i = 0; i < dsize; i++) {
-        int64_t base_pos2 = i * (x_stride[dim1_] + x_stride[dim2_]);
-        int64_t arr[N2] = {x_stride[dim1_], x_stride[dim2_]};
-        output[outbase_pos + i] = offset_ >= 0 ? input[base_pos1 + base_pos2 + offset_ * arr[1]]
-                                               : input[base_pos1 + base_pos2 - offset_ * arr[0]];
-      }
-    }
-  } else {
-    for (int i = 0; i < dsize; i++) {
-      int64_t base_pos = i * (x_stride[dim1_] + x_stride[dim2_]);
-      int64_t arr[N2] = {x_stride[dim1_], x_stride[dim2_]};
-      output[i] = offset_ >= 0 ? input[base_pos + offset_ * arr[1]] : input[base_pos - offset_ * arr[0]];
-    }
-  }
+  T *output = GetDeviceAddress<T>(outputs, 0);
+  auto status = CalDiagonal(input, offset_, dim1_, dim2_, input_shape, output_shape, output, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
-std::vector<std::pair<KernelAttr, DiagonalCpuKernelMod::DiagonalLaunchFunc>> DiagonalCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, DiagonalGpuKernelMod::DiagonalLaunchFunc>> DiagonalGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &DiagonalCpuKernelMod::LaunchKernel<float>},
+   &DiagonalGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &DiagonalCpuKernelMod::LaunchKernel<double>},
+   &DiagonalGpuKernelMod::LaunchKernel<double>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   &DiagonalCpuKernelMod::LaunchKernel<bool>},
+   &DiagonalGpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &DiagonalCpuKernelMod::LaunchKernel<float16>},
+   &DiagonalGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &DiagonalCpuKernelMod::LaunchKernel<int8_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &DiagonalCpuKernelMod::LaunchKernel<int16_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<int16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &DiagonalCpuKernelMod::LaunchKernel<int32_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &DiagonalCpuKernelMod::LaunchKernel<int64_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &DiagonalCpuKernelMod::LaunchKernel<uint8_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &DiagonalCpuKernelMod::LaunchKernel<uint16_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &DiagonalCpuKernelMod::LaunchKernel<uint32_t>},
+   &DiagonalGpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &DiagonalCpuKernelMod::LaunchKernel<uint64_t>}};
+   &DiagonalGpuKernelMod::LaunchKernel<uint64_t>}};
 
-std::vector<KernelAttr> DiagonalCpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> DiagonalGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, DiagonalLaunchFunc> &pair) { return pair.first; });
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Diagonal, DiagonalCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Diagonal, DiagonalGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

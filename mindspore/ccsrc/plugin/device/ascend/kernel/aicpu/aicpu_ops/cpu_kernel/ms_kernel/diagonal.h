@@ -35,6 +35,9 @@ class DiagonalCpuKernel final : public CpuKernel {
   void set_output(int64_t *ar, T *dptr, T *y_dptr);
 
  private:
+  uint32_t ComputeWithType(CpuKernelContext &ctx);
+
+ private:
   int64_t offset_ = 0;
   int64_t dim1_ = 0;
   int64_t dim2_ = 1;

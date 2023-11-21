@@ -1405,51 +1405,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     if ndim < 2:
         const_utils.raise_value_error(
             'diagonal requires an array of at least two dimensions')
-    dtype = x.dtype
-
-    axes = check_axis_valid((axis1, axis2), ndim)
-    perm = ()
-    for i in range(ndim):
-        if i not in axes:
-            perm += (i,)
-    perm += axes
-    x = x.transpose(perm)
-
-    shape = x.shape
-    n, m = shape[-2:]
-
-    e = F.eye(n, m, dtype)
-    if offset >= m or offset <= -n:
-        zero_shape = shape[:-2] + (0,)
-        return F.zeros(zero_shape, dtype)
-    if offset != 0:
-        e = e.astype(mstype.float32)
-        if offset > 0:
-            e_left = F.fill(dtype, (n, offset), 0)
-            e_right = e[..., 0:m - offset:1]
-            e = P.Concat(1)((e_left, e_right)).astype(dtype)
-        elif offset < 0:
-            e_upper = F.fill(dtype, (-offset, m), 0)
-            e_lower = e[0:n + offset:1, ...]
-            e = P.Concat(0)((e_upper, e_lower)).astype(dtype)
-    e = F.broadcast_to(e, shape)
-
-    prod_val = F.tensor_mul(x, e)
-    res = F.reduce_sum(prod_val.astype(mstype.float32), -1)
-
-    begin = ()
-    for _ in range(ndim - 2):
-        begin += (0,)
-    last_dim_begin = max_(0, -offset)
-    begin += (last_dim_begin,)
-    size = res.shape[:-1]
-    last_dim_end = min_(
-        shape[-2], max_(0, shape[-1] - offset)) - last_dim_begin
-    if last_dim_end <= 0:
-        return empty_compile(dtype, (0,))
-    size += (last_dim_end,)
-    res = F.tensor_slice(res, begin, size)
-    return res.astype(dtype)
+    return F.diagonal(x, offset, axis1, axis2)
 
 
 def diagonal_scatter(input, src, offset, dim1=0, dim2=1):

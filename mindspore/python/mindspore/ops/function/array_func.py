@@ -31,6 +31,7 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
+from mindspore.ops.operations.math_ops import Diagonal
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -6647,50 +6648,9 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
         raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
     _check_attr_dtype("dim1", dim1, [int], "diagonal")
     _check_attr_dtype("dim2", dim2, [int], "diagonal")
-    dtype = input.dtype
 
-    axes = _check_diagonal_axes(dim1, dim2, x_ndim)
-    perm = ()
-    for i in ms_arrange(x_ndim):
-        if i not in axes:
-            perm += (i,)
-    perm += axes
-    input = input.transpose(perm)
-
-    x_shape = input.shape
-    n, m = x_shape[-2:]
-
-    e = ops.eye(n, m, dtype)
-    if offset >= m or offset <= -n:
-        zero_shape = x_shape[:-2] + (0,)
-        return ops.zeros(zero_shape, dtype)
-    if offset != 0:
-        e = e.astype(mstype.float32)
-        if offset > 0:
-            e_left = ops.fill(mstype.float32, (n, offset), 0)
-            e_right = e[..., 0:m - offset:1]
-            e = ops.cat((e_left, e_right), 1).astype(dtype)
-        elif offset < 0:
-            e_upper = ops.fill(mstype.float32, (-offset, m), 0)
-            e_lower = e[0:n + offset:1, ...]
-            e = ops.cat((e_upper, e_lower), 0).astype(dtype)
-    e = ops.broadcast_to(e, x_shape)
-
-    prod_val = ops.mul(input, e)
-    res = ops.ReduceSum()(prod_val.astype(mstype.float32), -1)
-
-    begin = ()
-    for _ in ms_arrange(x_ndim - 2):
-        begin += (0,)
-    last_dim_begin = builtins.max(0, -offset)
-    begin += (last_dim_begin,)
-    res_size = res.shape[:-1]
-    last_dim_end = builtins.min(x_shape[-2], builtins.max(0, x_shape[-1] - offset)) - last_dim_begin
-    if last_dim_end <= 0:
-        return Tensor([])
-    res_size += (last_dim_end,)
-    res = ops.slice(res, begin, res_size)
-    return res.astype(dtype)
+    _diagonal = _get_cache_prim(Diagonal)(offset, dim1, dim2)
+    return _diagonal(input)
 
 
 def _check_is_tensor(param_name, input, cls_name):
