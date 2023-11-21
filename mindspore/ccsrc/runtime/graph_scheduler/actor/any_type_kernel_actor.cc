@@ -520,7 +520,7 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphOutput(OpContext<Dev
                     << " for graph:" << graph()->ToString();
       continue;
     }
-    size_t real_output_index = output_iter - real_output.begin();
+    size_t real_output_index = LongToSize(output_iter - real_output.begin());
     if (real_output_index >= graph_ouput_device_tensors_.size() ||
         graph_ouput_device_tensors_[real_output_index] == nullptr ||
         graph_ouput_device_tensors_[real_output_index]->user_data() == nullptr) {
@@ -708,14 +708,14 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph());
   if (actor_state_ == AnyTypeKernelActorState::kAnyTypeKernelActorSendOutput) {
-    size_t index = data_arrow->from_output_index_;
+    size_t index = IntToSize(data_arrow->from_output_index_);
     const auto &real_output = common::AnfAlgo::GetAllOutputWithOutMonadAndParameter(graph()->output());
     const auto &output_iter = find(real_output.begin(), real_output.end(), std::make_pair(output_node, index));
     if (output_iter == real_output.end()) {
       MS_LOG(EXCEPTION) << "Invalid output node:" << output_node->DebugString() << " index:" << index
                         << " for graph:" << graph()->ToString();
     }
-    size_t real_output_index = output_iter - real_output.begin();
+    size_t real_output_index = LongToSize(output_iter - real_output.begin());
 
     if (real_output_index >= graph_ouput_device_tensors_.size()) {
       MS_LOG(EXCEPTION) << "Invalid input index:" << real_output_index << " by node:" << output_node->DebugString()
