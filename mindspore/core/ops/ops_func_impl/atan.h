@@ -23,14 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API AtanFuncImpl : public EltwiseOpFuncImpl {
- public:
-  inline BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) const override {
-    constexpr size_t kMaxRank = 8;
-    return InferShapeWithCheck(primitive, input_args, kMaxRank);
-  }
-};
+class MIND_API AtanFuncImpl : public EltwiseOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 
