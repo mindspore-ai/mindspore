@@ -200,33 +200,9 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   // type and shape inference stage). Inside the ACL internal, it may also need to sync there arguments to host for
   // operator validation (e.g. ReduceSum), so put it on host will be more efficiencient to reduce the count of sync from
   // device to host.
-  for (const auto input_idx : value_depend_args_) {
-    const auto &input = inputs[input_idx];
-    const auto &param = input_params_[input_idx];
-    KernelTensorValuePtr value_ptr = input->GetValue()->cast<KernelTensorValuePtr>();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-    errno_t ret;
-    tensor::TensorPtr tensor = nullptr;
-    if (param.data_type == kNumberTypeInt64 &&
-        !transform::AclHelper::IsInputDtypeSupport(kernel_name_, param.data_type, input_idx)) {
-      auto value = ops::GetArrayValue<int64_t>(value_ptr);
-      auto ori_vec = value.value().ToVector();
-      std::vector<int32_t> vec;
-      (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
-                           [](const auto &v) { return static_cast<int32_t>(v); });
-      tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, param.ori_shape);
-      ret = memcpy_s(tensor->data_c(), tensor->Size(), vec.data(), vec.size() * sizeof(int32_t));
-    } else {
-      tensor = std::make_shared<tensor::Tensor>(param.data_type, param.ori_shape);
-      ret = memcpy_s(tensor->data_c(), tensor->Size(), value_ptr->GetDataPtr(), value_ptr->GetDataSize());
-    }
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-    }
-    input_to_host_array_.emplace(input_idx, tensor);
-  }
-
   MS_EXCEPTION_IF_NULL(converter_);
+  converter_->ConvertValueDependToHostInput(kernel_name_, inputs, input_params_, value_depend_args_,
+                                            &input_to_host_array_);
   converter_->ConvertToAclInput(primitive_, input_to_host_array_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);
   converter_->SetRunnerSpecialInfo();

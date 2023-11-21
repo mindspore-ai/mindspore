@@ -30,6 +30,7 @@ const std::map<std::string, Format> format_relation_map = {{"DefaultFormat", For
                                                            {"KCHW", Format::KCHW},
                                                            {"CKHW", Format::CKHW},
                                                            {"KHWC", Format::KHWC},
+                                                           {"FRACTAL_NZ", Format::FRACTAL_NZ},
                                                            {"CHWK", Format::CHWK},
                                                            {"HW", Format::HW},
                                                            {"HW4", Format::HW4},
@@ -47,7 +48,7 @@ Format GetFormatFromStrToEnum(const std::string &format_str) {
   if (iter != format_relation_map.end()) {
     return iter->second;
   }
-  MS_LOG(DEBUG) << "The data format " << format_str << " can not be converted to enum.";
+  MS_LOG(WARNING) << "The data format " << format_str << " can not be converted to enum.";
   return Format::DEFAULT_FORMAT;
 }
 

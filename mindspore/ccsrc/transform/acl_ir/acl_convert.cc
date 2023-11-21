@@ -147,6 +147,33 @@ AddressPtr GetAddrPtr(KernelTensor *ptr) {
 }  // namespace
 
 template <typename ConvertType>
+void AttrHelper<ConvertType>::ConvertValueToDstType(const ValuePtr &value, const TypeId src_type) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto sub_converter = static_cast<ConvertType *>(this);
+  switch (src_type) {
+    case kNumberTypeInt32: {
+      sub_converter->ConvertValue(value, AttrDeclType<int32_t>());
+      break;
+    }
+    case kNumberTypeInt64: {
+      sub_converter->ConvertValue(value, AttrDeclType<int64_t>());
+      break;
+    }
+    case kNumberTypeFloat32: {
+      sub_converter->ConvertValue(value, AttrDeclType<float>());
+      break;
+    }
+    case kNumberTypeFloat64: {
+      sub_converter->ConvertValue(value, AttrDeclType<double>());
+      break;
+    }
+    default: {
+      MS_LOG(EXCEPTION) << "Unsupported type: " << src_type;
+    }
+  }
+}
+
+template <typename ConvertType>
 template <typename T>
 void AttrHelper<ConvertType>::ConvertValueToRealType(const ValuePtr &value, const std::string &attr_name,
                                                      T trans_struct) {
@@ -256,6 +283,41 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
   if (val->isa<ValueSequence>()) {
     const auto &sub_sequence = val->cast<ValueSequencePtr>()->value();
     GetValueSequenceDataTypeAndShape(sub_sequence, data_type, shape, is_ge_datatype);
+  }
+}
+void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
+                                                 const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<TensorParams> &input_params,
+                                                 const std::set<int64_t> &value_depend_args,
+                                                 AclInputToHost *inputs_on_host) {
+  MS_LOG(DEBUG) << "Start convert value_depend to acl host_input";
+  for (const auto input_idx : value_depend_args) {
+    const auto &input = inputs[input_idx];
+    const auto &param = input_params[input_idx];
+    KernelTensorValuePtr value_ptr = input->GetValue()->cast<KernelTensorValuePtr>();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    tensor::TensorPtr tensor = nullptr;
+    if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, input_idx)) {
+      ValueDependToInputConverter value_convert;
+      auto cast_map = value_convert.GetValueDependCastMap();
+      auto iter = cast_map.find(param.data_type);
+      if (iter == cast_map.end()) {
+        MS_LOG(INTERNAL_EXCEPTION) << kernel_name << " input(" << input_idx
+                                   << ") data type not support and can not add Cast.";
+      }
+      if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, iter->second, input_idx)) {
+        MS_LOG(INTERNAL_EXCEPTION) << kernel_name << " input(" << input_idx << ") data type not support.";
+      }
+      value_convert.ConvertValueToDstType(value_ptr, param.data_type);
+      tensor = value_convert.GetTensor();
+    } else {
+      tensor = std::make_shared<tensor::Tensor>(param.data_type, param.ori_shape);
+      auto ret = memcpy_s(tensor->data_c(), tensor->Size(), value_ptr->GetDataPtr(), value_ptr->GetDataSize());
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+      }
+    }
+    inputs_on_host->emplace(input_idx, tensor);
   }
 }
 

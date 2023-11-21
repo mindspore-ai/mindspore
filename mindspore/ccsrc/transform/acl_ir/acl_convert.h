@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_ACL_CONVERT_H_
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <utility>
@@ -70,6 +71,10 @@ class AclConverter {
                          const std::vector<KernelTensor *> &inputs, const std::vector<TensorParams> &input_params);
   void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                           const std::vector<TensorParams> &output_params);
+
+  void ConvertValueDependToHostInput(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<TensorParams> &input_params,
+                                     const std::set<int64_t> &value_depend_args, AclInputToHost *inputs_on_host);
 
   void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name,
                              AclInputToHost *inputs_on_host);
@@ -137,6 +142,8 @@ class AttrHelper {
 
   void GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type, ShapeVector *shape,
                                         bool *is_ge_datatype);
+
+  void ConvertValueToDstType(const ValuePtr &value, const TypeId src_type);
 
   template <typename T>
   void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) const {
@@ -215,6 +222,60 @@ class AttrConverter : public AttrHelper<AttrConverter> {
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list_int64);
   }
+};
+
+class ValueDependToInputConverter : public AttrHelper<ValueDependToInputConverter> {
+ public:
+  const tensor::TensorPtr &GetTensor() const { return tensor_; }
+  const std::map<TypeId, TypeId> &GetValueDependCastMap() {
+    static const std::map<TypeId, TypeId> kValueDependCastMap = {{kNumberTypeInt32, kNumberTypeInt64},
+                                                                 {kNumberTypeInt64, kNumberTypeInt32},
+                                                                 {kNumberTypeFloat32, kNumberTypeFloat64},
+                                                                 {kNumberTypeFloat64, kNumberTypeFloat32}};
+    return kValueDependCastMap;
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &) {
+    MS_EXCEPTION_IF_NULL(value);
+    std::vector<int32_t> vec;
+    auto ori_vec = ops::GetArrayValue<int64_t>(value).value().ToVector();
+    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
+                         [](const auto &v) { return static_cast<int32_t>(v); });
+    tensor_ = std::make_shared<tensor::Tensor>(vec);
+    MS_EXCEPTION_IF_NULL(tensor_);
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &) {
+    MS_EXCEPTION_IF_NULL(value);
+    std::vector<int64_t> vec;
+    auto ori_vec = ops::GetArrayValue<int32_t>(value).value().ToVector();
+    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
+                         [](const auto &v) { return static_cast<int64_t>(v); });
+    tensor_ = std::make_shared<tensor::Tensor>(vec);
+    MS_EXCEPTION_IF_NULL(tensor_);
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<float> &) {
+    MS_EXCEPTION_IF_NULL(value);
+    std::vector<double> vec;
+    auto ori_vec = ops::GetArrayValue<float>(value).value().ToVector();
+    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
+                         [](const auto &v) { return static_cast<double>(v); });
+    tensor_ = std::make_shared<tensor::Tensor>(vec);
+    MS_EXCEPTION_IF_NULL(tensor_);
+  }
+
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<double> &) {
+    MS_EXCEPTION_IF_NULL(value);
+    std::vector<float> vec;
+    auto ori_vec = ops::GetArrayValue<double>(value).value().ToVector();
+    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
+                         [](const auto &v) { return static_cast<float>(v); });
+    tensor_ = std::make_shared<tensor::Tensor>(vec);
+    MS_EXCEPTION_IF_NULL(tensor_);
+  }
+
+  tensor::TensorPtr tensor_;
 };
 
 class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {

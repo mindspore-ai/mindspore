@@ -580,6 +580,8 @@ class OpAdapter : public BaseOpAdapter {
         }
         return v;
       }
+    } else {
+      return ops::GetValueWithCheck<std::vector<int64_t>>(value);
     }
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
   }
