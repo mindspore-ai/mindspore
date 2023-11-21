@@ -1129,6 +1129,14 @@ ValueNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr 
   return new_value_node;
 }
 
+namespace {
+void AddValueNode(const AnfNodePtr &backend_node, KernelGraph *graph) {
+  if (backend_node->isa<ValueNode>() && !IsValueNode<FuncGraph>(backend_node)) {
+    graph->AddValueNodeToGraph(backend_node->cast<ValueNodePtr>());
+  }
+}
+}  // namespace
+
 void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                                        mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1148,7 +1156,9 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
     MS_EXCEPTION_IF_NULL(anf);
     // anf has been created before
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
-      (void)params.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
+      const auto &backend_node = graph->GetBackendAnfByFrontAnf(anf);
+      (void)params.emplace_back(backend_node);
+      AddValueNode(backend_node, graph);
       continue;
     } else if ((is_depend && input_idx > kRealInputIndexInDepend && !enable_ge)) {
       (void)params.emplace_back(graph->NewValueNode(std::make_shared<Tensor>(SizeToInt(input_idx))));
