@@ -46,8 +46,7 @@ void CustomAOTCpuKernelMod::SetKernelPath() {
 
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
-    if (primitive_->HasAttr("path_from_env") &&
-        GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
+    if (primitive_->HasAttr("path_from_env") && GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
       const char *path_in_env = std::getenv(path.c_str());
       if (path_in_env == nullptr) {
         MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, the attr path_from_env is set but the env var ["
