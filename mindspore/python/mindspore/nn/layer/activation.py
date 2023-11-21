@@ -406,8 +406,8 @@ class ReLU(Cell):
         :align: center
 
     Inputs:
-        - **x** (Tensor) - The input of ReLU is a Tensor of any dimension. The data type is `number <https://www.mind
-          spore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        - **x** (Tensor) - The input of ReLU is a Tensor of any dimension. The data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
 
     Outputs:
         Tensor, with the same type and shape as the `x`.

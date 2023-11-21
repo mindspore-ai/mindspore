@@ -100,8 +100,8 @@ class ScopedValue:
         Create a naming `ScopedValue`. A `NamingValue` represents a reference to another variable.
 
         Args:
-            name: (str): A string represents the identifier of another variable.
-            scope: (str, optional): A string represents the scope of another variable. Default: ``""`` .
+            name (str): A string represents the identifier of another variable.
+            scope (str, optional): A string represents the scope of another variable. Default: ``""`` .
 
         Returns:
             An instance of `ScopedValue`.
