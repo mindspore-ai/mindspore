@@ -658,3 +658,25 @@ class ScaleGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ScaleGrad"""
+
+
+class KVCacheMgr(Primitive):
+    """
+    Update past with cur and index along sequence axis.
+
+    Inputs:
+        - **past** (Parameter) - 4-D tensor with shape: :math:`(batch_size, num_head, seq_len, hidden_size)`.
+        - **cur** (Tensor) - 4-D tensor with shape: :math:`(batch_size, num_head, 1, hidden_size)`.
+        - **index** (Tensor) - 1-D tensor with shape: :math:`(batch_size,)`.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `past`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['past', 'cur', 'index'], outputs=['past'])
+        self.add_prim_attr('side_effect_mem', True)

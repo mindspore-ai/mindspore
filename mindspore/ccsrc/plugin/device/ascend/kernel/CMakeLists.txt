@@ -49,3 +49,4 @@ if(ENABLE_D)
 endif()
 
 add_subdirectory(bisheng)
+add_subdirectory(aicore)
