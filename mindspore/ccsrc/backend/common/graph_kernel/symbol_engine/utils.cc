@@ -22,6 +22,7 @@ ShapeVector ToShape(const Symbol *symbol) {
     return {abstract::Shape::kShapeRankAny};
   }
   auto *list = symbol->as<ListSymbol>();
+  MS_EXCEPTION_IF_NULL(list);
   ShapeVector shape(list->size());
   (void)std::transform(list->symbols().cbegin(), list->symbols().cend(), shape.begin(), [](const SymbolPtr &s) {
     auto int_smbl = s->as<IntSymbol>();

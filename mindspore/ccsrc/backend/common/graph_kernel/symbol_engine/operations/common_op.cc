@@ -49,10 +49,6 @@ SymbolPtr ScalarSub::Eval() {
   if (lhs->HasData() && rhs->HasData()) {
     return GenInt(lhs->value() - rhs->value());
   }
-  if (lhs->HasData() && lhs->value() == 0) {
-    DoNotEvalOnRun();
-    return input(1);
-  }
   if (rhs->HasData() && rhs->value() == 0) {
     DoNotEvalOnRun();
     return input(0);

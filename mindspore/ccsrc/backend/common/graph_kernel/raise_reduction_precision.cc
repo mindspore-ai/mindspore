@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/raise_reduction_precision.h"
-#include <memory>
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/utils.h"

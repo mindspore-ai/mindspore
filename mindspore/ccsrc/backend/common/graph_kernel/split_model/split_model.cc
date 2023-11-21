@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/split_model/split_model.h"
-#include <algorithm>
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel::inner {

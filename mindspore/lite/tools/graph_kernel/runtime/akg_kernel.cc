@@ -191,7 +191,7 @@ int AkgKernel::Prepare() {
     // the data address should align in 32 bytes.
     if (input->IsConst() && (reinterpret_cast<size_t>(input->data()) & kAddrAlignMask) != 0) {
       auto buffer = static_cast<int8_t *>(input->data());
-      int tensor_size = input->Size();
+      auto tensor_size = input->Size();
       if (tensor_size == 0) {
         MS_LOG(ERROR) << "The tensor \'" << input->tensor_name() << "\' size is 0. kernel: " << kernel_name_;
         return RET_ERROR;

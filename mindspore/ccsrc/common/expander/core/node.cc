@@ -15,7 +15,6 @@
  */
 
 #include "include/common/expander/core/node.h"
-#include <algorithm>
 #include "include/common/expander/core/emitter.h"
 #include "include/common/expander/core/infer.h"
 

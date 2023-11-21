@@ -185,9 +185,10 @@ void FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradOutput(size_t tenso
   }
   for (size_t index = 0; index < back_in_nums; ++index) {
     int64_t input_index = tensor_out_index[index];
-    if (input_index < 0 || input_index >= SizeToLong(output_nums))
+    if (input_index < 0 || input_index >= SizeToLong(output_nums)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', invalid input 'out_backprop' index:[" << input_index
                                << "], the maximum number of output is: [" << output_nums << "].";
+    }
     *(output + input_index) += *(out_backprop + index);
   }
 }

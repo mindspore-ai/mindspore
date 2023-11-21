@@ -83,23 +83,23 @@ class CommonPattern:
     def reshape(dom):
         """fuse strategy for reshape dom"""
         if dom.pattern != PrimLib.RESHAPE:
-            return []
+            return [], False
         min_area, forward_fuse = None, False
         for a, _ in dom.out_relations.items():
-            if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                    (min_area is None or a.pattern < min_area.pattern):
-                min_area = a
+            if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a):
+                if min_area is None or a.pattern < min_area.pattern:
+                    min_area = a
         for a, _ in dom.in_relations.items():
-            if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                    (min_area is None or a.pattern < min_area.pattern):
-                min_area, forward_fuse = a, True
-        return ([min_area], forward_fuse) if min_area else []
+            if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom):
+                if min_area is None or a.pattern < min_area.pattern:
+                    min_area, forward_fuse = a, True
+        return ([min_area], forward_fuse) if min_area else ([], False)
 
     @staticmethod
     def isolate_reshape(dom):
         """fuse strategy for isolate reshape dom"""
         if dom.pattern != PrimLib.RESHAPE or len(dom.ops) != 1:
-            return []
+            return [], False
         for a, _ in dom.out_relations.items():
             if a.mode == GraphSplitByPattern.Area.MODE_COMPOSITE and dom.check_acyclic(a):
                 return [a], False
@@ -107,59 +107,61 @@ class CommonPattern:
             if a.mode == GraphSplitByPattern.Area.MODE_COMPOSITE and a.pattern <= PrimLib.BROADCAST and \
                     a.check_acyclic(dom):
                 return [a], True
-        return []
+        return [], False
 
     @staticmethod
     def elemwise_depth(dom):
         """fuse strategy in depth for elemwise dom"""
         if dom.pattern != PrimLib.ELEMWISE or len(dom.in_relations) != 1:
-            return []
+            return [], False
         a, r = list(dom.in_relations.items())[0]
-        if a.pattern > PrimLib.ELEMWISE or len(a.out_relations) != 1 or r > PrimLib.ELEMWISE or \
-                tensor_size(a.dom_op().output) != tensor_size(dom.dom_op().output):
-            return []
+        if a.pattern > PrimLib.ELEMWISE or len(a.out_relations) != 1 or r > PrimLib.ELEMWISE:
+            return [], False
+        if tensor_size(a.dom_op().output) != tensor_size(dom.dom_op().output):
+            return [], False
         return [a], True
 
     @staticmethod
     def elemwise_width(dom):
         """fuse strategy in width for elemwise dom"""
         if dom.pattern != PrimLib.ELEMWISE:
-            return []
+            return [], False
         fused = []
         for a, r in dom.in_relations.items():
-            if a.pattern <= PrimLib.ELEMWISE and r <= PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                    tensor_size(a.dom_op().output) == tensor_size(dom.dom_op().output):
-                fused.append(a)
+            if a.pattern <= PrimLib.ELEMWISE and r <= PrimLib.ELEMWISE and a.check_acyclic(dom):
+                if tensor_size(a.dom_op().output) == tensor_size(dom.dom_op().output):
+                    fused.append(a)
         return fused, True
 
     @staticmethod
     def broadcast_depth(dom):
         """fuse strategy in depth for broadcast dom"""
         if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
-            return []
+            return [], False
         a, r = list(dom.in_relations.items())[0]
-        if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r > PrimLib.ELEMWISE or \
-                tensor_size(a.dom_op().output) != tensor_size(dom.dom_op().output):
-            return []
+        if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r > PrimLib.ELEMWISE:
+            return [], False
+        if tensor_size(a.dom_op().output) != tensor_size(dom.dom_op().output):
+            return [], False
         return [a], True
 
     @staticmethod
     def broadcast_width(dom):
         """fuse strategy in width for broadcast dom"""
         if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-            return []
+            return [], False
         fused = []
         for a, r in dom.in_relations.items():
-            if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                    tensor_size(a.dom_op().output) == tensor_size(dom.dom_op().output):
-                fused.append(a)
+            if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.ELEMWISE and a.check_acyclic(dom):
+                if tensor_size(a.dom_op().output) == tensor_size(dom.dom_op().output):
+                    fused.append(a)
         return fused, True
 
     @staticmethod
     def assign(dom):
         """fuse strategy for assign dom"""
         if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
-            return []
+            return [], False
         fused = []
         for a, _ in dom.in_relations.items():
             fused.append(a)
@@ -711,8 +713,9 @@ class GraphSplitByPattern:
             for i in range(len(areas) - 1):
                 dom = areas[i]
                 for a in areas[i + 1:]:
-                    if dom.check_acyclic(a) and a.check_acyclic(dom) and \
-                            selector(dom, a) and self.limit_area_size(dom, [a], 64) and dom.fuse_confirm(a):
+                    can_fuse = dom.check_acyclic(a) and a.check_acyclic(dom) and selector(dom, a) \
+                        and self.limit_area_size(dom, [a], 64) and dom.fuse_confirm(a)
+                    if can_fuse:
                         dom.fuse(a)
                         self.set_area_map(a.ops, dom)
                         self.areas.remove(a)
@@ -844,7 +847,7 @@ class GraphSplitByPattern:
             while stack:
                 op = stack.pop()
                 if len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST or len(ops) > max_weight:
-                    return []
+                    return [], []
                 ops.append(op)
                 for t in op.inputs:
                     if t.op in area.ops:
@@ -878,8 +881,8 @@ class GraphSplitByPattern:
                 return []
             result = []
             for op in borders:
-                if prods[op]:
-                    prod_ops, inputs = prods[op]
+                prod_ops, inputs = prods[op]
+                if prod_ops:
                     if sum([t.get_size() for t in inputs]) <= op.output.get_size():
                         pred = self.area_map.get(inputs[0].op) if inputs and inputs[0].op else None
                         result.append([pred, prod_ops[::-1]])
@@ -938,23 +941,25 @@ class GraphSplitGpu(GraphSplitByPattern):
             return a.pattern > PrimLib.REDUCE or r > PrimLib.BROADCAST
 
         def _broadcast_bwd_depth(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.out_relations) != 1 or \
-                    dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH:
-                return []
+            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.out_relations) != 1:
+                return [], False
+            if dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH:
+                return [], False
             a, r = list(dom.out_relations.items())[0]
             if _broadcast_pat_exclude(dom, a, r) or len(a.in_relations) != 1:
-                return []
+                return [], False
             return [a], False
 
         def _broadcast_bwd_width(dom):
             if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or \
                     dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH:
-                return []
+                return [], False
             fused = []
             for a, r in dom.out_relations.items():
-                if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
-                        (fused and tensor_size(fused[0].dom_op().output) != tensor_size(a.dom_op().output)):
-                    return []
+                if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a):
+                    return [], False
+                if fused and tensor_size(fused[0].dom_op().output) != tensor_size(a.dom_op().output):
+                    return [], False
                 fused.append(a)
             return fused, False
 
@@ -965,25 +970,25 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _reduce_depth(dom):
             if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
-                return []
+                return [], False
             a, r = list(dom.in_relations.items())[0]
-            if dom.ops[0].inputs[0].dtype == "float16" and a.is_output and len(a.ops) >= 10 and \
-                    _is_atomic_add_available(dom):
-                # to evade the precision problem.
-                return []
+            if dom.ops[0].inputs[0].dtype == "float16" and a.is_output:
+                if len(a.ops) >= 10 and _is_atomic_add_available(dom):
+                    # to evade the precision problem.
+                    return [], False
             if _reduce_pat_exclude(dom, a, r) or len(a.out_relations) != 1:
                 return []
             return [a], True
 
         def _reduce_width(dom):
             if dom.pattern != PrimLib.REDUCE:
-                return []
+                return [], False
             fused = []
             for a, r in dom.in_relations.items():
-                if dom.ops[0].inputs[0].dtype == "float16" and a.is_output and len(a.ops) >= 10 and \
-                        _is_atomic_add_available(dom):
-                    # to evade the precision problem.
-                    continue
+                if dom.ops[0].inputs[0].dtype == "float16" and a.is_output:
+                    if len(a.ops) >= 10 and _is_atomic_add_available(dom):
+                        # to evade the precision problem.
+                        continue
                 if not _reduce_pat_exclude(dom, a, r) and a.check_acyclic(dom):
                     fused.append(a)
             return fused, True
@@ -1016,15 +1021,15 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _reduce_output(dom):
             if dom.pattern != PrimLib.REDUCE:
-                return []
+                return [], False
             if _may_multi_filter(dom.ops):
-                return []
+                return [], False
             if _is_atomic_add_available(dom):
-                return []
+                return [], False
             is_all_reduce = tensor_size(dom.ops[0].output) == 1
             # excluded large size all reduce
             if is_all_reduce and dom.ops[0].inputs and tensor_size(dom.ops[0].inputs[0]) > 1024 * 12:
-                return []
+                return [], False
 
             fused = []
             for a, r in dom.out_relations.items():
@@ -1034,11 +1039,11 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _reduce_stitch(dom):
             if dom.pattern != PrimLib.REDUCE:
-                return []
+                return [], False
             if tensor_size(dom.ops[0].output) == 1:
-                return []
+                return [], False
             if tensor_size(dom.ops[0].inputs[0]) < 1024 * 12:
-                return []
+                return [], False
 
             fused = []
             for a, r in dom.out_relations.items():
@@ -1055,7 +1060,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _transpose(dom):
             if len(dom.ops) != 1 or dom.ops[0].prim != "Transpose":
-                return []
+                return [], False
             fused = []
             for a, _ in dom.in_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and len(a.ops) <= self.TRANSPOSE_FUSE_DEPTH:
@@ -1064,7 +1069,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _strided_slice(dom):
             if dom.dom_op().prim != "StridedSlice":
-                return []
+                return [], False
             fused = []
             for a, _ in dom.in_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
@@ -1075,7 +1080,7 @@ class GraphSplitGpu(GraphSplitByPattern):
         def _gather_output(dom, reduce_fusion=False):
             gather_prims = ("Gather", "GatherNd", "CSRGather")
             if not dom.dom_op().prim in gather_prims:
-                return []
+                return [], False
 
             def _reduce_exclude(op, axis_list):
                 """ Whether this operator should be excluded.
@@ -1173,7 +1178,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             for a, _ in dom.out_relations.items():
                 if _shape_consistent(gather_prims, appected_areas, dom, a) and dom.check_acyclic(a):
                     return [a], False
-            return []
+            return [], False
 
         def _broadcast_tot(dom):
             """Fuse rule for TensorScatterAdd and UnsortedSegmentSum."""
@@ -1182,13 +1187,13 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return bool(set(op1.inputs) & set(op2.inputs))
 
             if len(dom.ops) != 1:
-                return []
+                return [], False
 
             # Only fuse the first input for `TensorScatterAdd`` and the first and second input for `UnsortedSegmentSum`.
             fuse_arg = {"TensorScatterAdd": slice(1, None), "UnsortedSegmentSum": slice(0, 2)}
             arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
             if arg_idx == -1:
-                return []
+                return [], False
             fuse_tensor = dom.dom_op().inputs[arg_idx]
 
             for a, _ in dom.in_relations.items():
@@ -1200,27 +1205,30 @@ class GraphSplitGpu(GraphSplitByPattern):
                 # Rule 2: Fuse op(reshape/elementwise/broadcast) in specified position inputs.
                 if a.pattern <= PrimLib.BROADCAST and any((op.output in fuse_tensor for op in a.ops)):
                     return [a], True
-            return []
+            return [], False
 
         def _broadcast_onehot(dom, fwd=True):
             """Fuse rule for OneHot."""
             if dom.dom_op().prim != "OneHot":
-                return []
+                return [], False
 
             fused = []
             neighbours = dom.in_relations.items() if fwd else dom.out_relations.items()
             for a, _ in neighbours:
                 if a.pattern <= PrimLib.BROADCAST:
-                    if (fwd and a.check_acyclic(dom) and len(a.out_relations) == 1 and not a.is_output) or \
-                            (not fwd and dom.check_acyclic(a)):
-                        fused.append(a)
+                    if fwd:
+                        if a.check_acyclic(dom) and len(a.out_relations) == 1 and not a.is_output:
+                            fused.append(a)
+                    else:
+                        if dom.check_acyclic(a):
+                            fused.append(a)
 
             return fused, fwd
 
         def _elemwise_elemany(dom):
             """Fuse rule for elemany."""
             if dom.dom_op().prim != "ElemAny":
-                return []
+                return [], False
 
             fused = []
             for a, r in dom.in_relations.items():
@@ -1233,21 +1241,21 @@ class GraphSplitGpu(GraphSplitByPattern):
             """Fuse rule for injective """
             injective_ops = {"Transpose", "StridedSlice"}
             if dom.dom_op().prim not in injective_ops:
-                return []
+                return [], False
             to_ops = dom.dom_op().output.to_ops
             if dom.is_output or len(to_ops) != 1 or len(dom.out_relations) != 1:
-                return []
+                return [], False
             to_area = list(dom.out_relations.keys())[0]
             if (to_area.pattern >= PrimLib.REDUCE and to_area.dom_op().prim not in injective_ops) or \
                     to_ops[0] not in to_area.ops:
-                return []
+                return [], False
             if len(to_area.ops) > self.TRANSPOSE_FUSE_DEPTH:
-                return []
+                return [], False
             return [to_area], False
 
         def _h_broadcast(dom, a):
             if dom.pattern > PrimLib.BROADCAST:
-                return []
+                return [], False
             return a.pattern <= PrimLib.BROADCAST and dom.ops[0].output.shape == a.ops[0].output.shape
 
         def _h_reduce(dom, a):
@@ -1274,7 +1282,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             fuse_arg = {"CSRReduceSum": slice(1, 3), "CSRGather": slice(2, 3)}
             arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
             if arg_idx == -1:
-                return []
+                return [], False
             fuse_tensor = dom.dom_op().inputs[arg_idx]
             for a, _ in dom.in_relations.items():
                 if (a.dom_op().prim == "CSRGather" and a.dom_op().prim == dom.dom_op().prim and
@@ -1283,7 +1291,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
                         any([op.output in fuse_tensor for op in a.ops]):
                     return [a], True
-            return []
+            return [], False
 
         def _fuse_loop():
             self.fuse(CommonPattern.reshape)

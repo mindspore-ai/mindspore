@@ -16,7 +16,6 @@
 
 #include "include/common/expander/core/infer.h"
 
-#include <algorithm>
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
