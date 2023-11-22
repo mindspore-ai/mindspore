@@ -33,7 +33,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
-#include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/resize_linear1d_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
@@ -351,9 +350,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
-  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
@@ -435,9 +431,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
-  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());

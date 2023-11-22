@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_RENORM_SPLIT_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_RENORM_SPLIT_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_RENORM_SPLIT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_RENORM_SPLIT_H_
 #include <string>
 #include <memory>
 #include "include/backend/optimizer/pass.h"
@@ -23,7 +23,6 @@
 #include "ir/anf.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/optimizer.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,4 +36,4 @@ class RenormSplit : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_RENORM_SPLIT_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_RENORM_SPLIT_H_
