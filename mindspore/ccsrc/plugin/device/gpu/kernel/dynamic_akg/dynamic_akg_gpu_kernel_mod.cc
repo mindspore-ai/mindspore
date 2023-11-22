@@ -26,28 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-using std::fstream;
-using std::string;
-using std::vector;
-
-const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
-const int REGISTER_UNIT_IN_WARP = 256;
-const int WARP_SIZE = 32;
-const int WARP_ALLOC_GRAN = 4;
-const int AKG_KERNEL_MOD_BX_IDX = 0;
-const int AKG_KERNEL_MOD_BY_IDX = 1;
-const int AKG_KERNEL_MOD_BZ_IDX = 2;
-const int AKG_KERNEL_MOD_TX_IDX = 3;
-const int AKG_KERNEL_MOD_TY_IDX = 4;
-const int AKG_KERNEL_MOD_TZ_IDX = 5;
-constexpr auto kMappingUpdated = "updated";
-constexpr auto kBlockIdxX = "blockIdx.x";
-constexpr auto kBlockIdxY = "blockIdx.y";
-constexpr auto kBlockIdxZ = "blockIdx.z";
-constexpr auto kThreadIdxX = "threadIdx.x";
-constexpr auto kThreadIdxY = "threadIdx.y";
-constexpr auto kThreadIdxZ = "threadIdx.z";
-
 void PrintCuError(CUresult result, const string error_msg, const string kernel_name) {
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
@@ -205,8 +183,9 @@ std::vector<std::vector<int64_t>> DynamicAkgGpuKernelMod::GetArgSizeVec() {
     for (int j = SizeToInt(ndims_[i]) - 2; j >= 0; j--) {
       strides_[j] = strides_[j + 1] * shape_list_[i][j + 1];
     }
+    constexpr auto kTwo = 2;
     (void)arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
-    (void)arg_size.insert(arg_size.end(), 2 * (max_length - shape_list_[i].size()), 0);
+    (void)arg_size.insert(arg_size.end(), kTwo * (max_length - shape_list_[i].size()), 0);
     arg_size_vec.push_back(arg_size);
   }
   return arg_size_vec;
