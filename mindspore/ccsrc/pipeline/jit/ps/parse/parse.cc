@@ -3095,7 +3095,7 @@ void CloneInnerNodeLocation(const AnfNodePtr &node) {
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
   MS_EXCEPTION_IF_NULL(block);
-  AnfNodePtr op_len_with_check = block->MakeResolveOperation(NAMED_PRIMITIVE_LEN);
+  AnfNodePtr op_len = block->MakeResolveOperation(NAMED_PRIMITIVE_LEN);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
 
@@ -3105,13 +3105,14 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   // Create statement 'len(xs)'
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   MS_LOG(DEBUG) << "Parse Recursive Iter, iter_obj: " << py::str(iter_obj);
-  AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
-  MS_EXCEPTION_IF_NULL(iter_node);
+  AnfNodePtr origin_iter_node = ParseExprNode(block, iter_obj);
+  MS_EXCEPTION_IF_NULL(origin_iter_node);
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
-  if (iter_node->interpret() && !IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret)) {
-    iter_node = HandleInterpret(block, iter_node, iter_obj);
+  if (origin_iter_node->interpret() && !IsPrimitiveCNode(origin_iter_node, prim::kPrimPyInterpret)) {
+    origin_iter_node = HandleInterpret(block, origin_iter_node, iter_obj);
   }
-  CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len_with_check, iter_node});
+  auto iter_node = block->func_graph()->NewCNodeInOrder({op_iter, origin_iter_node});
+  CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   FunctionBlockPtr header_block =
     MakeFunctionBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(header_block);
@@ -3136,8 +3137,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   if (iter_node->interpret() || interpret_without_internal) {
     target_var = GenerateInterpretGetItem(body_func_graph, iter_node, loop_var);
   } else {
-    CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
-    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
+    target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
     CloneInnerNodeLocation(target_var);
   }
   header_block->UpdateGlobalPyParam(block->global_py_params());

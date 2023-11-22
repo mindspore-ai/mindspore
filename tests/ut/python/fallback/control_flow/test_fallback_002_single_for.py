@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import pytest
+import itertools
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -154,9 +155,9 @@ def test_single_for_wrong_xs():
             y += i
         return Tensor(y)
 
-    with pytest.raises(AttributeError) as info:
+    with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "'Int' object has no attribute '__len__'" in str(info.value)
+    assert "'Int' object is not iterable" in str(info.value)
 
 
 def test_single_for_wrong_xs_2():
@@ -173,6 +174,25 @@ def test_single_for_wrong_xs_2():
             y += i
         return Tensor(y)
 
-    with pytest.raises(AttributeError) as info:
+    with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "'Int' object has no attribute '__len__'" in str(info.value)
+    assert "'Int' object is not iterable" in str(info.value)
+
+
+def test_single_for_iter_object():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def control_flow_for():
+        a = 0
+        m = (1, 2, 3)
+        n = (4, 5, 6)
+        for i, j in itertools.product(m, n):
+            a = a + i * j
+        return a
+
+    ret = control_flow_for()
+    assert ret == 90
