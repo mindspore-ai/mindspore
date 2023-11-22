@@ -43,6 +43,9 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   }
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf)) {
+    if (tuple_anf->isa<ValueNode>()) {
+      kernel_graph->RemoveValueNodeFromGraph(tuple_anf->cast<ValueNodePtr>());
+    }
     return kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf);
   }
   auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);

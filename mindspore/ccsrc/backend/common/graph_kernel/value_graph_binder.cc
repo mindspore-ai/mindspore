@@ -22,7 +22,7 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto &value_nodes = kernel_graph->graph_value_nodes();
+  const auto &value_nodes = kernel_graph->graph_value_nodes();
   bool changed = false;
   auto mng = func_graph->manager();
   if (mng == nullptr) {

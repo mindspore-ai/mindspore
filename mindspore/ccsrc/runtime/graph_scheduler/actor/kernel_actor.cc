@@ -742,9 +742,6 @@ void KernelActor::InferShapeAndResize() {
   // 1. Infer operator's output's Shape.
   if (common::AnfAlgo::CheckPrimitiveType(kernel_, prim::kPrimPyExecute)) {
     MS_LOG(DEBUG) << "Infer shape for pyexecute kernel:" << kernel_->DebugString();
-    MS_LOG(WARNING) << "actor:" << GetAID() << " output device address:" << output_device_tensors_[0]
-                    << " type:" << output_device_tensors_[0]->kernel_tensor()->GetType()->ToString()
-                    << " type id:" << output_device_tensors_[0]->kernel_tensor()->type_id();
     opt::dynamic_shape::InferOp(kernel_, &input_device_tensors_);
     MS_EXCEPTION_IF_NULL(kernel_->abstract());
     if (output_device_tensors_.empty() || output_device_tensors_[0] == nullptr ||

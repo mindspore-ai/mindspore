@@ -706,9 +706,33 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
   tensor_to_value_node_map_[tensor] = value_node;
 }
 
-void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.emplace(value_node); }
+void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) {
+  if (graph_value_nodes_.find(value_node) != graph_value_nodes_.end()) {
+    ++graph_value_nodes_[value_node];
+  } else {
+    graph_value_nodes_[value_node] = 1;
+  }
+  MS_LOG(DEBUG) << "graph:" << ToString()
+                << " add value node:" << (value_node == nullptr ? "null" : value_node->DebugString())
+                << " num:" << graph_value_nodes_[value_node];
+}
 
-void KernelGraph::EraseValueNode(const ValueNodePtr &value_node) { (void)graph_value_nodes_.erase(value_node); }
+bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
+  if (graph_value_nodes_.find(value_node) != graph_value_nodes_.end() && graph_value_nodes_[value_node] > 1) {
+    --graph_value_nodes_[value_node];
+    return true;
+  }
+  MS_LOG(INFO) << "graph:" << ToString()
+               << " erase value node:" << (value_node == nullptr ? "null" : value_node->DebugString());
+  return graph_value_nodes_.erase(value_node) != 0;
+}
+
+mindspore::HashSet<ValueNodePtr> KernelGraph::graph_value_nodes() const {
+  mindspore::HashSet<ValueNodePtr> value_nodes;
+  (void)std::for_each(graph_value_nodes_.begin(), graph_value_nodes_.end(),
+                      [&value_nodes](const auto &node_pair) { (void)value_nodes.emplace(node_pair.first); });
+  return value_nodes;
+}
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 
@@ -750,10 +774,6 @@ void KernelGraph::ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithO
       item.second = new_pair;
     }
   }
-}
-
-bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
-  return graph_value_nodes_.erase(value_node) != 0;
 }
 
 void KernelGraph::SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) {
@@ -1278,7 +1298,7 @@ void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
     (void)backend_front_anf_map_.erase(iter);
   }
   if (node->isa<ValueNode>()) {
-    (void)graph_value_nodes_.erase(node->cast<ValueNodePtr>());
+    (void)RemoveValueNodeFromGraph(node->cast<ValueNodePtr>());
   }
 }
 

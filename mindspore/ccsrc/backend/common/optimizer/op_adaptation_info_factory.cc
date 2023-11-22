@@ -154,7 +154,7 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
       }
       auto kernel_graph = graph->cast<KernelGraphPtr>();
       MS_EXCEPTION_IF_NULL(kernel_graph);
-      kernel_graph->EraseValueNode(input_node->cast<ValueNodePtr>());
+      (void)kernel_graph->RemoveValueNodeFromGraph(input_node->cast<ValueNodePtr>());
       ir_change = true;
     } else {
       target_inputs.push_back(inputs[i + 1]);

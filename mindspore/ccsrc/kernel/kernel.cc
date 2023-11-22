@@ -333,6 +333,10 @@ void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
     // Scalar type element.
     dtype_ = element_type;
     dtype_id_ = dtype_->type_id();
+  } else if (element_type->object_type() == kObjectTypeString) {
+    // String type element.
+    dtype_ = element_type;
+    dtype_id_ = dtype_->type_id();
   } else {
     MS_LOG(EXCEPTION) << "Unsupported element type[" << element_type->ToString()
                       << "] to set element data type for KernelTensor.";
