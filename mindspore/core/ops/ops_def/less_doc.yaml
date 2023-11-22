@@ -2,26 +2,26 @@ less:
   description: |
     Computes the boolean value of :math:`x < y` element-wise.
 
-        Refer to :func:`mindspore.ops.less` for more details.
+    Refer to :func:`mindspore.ops.less` for more details.
 
-        Inputs:
-            - **x** (Union[Tensor, Number, bool]) -  The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-            - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) -  The first input is a number or
+        a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+        a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
 
-        Outputs:
-            Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-            >>> output = ops.less(x, y)
-            >>> print(output)
-            [False False True]
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.less(x, y)
+        >>> print(output)
+        [False False True]

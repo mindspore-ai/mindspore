@@ -2,49 +2,49 @@ prelu:
     description: |
         Parametric Rectified Linear Unit activation function.
 
-            PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
-            ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
+        PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
+        ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
 
-            .. math::
-                prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
+        .. math::
+            prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
 
-            where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
+        where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
 
-            Note:
-                Scalar or 1-D Tensor is not supported on Ascend.
+        Note:
+            Scalar or 1-D Tensor is not supported on Ascend.
 
-            Args:
-                x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
-                The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
-                weight (Tensor):  Weight Tensor. The data type is float16 or float32.
-                The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
-                On GPU devices, when the input is a scalar, the shape is :math:`(1,)` .
+        Args:
+            x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
+            The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
+            weight (Tensor):  Weight Tensor. The data type is float16 or float32.
+            The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
+            On GPU devices, when the input is a scalar, the shape is :math:`(1,)` .
 
-            Returns:
-                Tensor, with the same shape and dtype as `x`.
+        Returns:
+            Tensor, with the same shape and dtype as `x`.
 
-                For detailed information, please refer to :class:`mindspore.nn.PReLU`.
+            For detailed information, please refer to :class:`mindspore.nn.PReLU`.
 
-            Raises:
-                TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
-                TypeError: If the `x` or the `weight` is not a Tensor.
-                ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
-                ValueError: If the `weight` is not a 1-D Tensor.
+        Raises:
+            TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
+            TypeError: If the `x` or the `weight` is not a Tensor.
+            ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
+            ValueError: If the `weight` is not a 1-D Tensor.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
-                >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
-                >>> output = ops.prelu(x, weight)
-                >>> print(output)
-                [[[-0.60 -0.50]
-                [-2.40 -1.80]
-                [ 0.60  0.30]]
-                [[ 0.00  1.00]
-                [ 2.00  3.00]
-                [ 4.0   5.00]]]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
+            >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
+            >>> output = ops.prelu(x, weight)
+            >>> print(output)
+            [[[-0.60 -0.50]
+            [-2.40 -1.80]
+            [ 0.60  0.30]]
+            [[ 0.00  1.00]
+            [ 2.00  3.00]
+            [ 4.0   5.00]]]

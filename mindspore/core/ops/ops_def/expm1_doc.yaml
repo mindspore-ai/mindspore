@@ -2,27 +2,27 @@ expm1:
   description: |
     Returns exponential then minus 1 of a tensor element-wise.
 
-        .. math::
+    .. math::
 
-          out_i = e^{x_i} - 1
+      out_i = e^{x_i} - 1
 
-        Args:
-          input (Tensor): The input Tensor.
+    Args:
+      input (Tensor): The input Tensor.
 
-        Returns:
-          Tensor, has the same shape as the `input`.
+    Returns:
+      Tensor, has the same shape as the `input`.
 
-        Raises:
-          TypeError: If `input` is not a Tensor.
+    Raises:
+      TypeError: If `input` is not a Tensor.
 
-        Supported Platforms:
-          ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+      ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-          >>> import mindspore
-          >>> import numpy as np
-          >>> from mindspore import Tensor, ops
-          >>> x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
-          >>> output = ops.expm1(x)
-          >>> print(output)
-          [ 0.        1.718282  6.389056 53.598152]
+    Examples:
+      >>> import mindspore
+      >>> import numpy as np
+      >>> from mindspore import Tensor, ops
+      >>> x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
+      >>> output = ops.expm1(x)
+      >>> print(output)
+      [ 0.        1.718282  6.389056 53.598152]

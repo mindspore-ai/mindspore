@@ -2,29 +2,29 @@ asin:
     description: |
         Computes arcsine of input tensors element-wise.
 
-            .. math::
+        .. math::
 
-                out_i = \sin^{-1}(input_i)
+            out_i = \sin^{-1}(input_i)
 
-            Args:
-                input (Tensor): The shape of tensor is
-                    :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        Args:
+            input (Tensor): The shape of tensor is
+                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
-            Returns:
-                Tensor, has the same shape and dtype as `input`.
+        Returns:
+            Tensor, has the same shape and dtype as `input`.
 
-            Raises:
-                TypeError: If `input` is not a Tensor.
-                TypeError: If dtype of `input` is not float16, float32, float64, complex64, complex128.
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` is not float16, float32, float64, complex64, complex128.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-                >>> output = ops.asin(x)
-                >>> print(output)
-                [0.8330704  0.04001067  0.30469266  0.5943858 ]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+            >>> output = ops.asin(x)
+            >>> print(output)
+            [0.8330704  0.04001067  0.30469266  0.5943858 ]

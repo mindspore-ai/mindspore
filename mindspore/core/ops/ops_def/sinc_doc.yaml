@@ -2,29 +2,29 @@ sinc:
     description: |
         Computes the normalized sinc of input.
 
-            .. math::
+        .. math::
 
-                output_i = \begin{cases} \frac{sin(\pi input_i)}{\pi input_i} & input_i\neq 0\\
-                1 & input_i=0 \end{cases}
+            output_i = \begin{cases} \frac{sin(\pi input_i)}{\pi input_i} & input_i\neq 0\\
+            1 & input_i=0 \end{cases}
 
-            Args:
-                input (Tensor): The input Tensor.
+        Args:
+            input (Tensor): The input Tensor.
 
-            Returns:
-                Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
-                [int, bool]. Otherwise output has the same dtype as the `input`.
+        Returns:
+            Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
+            [int, bool]. Otherwise output has the same dtype as the `input`.
 
-            Raises:
-                TypeError: If `input` is not a Tensor.
+        Raises:
+            TypeError: If `input` is not a Tensor.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-                >>> output = ops.sinc(input)
-                >>> print(output)
-                [0.47735003 0.8759357  0.7224278  0.47735003]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+            >>> output = ops.sinc(input)
+            >>> print(output)
+            [0.47735003 0.8759357  0.7224278  0.47735003]

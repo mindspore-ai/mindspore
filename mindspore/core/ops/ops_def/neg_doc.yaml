@@ -2,27 +2,27 @@ neg:
     description: |
         Returns a tensor with negative values of the input tensor element-wise.
     
-            .. math::
+        .. math::
 
-            out_{i} = - input_{i}
+        out_{i} = - input_{i}
         
-            Args:
-                input (Tensor): The input tensor with a dtype of Number.
+        Args:
+            input (Tensor): The input tensor with a dtype of Number.
         
-            Returns:
-                Tensor, has the same shape and dtype as input.
+        Returns:
+            Tensor, has the same shape and dtype as input.
         
-            Raises:
-                TypeError: If `input` is not a Tensor.
+        Raises:
+            TypeError: If `input` is not a Tensor.
         
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
         
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
-                >>> output = ops.neg(input)
-                >>> print(output)
-                [-1.  -2.   1.  -2.   0.   3.5]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+            >>> output = ops.neg(input)
+            >>> print(output)
+            [-1.  -2.   1.  -2.   0.   3.5]

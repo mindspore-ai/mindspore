@@ -2,5 +2,5 @@ atan_grad:
     description: |
         Computes AtanGrad of input element-wise.
 
-            Returns:
-                Tensor, has the same type as input.
+        Returns:
+            Tensor, has the same type as input.

@@ -2,30 +2,30 @@ atan:
     description: |
         Computes the trigonometric inverse tangent of the input element-wise.
 
-            .. math::
+        .. math::
 
-                out_i = \tan^{-1}(input_i)
+            out_i = \tan^{-1}(input_i)
 
-            Args:
-                input (Tensor): The shape of tensor is
-                    :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-                    The data type should be one of the following types: float16, float32.
+        Args:
+            input (Tensor): The shape of tensor is
+                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+                The data type should be one of the following types: float16, float32.
 
-            Returns:
-                A Tensor, has the same type as the input.
+        Returns:
+            A Tensor, has the same type as the input.
 
-            Raises:
-                TypeError: If `input` is not a Tensor.
-                TypeError: If dtype of `input` is not float16 or float32.
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` is not float16 or float32.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
-                >>> output = ops.atan(x)
-                >>> print(output)
-                [0.7853982 0.       ]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
+            >>> output = ops.atan(x)
+            >>> print(output)
+            [0.7853982 0.       ]

@@ -2,28 +2,28 @@ rank:
     description: |
         Returns the rank of a tensor.
 
-            Returns a int64 scalar representing the rank of input; the rank of a tensor
-            is the number of indices required to uniquely select each element of the tensor.
+        Returns a int64 scalar representing the rank of input; the rank of a tensor
+        is the number of indices required to uniquely select each element of the tensor.
 
-            Args:
-                input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+        Args:
+            input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
 
-            Returns:
-                A int64 scalar representing the rank of input, i.e., :math:`R`. The data type is an int.
+        Returns:
+            A int64 scalar representing the rank of input, i.e., :math:`R`. The data type is an int.
 
-            Raises:
-                TypeError: If `input_x` is not a Tensor.
+        Raises:
+            TypeError: If `input_x` is not a Tensor.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-                >>> output = ops.rank(input_tensor)
-                >>> print(output)
-                2
-                >>> print(type(output))
-                <class 'int'>
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
+            >>> output = ops.rank(input_tensor)
+            >>> print(output)
+            2
+            >>> print(type(output))
+            <class 'int'>

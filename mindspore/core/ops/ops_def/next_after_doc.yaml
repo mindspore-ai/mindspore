@@ -2,36 +2,36 @@ next_after:
     description: |
         Returns the next representable floating-point value after `input` towards `other` element-wise.
     
-            Say there are two float32 numbers :math:`a`, :math:`b`, and let the
-            representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
-            then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
-            the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
+        Say there are two float32 numbers :math:`a`, :math:`b`, and let the
+        representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
+        then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
+        the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
         
-            Args:
-                input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
-                    any number of additional dimensions. Must be one of the following types: float32, float64.
+        Args:
+            input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
+                any number of additional dimensions. Must be one of the following types: float32, float64.
         
-                other (Tensor): The second input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
-                    any number of additional dimensions. Must be one of the following types: float32, float64.
+            other (Tensor): The second input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
+                any number of additional dimensions. Must be one of the following types: float32, float64.
         
-            Returns:
-                Tensor, it has the same shape as the `x` and `y` after broadcasting.
+        Returns:
+            Tensor, it has the same shape as the `x` and `y` after broadcasting.
         
-            Raises:
-                TypeError: If neither `input` nor `other` is a Tensor.
-                TypeError: If the dtype of `input` and `other` is not one of: float32, float64.
-                TypeError: If the dtypes of `input` and `other` are not same.
-                ValueError: If `input`'s shape is not the same as `other`.
+        Raises:
+            TypeError: If neither `input` nor `other` is a Tensor.
+            TypeError: If the dtype of `input` and `other` is not one of: float32, float64.
+            TypeError: If the dtypes of `input` and `other` are not same.
+            ValueError: If `input`'s shape is not the same as `other`.
         
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
         
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input_ = Tensor(np.asarray([0.0]), mindspore.float32)
-                >>> other_ = Tensor(np.asarray([0.1]), mindspore.float32)
-                >>> output_ = ops.nextafter(input_, other_)
-                >>> print(output_)
-                [1.e-45]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_ = Tensor(np.asarray([0.0]), mindspore.float32)
+            >>> other_ = Tensor(np.asarray([0.1]), mindspore.float32)
+            >>> output_ = ops.nextafter(input_, other_)
+            >>> print(output_)
+            [1.e-45]

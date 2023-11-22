@@ -2,46 +2,46 @@ transpose:
     description: |
         Permutes the dimensions of the input tensor according to input permutation.
 
-            For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-            To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
-            For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
-            their order indicates how the axes are permuted (see Examples).
-            If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
-            then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
+        For a 1-D array this has no effect, as a transposed vector is simply the same vector.
+        To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
+        For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
+        their order indicates how the axes are permuted (see Examples).
+        If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
+        then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
 
-            Note:
-                On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input)`.
-                Negative value of `input_perm` is not supported on Ascend.
+        Note:
+            On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input)`.
+            Negative value of `input_perm` is not supported on Ascend.
 
-            Args:
-                x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-                perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
-                    the indexes of each dimension of `input`. The length of `input_perm` and the shape of `input` must be
-                    the same. Only constant value is allowed. Must be in the range [-rank(input), rank(input)).
+        Args:
+            x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+            perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
+                the indexes of each dimension of `input`. The length of `input_perm` and the shape of `input` must be
+                the same. Only constant value is allowed. Must be in the range [-rank(input), rank(input)).
 
-            Returns:
-                Tensor, the type of output tensor is the same as `input` and the shape of output tensor is decided by the
-                shape of `input` and the value of `input_perm`.
+        Returns:
+            Tensor, the type of output tensor is the same as `input` and the shape of output tensor is decided by the
+            shape of `input` and the value of `input_perm`.
 
-            Raises:
-                TypeError: If `input_perm` is not a tuple.
-                ValueError: If length of shape of `input` is not equal to length of shape of `input_perm`.
-                ValueError: If the same element exists in `input_perm`.
+        Raises:
+            TypeError: If `input_perm` is not a tuple.
+            ValueError: If length of shape of `input` is not equal to length of shape of `input_perm`.
+            ValueError: If the same element exists in `input_perm`.
 
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-                >>> input_perm = (0, 2, 1)
-                >>> output = ops.transpose(input, input_perm)
-                >>> print(output)
-                [[[ 1.  4.]
-                [ 2.  5.]
-                [ 3.  6.]]
-                [[ 7. 10.]
-                [ 8. 11.]
-                [ 9. 12.]]]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+            >>> input_perm = (0, 2, 1)
+            >>> output = ops.transpose(input, input_perm)
+            >>> print(output)
+            [[[ 1.  4.]
+            [ 2.  5.]
+            [ 3.  6.]]
+            [[ 7. 10.]
+            [ 8. 11.]
+            [ 9. 12.]]]

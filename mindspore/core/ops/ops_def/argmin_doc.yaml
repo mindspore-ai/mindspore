@@ -2,31 +2,31 @@ argmin:
     description: |
         Returns the indices of the minimum value along a specified `axis` of a Tensor.
 
-            If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
-            :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+        If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
+        :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         
-            Args:
-                x (Tensor) - Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
-                    any number of additional dimensions.
-                axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
-                output_type (:class:`mindspore.dtype`): Output data type.
-                    Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
+        Args:
+            x (Tensor) - Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
+                any number of additional dimensions.
+            axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
+            output_type (:class:`mindspore.dtype`): Output data type.
+                Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
  
-            Outputs:
-                Tensor, whose dtype is determined by `output_type`.
+        Outputs:
+            Tensor, whose dtype is determined by `output_type`.
         
-            Raises:
-                TypeError: If `axis` is not an int.
-                TypeError: If `output_type` is neither int32 nor int64.
+        Raises:
+            TypeError: If `axis` is not an int.
+            TypeError: If `output_type` is neither int32 nor int64.
         
-            Supported Platforms:
-                ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
         
-            Examples:
-                >>> import mindspore
-                >>> import numpy as np
-                >>> from mindspore import Tensor, ops
-                >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-                >>> index = ops.argmin_(input_x)
-                >>> print(index)
-                2
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
+            >>> index = ops.argmin_(input_x)
+            >>> print(index)
+            2
