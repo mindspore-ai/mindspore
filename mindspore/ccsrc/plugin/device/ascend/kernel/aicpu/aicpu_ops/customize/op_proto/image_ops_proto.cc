@@ -281,15 +281,18 @@ bool ResizeConstInferShape(const Operator &op, const std::pair<uint32_t, std::st
 
 // ---------------ResizeNearestNeighborV2 Op Start-------------------
 IMPLEMT_COMMON_INFERFUNC(ResizeNearestNeighborV2InferShape) {
-  static const std::pair<uint32_t, std::string> input_x{0, "x"};
-  static const std::pair<uint32_t, std::string> input_size{1, "size"};
-  static const std::pair<uint32_t, std::string> output_y{0, "y"};
-  const vector<string> depends{input_size.second};
+  const vector<std::string> depends{"size"};
   PREPARE_DYNAMIC_SHAPE(depends);
-  if (!ResizeConstInferShape(op, input_x, input_size, output_y)) {
-    return GRAPH_FAILED;
+  auto output_desc = op.GetOutputDescByName("y");
+  output_desc.SetDataType(op.GetInputDescByName("x").GetDataType());
+  Tensor size_tensor;
+  Shape out_shape(ge::UNKNOWN_RANK);
+  if (op.GetInputConstData("size", size_tensor) == GRAPH_SUCCESS) {
+    if (MakeShapeFromShapeTensor(size_tensor, out_shape, op) != GRAPH_SUCCESS) {
+      return GRAPH_FAILED;
+    }
   }
-
+  output_desc.SetShape(out_shape);
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(ResizeNearestNeighborV2, ResizeNearestNeighborV2InferShape);
