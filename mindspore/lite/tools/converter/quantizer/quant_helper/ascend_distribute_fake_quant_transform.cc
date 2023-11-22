@@ -157,11 +157,6 @@ int AscendDistributeFakeQuantTransform::FetchWeightQuantParamFromFakeQuant(const
       return RET_ERROR;
     }
 
-    if (SetInputNodeQuantParam(cnode, kPrimOffset, quant_params) != RET_OK) {
-      MS_LOG(ERROR) << "Failed to set weight quant param.";
-      return RET_ERROR;
-    }
-
     auto node_users = manager->node_users()[cnode];
     if (node_users.empty()) {
       MS_LOG(WARNING) << cnode->fullname_with_scope() << " cnode is isolated.";
@@ -378,7 +373,7 @@ int AscendDistributeFakeQuantTransform::SetInputQuantParam(const FuncGraphPtr &f
   return RET_OK;
 }
 
-int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph) {
+int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph, bool holder) {
   // Insert QuantDtypeCast for matmul
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     lite::quant::QuantType curr_quant_type;
@@ -390,12 +385,12 @@ int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncG
       continue;
     }
     lite::quant::InsertQuantNodeManager insert_node_manager;
-    auto ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
+    auto ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode, holder);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert AscendDeQuant node failed, cnode name: " << cnode->fullname_with_scope();
       return ret;
     }
-    ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
+    ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode, holder);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
       return ret;
@@ -422,19 +417,6 @@ int AscendDistributeFakeQuantTransform::MatMulWeightTranspose(const FuncGraphPtr
   lite::quant::InsertQuantNodeManager quant_manager;
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
-    if (!cnode_primitive->HasAttr(quant::kQuantType)) {
-      continue;
-    }
-    auto quant_type_attr = cnode_primitive->GetAttr(quant::kQuantType);
-    MS_CHECK_TRUE_MSG(quant_type_attr != nullptr, RET_NULL_PTR, "quant_type attr not exist.");
-    auto quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
-
-    if (quant_type != quant::QUANT_WEIGHT && quant_type != quant::QUANT_ALL) {
-      MS_LOG(DEBUG) << "Invalid quant type, dont need transpose weight.";
-      continue;
-    }
     auto ret = quant_manager.AdjustTransposeNodeForSingleMatMulNode(func_graph, cnode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " Adjust Transpose Node failed.";
@@ -552,7 +534,7 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
     return ret;
   }
 
-  ret = InsertAscendQuantDeQuantNode(func_graph);
+  ret = InsertAscendQuantDeQuantNode(func_graph, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Insert AscendQuant&DeQuant node failed.";
     return ret;
