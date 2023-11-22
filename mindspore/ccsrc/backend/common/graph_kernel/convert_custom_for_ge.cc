@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
-#include <set>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <memory>
 #include "mindspore/core/ops/custom.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"

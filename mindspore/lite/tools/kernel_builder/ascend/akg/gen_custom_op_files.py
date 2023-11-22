@@ -25,6 +25,7 @@ SUPPORTED_INPUT_NUM = [1, 2, 3, 4, 5, 6, 7]
 SUPPORTED_OUTPUT_NUM = [1, 2, 3, 4, 5]
 SUPPORTED_DEVICE_ARCH = ["ascend910", "ascend310p", "ascend310", "ascend910b"]
 VALUE_ALL = "all"
+VALUE = "value"
 NAME = "name"
 SHAPE = "shape"
 REQUIRED = "required"
@@ -38,9 +39,9 @@ def gen_ops_info():
     supported_io_num = list(product(SUPPORTED_INPUT_NUM, SUPPORTED_OUTPUT_NUM))
     for input_num, output_num in supported_io_num:
         op_info = {"attr": {"list": "info_path"},
-                   "attr_info_path": {PARAM_TYPE: REQUIRED, "type": "str", "value": VALUE_ALL},
-                   "opFile": {"value": "custom"},
-                   "opInterface": {"value": "custom"},
+                   "attr_info_path": {PARAM_TYPE: REQUIRED, "type": "str", VALUE: VALUE_ALL},
+                   "opFile": {VALUE: "custom"},
+                   "opInterface": {VALUE: "custom"},
                    "dynamicFormat": {"flag": "true"}}
         for i in range(input_num):
             op_info["input" + str(i)] = {NAME: "x" + str(i),
