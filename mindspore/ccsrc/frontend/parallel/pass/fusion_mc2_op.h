@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_
-#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_FUSION_MC2_OP_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_FUSION_MC2_OP_H_
 
-#include "inc/ops/experiment_ops.h"
-#include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "frontend/optimizer/optimizer.h"
 
-// BlendFaceBgPartOne
-DECLARE_OP_ADAPTER(BlendFaceBgPartOne)
-DECLARE_OP_USE_OUTPUT(BlendFaceBgPartOne)
+namespace mindspore {
+namespace parallel {
+void FusionMC2Op(const FuncGraphPtr &func_graph);
+}  // namespace parallel
+}  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_FUSION_MC2_OP_H_

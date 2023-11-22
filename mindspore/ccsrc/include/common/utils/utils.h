@@ -357,6 +357,13 @@ constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr char kAttrKeepProb[] = "keep_prob";
 constexpr char kAttrHeadNum[] = "head_num";
+constexpr char kAttrIsTransA[] = "is_trans_a";
+constexpr char kAttrIsTransB[] = "is_trans_b";
+constexpr char kAttrReduceOp[] = "reduce_op";
+constexpr char kAttrTransposeX1[] = "transpose_x1";
+constexpr char kAttrTransposeX2[] = "transpose_x2";
+constexpr char kAttrCommTurn[] = "comm_turn";
+constexpr char kAttrGatherIndex[] = "gather_index";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
