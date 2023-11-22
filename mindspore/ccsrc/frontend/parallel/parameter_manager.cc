@@ -1468,6 +1468,11 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
       row_col_node->set_abstract(cloned_abstract);
     }
   }
+
+  for (const auto &origin_param_node : origin_params) {
+    auto inserter = CameCommHandler(origin_param_node->cast<ParameterPtr>(), root->parameters(), manager->node_users());
+    inserter.Process();
+  }
 }
 
 static std::shared_ptr<TensorLayout> GenerateTensorLayoutForParamReshapeWithStra(const AnfNodePtr &node,
