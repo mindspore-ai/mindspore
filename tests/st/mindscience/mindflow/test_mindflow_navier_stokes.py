@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """navier stokes pinns"""
-
+import time
 import pytest
 
 import numpy as np
@@ -34,7 +34,6 @@ class Net(nn.Cell):
         self.act = act
         self.layers = nn.SequentialCell(
             nn.Dense(in_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
             nn.Dense(hidden_channels, hidden_channels, activation=self.act),
             nn.Dense(hidden_channels, hidden_channels, activation=self.act),
             nn.Dense(hidden_channels, out_channels)
@@ -115,8 +114,11 @@ def test_mindflow_navier_stokes():
     epochs = 10
     for epoch in range(1, 1 + epochs):
         model.set_train(True)
+        time_beg = time.time()
         train_loss = train_step(pde_data, bc_data, bc_label, ic_data, ic_label)
-        print(f"epoch: {epoch} train loss: {train_loss}")
+        epoch_time = time.time() - time_beg
+        print(f"epoch: {epoch} train loss: {train_loss} epoch time: {epoch_time}s")
     model.set_train(False)
 
+    assert epoch_time < 0.01
     assert train_loss < 0.8
