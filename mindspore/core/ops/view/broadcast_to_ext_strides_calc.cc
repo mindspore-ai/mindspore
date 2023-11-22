@@ -22,6 +22,6 @@ TensorStorageInfoPtrList BroadCastToExtCalc(const PrimitivePtr &prim, const std:
   auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto input_x = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
-  return BroadCastToProcess(input_tensor, input_x);
+  return BroadCastToProcess(prim, input_tensor, input_x);
 }
 }  // namespace mindspore::ops

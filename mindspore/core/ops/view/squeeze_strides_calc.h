@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_STRIDES_CALC_H
-#define MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_STRIDES_CALC_H
+
+#ifndef MINDSPORE_CORE_OPS_VIEW_SQUEEZE_STRIDES_CALC_H_
+#define MINDSPORE_CORE_OPS_VIEW_SQUEEZE_STRIDES_CALC_H_
 
 #include <vector>
 #include "ops/view/view_strides_calculator.h"
 
 namespace mindspore {
 namespace ops {
-
-TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tensor::TensorPtr input_tensor,
-                                            const std::vector<int64_t> &input_x);
+TensorStorageInfoPtrList SqueezeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_STRIDES_CALC_H
+#endif  // MINDSPORE_CORE_OPS_VIEW_SQUEEZE_STRIDES_CALC_H_

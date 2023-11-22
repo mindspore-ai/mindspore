@@ -278,6 +278,70 @@ NodePtrList FminFmaxGrad(BpropIRBuilder *ib, bool if_fmin) {
   return {brrx1, brrx2};
 }
 
+inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
+                                std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
+  auto [offset, dim1, dim2, x_dim] = int_tuple;
+  auto value = ib->Tensor(0, x_dtype);
+  auto dx = ib->Emit("FillV2", {dx_trans_shape, value});
+  auto k = ib->Tensor(offset, kInt32);
+  constexpr int64_t max_length = 200000000;
+  dx = ib->Emit("MatrixSetDiagV3", {dx, dout, k},
+                {{"align", MakeValue("LEFT_RIGHT")}, {"max_length", MakeValue(max_length)}});
+  int64_t dim = 0;
+  ShapeVector perm(x_dim, 0);
+  for (size_t i = 0; i < x_dim; ++i) {
+    if (i == static_cast<size_t>(dim1)) {
+      perm[i] = static_cast<int64_t>(x_dim - i2);
+    } else if (i == static_cast<size_t>(dim2)) {
+      perm[i] = static_cast<int64_t>(x_dim - i1);
+    } else {
+      perm[i] = dim;
+      dim++;
+    }
+  }
+  dx = ib->Transpose(dx, perm);
+  return {dx};
+}
+
+class DiagonalShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_Diagonal", DiagonalShapeCalc)
+  explicit DiagonalShapeCalc(int64_t dim1, int64_t dim2)
+      : ShapeCalcFunctor("ShapeCalc_Diagonal"), dim1_(dim1), dim2_(dim2) {}
+  ValuePtr ToValue() const override {
+    auto values = {MakeValue(dim1_), MakeValue(dim2_)};
+    return std::make_shared<ValueTuple>(values);
+  }
+  void FromValue(const ValuePtr &value) override {
+    auto values = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(values);
+    if (values->value().size() != i2) {
+      MS_LOG(EXCEPTION) << "DiagonalShapeCalc's value size should be 2, but got " << values->value().size();
+    }
+    dim1_ = GetValue<int64_t>(values->value()[0]);
+    dim2_ = GetValue<int64_t>(values->value()[1]);
+  }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto x_shape = inputs.at(i0);
+    auto out_shape = inputs.at(i1);
+    ShapeVector dx_trans_shape(out_shape.begin(), out_shape.end() - i1);
+    dx_trans_shape.push_back(x_shape[static_cast<size_t>(dim1_)]);
+    dx_trans_shape.push_back(x_shape[static_cast<size_t>(dim2_)]);
+    return {dx_trans_shape};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    auto out_shape = inputs.at(1);
+    auto rank = IsDynamicRank(out_shape) ? -1 : SizeToLong(out_shape.size() + 1);
+    return {rank};
+  }
+
+ protected:
+  int64_t dim1_;
+  int64_t dim2_;
+};
+REG_FUNCTOR("ShapeCalc_Diagonal", DiagonalShapeCalc);
+
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto ta = ib->GetAttr<bool>("transpose_a");
@@ -2171,6 +2235,43 @@ REG_BPROP_BUILDER("Baddbmm").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
     input_grad = ib->Reshape(ib->ReduceSum(input_grad, bc_axis[0], false, true), input_shape);
   }
   return {input_grad, batch1_grad, batch2_grad, ib->OutZeros(beta), ib->OutZeros(alpha)};
+});
+
+REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto offset = GetValue<int64_t>(ib->GetAttr("offset"));
+  auto dim1 = GetValue<int64_t>(ib->GetAttr("dim1"));
+  auto dim2 = GetValue<int64_t>(ib->GetAttr("dim2"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+  if (IsDynamicRank(x_shape)) {
+    MS_LOG_EXCEPTION << "Diagonal doesn't support dynamic rank now, because it need rank of x to do transpose";
+  }
+  auto x_dtype = ib->GetDtype(x);
+  auto x_dim = ib->GetRank(x);
+  if (dim1 < 0) {
+    dim1 += x_dim;
+  }
+  if (dim2 < 0) {
+    dim2 += x_dim;
+  }
+  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, x_dim](Emitter *ib) -> NodePtrList {
+    auto dx_trans_shape = ib->ShapeCalc(std::make_shared<DiagonalShapeCalc>(dim1, dim2), {x, out})[0];
+    return GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+  };
+  auto false_case = [&x](Emitter *ib) -> NodePtrList { return {ib->ZerosLike(x)}; };
+  if (IsDynamic(ib->GetShape(out))) {
+    auto out_size = ib->Emit("Size", {out});
+    auto cond = ib->Emit("scalar_eq", {out_size, ib->Value<int64_t>(0)});
+    auto dx = ib->Conditional(cond, false_case, true_case);
+    return {dx};
+  }
+  if (ib->GetSize(out) > 0) {
+    return true_case(ib);
+  } else {
+    return false_case(ib);
+  }
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

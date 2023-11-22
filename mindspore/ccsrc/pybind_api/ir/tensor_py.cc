@@ -840,6 +840,8 @@ void RegMetaTensor(const py::module *m) {
     .def("data_sync", &Tensor::data_sync)
     .def("contiguous", &Tensor::contiguous)
     .def("is_contiguous", &Tensor::is_contiguous)
+    .def("stride", &Tensor::stride)
+    .def("storage_offset", &Tensor::storage_offset)
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)

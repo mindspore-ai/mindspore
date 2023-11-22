@@ -54,7 +54,7 @@ def test_broadcast_to_single_op():
     output = net(x).asnumpy()
     grad = grad_op(net)(x)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -90,7 +90,7 @@ def test_broadcast_to_multiple_op():
     output = net(x).asnumpy()
     grad = grad_op(net)(x)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -118,7 +118,7 @@ def test_strided_slice_single_op():
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
     grad = grad_op(net)(x)
     expect_grad = np.array([[[1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1]]]).astype(np.float32)
-    assert np.allclose(grad[0].asnumpy(), expect_grad, 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad, 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -148,7 +148,7 @@ def test_strided_slice_multiple_op():
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
     grad = grad_op(net)(x)
     expect_grad = np.array([[[0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1]]]).astype(np.float32)
-    assert np.allclose(grad[0].asnumpy(), expect_grad, 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad, 0.00001, 0.00001)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -181,7 +181,7 @@ def test_expand_dim_single_op():
     output = net(x).asnumpy()
     grad = grad_op(net)(x)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -217,7 +217,7 @@ def test_expand_dim_multiple_op():
     output = net(x).asnumpy()
     grad = grad_op(net)(x)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -297,7 +297,7 @@ def test_transpose_single_op():
     output = net(input_x, input_perm).asnumpy()
     grad = grad_op(net)(input_x, input_perm)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -331,7 +331,7 @@ def test_transpose_multiple_op():
     output = net(input_x, input_perm).asnumpy()
     grad = grad_op(net)(input_x, input_perm)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -361,8 +361,8 @@ def test_gather_single_op():
     net = Net()
     output = net(x)
     grad = grad_op(net)(x)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -395,8 +395,8 @@ def test_large_conv_slice_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -429,8 +429,8 @@ def test_small_conv_slice_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -462,8 +462,8 @@ def test_small_conv_tranpose_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -496,8 +496,8 @@ def test_large_conv_tranpose_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -528,8 +528,8 @@ def test_small_mix_op():
     net = Net()
     output = net(x)
     grad = grad_op(net)(x)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -560,8 +560,8 @@ def test_large_mix_op():
     net = Net()
     output = net(x)
     grad = grad_op(net)(x)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 
@@ -595,8 +595,8 @@ def test_small_conv_mix_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -629,5 +629,71 @@ def test_large_conv_mix_op():
     net = Net()
     output = net(x, weight)
     grad = grad_op(net)(x, weight)
-    assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_slice_single_op():
+    """
+    Feature: slice
+    Description: Verify the result of slice
+    Expectation: success
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return ops.slice(x, *y)
+
+    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
+    input_perm = [(0, 0, 1), (1, 2, 2)]
+    net = Net()
+    expect_output = net(input_x, input_perm).asnumpy()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
+    expect_grad = grad_op(net)(input_x, input_perm)
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    net = Net()
+    output = net(input_x, input_perm).asnumpy()
+    grad = grad_op(net)(input_x, input_perm)
+    np.testing.assert_array_equal(output, expect_output)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_slice_multiple_op():
+    """
+    Feature: slice
+    Description: Verify the result of slice
+    Expectation: success
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            temp = ops.slice(x, *y)
+            temp = (temp + 1) * 2
+            return ops.slice(temp, *y)
+
+    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
+    input_perm = [(0, 0, 0), (1, 2, 2)]
+    net = Net()
+    expect_output = net(input_x, input_perm).asnumpy()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
+    expect_grad = grad_op(net)(input_x, input_perm)
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    net = Net()
+    output = net(input_x, input_perm).asnumpy()
+    grad = grad_op(net)(input_x, input_perm)
+    np.testing.assert_array_equal(output, expect_output)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)

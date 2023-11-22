@@ -20,67 +20,72 @@ from mindspore import Tensor
 from mindspore import ops
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_transpose_single_op():
+def test_squeeze_single_op():
     """
-    Feature: transpose
-    Description: Verify the result of transpose
+    Feature: squeeze
+    Description: Verify the result of squeeze
     Expectation: success
     """
     ms.set_context(mode=ms.GRAPH_MODE)
 
     class Net(nn.Cell):
-        def construct(self, x, y):
-            return ops.transpose(x, y)
+        def construct(self, x, y=None):
+            return ops.squeeze(x, axis=y)
 
-    input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), ms.float32)
-    input_perm = (0, 2, 1)
     net = Net()
-    expect_output = net(input_x, input_perm).asnumpy()
+    np_tensor = np.random.randn(10, 1, 1, 20)
+    ms_tensor = Tensor(np_tensor, dtype=ms.float32)
+    expect_output_1 = net(ms_tensor).asnumpy()
+    expect_output_2 = net(ms_tensor, 1).asnumpy()
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
-    expect_grad = grad_op(net)(input_x, input_perm)
+    expect_grad_1 = grad_op(net)(ms_tensor)
+    expect_grad_2 = grad_op(net)(ms_tensor, 1)
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    net = Net()
-    output = net(input_x, input_perm).asnumpy()
-    grad = grad_op(net)(input_x, input_perm)
-    np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    output_1 = net(ms_tensor).asnumpy()
+    output_2 = net(ms_tensor, 1).asnumpy()
+    grad_1 = grad_op(net)(ms_tensor)
+    grad_2 = grad_op(net)(ms_tensor, 1)
+    np.testing.assert_array_equal(output_1, expect_output_1)
+    np.testing.assert_array_equal(output_2, expect_output_2)
+    np.testing.assert_allclose(grad_1[0].asnumpy(), expect_grad_1[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad_2[0].asnumpy(), expect_grad_2[0].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_transpose_multiple_op():
+def test_squeeze_multiple_op():
     """
-    Feature: transpose
-    Description: Verify the result of transpose
+    Feature: squeeze
+    Description: Verify the result of squeeze
     Expectation: success
     """
     ms.set_context(mode=ms.GRAPH_MODE)
 
     class Net(nn.Cell):
-        def construct(self, x, y):
-            temp = ops.transpose(x, y)
+        def construct(self, x, y=None):
+            temp = ops.squeeze(x, y)
             temp = (temp + 1) * 2
-            return ops.transpose(temp, y)
+            return ops.squeeze(temp, y)
 
-    input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), ms.float32)
-    input_perm = (0, 2, 1)
     net = Net()
-    expect_output = net(input_x, input_perm).asnumpy()
+    np_tensor = np.random.randn(10, 1, 1, 20)
+    ms_tensor = Tensor(np_tensor, dtype=ms.float32)
+
+    expect_output = net(ms_tensor, 1).asnumpy()
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
-    expect_grad = grad_op(net)(input_x, input_perm)
+    expect_grad = grad_op(net)(ms_tensor, 1)
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    net = Net()
-    output = net(input_x, input_perm).asnumpy()
-    grad = grad_op(net)(input_x, input_perm)
+    output = net(ms_tensor, 1).asnumpy()
+    grad = grad_op(net)(ms_tensor, 1)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
