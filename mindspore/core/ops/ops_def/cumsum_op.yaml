@@ -7,10 +7,12 @@ cum_sum:
       dtype: int
     exclusive:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
     reverse:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
   returns:
     output:
       dtype: tensor

@@ -7,7 +7,8 @@ hshrink_grad:
             dtype: tensor
         lambd:
             dtype: float
-            init: 0.5
+            default: 0.5
+            prim_init: True
     returns:
         output: 
             dtype: tensor

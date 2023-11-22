@@ -9,10 +9,12 @@ reduce_sum:
       default: ()
     keep_dims:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
     skip_mode:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
   returns:
     output:
       dtype: tensor

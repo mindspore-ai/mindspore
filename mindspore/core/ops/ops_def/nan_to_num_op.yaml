@@ -5,13 +5,16 @@ nan_to_num:
             dtype: tensor
         nan:
             dtype: float
-            init: 0.0
+            default: 0.0
+            prim_init: True
         posinf:
             dtype: float
-            init: 65504.0
+            default: 65504.0
+            prim_init: True
         neginf:
             dtype: float
-            init: -65504.0
+            default: -65504.0
+            prim_init: True
     returns:
         output: 
             dtype: tensor

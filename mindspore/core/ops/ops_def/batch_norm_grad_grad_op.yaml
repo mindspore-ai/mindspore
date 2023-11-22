@@ -18,13 +18,16 @@ batch_norm_grad_grad:
             dtype: tensor
         is_training:
             dtype: bool
-            init: False
+            default: False
+            prim_init: True
         epsilon:
             dtype: float
-            init: 1e-5
+            default: 1e-5
+            prim_init: True
         data_format:
             dtype: int
-            init: "'NCHW'"
+            default: "'NCHW'"
+            prim_init: True
             arg_handler: py_format_to_enum
     returns:
         dx:

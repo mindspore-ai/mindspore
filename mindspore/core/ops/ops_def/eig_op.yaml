@@ -5,7 +5,8 @@ eig:
       dtype: tensor
     compute_v:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
   returns:
     eigen_values:
       dtype: tensor

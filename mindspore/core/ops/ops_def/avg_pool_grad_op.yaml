@@ -9,19 +9,23 @@ avg_pool_grad:
             dtype: tensor
         kernel_size:
             dtype: tuple[int]
-            init: 1
+            default: 1
+            prim_init: True
             arg_handler: to_kernel_size
         strides:
             dtype: tuple[int]
-            init: 1
+            default: 1
+            prim_init: True
             arg_handler: to_strides
         pad_mode:
             dtype: int
-            init: "'VALID'"
+            default: "'VALID'"
+            prim_init: True
             arg_handler: pad_mode_to_enum
         data_format:
             dtype: int
-            init: "'NCHW'"
+            default: "'NCHW'"
+            prim_init: True
             arg_handler: py_format_to_enum
     returns:
         output:

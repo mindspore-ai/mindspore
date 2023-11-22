@@ -13,11 +13,13 @@ nllloss_grad:
             dtype: tensor
         reduction:
             dtype: int
-            init: "'mean'"
+            default: "'mean'"
+            prim_init: True
             arg_handler: reduction_to_enum
         ignore_index:
             dtype: int
-            init: -100
+            default: -100
+            prim_init: True
     returns:
         logits_grad:
             dtype: tensor

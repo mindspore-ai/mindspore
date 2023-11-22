@@ -227,21 +227,23 @@ def generate_py_op_func(yaml_data, doc_data):
         init_args = []
         input_args = []
         for arg_name, arg_info in args.items():
-            init_value = arg_info.get('init')
+            is_prim_init = arg_info.get('prim_init')
+            has_default = 'default' in arg_info.keys()
 
-            if init_value is None:
-                default_key = 'default'
-                default_value = arg_info.get(default_key)
-                default_value_str = '=' + str(default_value) if default_key in arg_info else ''
-                func_args.append(arg_name + default_value_str)
-                input_args.append(arg_name)
+            # step1: Process function input args.
+            if not has_default:
+                func_args.append(f"""{arg_name}""")
             else:
-                if init_value == 'NO_VALUE':
-                    func_args.append(f"""{arg_name}""")
-                    init_args.append(arg_name)
-                else:
-                    func_args.append(f"""{arg_name}={init_value}""")
-                    init_args.append(arg_name)
+                default_value = arg_info.get('default')
+                func_args.append(f"""{arg_name}={default_value}""")
+
+            # step2: Process primitive object init args.
+            if is_prim_init:
+                init_args.append(arg_name)
+
+            # step3: Process primitive object call args.
+            else:
+                input_args.append(arg_name)
 
         description = _process_description(description)
         function_code = f"""\n
@@ -268,34 +270,40 @@ def process_args(args):
     args_handlers = {}
     for arg_name, arg_info in args.items():
         dtype = arg_info.get('dtype')
-        init_value = arg_info.get('init')
-        if init_value is None:
+        default_value = arg_info.get('default')
+        has_default = 'default' in arg_info.keys()
+        is_prim_init = arg_info.get('prim_init')
+        arg_handler = arg_info.get('arg_handler')
+
+        # step1: get args infos:
+        if is_prim_init:
+            # step1.1: get args name:
+            args_name.append(arg_name)
+            # step1.2: get args assign with default value:
+            if has_default:
+                init_args_with_default.append(f"""{arg_name}={default_value}""")
+            else:
+                init_args_with_default.append(f"""{arg_name}""")
+
+            # step1.3: get args set prim arg expression:
+            assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
+            if arg_handler:
+                assign_str = f'{arg_handler}({assign_str})'
+            assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
+            args_assign.append(assign_str)
+        # step2: get inputs infos:
+        else:
+            # step2.1: get inputs name:
             inputs_name.append(arg_name)
-            default_key = 'default'
-            default_value = arg_info.get(default_key)
-            if default_key in arg_info.keys():
+
+            # step2.2: get default value of inputs:
+            if has_default:
                 inputs_default[arg_name] = default_value
 
-            arg_handler = arg_info.get('arg_handler')
+            # step2.3: get args_handler functions for inputs
             if arg_handler:
                 args_handlers[arg_name] = arg_handler
 
-            continue
-
-        if init_value == 'NO_VALUE':
-            init_args_with_default.append(f"""{arg_name}""")
-        else:
-            init_args_with_default.append(f"""{arg_name}={init_value}""")
-        args_name.append(arg_name)
-
-        assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
-
-        arg_handler = arg_info.get('arg_handler')
-        if arg_handler is not None:
-            assign_str = f'{arg_handler}({assign_str})'
-
-        assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
-        args_assign.append(assign_str)
     return inputs_name, inputs_default, args_name, args_assign, init_args_with_default, args_handlers
 
 
@@ -490,8 +498,8 @@ namespace mindspore::ops {
   {op_name}() : BaseOperator(kName{op_name}) {{}}\n"""
         args = operator_data.get('args')
         for _, (arg_name, arg_info) in enumerate(args.items()):
-            init = arg_info.get('init')
-            if init is None:
+            is_prim_init = arg_info.get('prim_init')
+            if not is_prim_init:
                 continue
 
             dtype = arg_info.get('dtype')
@@ -545,8 +553,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
-            init = arg_info.get('init')
-            init_flag = 0 if init is None else 1
+            is_prim_init = 1 if arg_info.get('prim_init') else 0
             arg_handler = arg_info.get('arg_handler')
             arg_handler_str = "" if arg_handler is None else arg_handler
 
@@ -556,7 +563,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                           (ct.strip() for ct in type_cast.split(",")))
 
             opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
-                        f"""/*.as_init_arg_=*/{init_flag}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
+                        f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
                         f"""/*.cast_dtype_ =*/{{{type_cast_str}}}}},"""
         opdef_cc += f"""\n  }},"""
         opdef_cc += f"""\n  /* .returns_ = */ {{"""
@@ -690,6 +697,7 @@ def generate_labels_file(work_path, yaml_str):
         py_file.write(py_licence_str + "\n" + py_labels + "\n")
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
+
 def generate_aclnn_reg_code(yaml_data):
     """generate aclnn register code"""
     reg_code = f"""
@@ -703,7 +711,7 @@ namespace kernel {{
         if not dispatch or not dispatch.get("enable"):
             continue
         Ascend = dispatch.get("Ascend")
-        if Ascend is not None: # KernelMod is provided by yaml, don't auto generate it.
+        if Ascend is not None:  # KernelMod is provided by yaml, don't auto generate it.
             continue
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         op_class = operator_data.get("class")
@@ -717,6 +725,7 @@ MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, aclnn{class_name}, {inputs_out
 }}  // namespace mindspore
 """
     return reg_code
+
 
 def generate_aclnn_reg_file(work_path, yaml_str):
     """

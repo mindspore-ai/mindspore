@@ -13,10 +13,12 @@ layer_norm_grad:
       dtype: tensor
     begin_norm_axis:
       dtype: int
-      init: 1
+      default: 1
+      prim_init: True
     begin_params_axis:
       dtype: int
-      init: 1
+      default: 1
+      prim_init: True
   returns:
     pd_x:
       dtype: tensor

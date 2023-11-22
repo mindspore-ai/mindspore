@@ -9,7 +9,8 @@ reduce_min:
       default: ()
     keep_dims:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
   returns:
     output:
       dtype: tensor

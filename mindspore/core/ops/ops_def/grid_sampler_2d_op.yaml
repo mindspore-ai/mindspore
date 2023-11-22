@@ -7,15 +7,18 @@ grid_sampler_2d:
             dtype: tensor
         interpolation_mode:
             dtype: int
-            init: "'bilinear'"
+            default: "'bilinear'"
+            prim_init: True
             arg_handler: interpolation_mode_to_enum
         padding_mode:
             dtype: int
-            init: "'zeros'"
+            default: "'zeros'"
+            prim_init: True
             arg_handler: grid_sampler_padding_mode_to_enum
         align_corners:
             dtype: bool
-            init: False
+            default: False
+            prim_init: True
     returns:
         output: 
             dtype: tensor

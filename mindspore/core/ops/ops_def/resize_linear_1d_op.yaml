@@ -8,7 +8,8 @@ resize_linear_1d:
       type_cast: list[int], tensor
     coordinate_transformation_mode:
       dtype: int
-      init: "'align_corners'"
+      default: "'align_corners'"
+      prim_init: True
       arg_handler: coordinate_transformation_mode_to_enum
   returns:
     output:

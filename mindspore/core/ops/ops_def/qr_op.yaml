@@ -5,7 +5,8 @@ qr:
             dtype: tensor
         full_matrices:
             dtype: bool
-            init: False
+            default: False
+            prim_init: True
     returns:
         q:
             dtype: tensor

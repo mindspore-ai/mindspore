@@ -5,7 +5,7 @@ cummax:
       dtype: tensor
     axis:
       dtype: int
-      init: NO_VALUE
+      prim_init: True
   returns:
     values:
       dtype: tensor

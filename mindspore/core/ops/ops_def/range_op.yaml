@@ -12,7 +12,8 @@ range:
             type_cast: tensor
         maxlen:
             dtype: int
-            init: 1000000
+            default: 1000000
+            prim_init: True
     returns:
         output:
             dtype: tensor

@@ -5,11 +5,11 @@ roll:
       dtype: tensor
     shift:
       dtype: tuple[int]
-      init: NO_VALUE
+      prim_init: True
       type_cast:  int, list[int]
     axis:
       dtype: tuple[int]
-      init: NO_VALUE
+      prim_init: True
       type_cast: int, list[int]
   returns:
     output:

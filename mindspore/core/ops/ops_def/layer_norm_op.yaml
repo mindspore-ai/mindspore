@@ -9,13 +9,16 @@ layer_norm:
       dtype: tensor
     begin_norm_axis:
       dtype: int
-      init: 1
+      default: 1
+      prim_init: True
     begin_params_axis:
       dtype: int
-      init: 1
+      default: 1
+      prim_init: True
     epsilon:
       dtype: float
-      init: 1e-7
+      default: 1e-7
+      prim_init: True
   returns:
     output_x:
       dtype: tensor
