@@ -878,13 +878,7 @@ REG_BPROP_BUILDER("GatherNd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shp = ib->GetShape(x);
-  NodePtr shp;
-  if (IsDynamic(x_shp)) {
-    shp = ib->Shape(x, true);
-  } else {
-    shp = ib->EmitValue(MakeValue(x_shp));
-  }
+  auto shp = ib->Shape(x);
   return {ib->ScatterNd(ib->Cast(indices, kInt64), dout, shp), ib->OutZeros(indices)};
 });
 
