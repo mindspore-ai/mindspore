@@ -206,7 +206,7 @@ AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
     : param_(param),
       fmk_type_(param->fmk_type),
       export_mindir_(param->save_type),
-      user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
+      user_options_cfg_(param->aclModelOptionCfgParam),
       om_parameter_(nullptr),
       custom_node_(nullptr) {
   is_ptq_quant_ = (param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
