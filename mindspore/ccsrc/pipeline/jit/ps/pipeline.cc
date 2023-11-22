@@ -1775,7 +1775,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
 #if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
-      distributed::DataQueueManager::GetInstance().CreateDataQueue(queue_name, size, 128);
+      const size_t capacity = 128;
+      distributed::DataQueueManager::GetInstance().CreateDataQueue(queue_name, size, capacity);
     }
 #endif
 

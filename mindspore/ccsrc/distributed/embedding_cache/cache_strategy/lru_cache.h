@@ -45,7 +45,11 @@ class LRUCache : public Cache<KeyType, ValueType> {
 
   ~LRUCache() override {
     elements_.clear();
-    element_keys_to_iters_.clear();
+    try {
+      element_keys_to_iters_.clear();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Failed to clear element keys to iters HashMap, error message: " << e.what();
+    }
   }
 
   // Insert an element (key-value pair) into the lru cache.
@@ -66,7 +70,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
     }
 
     // The key does not exist in lru cache, insert this new element at the head of list.
-    elements_.emplace_front(key, value);
+    (void)elements_.emplace_front(key, value);
     (void)element_keys_to_iters_.emplace(key, elements_.begin());
   }
 
@@ -122,7 +126,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
 
     while (size() > capacity - reserve_size) {
       const auto &back_element = elements_.back();
-      evicted_elements->emplace_back(back_element.first, back_element.second);
+      (void)evicted_elements->emplace_back(back_element.first, back_element.second);
       (void)element_keys_to_iters_.erase(back_element.first);
       elements_.pop_back();
     }

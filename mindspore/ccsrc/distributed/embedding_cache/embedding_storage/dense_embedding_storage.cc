@@ -15,7 +15,6 @@
  */
 
 #include "distributed/embedding_cache/embedding_storage/dense_embedding_storage.h"
-#include <memory>
 
 namespace mindspore {
 namespace distributed {

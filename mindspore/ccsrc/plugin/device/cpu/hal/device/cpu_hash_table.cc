@@ -16,7 +16,6 @@
 #include "plugin/device/cpu/hal/device/cpu_hash_table.h"
 
 #include <string>
-#include <algorithm>
 
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"

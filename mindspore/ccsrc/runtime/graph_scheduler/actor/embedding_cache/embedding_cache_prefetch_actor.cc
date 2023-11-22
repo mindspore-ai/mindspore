@@ -169,7 +169,7 @@ void DeduplicateId(UniqueIds *unique_ids) {
   }
   const auto &unique_ids_set = unique_batch_ids_sets.front();
   unique_ids->ids_num_ = unique_ids_set.size();
-  unique_ids->ids_ = new int[unique_ids->ids_num_];
+  unique_ids->ids_ = new (std::nothrow) int[unique_ids->ids_num_];
   MS_EXCEPTION_IF_NULL(unique_ids->ids_);
   size_t index = 0;
   auto unique_ids_ptr = unique_ids->ids_;
@@ -237,8 +237,8 @@ void EmbeddingCachePrefetchActor::Initialize() {
   LinkRpcOperators();
 
   // Create the device embedding operation.
-  emb_ops_ = new DeviceDenseEmbeddingOperation(this, device_context_, local_embedding_slice_bounds_,
-                                               local_device_cache_bounds_, &statistics_info_, stream_id_);
+  emb_ops_ = new (std::nothrow) DeviceDenseEmbeddingOperation(
+    this, device_context_, local_embedding_slice_bounds_, local_device_cache_bounds_, &statistics_info_, stream_id_);
   MS_EXCEPTION_IF_NULL(emb_ops_);
   if (!emb_ops_->Initialize()) {
     MS_LOG(ERROR) << "Failed to initialize the device embedding operation.";
@@ -457,7 +457,7 @@ void EmbeddingCachePrefetchActor::UniqueIdsTask(const std::string &channel_name)
 
     if (data->end_of_file_ || data->end_of_epoch_) {
       // Push empty data for epoch or file end flag.
-      UniqueIds *empty_unique_ids = new UniqueIds();
+      UniqueIds *empty_unique_ids = new (std::nothrow) UniqueIds();
       MS_EXCEPTION_IF_NULL(empty_unique_ids);
       empty_unique_ids->end_of_epoch_ = data->end_of_epoch_;
       empty_unique_ids->end_of_file_ = data->end_of_file_;
@@ -467,7 +467,7 @@ void EmbeddingCachePrefetchActor::UniqueIdsTask(const std::string &channel_name)
     }
 
     if (unique_ids == nullptr) {
-      unique_ids = new UniqueIds();
+      unique_ids = new (std::nothrow) UniqueIds();
       MS_EXCEPTION_IF_NULL(unique_ids);
     }
 
@@ -517,7 +517,7 @@ void EmbeddingCachePrefetchActor::AnalyseCacheTask(const std::string &channel_na
     MS_EXCEPTION_IF_NULL(unique_ids);
     if (unique_ids->end_of_file_ || unique_ids->end_of_epoch_) {
       // Push empty data for epoch or file end flag.
-      CacheAnalysis *cache_analysis = new CacheAnalysis();
+      CacheAnalysis *cache_analysis = new (std::nothrow) CacheAnalysis();
       MS_EXCEPTION_IF_NULL(cache_analysis);
       cache_analysis->end_of_epoch_ = unique_ids->end_of_epoch_;
       cache_analysis->end_of_file_ = unique_ids->end_of_file_;
@@ -526,14 +526,14 @@ void EmbeddingCachePrefetchActor::AnalyseCacheTask(const std::string &channel_na
       continue;
     }
     size_t unique_ids_num = unique_ids->ids_num_;
-    int *indices = new int[unique_ids_num];
+    int *indices = new (std::nothrow) int[unique_ids_num];
     MS_EXCEPTION_IF_NULL(indices);
 
-    EmbeddingDeviceCache *embedding_device_cache = new EmbeddingDeviceCache(unique_ids_num);
+    EmbeddingDeviceCache *embedding_device_cache = new (std::nothrow) EmbeddingDeviceCache(unique_ids_num);
     MS_EXCEPTION_IF_NULL(embedding_device_cache);
-    EmbeddingHostCache *embedding_host_cache = new EmbeddingHostCache(unique_ids_num);
+    EmbeddingHostCache *embedding_host_cache = new (std::nothrow) EmbeddingHostCache(unique_ids_num);
     MS_EXCEPTION_IF_NULL(embedding_host_cache);
-    EmbeddingCacheStatisticsInfo *statistics_info = new EmbeddingCacheStatisticsInfo();
+    EmbeddingCacheStatisticsInfo *statistics_info = new (std::nothrow) EmbeddingCacheStatisticsInfo();
     MS_EXCEPTION_IF_NULL(statistics_info);
 
     // Analyse cache hit/miss
@@ -547,8 +547,8 @@ void EmbeddingCachePrefetchActor::AnalyseCacheTask(const std::string &channel_na
 
     // Push analyse result to update cache queue
     CacheAnalysis *cache_analysis =
-      new CacheAnalysis(embedding_device_cache, embedding_host_cache, statistics_info, unique_ids, indices,
-                        unique_ids->end_of_epoch_, unique_ids->end_of_file_);
+      new (std::nothrow) CacheAnalysis(embedding_device_cache, embedding_host_cache, statistics_info, unique_ids,
+                                       indices, unique_ids->end_of_epoch_, unique_ids->end_of_file_);
     MS_EXCEPTION_IF_NULL(cache_analysis);
     cache_analysis_queue->Push(cache_analysis);
   }
@@ -574,7 +574,7 @@ void EmbeddingCachePrefetchActor::UpdateCacheTask(const std::string &channel_nam
     MS_EXCEPTION_IF_NULL(cache_analysis);
     if (cache_analysis->end_of_file_ || cache_analysis->end_of_epoch_) {
       // Push empty data for epoch end flag.
-      IdsAndIndices *ids_and_indices = new IdsAndIndices();
+      IdsAndIndices *ids_and_indices = new (std::nothrow) IdsAndIndices();
       MS_EXCEPTION_IF_NULL(ids_and_indices);
       ids_and_indices->end_of_epoch_ = cache_analysis->end_of_epoch_;
       ids_and_indices->end_of_file_ = cache_analysis->end_of_file_;
@@ -597,8 +597,9 @@ void EmbeddingCachePrefetchActor::UpdateCacheTask(const std::string &channel_nam
                                  "Pull cache from local host to device failed.");
     }
 
-    IdsAndIndices *ids_and_indices = new IdsAndIndices(cache_analysis->unique_ids_, cache_analysis->indices_,
-                                                       cache_analysis->end_of_epoch_, cache_analysis->end_of_file_);
+    IdsAndIndices *ids_and_indices =
+      new (std::nothrow) IdsAndIndices(cache_analysis->unique_ids_, cache_analysis->indices_,
+                                       cache_analysis->end_of_epoch_, cache_analysis->end_of_file_);
 
     ids_and_indices_queue->Push(ids_and_indices);
 
@@ -627,7 +628,7 @@ void EmbeddingCachePrefetchActor::TransformIdsToIndicesTask(const std::string &c
     MS_EXCEPTION_IF_NULL(ids_and_indices);
     // Push empty data for epoch end flag.
     if (ids_and_indices->end_of_file_ || ids_and_indices->end_of_epoch_) {
-      IndexDataInfo *indices_info = new IndexDataInfo();
+      IndexDataInfo *indices_info = new (std::nothrow) IndexDataInfo();
       MS_EXCEPTION_IF_NULL(indices_info);
       indices_info->end_of_epoch_ = ids_and_indices->end_of_epoch_;
       indices_info->end_of_file_ = ids_and_indices->end_of_file_;
@@ -653,8 +654,8 @@ void EmbeddingCachePrefetchActor::TransformIdsToIndicesTask(const std::string &c
                               reinterpret_cast<int *>(unique_ids->multi_batch_data_.at(i)));
       }
       IndexDataInfo *indices_info =
-        new IndexDataInfo(unique_ids->multi_batch_data_.at(i), unique_ids->multi_batch_items_.at(i),
-                          ids_and_indices->end_of_epoch_, ids_and_indices->end_of_file_);
+        new (std::nothrow) IndexDataInfo(unique_ids->multi_batch_data_.at(i), unique_ids->multi_batch_items_.at(i),
+                                         ids_and_indices->end_of_epoch_, ids_and_indices->end_of_file_);
 
       if (unique_ids->multi_batch_data_.at(i) != unique_ids->multi_batch_items_.at(i)->at(0).data_ptr) {
         MS_LOG(EXCEPTION) << "The id data ptr is valid";
