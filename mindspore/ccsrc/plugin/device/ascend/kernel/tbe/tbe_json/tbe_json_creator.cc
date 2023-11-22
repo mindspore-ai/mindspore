@@ -539,6 +539,25 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   (*compute_json)[kJModuleName] = kJModuleNamePrefix + file_name;
 }
 
+std::string TbeJsonCreator::GetOutputFormat(const AnfNodePtr &anf_node, size_t output_index) const {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto ori_shape = TbeJsonUtils::GetOutputOriShapeForTbeBuild(anf_node, output_index);
+  if (ori_shape.empty()) {
+    ori_shape.emplace_back(1);
+  }
+  // !! Note: format: only data node's output use it
+  auto format = AnfAlgo::GetOutputFormat(anf_node, output_index);
+  format = tbe::TbeAdapter::FormatPass(format, ori_shape.size());
+  auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
+  format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
+  if (anf_node->isa<CNode>() && common::AnfAlgo::IsDynamicRankNode(anf_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrDstFormat, anf_node->cast<CNodePtr>())) {
+      format = common::AnfAlgo::GetNodeAttr<std::string>(anf_node->cast<CNodePtr>(), kAttrDstFormat);
+    }
+  }
+  return format;
+}
+
 // node_out_idx: node output index
 // desc_output_idx: this index use to add json
 void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
@@ -559,17 +578,8 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
 
   auto full_name = anf_node->fullname_with_scope();
   auto output_desc_name = node_out_idx > 0 ? (full_name + "_" + std::to_string(node_out_idx)) : full_name;
-
-  // !! Note: format: only data node's output use it
-  auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
-  format = tbe::TbeAdapter::FormatPass(format, ori_shape.size());
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
-  if (anf_node->isa<CNode>() && common::AnfAlgo::IsDynamicRankNode(anf_node)) {
-    if (common::AnfAlgo::HasNodeAttr(kAttrDstFormat, anf_node->cast<CNodePtr>())) {
-      format = common::AnfAlgo::GetNodeAttr<std::string>(anf_node->cast<CNodePtr>(), kAttrDstFormat);
-    }
-  }
+  auto format = GetOutputFormat(anf_node, node_out_idx);
 
   (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx));
   (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);
