@@ -1225,9 +1225,20 @@ def tensor_setitem_by_slice(self, index, value):
         return self
     value = F.broadcast_to(value, value_shape)
     if not const_utils.is_ascend() and step == 1:
+        tensor_to_tuple = TensorToTuple()
+        if isinstance(start, Tensor):
+            start = tensor_to_tuple(start)
+        else:
+            start = (start,)
+        if isinstance(stop, Tensor):
+            stop = tensor_to_tuple(stop)
+        else:
+            stop = (stop,)
         if isinstance(step, Tensor):
-            return copy_slice(self, value, start, stop, step)
-        return copy_slice(self, value, (start,), (stop,), (step,))
+            step = tensor_to_tuple(step)
+        else:
+            step = (step,)
+        return copy_slice(self, value, start, stop, step)
     return F.tensor_scatter_update(self, indices, value)
 
 

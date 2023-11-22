@@ -759,7 +759,7 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
     auto part_2 = stridedslice_helper(range_2);
     auto part_3 = stridedslice_helper(range_3);
     perm = ib->Concat({part_1, part_2, part_3}, -1);
-    return ib->Transpose(x, perm);
+    return ib->Transpose(x, ib->TensorToTuple(perm));
   }
   auto dim = shape.size();
   if (dim < kDim2) {
