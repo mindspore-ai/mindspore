@@ -183,10 +183,10 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
                 _insert_cast_for_cell_container(node, dtype, allowed_list, white_list=white_list)
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _insert_cast_operator_white_list(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)),
+                    _insert_cast_operator_white_list(ms.rewrite.Node(n).get_sub_tree(),
                                                      white_list, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
+            substree = node.get_sub_tree()
             _insert_cast_operator_white_list(substree, white_list, dtype)
         elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
             if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):
@@ -303,9 +303,9 @@ def _remove_duplicated_cast(stree, dtype):
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _remove_duplicated_cast(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)), dtype)
+                    _remove_duplicated_cast(ms.rewrite.Node(n).get_sub_tree(), dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
+            substree = node.get_sub_tree()
             _remove_duplicated_cast(substree, dtype)
         elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
             if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):

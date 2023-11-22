@@ -17,7 +17,7 @@ import numpy as np
 import mindspore
 from mindspore import Tensor, nn
 from mindspore.ops import operations as P
-from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
+from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType
 from mindspore.common.api import _cell_graph_executor
 from .comp_network import CompNet, SubNet4, SubNet2
 
@@ -53,7 +53,7 @@ def add_relu_in_conv1(stree: SymbolTree):
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv1":
-            modify_stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            modify_stree: SymbolTree = node.get_sub_tree()
             for inner_node in modify_stree.nodes():
                 if inner_node.get_node_type() != NodeType.Output:
                     continue
@@ -74,7 +74,7 @@ def replace_bn_in_conv2(stree: SymbolTree):
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv2":
-            modify_stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            modify_stree: SymbolTree = node.get_sub_tree()
             for inner_node in modify_stree.nodes():
                 if inner_node.get_instance_type() != nn.BatchNorm2d:
                     continue
@@ -94,7 +94,7 @@ def erase_relu_in_conv2(stree: SymbolTree):
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv2":
-            modify_stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            modify_stree: SymbolTree = node.get_sub_tree()
             for inner_node in modify_stree.nodes():
                 if inner_node.get_instance_type() != nn.ReLU:
                     continue
@@ -139,7 +139,7 @@ def add_relu_in_conv11(stree: SymbolTree):
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv11":
-            _stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            _stree: SymbolTree = node.get_sub_tree()
             for inner_node in _stree.nodes():
                 if inner_node.get_node_type() != NodeType.Output:
                     continue
@@ -176,7 +176,7 @@ def test_subtree_net():
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv":
-            modify_stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            modify_stree: SymbolTree = node.get_sub_tree()
             for inner_node in modify_stree.nodes():
                 print("inserted subtree node: ", inner_node.get_name())
 

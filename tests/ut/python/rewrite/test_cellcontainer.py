@@ -17,7 +17,7 @@
 from mindspore import nn
 from mindspore.ops import operations as P
 
-from mindspore.rewrite import SymbolTree, NodeType, TreeNodeHelper, Node, ScopedValue, PatternEngine, Replacement, \
+from mindspore.rewrite import SymbolTree, NodeType, Node, ScopedValue, PatternEngine, Replacement, \
     PatternNode
 
 
@@ -165,7 +165,7 @@ def test_cellcontainer_insert_ok():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _insert_conv(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _insert_conv(Node(n).get_sub_tree())
                     break
     new_net = stree.get_network()
     cell_container = getattr(new_net, "layer1")
@@ -193,7 +193,7 @@ def test_cellcontainer_insert_to_subtree():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _insert_conv(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _insert_conv(Node(n).get_sub_tree())
                     break
     new_net = stree.get_network()
     cell_container = getattr(new_net, "layer1")
@@ -330,7 +330,7 @@ def test_cellcontainer_replace_in_subtree():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _replace_bn(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _replace_bn(Node(n).get_sub_tree())
                     break
 
     cell_container = stree.get_node("layer1").get_handler().node_list[0].symbol_tree

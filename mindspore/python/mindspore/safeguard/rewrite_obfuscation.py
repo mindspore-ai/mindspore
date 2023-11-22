@@ -22,7 +22,7 @@ from mindspore import ops, nn
 from mindspore.common.tensor import Tensor
 from mindspore import log as logger
 from mindspore import load_checkpoint, save_checkpoint
-from mindspore.rewrite import SymbolTree, Node, NodeType, TreeNodeHelper, ScopedValue
+from mindspore.rewrite import SymbolTree, Node, NodeType, ScopedValue
 from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
 from mindspore.rewrite.parsers.class_def_parser import ModuleParser
 
@@ -500,7 +500,7 @@ def _obfuscate_network(model, path_list, target_list, data_parallel_num=1, **kwa
         for node in stree.nodes():
             node_name = node.get_name()
             if node.get_node_type() == NodeType.Tree and node_name.startswith(path_list[i]):
-                sub_stree = TreeNodeHelper.get_sub_tree(node)
+                sub_stree = node.get_sub_tree()
                 _traverse(sub_stree, i + 1)
                 _insert_input(sub_stree, arg_name='y_obf')
                 _insert_mul_by_name(sub_stree, after_name_list=target_list[i + 1])

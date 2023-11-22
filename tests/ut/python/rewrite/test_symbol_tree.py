@@ -600,3 +600,32 @@ def test_print_node_tabulate():
                                     "]        [[0, [('return', 0)]]]") == 1
     assert redirecter.content.count("NodeType.CallFunction  subsubnet_internal_func  x = self.subsubnet_internal_func"
                                     "(x)  [[0, ('external_func', 0)]]            [[0, [('return_1', 0)]]]") == 1
+
+
+class SubNet1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+class Net1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subnet = SubNet1()
+    def construct(self, x):
+        x = self.subnet(x)
+        return x
+
+def test_get_sub_tree():
+    """
+    Feature: Python api get_sub_tree of Node of Rewrite.
+    Description: Call get_sub_tree from Node.
+    Expectation: Success.
+    """
+    net = Net1()
+    stree = SymbolTreeApi.create(net)
+    node = stree.get_node("subnet")
+    substree = node.get_sub_tree()
+    assert isinstance(substree, SymbolTreeApi)
+    assert isinstance(substree.get_handler().get_origin_network(), SubNet1)

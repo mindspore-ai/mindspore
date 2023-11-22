@@ -102,6 +102,17 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         返回：
             NodeType，当前节点的类型。
 
+    .. py:method:: mindspore.rewrite.Node.get_sub_tree()
+
+        获取类型为 `NodeType.Tree` 的节点里保存的符号树。节点类型详见 :class:`mindspore.rewrite.NodeType` 。
+
+        返回：
+            保存在Tree类型节点里的符号树。
+
+        异常：
+            - **TypeError** - 如果当前节点的类型不是 `NodeType.Tree` 。
+            - **AttributeError** - 如果当前Tree类型节点里没有保存符号树。
+
     .. py:method:: mindspore.rewrite.Node.get_symbol_tree()
 
         获取当前节点所属的SymbolTree。

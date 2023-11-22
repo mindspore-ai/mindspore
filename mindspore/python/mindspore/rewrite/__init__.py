@@ -32,9 +32,8 @@ from .api.symbol_tree import SymbolTree
 from .api.node import Node
 from .api.node_type import NodeType
 from .api.pattern_engine import PatternEngine, PatternNode, VarNode, Replacement
-from .api.tree_node_helper import TreeNodeHelper
 from .sparsify.sparsify import sparsify
 from .sparsify.utils import ArgType, SparseFunc
 
 __all__ = ["SymbolTree", "Node", "NodeType", "ScopedValue", "ValueType", "PatternEngine", "PatternNode", "VarNode",
-           "Replacement", "TreeNodeHelper", "sparsify", "ArgType", "SparseFunc"]
+           "Replacement"]

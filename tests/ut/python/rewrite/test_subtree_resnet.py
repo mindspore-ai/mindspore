@@ -4,7 +4,6 @@ from collections import OrderedDict
 from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.rewrite import SymbolTree, PatternEngine, Replacement, PatternNode, Node, ScopedValue
-from mindspore.rewrite.api.tree_node_helper import TreeNodeHelper
 from mindspore.rewrite.api.node_type import NodeType
 
 
@@ -170,7 +169,7 @@ def test_erase_subtree_node():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             orig_node_num = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.MaxPool2d:
@@ -195,7 +194,7 @@ def test_erase_subtree_node_01():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             orig_node_num = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_name() == "block":
@@ -229,10 +228,10 @@ def test_erase_subtree_node_02():
     stree = SymbolTree.create(net)
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_name() == "block":
-                    subtree1 = TreeNodeHelper.get_sub_tree(n)
+                    subtree1 = n.get_sub_tree()
                     _remove_bn(subtree1)
                     assert subtree1.get_node("bn1") is None
                     break
@@ -257,10 +256,10 @@ def test_insert_subtree_node():
     stree = SymbolTree.create(net)
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_name() == "block":
-                    subtree1 = TreeNodeHelper.get_sub_tree(n)
+                    subtree1 = n.get_sub_tree()
                     orig_node_num = len(subtree1.get_handler().nodes())
                     _insert_node(subtree1)
                     assert len(subtree1.get_handler().nodes()) == orig_node_num + 1
@@ -277,7 +276,7 @@ def test_resnet_replace_121():
     original_nodes_size = len(stree.get_handler().nodes())
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.Conv2d:
                     conv: nn.Conv2d = n.get_instance()
@@ -300,7 +299,7 @@ def test_resnet_replace_12m():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             original_nodes_size = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.Conv2d:
@@ -327,7 +326,7 @@ def test_node_fusion_in_subtree():
     original_nodes_size = len(stree.get_handler().nodes())
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             original_nodes_size = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 node_: Node = n

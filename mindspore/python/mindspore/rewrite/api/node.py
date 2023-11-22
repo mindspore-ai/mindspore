@@ -416,6 +416,56 @@ class Node:
             return None
         return SymbolTree(stree_impl)
 
+    def get_sub_tree(self) -> 'SymbolTree':
+        """
+        Get the sub symbol tree stored in node with type of `NodeType.Tree` .
+        See :class:`mindspore.rewrite.NodeType` for details on node types.
+
+        Returns:
+            SymbolTree stored in Tree node.
+
+        Raises:
+            TypeError: If current node is not type of `NodeType.Tree` .
+            AttributeError: If no symbol tree is stored in Tree node.
+
+        Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore.rewrite import SymbolTree
+        >>>
+        >>> class SubNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super().__init__()
+        >>>         self.relu = nn.ReLU()
+        >>>
+        >>>     def construct(self, x):
+        >>>         x = self.relu(x)
+        >>>         return x
+        >>>
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super().__init__()
+        >>>         self.subnet = SubNet()
+        >>>
+        >>>     def construct(self, x):
+        >>>         x = self.subnet(x)
+        >>>         return x
+        >>>
+        >>> net = Net()
+        >>> stree = SymbolTree.create(net)
+        >>> node = stree.get_node("subnet")
+        >>> print(type(node.get_sub_tree()))
+        <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
+        """
+        if self.get_node_type() != NodeType.Tree:
+            raise TypeError("For get_sub_tree, the type of node should be 'NodeType.Tree', "
+                            f"but got {self.get_node_type()}")
+        subtree: SymbolTreeImpl = self.get_handler().symbol_tree
+        if subtree is None:
+            raise AttributeError(
+                f"For get_sub_tree, no symbol tree is stroed in node {self.get_name()}.")
+        from .symbol_tree import SymbolTree
+        return SymbolTree(subtree)
+
     def get_kwargs(self) -> {str: ScopedValue}:
         return self._node.get_kwargs()
 
