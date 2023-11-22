@@ -15,11 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/rts/getnext_dynamic.h"
-#include <memory>
-#include <numeric>
-#include <functional>
-#include <string>
-#include <map>
 #include "abstract/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

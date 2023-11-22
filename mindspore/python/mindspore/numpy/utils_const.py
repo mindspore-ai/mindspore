@@ -399,7 +399,7 @@ def _broadcast_tuples(tup1, tup2):
         if not isinstance(tup1, (tuple, list)) or not isinstance(tup2, (tuple, list)):
             raise TypeError("input shift and axis must be tuple or list or int.")
         if len(tup1) == len(tup2) or len(tup1) == 1 or len(tup2) == 1:
-            return None
+            return
         raise ValueError("shape mismatch: objects cannot be broadcast to a single shape")
 
     tup1 = (tup1,) if isinstance(tup1, int) else tup1
