@@ -494,6 +494,7 @@ constexpr const char kNameEnvironCreate[] = "EnvironCreate";
 constexpr const char kNameEnvironDestroyAll[] = "EnvironDestroyAll";
 constexpr const char kNameEnvironGet[] = "EnvironGet";
 constexpr const char kNameEnvironSet[] = "EnvironSet";
+constexpr const char kNameNanToNum[] = "NanToNum";
 
 class OpAdapterDesc;
 
