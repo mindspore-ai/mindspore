@@ -90,6 +90,13 @@ class TransformUtil {
 
   /*
    * Parameters:
+   *     Value: [Scalar] the scalar value
+   * Return：
+   *     [GeTensorPtr] the data tensors in GE
+   * */
+  static GeTensorPtr ConvertScalar(const ValuePtr &val);
+  /*
+   * Parameters:
    *     tensor: [GeTensor] the data tensor in GE
    * Return：
    *     [MeTensor] the data tensor in ME

@@ -2673,6 +2673,11 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
       ret = adpt->setInput(src, SizeToInt(ms_input_idx), std::make_shared<std::vector<OutHandler>>(handles), true,
                            dyn_input_begin_idx);
     } else {
+      if (handles.size() != 1 && pred->isa<ValueNode>()) {
+        handles.clear();
+        auto handle = GetNormalOpInput(node, pred);
+        handles.push_back(handle);
+      }
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
                           << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
@@ -2763,6 +2768,11 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
       ret = adpt->setInput(src, SizeToInt(real_input_idx), std::make_shared<std::vector<OutHandler>>(handles));
       input_idx += LongToSize(dyn_input_num);
     } else {
+      if (handles.size() != 1 && pred->isa<ValueNode>()) {
+        handles.clear();
+        auto handle = GetNormalOpInput(node, pred);
+        handles.push_back(handle);
+      }
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
                           << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
@@ -3904,23 +3914,30 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
   std::shared_ptr<std::vector<OutHandler>> tuple_items = std::make_shared<std::vector<OutHandler>>();
   for (size_t i = 0; i < vec.size(); i++) {
     MS_EXCEPTION_IF_NULL(vec[i]);
+    GeTensorPtr ge_tensor = nullptr;
     if (vec[i]->isa<MeTensor>()) {
-      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
+      ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
       MS_EXCEPTION_IF_NULL(ge_tensor);
-      auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
-      AddGraphConstInput(const_op);
-      (void)const_op->set_attr_value(*ge_tensor);
-      (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
-      (void)tuple_items->emplace_back(OutHandler(const_op, ""));
     } else {
-      return FAILED;
+      ge_tensor = transform::TransformUtil::ConvertScalar(vec[i]);
+      if (ge_tensor == nullptr) {
+        return FAILED;
+      }
     }
+    auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
+    AddGraphConstInput(const_op);
+    (void)const_op->set_attr_value(*ge_tensor);
+    (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
+    (void)tuple_items->emplace_back(OutHandler(const_op, ""));
   }
   if (tuple_items->empty()) {
     return FAILED;
   }
 
   tuple_out_handle_cache_[node.get()] = tuple_items;
+  if (!vec[0]->isa<MeTensor>()) {
+    return FAILED;
+  }
   return SUCCESS;
 }
 
