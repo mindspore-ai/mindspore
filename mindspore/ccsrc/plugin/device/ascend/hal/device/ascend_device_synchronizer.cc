@@ -48,7 +48,7 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
   }
 
   if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
-    MS_LOG(ERROR) << "Sync default failed.";
+    MS_LOG(ERROR) << "Sync stream failed, stream id: " << stream_id;
     return false;
   }
   return true;
@@ -79,7 +79,7 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
   }
 
   if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
-    MS_LOG(ERROR) << "Sync default failed.";
+    MS_LOG(ERROR) << "Sync stream failed, stream id: " << stream_id;
     return false;
   }
   return true;

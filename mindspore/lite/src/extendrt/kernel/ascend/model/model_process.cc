@@ -886,10 +886,10 @@ bool ModelProcess::CheckInputTensors(const std::vector<KernelTensor *> &input_te
                       << ShapeToString(tensor->GetShapeVector()) << "."
                       << "Please check input shape has been modified by DVPP method.";
     }
-    if (tensor->GetDtype() != TransToDataType(info.data_type)) {
+    if (tensor->dtype_id() != TransToDataType(info.data_type)) {
       MS_LOG(ERROR) << "Note: input " << i << " data type not match, required "
                     << static_cast<int>(TransToDataType(info.data_type)) << ", given "
-                    << static_cast<int>(tensor->GetDtype());
+                    << static_cast<int>(tensor->dtype_id());
       return false;
     }
     auto device_data = tensor->GetData();
@@ -932,10 +932,10 @@ bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensor *> &outputs
                       << ShapeToString(tensor->GetShapeVector()) << "."
                       << "Please check output shape.";
     }
-    if (tensor->GetDtype() != TransToDataType(info.data_type)) {
+    if (tensor->dtype_id() != TransToDataType(info.data_type)) {
       MS_LOG(ERROR) << "Note: output " << i << " data type not match, required "
                     << static_cast<int>(TransToDataType(info.data_type)) << ", given "
-                    << static_cast<int>(tensor->GetDtype());
+                    << static_cast<int>(tensor->dtype_id());
       return false;
     }
     auto device_data = tensor->GetData();
@@ -975,12 +975,12 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensor *> &inputs) 
     auto device_data = input->GetData();
     auto host_data = input->GetHostData();
     if (device_data && device_data->addr) {
-      auto input_device_id = input->GetDeviceId();
-      if (input_device_id == device_id_) {
+      auto input_device_id = input->device_id();
+      if (input_device_id == IntToUint(device_id_)) {
         input_buffer = device_data->addr;
       } else {
         // memcpy device data from src device to current device.
-        auto data_copy_size = inputs[i]->GetSizeInBytes();
+        auto data_copy_size = inputs[i]->size();
         if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(device_data->addr, info.device_data,
                                                                         data_copy_size, info.buffer_size,
                                                                         input_device_id, device_id_) != kSuccess) {
@@ -1053,11 +1053,11 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensor *> &outputs
     void *output_device_buffer = nullptr;
     auto device_data = output->GetData();
     auto host_data = output->GetHostData();
-    auto output_device_id = output->GetDeviceId();
+    auto output_device_id = output->device_id();
     auto output_device_buffer_size = info.buffer_size;
     bool is_dynamic = is_dynamic_input_ || is_dynamic_shape_range_ || is_dynamic_output_;
     if (device_data && device_data->addr) {
-      output_device_buffer = (output_device_id == device_id_) ? device_data->addr : info.device_data;
+      output_device_buffer = (output_device_id == IntToUint(device_id_)) ? device_data->addr : info.device_data;
       if (is_dynamic) {
         output_device_buffer_size = device_data->size;  // device data buffer size is needed for memory alloc
       }
@@ -1108,10 +1108,10 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensor *> &o
     auto device_data = output->GetData();
     if (device_data && device_data->addr) {
       MS_LOG(DEBUG) << "data on device, no need to update system allocated buffer";
-      auto output_device_id = output->GetDeviceId();
+      auto output_device_id = output->device_id();
       output->SetHostData(nullptr);
       output->SetData(std::make_shared<kernel::Address>(acl_device_data, output_desc_size));
-      if (output_device_id != device_id_) {
+      if (output_device_id != IntToUint(device_id_)) {
         MS_LOG(DEBUG) << "output across device, tensor on device " << output_device_id << " with addr "
                       << device_data->addr << ", infer on device " << device_id_ << " with addr " << acl_device_data;
         output->SetData(std::make_shared<kernel::Address>(device_data->addr, output_desc_size));
@@ -1285,7 +1285,7 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensor *> &outputs) {
       continue;
     }
     auto host_data = output->GetHostData();
-    auto output_device_id = output->GetDeviceId();
+    auto output_device_id = output->device_id();
     if (host_data && host_data->addr && !is_run_on_device_) {
       if (host_data->size != output_info.buffer_size) {
         MS_LOG(ERROR) << "Specified output host data size " << host_data->size << " != execute output data size "
@@ -1300,11 +1300,11 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensor *> &outputs) {
                       << " to host failed, memory size " << output_info.buffer_size << ", ret: " << ret;
         return false;
       }
-    } else if (output_device_id != device_id_) {
+    } else if (output_device_id != IntToUint(device_id_)) {
       // memcpy output data from current device to output device.
       if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
-            output_info.cur_device_data, output->GetData()->addr, output->GetSizeInBytes(), output_info.buffer_size,
-            device_id_, output_device_id) != kSuccess) {
+            output_info.cur_device_data, output->GetData()->addr, output->size(), output_info.buffer_size, device_id_,
+            output_device_id) != kSuccess) {
         MS_LOG(ERROR) << "Copy output data from device to current device failed.";
         return false;
       }

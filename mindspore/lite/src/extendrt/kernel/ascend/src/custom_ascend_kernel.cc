@@ -256,10 +256,9 @@ void CustomAscendKernelMod::UpdateOutputKernelTensorInfo() {
   }
   for (size_t i = 0; i < outputs_.size(); ++i) {
     auto &output = outputs_[i];
-    output->SetShapeVector(shapes[i]);
-    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), output->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract};
-    output->SetTensorInfo(tensor_info);
+    output->SetType(std::make_shared<TensorType>(TypeIdToType(types[i])));
+    output->SetShape(std::make_shared<abstract::TensorShape>(shapes[i]));
+    output->set_format(formats[i]);
   }
   return;
 }
@@ -278,10 +277,9 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
 
   for (size_t i = 0; i < inputs_.size(); ++i) {
     auto &input = inputs_[i];
-    input->SetShapeVector(shapes[i]);
-    auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract};
-    input->SetTensorInfo(tensor_info);
+    input->SetType(std::make_shared<TensorType>(TypeIdToType(types[i])));
+    input->SetShape(std::make_shared<abstract::TensorShape>(shapes[i]));
+    input->set_format(formats[i]);
   }
 }
 }  // namespace acl

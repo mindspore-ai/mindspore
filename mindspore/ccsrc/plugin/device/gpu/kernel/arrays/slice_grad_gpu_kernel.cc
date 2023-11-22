@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/arrays/slice_grad_gpu_kernel.h"
 #include <memory>
 #include <functional>
-#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {

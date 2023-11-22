@@ -18,7 +18,6 @@
 #include <memory>
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/reduce.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"

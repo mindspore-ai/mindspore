@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"

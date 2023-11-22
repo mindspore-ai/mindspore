@@ -17,7 +17,6 @@
 #include <algorithm>
 
 #include "kernel/ops_utils.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/arrays/strided_slice_grad_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 

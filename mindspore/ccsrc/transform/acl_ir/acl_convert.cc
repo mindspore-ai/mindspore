@@ -309,7 +309,7 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto type_id = input->dtype_id();
     AclHostInfoPtr acl_host_input;
-    bool is_const = input->IsConstTensor();
+    bool is_const = input->IsConstValue();
     if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, ms_proto_idx) &&
         param.data_type != kMetaTypeNone) {
       ValueDependToInputConverter value_convert;

@@ -25,7 +25,6 @@
 #include "mindspore/core/ops/euclidean_norm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/euclidean_norm_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {

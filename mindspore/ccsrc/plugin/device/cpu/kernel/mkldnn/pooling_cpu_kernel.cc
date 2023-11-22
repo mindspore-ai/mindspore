@@ -32,14 +32,13 @@ constexpr size_t kPoolingOutputsNum = 1;
 
 void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  dtype_ = inputs[0]->dtype_id();
   if (kernel_name_ == kAvgPoolOpName) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAvgPoolInputsNum, kernel_name_);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
-  dtype_ = inputs[0]->GetDtype();
+  dtype_ = inputs[0]->dtype_id();
 
   if (kernel_name_ == kAvgPoolOpName) {
     kernel_include_nc = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();

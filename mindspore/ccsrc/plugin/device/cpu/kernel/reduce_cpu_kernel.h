@@ -22,7 +22,6 @@
 #include <string>
 #include <map>
 #include <functional>
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

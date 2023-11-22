@@ -79,7 +79,7 @@ int AclLiteKernel::InferShape() {
       auto new_output = out_tensors_.at(i);
       auto old_output = outputs_.at(i);
       new_output->set_shape64(old_output->GetShapeVector());
-      new_output->set_data_type(old_output->GetDtype());
+      new_output->set_data_type(old_output->dtype_id());
     }
     return lite::RET_OK;
   }
@@ -96,9 +96,9 @@ int AclLiteKernel::Run() {
   for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
     auto &input = in_tensors_[i];
     auto &kernel_input = inputs_[i];
-    if (input->Size() != kernel_input->GetSizeInBytes()) {
+    if (input->Size() != kernel_input->size()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input->Size()
-                    << ", expected size " << kernel_input->GetSizeInBytes()
+                    << ", expected size " << kernel_input->size()
                     << ", input shape: " << kernel_input->GetShapeVector();
       return kLiteError;
     }
@@ -119,7 +119,7 @@ int AclLiteKernel::Run() {
       std::vector<int> shape;
       std::transform(shape64.begin(), shape64.end(), std::back_inserter(shape),
                      [](auto &value) { return static_cast<int>(value); });
-      return new lite::Tensor(item->GetDtype(), shape);
+      return new lite::Tensor(item->dtype_id(), shape);
     });
   }
   if (out_tensors_.size() != outputs_.size()) {
@@ -129,9 +129,9 @@ int AclLiteKernel::Run() {
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     auto output = out_tensors_[i];
     auto kernel_output = outputs_[i];
-    if (output->Size() != kernel_output->GetSizeInBytes()) {
+    if (output->Size() != kernel_output->size()) {
       MS_LOG(ERROR) << "Byte size of output " << i << " != the size expected, given size " << output->Size()
-                    << ", expected size " << kernel_output->GetSizeInBytes()
+                    << ", expected size " << kernel_output->size()
                     << ", output shape: " << kernel_output->GetShapeVector();
       return kLiteError;
     }

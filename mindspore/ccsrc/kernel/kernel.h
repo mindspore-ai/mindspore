@@ -290,9 +290,6 @@ struct KernelHostInfo {
   // The object enum type id of the KernelTensor.
   TypeId type_id_{kTypeUnknown};
 
-  // The memory in bytes of each element in KernelTensor.
-  size_t element_size_in_bytes_{0};
-
   // Saves the contents after the value is converted to continuous memory storage.
   KernelTensorValuePtr kernel_tensor_value_{nullptr};
 
@@ -349,6 +346,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   abstract::BaseShapePtr GetShape() const override { return shape_; }
 
   // Set the base shape for Tensor/Sequence/Scalar.
+  // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
   void SetShape(const abstract::BaseShapePtr &shape);
 
   // Get the shape vector for Tensor/Sequence/Scalar.
@@ -584,64 +582,27 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     device_synchronizer_ = device_synchronizer;
   }
 
+  // Clone a new KernelTensor from this.
   std::shared_ptr<KernelTensor> CloneKernelTensor() { return std::make_shared<KernelTensor>(*this); }
 
-  // The following member methods are required by the old KernelTensor.
-
+  // Check whether the shape is dynamic shape(contains dim which is less than 0).
   bool IsDynamicShape() const;
-  inline bool IsConstTensor() const { return (value_ != nullptr) && !(value_->isa<ValueAny>()); }
 
-  size_t GetSizeInBytes() const;
+  // Check whether the KernelTensor is from a constant variable(such as ValueNode).
+  inline bool IsConstValue() const { return (value_ != nullptr) && !(value_->isa<ValueAny>()); }
+
+  // The following four methods are only used in the Lite framework.
+  // Get the device data address(pointer and size).
   AddressPtr GetData() const { return data_; }
-  AddressPtr GetHostData() const { return host_data_; }
-  TypeId GetDtype() const;
-  mindspore::Format GetFormat() const {
-    if (meta_type_ == kObjectTypeTensorType) {
-      const TensorInfo &info = std::get<TensorInfo>(meta_);
-      return info.format;
-    }
-    return Format::DEFAULT_FORMAT;
-  }
-  TypeId GetMetaType() const { return meta_type_; }
-  std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> GetMeta() const { return meta_; }
-  // If real type is not a list or tuple tensor, it will return kTypeUnknown.
-  std::vector<TypeId> GetListOrTupleDtype() const;
-
-  // If real type is not a list or tuple shape vector, it will return empty.
-  std::vector<ShapeVector> GetListOrTupleShapeVector() const;
+  // Set the device data address(pointer and size).
   void SetData(const AddressPtr &data) { data_ = data; }
+  // Get the host data address(pointer and size).
+  AddressPtr GetHostData() const { return host_data_; }
+  // Set the host data address(pointer and size).
   void SetHostData(const AddressPtr &data) { host_data_ = data; }
-  void SetDtype(const TypePtr &dtype);
-  void SetFormat(mindspore::Format format) {
-    TensorInfo &info = std::get<TensorInfo>(meta_);
-    info.format = format;
-  }
-  void SetMetaType(const TypeId meta_type) { meta_type_ = meta_type; }
 
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
-
-  abstract::BaseShapePtr GetBaseShape() const;
-  // If the shape need to be List or Tuple, `SetBaseShape` should be called.
-  void SetBaseShape(const abstract::BaseShapePtr &base_shape);
-  void SetTensorInfo(const TensorInfo &info) {
-    meta_type_ = kObjectTypeTensorType;
-    meta_ = info;
-  }
-  void SetScalarInfo(const ScalarInfo &info) {
-    meta_type_ = kObjectTypeNumber;
-    meta_ = info;
-  }
-  void SetTupleInfo(const TupleInfo &info) {
-    meta_type_ = kObjectTypeTuple;
-    meta_ = info;
-  }
-  void SetListInfo(const ListInfo &info) {
-    meta_type_ = kObjectTypeList;
-    meta_ = info;
-  }
-  int32_t GetDeviceId() const { return device_info_->device_id_; }
-  void SetDeviceId(int32_t device_id) { device_info_->device_id_ = device_id; }
 
  private:
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
@@ -683,13 +644,11 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // For synchronizing data between device and host.
   DeviceSynchronizerPtr device_synchronizer_{nullptr};
 
-  // The following member variables are required by the old KernelTensor.
-  TypeId meta_type_{kObjectTypeTensorType};
-  // meta is a type-safe union of TensorInfo, ScalarInfo, TupleInfo, ListInfo.
-  std::variant<TensorInfo, ScalarInfo, TupleInfo, ListInfo> meta_{TensorInfo()};
-  AddressPtr data_{nullptr};       // Device data address.
-  AddressPtr host_data_{nullptr};  // Host data address.
-  string GetAbstractName() const;
+  // The following two variables are only used in the Lite framework.
+  // Device data address.
+  AddressPtr data_{nullptr};
+  // Host data address.
+  AddressPtr host_data_{nullptr};
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
@@ -863,9 +822,6 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
   return reinterpret_cast<T *>(addr_list[index]->device_ptr());
 }
 
-// ===========================Old interface===========================
-BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors);
-// ===========================Old interface===========================
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
 
 BACKEND_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);

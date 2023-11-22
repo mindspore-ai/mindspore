@@ -909,7 +909,7 @@ std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAb
     MS_EXCEPTION_IF_NULL(abs);
     shape = abs->GetShape();
     type = abs->GetType();
-    value = kValueAny;
+    value = nullptr;
   }
 
   // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
