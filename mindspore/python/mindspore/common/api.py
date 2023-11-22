@@ -64,6 +64,13 @@ BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 
+def _ms_adapter_tensor_as_parameter_output(data):
+    """Check whether the data is an output from a parameter which is a ms_adapter tensor."""
+    # pylint: disable=unidiomatic-typecheck
+    return ms_adapter_registry.is_registered and type(data) == ms_adapter_registry.tensor \
+           and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
+
+
 def _convert_python_data(data):
     """
     Convert C++ data to python.
@@ -76,6 +83,8 @@ def _convert_python_data(data):
     """
     if isinstance(data, Tensor) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
+    if _ms_adapter_tensor_as_parameter_output(data):
+        return data.tensor
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)
     if isinstance(data, CSRTensor) and not isinstance(data, PythonCSRTensor):
