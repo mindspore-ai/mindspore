@@ -400,12 +400,11 @@ class AscendEnvChecker(EnvChecker):
         curr_path = os.path.abspath(os.path.dirname(__file__))
         cust_aicpu_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicpu_ops"))
         cust_aicore_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
-        cust_ascendc_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_ascendc_ops"))
         if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
-                                                   cust_ascendc_path + ":" + cust_aicore_path + ":" + cust_aicpu_path
+                                                   cust_aicore_path + ":" + cust_aicpu_path
         else:
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_ascendc_path + ":" + cust_aicore_path + ":" + cust_aicpu_path
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_aicore_path + ":" + cust_aicpu_path
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
         AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
