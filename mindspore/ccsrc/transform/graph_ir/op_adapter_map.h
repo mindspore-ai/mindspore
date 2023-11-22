@@ -488,6 +488,7 @@ constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
 constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
 constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
 constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
+constexpr const char kNameNanToNum[] = "NanToNum";
 
 class OpAdapterDesc;
 
