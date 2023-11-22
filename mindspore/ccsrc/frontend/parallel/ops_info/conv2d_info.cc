@@ -156,15 +156,16 @@ void Conv2DInfo::AdjustPadList() {
   }
 
   if (useless_len_2th_dim > pad_list_[1]) {
-    MS_LOG(EXCEPTION) << name_ << ": The useless len for 2th dim (" << useless_len_2th_dim
-                      << ") can not larger than pad_list[1] (" << pad_list_[1] << ")";
+    pad_list_[1] = 0;
+  } else {
+    pad_list_[1] -= useless_len_2th_dim;
   }
   if (useless_len_3th_dim > pad_list_[3]) {
-    MS_LOG(EXCEPTION) << name_ << ": The useless len for 3th dim (" << useless_len_3th_dim
-                      << ") can not larger than pad_list[3] (" << pad_list_[3] << ")";
+    pad_list_[3] = 0;
+  } else {
+    pad_list_[3] -= useless_len_3th_dim;
   }
-  pad_list_[1] -= useless_len_2th_dim;
-  pad_list_[3] -= useless_len_3th_dim;
+
   pad_list_adjusted_ = true;
   MS_LOG(INFO) << name_ << ": After adjusting, the pad_list is " << pad_list_;
 }
