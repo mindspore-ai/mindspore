@@ -16,22 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_
-
-#include "op_proto/inc/fusion_ops.h"
+#include "inc/ops/experiment_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 
-// PromptFlashAttention
-DECLARE_OP_ADAPTER(PromptFlashAttention)
-DECLARE_OP_USE_OUTPUT(PromptFlashAttention)
-
-// IncreFlashAttention
-DECLARE_OP_ADAPTER(IncreFlashAttention)
-DECLARE_OP_USE_DYN_INPUT(IncreFlashAttention)
-DECLARE_OP_USE_OUTPUT(IncreFlashAttention)
-
-DECLARE_OP_ADAPTER(FlashAttentionScore)
-DECLARE_OP_USE_OUTPUT(FlashAttentionScore)
-
-DECLARE_OP_ADAPTER(FlashAttentionScoreGrad)
-DECLARE_OP_USE_OUTPUT(FlashAttentionScoreGrad)
+// BlendFaceBgPartOne
+DECLARE_OP_ADAPTER(BlendFaceBgPartOne)
+DECLARE_OP_USE_OUTPUT(BlendFaceBgPartOne)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_EXPERIMENT_OPS_DECLARE_H_

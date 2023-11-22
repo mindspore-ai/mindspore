@@ -4,7 +4,5 @@
   "enable_task_opt": false,
   "interleaved_matmul_comm": false,
   "interleaved_layernorm_comm": false,
-  "enable_concat_eliminate_opt": false,
-  "enable_begin_end_inline_opt": false,
-  "compute_communicate_fusion_level": 0
+  "enable_compute_communicate_fusion_level": 3
 }
