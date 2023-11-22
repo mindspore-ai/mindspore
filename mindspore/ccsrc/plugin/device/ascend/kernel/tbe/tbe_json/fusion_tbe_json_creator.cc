@@ -295,6 +295,7 @@ void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, 
   (*output_desc)[kJOutputIndex] = output_index;
   std::vector<size_t> shape;
   (*output_desc)[kJShape] = shape;
+  (*output_desc)[kFormat] = GetOutputFormat(anf_node, output_index);
   if (out_size < 1) {
     MS_LOG(EXCEPTION) << "Invalid output size: " << out_size;
   }
