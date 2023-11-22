@@ -127,13 +127,6 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
   KERNEL_CHECK_FALSE(in_height < (1 << kMaxValue) && in_width < (1 << kMaxValue), KERNEL_STATUS_PARAM_INVALID,
                      "nearest neighbor requires max height "
                      "& width of 2^24.");
-
-  // Set Output Shape
-  std::vector<int64_t> y_shape(x_shape);
-  y_shape[h_idx] = out_height;
-  y_shape[w_idx] = out_width;
-  ctx.Output(0)->GetTensorShape()->SetDimSizes(y_shape);
-
   return KERNEL_STATUS_OK;
 }
 
