@@ -527,6 +527,8 @@ constexpr const char kNameLogUniformCandidateSampler[] = "LogUniformCandidateSam
 constexpr const char kNameCoalesce[] = "Coalesce";
 constexpr const char kNameFFTWithSize[] = "FFTWithSize";
 constexpr const char kNameCumulativeLogsumexp[] = "CumulativeLogsumexp";
+constexpr const char kNameMatmulReduceScatter[] = "MatmulReduceScatter";
+constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 
 class OpAdapterDesc;
 

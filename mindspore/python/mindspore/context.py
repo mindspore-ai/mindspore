@@ -683,25 +683,29 @@ class _Context:
                              f"{speedup_config_real_path} does not exist, please check whether the "
                              f"'parallel_speed_up_json_path' is correct.")
         try:
-            valid_option = {"recompute_comm_overlap": ms_ctx_param.recompute_comm_overlap,
-                            "matmul_grad_comm_overlap": ms_ctx_param.matmul_grad_comm_overlap,
-                            "enable_task_opt": ms_ctx_param.enable_task_opt,
-                            "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
-                            "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
-                            "enable_opt_shard_comm_opt": ms_ctx_param.enable_opt_shard_comm_opt,
-                            "enable_begin_end_inline_opt": ms_ctx_param.enable_begin_end_inline_opt,
-                            "enable_concat_eliminate_opt": ms_ctx_param.enable_concat_eliminate_opt,
-                            "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
+            valid_option = {"recompute_comm_overlap": (ms_ctx_param.recompute_comm_overlap, bool),
+                            "matmul_grad_comm_overlap": (ms_ctx_param.matmul_grad_comm_overlap, bool),
+                            "enable_task_opt": (ms_ctx_param.enable_task_opt, bool),
+                            "enable_grad_comm_opt": (ms_ctx_param.enable_grad_comm_opt, bool),
+                            "interleaved_matmul_comm": (ms_ctx_param.interleaved_matmul_comm, bool),
+                            "enable_opt_shard_comm_opt": (ms_ctx_param.enable_opt_shard_comm_opt, bool),
+                            "enable_begin_end_inline_opt": (ms_ctx_param.enable_begin_end_inline_opt, bool),
+                            "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),
+                            "interleaved_layernorm_comm": (ms_ctx_param.interleaved_layernorm_comm, bool),
+                            "compute_communicate_fusion_level":
+                                (ms_ctx_param.compute_communicate_fusion_level, int)}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
-                for k, v in speedup_config.items():
-                    if not isinstance(k, str):
-                        raise TypeError("key {} is not a str".format(k))
-                    if k not in valid_option:
-                        raise ValueError("key {} should be one of {}.".format(k, valid_option.keys()))
-                    if not isinstance(v, bool):
-                        raise TypeError("value {} is not a bool".format(v))
-                    self.set_param(valid_option.get(k), v)
+                for key, value in speedup_config.items():
+                    if not isinstance(key, str):
+                        raise TypeError("key {} is not a str".format(key))
+                    if key not in valid_option:
+                        raise ValueError("key {} should be one of {}.".format(key, valid_option.keys()))
+                    set_func, valid_type = valid_option.get(key)
+                    if not isinstance(value, valid_type):
+                        raise TypeError(f"The value type of {key} must be {valid_type}, "
+                                        f"but got value is {value} and type is {type(value)}.")
+                    self.set_param(set_func, value)
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', "
                                         "open or load the 'speedup_config_path' file {} "
@@ -1409,6 +1413,12 @@ def set_context(**kwargs):
                 Default: ``False``.
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if ``True``.
                 Default: ``False``.
+              - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
+                Default: ``0``.
+                - 0: Disable fusion.
+                - 1: Apply fusion to forward nodes.
+                - 2: Apply fusion to backward nodes.
+                - 3: Apply fusion to all nodes.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
