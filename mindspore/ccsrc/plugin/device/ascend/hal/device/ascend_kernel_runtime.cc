@@ -346,18 +346,26 @@ bool AscendKernelRuntime::Init() {
     }
     uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");
-    uint32_t notify_wait_timeout;
-    if (hccl_exec_timeout.empty()) {
-      notify_wait_timeout = kDefaultHcclExecTimeout;
-    } else {
+    uint32_t notify_wait_timeout = kDefaultHcclExecTimeout;
+    if (!hccl_exec_timeout.empty()) {
+      int notify_wait_timeout_int32;
       try {
-        notify_wait_timeout = std::stoi(hccl_exec_timeout);
+        notify_wait_timeout_int32 = std::stoi(hccl_exec_timeout);
       } catch (const std::exception &e) {
         MS_LOG(ERROR) << "Parse environment variable HCCL_EXEC_TIMEOUT failed, value" << hccl_exec_timeout
                       << ", msg: " << e.what();
         return false;
       }
+
+      if (notify_wait_timeout_int32 <= 0) {
+        MS_LOG(ERROR) << "Environment variable HCCL_EXEC_TIMEOUT must > 0, but got value" << notify_wait_timeout_int32
+                      << ".";
+        return false;
+      }
+
+      notify_wait_timeout = static_cast<uint32_t>(notify_wait_timeout_int32);
     }
+
     if (op_execute_timeout >= notify_wait_timeout) {
       MS_LOG(WARNING) << "OpExecuteTimeout should be less than NotifyWaitTimeout, but got OpExecuteTimeout "
                       << op_execute_timeout << ", notify_wait_timeout " << notify_wait_timeout << "."
