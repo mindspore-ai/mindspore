@@ -20,6 +20,7 @@ import json
 import math
 import os
 import re
+import shutil
 import string
 import pytest
 import numpy as np
@@ -28,7 +29,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
-from mindspore.mindrecord import FileWriter
+from mindspore.mindrecord import FileWriter, set_enc_key, set_enc_mode, set_hash_mode
 from util import config_get_set_seed
 
 FILES_NUM = 4
@@ -2844,6 +2845,111 @@ def test_minddataset_multi_files_with_empty_one(add_and_remove_three_nlp_file_wi
     read_multi_mindrecord_files([paths[1], paths[0], paths[2]])
     read_multi_mindrecord_files([paths[0], paths[2], paths[1]])
 
+
+def minddataset_with_encode_and_hash_check(enc_key, enc_mode, hash_mode):
+    """
+    Test encode and hash check
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    ## single file
+    if os.path.exists(file_name):
+        os.remove("{}".format(file_name))
+    if os.path.exists(file_name + ".db"):
+        os.remove("{}".format(file_name + ".db"))
+
+    set_enc_key(enc_key)
+    set_enc_mode(enc_mode)
+    set_hash_mode(hash_mode)
+
+    writer = FileWriter(file_name, 1)
+    data = get_data(CV_DIR_NAME)
+    cv_schema_json = {"id": {"type": "int32"},
+                      "file_name": {"type": "string"},
+                      "label": {"type": "int32"},
+                      "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+    dataset = ds.MindDataset(dataset_files=file_name, num_shards=4, shard_id=1)
+    assert dataset.get_dataset_size() == 3
+    epoch_size = 3
+    dataset_iter = dataset.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+    for epoch in range(epoch_size):  # 3 epoch
+        num_iter = 0
+        for item in dataset_iter:
+            num_iter += 1
+        assert num_iter == 3
+
+    if os.path.exists(file_name):
+        os.remove("{}".format(file_name))
+    if os.path.exists(file_name + ".db"):
+        os.remove("{}".format(file_name + ".db"))
+
+    ## multi files
+    file_names = [file_name + "1", file_name + "2", file_name + "3"]
+    for item in file_names:
+        if os.path.exists(item):
+            os.remove("{}".format(item))
+        if os.path.exists(item + ".db"):
+            os.remove("{}".format(item + ".db"))
+
+    for index, item in enumerate(file_names):
+        writer = FileWriter(item, 1)
+        data = get_data(CV_DIR_NAME)
+        cv_schema_json = {"id": {"type": "int32"},
+                          "file_name": {"type": "string"},
+                          "label": {"type": "int32"},
+                          "data": {"type": "bytes"}}
+        writer.add_schema(cv_schema_json, "img_schema")
+        writer.add_index(["file_name", "label"])
+        if index == 0:
+            writer.write_raw_data(data)
+        elif index == 1:
+            writer.write_raw_data(data[0:10])
+        else:
+            writer.write_raw_data(data[0:5])
+        writer.commit()
+
+    dataset = ds.MindDataset(dataset_files=file_names, num_shards=4, shard_id=3)
+    assert dataset.get_dataset_size() == 7
+    epoch_size = 3
+    dataset_iter = dataset.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+    for epoch in range(epoch_size):  # 3 epoch
+        num_iter = 0
+        for item in dataset_iter:
+            num_iter += 1
+        assert num_iter == 7
+
+    for item in file_names:
+        if os.path.exists(item):
+            os.remove("{}".format(item))
+        if os.path.exists(item + ".db"):
+            os.remove("{}".format(item + ".db"))
+
+    set_enc_key(None)
+    set_hash_mode(None)
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+
+def test_minddataset_with_encode_and_hash_check():
+    """
+    Feature: MindDataset
+    Description: Test for with mindrecord which had been encode and hashed
+    Expectation: Output is equal to the expected output
+    """
+
+    minddataset_with_encode_and_hash_check(None, "AES-CBC", None)
+    minddataset_with_encode_and_hash_check("abcdefghijklmnop01234567", "AES-CBC", None)
+    minddataset_with_encode_and_hash_check(None, "AES-CBC", "sha3_384")
+    minddataset_with_encode_and_hash_check("89012345abcdefgh", "SM4-CBC", "sha512")
+
+
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)
     test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file)
@@ -2881,3 +2987,4 @@ if __name__ == '__main__':
     test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files)
     test_field_is_null_numpy()
     test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file)
+    test_minddataset_with_encode_and_hash_check()
