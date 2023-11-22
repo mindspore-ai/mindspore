@@ -257,7 +257,6 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
                       << anf_node->fullname_with_scope() << "] failed.";
   }
   kernel_mod_ptr->SetIsDynamicShape(common::AnfAlgo::IsDynamicShape(anf_node));
-  kernel_mod_ptr->CloseTdtWingManQueue();
   kernel_mod_ptr->SetNodeScopeName(anf_node->fullname_with_scope());
 
   kernel_mod_ptr->SetNodeName(op_name);

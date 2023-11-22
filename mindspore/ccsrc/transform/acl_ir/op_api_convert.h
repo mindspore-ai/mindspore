@@ -354,6 +354,8 @@ inline aclDataType ConvertType(const TypePtr &type) {
   return AclConverter::ConvertType(type->type_id());
 }
 
+inline const char *ConvertType(const std::string &value) { return value.c_str(); }
+
 template <typename T>
 T ConvertType(T value) {
   return value;

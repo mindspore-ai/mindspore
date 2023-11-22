@@ -137,11 +137,10 @@ void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType 
 
 std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
-  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
-  // Todo: add datatype and format filter
-  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel::IsRegisteredAclnnOp(node)) {
+  if (kernel::IsRegisteredAclnnOp(node)) {
     return {KernelType::OPAPI_KERNEL, {}};
   }
+  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
   if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel_type != KernelType::HCCL_KERNEL) {
     return {kernel_type, {}};
   }
