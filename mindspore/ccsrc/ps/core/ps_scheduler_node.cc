@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include <memory>
 #include "ps/core/ps_scheduler_node.h"
 #include "utils/ms_context.h"

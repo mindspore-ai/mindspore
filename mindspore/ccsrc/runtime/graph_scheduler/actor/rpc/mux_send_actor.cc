@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <utility>
 #include "runtime/graph_scheduler/actor/rpc/mux_send_actor.h"
 
 namespace mindspore {
