@@ -17,7 +17,6 @@
 #include "src/litert/delegate/nnapi/op/conv_nnapi.h"
 #include <algorithm>
 #include <vector>
-#include <unordered_map>
 #include "src/litert/delegate/nnapi/nnapi_utils.h"
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
