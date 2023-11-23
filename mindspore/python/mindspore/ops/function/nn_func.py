@@ -2643,9 +2643,9 @@ def softmax(x, axis=-1, *, dtype=None):
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: ``-1`` .
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
+        axis (int, optional): The axis to perform the Softmax operation. Default: ``-1`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
@@ -2655,10 +2655,8 @@ def softmax(x, axis=-1, *, dtype=None):
         Tensor, with the same type and shape as the logits.
 
     Raises:
-        TypeError: If `axis` is not an int or a tuple.
+        TypeError: If `axis` is not an int.
         TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape))
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
