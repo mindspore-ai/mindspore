@@ -15,9 +15,7 @@
  */
 
 #include "runtime/device/auto_mem_offload.h"
-#include <memory>
 #include <vector>
-#include <queue>
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_offload_strategy.h"
 
