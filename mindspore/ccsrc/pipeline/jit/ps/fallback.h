@@ -35,6 +35,7 @@ constexpr auto kPyExecSuffix = "__";
 constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
 constexpr auto kObjectAttrChange = "object_attr_change";
+constexpr auto kCheckListDictInplace = "check_list_dict_inplace";
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -91,9 +92,10 @@ bool EnableFallbackListDictInplace();
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
 // Handle python object for abstract using ExtraInfoHolder.
 void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
-py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
-bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
 bool HasObjInExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+bool HasCreateInGraphInExtraInfoHolder(const abstract::AbstractBasePtr &abs);
+bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs);
 // Attach python object to abstract recursively using ExtraInfoHolder.
 void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool create_in_graph);
 // Handle python object for AnfNode.

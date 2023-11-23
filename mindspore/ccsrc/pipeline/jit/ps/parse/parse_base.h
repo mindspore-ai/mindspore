@@ -114,7 +114,6 @@ const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namesp
 const char PYTHON_PARSE_IS_CLASS_TENSOR_TYPE[] = "is_tensor_class_type";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
-const char PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE[] = "is_jit_supported_attribute";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";

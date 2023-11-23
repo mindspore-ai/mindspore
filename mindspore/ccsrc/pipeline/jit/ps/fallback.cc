@@ -508,6 +508,20 @@ py::object GetObjFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
   MS_INTERNAL_EXCEPTION(TypeError) << "The abstract should be a ExtraInfoHolder but got : " << abs->ToString();
 }
 
+bool HasCreateInGraphInExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  constexpr auto create_in_graph_key = "create_in_graph_key";
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    return abs_list->HasData(create_in_graph_key);
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    return abs_dict->HasData(create_in_graph_key);
+  }
+  return false;
+}
+
 bool GetCreateInGraphFromExtraInfoHolder(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
   constexpr auto create_in_graph_key = "create_in_graph_key";
@@ -783,25 +797,11 @@ AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_gra
   const auto script_str = script_buffer.str();
   const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
   const auto key_value_tuple = func_graph->NewCNode(key_value_list);
-  bool has_list_dict = false;
-  for (size_t i = 0; i < node_inputs.size(); ++i) {
-    if (!has_list_dict && (types[i]->isa<List>() || types[i]->isa<Dictionary>())) {
-      has_list_dict = true;
-    }
-  }
-
-  if (has_list_dict) {
-    // If the multitype-fg has list or dict input, they may include inplace operation.
-    // So, we directly convert it to PyExecute.
-    auto res = CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
-                                           key_value_name_tuple->debug_info());
-    MS_LOG(DEBUG) << "Generate PyExecute node: " << res->DebugString();
-    return res;
-  }
 
   // Generate PyInterpret node with
   auto local_dict = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_value_name_tuple, key_value_tuple});
   auto res = CreatePyInterpretCNode(func_graph, script_str, py::dict(), local_dict, key_value_name_tuple->debug_info());
+  res->set_user_data(kCheckListDictInplace, std::make_shared<bool>(true));
   MS_LOG(DEBUG) << "Generate PyInterpret node: " << res->DebugString();
   return res;
 }
