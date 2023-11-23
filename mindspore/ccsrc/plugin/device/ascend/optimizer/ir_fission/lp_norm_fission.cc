@@ -16,7 +16,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/lp_norm_fission.h"
 #include <vector>
 #include <memory>
-#include "ops/ascend_op_name.h"
 #include "ops/math_op_name.h"
 #include "ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"

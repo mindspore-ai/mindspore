@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <set>
-#include <functional>
 #include "ir/tensor.h"
 #include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"

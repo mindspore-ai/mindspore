@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_LP_NORM_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_LP_NORM_FISSION_H_
 
-#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
