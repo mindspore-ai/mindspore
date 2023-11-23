@@ -1,7 +1,7 @@
 mindspore.export
 ================
 
-.. py:function:: mindspore.export(net, *inputs, file_name, file_format, custom_func, **kwargs)
+.. py:function:: mindspore.export(net, *inputs, file_name, file_format, **kwargs)
 
     将MindSpore网络模型导出为指定格式的文件。
 

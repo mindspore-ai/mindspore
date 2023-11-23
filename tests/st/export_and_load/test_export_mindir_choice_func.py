@@ -70,7 +70,6 @@ def _custom_func(mindir_model):
     mindir_model.producer_name = "pandu11111"
     mindir_model.producer_version = "1.0"
     mindir_model.user_info["version"] = "1.0"
-    return mindir_model
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
