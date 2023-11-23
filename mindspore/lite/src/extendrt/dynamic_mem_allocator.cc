@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "src/extendrt/dynamic_mem_allocator.h"
-#include <memory>
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"
 
