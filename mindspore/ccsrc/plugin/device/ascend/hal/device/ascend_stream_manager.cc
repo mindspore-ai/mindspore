@@ -212,10 +212,10 @@ bool AscendStreamMng::SyncAllStreams() const {
   return true;
 }
 
-bool AscendStreamMng::SyncNotCurrentStreams() const {
+bool AscendStreamMng::SyncNotDefaultStreams() const {
   bool res = true;
   for (size_t i = 0; i < streams_.size(); i++) {
-    if (i != current_stream_id_ && !SyncStream(i)) {
+    if (i != default_stream_id_ && !SyncStream(i)) {
       MS_LOG(ERROR) << "Failed to sync for ascend stream id: " << i;
       res = false;
     }

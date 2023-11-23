@@ -20,9 +20,12 @@ MindSpore export 'mindspore.hal' for users to access hardware resources and abil
 """
 from mindspore.hal.device import is_initialized, is_available, device_count, get_device_capability,\
                                  get_device_properties, get_device_name, get_arch_list
-
+from mindspore.hal.stream import Stream, synchronize, set_cur_stream, current_stream, default_stream,\
+                                 StreamCtx
+from mindspore.hal.event import Event
 
 __all__ = [
     "is_initialized", "is_available", "device_count", "get_device_capability",
-    "get_device_properties", "get_device_name", "get_arch_list"
+    "get_device_properties", "get_device_name", "get_arch_list",
+    "Stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx", "Event"
 ]

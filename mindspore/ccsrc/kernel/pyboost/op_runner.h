@@ -59,6 +59,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
   void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
+  void SetStreamId() {
+    // device_context_ is checked in PyBoostUtils::GetDeviceContext
+    stream_id_ = device_context_->device_res_manager_->GetCurrentStreamId();
+  }
+
+  size_t stream_id() { return stream_id_; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
@@ -131,6 +137,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // If the grad_func is not a null pointer,
   // the operator will calculate the grad.
   GradFunc grad_func_{nullptr};
+  // Op stream id
+  size_t stream_id_{kDefaultStreamIndex};
 };
 using OpPtr = std::shared_ptr<OpRunner>;
 }  // namespace pyboost

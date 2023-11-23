@@ -21,6 +21,8 @@
 #include "acl/acl_rt.h"
 
 namespace mindspore::device::ascend {
+constexpr uint32_t ACL_EVENT_DEFAULT = 0x0000000Eu;
+
 class AscendEvent : public DeviceEvent {
  public:
   AscendEvent();

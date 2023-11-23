@@ -145,6 +145,17 @@ class KernelDeviceTask : public AsyncTask {
   TensorStorageInfoPtrList input_storage_list_;
   device::DeviceAddressPtrList output_addr_list_;
 };
+
+class BACKEND_EXPORT PassthroughDeviceTask : public AsyncTask {
+ public:
+  explicit PassthroughDeviceTask(std::function<void(void)> run_func)
+      : AsyncTask(kDeviceOpTask), run_func_(std::move(run_func)) {}
+  ~PassthroughDeviceTask() override = default;
+  void Run() override;
+
+ private:
+  std::function<void(void)> run_func_;
+};
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_DEVICE_TASK_H_

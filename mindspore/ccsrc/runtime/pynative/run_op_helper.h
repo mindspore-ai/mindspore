@@ -28,7 +28,7 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
                          const device::DeviceContext *device_context);
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                      const device::DeviceContext *device_context);
+                      const device::DeviceContext *device_context, const session::BackendOpRunInfoPtr &op_run_info);
 void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                         vector<device::DeviceAddressPtr> *device_address_list);
 std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info);

@@ -903,7 +903,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
   runtime::RunSingleOpGraph(context->graph(), runtime::GetTensorWithoutValueMask(context->op_run_info()),
-                            context->device_context());
+                            context->device_context(), context->op_run_info());
 
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
@@ -1018,7 +1018,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   const auto &tensors_without_value_mask = runtime::GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
 
-  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
+  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context, op_run_info);
 
   if (!op_run_info->is_infer) {
     ReleaseForwardOutput(op_run_info->base_op_run_info.expanded_input_values);

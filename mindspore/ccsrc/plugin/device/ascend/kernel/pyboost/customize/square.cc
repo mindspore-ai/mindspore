@@ -25,10 +25,10 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void SquareAscendCall(const device::DeviceContext *device_context, const tensor::TensorPtr &input_tensor,
-                      const std::vector<tensor::TensorPtr> &outputs) {
+void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
+                      const tensor::TensorPtr &input_tensor, const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
   constexpr int64_t val = 2;
   const auto exponent = std::dynamic_pointer_cast<Scalar>(MakeValue(val));
   MS_EXCEPTION_IF_NULL(exponent);
@@ -51,7 +51,7 @@ tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, con
     PyBoostUtils::MallocOpInputs(device_context, x_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    SquareAscendCall(device_context, x_tensor, outputs);
+    SquareAscendCall(op, device_context, x_tensor, outputs);
     MS_LOG(DEBUG) << "Run device task Square end";
   }));
   return op->output(0);

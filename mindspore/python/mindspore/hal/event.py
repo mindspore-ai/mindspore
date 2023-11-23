@@ -12,45 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Hal event class"""
-class Event():
+from mindspore._c_expression import Event as Event_
+from mindspore._c_expression import current_stream as current_stream_
+
+
+class Event(Event_):
     """
     Python event class wrapping around hardware event interfaces.
     """
-    def __init__(self):
-        # Use _c_expression hal class.
-        pass
+    def __init__(self, enable_timing=False, blocking=False):
+        # pylint: disable=useless-super-delegation
+        super().__init__(enable_timing, blocking)
 
-    def synchronize(self):
-        """
-        Wait for tasks captured by this event to complete.
-        """
-        return
-
-    def record(self, stream: Stream):
+    def record(self, stream=None):
         """
         Record event in specified stream.
         This event captures tasks on specified stream at the time of this call.
         """
-        return
+        if stream is None:
+            stream = current_stream_()
+        super().record(stream)
 
-    def wait(self, stream: Stream):
+    def wait(self, stream=None):
         """
         Make the specified stream wait on this event.
         The specified stream will wait till the tasks captured by this event are completed.
         """
-        return
-
-    def query(self):
-        """
-        Query completion status of all tasks captured by this event.
-        """
-        return
-
-
-def elapsed_time(start_event: Event, end_event: Event):
-    """
-    Return the elapsed time between two events.
-    """
-    return
+        if stream is None:
+            stream = current_stream_()
+        super().wait(stream)

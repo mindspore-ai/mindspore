@@ -12,73 +12,72 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Hal stream class"""
-class Stream():
+from mindspore._c_expression import Stream as Stream_
+from mindspore._c_expression import set_cur_stream as set_cur_stream_
+from mindspore._c_expression import synchronize as synchronize_
+from mindspore._c_expression import current_stream as current_stream_
+from mindspore._c_expression import default_stream as default_stream_
+from .event import Event
+
+
+class Stream(Stream_):
     """
     Python stream class wrapping around hardware stream interfaces.
     """
-    def __init__(self):
-        # Use _c_expression hal class.
-        pass
+    def __init__(self, priority=0, **kwargs):
+        if 'stream_id' in kwargs:
+            super().__init__(priority, kwargs['stream_id'])
+        else:
+            super().__init__(priority)
 
-    def synchronize(self):
-        """
-        Wait for tasks on this stream to complete.
-        """
-        return
-
-    def record_event(self, event: Event):
+    def record_event(self, event=None):
         """
         Record event in this stream.
         This event captures tasks on this stream at the time of this call.
         """
-        return
+        if event is None:
+            event = Event()
+        event.record(self)
+        return event
 
-    def wait_event(self, event: Event):
+    def wait_event(self, event):
         """
         Wait on the specified event.
         This stream will wait till the tasks captured by this event are completed.
         """
-        return
+        event.wait(self)
 
-    def sync_stream(self, stream: Stream):
+    def wait_stream(self, stream):
         """
         Synchronize with specified stream: wait for tasks on another stream to complete.
         """
-        return
+        self.wait_event(stream.record_event())
 
-    def query(self):
-        """
-        Query this stream's completion status.
-        """
-        return
 
-def synchronize(stream: Stream = None):
+def synchronize():
     """
-    Synchronize specified stream. If stream is `None`, synchronize all streams on current device.
-    Note:
-        Each MindSpore process only occupies one device.
+    Synchronize all streams on current device.(Each MindSpore process only occupies one device)
     """
-    return
+    synchronize_()
 
-def set_cur_stream(stream: Stream):
+def set_cur_stream(stream):
     """
     Set current stream to specified stream.
     """
-    return
+    set_cur_stream_(stream)
 
 def current_stream():
     """
     Return current stream used on this device.
     """
-    return
+    return current_stream_()
 
 def default_stream():
     """
     Return default stream on this device.
     """
-    return
+    return default_stream_()
 
 class StreamCtx():
     """
@@ -87,11 +86,19 @@ class StreamCtx():
     Args:
         ctx_stream (Stream): Stream this context wraps.
     """
-    def __init__(self, ctx_stream: Stream):
+    def __init__(self, ctx_stream):
         self.stream = ctx_stream
+        self.prev_stream = None
 
     def __enter__(self):
+        if self.stream is None:
+            return
+        self.prev_stream = current_stream()
+        set_cur_stream(self.stream)
         return
 
-    def __exit__(self, except_type, except_value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.stream is None:
+            return
+        set_cur_stream(self.prev_stream)
         return

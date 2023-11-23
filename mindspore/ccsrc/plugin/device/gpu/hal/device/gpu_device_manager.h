@@ -50,7 +50,7 @@ class GPUDeviceManager {
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
   bool SyncAllStreams() const;
-  bool SyncNotCurrentStreams() const;
+  bool SyncNotDefaultStreams() const;
   const CudaDeviceStream &default_stream() const;
   size_t default_stream_id() const;
 
@@ -68,6 +68,8 @@ class GPUDeviceManager {
   bool CopyHostMemToHost(const HostMemPtr &dst, const void *src, size_t size) const;
 
   static GPUDeviceManager &GetInstance();
+  bool multi_stream_used() const { return multi_stream_used_; }
+  void SetMultiStreamUsed(bool multi_stream_used) { multi_stream_used_ = multi_stream_used; }
 
  private:
   GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0), dev_alive_(false) {}
@@ -102,6 +104,7 @@ class GPUDeviceManager {
   bool dev_id_init_;
   uint32_t cur_dev_id_;
   bool dev_alive_;
+  bool multi_stream_used_{false};
 };
 }  // namespace gpu
 }  // namespace device

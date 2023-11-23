@@ -338,6 +338,15 @@ bool EnableView(const FrontendOpRunInfoPtr &op_run_info) {
 
   return true;
 }
+
+#ifndef ENABLE_TEST
+size_t GetCurStreamId(const std::string &device_target) {
+  const auto &device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  return device_ctx->device_res_manager_->GetCurrentStreamId();
+}
+#endif
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
@@ -836,6 +845,10 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
                   << ", input_to_attr is not empty:" << (!op_run_info->input_to_attr.empty());
     ClonePrim(op_run_info);
   }
+#ifndef ENABLE_TEST
+  // Obtaining device context may fail in UT
+  op_run_info->base_op_run_info.stream_id = GetCurStreamId(op_run_info->base_op_run_info.device_target);
+#endif
   op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }

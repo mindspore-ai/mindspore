@@ -913,6 +913,12 @@ bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pr
   return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
 }
 
+bool GPUDeviceResManager::multi_stream_used() const { return GPUDeviceManager::GetInstance().multi_stream_used(); }
+
+void GPUDeviceResManager::SetMultiStreamUsed(bool multi_stream_used) {
+  return GPUDeviceManager::GetInstance().SetMultiStreamUsed(multi_stream_used);
+}
+
 void *GPUDeviceResManager::GetStream(size_t stream_id) const {
   return GPUDeviceManager::GetInstance().GetStream(stream_id);
 }
@@ -958,8 +964,8 @@ bool GPUDeviceResManager::SyncAllStreams() const {
 #endif
   return result;
 }
-bool GPUDeviceResManager::SyncNotCurrentStreams() const {
-  return GPUDeviceManager::GetInstance().SyncNotCurrentStreams();
+bool GPUDeviceResManager::SyncNotDefaultStreams() const {
+  return GPUDeviceManager::GetInstance().SyncNotDefaultStreams();
 }
 
 size_t GPUDeviceResManager::DefaultStream() const { return GPUDeviceManager::GetInstance().default_stream_id(); }
@@ -975,7 +981,9 @@ uint32_t GPUKernelExecutor::GetRankID() const {
   return rank_id;
 }
 
-DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(uint32_t flag) const {
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+  uint32_t flag =
+    (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
   auto event = std::make_shared<GpuEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
   return event;

@@ -146,6 +146,8 @@ void RegModule(py::module *m) {
   RegMsContext(m);
   RegSecurity(m);
   RegForkUtils(m);
+  mindspore::hal::RegStream(m);
+  mindspore::hal::RegEvent(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::pynative::RegisterPyBoostFunction(m);
   mindspore::prim::RegCompositeOpsGroup(m);

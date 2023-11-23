@@ -123,7 +123,11 @@ def test_mindflow_navier_stokes():
     model.set_train(False)
 
     if context.get_context("device_target") == 'GPU':
+<<<<<<< HEAD
         assert epoch_time < 0.015
+=======
+        assert epoch_time < 0.02
+>>>>>>> hal support multi-stream
     else:
         assert epoch_time < 0.01
     assert train_loss < 0.8

@@ -238,6 +238,12 @@ bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pri
   return true;
 }
 
+bool GeDeviceResManager::multi_stream_used() const { return AscendStreamMng::GetInstance().multi_stream_used(); }
+
+void GeDeviceResManager::SetMultiStreamUsed(bool multi_stream_used) {
+  return AscendStreamMng::GetInstance().SetMultiStreamUsed(multi_stream_used);
+}
+
 void *GeDeviceResManager::GetStream(size_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
@@ -286,12 +292,12 @@ bool GeDeviceResManager::SyncAllStreams() const {
   return AscendStreamMng::GetInstance().SyncAllStreams();
 }
 
-bool GeDeviceResManager::SyncNotCurrentStreams() const {
+bool GeDeviceResManager::SyncNotDefaultStreams() const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return false;
   }
-  return AscendStreamMng::GetInstance().SyncNotCurrentStreams();
+  return AscendStreamMng::GetInstance().SyncNotDefaultStreams();
 }
 
 size_t GeDeviceResManager::DefaultStream() const {
@@ -302,7 +308,8 @@ size_t GeDeviceResManager::DefaultStream() const {
   return AscendStreamMng::GetInstance().default_stream_id();
 }
 
-DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(uint32_t flag) const {
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+  auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
   auto event = std::make_shared<AscendEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
   return event;

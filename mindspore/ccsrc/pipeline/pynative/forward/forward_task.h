@@ -40,6 +40,17 @@ class FrontendTask : public AsyncTask {
   FrontendOpRunInfoPtr op_run_info_;
 };
 
+class PassthroughFrontendTask : public AsyncTask {
+ public:
+  explicit PassthroughFrontendTask(std::function<void(void)> run_func)
+      : AsyncTask(kFrontendTask), run_func_(std::move(run_func)) {}
+  ~PassthroughFrontendTask() override = default;
+  void Run() override;
+
+ private:
+  std::function<void(void)> run_func_;
+};
+
 class SliceOpFrontendTask : public AsyncTask {
  public:
   SliceOpFrontendTask(

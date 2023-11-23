@@ -23,12 +23,12 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
+tensor::TensorPtr UpsampleNearest1dAscendCall(const std::shared_ptr<OpRunner> &op, const PrimitivePtr &primitive,
                                               const device::DeviceContext *device_context,
                                               const TensorPtr &input_tensor, const std::vector<int64_t> &output_size,
                                               const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
   LAUNCH_ACLNN(aclnnUpsampleNearest1d, device_context, stream_ptr, input_tensor, output_size, outputs[0]);
   return outputs[0];
 }
@@ -53,7 +53,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunne
     PyBoostUtils::MallocOpInputs(device_context, input_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    UpsampleNearest1dAscendCall(op->primitive(), device_context, input_tensor, output_size_vector, outputs);
+    UpsampleNearest1dAscendCall(op, op->primitive(), device_context, input_tensor, output_size_vector, outputs);
     MS_LOG(DEBUG) << "Run device task UpsampleNearest1d end";
   }));
   return op->output(0);

@@ -60,12 +60,15 @@ class GPUDeviceResManager : public DeviceResManager {
   bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;
   bool SyncAllStreams() const override;
-  bool SyncNotCurrentStreams() const override;
+  bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(uint32_t flag) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
 
   bool LoadCollectiveCommLib() override;
+
+  bool multi_stream_used() const override;
+  void SetMultiStreamUsed(bool multi_stream_used) override;
 
  protected:
   // Relevant function to allocate and free device memory of raw ptr.

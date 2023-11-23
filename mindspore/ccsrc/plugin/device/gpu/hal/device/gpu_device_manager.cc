@@ -109,6 +109,7 @@ bool GPUDeviceManager::CreateStreamWithPriority(size_t *stream_id, int32_t prior
                            "Failed to create CUDA stream with priority");
   *stream_id = gpu_streams_.size();
   (void)gpu_streams_.emplace_back(stream);
+
   return true;
 }
 
@@ -208,10 +209,10 @@ bool GPUDeviceManager::SyncAllStreams() const {
   return true;
 }
 
-bool GPUDeviceManager::SyncNotCurrentStreams() const {
+bool GPUDeviceManager::SyncNotDefaultStreams() const {
   bool res = true;
   for (size_t i = 0; i < gpu_streams_.size(); i++) {
-    if (i != current_stream_id_ && !SyncStream(i)) {
+    if (i != default_stream_id_ && !SyncStream(i)) {
       MS_LOG(ERROR) << "Failed to sync for gpu stream id: " << i;
       res = false;
     }

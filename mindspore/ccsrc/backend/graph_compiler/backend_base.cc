@@ -993,6 +993,14 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
   }
 }
 
+void MindRTBackendBase::WaitMultiStream(const GraphCompilerInfo &graph_compiler_info) {
+  for (auto device_context : graph_compiler_info.device_contexts_) {
+    if (device_context->device_res_manager_->multi_stream_used()) {
+      device_context->device_res_manager_->SyncNotDefaultStreams();
+    }
+  }
+}
+
 void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
@@ -1017,9 +1025,9 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   // For pynative and graph mix execution.
-
   ContiguousArgs(args);
   WaitTaskFinish();
+  WaitMultiStream(graph_compiler_info);
 
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
