@@ -35,10 +35,10 @@ class ReservoirReplayBuffer {
   ~ReservoirReplayBuffer() = default;
 
   // Push an experience transition to the buffer which will be given the highest reservoir.
-  bool Push(const std::vector<AddressPtr> &transition);
+  bool Push(const std::vector<KernelTensor *> &transition);
 
   // Sample a batch transitions with indices and bias correction weights.
-  bool Sample(const size_t &batch_size, const std::vector<AddressPtr> &transition);
+  bool Sample(const size_t &batch_size, const std::vector<KernelTensor *> &transition);
 
  private:
   size_t seed{42};

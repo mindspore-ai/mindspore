@@ -116,13 +116,7 @@ bool PriorityReplayBufferPushGpuKernel::Launch(const std::vector<KernelTensor *>
   float *priority = default_priority_ ? nullptr : GetDeviceAddress<float>(inputs, num_item_);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
-
-  std::vector<AddressPtr> inputs_addr;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto input_addr = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
-    inputs_addr.push_back(input_addr);
-  }
-  return prioriory_replay_buffer_->Push(inputs_addr, priority, stream);
+  return prioriory_replay_buffer_->Push(inputs, priority, stream);
 }
 
 std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {
@@ -154,10 +148,9 @@ bool PriorityReplayBufferSampleGpuKernel::Launch(const std::vector<KernelTensor 
   auto beta = GetDeviceAddress<float>(inputs, 0);
   auto indices = GetDeviceAddress<size_t>(outputs, 0);
   auto weights = GetDeviceAddress<float>(outputs, 1);
-  std::vector<AddressPtr> transition;
+  std::vector<KernelTensor *> transition;
   for (size_t i = 2; i < outputs.size(); ++i) {
-    auto output_addr = std::make_shared<Address>(outputs[i]->device_ptr(), outputs[i]->size());
-    transition.push_back(output_addr);
+    transition.push_back(outputs[i]);
   }
 
   return prioriory_replay_buffer_->Sample(batch_size_, beta, indices, weights, transition,

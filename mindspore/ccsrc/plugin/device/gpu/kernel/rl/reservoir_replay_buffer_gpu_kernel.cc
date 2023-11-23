@@ -111,13 +111,7 @@ bool ReservoirReplayBufferPushGpuKernel::Launch(const std::vector<KernelTensor *
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
-
-  std::vector<AddressPtr> inputs_addr;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto input_addr = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
-    inputs_addr.push_back(input_addr);
-  }
-  return reservior_replay_buffer_->Push(inputs_addr, stream);
+  return reservior_replay_buffer_->Push(inputs, stream);
 }
 
 std::vector<KernelAttr> ReservoirReplayBufferPushGpuKernel::GetOpSupport() {
@@ -146,12 +140,7 @@ bool ReservoirReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *
 bool ReservoirReplayBufferSampleGpuKernel::Launch(const std::vector<KernelTensor *> &,
                                                   const std::vector<KernelTensor *> &,
                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  std::vector<AddressPtr> outputs_addr;
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto output_addr = std::make_shared<Address>(outputs[i]->device_ptr(), outputs[i]->size());
-    outputs_addr.push_back(output_addr);
-  }
-  return reservior_replay_buffer_->Sample(batch_size_, outputs_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  return reservior_replay_buffer_->Sample(batch_size_, outputs, reinterpret_cast<cudaStream_t>(stream_ptr));
 }
 
 std::vector<KernelAttr> ReservoirReplayBufferSampleGpuKernel::GetOpSupport() {

@@ -88,12 +88,7 @@ int PriorityReplayBufferPushCpuKernel::Resize(const std::vector<KernelTensor *> 
 bool PriorityReplayBufferPushCpuKernel::Launch(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &,
                                                const std::vector<KernelTensor *> &outputs) {
-  std::vector<AddressPtr> inputs_addr;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto input_addr = std::make_shared<Address>(inputs[i]->device_ptr(), inputs[i]->size());
-    inputs_addr.push_back(input_addr);
-  }
-  (void)prioriory_replay_buffer_->Push(inputs_addr);
+  (void)prioriory_replay_buffer_->Push(inputs);
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, kIndex0);
