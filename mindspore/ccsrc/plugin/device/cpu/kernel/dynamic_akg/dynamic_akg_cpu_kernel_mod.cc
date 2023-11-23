@@ -78,8 +78,8 @@ void DynamicAkgCpuKernelManager::GetFunctionAndKernelName(const std::string &fn,
 }
 
 void *DynamicAkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
-  if (auto func = SearchFuncWithSharedLock(kernel_name); func != nullptr) {
-    return func;
+  if (auto kernel_func = SearchFuncWithSharedLock(kernel_name); kernel_func != nullptr) {
+    return kernel_func;
   }
   std::unique_lock lock(mutex_);
   // Search cache again between setting unique lock and calling "dlopen", to make sure that
