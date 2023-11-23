@@ -32,6 +32,35 @@ class BoolTensorIndexSetItem(nn.Cell):
         return x
 
 
+class BoolTensorIndexSetItemWithDynamicValue(nn.Cell):
+    def construct(self, x, index):
+        x[index] = x[index]
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_bool_tensor_setitem_with_dynamic_value(mode):
+    """
+    Feature: Tensor setitem with bool Tensor index and dynamic value
+    Description: Verify the result of bool tensor indexing with dynamic value
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = BoolTensorIndexSetItemWithDynamicValue()
+    a = Tensor(np.arange(24).reshape((2, 3, 4)), ms.float32)
+    b = Tensor([False, True])
+    output = net(a, b)
+    expected = np.arange(24).reshape((2, 3, 4)).astype(np.float32)
+    assert np.array_equal(output.asnumpy(), expected)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -199,7 +228,7 @@ def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x0 = np.arange(2*3).reshape(2, 3)
+    x0 = np.arange(2 * 3).reshape(2, 3)
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
@@ -227,7 +256,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x0 = np.arange(2*3).reshape(2, 3)
+    x0 = np.arange(2 * 3).reshape(2, 3)
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
@@ -256,7 +285,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x0 = np.arange(2*3).reshape(2, 3)
+    x0 = np.arange(2 * 3).reshape(2, 3)
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
