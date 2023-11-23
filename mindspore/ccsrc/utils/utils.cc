@@ -314,8 +314,8 @@ size_t GetSystemFreeDiskSize(const std::string &path) {
     MS_LOG(INFO) << "Failed to get disk directory " << path << " size, check whether the directory is created.";
     return 0;
   }
-  size_t block_size = disk_info.f_bsize;
-  size_t fb_size = disk_info.f_bfree;
+  size_t block_size = static_cast<size_t>(disk_info.f_bsize);
+  size_t fb_size = static_cast<size_t>(disk_info.f_bfree);
   return block_size * fb_size;
 #endif
 }
