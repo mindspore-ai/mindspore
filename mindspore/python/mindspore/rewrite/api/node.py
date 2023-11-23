@@ -403,14 +403,14 @@ class Node:
             SymbolTree, None if current node does not belong to any SymbolTree.
 
         Examples:
-        >>> from mindspore.rewrite import SymbolTree
-        >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-        >>> net = LeNet5()
-        >>> stree = SymbolTree.create(net)
-        >>> node = stree.get_node("conv1")
-        >>> print(type(node.get_symbol_tree()))
-        <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
+            >>> from mindspore.rewrite import SymbolTree
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("conv1")
+            >>> print(type(node.get_symbol_tree()))
+            <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
         """
         from .symbol_tree import SymbolTree
         stree_impl = self._node.get_belong_symbol_tree()

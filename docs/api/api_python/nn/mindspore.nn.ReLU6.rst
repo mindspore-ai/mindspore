@@ -3,7 +3,7 @@ mindspore.nn.ReLU6
 
 .. py:class:: mindspore.nn.ReLU6
 
-    ReLU6激活函数。
+    逐元素计算ReLU6激活函数。
 
     ReLU6类似于ReLU，不同之处在于设置了上限，其上限为6，如果输入大于6，输出会被限制为6。公式如下：
 

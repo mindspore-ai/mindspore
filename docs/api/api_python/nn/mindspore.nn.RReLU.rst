@@ -3,7 +3,7 @@ mindspore.nn.RReLU
 
 .. py:class:: mindspore.nn.RReLU(lower=1 / 8, upper=1 / 3)
 
-   Randomized Leaky ReLU激活函数。
+   逐元素计算RReLU（Randomized Leaky ReLU）激活函数。
 
    该激活函数定义如下：
 

@@ -3,7 +3,7 @@ mindspore.nn.ReLU
 
 .. py:class:: mindspore.nn.ReLU
 
-    修正线性单元激活函数（Rectified Linear Unit activation function）。
+    逐元素计算ReLU（Rectified Linear Unit activation function）修正线性单元激活函数。
 
     .. math::
 

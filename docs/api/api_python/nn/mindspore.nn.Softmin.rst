@@ -3,7 +3,7 @@ mindspore.nn.Softmin
 
 .. py:class:: mindspore.nn.Softmin(axis=-1)
 
-    Softmin函数，它是二分类函数 :class:`mindspore.nn.Sigmoid` 在多分类上的推广，目的是将多分类的结果以概率的形式展现出来。
+    逐元素计算Softmin函数，它是二分类函数 :class:`mindspore.nn.Sigmoid` 在多分类上的推广，目的是将多分类的结果以概率的形式展现出来。
 
     对输入Tensor在轴 `axis` 上的元素计算其指数函数值，然后归一化到[0, 1]范围，总和为1。
 

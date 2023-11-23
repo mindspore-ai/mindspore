@@ -3,7 +3,7 @@ mindspore.nn.TransformerEncoder
 
 .. py:class:: mindspore.nn.TransformerEncoder(encoder_layer, num_layers, norm=None)
 
-    Transformer编码器模块，多层 `TransformerEncoderLayer` 的堆叠，包括MultiheadAttention层和FeedForward层。可以使用此模块构造BERT(https://arxiv.org/abs/1810.04805)模型。
+    Transformer编码器模块，多层 :class:`mindspore.nn.TransformerEncoderLayer` 的堆叠，包括MultiheadAttention层和FeedForward层。可以使用此模块构造BERT(https://arxiv.org/abs/1810.04805)模型。
 
     参数：
         - **encoder_layer** (Cell) - :class:`mindspore.nn.TransformerEncoderLayer` 的实例。
