@@ -30,6 +30,7 @@ namespace py = pybind11;
 static const char kMutableAttr[] = "__ms_mutable__";
 static const char kConstArgAttr[] = "const_arg";
 static const char kDynamicLengthAttr[] = "__ms_dynamic_len__";
+static const char kMsClassAttr[] = "__ms_class__";
 
 std::string GetStopTraceReasonDesc(StopTraceReason res) {
   switch (res) {
@@ -343,6 +344,14 @@ bool IsTensorPyObject(PyObject *obj) {
          py::isinstance<mindspore::tensor::MetaTensor>(obj) || py::isinstance<mindspore::tensor::CSRTensor>(obj) ||
          py::isinstance<mindspore::tensor::RowTensor>(obj) || py::isinstance<mindspore::tensor::COOTensor>(obj) ||
          py::isinstance<mindspore::tensor::TensorData>(obj);
+}
+
+bool IsMsClass(PyObject *obj) {
+  if (obj == nullptr) {
+    return false;
+  }
+  auto py_obj = py::cast<py::object>(obj);
+  return py::hasattr(py_obj, kMsClassAttr) && py::cast<bool>(py::getattr(py_obj, kMsClassAttr));
 }
 
 std::string GetTopModule(const py::object &o) {

@@ -470,7 +470,7 @@ static bool support_create_primitive(PyObject *obj) {
 }
 
 static bool SupportCall(PyObject *func, const std::string &name) {
-  return support_infer_primitive(func) || support_create_primitive(func) ||
+  return support_infer_primitive(func) || support_create_primitive(func) || IsMsClass(func) ||
          (name.size() != 0 && PyDict_GetItemString(PyEval_GetBuiltins(), name.c_str()) == func);
 }
 
@@ -485,7 +485,7 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, std::stri
     bool is_abstract = false;
     return inst->InferPrimitive(params[0], list, &is_abstract);
   }
-  if (!support_create_primitive(params[0])) {
+  if (!support_create_primitive(params[0]) && !IsMsClass(params[0])) {
     // current only for builtin func
     MS_EXCEPTION_IF_CHECK_FAIL(PyDict_GetItemString(PyEval_GetBuiltins(), name.c_str()) == params[0],
                                "not implement guard none builtin function");
