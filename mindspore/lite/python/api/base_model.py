@@ -52,11 +52,11 @@ class BaseModel:
             outputs_metadata.append(output_meta)
         return tuple(outputs_metadata)
 
-    def get_user_info(self):
+    def get_model_info(self, key):
         """
-        Obtains user info of the model.
+        Obtains model info of the model.
         """
-        return self._model.get_user_info()
+        return self._model.get_model_info(key)
 
     def predict(self, inputs, outputs=None):
         """

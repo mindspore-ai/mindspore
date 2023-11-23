@@ -90,13 +90,13 @@ std::vector<MSTensorPtr> PyModelGetOutputs(Model *model) {
   return MSTensorToMSTensorPtr(model->GetOutputs());
 }
 
-std::map<std::string, std::string> PyModelGetUserInfo(Model *model) {
-  std::map<std::string, std::string> empty;
+std::string PyModelGetModelInfo(Model *model, const std::string &key) {
+  std::string empty;
   if (model == nullptr) {
     MS_LOG(ERROR) << "Model object cannot be nullptr";
     return empty;
   }
-  return model->GetUserInfo();
+  return model->GetModelInfo(key);
 }
 
 void ModelPyBind(const py::module &m) {
@@ -159,7 +159,7 @@ void ModelPyBind(const py::module &m) {
     .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelGetInputs)
     .def("get_outputs", &PyModelGetOutputs)
-    .def("get_user_info", &PyModelGetUserInfo)
+    .def("get_model_info", &PyModelGetModelInfo)
     .def("get_input_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",
