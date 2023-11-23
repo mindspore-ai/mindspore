@@ -32,6 +32,7 @@
 
 namespace mindspore {
 namespace parallel {
+const int32_t DEPEND_NODE_SOURCE_INDEX = 2;
 
 class FoldPipelineTransformer : public PipelineTransformer {
  public:
