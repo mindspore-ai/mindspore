@@ -121,7 +121,10 @@ void ModelPyBind(const py::module &m) {
     .value("kLiteInferInvalid", StatusCode::kLiteInferInvalid)
     .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid)
     .value("kLiteLLMKVCacheNotExist", StatusCode::kLiteLLMKVCacheNotExist)
-    .value("kLiteLLMWaitProcessTimeOut", StatusCode::kLiteLLMWaitProcessTimeOut);
+    .value("kLiteLLMWaitProcessTimeOut", StatusCode::kLiteLLMWaitProcessTimeOut)
+    .value("kLiteLLMRepeatRequest", StatusCode::kLiteLLMRepeatRequest)
+    .value("kLiteLLMRequestAlreadyCompleted", StatusCode::kLiteLLMRequestAlreadyCompleted)
+    .value("kLiteLLMEngineFinalized", StatusCode::kLiteLLMEngineFinalized);
 
   (void)py::class_<Status, std::shared_ptr<Status>>(m, "Status")
     .def(py::init<>())
