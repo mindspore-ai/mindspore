@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/sparse/dense_to_csr_sparse_matrix_gpu_kernel.h"
-#include <algorithm>
-#include <map>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
