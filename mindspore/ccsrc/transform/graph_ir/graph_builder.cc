@@ -15,7 +15,6 @@
  */
 
 #include "transform/graph_ir/graph_builder.h"
-#include <vector>
 #include <sstream>
 #include "inc/ops/math_ops.h"
 
