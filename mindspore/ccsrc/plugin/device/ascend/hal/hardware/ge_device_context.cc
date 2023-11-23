@@ -64,6 +64,8 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
     opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
@@ -105,10 +107,11 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
         }
       }
     }
+    if (!all_support) {
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    }
     return all_support;
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
