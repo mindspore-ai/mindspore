@@ -1496,6 +1496,22 @@ size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index, size_t data_dims
   return specified_dimensions;
 }
 
+namespace {
+void CheckDataDim(const ShapeVector &data_shape) {
+  constexpr size_t max_data_dim = 8;
+  if (data_shape.size() > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], "
+                             << "but got '" << data_shape.size() << "'.";
+  }
+}
+
+void CheckNumberOfEllipsis(const size_t counter) {
+  if (counter > 0) {
+    MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis ('...')";
+  }
+}
+}  // namespace
+
 bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
                                          const py::object &py_index, std::vector<int64_t> *data_transfer_types,
                                          std::vector<py::object> *data_transfer_args, const TypePtr &data_type) {
@@ -1560,9 +1576,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       new_data_shape[dim] = (slice_info.stop() + slice_info.step() - 1 - slice_info.start()) / slice_info.step();
       dim++;
     } else if (py::isinstance<py::ellipsis>(obj)) {
-      if (ellipsis_count > 0) {
-        MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
-      }
+      CheckNumberOfEllipsis(ellipsis_count);
       dim += data_shape.size() - specified_dimensions;
       ellipsis_count += 1;
     } else if (py::isinstance<py::none>(obj)) {
@@ -1580,12 +1594,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       return false;
     }
   }
-  constexpr size_t max_data_dim = 8;
-  if (new_data_shape.size() > max_data_dim) {
-    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
-                             << data_dims << "'.";
-  }
-
+  CheckDataDim(new_data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
     slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
