@@ -66,6 +66,7 @@
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/irpass/grad_partial_transform.h"
+#include "frontend/optimizer/irpass/const_output_eliminate.h"
 
 namespace mindspore {
 namespace opt {
@@ -140,6 +141,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<CheckBpropEliminater>(), "check_bprop_eliminate", prim::kPrimCheckBprop);
   reset_defer_inline_ =
     MakeSubstitution(std::make_shared<ResetDeferInline>(), "reset_defer_inline", IsValueNode<FuncGraph>);
+  const_output_eliminate_ =
+    MakeSubstitution(std::make_shared<ConstOutputEliminater>(), "const_output_eliminate", IsValueNode<FuncGraph>);
   depend_value_elim_ = MakeSubstitution(std::make_shared<DependValueElim>(), "depend_value_elim", prim::kPrimDepend);
   all_reduce_const_elim_ =
     MakeSubstitution(std::make_shared<AllReduceConstElim>(), "reduce_all_const_elim", prim::kPrimAllReduce);

@@ -63,6 +63,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr same_eliminate_;
   SubstitutionPtr check_bprop_eliminate_;
   SubstitutionPtr reset_defer_inline_;
+  SubstitutionPtr const_output_eliminate_;
   SubstitutionPtr depend_value_elim_;
   SubstitutionPtr all_reduce_const_elim_;
   SubstitutionPtr mini_step_allgather_replace_;
