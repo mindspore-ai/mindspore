@@ -32,7 +32,8 @@ namespace ge {
 graphStatus ValidateTableResourceHandle(Shape keys, std::vector<ShapeAndType> handleData,
                                         ShapeAndType &output_shape_and_type, bool is_lookup, const ge::Operator &op) {
   Shape unknown_shape(ge::UNKNOWN_SHAPE);
-  if (handleData.size() != 2) {
+  constexpr size_t kHandleSize = 2;
+  if (handleData.size() != kHandleSize) {
     output_shape_and_type.SetShape(unknown_shape);
     output_shape_and_type.SetType(DT_UNDEFINED);
   } else {
@@ -100,7 +101,8 @@ graphStatus ValidateTableResourceHandle(const Operator &op, Shape &keys, const D
   }
 
   auto handle_data = shapes_and_types[0];
-  if (handle_data.size() != 2) {
+  constexpr size_t kHandleSize = 2;
+  if (handle_data.size() != kHandleSize) {
     OP_LOGI(op, "handle data(shapes_and_types[0]) size is not 2, return unknown shape");
     output_shape_and_type.SetShape(Shape(UNKNOWN_RANK));
     output_shape_and_type.SetType(DT_UNDEFINED);

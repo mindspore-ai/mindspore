@@ -18,7 +18,7 @@ static bool VerifyDepthToSpaceInputShape(const Operator &op, const int64_t &bloc
   bool check_format = (data_format == "NCHW" || data_format == "NHWC");
   if (check_format && !IsUnknown(input_dims)) {
     int64_t c_dim = 3;
-    c_dim = data_format == "NHWC" ? 3 : 1;
+    c_dim = data_format == "NHWC" ? c_dim : 1;
     auto mod_res = input_dims[c_dim] % (block_size * block_size);
     if (mod_res != 0) {
       OP_LOGE(TbeGetName(op),

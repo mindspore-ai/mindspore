@@ -46,7 +46,8 @@ T CalcDigamma(T x) {
     if (x_is_integer) {
       return std::numeric_limits<T>::quiet_NaN();
     }
-    double q, r = 0;
+    double q = 0;
+    double r = 0;
     r = std::modf(x, &q);
     return CalcDigamma(1 - x) - kPI / tan(kPI * r);
   }

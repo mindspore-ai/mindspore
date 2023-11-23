@@ -29,6 +29,9 @@
 #include "utils/op_const.h"
 
 namespace ge {
+namespace {
+constexpr size_t kNum2 = 2;
+}
 // ----------------Pad Op Begin-------------------
 static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &paddings) {
   auto op_info = OpDescUtils::GetOpDescFromOperator(op);
@@ -54,7 +57,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("input shape cannot empty"));
       return GRAPH_FAILED;
     }
-    if (dim_num * 2 != paddings.size()) {
+    if (dim_num * kNum2 != paddings.size()) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op),
                                           OtherErrMsg("the num of paddings must be double the input dim size"));
       return GRAPH_FAILED;
@@ -63,7 +66,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
     // calce the output shape
     output_shape.SetDimNum(dim_num);
     for (size_t dim = 0; dim < dim_num; dim++) {
-      output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * 2] + paddings[dim * 2 + 1]);
+      output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * kNum2] + paddings[dim * kNum2 + 1]);
     }
 
     return GRAPH_SUCCESS;
@@ -76,7 +79,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
     if (input_shape.GetDim(dim) == -1) {
       output_shape.SetDim(dim, input_shape.GetDim(dim));
     } else {
-      output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * 2] + paddings[dim * 2 + 1]);
+      output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * kNum2] + paddings[dim * kNum2 + 1]);
     }
   }
 
@@ -231,7 +234,7 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
     // calce the output shape
     vector<int64_t> output_shape;
     for (size_t dim = 0; dim < input_shape.size(); dim++) {
-      output_shape.push_back(input_shape[dim] - paddings[dim * 2] - paddings[dim * 2 + 1]);
+      output_shape.push_back(input_shape[dim] - paddings[dim * kNum2] - paddings[dim * kNum2 + 1]);
     }
     output_desc->SetShape(GeShape(output_shape));
 
@@ -252,7 +255,7 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
     if (input_shape[dim] == -1) {
       output_shape.push_back(input_shape[dim]);
     } else {
-      output_shape.push_back(input_shape[dim] - paddings[dim * 2] - paddings[dim * 2 + 1]);
+      output_shape.push_back(input_shape[dim] - paddings[dim * kNum2] - paddings[dim * kNum2 + 1]);
     }
   }
   output_desc->SetShape(GeShape(output_shape));
