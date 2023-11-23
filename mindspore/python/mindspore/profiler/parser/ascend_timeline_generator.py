@@ -160,15 +160,17 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._timeline_meta = self._format_meta_data_list
 
         # Update timeline summary info
-        timeline_summary = op_summary[np.isin(op_summary['Task Type'], ['AI_CORE', 'AI_CPU', 'HCCL'])][[
-            'Op Name', 'Stream ID', 'Task Duration']]
+        timeline_summary = op_summary[['Op Name', 'Stream ID', 'Task Duration']]
         self._timeline_summary['total_time'] = np.sum(timeline_summary['Task Duration'])
         self._timeline_summary['num_of_streams'] = int(
             len(np.unique(timeline_summary['Stream ID'], return_counts=True)[0]))
         self._timeline_summary['num_of_ops'] = int(len(np.unique(timeline_summary['Op Name'], return_counts=True)[0]))
         self._timeline_summary['op_exe_times'] = int(len(timeline_summary))
-        self._timeline_summary['max_scope_name_num'] = int(np.max(
-            [len(x) for x in np.char.split(timeline_summary['Op Name'].astype(str), sep='/')]))
+        if self._timeline_summary['op_exe_times'] != 0:
+            self._timeline_summary['max_scope_name_num'] = int(np.max(
+                [len(x) for x in np.char.split(timeline_summary['Op Name'].astype(str), sep='/')]))
+        else:
+            self._timeline_summary['max_scope_name_num'] = 0
         logger.info('Finished adding info into timeline...')
 
     def init_pynative_timeline(self):
