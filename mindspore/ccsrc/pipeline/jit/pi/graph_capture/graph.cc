@@ -199,6 +199,9 @@ bool Graph::GuardValueNode(ValueNode *node) {
   if (guard_ == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
     return false;
   }
+  if (node->GetOpcode() == LOAD_CONST) {
+    return true;
+  }
   TracePtr t = GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
                         Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
                         Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
@@ -212,14 +215,16 @@ bool Graph::GuardValueNode(ValueNode *node) {
   return false;
 }
 
-TracePtr Graph::TraceValueNode(ValueNode *node) {
+TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
   AObject *vo = node->GetVobj();
   if (guard_ == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
     return nullptr;
   }
+  if (max_trace_depth < 0) {
+    max_trace_depth = Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth);
+  }
   return GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
-                  Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
-                  Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
+                  Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0, max_trace_depth);
 }
 
 void Graph::print(int depth) const {

@@ -196,15 +196,13 @@ AObject *AbstractObjectBase::MakeAObject(AObject::Type type, PyTypeObject *tp, P
       break;
     case kTypeAnyValue:
       if (tp == nullptr) {
-        return res = aobject_mem_pool_.New<AbstractObjectBase>(kTypeAnyValue);
+        res = aobject_mem_pool_.New<AbstractObjectBase>(kTypeAnyValue);
+        break;
       }
     /* fall-through */
     default:
-      if (o == nullptr) {
-        res = aobject_mem_pool_.New<AbstractObjectBase>(type);
-      } else {
-        res = aobject_mem_pool_.New<AbstractObject>(type, h);
-      }
+      // known type
+      res = aobject_mem_pool_.New<AbstractObject>(type, h);
       break;
   }
   res->SetTypeObject(o == nullptr ? tp : Py_TYPE(o));
@@ -469,7 +467,8 @@ AObject *AbstractSequence::GetItem(AObject *k) {
   PyObject *s = this->GetPyObject().ptr();
   PyObject *i = k ? k->GetPyObject().ptr() : nullptr;
   PyObject *t = nullptr;
-  if (s != nullptr && i != nullptr && k->GetType() != kTypeAnyValue) {
+  if (s != nullptr && i != nullptr && k->GetType() != kTypeAnyValue && k->GetType() != kTypeTensor) {
+    // avoid Tensor as index and Tensor data sync
     t = PyObject_GetItem(s, i);
     CHECK_PYTHON_EXCEPTION(t);
   }
@@ -613,10 +612,21 @@ static AObject *BinaryIs(AObject *l, AObject *r) {
   const auto &map = const_object_type_map;
   bool const_a = map.find(a) != map.end();
   bool const_b = map.find(b) != map.end();
+  // all is const object
   if (const_a && const_b) {
     return AObject::Convert(a == b ? Py_True : Py_False);
   }
+  // a const object and a known object
   if ((const_a && b) || (const_b && a)) {
+    return AObject::Convert(Py_False);
+  }
+  // a const object and a unknown object, but known it's type
+  if (const_a && r != nullptr && r->GetType() != AObject::kTypeAnyValue && r->GetType() != AObject::kTypeBool) {
+    MS_EXCEPTION_IF_CHECK_FAIL(!const_b, "shouldn't reach here");
+    return AObject::Convert(Py_False);
+  }
+  if (const_b && l != nullptr && l->GetType() != AObject::kTypeAnyValue && l->GetType() != AObject::kTypeBool) {
+    MS_EXCEPTION_IF_CHECK_FAIL(!const_a, "shouldn't reach here");
     return AObject::Convert(Py_False);
   }
   return AObject::MakeAObject(AObject::kTypeBool);
@@ -938,11 +948,11 @@ std::string AbstractDict::ToString() const {
 }
 
 /**
- * cast to int, call hook __index__
+ * cast to Py_ssize_t, call hook __index__ by PyNumber_AsSsize_t
  * \return -1 if key error, out of bound, overflow to cast Py_ssize_t
  */
 static Py_ssize_t GetTupleIndex(AObject *k, Py_ssize_t size) {
-  Py_ssize_t index = PyNumber_AsSsize_t(k->GetPyObject().ptr(), PyExc_TypeError);
+  Py_ssize_t index = PyLong_AsSsize_t(k->GetPyObject().ptr());
   if (PyErr_Occurred()) {
     PyErr_Clear();
     return -1;
@@ -1139,6 +1149,13 @@ AbstractTuple *AbstractList::ListToTuple() {
 bool AbstractTuple::Update(const std::vector<AObject *> &item) {
   this->element_valid_ = true;
   this->items_ = item;
+  if (this->items_.size() != 0 && items_[0] != nullptr) {
+    this->element_type_ = items_[0]->GetType();
+    bool any = item.end() != std::find_if(item.begin(), item.end(), [this](AObject *i) {
+                 return i ? i->GetType() != this->element_type_ : true;
+               });
+    this->element_type_ = any ? kTypeAnyValue : this->element_type_;
+  }
   return Update();
 }
 

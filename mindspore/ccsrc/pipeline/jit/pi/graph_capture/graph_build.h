@@ -54,7 +54,6 @@ class GraphBuilder {
   static py::object FindPyFunc(AObject *vobj);
   static py::object GetFuncInfo(ValueNode *func_node);
 
-  static bool HandleCallClass(CallNode *call_node);
   static bool IsByteCodeImplemented(int bytecode);
 
  private:
@@ -157,6 +156,9 @@ class GraphBuilder {
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func, GraphBuilder *subgraph);
 
   bool ReplaceCall(CallNode *call_node, const py::object &func);
+
+  // build abstract instance of python class
+  bool HandleCallClass(CallNode *call_node);
 
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);

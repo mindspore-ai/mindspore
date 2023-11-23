@@ -556,24 +556,14 @@ void ByteCodeParser::ParseRotFour(const InstrPtr &instr) { DoRot(4); }
 
 void ByteCodeParser::ParseNop(const InstrPtr &instr) {}
 
-void ByteCodeParser::ParseDupTop(const InstrPtr &instr) {
-  ir::NodePtrList args = {std::make_shared<ir::RefNode>(stack_.back())};
-  ir::NaryOperationPtr node = std::make_shared<ir::NaryOperation>(instr->GetOpCode(), args);
-  node->SetLineNo(instr->GetStartsLine());
-  PushStack(node);
-}
+void ByteCodeParser::ParseDupTop(const InstrPtr &instr) { PushStack(stack_.back()); }
 
 void ByteCodeParser::ParseDupTwo(const InstrPtr &instr) {
-  auto tos = PopStack();
-  ir::NodePtrList args = {std::make_shared<ir::RefNode>(stack_.back())};
-  ir::NaryOperationPtr node = std::make_shared<ir::NaryOperation>(DUP_TOP, args);
-  node->SetLineNo(instr->GetStartsLine());
-  PushStack(node);
-  PushStack(tos);
-  args = {std::make_shared<ir::RefNode>(tos)};
-  node = std::make_shared<ir::NaryOperation>(DUP_TOP, args);
-  node->SetLineNo(instr->GetStartsLine());
-  PushStack(node);
+  auto iter = stack_.end();
+  auto first = *(--iter);
+  auto second = *(--iter);
+  PushStack(second);
+  PushStack(first);
 }
 
 // Parse unary operators, eg: `not a`, `-a`, etc.
