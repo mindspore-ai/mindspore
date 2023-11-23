@@ -95,7 +95,7 @@ class BACKEND_EXPORT DumpJsonParser {
   inline static std::shared_ptr<DumpJsonParser> instance_ = nullptr;
   inline static std::once_flag instance_mutex_;
 
-  std::mutex lock_;
+  inline static std::mutex lock_;
   bool async_dump_enabled_{false};
   bool e2e_dump_enabled_{false};
   uint32_t dump_mode_{0};
