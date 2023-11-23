@@ -88,8 +88,11 @@ class KernelDecoderKvCache {
         pipe_barrier((pipe_t)PIPE_ALL);
         auto s_idx = valid_seq_len_tensor_.GetValue(b_idx);
         pipe_barrier((pipe_t)PIPE_ALL);
-        if (s_idx < 0 || s_idx >= s_) {
+        if (s_idx < 0) {
           continue;
+        }
+        if (s_idx >= s_) {
+          s_idx = s_idx % s_;
         }
         out_gm_.SetGlobalBuffer((__gm__ T *)cache + bh_idx * s_ * d_ + s_idx * d_, us_ * d_);
         int64_t src_offset = j * us_ * d_;
