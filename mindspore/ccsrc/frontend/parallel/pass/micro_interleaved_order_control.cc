@@ -422,6 +422,9 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return;
   }
+  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

@@ -293,6 +293,10 @@ void ParallelContext::set_enable_micro_interleaved(const bool enable_micro_inter
   enable_micro_interleaved_ = enable_micro_interleaved;
 }
 
+void ParallelContext::set_enable_fine_grained_micro_interleaved(const bool enable_fine_grained_micro_interleaved) {
+  enable_fine_grained_micro_interleaved_ = enable_fine_grained_micro_interleaved;
+}
+
 void ParallelContext::set_pipeline_micro_size(const size_t pipeline_micro_size) {
   pipeline_micro_size_ = pipeline_micro_size;
 }
