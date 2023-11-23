@@ -34,6 +34,8 @@ bool HandleFuncInWhiteList(const std::string &, CallNode *);
 
 void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
 
+bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

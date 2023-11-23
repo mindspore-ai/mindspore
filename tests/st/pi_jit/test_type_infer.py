@@ -190,11 +190,10 @@ def builtin_func_test(x, *args):
     g = issubclass(type(x), Tensor)
     h = id(x)
     i = ord('c')
-    j = globals()
     k = callable(x)
     l = getattr(x, "shape")
     m = hasattr(x, "xxxx")
-    return a, b, c, d, e, f, g, h, i, j, k, l, m
+    return a, b, c, d, e, f, g, h, i, k, l, m
 
 
 @pytest.mark.level0

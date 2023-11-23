@@ -1,163 +1,94 @@
-from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
 from mindspore import ops, numpy, Tensor
 from mindspore.nn import Cell
-from mindspore import jit, context
+from mindspore import jit
 import pytest
 from .share.utils import match_array
-
 
 config = {
     "replace_nncell_by_construct": True,
     "interpret_captured_code": True,
     "loop_unrolling": False,
-    "MAX_INLINE_DEPTH": 99
 }
 
 
-def kwf(*vargs, p=-1, **kwvargs):
-    return (p, vargs, kwvargs)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_try_block():
+    """
+    Feature:
+        Testing with block
+
+    Description:
+        Split bytecode and results is right
+
+    Expectation:
+        The outputs should be identical regardless of the status of PIJit.
+    """
+    def try_catch_block_test(x):
+        z = None
+        try:
+            with open(x) as f:
+                pass
+        except FileNotFoundError:
+            z = True
+        finally:
+            y = "<<<<<<<<<<<<<<<<<<<<<<<"
+            f = None
+        return x, y, z, f
+
+    a = try_catch_block_test("aaaa")
+    b = jit(fn=try_catch_block_test, mode="PIJit",
+            jit_config=config)("aaaa")
+    assert a == b
 
 
-def kwf2(a, b):
-    return (a, b)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_with_block():
+    """
+    Feature:
+        Testing with block
 
+    Description:
+        Split bytecode and results is right
 
-def kwf3(a, b=21):
-    return (a, b)
+    Expectation:
+        The outputs should be identical regardless of the status of PIJit.
+    """
 
+    class UserDefineObject(Cell):
+        def __init__(self):
+            super().__init__()
+            self.res = None
 
-@jit(mode="PIJit", jit_config=config)
-def kw_inline_test():
-    return kwf(1), kwf(1, 2), kwf(1, 2, a=3), kwf(p=1, a=3), kwf(p=1), kwf(a=1), kwf2(a=1, b=2), kwf3(a=1)
+        def __enter__(self):
+            self.enter_set = True
 
+        def __exit__(self, *varg):
+            self.exit_set = True
 
-@jit(mode="PIJit", jit_config=config)
-def cell_free_test(a=1):
-    def inner(b):
-        def iiner(c):
-            return c + b
-        b = a + b
-        print("----break----")
-        return (b, iiner(b))
-    c = inner
-    res1 = c(1)
-    print("----break----")
-    a = 2
-    res2 = c(1)
-    return (res1, res2)
+        def __eq__(self, other):
+            a = self.enter_set, self.exit_set, self.res
+            b = other.enter_set, other.exit_set, other.res
+            return a == b
 
+    @jit(mode="PIJit", jit_config=config)
+    def with_block_test(o, u):
+        x = 1
+        y = None  # must be define before use, see issue87
+        with o:
+            o.res = "yes"
+            y = 2
+        z = 3
+        out = (x, y, z, u, o)
+        return out
 
-@jit(mode="PIJit", jit_config=config)
-def branch_test(a=None, b=None, use_default=True):
-    x = None
-    if use_default:
-        x = " x"
-    else:
-        if isinstance(a, int):
-            x = " a"
-        elif isinstance(b, int):
-            x = " b"
-    return x
-
-
-@jit(mode="PIJit", jit_config=config)
-def loop_test(a, res):
-    for i in range(1):
-        res += 1
-    while a > 0:
-        for i in range(1):
-            res += i
-        a = a - 1
-    for i in range(1):
-        res += 1
-    return res
-
-
-def toy_example(a, b):
-    x = a / ops.abs(a) + 1
-    if b.sum() < 0:
-        b = b * -1
-    return x * b
-
-# side effect tests
-
-
-def f1(a):
-    if a != int:
-        return callable
-    return a
-
-
-def f2(a):
-    return f1(a)(f1(2)(a))
-
-
-@jit(mode="PIJit", jit_config=config)
-def stack_restore_test(a):
-    def f3():
-        nonlocal a
-        a = 2
-        return a
-    return (f2(a), f2(f3() + f2(a)))
-
-
-class UserDefineObject(Cell):
-    def __init__(self):
-        super(UserDefineObject, self).__init__()
-        self.some_attr = 1
-
-    def __enter__(self):
-        self.enter_set = True
-
-    def __exit__(self, *varg):
-        self.exit_set = True
-
-    def construct(self, x):
-        return x
-
-
-obj = None
-
-
-@jit(mode="PIJit", jit_config=config)
-def store_attr_test(a, attr):
-    global obj
-    support_operation = obj.some_attr
-    a.some_attr = attr
-    return support_operation
-
-
-def try_catch_block_test(x):
-    try:
-        with open(x) as f:
-            pass
-    except FileNotFoundError:
-        print("fail")
-    finally:
-        y = "<<<<<<<<<<<<<<<<<<<<<<<"
-        f = None
-    return x, y, f
-
-
-@jit(mode="PIJit", jit_config=config)
-def with_block_test(o, u):
-    x = 1
-    y = None  # must be define before use, see issue87
-    with o:
-        o.res = "yes"
-        y = 2
-    z = 3
-    return x, y, z, u
-
-# NOTE: not implement globals side effect
-# same_name = "right global"
-# from cross_file_globals_test import modify_global
-# def store_global_test():
-#     global same_name
-#     g1 = modify_global()
-#     g2 = same_name
-#     same_name = "some info"
-#     return (g1, (g2, same_name))
+    a = with_block_test(UserDefineObject(), 0)
+    b = jit(fn=with_block_test, mode="PIJit",
+            jit_config=config)(UserDefineObject(), 0)
+    assert a == b
 
 
 @pytest.mark.level0
@@ -175,12 +106,20 @@ def test_kw_inline():
     Expectation:
         The outputs should be identical regardless of the status of PIJit.
     """
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
+    def kwf(*vargs, p=-1, **kwvargs):
+        return (p, vargs, kwvargs)
+
+    def kwf2(a, b):
+        return (a, b)
+
+    def kwf3(a, b=21):
+        return (a, b)
+
+    def kw_inline_test():
+        return kwf(1), kwf(1, 2), kwf(1, 2, a=3), kwf(p=1, a=3), kwf(p=1), kwf(a=1), kwf2(a=1, b=2), kwf3(a=1)
+
     a = kw_inline_test()
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    b = kw_inline_test()
+    b = jit(fn=kw_inline_test, mode="PIJit", jit_config=config)()
     assert a == b
 
 
@@ -198,13 +137,22 @@ def test_cell_free():
     Expectation:
         The outputs should be identical regardless of the status of PIJit.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    def cell_free_test(a=1):
+        def inner(b):
+            def iiner(c):
+                return c + b
+            b = a + b
+            print("----break----")
+            return (b, iiner(b))
+        c = inner
+        res1 = c(1)
+        print("----break----")
+        a = 2
+        res2 = c(1)
+        return (res1, res2)
+
     res2 = cell_free_test()
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
-    res1 = cell_free_test()
-    jit_mode_pi_enable()
+    res1 = jit(fn=cell_free_test, mode="PIJit", jit_config=config)()
     assert res1 == res2
 
 
@@ -224,8 +172,18 @@ def test_branch():
         The output for each set of parameters should match the expected output
         based on the function's defined behavior.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    @jit(mode="PIJit", jit_config=config)
+    def branch_test(a=None, b=None, use_default=True):
+        x = None
+        if use_default:
+            x = " x"
+        else:
+            if isinstance(a, int):
+                x = " a"
+            elif isinstance(b, int):
+                x = " b"
+        return x
+
     r1 = branch_test()
     r2 = branch_test(a=1, use_default=False)
     r3 = branch_test(b=1, use_default=False)
@@ -252,13 +210,19 @@ def test_break_at_loop(a):
     Expectation:
         The output with and without PIJit enabled should be the same.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    def loop_test(a, res):
+        for i in range(1):
+            res += 1
+        while a > 0:
+            for i in range(1):
+                res += i
+            a = a - 1
+        for i in range(1):
+            res += 1
+        return res
+
     r1 = loop_test(a, 0)
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
-    r2 = loop_test(a, 0)
-    jit_mode_pi_enable()
+    r2 = jit(fn=loop_test, mode="PIJit", jit_config=config)(a, 0)
     assert r1 == r2
 
 
@@ -278,13 +242,14 @@ def test_toy_example(a, b):
     Expectation:
         The outputs should match when PIJit and PSJit are enabled or disabled.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    def toy_example(a, b):
+        x = a / ops.abs(a) + 1
+        if b.sum() < 0:
+            b = b * -1
+        return x * b
+
+    r2 = toy_example(a, b)
     r1 = jit(toy_example, mode="PIJit", jit_config=config)(a, b)
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
-    r2 = jit(toy_example)(a, b)
-    jit_mode_pi_enable()
     match_array(r1, r2)
 
 
@@ -304,27 +269,26 @@ def test_stack_restore(param):
     Expectation:
         The outputs should match when PIJit and PSJit are enabled or disabled.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    res2 = stack_restore_test(param)
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
+    def f1(a):
+        if a != int:
+            return callable
+        return a
+
+    def f2(a):
+        return f1(a)(f1(2)(a))
+
+    def stack_restore_test(a):
+        def f3():
+            nonlocal a
+            a = 2
+            return a
+        return (f2(a), f2(f3() + f2(a)))
+
     res1 = stack_restore_test(param)
-    jit_mode_pi_enable()
+    res2 = jit(fn=stack_restore_test, mode="PIJit", jit_config=config)(param)
     assert res1 == res2
 
 
-obj = None
-
-
-@jit(mode="PIJit", jit_config=config)
-def unpack_test(c):
-    i1, i2 = c
-    *self, = c
-    return i1, i2, self
-
-
-@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -340,23 +304,14 @@ def test_unpack(c):
     Expectation:
         The function should unpack variables consistently and return the same value in both modes.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    def unpack_test(c):
+        i1, i2 = c
+        *self, = c
+        return i1, i2, self
+
     r1 = unpack_test(c)
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
-    r2 = unpack_test(c)
-    jit_mode_pi_enable()
+    r2 = jit(fn=unpack_test, mode="PIJit", jit_config=config)(c)
     assert r1 == r2
-
-
-@jit(mode="PIJit", jit_config=config)
-def unpack_test2(a, b, c):
-    a = a, b, c
-    c, e, *b = a
-    *c, e = a
-    a, d, e = a
-    return {'a': a, 'b': b, 'c': c, 'd': d, 'e': e}
 
 
 @pytest.mark.level0
@@ -373,11 +328,13 @@ def test_unpack2():
     Expectation:
         The function should unpack variables consistently and return the same value in both modes.
     """
-    jit_mode_pi_enable()
-    context.set_context(mode=context.PYNATIVE_MODE)
+    def unpack_test2(a, b, c):
+        a = a, b, c
+        c, e, *b = a
+        *c, e = a
+        a, d, e = a
+        return {'a': a, 'b': b, 'c': c, 'd': d, 'e': e}
+
     r1 = unpack_test2(1, 2, 3)
-    jit_mode_pi_disable()
-    context.set_context(mode=context.GRAPH_MODE)
-    r2 = unpack_test2(1, 2, 3)
-    jit_mode_pi_enable()
+    r2 = jit(fn=unpack_test2, mode="PIJit", jit_config=config)(1, 2, 3)
     assert r1 == r2

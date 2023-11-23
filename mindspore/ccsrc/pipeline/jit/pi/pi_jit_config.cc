@@ -54,6 +54,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"strict_trace", &GraphJitConfig::SetBool<GraphJitConfig::kStrictTrace>},
   {"perf_statistics", &GraphJitConfig::SetBool<GraphJitConfig::kPerfStatistics>},
   {"LOG_GRAPH_BREAK", &GraphJitConfig::SetBool<GraphJitConfig::kLogGraphBreak>},
+  {"LOG_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogPerf>},
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
   {"MAX_INLINE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxInlineDepth>},
@@ -93,6 +94,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;
   bool_conf[kLogGraphBreak - kBoolConf] = false;
+  bool_conf[kLogPerf - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the
    *__getattr__, __getitem__ function of the user-defined object do not affect the correctness.
@@ -259,7 +261,7 @@ bool GraphJitConfig::CheckJitForbidden(const py::object &code) {
 bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
   py::set constexpr_callable;
   for (const py::handle &i : py::iter(list)) {
-    if (!PyFunction_Check(i.ptr())) {
+    if (!PyCallable_Check(i.ptr())) {
       MS_LOG(WARNING) << "config pijit_constexpr, all values must be function";
       return false;
     }
@@ -274,7 +276,11 @@ bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
 }
 
 bool GraphJitConfig::CheckJitConstexpr(const py::object &code) {
-  if (!PyFunction_Check(code.ptr())) {
+  if (code.ptr() == nullptr || !PyCallable_Check(code.ptr())) {
+    return false;
+  }
+  PyTypeObject *tp = Py_TYPE(code.ptr());
+  if (tp->tp_hash == nullptr || tp->tp_hash == PyObject_HashNotImplemented) {
     return false;
   }
   py::object map = GetObjectsMap();
@@ -285,7 +291,12 @@ bool GraphJitConfig::CheckJitConstexpr(const py::object &code) {
   if (set == nullptr) {
     return false;
   }
-  return PySet_Contains(set, code.ptr());
+  int res = PySet_Contains(set, code.ptr());
+  if (res < 0) {
+    PyErr_Clear();
+    return false;
+  }
+  return res;
 }
 
 GraphJitConfig::GraphJitConfig(const py::object &c) {

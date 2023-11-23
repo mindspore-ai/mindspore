@@ -587,6 +587,7 @@ bool GraphBuilder::DoCall(const Instr &instr) {
       return false;
   }
   ValueNode *call_node = seek(0);
+  call_node->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
   this->graph_->SetInstr(instr.bci(), call_node);
 
   // replace CALL_FUNCTION_EX node with new opcode, guard function and parameters (tuple size and dict size)
@@ -1181,6 +1182,14 @@ static void FillInstrNode(Graph *g) {
     if (n == nullptr || Utils::GetBranchDestIndex(n->GetOpcode(), n->GetOparg(), n->bci()) == -1) {
       continue;
     }
+    if (b->GetJumpBB() == nullptr) {
+      MS_EXCEPTION_IF_CHECK_FAIL(n->GetOpcode() == POP_JUMP_IF_FALSE || n->GetOpcode() == POP_JUMP_IF_TRUE,
+                                 "check prune branch and loop unrolling");
+      n->SetOpcode(POP_TOP);
+      n->SetOparg(0);
+      continue;
+    }
+
     int i = b->GetJumpBB()->begin_ci();
     while (!nodes[i]) {
       ++i;
@@ -1292,14 +1301,11 @@ StopTraceReason GraphBuilder::BuildGraph(int depth) {
       break;
     }
     if (Utils::IsCallOp(instr.op())) {
-      CallNode *n = reinterpret_cast<CallNode *>(seek(0));
       ret = HandleCall(depth);
-      if (StopTraceReason::kNonStopTrace == ret) {
-        seek(0) = n->GetSubGraph() ? n->GetSubGraph()->GetRetVal() : n;
-        continue;
+      if (StopTraceReason::kNonStopTrace != ret) {
+        stop_trace_at = instr.bci();
+        break;
       }
-      stop_trace_at = instr.bci();
-      break;
     }
   }
 
@@ -1396,6 +1402,7 @@ bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::obj
     call_node->SetInlineReason(InlineReason::kInline);
     ValueNode *ret_node = call_node->GetSubGraph()->GetRetVal();
     MS_EXCEPTION_IF_CHECK_FAIL(ret_node, "infer special function failed");
+    seek(0) = ret_node;
     return true;
   }
 
@@ -1463,17 +1470,31 @@ static bool ApplyInlinePolicy(Graph *g) {
   return true;
 }
 
-bool GraphBuilder::HandleCallClass(CallNode *call_node) {
+bool CheckSupportCreateInstance(CallNode *call_node) {
   /**
    * only support exactly type, sub-class not create
-   * list, tuple, set, dict, will reduce generator, chang the parameter object
-   * here not actually create it
+   * list, tuple, set, dict, will reduce generator, not support create
    */
   static const std::set<PyTypeObject *> support_create_instance_type = {
     &PyComplex_Type, &PyMap_Type,  &PyBaseObject_Type, &PyRange_Type, &PyZip_Type,
     &PySlice_Type,   &PyBool_Type, &PyFloat_Type,      &PyLong_Type,  &PyType_Type,
   };
 
+  AObject *cls_info = call_node->input(0)->GetVobj();
+  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(cls_info)->GetPyObject().ptr());
+  if (tp == nullptr) {
+    return false;
+  }
+
+  const auto &params = call_node->getInputs();
+  bool support_create_instance = support_create_instance_type.end() != support_create_instance_type.find(tp);
+  if (tp == &PyUnicode_Type && params.size() == 1 && params[0]->GetVobj() != nullptr) {
+    support_create_instance = params[0]->GetVobj()->GetType() != AObject::kTypeAnyValue;
+  }
+  return support_create_instance;
+}
+
+bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   AObject *vobj = call_node->input(0)->GetVobj();
   if (!vobj || vobj->GetType() != AObject::kTypeType) {
     return false;
@@ -1483,33 +1504,37 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
 
   AObject *instance = nullptr;
   AObject::Type type = t->GetTypeType();
-  bool support_create_instance =
-    support_create_instance_type.end() !=
-    support_create_instance_type.find(reinterpret_cast<PyTypeObject *>(t->GetPyObject().ptr()));
-
-  if (type == AObject::kTypeString) {
-    AObject::Type param_type = params.size() == (size_t)2 && params[1]->GetVobj() != nullptr
-                                 ? params[1]->GetVobj()->GetType()
-                                 : AObject::kTypeAnyValue;
-    PyObject *arg = nullptr;
-    if (param_type > AObject::kTypeAnyValue && param_type < AObject::kTypeNNCellList) {
-      // call nn.CellList.__repr__ maybe get an exception
-      arg = params[1]->GetVobj()->GetPyObject().ptr();
-    } else {
-      // str(user-defined object), unknown side effect
-    }
-    instance = arg == nullptr ? AObject::MakeAObject(AObject::kTypeString) : AObject::Convert(py::str(arg));
-  } else if (type == AObject::kTypePrimitive || support_create_instance) {
-    // e.g. user defined iterable object as builtin 'list' parameters
+  bool support_create_instance = CheckSupportCreateInstance(call_node);
+  bool constant = type == AObject::kTypePrimitive || type == AObject::kTypeTensor || type == AObject::kTypeStubTensor;
+  // create instance
+  if (support_create_instance || constant) {
     std::vector<py::object> args;
-    for (int i = 1; i < static_cast<int>(params.size()); ++i) {
-      if (!call_node->input(i)->GetVobj()) {
-        return false;
-      }
-      args.push_back(call_node->input(i)->GetVobj()->GetPyObject());
-    }
+    std::transform(params.begin() + 1, params.end(), std::back_inserter(args), [](ValueNode *n) {
+      AObject *i = n->GetVobj();
+      return i && i->GetType() != AObject::kTypeAnyValue ? i->GetPyObject() : py::object();
+    });
     py::object res = t->BuildInstance(args, call_node->GetOpcode());
     instance = res.ptr() ? AObject::Convert(res) : nullptr;
+  }
+
+  // make instance is global
+  if (constant && instance != nullptr) {
+    // guard parameters
+    bool guard_success = GuardConstCallNodeParam(call_node, call_node->GetGraph(), 4);
+    if (guard_success) {
+      auto &nodes = current_block_->GetNodes();
+      MS_EXCEPTION_IF_CHECK_FAIL(nodes.back() == call_node, "CallNode must be last when build sub graph");
+
+      nodes.pop_back();
+      ValueNode *new_node = NewValueNode(instance, LOAD_GLOBAL, -1, {});
+      std::stringstream key;
+      key << (instance->GetTypeObject()->tp_name) << "<" << instance->GetPyObject().ptr() << ">";
+      new_node->SetName(key.str());
+      new_node->SetGraph(call_node->GetGraph());
+      nodes.push_back(new_node);
+      seek(0) = new_node;
+      this->graph_->InstallToGlobal(new_node->GetName(), instance->GetPyObject());
+    }
   }
 
   if (!instance) {
@@ -1719,7 +1744,9 @@ bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extr
   ValueNode *args_node = params->operator[](0);
   AbstractNodeList tuple_unpack;
   AbstractNodeList dict_unpack;
-  if (has_dict && !UnpackCallExDict(params, &dict_unpack)) {
+  if (!has_dict) {
+    params->clear();
+  } else if (!UnpackCallExDict(params, &dict_unpack)) {
     return false;
   }
   *has_kw = params->size();
@@ -1822,23 +1849,7 @@ bool GraphBuilder::HandleKWParams(const py::object &func, std::vector<ValueNode 
     return false;
   }
 
-  // set default arguments
-  PyObject *kw_defs = PyFunction_GET_KW_DEFAULTS(func.ptr());
-  PyObject **varnames = &PyTuple_GET_ITEM(co->co_varnames, 0);
   const int argc = co->co_argcount + co->co_kwonlyargcount;
-  for (int i = co->co_argcount; i < argc; ++i) {
-    if (frame->Local(i) != &ValueNode::UnboundLocal) {
-      continue;
-    }
-    PyObject *kw_def_val = kw_defs ? PyDict_GetItem(kw_defs, varnames[i]) : nullptr;
-    if (kw_def_val != nullptr) {
-      frame->SetLocal(i, NewValueNode(AObject::Convert(kw_def_val), LOAD_CONST, -1, {}));
-      continue;
-    }
-    MS_LOG(DEBUG) << "kwonly argument not specified";
-    return false;
-  }
-
   extra_oper->insert(nullptr, &dict_gen);
   if (!(co->co_flags & CO_VARKEYWORDS)) {
     // kw_2_p_cnt == k_cnt, all kw arguments is positions arguments
@@ -2160,6 +2171,11 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   // build sub-graph
   stop_reason = BuildSubGraph(call_node, depth, callable_info, &subgraph);
   CollectInlineInfo(call_node, depth);
+
+  if (call_node->GetSubGraph()) {
+    MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
+    seek(0) = call_node->GetSubGraph()->GetRetVal();
+  }
   return stop_reason;
 }
 

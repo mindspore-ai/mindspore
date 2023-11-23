@@ -152,7 +152,7 @@ class Graph {
   std::string getCodeInfoName() const { return py::str(co_.ptr()).cast<std::string>(); }
 
   bool GuardValueNode(ValueNode *);
-  TracePtr TraceValueNode(ValueNode *);
+  TracePtr TraceValueNode(ValueNode *, int max_trace_depth = -1);
   int GetPruneBranchCount() const { return prune_branch_count_; }
   void SetPruneBranchCount(int count) { prune_branch_count_ = count; }
   const std::shared_ptr<OptCode> &GetGuard() { return guard_; }

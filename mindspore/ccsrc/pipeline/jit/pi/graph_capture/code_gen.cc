@@ -1001,6 +1001,7 @@ static int allocLocal(std::unordered_map<ValueNode *, int> *local_map, ValueNode
     return pos->second;
   }
   int res;
+  std::set<int> used_slots;  // order set
   for (pos = local_map->begin(); pos != local_map->end(); ++pos) {
     if (pos->first->marker_ < alive_time) {
       res = pos->second;
@@ -1008,8 +1009,15 @@ static int allocLocal(std::unordered_map<ValueNode *, int> *local_map, ValueNode
       local_map->insert({n, res});
       return res;
     }
+    used_slots.insert(pos->second);
   }
-  res = local_map->size();
+  res = 0;
+  for (auto i : used_slots) {
+    if (res != i) {
+      break;
+    }
+    res++;
+  }
   local_map->insert({n, res});
   return res;
 }
@@ -1348,8 +1356,14 @@ AbstractNodeList CodeGenerator::ReshapeCapturedBytecodes(const FrameStates &last
 
   std::unordered_map<ValueNode *, int> local_map;
   // prepare local_map
-  for (auto i : this->graph_->GetFrame(0).GetLocals()) {
-    local_map.insert({i, local_map.size()});
+  const auto &params = this->graph_->GetFrame(0).GetLocals();
+  for (int i = 0; i < static_cast<int>(params.size()); ++i) {
+    if (params[i] != &ValueNode::UnboundLocal) {
+      MS_EXCEPTION_IF_CHECK_FAIL(params[i]->GetType() == ValueNode::Param && params[i]->GetOparg() == i,
+                                 "must be parameter node");
+
+      local_map.insert({params[i], i});
+    }
   }
   // produce interpret values
   AbstractNodeList res = BuildValues(&local_map, nodes.ordered_escaped_locals);

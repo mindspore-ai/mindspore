@@ -51,6 +51,7 @@ class GraphJitConfig {
     kStrictTrace,
     kPerfStatistics,
     kLogGraphBreak,
+    kLogPerf,
     kEnableOptimizeForAttrItem,
     kEnableEliminateUnusedOperation,
     /* ------------------------------ */

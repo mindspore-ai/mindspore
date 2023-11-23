@@ -44,6 +44,10 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
+std::map<TimeRecorder::RecorderType, TimeRecorder::PerfData> TimeRecorder::data_;
+static std::map<uint64_t, size_t> code_size_execute_python;  // execute count, code size
+static std::map<uint64_t, size_t> code_size_execute_graph;   // execute count, code size
+
 // jit compiler initialize
 static void ensureInitialize() {
   static bool init = false;
@@ -55,6 +59,24 @@ static void ensureInitialize() {
     tss = PyThread_tss_alloc();
     PyThread_tss_create(tss);
   }
+  std::atexit([]() {
+    if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {
+      return;
+    }
+    for (const auto &i : TimeRecorder::data_) {
+      std::cout << i.first << " " << i.second.count << " times, " << (i.second.nano / TimeRecorder::scale) << " seconds"
+                << std::endl;
+    }
+    size_t sum_code_py =
+      std::accumulate(code_size_execute_python.begin(), code_size_execute_python.end(), 0,
+                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
+    size_t sum_code_graph =
+      std::accumulate(code_size_execute_graph.begin(), code_size_execute_graph.end(), 0,
+                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
+
+    std::cout << "execute code ratio (graph / (graph + python)): "
+              << (sum_code_graph / static_cast<double>(sum_code_graph + sum_code_py)) << std::endl;
+  });
 }
 
 void Tracebackes::PushInlineInfo(InlineInfo info) {
@@ -594,6 +616,9 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
 
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->origin_frame_));
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
+    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileCapture,
+                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
     c->stat = JitCompileResults::GRAPH_BUILDING;
     GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
@@ -603,6 +628,9 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   }
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
+    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
+                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
     c->stat = JitCompileResults::GRAPH_BUILDING;
     PyFrameObject *f = reinterpret_cast<PyFrameObject *>(frame.ptr());
     PyFrame_FastToLocals(f);
@@ -684,6 +712,8 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
     res = _PyEval_EvalFrameDefault(tstate, new_f, 0);
   }
 
+  code_size_execute_python[PyBytes_GET_SIZE(new_f->f_code->co_code)]++;
+
   bci = new_f->f_lasti;
   Py_DECREF(new_f);
 
@@ -739,6 +769,10 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object kwvargs = packed_args[2];
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
 
+  if (graph_preferred) {
+    code_size_execute_graph[PyBytes_GET_SIZE(f->f_code->co_code)]++;
+  }
+
   // dump traceback
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintTraceback)) {
     // dump all traceback for the root function
@@ -751,6 +785,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 }
 
 static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
+  TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
   c->code = nullptr;
 
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
@@ -767,6 +803,12 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
 }
 
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
+  TimeRecorder _time_recorder(TimeRecorder::kTimeCompile, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
+  if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
+    return JitCompile(tstate, c);
+  }
+
   bool compiled = false;
   try {
     compiled = JitCompile(tstate, c);
@@ -787,7 +829,6 @@ static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
 
 static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameObject *frame) {
   bool just_compiled = false;
-  bool compiled = false;
   switch (c->stat) {
     case JitCompileResults::NEVER_COMPILE:
       break;
@@ -803,20 +844,14 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       if (c->conf->GetBoolConfig(GraphJitConfig::kCompileWithoutCapture)) {
         c->stat = JitCompileResults::GRAPH_CAPTURED;
       }
-      if (c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
-        compiled = JitCompileWithTry(tstate, c);
-      } else {
-        compiled = JitCompile(tstate, c);
-      }
-      if (!compiled) {
+      if (!JitCompileWithTry(tstate, c)) {
         c->stat = JitCompileResults::NEVER_COMPILE;
         break;
       }
       just_compiled = true;
     /* fallthrough */
     case JitCompileResults::GRAPH_CALLABLE: {
-      bool check_guard = CheckGuard(c, frame);
-      if (check_guard) {
+      if (CheckGuard(c, frame)) {
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
       }

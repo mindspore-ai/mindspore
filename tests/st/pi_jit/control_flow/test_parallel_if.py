@@ -31,6 +31,3 @@ def test_if_raise_raise():
 
     with pytest.raises(ValueError):
         foo(x, y, z)
-
-
-test_if_raise_raise()
