@@ -80,7 +80,7 @@ ATTR_MAP(TopKV2) = {{"axis", ATTR_DESC(dim, AnyTraits<int64_t>())},
                     {"largest", ATTR_DESC(largest, AnyTraits<bool>())},
                     {"sorted", ATTR_DESC(sorted, AnyTraits<bool>())}};
 OUTPUT_MAP(TopKV2) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
-REG_ADPT_DESC(TopKV2, kNameTopKV2, ADPT_DESC(TopK))
+REG_ADPT_DESC(TopKV2, kNameTopKV2, ADPT_DESC(TopKV2))
 
 // InTopK
 INPUT_MAP(InTopKD) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
