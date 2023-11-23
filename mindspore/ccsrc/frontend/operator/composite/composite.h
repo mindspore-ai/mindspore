@@ -70,6 +70,7 @@ class HyperMap : public MetaFuncGraph {
   abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_abs_list) const override;
   FuncGraphPtr GenerateFromTypes(const TypePtrList &args_abs_list) override;
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
+  void SetObjectForFnLeaf(const py::object &leaf_object);
 
  private:
   AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const;
@@ -90,8 +91,10 @@ using HyperMapPtr = std::shared_ptr<HyperMap>;
 
 class HyperMapPy : public HyperMap {
  public:
-  explicit HyperMapPy(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
-      : HyperMap(reverse, fn_leaf) {}
+  explicit HyperMapPy(bool reverse = false, const py::object &fn_leaf = py::none())
+      : HyperMap(reverse, fn_leaf.cast<prim::MultitypeFuncGraphPtr>()) {
+    SetObjectForFnLeaf(fn_leaf);
+  }
   ~HyperMapPy() override = default;
   MS_DECLARE_PARENT(HyperMapPy, HyperMap)
 };

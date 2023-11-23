@@ -31,7 +31,7 @@ namespace prim {
 void RegCompositeOpsGroup(const py::module *m) {
   //  Reg HyperMap
   (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-    .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
+    .def(py::init<bool, py::object>(), py::arg("reverse"), py::arg("ops"))
     .def(py::init<bool>(), py::arg("reverse"));
 
   // Reg Tail

@@ -884,7 +884,8 @@ int GetDumpFormatLevel() {
     try {
       format_level = std::stoi(format);
     } catch (const std::invalid_argument &ia) {
-      MS_LOG(DEBUG) << "Invalid argument: " << ia.what() << " when parse " << format;
+      MS_LOG(ERROR) << "Invalid argument: " << ia.what() << " when parse " << format
+                    << ". Please set this env variable to number 0-2.";
     }
   }
   return format_level;
@@ -1105,15 +1106,15 @@ void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
 #ifdef ENABLE_DUMP_IR
 void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location,
             const std::string &target_file) {
-  bool need_dump = Common::CheckIfPrintIrPass(filename);
   GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
     return;
   }
+  auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
   if (!need_dump) {
     return;
   }
-  auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
   if (!target_file.empty()) {
     path = target_file;
   }
@@ -1191,15 +1192,15 @@ void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool du
 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name,
                   LocDumpMode dump_location) {
-  bool need_dump = Common::CheckIfPrintIrPass(filename);
   GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
     return;
   }
+  auto path = Common::AddId(filename, ".ir");
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
   if (!need_dump) {
     return;
   }
-  auto path = Common::AddId(filename, ".ir");
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;

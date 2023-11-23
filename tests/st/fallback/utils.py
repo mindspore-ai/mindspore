@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 from mindspore import ops
+import mindspore.ops.operations as P
 
 
 def add_func(x, y):
@@ -32,3 +33,11 @@ def add_scala(x, y):
 @add.register("Tensor", "Tensor")
 def add_tensor(x, y):
     return tensor_add(x, y)
+
+
+c = ops.MultitypeFuncGraph('concat')
+
+
+@c.register('List')
+def concat(t):
+    return P.Concat()(t)
