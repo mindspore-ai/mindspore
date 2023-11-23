@@ -3,10 +3,10 @@ not_equal:
     args:
         x1:
             dtype: tensor
-            type_cast: number
+            #type_cast: number
         x2:
             dtype: tensor
-            type_cast: number
+            #type_cast: number
     args_signature:
         dtype_group: (x1, x2)
     returns:
