@@ -505,7 +505,8 @@ SchedulingOutput FastGreedyScheduler::Process(SchedulingInput &input, const std:
   ComputePredComm(*tasks);
 
   // Loop over all sorting combinations
-  std::unordered_map<std::shared_ptr<Task>, Time> best_start, best_end;  // to use in verify dependencies only
+  std::unordered_map<std::shared_ptr<Task>, Time> best_start;
+  std::unordered_map<std::shared_ptr<Task>, Time> best_end;  // to use in verify dependencies only
   std::string best_solution;
   MS_LOG(INFO) << "Start loop multiple scheduling functions";
   for (size_t task_sort = 0; task_sort < static_cast<size_t>(kNumTaskSort); ++task_sort) {
@@ -992,7 +993,8 @@ SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &manager, const
 void AddRealDependencies(const FuncGraphManagerPtr &manager, const std::vector<CNodePtr> &cnode_vec,
                          const std::vector<std::pair<TaskId, TaskId>> &dependencies,
                          std::unordered_map<CNodePtr, TaskPtr> *cnode_to_task) {
-  size_t count = 0, redundant_count = 0;
+  size_t count = 0;
+  size_t redundant_count = 0;
   for (const auto &dependency : dependencies) {
     MS_LOG(INFO) << "Checking dependency " << dependency.first << " " << dependency.second;
     const auto &source = cnode_vec[dependency.first];
