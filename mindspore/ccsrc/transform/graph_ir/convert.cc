@@ -251,9 +251,9 @@ int64_t GetDynInputNum(const OpAdapterPtr &adpt, bool is_call, std::vector<int64
       // which should not be members of input args, so the dyn_input_num need to minus 2 in default.
       if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
         // For PartitionedCall, Monod should not be a member of input args, so here dyn_input_num need to minus 3.
-        dyn_input_num = input_size - 3;
+        dyn_input_num = static_cast<int64_t>(input_size) - 3;
       } else {
-        dyn_input_num = input_size - 2;
+        dyn_input_num = static_cast<int64_t>(input_size) - 2;
       }
       return dyn_input_num;
     }
@@ -2622,7 +2622,7 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
       }
       size_t dyn_input_begin_idx = 0;
       for (size_t i = 0; i < IntToSize(ge_input_idx); ++i) {
-        dyn_input_begin_idx += new_dyn_input_sizes[i] == -1 ? 1 : new_dyn_input_sizes[i];
+        dyn_input_begin_idx += new_dyn_input_sizes[i] == -1 ? 1 : static_cast<size_t>(new_dyn_input_sizes[i]);
       }
       ret = adpt->setInput(src, SizeToInt(ms_input_idx), std::make_shared<std::vector<OutHandler>>(handles), true,
                            dyn_input_begin_idx);
@@ -2715,7 +2715,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
         handles.insert(handles.end(), dyn_input_handle.begin(), dyn_input_handle.end());
       }
       ret = adpt->setInput(src, SizeToInt(real_input_idx), std::make_shared<std::vector<OutHandler>>(handles));
-      input_idx += dyn_input_num;
+      input_idx += static_cast<size_t>(dyn_input_num);
     } else {
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
