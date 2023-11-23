@@ -15,7 +15,6 @@
  */
 #include "plugin/device/gpu/optimizer/bias_dropout_add_fusion.h"
 
-#include <memory>
 #include <vector>
 
 #include "mindspore/core/ops/sequence_ops.h"
