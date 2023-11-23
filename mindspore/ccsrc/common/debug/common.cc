@@ -54,6 +54,9 @@ std::string Common::GetRandomStr(size_t str_len) {
 
 std::string Common::GetRandomStr() {
   std::string npy_suffix = ".npy";
+#if defined(SYSTEM_ENV_POSIX)
+  std::lock_guard<std::mutex> guard(random_data_lock_);
+#endif
 #ifndef _MSC_VER
   unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
   std::string random_name = std::to_string(rand_r(&seed)) + npy_suffix;
