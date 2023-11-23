@@ -27,6 +27,7 @@ namespace lite {
 void *ReadFileByMmap(const std::string &file, size_t *size) {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(MS_COMPILE_IOS)
   auto real_path = RealPath(file.c_str());
+  MS_CHECK_TRUE_RET(!real_path.empty(), nullptr);
   auto fd = open(real_path.c_str(), O_RDONLY);
   if (fd == -1) {
     MS_LOG(ERROR) << "Could not open " << file;
@@ -35,12 +36,12 @@ void *ReadFileByMmap(const std::string &file, size_t *size) {
   struct stat fd_stat;
   if (fstat(fd, &fd_stat) != 0) {
     MS_LOG(ERROR) << "Get fd stat error.";
-    close(fd);
+    (void)close(fd);
     return nullptr;
   }
-  *size = fd_stat.st_size;
+  *size = static_cast<size_t>(fd_stat.st_size);
   auto mmap_buffers = mmap(nullptr, *size, PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
-  close(fd);
+  (void)close(fd);
   if (mmap_buffers == MAP_FAILED) {
     MS_LOG(ERROR) << "Model mmap failed.";
     return nullptr;

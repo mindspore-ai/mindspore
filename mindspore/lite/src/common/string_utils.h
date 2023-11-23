@@ -46,6 +46,9 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
 int GetStringCount(const void *data);
 int GetStringCount(Tensor *tensor);
 uint64_t StringHash64(const char *s, size_t len);
+inline bool IsStrNumeric(const std::string &str) {
+  return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
+}
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_STRING_UTILS_H_
