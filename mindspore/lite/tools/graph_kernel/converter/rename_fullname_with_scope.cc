@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
-#include <string>
-#include <unordered_map>
 
 namespace mindspore::graphkernel {
 bool RenameFullnameWithScope::Run(const FuncGraphPtr &func_graph) {
