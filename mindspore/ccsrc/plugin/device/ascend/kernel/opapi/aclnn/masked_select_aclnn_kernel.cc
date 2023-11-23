@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn/masked_select_aclnn_kernel.h"
-#include <algorithm>
-#include <functional>
-#include <memory>
 #include "ir/tensor.h"
 #include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"

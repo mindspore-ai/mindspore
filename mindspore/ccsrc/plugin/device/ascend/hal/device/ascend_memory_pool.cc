@@ -143,7 +143,7 @@ DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_per
 
 size_t AscendMemoryPool::GetMaxUsedMemSize() const {
   auto min_addr = reinterpret_cast<uint8_t *>(GetMinUsedMemoryAddr());
-  auto max_used_hbm = AscendMemAdapter::GetInstance().GetMsUsedHbmSize();
+  auto max_used_hbm = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
   size_t static_offset = min_addr - AscendMemAdapter::GetInstance().GetBaseAddr();
   return max_used_hbm - static_offset;
 }

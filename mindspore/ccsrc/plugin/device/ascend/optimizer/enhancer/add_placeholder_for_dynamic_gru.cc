@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
-#include <vector>
 #include "ops/array_op_name.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
