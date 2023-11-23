@@ -75,7 +75,7 @@ void *AkgLibraryLoader::LookupFunction(const std::string &name) const {
   return nullptr;
 }
 
-std::vector<uint64_t> AkgLibraryLoader::ParseSection(std::string section_name, bool is_mandatory) const {
+std::vector<uint64_t> AkgLibraryLoader::ParseSection(const std::string &section_name, bool is_mandatory) const {
   const Elf64_Shdr *section_hdr = LookupSection(section_name);
   uint64_t section_size = 0;
   uint64_t section_offset = 0;

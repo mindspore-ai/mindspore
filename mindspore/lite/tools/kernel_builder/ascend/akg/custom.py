@@ -466,7 +466,9 @@ class Reshape(OpInfer):
 
 
 class ExpandDimAndSqueeze(Reshape):
+    """ExpandDimAndSqueeze."""
     def copy_axis(self, axis):
+        """copy axis."""
         out_axis = []
         if isinstance(axis, int):
             out_axis.append(axis)
@@ -476,6 +478,7 @@ class ExpandDimAndSqueeze(Reshape):
 
 
 class Squeeze(ExpandDimAndSqueeze):
+    """Squeeze."""
     def infer_ori_shape(self):
         axis = self.copy_axis(self.input_desc[1][VALUE])
         input_shape = copy_shape(self.input_desc[0][SHAPE])
@@ -488,6 +491,7 @@ class Squeeze(ExpandDimAndSqueeze):
 
 
 class ExpandDim(ExpandDimAndSqueeze):
+    """ExpandDim."""
     def infer_ori_shape(self):
         axis = self.copy_axis(self.input_desc[1][VALUE])
         input_shape = copy_shape(self.input_desc[0][SHAPE])

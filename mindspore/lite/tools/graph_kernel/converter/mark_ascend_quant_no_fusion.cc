@@ -60,8 +60,8 @@ bool MarkAscendQuantNoFusion::Run(const FuncGraphPtr &func_graph) {
         SetNoFusionRecursive(node, kStartDepth, kMaxNoFusionDepth, [&manager](const CNodePtr &cnode) {
           auto cnode_outputs = manager->node_users()[cnode];
           std::vector<AnfNodePtr> ret;
-          std::transform(cnode_outputs.begin(), cnode_outputs.end(), std::back_inserter(ret),
-                         [](const auto &index_set) { return index_set.first; });
+          (void)std::transform(cnode_outputs.begin(), cnode_outputs.end(), std::back_inserter(ret),
+                               [](const auto &index_set) { return index_set.first; });
           return ret;
         });
         changed = true;

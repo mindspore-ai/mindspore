@@ -32,7 +32,6 @@
 #include "ops/reverse_v2.h"
 #include "ops/uniform_real.h"
 #include "include/errorcode.h"
-#include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
@@ -43,19 +42,22 @@
 namespace mindspore::lite {
 namespace {
 
+const int64_t kNumTwo = 2;
+const int64_t kNumThree = 3;
+
 CNodePtr NewCNode(const CNodePtr &cnode, const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs,
                   const abstract::AbstractBasePtr &abstract, const std::string &name) {
-  auto func_graph = cnode->func_graph();
-  if (func_graph == nullptr) {
+  auto fg = cnode->func_graph();
+  if (fg == nullptr) {
     MS_LOG(ERROR) << "Failed to NewCNode, funcGraph cannot be nullptr";
     return nullptr;
   }
-  auto manager = func_graph->manager();
+  auto manager = fg->manager();
   if (manager == nullptr) {
     MS_LOG(ERROR) << "Failed to NewCNode, FuncGraph manager cannot be nullptr";
     return nullptr;
   }
-  auto new_node = func_graph->NewCNode(primitive, inputs);
+  auto new_node = fg->NewCNode(primitive, inputs);
   if (new_node == nullptr) {
     MS_LOG(ERROR) << "Failed to create node " << name << " for node " << cnode->fullname_with_scope();
     return nullptr;
@@ -73,7 +75,7 @@ STATUS AdjustRot90(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool *
   auto reversev2_op = std::make_shared<ops::ReverseV2>();
   MS_CHECK_TRUE_RET(reversev2_op != nullptr, RET_ERROR);
   auto inputs = cnode->inputs();
-  MS_CHECK_TRUE_RET(inputs.size() == 3, RET_ERROR);
+  MS_CHECK_TRUE_RET(inputs.size() == kNumThree, RET_ERROR);
   auto primitive_c = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_RET(primitive_c != nullptr, RET_ERROR);
   auto kernel_ptr = std::dynamic_pointer_cast<Rot90>(primitive_c);
@@ -105,7 +107,7 @@ STATUS AdjustRot90(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool *
 STATUS AdjustRandomUniformLike(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool *need_update_manager) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto &inputs = cnode->inputs();
-  MS_CHECK_TRUE_RET(inputs.size() == 2, RET_ERROR);
+  MS_CHECK_TRUE_RET(inputs.size() == kNumTwo, RET_ERROR);
   auto primitive_c = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_RET(primitive_c != nullptr, RET_ERROR);
   auto kernel_ptr = std::dynamic_pointer_cast<RandomUniformLike>(primitive_c);
