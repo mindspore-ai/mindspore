@@ -358,10 +358,7 @@ class MS_API Model {
 
   const std::shared_ptr<ModelImpl> impl() const { return impl_; }
 
-  /// \brief Obtains user info of the model.
-  ///
-  /// \return The map include all user info.
-  std::map<std::string, std::string> GetUserInfo() const;
+  inline std::string GetModelInfo(const std::string &key);
 
  private:
   friend class Serialization;
@@ -379,6 +376,7 @@ class MS_API Model {
                const std::vector<char> &cropto_lib_path);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                const Key &dec_key, const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path);
+  std::vector<char> GetModelInfo(const std::vector<char> &key);
   std::shared_ptr<ModelImpl> impl_;
 };
 
@@ -421,5 +419,7 @@ Status Model::Build(const std::string &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
   return Build(StringToChar(model_path), model_type, model_context);
 }
+
+std::string Model::GetModelInfo(const std::string &key) { return CharToString(GetModelInfo(StringToChar(key))); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

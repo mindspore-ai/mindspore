@@ -275,17 +275,15 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
                        std::pair<std::string, std::string>(lite::kDumpModelNameKey, model_name));
   }
   FuncGraphPtr func_graph;
-  std::map<std::string, std::string> user_info;
   {
     std::unique_lock<std::mutex> l(g_load_mindir_lock);
     MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-    auto ret = mindir_loader.LoadMindIR(model_buff, model_size, weight_path, &func_graph, &user_info);
+    auto ret = mindir_loader.LoadMindIR(model_buff, model_size, weight_path, &func_graph, &model_info_);
     if (!ret || func_graph == nullptr) {
       MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
       return nullptr;
     }
   }
-  SetUserInfo(user_info);
   return func_graph;
 }
 
