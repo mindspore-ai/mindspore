@@ -36,7 +36,7 @@ Status TileInfo::GetAttrs() {
     return FAILED;
   }
   if (input_value_[1] == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The multiples is null.";
+    MS_LOG(ERROR) << name_ << ": The dims is null.";
     return FAILED;
   }
 
@@ -77,7 +77,7 @@ Status TileInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
   Shapes multiples = {tmp};
-  MS_LOG(INFO) << name_ << ": The input shape is " << ShapeToString(inputs_shape_[0]) << ", the multiples is "
+  MS_LOG(INFO) << name_ << ": The input shape is " << ShapeToString(inputs_shape_[0]) << ", the dims is "
                << ShapeToString(full_multiples_) << ", so the 'shape' can be split is " << ShapeToString(tmp);
   return CheckStrategyValue(strategy, multiples);
 }

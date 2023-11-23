@@ -15,15 +15,16 @@
 
 """Test Tile."""
 
+from functools import reduce
 import numpy as np
 import pytest
+import mindspore as ms
+from mindspore import Tensor, ops
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
 
-from mindspore import ops
-from mindspore import Tensor
-import mindspore as ms
-
 ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
+
 
 def tile_func(x, multiplies):
     return ops.operations.manually_defined.tile(x, multiplies)
@@ -39,31 +40,6 @@ def tile_backward_func(x, multiplies):
     return ops.grad(tile_forward_func, (0,))(x, multiplies)
 
 
-@test_utils.run_with_cell
-def tile_infer_value():
-    x = Tensor(np.array([[2, 2], [3, 3]]))
-    return tile_func(x, (1, 2))
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-def test_tile_infer_value():
-    """
-    Feature: Ops.
-    Description: test op tile.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
-    out = tile_infer_value()
-    np_x = np.array([[2, 2], [3, 3]])
-    mul = (1, 2)
-    expect = np.tile(np_x, mul)
-    assert np.allclose(out.asnumpy(), expect)
-
-
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -77,12 +53,26 @@ def test_tile_forward(mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    np_x = np.random.rand(2, 3, 4, 5).astype(np.float32)
-    x = Tensor(np_x)
-    mul = (1, 1, 2, 2)
-    out = tile_forward_func(x, mul)
-    expect = np.tile(np_x, mul)
-    assert np.allclose(out.asnumpy(), expect)
+    np_x1 = np.random.rand(3, 4, 5, 6).astype(np.float32)
+    x1 = Tensor(np_x1)
+    mul1 = (2, 2, 2, 2)
+    out1 = tile_forward_func(x1, mul1)
+    expect1 = np.tile(np_x1, mul1)
+    assert np.allclose(out1.asnumpy(), expect1)
+
+    np_x2 = np.random.rand(3, 4).astype(np.float32)
+    x2 = Tensor(np_x2)
+    mul2 = (2, 2, 2, 2)
+    out2 = tile_forward_func(x2, mul2)
+    expect2 = np.tile(np_x2, mul2)
+    assert np.allclose(out2.asnumpy(), expect2)
+
+    np_x3 = np.random.rand(3, 4, 5, 6).astype(np.float32)
+    x3 = Tensor(np_x3)
+    mul3 = (2,)
+    out3 = tile_forward_func(x3, mul3)
+    expect3 = np.tile(np_x3, mul3)
+    assert np.allclose(out3.asnumpy(), expect3)
 
 
 @pytest.mark.level1
@@ -98,11 +88,23 @@ def test_tile_backward(mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    x = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
-    mul = (1, 1, 2, 2)
-    grads = tile_backward_func(x, mul)
-    expect = np.ones((2, 3, 4, 5)).astype(np.float32) * 4.0
-    assert np.allclose(grads.asnumpy(), expect)
+    x1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
+    mul1 = (2, 2, 2, 2)
+    grads1 = tile_backward_func(x1, ms.mutable(mul1))
+    expect1 = np.ones((3, 4, 5, 6)).astype(np.float32) * reduce(lambda x, y: x*y, mul1)
+    assert np.allclose(grads1.asnumpy(), expect1)
+
+    x2 = Tensor(np.random.rand(3, 4).astype(np.float32))
+    mul2 = (2, 2, 2, 2)
+    grads2 = tile_backward_func(x2, ms.mutable(mul2))
+    expect2 = np.ones((3, 4)).astype(np.float32) * reduce(lambda x, y: x*y, mul2)
+    assert np.allclose(grads2.asnumpy(), expect2)
+
+    x3 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
+    mul3 = (2,)
+    grads3 = tile_backward_func(x3, ms.mutable(mul3))
+    expect3 = np.ones((3, 4, 5, 6)).astype(np.float32) * reduce(lambda x, y: x*y, mul3)
+    assert np.allclose(grads3.asnumpy(), expect3)
 
 
 @pytest.mark.level1
@@ -132,9 +134,28 @@ def test_tile_vmap(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_tile_forward_dyn(mode):
+def test_tile_dynamic(mode):
+    """
+    Feature: test dynamic by TEST_OP.
+    Description: test op concat.
+    Expectation: expect tile result.
+    """
+    ms.context.set_context(runtime_num_threads=1)  # multi-threads have none-initialized bug now.
+    input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
+    input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
+    TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], mode=mode, grad=True)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
+def test_tile_forward_dyn(mode, dyn_mode):
     """
     Feature: Ops.
     Description: test op tile.
@@ -142,17 +163,20 @@ def test_tile_forward_dyn(mode):
     """
     ms.context.set_context(mode=mode)
     mul = (1, 1, 2, 2)
-    dyn_x = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    dyn_tensor_shape = [None, None, None, None] if dyn_mode == "dyn_shape" else None
+    dyn_x = Tensor(shape=dyn_tensor_shape, dtype=ms.float32)
     fwd_cell = test_utils.to_cell_obj(tile_func)
     fwd_cell.set_inputs(dyn_x, ms.mutable(mul))
 
-    np_x1 = np.random.rand(2, 3, 4, 5).astype(np.float32)
+    shape1 = (2, 3, 4, 5)
+    np_x1 = np.random.rand(*shape1).astype(np.float32)
     x1 = Tensor(np_x1)
     out1 = fwd_cell(x1, mul)
     expect1 = np.tile(np_x1, mul)
     assert np.allclose(out1.asnumpy(), expect1)
 
-    np_x2 = np.random.rand(3, 4, 5, 6).astype(np.float32)
+    shape2 = (3, 4, 5, 6) if dyn_mode == "dyn_shape" else (2, 3, 4)
+    np_x2 = np.random.rand(*shape2).astype(np.float32)
     x2 = Tensor(np_x2)
     out2 = fwd_cell(x2, mul)
     expect2 = np.tile(np_x2, mul)
@@ -163,9 +187,10 @@ def test_tile_forward_dyn(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE])  # ms.context.GRAPH_MODE has runtime heterogeneous bug.
-def test_tile_backward_dyn(mode):
+@pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
+def test_tile_backward_dyn(mode, dyn_mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op tile.
@@ -173,18 +198,21 @@ def test_tile_backward_dyn(mode):
     """
     ms.context.set_context(mode=mode)
     mul = (1, 1, 2, 2)
-    dyn_x = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    dyn_tensor_shape = [None, None, None, None] if dyn_mode == "dyn_shape" else None
+    dyn_x = Tensor(shape=dyn_tensor_shape, dtype=ms.float32)
     bwd_cell = test_utils.to_cell_obj(tile_backward_func)
     bwd_cell.set_inputs(dyn_x, ms.mutable(mul))
 
-    x1 = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
+    shape1 = (2, 3, 4, 5)
+    x1 = Tensor(np.random.rand(*shape1).astype(np.float32))
     grads1 = bwd_cell(x1, mul)
     expect1 = np.ones((2, 3, 4, 5)).astype(np.float32) * 4.0
     assert np.allclose(grads1.asnumpy(), expect1)
 
-    x2 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
+    shape2 = (3, 4, 5, 6) if dyn_mode == "dyn_shape" else (2, 3, 4)
+    x2 = Tensor(np.random.rand(*shape2).astype(np.float32))
     grads2 = bwd_cell(x2, mul)
-    expect2 = np.ones((3, 4, 5, 6)).astype(np.float32) * 4.0
+    expect2 = np.ones(shape2).astype(np.float32) * 4.0
     assert np.allclose(grads2.asnumpy(), expect2)
 
 
@@ -192,7 +220,7 @@ def test_tile_backward_dyn(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('is_fwd', [True, False])
 def test_tile_dynamic_len(mode, is_fwd):

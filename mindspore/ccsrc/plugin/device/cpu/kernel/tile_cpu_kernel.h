@@ -22,6 +22,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include "mindapi/base/shape_vector.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/tile_base.h"
@@ -55,10 +56,10 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector y_shape_;
   ShapeVector multiple_shape;
   size_t input_num_;
-  std::vector<int> multiples_;
+  ShapeVector multiples_;
   ShapeVector multiple_shape_;
+  size_t multiple_num_{0};
   TypeId dtype_{kTypeUnknown};
-  TypeId multiple_dtype_{kTypeUnknown};
 
   using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs)>;
