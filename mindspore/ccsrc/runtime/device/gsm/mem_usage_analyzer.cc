@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "runtime/device/gsm/mem_usage_analyzer.h"
-#include <memory>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 namespace mindspore {
