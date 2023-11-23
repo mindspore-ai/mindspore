@@ -969,7 +969,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
-        MS_LOG(WARNING) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
+        MS_LOG(INFO) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
         nodes.push_back(p);
       }
     }
