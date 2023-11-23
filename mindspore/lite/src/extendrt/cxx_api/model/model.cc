@@ -460,17 +460,17 @@ Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack 
   return kLiteNotSupport;
 }
 
-std::map<std::string, std::string> Model::GetUserInfo() const {
-  std::map<std::string, std::string> empty;
+std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
+  std::vector<char> ret;
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
-    return empty;
+    return ret;
   }
-  try {
-    return impl_->GetUserInfo();
-  } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
-    return empty;
+  auto model_info = impl_->GetModelInfo();
+  auto it = model_info.find(CharToString(key));
+  if (it == model_info.end()) {
+    return ret;
   }
+  return StringToChar(it->second);
 }
 }  // namespace mindspore

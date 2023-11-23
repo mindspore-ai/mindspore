@@ -149,5 +149,4 @@ static const char *const kConverterOutputFile = "output_file";
 static const char *const kOMConverterOptionsSection = "om_converter";
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_LITE_SRC_COMMON_COMMON_H_
