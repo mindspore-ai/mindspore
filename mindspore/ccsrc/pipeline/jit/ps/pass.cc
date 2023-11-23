@@ -49,6 +49,7 @@
 #include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -745,6 +746,12 @@ bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool FullMicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::FullMicroInterleavedOrderControl(resource->func_graph());
+  return true;
+}
+
 bool SplitMatmulCommElementwiseOpFpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::SplitMatmulCommElementwiseFp(resource->func_graph());
@@ -1056,6 +1063,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
                                    {"comm_op_add_attrs", CommOpAddAttrs},

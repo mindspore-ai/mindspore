@@ -256,7 +256,7 @@ void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
       MS_LOG(INFO) << "block_index:" << block_index
                    << ", interleaved_end_cnode:" << forward_interleaved_end_cnode->fullname_with_scope();
     }
-    parallel::ParallelContext::GetInstance()->set_enable_micro_interleaved(true);
+    parallel::ParallelContext::GetInstance()->set_enable_fine_grained_micro_interleaved(true);
   }
 
   auto backward_order_cnodes = backward_graph->GetOrderedCnodes();

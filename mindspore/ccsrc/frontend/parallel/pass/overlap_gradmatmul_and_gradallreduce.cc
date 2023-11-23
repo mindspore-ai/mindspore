@@ -380,7 +380,7 @@ void OverlapGradMatmulAndGradAllreduce(const FuncGraphPtr &graph) {
       break;
     }
   }
-  if (!parallel::ParallelContext::GetInstance()->enable_micro_interleaved()) {
+  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
     DoOverLap(manager, forward_graph, backward_graph);
     return;
   }
