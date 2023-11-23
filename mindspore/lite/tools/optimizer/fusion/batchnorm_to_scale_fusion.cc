@@ -294,7 +294,7 @@ bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
       free(trans_scale);
       return false;
     }
-    auto ret = CalculateScaleAndBiasFromBN(cnode, channel, trans_scale, trans_bias);
+    auto ret = CalculateScaleAndBiasFromBN(cnode, static_cast<int>(channel), trans_scale, trans_bias);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Calculate scale and bias failed.";
       free(trans_scale);

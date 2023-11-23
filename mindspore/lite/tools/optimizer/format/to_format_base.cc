@@ -372,7 +372,7 @@ void SetCNodeFormat(const CNodePtr &cnode, mindspore::Format dst_format) {
   if (prim->GetAttr(ops::kFormat) == nullptr && format_value != nullptr) {
     auto format = GetValue<int64_t>(format_value);
     if (format == dst_format) {
-      prim->AddAttr(ops::kFormat, format_value);
+      (void)prim->AddAttr(ops::kFormat, format_value);
     }
   }
   return;
