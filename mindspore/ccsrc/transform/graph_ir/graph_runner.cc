@@ -108,7 +108,10 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     graph_manager_.AddSavedGraphs(std::to_string(it->id_));
     if (!it->is_added_to_ge_session_) {
       MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
-      (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+      auto ret = sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+      if (ret != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Call GE AddGraph Failed, ret is: " << ret;
+      }
       it->is_added_to_ge_session_ = true;
     }
   }
