@@ -553,7 +553,7 @@ int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_pt
   CHECK_NULL_RETURN(decrease_trans_pm);
   std::vector<opt::PassPtr> fusions = {std::make_shared<opt::ReshapeTransposeFusion>(),
                                        std::make_shared<opt::TransposeFusion>()};
-  std::for_each(fusions.begin(), fusions.end(), [&decrease_trans_pm, &param](opt::PassPtr fusion) {
+  (void)std::for_each(fusions.begin(), fusions.end(), [&decrease_trans_pm, &param](opt::PassPtr fusion) {
     if (fusion != nullptr && param->fusion_blacklists.find(fusion->name()) == param->fusion_blacklists.end()) {
       decrease_trans_pm->AddPass(fusion);
     }
