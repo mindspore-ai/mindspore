@@ -1,15 +1,17 @@
-#operator sigmoid_grad
-sigmoid_grad:
+#operator silu_grad
+silu_grad:
     args:
-        y:
+        dout:
             dtype: tensor
-        dy:
+        x:
             dtype: tensor
     returns:
         output:
             dtype: tensor
+    class:
+        name: SiLUGrad
     function:
-        name: _sigmoid_grad
+        name: _silu_grad
     dispatch:
         enable: True
-        Ascend: SigmoidGradAscend
+        CPU: SiLUGradCPU

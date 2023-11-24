@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/silu.h"
+#include "ops/ops_func_impl/silu_grad.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
@@ -26,29 +26,33 @@
 
 namespace mindspore {
 namespace ops {
-class TestSiLU : public TestOps,
-                 public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
+class TestSiLUGrad : public TestOps,
+                     public testing::WithParamInterface<std::tuple<EltwiseGradOpShapeParams, EltwiseGradOpTypeParams>> {
+};
 
-TEST_P(TestSiLU, dyn_shape) {
+TEST_P(TestSiLUGrad, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
+  auto dy = std::make_shared<abstract::AbstractTensor>(dtype_param.grad_type, shape_param.grad_shape);
+  ASSERT_NE(dy, nullptr);
   auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
   ASSERT_NE(x, nullptr);
   auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
   auto expect_type = std::make_shared<TensorType>(dtype_param.out_type);
-  DoFuncImplInferAndCompare<SiLUFuncImpl>("SiLU", {x}, expect_shape, expect_type);
+  DoFuncImplInferAndCompare<SiLUGradFuncImpl>("SiLUGrad", {dy, x}, expect_shape, expect_type);
 }
 
 namespace {
-auto SiLUOpTypeCases = testing::ValuesIn({
-  EltwiseOpTypeParams{kFloat16, kFloat16},
-  EltwiseOpTypeParams{kFloat32, kFloat32},
-  EltwiseOpTypeParams{kFloat64, kFloat64},
-  EltwiseOpTypeParams{kComplex64, kComplex64},
-  EltwiseOpTypeParams{kComplex128, kComplex128},
+auto SiLUGradOpTypeCases = testing::ValuesIn({
+  EltwiseGradOpTypeParams{kFloat16, kFloat16, kFloat16},
+  EltwiseGradOpTypeParams{kFloat32, kFloat32, kFloat32},
+  EltwiseGradOpTypeParams{kFloat64, kFloat64, kFloat64},
+  EltwiseGradOpTypeParams{kComplex64, kComplex64, kComplex64},
+  EltwiseGradOpTypeParams{kComplex128, kComplex128, kComplex128},
 });
 }
 
-INSTANTIATE_TEST_CASE_P(TestSiLUGroup, TestSiLU, testing::Combine(EltwiseDynShapeTestCases, SiLUOpTypeCases));
+INSTANTIATE_TEST_CASE_P(TestSiLUGradGroup, TestSiLUGrad,
+                        testing::Combine(EltwiseGradDynShapeTestCases, SiLUGradOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

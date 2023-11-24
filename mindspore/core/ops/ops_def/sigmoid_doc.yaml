@@ -1,14 +1,22 @@
 sigmoid:
     description: |
-        Sigmoid activation function.
+        Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
-        Refer to :func:`mindspore.ops.sigmoid` for more details.
+        .. math::
+
+            \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
+
+        where :math:`input_i` is an element of the input.
 
         Inputs:
-            - **input_x** (Tensor) - Tensor of any dimension.
+            input (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
 
-        Outputs:
-            Tensor, with the same type and shape as the input_x.
+        Returns:
+            Tensor, with the same type and shape as the input.
+
+        Raises:
+            TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
+            TypeError: If `input` is not a Tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -17,8 +25,8 @@ sigmoid:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-            >>> sigmoid = ops.Sigmoid()
-            >>> output = sigmoid(input_x)
+            >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> output = ops.sigmoid(input)
             >>> print(output)
             [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
+    

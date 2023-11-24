@@ -16,7 +16,7 @@ mindspore.ops.sigmoid
     .. image:: ../images/Sigmoid.png
         :align: center
 
-    参数：
+    输入：
         - **input** (Tensor) - 任意维度的Tensor，数据类型为float16、float32、float64、complex64或complex128。
 
     返回：
