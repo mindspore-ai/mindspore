@@ -329,6 +329,12 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
   size_t ms_real_idx = 0;  // index of actual input argument
+
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  }
+
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
@@ -367,15 +373,12 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     }
 
     if (ge_input_info.type == Ms2GeParamInfo::DYNAMIC) {
-      std::vector<int64_t> dyn_input_sizes = {};
-      if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-        dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+      // process op which has only one dynamic input
+      if (ms_proto_idx >= dyn_input_sizes.size()) {
+        MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of " << cnode->fullname_with_scope() << " is "
+                          << dyn_input_sizes << ", of which size is less than " << ms_proto_idx;
       }
-      if (dyn_input_sizes.size() != 1) {
-        MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
-                          << ", of which size is not 1";
-      }
-      ms_real_idx += LongToSize(dyn_input_sizes[0]);
+      ms_real_idx += dyn_input_sizes[ms_proto_idx];
     } else {
       ms_real_idx += 1;
     }
