@@ -28,7 +28,8 @@ const double kValueZero = 0.;
 constexpr size_t kUpsampleTrilinear3DGradInputsNum = 3;
 constexpr size_t kUpsampleTrilinear3DGradOutputNum = 1;
 // GRAIN_SIZE for Parallel
-constexpr size_t kGrainSize = 32768;
+constexpr float kGrainSize = 32768;
+constexpr float kConstEight = 8;
 }  // namespace
 template <typename S>
 void UpsampleTrilinear3DGradCpuKernelMod::ComputeWeightsAndIndices(
@@ -210,7 +211,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     }
   };
 
-  ParallelLaunch(loop3d, static_cast<size_t>(channels), static_cast<float>(kGrainSize) / output_slice_size / 8);
+  ParallelLaunch(loop3d, static_cast<size_t>(channels), kGrainSize / output_slice_size / kConstEight);
   // memcopy and cast for fp16
   if (is_fp16) {
     T *real_input_ptr = GetDeviceAddress<T>(outputs, kIndex0);
