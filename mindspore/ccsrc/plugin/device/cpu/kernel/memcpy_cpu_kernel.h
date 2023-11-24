@@ -48,6 +48,7 @@ class MemcpyCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<KernelAttr> common_valid_types_with_bool_complex_;
   static std::vector<KernelAttr> common_two_valid_types_with_bool_complex_;
   static std::vector<KernelAttr> reshape_valid_types_;
+  static std::vector<KernelAttr> expand_dims_valid_types_;
 
   bool is_empty_tensor_{false};
 };

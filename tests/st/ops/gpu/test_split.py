@@ -168,19 +168,24 @@ def test_split_dynamic_axis2():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_invalid_input():
-    with pytest.raises(TypeError):
-        _ = Net(0.1, 3)
+    x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32)
+    x_tensor = Tensor(x)
 
     with pytest.raises(TypeError):
-        _ = Net(0, 3.0)
+        net = Net(0.1, 3)
+        _ = net(x_tensor)
+
+    with pytest.raises(TypeError):
+        net = Net(0, 3.0)
+        _ = net(x_tensor)
 
     with pytest.raises(ValueError):
-        _ = Net(0, -3)
+        net = Net(0, -3)
+        _ = net(x_tensor)
 
-    x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32)
     split_net = Net(2, 2)
     with pytest.raises(ValueError):
-        _ = split_net(Tensor(x))
+        _ = split_net(x_tensor)
 
     with pytest.raises(TypeError):
         _ = split_net(x)

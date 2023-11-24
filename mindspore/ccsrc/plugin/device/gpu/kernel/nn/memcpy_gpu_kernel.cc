@@ -23,6 +23,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#define EXPAND_DIMS_GPU_REG(T)                                                                     \
+  KernelAttr().AddInputAttr(T).AddInputAttr(kObjectTypeNumber, kNumberTypeInt32).AddOutputAttr(T), \
+    KernelAttr().AddInputAttr(T).AddInputAttr(kObjectTypeNumber, kNumberTypeInt64).AddOutputAttr(T)
+
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 constexpr auto kReshape = "Reshape";
@@ -80,38 +84,19 @@ static std::vector<KernelAttr> common_valid_types_with_single_input = {
   KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
   KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)};
 
-static std::vector<KernelAttr> common_valid_types_with_double_input = {
+static std::vector<KernelAttr> expand_dims_valid_types = {
   // index int64
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-  KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-  KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  // index int32
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-  KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-  KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  // complex
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
-  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128)};
+  EXPAND_DIMS_GPU_REG(kNumberTypeFloat16),   EXPAND_DIMS_GPU_REG(kNumberTypeFloat32),
+  EXPAND_DIMS_GPU_REG(kNumberTypeFloat64),
+
+  EXPAND_DIMS_GPU_REG(kNumberTypeInt8),      EXPAND_DIMS_GPU_REG(kNumberTypeInt16),
+  EXPAND_DIMS_GPU_REG(kNumberTypeInt32),     EXPAND_DIMS_GPU_REG(kNumberTypeInt64),
+
+  EXPAND_DIMS_GPU_REG(kNumberTypeUInt8),     EXPAND_DIMS_GPU_REG(kNumberTypeUInt16),
+  EXPAND_DIMS_GPU_REG(kNumberTypeUInt32),    EXPAND_DIMS_GPU_REG(kNumberTypeUInt64),
+
+  EXPAND_DIMS_GPU_REG(kNumberTypeBool),      EXPAND_DIMS_GPU_REG(kNumberTypeComplex64),
+  EXPAND_DIMS_GPU_REG(kNumberTypeComplex128)};
 
 static std::vector<KernelAttr> reshape_valid_types = {KernelAttr()
                                                         .AddInputAttr(kNumberTypeInt8)
@@ -175,7 +160,7 @@ std::vector<KernelAttr> MemcpyGpuKernelMod::GetOpSupport() {
     {kReshape, reshape_valid_types},
     {kFlatten, common_valid_types_with_single_input},
     {kFlattenGrad, common_valid_types_with_single_input},
-    {kExpandDims, common_valid_types_with_double_input},
+    {kExpandDims, expand_dims_valid_types},
     {kSqueeze, common_valid_types_with_single_input},
   };
 

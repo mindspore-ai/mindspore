@@ -66,9 +66,9 @@ void CheckSignalSizeValid(const PrimitivePtr &primitive, const int64_t signal_nd
   }
 
   std::vector<int64_t> valid_size_even(input_shape.end() - signal_ndim, input_shape.end());
-  valid_size_even.back() = (input_shape.back() - 1) * kDimNum;
+  valid_size_even[valid_size_even.size() - 1] = (input_shape.back() - 1) * kDimNum;
   auto valid_size_odd = valid_size_even;
-  valid_size_odd.back() = valid_size_even.back() + 1;
+  valid_size_odd[valid_size_odd.size() - 1] = valid_size_even.back() + 1;
   auto batch_rank = SizeToLong(input_shape.size()) - signal_ndim;
   for (size_t i = 0; i < LongToUlong(signal_ndim) - 1; i++) {
     if (signal_sizes[i] != abstract::TensorShape::kShapeDimAny && signal_sizes[i] != input_shape[i + batch_rank]) {
@@ -105,13 +105,14 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TensorShape>(dyn_output);
   }
   auto y_shape = input_shape;
-  y_shape.back() = abstract::TensorShape::kShapeDimAny;
+  auto y_last_dim = y_shape.size() - kInputIndex1;
+  y_shape[y_last_dim] = abstract::TensorShape::kShapeDimAny;
 
   /* get real and onesided value */
   auto real_v = GetScalarValue<bool>(input_args[kInputIndex3]->GetValue());
   auto onesided_v = GetScalarValue<bool>(input_args[kInputIndex5]->GetValue());
   if (!real_v.has_value() || !onesided_v.has_value()) {
-    return std::make_shared<abstract::TensorShape>(y_shape);
+    return std::make_shared<abstract::TensorShape>(std::move(y_shape));
   }
   bool real = real_v.value();
   bool onesided = onesided_v.value();
@@ -122,18 +123,18 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
   /* get inverse value */
   auto inverse_v = GetScalarValue<bool>(input_args[kInputIndex2]->GetValue());
   if (!inverse_v.has_value()) {
-    return std::make_shared<abstract::TensorShape>(y_shape);
+    return std::make_shared<abstract::TensorShape>(std::move(y_shape));
   }
   bool inverse = inverse_v.value();
   if (!inverse) {
-    y_shape.back() = input_shape.back() / kDimNum + 1;
-    return std::make_shared<abstract::TensorShape>(y_shape);
+    y_shape[y_last_dim] = input_shape.back() / kDimNum + 1;
+    return std::make_shared<abstract::TensorShape>(std::move(y_shape));
   }
 
   /* get signal_sizes value */
   auto signal_sizes_v = GetArrayValue<int64_t>(input_args[kInputIndex6]);
   if (!signal_sizes_v.has_value()) {
-    return std::make_shared<abstract::TensorShape>(y_shape);
+    return std::make_shared<abstract::TensorShape>(std::move(y_shape));
   }
   auto signal_sizes_array = signal_sizes_v.value();
 
@@ -147,13 +148,12 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   /* calculate output shape */
   if (signal_sizes_array.size() == 0) {
-    y_shape.back() = (input_shape.back() - 1) * kDimNum;
-  } else if (signal_sizes_array.IsValueUnknown(signal_sizes_array.size() - 1)) {
-    y_shape.back() = abstract::TensorShape::kShapeDimAny;
-  } else {
-    y_shape.back() = signal_sizes_array[signal_sizes_array.size() - 1];
+    y_shape[y_last_dim] = (input_shape.back() - 1) * kDimNum;
+  } else if (!signal_sizes_array.IsValueUnknown(signal_sizes_array.size() - 1)) {
+    y_shape[y_last_dim] = signal_sizes_array[signal_sizes_array.size() - 1];
   }
-  return std::make_shared<abstract::TensorShape>(y_shape);
+
+  return std::make_shared<abstract::TensorShape>(std::move(y_shape));
 }
 
 std::set<TypePtr> get_input_types(std::unordered_map<TypeId, TypePtr> types) {

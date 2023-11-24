@@ -299,8 +299,8 @@ NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr 
   // Common grad definition for binary operations with shift.
   // The function is usually used in backprop op to reduce additional dimensions
   // created by broadcasting.
-  NodePtr inputs[] = {x, y};
-  ShapeVector shape[] = {ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
+  NodePtrList inputs{x, y};
+  ShapeArray shape{ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
   NodePtrList reduce = {dx, dy};
   if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1])) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
@@ -532,7 +532,7 @@ NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const
   auto grad = dout;
   if (!keep_dims) {
     auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
-    grad = ib->Reshape(grad, calc_res[0]);
+    grad = ib->Reshape(grad, ib->TensorToTuple(calc_res[0]));
   }
   return ib->BroadcastTo(grad, x);
 }
@@ -544,8 +544,8 @@ NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, 
   auto keepdims = GetValue<bool>(keep_dims->BuildValue());
   if (!keepdims) {
     auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
-    y = ib->Reshape(out, output_shape_kept_dims);
-    grad = ib->Reshape(dout, output_shape_kept_dims);
+    y = ib->Reshape(out, ib->TensorToTuple(output_shape_kept_dims));
+    grad = ib->Reshape(dout, ib->TensorToTuple(output_shape_kept_dims));
   }
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
   auto num_selected = ib->ReduceSum(indicators, axis, true, false);
@@ -625,7 +625,7 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
     auto broad_shape = res[0];
     depth = res[1];
     auto depth_range = ib->Range(ib->TensorToScalar(depth));
-    auto depth_broad = ib->Reshape(depth_range, broad_shape);
+    auto depth_broad = ib->Reshape(depth_range, ib->TensorToTuple(broad_shape));
     auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
     auto one_hot_res = ib->Cast(one_hot_bool, type_x);
     return dout_expand * one_hot_res;
