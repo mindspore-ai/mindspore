@@ -1087,8 +1087,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         The stride to jump from one element to the next in the input dim.
         When no parameters are passed in, a list of stride for all dimensions is returned.
+
         Args:
-            dim (Int): The dim of stride from one element to the next.
+            dim (int): The dim of stride from one element to the next.
+
         Returns:
             Int, the stride of tensor.
 

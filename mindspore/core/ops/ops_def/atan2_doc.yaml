@@ -7,8 +7,8 @@ atan2:
 
         Note:
             - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-            If they have different data types, the lower precision data type will be converted to relatively the
-            highest precision data type.
+              If they have different data types, the lower precision data type will be converted to relatively the
+              highest precision data type.
             - At least one of the `input` and `other` args is Tensor.
 
         Args:
