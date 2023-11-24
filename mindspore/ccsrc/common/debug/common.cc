@@ -403,7 +403,7 @@ uint64_t Common::GetTimeStamp() {
 
 bool Common::CheckInterval() {
   int interval = 1;
-  static std::string interval_str = common::GetEnv("MS_DEV_DUMPIR_INTERVAL");
+  static std::string interval_str = common::GetEnv("MS_DEV_DUMP_IR_INTERVAL");
   if (interval_str.size() >= 1) {
     try {
       interval = std::stoi(interval_str);

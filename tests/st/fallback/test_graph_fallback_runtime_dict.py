@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore.common.initializer import TruncatedNormal
-from mindspore import ops, Parameter, Tensor
+from mindspore import ops, Parameter, Tensor, jit
 import mindspore.common.dtype as mstype
 from mindspore.nn import Cell
 
@@ -1082,3 +1082,26 @@ def test_return_dict_with_different_size_branch():
     z = Tensor(-1)
     ms_out = ms_net(z)
     assert ms_out == {0: 6, 1: 15}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inner_method_overrrided():
+    """
+    Feature: Support overriding dict getitem.
+    Description: Make overriding __getitem__ works in graph mode
+    Expectation: Return the correct value.
+    """
+    class Tmp(dict):
+        def __getitem__(self, x):
+            return x
+
+    obj = Tmp({"aaa": 100})
+    @jit
+    def foo():
+        return obj["aaa"]
+    ms_out = foo()
+    assert ms_out == 'aaa'
