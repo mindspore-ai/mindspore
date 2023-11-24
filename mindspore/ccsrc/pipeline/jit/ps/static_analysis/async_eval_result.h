@@ -95,12 +95,14 @@ class AnalysisSchedule {
     activate_thread_cv_.notify_one();
   }
 
+  void Start() {
+    run_ = true;
+    dispatcher_ = std::make_shared<std::thread>([this] { Schedule(); });
+  }
+
  private:
   void Schedule();
   void SetNextReady();
-  void Start() {
-    dispatcher_ = std::make_shared<std::thread>([this] { Schedule(); });
-  }
   AnalysisSchedule() { Start(); }
   std::atomic<int> infer_thread_count_{0};
   bool run_{true};

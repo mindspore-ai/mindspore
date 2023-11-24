@@ -25,6 +25,7 @@
 #include <string>
 #include <unordered_map>
 #include <condition_variable>
+#include <utility>
 
 #include "include/backend/visible.h"
 #include "runtime/pynative/async/task.h"
@@ -42,7 +43,8 @@ enum kThreadWaitLevel : int {
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level);
+  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level)
+      : name_(std::move(name)), wait_level_(wait_level) {}
   virtual ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -64,7 +66,7 @@ class BACKEND_EXPORT AsyncQueue {
   void WorkerJoin();
 
   // Reinit resources after fork occurs.
-  void ReinitAfterFork();
+  void ChildAfterFork();
 
   bool TaskInQueue(uint32_t task_id);
 
