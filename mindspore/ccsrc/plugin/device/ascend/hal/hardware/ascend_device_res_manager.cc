@@ -142,21 +142,6 @@ std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
 }
 
-DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                             const string &format, TypeId type_id,
-                                                             const ShapeVector &shape,
-                                                             const UserDataPtr &user_data) const {
-  auto device_address = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                              device_context_->device_context_key().device_name_,
-                                                              device_context_->device_context_key().device_id_);
-  if (shape.empty()) {
-    MS_LOG(DEBUG) << "shape size is empty.";
-  }
-  device_address->set_host_shape(shape);
-  device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
-  return device_address;
-}
-
 DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto device_address = std::make_shared<AscendDeviceAddress>(kernel_tensor);

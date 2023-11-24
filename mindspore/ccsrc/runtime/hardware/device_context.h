@@ -76,7 +76,7 @@ class DeviceContext {
   // mark the unsupported node as "NotSupport" through SetCNodeNotSupported()
   // For further usage, each device can add a attribute kAttrGraphSplitGroup to the node, and give different
   // group_name (the type must be a std::string, default is 'DefaultGroup') to the attribute, which means the
-  // continuous nodes with the same group_name will be splited into one subgraph.
+  // continuous nodes with the same group_name will be split into one subgraph.
   virtual bool PartitionGraph(const FuncGraphPtr &func_graph) const { return false; }
 
   // Analysis the function graph and select the appropriate run mode for the graph
@@ -180,11 +180,6 @@ class BACKEND_EXPORT DeviceResManager {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 
-  // Create concrete device address according different device type.
-  virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape,
-                                               const UserDataPtr &user_data = nullptr) const = 0;
-
   // Create concrete device address according different device type using KernelTensor.
   virtual DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
@@ -280,13 +275,6 @@ class BACKEND_EXPORT KernelExecutor {
 
   // Adjust kernel graph before run graph.
   virtual void PreprocessBeforeRun(const FuncGraphPtr &graph) const {}
-
-  // Launch a kernel via 'KernelMod' of the kernel.
-  virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                            size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-  }
 
   // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,

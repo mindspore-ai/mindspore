@@ -57,9 +57,6 @@ class AscendDeviceResManager : public DeviceResManager {
   size_t GetAvailableMemSize() const override { return mem_manager_->GetAvailableMemSize(); }
 
   // Create concrete device address according different device type.
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
-
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool CreateStream(size_t *stream_id) const override;

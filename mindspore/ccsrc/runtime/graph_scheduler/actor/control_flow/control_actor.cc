@@ -545,8 +545,13 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
       {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-    const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, 0, kOpFormat_DEFAULT, TypeId::kNumberTypeInt64, {});
+
+    auto tuple_shape = std::make_shared<abstract::TupleShape>();
+    auto tuple_type = std::make_shared<Tuple>();
+    const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      tuple_shape, tuple_type, nullptr, nullptr, 0, kOpFormat_DEFAULT, TypeId::kNumberTypeInt64, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     new_device_tensor->set_dynamic_ref_count(0);
     new_device_tensor->set_original_ref_count(SIZE_MAX);
@@ -603,9 +608,10 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   new_device_tensor->ResetRefCount();
 
   // Merge device address list into a single device address.
-  const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-    new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), addr_list[0]->format(), addr_list[0]->type_id(),
-    shape);
+  auto tmp_kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), addr_list[0]->format(), addr_list[0]->type_id(), shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(tmp_kernel_tensor);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
   MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
   for (size_t i = 0; i < addr_list.size(); ++i) {

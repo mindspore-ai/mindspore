@@ -979,8 +979,11 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const Device
                                                                     const size_t &workspace_size) {
   MS_EXCEPTION_IF_NULL(device_context);
 
-  auto device_address =
-    device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_size, "", kTypeUnknown, ShapeVector());
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, workspace_size, "", kTypeUnknown, ShapeVector(),
+                                                              device_context->device_context_key().device_name_,
+                                                              device_context->device_context_key().device_id_);
+
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr &&
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {

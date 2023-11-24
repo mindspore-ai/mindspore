@@ -35,6 +35,9 @@ const size_t kInputIndexZero = 0;
 const size_t kInputIndexOne = 1;
 const size_t kInputIndexTwo = 2;
 
+const size_t kCacheOpInputNum = 3;
+const size_t kCacheOpOutputNum = 1;
+
 using device::DeviceContext;
 using distributed::EmbeddingCacheStatisticsInfo;
 using distributed::EmbeddingDeviceCache;
@@ -122,7 +125,9 @@ class DeviceEmbeddingOperation {
 
   static ValueNodePtr NewValueNode(int64_t value, const DeviceContext *device_context, size_t stream_id);
 
-  static bool InferOpShape(const CNodePtr &kernel);
+  static bool InferOpShape(const CNodePtr &kernel, const std::vector<kernel::KernelTensor *> &input_kernel_tensors,
+                           const std::vector<kernel::KernelTensor *> &output_kernel_tensors,
+                           const std::vector<abstract::AbstractBasePtr> &output_kernel_tensors_for_iner);
 
   // The actor which owns this operation.
   EmbeddingCachePrefetchActor *actor_;
