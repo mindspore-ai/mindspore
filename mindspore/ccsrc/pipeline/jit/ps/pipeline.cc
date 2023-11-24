@@ -2357,6 +2357,18 @@ py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_
   return py_decrypt_data;
 }
 
+py::bytes PyDecryptData(char *model_data, size_t data_size, char *key, size_t key_len, const std::string &dec_mode) {
+  size_t decrypt_len;
+  auto decrypt_data = mindspore::Decrypt(&decrypt_len, reinterpret_cast<Byte *>(model_data), data_size,
+                                         reinterpret_cast<Byte *>(key), key_len, dec_mode);
+  if (decrypt_data == nullptr) {
+    MS_LOG(ERROR) << "Decrypt failed";
+    return py::none();
+  }
+  auto py_decrypt_data = py::bytes(reinterpret_cast<char *>(decrypt_data.get()), decrypt_len);
+  return py_decrypt_data;
+}
+
 bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFile(file_path); }
 
 void FinalizeCluster() {

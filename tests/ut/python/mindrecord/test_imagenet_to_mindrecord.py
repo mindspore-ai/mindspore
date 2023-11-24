@@ -14,11 +14,13 @@
 # ============================================================================
 """test imagenet to mindrecord tool"""
 import os
+import shutil
 import pytest
 
 from mindspore import log as logger
-from mindspore.mindrecord import FileReader
+from mindspore.mindrecord import FileReader, MindPage
 from mindspore.mindrecord import ImageNetToMR
+from mindspore.mindrecord import set_enc_key, set_enc_mode, set_hash_mode
 
 IMAGENET_MAP_FILE = "../data/mindrecord/testImageNetDataWhole/labels_map.txt"
 IMAGENET_IMAGE_DIR = "../data/mindrecord/testImageNetDataWhole/images"
@@ -133,3 +135,53 @@ def test_imagenet_to_mindrecord_illegal_1_filename(fixture_file):
                                             IMAGENET_IMAGE_DIR, filename,
                                             PARTITION_NUMBER)
         imagenet_transformer.transform()
+
+
+def imagenet_to_mindrecord_with_enc_and_hash(encode, enc_mode, hash_mode):
+    """test transform imagenet dataset to mindrecord with enc and hash."""
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    if os.path.exists(file_name):
+        os.remove(file_name)
+    if os.path.exists(file_name + '.db'):
+        os.remove(file_name + '.db')
+
+    set_enc_key(encode)
+    set_enc_mode(enc_mode)
+    set_hash_mode(hash_mode)
+
+    imagenet_transformer = ImageNetToMR(IMAGENET_MAP_FILE, IMAGENET_IMAGE_DIR,
+                                        file_name, 1)
+    imagenet_transformer.transform()
+
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+
+    read([file_name])
+
+    # MindPage open the file
+    _ = MindPage([file_name])
+
+    set_enc_key(None)
+    set_hash_mode(None)
+
+    if os.path.exists(file_name):
+        os.remove(file_name)
+    if os.path.exists(file_name + '.db'):
+        os.remove(file_name + '.db')
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+
+def test_imagenet_to_mindrecord_with_enc_and_hash_check(fixture_file):
+    """
+    Feature: ImageNetToMR
+    Description: test transform imagenet dataset to mindrecord with enc and hash.
+    Expectation: SUCCESS
+    """
+    imagenet_to_mindrecord_with_enc_and_hash("0123456789012345", "AES-GCM", "sha384")
+    imagenet_to_mindrecord_with_enc_and_hash("0123456789012345", "AES-CBC", None)
+    imagenet_to_mindrecord_with_enc_and_hash(None, "SM4-CBC", "sha512")
+    imagenet_to_mindrecord_with_enc_and_hash(None, "SM4-CBC", None)
