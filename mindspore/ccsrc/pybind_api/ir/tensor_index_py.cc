@@ -1594,7 +1594,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       return false;
     }
   }
-  CheckDataDim(data_shape);
+  CheckDataDim(new_data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
     slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
