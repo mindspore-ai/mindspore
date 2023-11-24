@@ -2448,14 +2448,16 @@ def atan(input):
 
     Args:
         input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Supported dtypes:
 
+            - Ascend: float16, float32.
+            - GPU/CPU: float16, float32, float64, complex64 or complex128.
     Returns:
         A Tensor, has the same type as the input.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32, complex64 or complex128.
+        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
