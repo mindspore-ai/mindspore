@@ -20,17 +20,16 @@ import numpy as np
 import mindspore_lite as mslite
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import Tensor, context, Parameter
+from mindspore import Tensor, context
 from mindspore.train.serialization import export
-import mindspore.common.dtype as mstype
 from mindspore.ops.operations._inner_ops import PromptKVCache
 
-b = 4
+b = 40
 h = 4
-s = 4096
+s = 1024
 d = 32
-ub = 1
-us = s
+ub = 40
+us = 512
 ps = s - us
 
 
@@ -45,29 +44,30 @@ class PromptKVCacheNet(nn.Cell):
         self.add = ops.Add()
         self.concat_dim2 = ops.Concat(axis=2)
         self.prompt_k_v_cache = PromptKVCache(padding_mode)
-        self.pad_update_zero_tensor = Parameter(
-            ops.zeros((ub, h, ps, d), mstype.float16))
 
     def construct(self, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len):
-        update_pad = self.concat_dim2((update, self.pad_update_zero_tensor))
-        out = self.prompt_k_v_cache(cache, update_pad, valid_seq_len, batch_index, seq_len_axis,
+        out = self.prompt_k_v_cache(cache, update, valid_seq_len, batch_index, seq_len_axis,
                                     new_max_seq_len, cur_max_seq_len)
         add_out = self.add(cache, 1)
         sub_out = self.sub(add_out, 1)
         return sub_out
 
 
-def np_inference(cache, update, batch_index):
+def np_inference(cache, update, valid_seq_len, batch_index):
     """
     np_inference
     """
-    zeros_ans = np.zeros(cache.shape, cache.dtype)
-    update_s = update.shape[2]
-    for idx in batch_index:
-        if idx < 0:
+    s_ = cache.shape[2]
+    us_ = update.shape[2]
+    for i in range(batch_index.size):
+        b_idx = batch_index[i]
+        s_idx = valid_seq_len[i]
+        if b_idx < 0:
             continue
-        cache[idx, :] = zeros_ans[idx, :]
-        cache[idx, :, 0:update_s, :] = update
+        if s_idx < 0 or s_idx + us > s_:
+            continue
+        cache[b_idx, :, s_idx:s_idx + us_, :] = update[i]
+
     return cache
 
 
@@ -79,8 +79,8 @@ def create_numpy_inputs():
     update_shape = (ub, h, us, d)
     cache = np.random.rand(*cache_shape).astype(np.float16)
     update = np.random.rand(*update_shape).astype(np.float16)
-    valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
-    batch_index = np.random.randint(-1, b, size=ub).astype(np.int64)
+    valid_seq_len = np.random.randint(-1, s, size=ub).astype(np.int64)
+    batch_index = np.random.choice(np.arange(-1, b), size=ub, replace=False).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
     new_max_seq_len = np.array([s]).astype(np.int64)
     cur_max_seq_len = np.array([s]).astype(np.int64)
@@ -146,7 +146,7 @@ def inference_prompt_k_v_cache(mindir_model):
         mslite_output = model.predict(input_lists)
         np_cache, np_update, batch_index = create_np_inputs(
             cache, update, batch_index)
-        expect_output = np_inference(np_cache, np_update, batch_index)
+        expect_output = np_inference(np_cache, np_update, valid_seq_len, batch_index)
         assert np.allclose(
             mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
         print(f"prompt_k_v_cache st {i} times: inference success.")

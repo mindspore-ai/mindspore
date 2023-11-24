@@ -35,13 +35,21 @@ class KernelPromptKvCache {
  public:
   __aicore__ inline KernelPromptKvCache() {}
 
-  __aicore__ inline void GetBatchIndex(GM_ADDR batch_index, int64_t ub) {
-    int64_t batch_index_ub_size = CeilRound(ub, kDivisor);
-    batch_index_gm_.SetGlobalBuffer((__gm__ int64_t *)batch_index, batch_index_ub_size);
-    pipe_.InitBuffer(batch_index_queue_, 1, batch_index_ub_size * sizeof(int64_t));
-    batch_index_tensor_ = batch_index_queue_.AllocTensor<int64_t>();
-    DataCopy(batch_index_tensor_, batch_index_gm_, batch_index_ub_size);
-    remain_ub_size_ = kUbSize - batch_index_ub_size * sizeof(int64_t);
+  __aicore__ inline void GetIndex(GM_ADDR batch_index, GM_ADDR valid_seq_len, int64_t ub) {
+    int64_t batch_index_ub_num = CeilRound(ub, kDivisor);
+    int64_t valid_seq_len_ub_num = CeilRound(ub, kDivisor);
+    batch_index_gm_.SetGlobalBuffer((__gm__ int64_t *)batch_index, batch_index_ub_num);
+
+    int64_t total_num = batch_index_ub_num + valid_seq_len_ub_num;
+    pipe_.InitBuffer(index_queue_, 1, total_num * sizeof(int64_t));
+    batch_index_tensor_ = index_queue_.AllocTensor<int64_t>();
+    DataCopy(batch_index_tensor_, batch_index_gm_, batch_index_ub_num);
+
+    valid_seq_len_gm_.SetGlobalBuffer((__gm__ int64_t *)valid_seq_len, valid_seq_len_ub_num);
+    valid_seq_len_tensor_ = batch_index_tensor_[batch_index_ub_num];
+    DataCopy(valid_seq_len_tensor_, valid_seq_len_gm_, valid_seq_len_ub_num);
+
+    remain_ub_size_ -= total_num * sizeof(int64_t);
   }
 
   __aicore__ inline void GetNewMaxSeqLen(GM_ADDR new_max_seq_len) {
@@ -57,7 +65,7 @@ class KernelPromptKvCache {
   __aicore__ inline void UpdateCache(GM_ADDR cache, GM_ADDR update) {
     int64_t split_us = 1;
     int64_t block_us = us_ / split_us;
-    while (kBufferNum * block_us * d_ * sizeof(T) > remain_ub_size_) {
+    while (kBufferNum * block_us * d_ * sizeof(T) >= remain_ub_size_) {
       split_us++;
       block_us = (us_ + split_us - 1) / split_us;
     }
@@ -67,12 +75,16 @@ class KernelPromptKvCache {
     pipe_.InitBuffer(update_queue_, kBufferNum, block_us * d_ * sizeof(T));
 
     for (int64_t i = 0; i < each_core_bs_num_; ++i) {
-      int64_t bs_idx = core_idx_ * former_each_core_bs_num_ + i;
-      int64_t ub_idx = bs_idx / h_;
-      int64_t h_idx = bs_idx % h_;
-      int64_t cache_b_idx = batch_index_tensor_.GetValue(ub_idx);
+      int64_t bh_idx = core_idx_ * former_each_core_bs_num_ + i;
+      int64_t ub_idx = bh_idx / h_;
+      int64_t h_idx = bh_idx % h_;
       pipe_barrier((pipe_t)PIPE_ALL);
+      int64_t cache_b_idx = batch_index_tensor_.GetValue(ub_idx);
+      int64_t s_idx = valid_seq_len_tensor_.GetValue(ub_idx);
       if (cache_b_idx < 0 || cache_b_idx >= b_) {
+        continue;
+      }
+      if (s_idx < 0 || s_idx + us_ > s_) {
         continue;
       }
 
@@ -87,9 +99,9 @@ class KernelPromptKvCache {
         update_gm_.SetGlobalBuffer(
           (__gm__ T *)update + ub_idx * update_b_stride_ + h_idx * update_h_stride_ + j * former_block_us * d_,
           u_block_len);
-        out_gm_.SetGlobalBuffer(
-          (__gm__ T *)cache + cache_b_idx * cache_b_stride_ + h_idx * cache_h_stride_ + j * former_block_us * d_,
-          u_block_len);
+        out_gm_.SetGlobalBuffer((__gm__ T *)cache + cache_b_idx * cache_b_stride_ + h_idx * cache_h_stride_ +
+                                  s_idx * d_ + j * former_block_us * d_,
+                                u_block_len);
         pipe_barrier((pipe_t)PIPE_ALL);
         DataCopy(update_in_local_tensor, update_gm_, u_block_len);
         update_queue_.EnQue(update_in_local_tensor);
@@ -118,7 +130,7 @@ class KernelPromptKvCache {
       return;
     }
 
-    GetBatchIndex(batch_index, ub);
+    GetIndex(batch_index, valid_seq_len, ub);
     GetNewMaxSeqLen(new_max_seq_len);
 
     b_ = b * s / s_;
@@ -140,25 +152,27 @@ class KernelPromptKvCache {
     update_b_stride_ = h_ * update_h_stride_;
 
     UpdateCache(cache, update);
-    batch_index_queue_.FreeTensor(batch_index_tensor_);
+    index_queue_.FreeTensor(batch_index_tensor_);
   }
 
  private:
   // gm
   GlobalTensor<T> update_gm_;
+  GlobalTensor<int64_t> valid_seq_len_gm_;
   GlobalTensor<int64_t> batch_index_gm_;
   GlobalTensor<int64_t> new_max_seq_len_gm_;
   GlobalTensor<T> out_gm_;
 
   // local gm
+  LocalTensor<int64_t> valid_seq_len_tensor_;
   LocalTensor<int64_t> batch_index_tensor_;
 
   TPipe pipe_;
   TQue<QuePosition::VECIN, 1> update_queue_;
-  TQue<QuePosition::VECIN, 1> batch_index_queue_;
+  TQue<QuePosition::VECIN, 1> index_queue_;
   TQue<QuePosition::VECIN, 1> new_max_seq_len_queue_;
 
-  int64_t remain_ub_size_ = 0;
+  int64_t remain_ub_size_ = kUbSize;
   int64_t core_idx_ = 0;
   int64_t core_num_ = 0;
   int64_t each_core_bs_num_ = 0;
