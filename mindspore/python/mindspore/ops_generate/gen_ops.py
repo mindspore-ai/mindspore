@@ -224,13 +224,13 @@ def generate_py_op_func(yaml_data, doc_data):
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, operator_data.get('class'))
         func_args = []
-        init_args = []
-        input_args = []
+        prim_init_args = []
+        prim_call_args = []
         for arg_name, arg_info in args.items():
             is_prim_init = arg_info.get('prim_init')
             has_default = 'default' in arg_info.keys()
 
-            # step1: Process function input args.
+            # step1: Process function args.
             if not has_default:
                 func_args.append(f"""{arg_name}""")
             else:
@@ -239,11 +239,11 @@ def generate_py_op_func(yaml_data, doc_data):
 
             # step2: Process primitive object init args.
             if is_prim_init:
-                init_args.append(arg_name)
+                prim_init_args.append(arg_name)
 
             # step3: Process primitive object call args.
             else:
-                input_args.append(arg_name)
+                prim_call_args.append(arg_name)
 
         description = _process_description(description)
         function_code = f"""\n
@@ -251,8 +251,8 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
     {description}
     \"\"\"
-    {operator_name}_op = _get_cache_prim({class_name})({', '.join(arg_name for arg_name in init_args)})
-    return {operator_name}_op({', '.join(arg_name for arg_name in input_args)})\n"""
+    {operator_name}_op = _get_cache_prim({class_name})({', '.join(arg_name for arg_name in prim_init_args)})
+    return {operator_name}_op({', '.join(arg_name for arg_name in prim_call_args)})\n"""
         gen_py += function_code
 
     return gen_py
