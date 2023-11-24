@@ -5,10 +5,12 @@ split:
       dtype: tensor
     axis:
       dtype: int
-      init: 0
+      default: 0
+      prim_init: True
     output_num:
       dtype: int
-      init: 1
+      default: 1
+      prim_init: True
   returns:
     output:
       dtype: tuple[tensor]

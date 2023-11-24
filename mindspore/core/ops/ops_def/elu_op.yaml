@@ -5,7 +5,8 @@ elu:
       dtype: tensor
     alpha:
       dtype: float
-      init: 1.0
+      default: 1.0
+      prim_init: True
   returns:
     output:
       dtype: tensor

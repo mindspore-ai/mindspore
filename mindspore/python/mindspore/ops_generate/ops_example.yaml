@@ -9,7 +9,8 @@
 #         data_format: 
 #             dtype: str
 #             #mark it if this is a primitive init arg.
-#             init: "NCHW"
+#             default: "NCHW"
+#             prim_init: True
 #     returns:
 #         output_x: 
 #             dtype: tensor
@@ -36,7 +37,8 @@ bias_add:
             dtype: tensor
         data_format: 
             dtype: str
-            init: "NCHW"
+            default: "NCHW"
+            prim_init: True
     returns:
         output_x: 
             dtype: tensor
@@ -62,13 +64,16 @@ batch_norm:
             dtype: tensor
         training: 
             dtype: bool
-            init: False
+            default: False
+            prim_init: True
         momentum:
             dtype: float
-            init: 0.1
+            default: 0.1
+            prim_init: True
         eps: 
             dtype: float
-            init: 1e-5
+            default: 1e-5
+            prim_init: True
     returns:
         output_x: 
             dtype: tensor
@@ -80,18 +85,22 @@ avg_pool:
             dtype: tensor
         kernel_size:
             dtype: tuple[int]
-            init: 1
+            default: 1
+            prim_init: True
             type_cast: int
         strides:
             dtype: tuple[int]
-            init: 1
+            default: 1
+            prim_init: True
             type_cast: int
         pad_mode:
             dtype: str
-            init: "valid"
+            default: "valid"
+            prim_init: True
         data_format:
             dtype: str
-            init: "NCHW"
+            default: "NCHW"
+            prim_init: True
     returns:
         output: 
             dtype: tensor

@@ -7,10 +7,12 @@ resize_bicubic_grad:
       dtype: tensor
     align_corners:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
     half_pixel_centers:
       dtype: bool
-      init: False
+      default: False
+      prim_init: True
   returns:
     output:
       dtype: tensor

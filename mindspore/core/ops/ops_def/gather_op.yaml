@@ -10,7 +10,8 @@ gather:
       type_cast: tensor
     batch_dims:
       dtype: int
-      init: 0
+      default: 0
+      prim_init: True
   returns:
     output:
       dtype: tensor

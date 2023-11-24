@@ -13,10 +13,12 @@ maximum_grad_grad:
             dtype: tensor
         grad_x:
             dtype: bool
-            init: True
+            default: True
+            prim_init: True
         grad_y:
             dtype: bool
-            init: True
+            default: True
+            prim_init: True
     returns:
         sopd_x:
             dtype: tensor

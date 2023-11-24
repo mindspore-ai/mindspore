@@ -5,7 +5,8 @@ log_softmax:
             dtype: tensor
         axis:
             dtype: int
-            init: -1
+            default: -1
+            prim_init: True
     returns:
         output:
             dtype: tensor

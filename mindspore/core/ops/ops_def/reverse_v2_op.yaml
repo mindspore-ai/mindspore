@@ -5,7 +5,7 @@ reverse_v2:
       dtype: tensor
     axis:
       dtype: tuple[int]
-      init: NO_VALUE
+      prim_init: True
       type_cast: list[int]
   returns:
     output:

@@ -6,13 +6,16 @@ randperm_v2:
             type_cast: tensor
         seed:
             dtype: int
-            init: 0
+            default: 0
+            prim_init: True
         offset:
             dtype: int
-            init: 0
+            default: 0
+            prim_init: True
         dtype:
             dtype: int
-            init: mstype.int64
+            default: mstype.int64
+            prim_init: True
             arg_handler: dtype_to_enum
     returns:
         output:

@@ -8,10 +8,12 @@ resize_nearest_neighbor_grad:
             type_cast: list[int]
         align_corners:
             dtype: bool
-            init: False
+            default: False
+            prim_init: True
         half_pixel_centers:
           dtype: bool
-          init: False
+          default: False
+          prim_init: True
     returns:
         y:
             dtype: tensor

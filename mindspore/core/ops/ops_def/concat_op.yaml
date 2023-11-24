@@ -6,7 +6,8 @@ concat:
             type_cast: list[tensor]
         axis:
             dtype: int
-            init: 0
+            default: 0
+            prim_init: True
     returns:
         output:
             dtype: tensor

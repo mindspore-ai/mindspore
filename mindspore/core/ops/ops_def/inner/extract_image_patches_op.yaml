@@ -6,21 +6,22 @@ extract_image_patches:
     ksizes:
       dtype: tuple[int]
       type_cast: list[int]
-      init: NO_VALUE
+      prim_init: True
       arg_handler: to_kernel_size
     strides:
       dtype: tuple[int]
       type_cast: list[int]
-      init: NO_VALUE
+      prim_init: True
       arg_handler: to_strides
     rates:
       dtype: tuple[int]
       type_cast: list[int]
-      init: NO_VALUE
+      prim_init: True
       arg_handler: to_rates
     padding:
       dtype: int
-      init: "'VALID'"
+      default: "'VALID'"
+      prim_init: True
       arg_handler: pad_mode_to_enum
   returns:
     output:
