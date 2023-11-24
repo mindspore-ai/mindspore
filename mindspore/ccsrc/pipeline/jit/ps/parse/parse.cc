@@ -388,6 +388,10 @@ bool CheckMiddleGraphOutputContainScalar(
   for (auto &call_graphs_pair : parallel_call_vec) {
     MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
     auto middle_call_graph = call_graphs_pair.second->func_graph();
+    MS_EXCEPTION_IF_NULL(middle_call_graph);
+    if (middle_call_graph->get_return() == nullptr) {
+      continue;
+    }
     constexpr auto recur_2 = 2;
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
@@ -416,6 +420,10 @@ bool CheckMiddleGraphOutputPyInterpret(
   for (auto &call_graphs_pair : parallel_call_vec) {
     MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
     auto middle_call_graph = call_graphs_pair.second->func_graph();
+    MS_EXCEPTION_IF_NULL(middle_call_graph);
+    if (middle_call_graph->get_return() == nullptr) {
+      continue;
+    }
     constexpr auto recur_2 = 2;
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
