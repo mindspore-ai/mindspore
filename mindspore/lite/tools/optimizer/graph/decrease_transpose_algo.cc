@@ -592,9 +592,9 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
     }
   }
   (void)std::for_each(in_nodes.begin(), in_nodes.end(),
-                      [&manager](const CNodePtr &in_cnode) { manager->Replace(in_cnode, in_cnode->input(1)); });
+                      [&manager](const CNodePtr &in_cnode) { (void)manager->Replace(in_cnode, in_cnode->input(1)); });
   (void)std::for_each(out_nodes.begin(), out_nodes.end(),
-                      [&manager](const CNodePtr &out_node) { manager->Replace(out_node, out_node->input(1)); });
+                      [&manager](const CNodePtr &out_node) { (void)manager->Replace(out_node, out_node->input(1)); });
 
   if (InsertPreTransForNonTransInOut(func_graph, not_trans_in_nodes, not_trans_out_nodes, trans_info) != lite::RET_OK) {
     MS_LOG(ERROR) << "Insert pre transpose failed for non-transpose inputs or outputs.";

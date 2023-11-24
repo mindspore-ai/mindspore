@@ -254,7 +254,7 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
     MS_CHECK_TRUE_RET(input != nullptr, kLiteNullptr);
     inputs_.push_back(input);
     input_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
-    malloced_data_size_.insert(std::make_pair(input, input->DataSize()));
+    (void)malloced_data_size_.insert(std::make_pair(input, input->DataSize()));
   }
   for (size_t i = 0; i < output_tensors.size(); i++) {
     auto &tensor = output_tensors[i];
