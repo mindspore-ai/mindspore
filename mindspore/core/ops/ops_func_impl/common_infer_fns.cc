@@ -31,7 +31,7 @@ BaseShapePtr BinaryOpShapesEqualInfer(const PrimitivePtr &primitive, const std::
   auto x_shape = x_shape_ptr->GetShapeVector();
   auto y_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto y_shape = y_shape_ptr->GetShapeVector();
-  if (x_shape == y_shape) {
+  if (x_shape == y_shape || (x_shape.empty() || y_shape.empty())) {
     return std::make_shared<abstract::TensorShape>(x_shape);
   }
   if (IsDynamicRank(x_shape)) {
@@ -40,7 +40,7 @@ BaseShapePtr BinaryOpShapesEqualInfer(const PrimitivePtr &primitive, const std::
     return std::make_shared<abstract::TensorShape>(x_shape);
   }
   if (x_shape.size() != y_shape.size()) {
-    MS_EXCEPTION(RuntimeError) << "Rank of x(" << x_shape.size() << ") and dout(" << y_shape.size()
+    MS_EXCEPTION(RuntimeError) << "Rank of x(" << x_shape.size() << ") and y(" << y_shape.size()
                                << ") not equal, primitive name: " << primitive->name() << ".";
   }
   auto output_shape = x_shape;
@@ -51,7 +51,7 @@ BaseShapePtr BinaryOpShapesEqualInfer(const PrimitivePtr &primitive, const std::
     if (output_shape[i] == abstract::TensorShape::kShapeDimAny) {
       output_shape[i] = y_shape[i];
     } else if (y_shape[i] != abstract::TensorShape::kShapeDimAny) {
-      MS_EXCEPTION(RuntimeError) << "The " << i << "th dim of x(" << x_shape[i] << ") and dout(" << y_shape[i]
+      MS_EXCEPTION(RuntimeError) << "The " << i << "th dim of x(" << x_shape[i] << ") and y(" << y_shape[i]
                                  << ") not equal.";
     }
   }
