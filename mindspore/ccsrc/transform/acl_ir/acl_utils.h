@@ -25,7 +25,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 
-#define MAX_INPUT_TO_HOST 25
+#define MAX_INPUT_TO_HOST 40
 
 namespace mindspore {
 namespace transform {

@@ -34,8 +34,10 @@
     ScalarToTensor -> MakeTuple -> Tuple(Tensor) -> Concat -> Reshape -> Tensor
     ###############
 
-    MakeTuple's Scalar inputs will be converted to Tensors, followed by a Concat op to allow the reshape by a Tensor.
-    ScalarToTensor conversion op is inserted before to make sure the old/new pattern inputs/outputs' types are agree.
+    MakeTuple's Scalar inputs will be converted to Tensors, followed by a Concat
+  op to allow the reshape by a Tensor.
+    ScalarToTensor conversion op is inserted before to make sure the old/new
+  pattern inputs/outputs' types are agree.
 */
 
 namespace mindspore {
@@ -109,7 +111,6 @@ const AnfNodePtr MakeTupleUnifyMindIR::Process(const FuncGraphPtr &func_graph, c
   int64_t num_of_inputs = static_cast<int64_t>(new_make_tuple_cnode->inputs().size() - kSizeOne);
   std::vector<int64_t> dyn_input_size_empty{num_of_inputs};
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(num_of_inputs), concat_node);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat_node);
 
   auto concat_abstract =
     abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector({num_of_inputs})), TypeIdToType(type_id));
@@ -155,13 +156,23 @@ CNodePtr MakeTupleUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_gra
   return scalar_to_tensor;
 }
 
+ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, const ValuePtr &value_ptr) {
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto new_node = std::make_shared<ValueNode>(value_ptr);
+  MS_EXCEPTION_IF_NULL(new_node);
+  auto value_abstract = value_ptr->ToAbstract();
+  new_node->set_abstract(value_abstract);
+  return new_node;
+}
+
 CNodePtr MakeTupleUnifyMindIR::CreateConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &maketuple_node,
                                             const std::string &cnode_name, int64_t axis) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatOpName)), maketuple_node};
+  auto axis_node = CreateValueNode(func_graph, MakeValue(axis));
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatOpName)), maketuple_node,
+                                           axis_node};
   auto concat = NewCNode(concat_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(concat);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
   concat->set_fullname_with_scope(cnode_name);
   return concat;
 }
