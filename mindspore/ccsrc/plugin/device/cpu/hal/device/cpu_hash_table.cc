@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <vector>
-#include <string>
 #include <algorithm>
 
 #include "utils/log_adapter.h"
