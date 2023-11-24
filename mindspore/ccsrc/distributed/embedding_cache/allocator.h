@@ -36,7 +36,7 @@ class Allocator {
   ~Allocator() = default;
 
   template <typename U>
-  Allocator(const Allocator<U> &other) {
+  explicit Allocator(const Allocator<U> &other) {
     cpu_device_context_ = other.cpu_device_context_;
   }
 
@@ -47,7 +47,7 @@ class Allocator {
   }
 
   template <typename U>
-  Allocator(Allocator<U> &&other) {
+  explicit Allocator(Allocator<U> &&other) {
     cpu_device_context_ = other.cpu_device_context_;
     other.cpu_device_context_ = nullptr;
   }

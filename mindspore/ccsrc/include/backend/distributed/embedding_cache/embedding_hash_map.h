@@ -79,7 +79,7 @@ class BACKEND_EXPORT EmbeddingHashMap {
   const std::list<Element> &Export() const;
 
   // Reset the hash map.
-  void Reset() {}
+  void Reset() const {}
 
   void DumpHashMap();
 
