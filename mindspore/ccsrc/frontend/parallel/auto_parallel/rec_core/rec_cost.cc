@@ -97,8 +97,10 @@ double CostRedis(const Graph::NodeType &node,
 
     // Find its backward nodes
     for (size_t i_node = 0; i_node < num_node_out; i_node++) {
-      if (graph.nodes[node.node_out[i_node]].name == node_name_to_strategy[i_strategy].first &&
-          SameShape(graph.nodes[node.node_out[i_node]].tensor_parm.tensor_shape, node.tensor_parm.tensor_shape)) {
+      bool is_same_shape =
+        SameShape(graph.nodes[node.node_out[i_node]].apply.arguments[0].tensor_shape, node.tensor_parm.tensor_shape) ||
+        SameShape(graph.nodes[node.node_out[i_node]].apply.arguments[1].tensor_shape, node.tensor_parm.tensor_shape);
+      if (graph.nodes[node.node_out[i_node]].name == node_name_to_strategy[i_strategy].first && is_same_shape) {
         bool is_search_forward = false;
         cost_redis +=
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, i_node, output_tensor, is_search_forward);
@@ -161,6 +163,17 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
   return new_redis_cost;
 }
 
+bool hasBeenSplitted(const Graph::NodeType &node, const bool dyn_shape_tmp_fix) {
+  if (dyn_shape_tmp_fix) {
+    if (node.apply.arguments[0].tensor_str.str_h < 1 || node.apply.arguments[0].tensor_str.str_w < 1 ||
+        node.apply.arguments[1].tensor_str.str_w < 1 || node.apply.arguments[0].tensor_str.str_n < 1 ||
+        node.apply.arguments[0].tensor_str.str_c < 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Get optimal strategy for MatMul
 StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
                                       const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -208,14 +221,22 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
     cost_op.push_back(cost_if_cut_k + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
-  cost_op.push_back(cost_if_no_cut + CostRedis(node, node_name_to_strategy, mode, graph));
+  if (hasBeenSplitted(node, graph.dyn_shape_tmp_fix)) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
+    cost_op.push_back(cost_if_no_cut + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
 
   // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
   // node.apply.arguments[0].tensor_str.str_h == 1 means that the batch dimension is not partitioned.
   if (ParallelContext::GetInstance()->enable_parallel_optimizer() && node.apply.arguments[0].tensor_str.str_h == 1.0 &&
       isTraining) {
     cost_op[0] = DOUBLE_MIN;
+  }
+
+  for (auto &cost : cost_op) {
+    cost = std::abs(cost);
   }
 
   return ChoseStr(cost_op, node.apply.str);
@@ -340,6 +361,13 @@ bool SplitOnlyOneDimension(const Graph &graph, float str) {
   return false;
 }
 
+bool IsEdgeSplittable(const int64_t edge) {
+  if (edge < SizeToLong(SIZE_TWO) || edge % SizeToLong(SIZE_TWO) != 0) {
+    return false;
+  }
+  return true;
+}
+
 // Get optimal strategy for BatchMatMul
 StrategyRec CostBatchMatMul::GetOptimalStr(
   const Graph::NodeType &node, const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -359,31 +387,28 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
   if (node.apply.arguments[0].tensor_str.str_n == 0) {
     MS_LOG(EXCEPTION) << "str_n cannot be 0!";
   }
-  if (edge_b < SizeToLong(SIZE_TWO) || edge_b % SizeToLong(SIZE_TWO) != 0 ||
-      1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
+  if (!IsEdgeSplittable(edge_b) || 1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}};
     cost_op.push_back(cost(B, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_x < SizeToLong(SIZE_TWO) || edge_x % SizeToLong(SIZE_TWO) != 0) {
+  if (!IsEdgeSplittable(edge_x)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}};
     cost_op.push_back(cost(X, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_i < SizeToLong(SIZE_TWO) || edge_i % SizeToLong(SIZE_TWO) != 0 ||
-      SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
+  if (!IsEdgeSplittable(edge_i) || SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
     cost_op.push_back(cost(I, node) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_j < SizeToLong(SIZE_TWO) || edge_j % SizeToLong(SIZE_TWO) != 0 ||
-      node.apply.arguments[0].tensor_str.str_w < 1 ||
+  if (!IsEdgeSplittable(edge_j) || node.apply.arguments[0].tensor_str.str_w < 1 ||
       SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -391,8 +416,7 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back((cost(J, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
   }
 
-  if (edge_k < SizeToLong(SIZE_TWO) || edge_k % SizeToLong(SIZE_TWO) != 0 ||
-      node.apply.arguments[1].tensor_str.str_w < 1 ||
+  if (!IsEdgeSplittable(edge_k) || node.apply.arguments[1].tensor_str.str_w < 1 ||
       SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -400,8 +424,16 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back((cost(K, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
   }
 
-  std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
-  cost_op.push_back(cost(R, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+  if (hasBeenSplitted(node, graph.dyn_shape_tmp_fix)) {
+    cost_op.push_back(DOUBLE_MAX);
+  } else {
+    std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
+    cost_op.push_back(cost(R, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
+
+  for (auto &cost : cost_op) {
+    cost = std::abs(cost);
+  }
 
   return ChoseStr(cost_op, node.apply.str);
 }
