@@ -373,7 +373,7 @@ bool AscendKernelRuntime::Init() {
                       << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
     }
     const uint32_t reserve_time = 180;
-    uint32_t op_wait_timeout = kDefaultHcclExecTimeout + reserve_time;
+    uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
     auto acl_ret = aclrtSetOpWaitTimeout(op_wait_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
