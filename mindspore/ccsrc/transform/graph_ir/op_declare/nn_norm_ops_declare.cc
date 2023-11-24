@@ -24,9 +24,7 @@ namespace mindspore::transform {
 // SoftmaxV2
 INPUT_MAP(SoftmaxV2) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(SoftmaxV2) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(SoftmaxV2) = {
-  {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-};
+ATTR_MAP(SoftmaxV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SoftmaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Softmax, kNameSoftmax, ADPT_DESC(SoftmaxV2))
 REG_ADPT_DESC(SoftmaxV2, kSoftmaxV2OpName, ADPT_DESC(SoftmaxV2))
