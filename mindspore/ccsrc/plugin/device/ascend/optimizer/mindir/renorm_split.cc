@@ -21,10 +21,10 @@
 #include "include/common/utils/anfalgo.h"
 #include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
-#include "ops/math_ops.h"
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kAttrRecomputeShape = "RecomputeShape";
 void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const TypeId &type) {
   MS_EXCEPTION_IF_NULL(node);
   auto dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, "dim");
@@ -83,6 +83,9 @@ const AnfNodePtr RenormSplit::Process(const FuncGraphPtr &func_graph, const AnfN
   auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   FreshRenormInferShape(cnode, in_shape, type);
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrRecomputeShape, MakeValue(true), cnode);
+  }
   std::vector<AnfNodePtr> broadcast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())),
                                               node};
   auto broadcast_node = NewCNode(broadcast_inputs, func_graph);

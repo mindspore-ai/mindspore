@@ -29,6 +29,35 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t kInputSize = 1;
+constexpr auto kAttrRecomputeShape = "RecomputeShape";
+constexpr auto kAttrDim = "dim";
+
+ShapeVector FreshRenormInferShape(const PrimitivePtr &prim, const ShapeVector &in_shape) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto dim = GetValue<int64_t>(prim->GetAttr(kAttrDim));
+  if (dim > 0 && dim >= SizeToLong(in_shape.size())) {
+    MS_LOG(EXCEPTION) << "Attr dim must be less than the shape size, but got dim:" << dim
+                      << ", shape size:" << in_shape.size();
+  }
+  if (dim < 0) {
+    if (std::abs(dim) <= SizeToLong(in_shape.size())) {
+      dim += SizeToLong(in_shape.size());
+      (void)prim->DelAttr(kAttrDim);
+      (void)prim->AddAttr(kAttrDim, MakeValue(dim));
+    } else {
+      MS_LOG(EXCEPTION) << "Attr dim must be less than the shape size, but got dim:" << dim
+                        << ", shape size:" << in_shape.size();
+    }
+  }
+  ShapeVector out = in_shape;
+  for (size_t i = 0; i < in_shape.size(); i++) {
+    if (static_cast<int64_t>(i) != dim) {
+      out[i] = 1;
+    }
+  }
+  return out;
+}
+
 TypePtr RenormInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto name = prim->name();
@@ -50,6 +79,9 @@ abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::ve
   auto shape = input_shape[kShape];
   MS_EXCEPTION_IF_ZERO("Renorm input shape", shape.size());
   auto out_shape = shape;
+  if (primitive->HasAttr(kAttrRecomputeShape) && GetValue<bool>(primitive->GetAttr(kAttrRecomputeShape))) {
+    out_shape = FreshRenormInferShape(primitive, out_shape);
+  }
 
   return std::make_shared<abstract::Shape>(out_shape);
 }

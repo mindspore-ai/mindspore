@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import torch
+import pytest
 import numpy as np
 import mindspore
 from mindspore import context, nn, Tensor
@@ -20,7 +21,6 @@ from mindspore.ops.operations.math_ops import Renorm
 from mindspore.ops import functional as F
 
 np.random.seed(5)
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class NetAscend(nn.Cell):
@@ -54,12 +54,14 @@ class NetTorch:
         return y.numpy()
 
 
-def test_renorm_p1_fp32():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p1_fp32(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float32, p=1
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 1
     dim = 0
     max_norm = 0.5
@@ -75,12 +77,41 @@ def test_renorm_p1_fp32():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_p2_fp32():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p1_fp32_dyn(mode):
+    """
+    Feature: test renorm dynamic shape
+    Description: test renorm with input tensor's type float32, p=1
+    Expectation: none.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    p = 1
+    dim = 0
+    max_norm = 0.5
+    a = np.random.random([2, 3, 4, 5]).astype(np.float32)
+
+    tensor = Tensor(a, mindspore.float32)
+    dyn_tensor = Tensor(shape=[None, 3, 4, 5], dtype=mindspore.float32)
+    ms_net = NetAscend(p, dim, max_norm)
+
+    ms_net.set_inputs(dyn_tensor)
+
+    ms_out = ms_net(tensor)
+
+    torch_net = NetTorch(a, p, dim, max_norm)
+    torch_out = torch_net.test_float32()
+
+    assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p2_fp32(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float32, p=2
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 2
     dim = 0
     max_norm = 0.5
@@ -96,12 +127,14 @@ def test_renorm_p2_fp32():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_p3_fp32():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p3_fp32(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float32, p=3
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 3
     dim = 0
     max_norm = 0.5
@@ -117,12 +150,14 @@ def test_renorm_p3_fp32():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_p1_fp16():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p1_fp16(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float16, p=1
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 1
     dim = 1
     max_norm = 0.5
@@ -137,12 +172,14 @@ def test_renorm_p1_fp16():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_p2_fp16():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p2_fp16(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float16, p=2
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 2
     dim = 1
     max_norm = 0.5
@@ -157,12 +194,14 @@ def test_renorm_p2_fp16():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_p3_fp16():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_p3_fp16(mode):
     """
     Feature: test renorm
     Description: test renorm with input tensor's type float16, p=3
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 3
     dim = -2
     max_norm = 0.5
@@ -177,12 +216,14 @@ def test_renorm_p3_fp16():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_tensor_renorm():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_tensor_renorm(mode):
     """
     Feature: test tensor's renorm
     Description: test tensor's renorm with type float16, p=3
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 3
     dim = -2
     max_norm = 0.5
@@ -196,12 +237,14 @@ def test_tensor_renorm():
     assert np.allclose(torch_out, ms_out.asnumpy(), 0.0001, 0.0001)
 
 
-def test_renorm_functional():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_renorm_functional(mode):
     """
     Feature: test functional renorm
     Description: test functional renorm with type float16, p=3
     Expectation: none.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     p = 3
     dim = -2
     max_norm = 0.5
