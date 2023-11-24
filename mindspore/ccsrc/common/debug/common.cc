@@ -298,10 +298,10 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   const int spaces = 4;
   if (i >= filename.size()) {
     s << filename;
-    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_ - 1);
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
   } else {
     s << filename.substr(0, i);
-    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_ - 1);
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
     if (i + 1 < filename.size()) {
       s << filename.substr(i);
     }
