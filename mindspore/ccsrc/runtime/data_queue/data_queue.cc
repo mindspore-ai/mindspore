@@ -15,7 +15,6 @@
  */
 
 #include "include/backend/data_queue/data_queue.h"
-#include <string>
 #include "utils/ms_context.h"
 #include "runtime/hardware/device_context_manager.h"
 
