@@ -98,8 +98,6 @@ STATUS InOutDTypeTransPass::HandleGraphInput(const FuncGraphPtr &graph) {
 
 STATUS InOutDTypeTransPass::HandleGraphOutput(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
-  auto manager = graph->manager();
-  MS_ASSERT(manager != nullptr);
   auto return_node = graph->get_return();
   MS_CHECK_TRUE_RET(return_node != nullptr, RET_ERROR);
   bool has_make_tuple = false;
