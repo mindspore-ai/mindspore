@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_RUNTIME_DEFAULT_GRAPH_RUNTIME_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_RUNTIME_DEFAULT_GRAPH_RUNTIME_H_
 
-#include <vector>
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DEFAULT_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DEFAULT_EXECUTOR_H_
+
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "infer/executor.h"
@@ -26,13 +27,13 @@
 
 namespace mindspore {
 /**
- * MindRTGraphExecutor: Executor using MindRT to make the actor async execute for parallelize speedup
+ * DefaultExecutor: Execute Kernel one by one, good for acl single kernel graph
  */
-class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
+class DefaultExecutor : public mindspore::infer::abstract::Executor {
  public:
-  MindRTGraphExecutor();
-  explicit MindRTGraphExecutor(const std::string &name, std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan);
-  virtual ~MindRTGraphExecutor() = default;
+  DefaultExecutor();
+  explicit DefaultExecutor(const std::string &name, std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan);
+  virtual ~DefaultExecutor() = default;
 
   const std::string &Name() override { return name_; }
 
@@ -48,10 +49,9 @@ class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
 
  private:
   std::string name_;
-  std::shared_ptr<mindspore::lite::Executor> mindrt_executor_;
   std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan_;
   bool inited_ = false;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_RUNTIME_DEFAULT_GRAPH_RUNTIME_H_
+#endif  //  MINDSPORE_LITE_SRC_EXTENDRT_DEFAULT_EXECUTOR_H_
