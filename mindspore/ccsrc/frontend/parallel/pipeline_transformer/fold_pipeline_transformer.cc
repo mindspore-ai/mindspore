@@ -403,7 +403,7 @@ AnfNodePtr FoldPipelineTransformer::Reuse(const AnfNodePtr &node, int64_t stage,
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
-      cnode = cnode->input(2)->cast<CNodePtr>();
+      cnode = cnode->input(DEPEND_NODE_SOURCE_INDEX)->cast<CNodePtr>();
     }
     if (cnode->input(1) == node) {
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
