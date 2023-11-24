@@ -1922,14 +1922,15 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     else:
         mindir_stream, net_dict = _cell_info(net, incremental, *inputs)
     model.ParseFromString(mindir_stream)
-    custom_func = kwargs.get('custom_func', None)
-    if custom_func is not None:
-        model = custom_func(model)
 
     if kwargs.get('dataset'):
         check_input_data(kwargs.get('dataset'), data_class=mindspore.dataset.Dataset)
         dataset = kwargs.get('dataset')
         _save_dataset_to_mindir(model, dataset)
+
+    custom_func = kwargs.get('custom_func', None)
+    if custom_func is not None:
+        custom_func(model)
 
     save_together = _save_together(net_dict, model)
     is_encrypt = lambda: 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys()
