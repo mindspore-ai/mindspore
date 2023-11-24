@@ -875,16 +875,16 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
     }
   }
 
-  const auto &name = sequence_value->name();
+  const auto &sub_class_name = sequence_value->sub_class_name();
   const auto &keys = sequence_value->key();
   abstract::AbstractBasePtrList key_abs;
   (void)std::transform(keys.begin(), keys.end(), std::back_inserter(key_abs), [](const ValuePtr &key) {
     MS_EXCEPTION_IF_NULL(key);
     return key->ToAbstract();
   });
-  auto new_sequence_value = std::make_shared<ValueNamedTuple>(name, keys, elements);
+  auto new_sequence_value = std::make_shared<ValueNamedTuple>(sub_class_name, keys, elements);
   auto new_input = NewValueNode(new_sequence_value);
-  auto new_sequence_abs = std::make_shared<AbstractNamedTuple>(name, key_abs, elements_abs);
+  auto new_sequence_abs = std::make_shared<AbstractNamedTuple>(sub_class_name, key_abs, elements_abs);
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
   new_sequence_abs->set_sequence_nodes(sequence_nodes);

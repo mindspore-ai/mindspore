@@ -1150,8 +1150,9 @@ class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
   /// \param[in] name The name of a namedtuple.
   /// \param[in] values  A List of data in namedtuple.
   /// \param[in] keys A list of label in namedtuple.
-  AbstractNamedTuple(const std::string &type_name, const AbstractBasePtrList &keys, const AbstractBasePtrList &values)
-      : AbstractTuple(values), type_name_{type_name}, keys_(keys) {}
+  AbstractNamedTuple(const std::string &sub_class_name, const AbstractBasePtrList &keys,
+                     const AbstractBasePtrList &values)
+      : AbstractTuple(values), sub_class_name_{sub_class_name}, keys_(keys) {}
 
   /// \brief Destructor of  AbstractNamedTuple.
   ~AbstractNamedTuple() override = default;
@@ -1163,13 +1164,13 @@ class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
   /// \brief Get the name of namedtuple object.
   ///
   /// \return A string of namedtuple's type name.
-  const std::string &name() const { return type_name_; }
+  const std::string &sub_class_name() const { return sub_class_name_; }
 
  protected:
   ValuePtr RealBuildValue() const override;
 
  private:
-  std::string type_name_;
+  std::string sub_class_name_;
   AbstractBasePtrList keys_;
 };
 using AbstractNamedTuplePtr = std::shared_ptr<AbstractNamedTuple>;

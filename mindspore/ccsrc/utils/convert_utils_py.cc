@@ -234,9 +234,9 @@ py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBa
       ele_sequeue[i] = ValueToPyData(value_sequeue[i]);
     }
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::str type_name = py::str(value_named_tuple->name());
-    py::object named_tuple =
-      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_TO_NAMEDTUPLE, type_name, key_sequeue, ele_sequeue);
+    py::str sub_class_name = py::str(value_named_tuple->sub_class_name());
+    py::object named_tuple = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_TO_NAMEDTUPLE, sub_class_name,
+                                                         key_sequeue, ele_sequeue);
     return named_tuple;
   }
   py::tuple res_sequeue(value_size);
