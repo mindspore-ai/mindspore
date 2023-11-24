@@ -2119,9 +2119,9 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   return RET_OK;
 }
 
-bool lite::LiteSession::IsMmapEnable() {
+bool lite::LiteSession::IsMmapEnable() const {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(MS_COMPILE_IOS)
-  if (delegate_device_type_ == DT_NPU) {
+  if (delegate_device_type_ == static_cast<int>(DT_NPU)) {
     return false;
   }
   return true;

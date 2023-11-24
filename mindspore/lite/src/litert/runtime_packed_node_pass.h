@@ -41,7 +41,7 @@ struct PackInfo {
 class PackedNodePass {
  public:
   static PackedNodePass &GetInstance() {
-    static PackedNodePass instance;
+    static PackedNodePass instance{};
     return instance;
   }
 
@@ -65,8 +65,6 @@ class PackedNodePass {
  private:
   PackedNodePass() = default;
   ~PackedNodePass();
-
- private:
   std::map<std::string, PackInfo *> node_pack_info_map_;
 };
 
@@ -74,7 +72,7 @@ int PackKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Tensor *> 
 
 // packed weight data -> unpack
 int RecoveryPackedWeight(Tensor *weight, const int quant_type, const TypeId data_type, const int node_type,
-                         PackInfo *packInfo);
+                         const PackInfo &packInfo);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_LITERT_RUNTIME_PACKED_NODE_PASS_
