@@ -196,8 +196,9 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   /// \brief Constructor of ValueNamedTuple.
   ///
   /// \param[in] elements Define the elements of the object.
-  ValueNamedTuple(const std::string &type_name, const std::vector<ValuePtr> &keys, const std::vector<ValuePtr> &values)
-      : ValueTuple(values), type_name_(type_name), keys_(keys) {}
+  ValueNamedTuple(const std::string &sub_class_name, const std::vector<ValuePtr> &keys,
+                  const std::vector<ValuePtr> &values)
+      : ValueTuple(values), sub_class_name_(sub_class_name), keys_(keys) {}
 
   /// \brief Destructor of ValueNamedTuple.
   ~ValueNamedTuple() override = default;
@@ -209,7 +210,7 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   /// \brief Show the type name of namedtuple.
   ///
   /// \return The type name of the namedtuple object.
-  std::string name() const { return type_name_; }
+  const std::string &sub_class_name() const { return sub_class_name_; }
   /// \brief Show the label of namedtuple.
   ///
   /// \return The Label of the namedtuple object.
@@ -224,7 +225,7 @@ class MS_CORE_API ValueNamedTuple : public ValueTuple {
   std::string DumpText() const override { return ToString(); }
 
  private:
-  std::string type_name_;
+  std::string sub_class_name_;
   std::vector<ValuePtr> keys_;
 };
 using ValueNamedTuplePtr = std::shared_ptr<ValueNamedTuple>;

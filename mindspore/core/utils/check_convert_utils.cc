@@ -459,6 +459,7 @@ bool CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(const std::vect
         return true;
       }
       try {
+        // cppcheck-suppress unreadVariable
         MS_LOG_TRY_CATCH_SCOPE;
         (void)first_element->Join(cur_element);
       } catch (std::exception &) {

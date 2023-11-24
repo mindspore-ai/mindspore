@@ -62,7 +62,7 @@ abstract::AbstractBasePtr ValueNamedTuple::ToAbstract() {
     MS_EXCEPTION_IF_NULL(ele);
     return ele->ToAbstract();
   });
-  return std::make_shared<abstract::AbstractNamedTuple>(type_name_, key_list, ele_list);
+  return std::make_shared<abstract::AbstractNamedTuple>(sub_class_name_, key_list, ele_list);
 }
 
 abstract::AbstractBasePtr ValueSlice::ToAbstract() {
