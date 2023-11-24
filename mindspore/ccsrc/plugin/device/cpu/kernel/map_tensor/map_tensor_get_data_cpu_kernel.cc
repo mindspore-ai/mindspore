@@ -15,10 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/map_tensor/map_tensor_get_data_cpu_kernel.h"
-#include <functional>
-#include <utility>
-#include <string>
-#include <algorithm>
 #include "mindspore/core/abstract/utils.h"
 #include "kernel/common_utils.h"
 
