@@ -87,7 +87,6 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
-  opt_ge_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedTuple>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
@@ -128,6 +127,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
+  opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
