@@ -61,8 +61,9 @@ struct GeTensorInfo {
 
   // Input/Output
   enum ParamMappingFlag : unsigned int {
-    kDynamicParam = 1 << 0,  // has dynamic input/output
-    kEmptyParam = 1 << 1     // empty input/output
+    kDynamicParam = 1 << 0,  // has only one dynamic input/output
+    kEmptyParam = 1 << 1,    // empty input/output
+    kMultiDynParam = 1 << 2  // has more than one dynamic inputs/outputs
   };
 
   // map input/output indices of operator from MindSpore frontend to GraphEngine backend
@@ -100,6 +101,8 @@ class GeAdapterInfo {
     // Note: number of ms operator inputs(not real inputs) is equal to size of info_.input_idx_ms2ge
     return info_.input_idx_ms2ge.size();
   }
+
+  const mindspore::HashMap<int, Ms2GeParamInfo> &GetMs2GeInputMap() const { return info_.input_idx_ms2ge; }
 
   const Ms2GeParamInfo &GetGeInputByMsInputIndex(size_t ms_input_idx) const {
     auto iter = info_.input_idx_ms2ge.find(ms_input_idx);

@@ -98,45 +98,36 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
     return rec_depend_list;
   }
 
-  const auto &inputs = cnode->inputs();
   auto attr = primitive->GetAttr(kAttrDynInputSizes);
   if (attr == nullptr) {
     return ori_depend_list;
   }
-  MS_EXCEPTION_IF_NULL(attr);
-  auto dyn_input_list = attr->cast_ptr<ValueTuple>();
-  MS_EXCEPTION_IF_NULL(dyn_input_list);
-  for (const auto i : ori_depend_list) {
-    if (LongToSize(i) > dyn_input_list->size()) {
-      MS_LOG(EXCEPTION) << "The index is out of range.";
-    }
-    int64_t start_index = 0;
-    for (int64_t index = 0; index < i; ++index) {
-      auto place_holder_size = GetValue<int64_t>((*dyn_input_list)[index]);
-      if (place_holder_size < 0) {
-        start_index += 1;
-      }
-      start_index += place_holder_size;
-    }
-    auto dyn_size = GetValue<int64_t>((*dyn_input_list)[i]);
-    MS_LOG(DEBUG) << "The input " << i << " dynamic input size is " << dyn_size;
-    if (dyn_size == -1) {
-      (void)rec_depend_list.emplace(i);
-      continue;
-    }
-    while (dyn_size >= 0) {
-      auto depend_index = start_index + dyn_size;
-      // skip primitive input
-      const auto &input = inputs.at(LongToSize(depend_index + 1));
-      MS_EXCEPTION_IF_NULL(input);
-      const auto &input_abs = input->abstract();
-      if (input_abs != nullptr && input_abs->isa<abstract::AbstractTensor>()) {
-        (void)rec_depend_list.emplace(depend_index);
-        MS_LOG(DEBUG) << "Rectify dynamic input " << start_index + dyn_size;
-      }
-      --dyn_size;
-    }
-  }
+
+  // mapping from input prototype index to corresponding start index of real input
+  std::vector<int64_t> dyn_input_sizes = GetValue<std::vector<int64_t>>(attr);
+  std::vector<int64_t> proto2real;
+  int64_t count = 0;
+  std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&count, &proto2real](int64_t dyn_size) {
+    proto2real.push_back(count);
+    count += dyn_size < 0 ? 1 : dyn_size;
+  });
+
+  std::for_each(ori_depend_list.begin(), ori_depend_list.end(),
+                [&proto2real, &dyn_input_sizes, &primitive, &rec_depend_list](int64_t proto_idx) {
+                  if (proto_idx >= static_cast<int64_t>(dyn_input_sizes.size())) {
+                    MS_LOG(EXCEPTION) << "The value depend index " << proto_idx << " of primitive " << primitive->name()
+                                      << " is out of range [0, " << dyn_input_sizes.size() << ").";
+                  }
+                  // value depend input is a normal input
+                  if (dyn_input_sizes[proto_idx] < 0) {
+                    rec_depend_list.insert(proto2real[proto_idx]);
+                  }
+                  // value depend input is is a dynamic input
+                  for (int64_t i = 0; i < dyn_input_sizes[proto_idx]; ++i) {
+                    rec_depend_list.insert(proto2real[proto_idx] + i);
+                  }
+                });
+
   return rec_depend_list;
 }
 

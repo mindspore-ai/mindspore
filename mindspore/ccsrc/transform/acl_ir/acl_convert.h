@@ -60,6 +60,21 @@ struct AclDumpString {
   } tensor_type;
 };
 
+// record the relationship between input in prototype and corresponding real inputs
+struct MsInputInfo {
+  // input index in operator prototype
+  size_t proto_index;
+  // for dynamic input, it is offset of the first element of dynamic input in real inputs; for normal input, it is the
+  // offset of the input in real inputs
+  size_t real_offset;
+  // for dynamic input, it is the number of real inputs corresponding to `proto_index`; for normal input, it is const
+  // value 1
+  size_t folded_size;
+};
+
+using SetInputFunc =
+  std::function<void(const MsInputInfo &ms_input_info, size_t ge_offset, const Ms2GeParamInfo &ge_input_info)>;
+
 class AclConverter {
  public:
   void ConvertToAclOpType(const std::string &prim_name);
@@ -104,16 +119,29 @@ class AclConverter {
   template <typename T>
   void AclRunnerAddAttr(const std::string &attrName, T value);
 
+  // convert acl inputs for operator with at most one dynamic parameter, general case
+  void ConvertInputsNormal(const PrimitivePtr &prim, const std::vector<AddressPtr> &inputs,
+                           const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input);
+
+  // convert acl inputs for operator with more than one dynamic parameters, rare case
+  void ConvertInputsMutiDynParams(const PrimitivePtr &prim, const std::vector<AddressPtr> &inputs,
+                                  const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input);
+
   AclRunner runner_;
 
   std::vector<AclDumpString> input_str_;
   std::vector<AclDumpString> output_str_;
   std::vector<std::string> attr_map_str_;
-  // number of folded inputs of dynamic input
+  // number of folded inputs of dynamic input, only used for op with only one dynamic input
   size_t num_folded_inputs_ = 0;
   bool is_dynamic_ = false;
   AclPrecisionMode precision_mode_ = FORCE_FP32;
   bool is_need_retrieve_output_shape_ = false;
+  // Fields for op containing multiple dynamic inputs, since operators with more than one dynamic inputs are rare, for
+  // speed reason, we process this case separately.
+  // Map for recording [MindSpore op input proto index of dynamic input] to [its number of folded inputs]
+  // NOTE: here the map MUST be an ordered map to sort the input indices ascendly.
+  std::map<size_t, size_t> dyn_inputs_map_;
 };
 
 using AclConverterPtr = std::shared_ptr<AclConverter>;
