@@ -69,7 +69,7 @@ std::string ExecutionFlow::Dump() const {
   return oss.str();
 }
 
-mindspore::kernel::SubGraphType ExecutionFlow::GetSubGraphType(abstract::Kernel *kernel) {
+mindspore::kernel::SubGraphType ExecutionFlow::GetSubGraphType(const abstract::Kernel *kernel) const {
   if (kernel == nullptr) {
     return kernel::kNotSubGraph;
   }

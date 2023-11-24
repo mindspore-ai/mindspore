@@ -55,12 +55,16 @@ void MemoryExternalTensorHelper::SetExternalTensorData(const mindspore::schema::
   auto data_key = external_info->location()->str() + std::to_string(external_info->offset());
   if (is_copy_data_) {
     auto size = external_info->length();
-    auto *new_data = malloc(size);
+    if (size <= 0) {
+      MS_LOG_ERROR << "malloc  invalid size " << size;
+      return;
+    }
+    auto *new_data = malloc(static_cast<size_t>(size));
     if (new_data == nullptr) {
       MS_LOG_ERROR << "malloc new data with " << size << " failed.";
       return;
     }
-    (void)memcpy(new_data, data, size);
+    (void)memcpy(new_data, data, static_cast<size_t>(size));
     this->data_map_[data_key] = new_data;
   } else {
     // not copy data, just set the pointer;

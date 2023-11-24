@@ -62,7 +62,7 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   std::string Dump() const;
 
-  mindspore::kernel::SubGraphType GetSubGraphType(abstract::Kernel *kernel);
+  mindspore::kernel::SubGraphType GetSubGraphType(const abstract::Kernel *kernel) const;
 
  private:
   std::vector<InferKernel *> kernels_;
