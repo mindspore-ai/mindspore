@@ -47,7 +47,7 @@ bool GetTupleIndexInfoCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
 
 int GetTupleIndexInfoCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  KernelMod::Resize(inputs, outputs);
+  (void)KernelMod::Resize(inputs, outputs);
   data_shapes_ = GetShapes(inputs);
   output_size_list_ = std::vector<size_t>(outputs.size(), sizeof(size_t) * max_indices_num);
   return KRET_OK;
@@ -130,20 +130,20 @@ std::vector<KernelAttr> GetTupleIndexInfoCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
-                 [](TypeId data_type_id) -> std::pair<KernelAttr, GetTupleIndexInfoFunc> {
-                   auto kernel_attr = KernelAttr();
-                   kernel_attr.AddInputAttr(data_type_id);
-                   kernel_attr.AddInputAttr(kNumberTypeInt64);
-                   for (size_t i = 0; i < max_indices_num; i++) {
-                     kernel_attr.AddInputAttr(kNumberTypeInt64);
-                   }
-                   const size_t output_size = 13;
-                   for (size_t i = 0; i < output_size; i++) {
-                     kernel_attr.AddOutputAttr(kNumberTypeInt64);
-                   }
-                   return {kernel_attr, &GetTupleIndexInfoCpuKernelMod::LaunchKernel};
-                 });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, GetTupleIndexInfoFunc> {
+                         auto kernel_attr = KernelAttr();
+                         (void)kernel_attr.AddInputAttr(data_type_id);
+                         (void)kernel_attr.AddInputAttr(kNumberTypeInt64);
+                         for (size_t i = 0; i < max_indices_num; i++) {
+                           (void)kernel_attr.AddInputAttr(kNumberTypeInt64);
+                         }
+                         const size_t output_size = 13;
+                         for (size_t i = 0; i < output_size; i++) {
+                           (void)kernel_attr.AddOutputAttr(kNumberTypeInt64);
+                         }
+                         return {kernel_attr, &GetTupleIndexInfoCpuKernelMod::LaunchKernel};
+                       });
 
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, GetTupleIndexInfoFunc> &item) { return item.first; });

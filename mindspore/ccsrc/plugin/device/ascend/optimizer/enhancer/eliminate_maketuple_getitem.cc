@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/utils/utils.h"
