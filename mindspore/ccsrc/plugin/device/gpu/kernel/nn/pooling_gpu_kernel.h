@@ -449,9 +449,9 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     if (pad_mode == mindspore::PadMode::SAME || pad_mode == mindspore::PadMode::VALID) {
       return;
     }
-    std::vector<int64_t> pad_list = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
-    if (kernel_name_ == kAvgPool3DOpName && !GetValue<bool>(primitive_->GetAttr("count_include_pad")) &&
-        primitive_->HasAttr("divisor_override") &&
+    const std::vector<int64_t> &pad_list = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
+    if (primitive_->HasAttr("count_include_pad") && !GetValue<bool>(primitive_->GetAttr("count_include_pad")) &&
+        primitive_->HasAttr("divisor_override") && GetValue<int64_t>(primitive_->GetAttr("divisor_override")) != 0 &&
         std::any_of(pad_list.begin(), pad_list.end(), [](int64_t pad) { return pad > 0; })) {
       MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode
                         << " && padding > 0 && count_include_pad == False && divisor_override != None";
