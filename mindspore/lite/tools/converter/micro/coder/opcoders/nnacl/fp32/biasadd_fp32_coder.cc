@@ -15,7 +15,6 @@
  */
 
 #include "coder/opcoders/nnacl/fp32/biasadd_fp32_coder.h"
-#include <string>
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
