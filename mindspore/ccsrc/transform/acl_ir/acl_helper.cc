@@ -332,8 +332,14 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   MS_EXCEPTION_IF_NULL(info);
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
-  size_t ms_real_idx = 0;  // index of actual input argument
+  size_t ms_real_idx = 0;    // index of actual input argument
+  size_t dyn_input_idx = 0;  // index of dynamic input
   auto value_depend_indices = ops::GetInputDependValueList(common::AnfAlgo::GetCNodePrimitive(cnode));
+
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  }
 
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
@@ -380,15 +386,17 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     }
 
     if (ge_input_info.type == Ms2GeParamInfo::DYNAMIC) {
-      std::vector<int64_t> dyn_input_sizes = {};
-      if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-        dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+      // process op which has only one dynamic input
+      if (info->GetInputMappingFlags() & GeTensorInfo::kDynamicParam) {
+        if (dyn_input_sizes.empty()) {
+          MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
+                            << ", of which size is empty";
+        }
+        ms_real_idx += LongToSize(dyn_input_sizes[0]);
+      } else {  // process op which has more than one dynamic inputs
+        ms_real_idx += (dyn_input_idx < dyn_input_sizes.size() ? dyn_input_sizes[dyn_input_idx] : 1);
       }
-      if (dyn_input_sizes.empty()) {
-        MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
-                          << ", of which size is empty";
-      }
-      ms_real_idx += LongToSize(dyn_input_sizes[0]);
+      dyn_input_idx += 1;
     } else {
       ms_real_idx += 1;
     }
