@@ -179,6 +179,12 @@ Status Model::LoadConfig(const std::vector<char> & /* config_path */) {
   return kMCFailed;
 }
 
+std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
+  MS_LOG(WARNING) << "mindspore inference does not support get model info";
+  std::vector<char> empty;
+  return empty;
+}
+
 #ifdef _MSC_VER
 Status Model::UpdateConfig(const std::vector<char> &section,
                            const std::pair<std::vector<char>, std::vector<char>> &config) {
