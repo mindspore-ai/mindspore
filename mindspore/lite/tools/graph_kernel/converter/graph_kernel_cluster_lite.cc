@@ -85,7 +85,7 @@ bool IsByteAlign(const CNodePtr &cnode, const std::string &node_name) {
   constexpr int64_t byte_align = 32;
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
-  static std::string target = cb->GetTargetFromContext(true);
+  static const std::string target = cb->GetTargetFromContext(true);
   if (target.find("Ascend910B") == std::string::npos) {
     return true;
   }

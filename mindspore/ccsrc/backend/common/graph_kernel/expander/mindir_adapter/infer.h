@@ -28,7 +28,7 @@ class MindirInfer {
   virtual ~MindirInfer() = default;
   virtual void InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) = 0;
   virtual void SetValue(const NodePtr &node) = 0;
-  virtual void HandleInputs(const NodePtrList &inputs) {}
+  virtual void HandleInputs(const NodePtrList &) {}
 };
 
 class InferByHostInfo : public MindirInfer {

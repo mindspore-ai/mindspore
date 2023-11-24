@@ -159,7 +159,7 @@ bool FormatRecognition::Run(const FuncGraphPtr &func_graph) {
       SetOutputsFormat(node->cast<CNodePtr>());
     }
   }
-  for (auto it = todos.rbegin(); it != todos.rend(); it++) {
+  for (auto it = todos.rbegin(); it != todos.rend(); ++it) {
     if ((*it)->isa<CNode>()) {
       FixFormatsBeforeTranspose((*it)->cast<CNodePtr>());
     }
