@@ -1985,5 +1985,20 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_prefix = ib->ZerosLike(prefix);
   return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
 }));
+
+REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto rstd = ib->TupleGetItem(out, kIndex1);
+  auto dy = ib->TupleGetItem(dout, kIndex0);
+
+  auto grad = ib->Emit("RmsNormGrad", {dy, x, rstd, gamma});
+  auto dx = ib->TupleGetItem(grad, kIndex0);
+  auto dgamma = ib->TupleGetItem(grad, kIndex1);
+  return {dx, dgamma};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

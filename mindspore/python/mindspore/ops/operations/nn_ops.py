@@ -1990,6 +1990,7 @@ class MaxPoolV1(Primitive):
         self.add_prim_attr("kernel_size", kernel_size_adapted)
         self.add_prim_attr("strides", strides_adapted)
 
+
 class MaxPool3D(Primitive):
     r"""
     Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
@@ -8959,8 +8960,10 @@ class Dilation2D(Primitive):
         self.pad_mode = validator.check_string(pad_mode, ['VALID', 'SAME', 'valid', 'same'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode.upper())
         self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+
         def is_in_range(x):
             return 1 <= x <= 255
+
         if not is_in_range(self.stride[2]) or not is_in_range(self.stride[3]):
             raise ValueError(f'For Dilation2D, size of stride is not supported, '
                              f'stride should be in the range of [1, 255], '
@@ -11357,6 +11360,7 @@ class PromptFlashAttention(Primitive):
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
     """
+
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
                  num_key_value_heads=0):
@@ -11437,3 +11441,40 @@ class FlashAttentionScore(Primitive):
         self.init_prim_io_names(
             inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
+
+
+class RmsNorm(Primitive):
+    r"""
+    The RmsNorm operator is a normalization operation, and its formula is:
+
+    .. math::
+        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        epsilon (float): prevent division by 0, default value is `1e-6`
+
+    Inputs:
+        - **input_x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
+
+    Outputs:
+        - **y** (Tensor) - Has the same type and shape with `input_x`.
+        - **rstd** (Tensor) - Has the same type with `input_x`, used by gradient calculation.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of "input_x" is not the same with the data type of "gamma"
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-6):
+        """Initialize Dense."""
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
