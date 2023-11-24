@@ -2029,5 +2029,112 @@ FuncGraphPtr ZerosLike::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
                        });
   return hyper_map.GenerateFromTypes(types);
 }
+
+// IterConvert is used when the input is need to convert to Iterable object.
+FuncGraphPtr IterConverter::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  constexpr auto input_size = 1;
+  abstract::CheckArgsSize("IterConverter", args_abs_list, input_size);
+  auto fg = std::make_shared<FuncGraph>();
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto input_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(input_abs);
+  if (input_abs->isa<abstract::AbstractAny>() || input_abs->BuildValue()->isa<parse::InterpretedObject>()) {
+    const std::vector<std::string> funcs_str{"tuple"};
+    auto ret_node = fallback::GeneratePyInterpretWithAbstract(fg, funcs_str, input_size);
+    fg->set_output(ret_node);
+    return fg;
+  }
+
+  auto input_type = input_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  auto type_id = input_type->type_id();
+  std::vector<int64_t> iterable_valid_types{TypeId::kObjectTypeString,     TypeId::kObjectTypeTuple,
+                                            TypeId::kObjectTypeList,       TypeId::kObjectTypeDictionary,
+                                            TypeId::kObjectTypeTensorType, TypeId::kObjectTypeFunction};
+  bool iterable = std::any_of(iterable_valid_types.begin(), iterable_valid_types.end(),
+                              [type_id](int64_t valid_type) { return valid_type == type_id; });
+  if (!iterable) {
+    MS_EXCEPTION(TypeError) << "'" << TypeIdToString(type_id, true) << "' object is not iterable";
+  }
+
+  auto input = fg->add_parameter();
+  if (input_abs->isa<AbstractDictionary>()) {
+    auto ret_node = fg->NewCNode({NewValueNode(prim::kPrimDictGetKeys), input});
+    fg->set_output(ret_node);
+    return fg;
+  }
+  fg->set_output(input);
+  return fg;
+}
+
+// HasNext is used to check whether the input has next element input.
+FuncGraphPtr HasNext::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  constexpr auto input_size = 1;
+  abstract::CheckArgsSize("HasNext", args_abs_list, input_size);
+  auto fg = std::make_shared<FuncGraph>();
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto input_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(input_abs);
+  auto input = fg->add_parameter();
+  if (input_abs->isa<abstract::AbstractAny>() || input_abs->BuildValue()->isa<parse::InterpretedObject>()) {
+    AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_has_next_func(";
+    const std::string data_str = "__data__";
+    script_buffer << data_str << ")";
+    (void)local_key_inputs.emplace_back(NewValueNode(data_str));
+    (void)local_value_inputs.emplace_back(input);
+    const auto &script = script_buffer.str();
+    auto local_key_node = fg->NewCNode(local_key_inputs);
+    auto local_value_node = fg->NewCNode(local_value_inputs);
+    auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+    auto ret = fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node);
+    fg->set_output(ret);
+    return fg;
+  }
+  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string func_name = "ms_hasnext";
+  py::function fn = python_adapter::GetPyFn(module, func_name);
+  auto prim_func = parse::ParsePythonCode(fn);
+  auto ret = fg->NewCNode({NewValueNode(prim_func), input});
+  fg->set_output(ret);
+  return fg;
+}
+
+// HasNext is used to check whether the input has next element input.
+FuncGraphPtr Next::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  constexpr auto input_size = 1;
+  abstract::CheckArgsSize("Next", args_abs_list, input_size);
+  auto fg = std::make_shared<FuncGraph>();
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto input_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(input_abs);
+  auto input = fg->add_parameter();
+  if (input_abs->isa<abstract::AbstractAny>() || input_abs->BuildValue()->isa<parse::InterpretedObject>()) {
+    AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_next_func(";
+    const std::string data_str = "__data__";
+    script_buffer << data_str << ")";
+    (void)local_key_inputs.emplace_back(NewValueNode(data_str));
+    (void)local_value_inputs.emplace_back(input);
+    const auto &script = script_buffer.str();
+    auto local_key_node = fg->NewCNode(local_key_inputs);
+    auto local_value_node = fg->NewCNode(local_value_inputs);
+    auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+    auto ret = fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node);
+    fg->set_output(ret);
+    return fg;
+  }
+  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string func_name = input_abs->isa<abstract::AbstractDictionary>() ? "dict_next" : "ms_next";
+  py::function fn = python_adapter::GetPyFn(module, func_name);
+  auto prim_func = parse::ParsePythonCode(fn);
+  auto ret = fg->NewCNode({NewValueNode(prim_func), input});
+  fg->set_output(ret);
+  return fg;
+}
 }  // namespace prim
 }  // namespace mindspore

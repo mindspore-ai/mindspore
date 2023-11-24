@@ -363,6 +363,36 @@ class ZerosLike : public MetaFuncGraph {
   MultitypeFuncGraphPtr fn_leaf_;
 };
 using ZerosLikePtr = std::shared_ptr<ZerosLike>;
+
+class IterConverter : public MetaFuncGraph {
+ public:
+  explicit IterConverter(const std::string &name) : MetaFuncGraph(name) {}
+  ~IterConverter() override = default;
+  MS_DECLARE_PARENT(IterConverter, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const IterConverter &lhs, const IterConverter &rhs) { return lhs.name_ == rhs.name_; }
+};
+using IterConverterPtr = std::shared_ptr<IterConverter>;
+
+class HasNext : public MetaFuncGraph {
+ public:
+  explicit HasNext(const std::string &name) : MetaFuncGraph(name) {}
+  ~HasNext() override = default;
+  MS_DECLARE_PARENT(HasNext, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const HasNext &lhs, const HasNext &rhs) { return lhs.name_ == rhs.name_; }
+};
+using HasNextPtr = std::shared_ptr<HasNext>;
+
+class Next : public MetaFuncGraph {
+ public:
+  explicit Next(const std::string &name) : MetaFuncGraph(name) {}
+  ~Next() override = default;
+  MS_DECLARE_PARENT(Next, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const Next &lhs, const Next &rhs) { return lhs.name_ == rhs.name_; }
+};
+using NextPtr = std::shared_ptr<Next>;
 }  // namespace prim
 }  // namespace mindspore
 

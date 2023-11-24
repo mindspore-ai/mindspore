@@ -14,6 +14,7 @@
 # ============================================================================
 """test graph list comprehension"""
 import pytest
+import itertools
 import numpy as np
 
 from mindspore import Tensor, jit, context
@@ -212,3 +213,45 @@ def test_list_comprehension_with_variable_input_and_condition_3():
     with pytest.raises(RuntimeError) as raise_info:
         foo(Tensor([1, 2, 3]))
     assert "Cannot join the return values of different branches" in str(raise_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_list_comprehension_with_iterator_input():
+    """
+    Feature: Graph syntax list comp.
+    Description: Graph list comprehension syntax.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        m = (1, 2)
+        n = (4, 5)
+        x = [i for i in itertools.product(m, n)]
+        return x
+
+    res = foo()
+    assert res == [(1, 4), (1, 5), (2, 4), (2, 5)]
+
+
+@pytest.mark.skip(reason="AbstractAny cause dynamic length list exist")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_list_comprehension_with_iterator_input_2():
+    """
+    Feature: Graph syntax list comp.
+    Description: Graph list comprehension syntax.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo(a, b, c, d):
+        m = (a, b)
+        n = (c, d)
+        x = [i for i in itertools.product(m, n)]
+        return x
+
+    foo(Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4]))

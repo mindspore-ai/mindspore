@@ -2298,21 +2298,6 @@ def itemset(data, *args):
     return compile_utils.tensor_itemset(data, *args)
 
 
-def ms_iter(xs):
-    """Implementation of `iter`."""
-    return xs.__ms_iter__
-
-
-def ms_next(it):
-    """Implementation of `next`."""
-    return it.__ms_next__
-
-
-def hasnext(it):
-    """Implementation of `hasnext`."""
-    return it.__ms_hasnext__
-
-
 @constexpr
 def cast_to_str(data):
     return str(data)
@@ -2426,10 +2411,6 @@ def list_func(*data):
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "list() does not support single sparse tensor input.")
-    if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
-        data_type = F.typeof(data)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
@@ -2438,8 +2419,8 @@ def list_func(*data):
             return ret
     else:
         ret = F.make_list()
-    for i in range(len(data)):
-        ret = ret + F.make_list(data[i])
+    for i in data:
+        ret = ret + F.make_list(i)
     return ret
 
 
@@ -2453,9 +2434,6 @@ def tuple_func(*data):
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         raise TypeError("tuple() does not support single sparse tensor input.")
-    if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
-        data_type = F.typeof(data)
-        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
@@ -2464,8 +2442,8 @@ def tuple_func(*data):
             return ret
     else:
         ret = F.make_tuple()
-    for i in range(len(data)):
-        ret = ret + F.make_tuple(data[i])
+    for i in data:
+        ret = ret + F.make_tuple(i)
     return ret
 
 
@@ -3437,24 +3415,14 @@ def triu(input, diagonal=0):
 #############
 
 
-def tuple_next(xs):
-    """Next tuple."""
-    return xs[0], xs[1:]
-
-
-def tuple_hasnext(xs):
-    """Whether the tuple is empty or not."""
+def ms_hasnext(xs):
+    """Whether the input has next element"""
     return len(xs) > 0
 
 
-def list_next(xs):
-    """Next list."""
+def ms_next(xs):
+    """Get next element and res elements"""
     return xs[0], xs[1:]
-
-
-def list_hasnext(xs):
-    """Whether the list is empty or not."""
-    return len(xs) > 0
 
 
 def dict_next(xs):
@@ -3466,31 +3434,6 @@ def dict_next(xs):
         new_keys.append(keys[i])
         new_values.append(xs[keys[i]])
     return keys[0], F.make_dict(new_keys, new_values)
-
-
-def dict_hasnext(xs):
-    """Whether the dict is empty or not."""
-    return len(xs) > 0
-
-
-def array_next(xs):
-    """Next array."""
-    return xs[0], xs[1:]
-
-
-def array_hasnext(xs):
-    """Whether the array is empty or not."""
-    return len(xs) > 0
-
-
-def str_next(xs):
-    """Next string."""
-    return xs[0], xs[1:]
-
-
-def str_hasnext(xs):
-    """Whether the string is empty or not."""
-    return len(xs) > 0
 
 
 def list_append(self_, list_item):
