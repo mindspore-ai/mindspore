@@ -279,4 +279,20 @@ CUST_ATTR_MAP(MultiMarginLoss) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
                                   {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 CUST_OUTPUT_MAP(MultiMarginLoss) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MultiMarginLoss, prim::kPrimMultiMarginLoss->name(), CUST_ADPT_DESC(MultiMarginLoss));
+
+// RmsNorm
+INPUT_MAP(RmsNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}};
+ATTR_MAP(RmsNorm) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(RmsNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(RmsNorm, prim::kPrimRmsNorm->name(), ADPT_DESC(RmsNorm))
+
+// RmsNormGrad
+INPUT_MAP(RmsNormGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(gamma)}};
+ATTR_MAP(RmsNormGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RmsNormGrad) = {
+  {0, OUTPUT_DESC(dx)},
+  {1, OUTPUT_DESC(dgamma)},
+};
+REG_ADPT_DESC(RmsNormGrad, prim::kPrimRmsNormGrad->name(), ADPT_DESC(RmsNormGrad))
+
 }  // namespace mindspore::transform
