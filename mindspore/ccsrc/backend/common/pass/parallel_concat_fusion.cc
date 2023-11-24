@@ -21,6 +21,7 @@
 
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -31,8 +32,6 @@ const BaseRef ParallelConcatFusion::DefinePattern() const {
 
 const AnfNodePtr ParallelConcatFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
-  constexpr auto kN = "N";
-
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -54,7 +53,8 @@ const AnfNodePtr ParallelConcatFusion::Process(const FuncGraphPtr &graph, const 
     }
   }
 
-  common::AnfAlgo::SetNodeAttr(kN, MakeValue(n), cnode);
+  std::vector<int64_t> dyn_input_sizes{n};
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
 
   return cnode;
 }
