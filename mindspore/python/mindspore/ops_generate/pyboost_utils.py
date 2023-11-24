@@ -83,7 +83,7 @@ def get_convert_type_str(dtype: str, optional):
         'list[bool]': 'ToBoolList<py::list>',
         'list[tensor]': 'ToTensorList<py::list>',
         'tensor': 'ToTensor',
-        'str': 'ToStr',
+        'str': 'ToString',
         'type': 'ToDtype',
     }
     optional_type_convert = {
@@ -91,6 +91,12 @@ def get_convert_type_str(dtype: str, optional):
         'float': 'ToFloatOptional',
         'number': 'ToScalarOptional',
         'tensor': 'ToTensorOptional',
+        'tuple[int]': 'ToIntListOptional<py::tuple>',
+        'tuple[float]': 'ToFloatListOptional<py::tuple>',
+        'tuple[bool]': 'ToBoolListOptional<py::tuple>',
+        'list[int]': 'ToIntListOptional<py::list>',
+        'list[float]': 'ToFloatListOptional<py::list>',
+        'list[bool]': 'ToBoolListOptional<py::list>',
     }
     if optional:
         if dtype in optional_type_convert:
@@ -154,6 +160,7 @@ def get_input_dtype(dtype: str, optional):
         'str': 'StringImmPtr',
         'type': 'TypePtr',
     }
+    kValueTuplePtrOptional = 'std::optional<ValueTuplePtr>'
     optional_type_convert = {
         'int': 'std::optional<Int64ImmPtr>',
         'float': 'std::optional<FP32ImmPtr>',
@@ -162,6 +169,9 @@ def get_input_dtype(dtype: str, optional):
         'tensor': 'std::optional<TensorPtr>',
         'str': 'std::optional<StringImmPtr>',
         'type': 'std::optional<TypePtr>',
+        'tuple[int]': kValueTuplePtrOptional,
+        'tuple[float]': kValueTuplePtrOptional,
+        'tuple[bool]': kValueTuplePtrOptional,
     }
     if optional:
         if dtype in optional_type_convert:
@@ -198,6 +208,7 @@ def get_aclnn_interface(class_name):
     if class_name in aclnn_map.keys():
         return aclnn_map[class_name]
     return "aclnn" + class_name
+
 
 def get_return_type(dtype: str):
     """

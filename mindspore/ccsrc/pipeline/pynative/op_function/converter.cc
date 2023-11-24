@@ -199,6 +199,15 @@ ValueTuplePtr Converter::ToIntList(size_t i) {
   return nullptr;
 }
 
+template <typename T>
+std::optional<ValueTuplePtr> Converter::ToIntListOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToIntList<T>(i));
+}
+
 BoolImmPtr Converter::ToBool(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
@@ -214,6 +223,14 @@ BoolImmPtr Converter::ToBool(size_t i) {
   }
   ThrowException(i);
   return nullptr;
+}
+
+std::optional<BoolImmPtr> Converter::ToBoolOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToBool(i));
 }
 
 template <typename T>
@@ -232,6 +249,15 @@ ValueTuplePtr Converter::ToBoolList(size_t i) {
   }
   ThrowException(i);
   return nullptr;
+}
+
+template <typename T>
+std::optional<ValueTuplePtr> Converter::ToBoolListOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToBoolList<T>(i));
 }
 
 FP32ImmPtr Converter::ToFloat(size_t i) {
@@ -267,6 +293,15 @@ ValueTuplePtr Converter::ToFloatList(size_t i) {
   }
   ThrowException(i);
   return nullptr;
+}
+
+template <typename T>
+std::optional<ValueTuplePtr> Converter::ToFloatListOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToFloatList<T>(i));
 }
 
 ScalarPtr Converter::ToScalar(size_t i) {
@@ -331,12 +366,12 @@ void Converter::ThrowException(size_t i) {
 // Declare template to compile corresponding method.
 template ValueTuplePtr Converter::ToTensorList<py::tuple>(size_t i);
 template ValueTuplePtr Converter::ToTensorList<py::list>(size_t i);
-template ValueTuplePtr Converter::ToIntList<py::tuple>(size_t i);
-template ValueTuplePtr Converter::ToIntList<py::list>(size_t i);
-template ValueTuplePtr Converter::ToBoolList<py::tuple>(size_t i);
-template ValueTuplePtr Converter::ToBoolList<py::list>(size_t i);
-template ValueTuplePtr Converter::ToFloatList<py::tuple>(size_t i);
-template ValueTuplePtr Converter::ToFloatList<py::list>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::tuple>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::list>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::tuple>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::list>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::tuple>(size_t i);
+template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::list>(size_t i);
 
 }  // namespace pynative
 }  // namespace mindspore

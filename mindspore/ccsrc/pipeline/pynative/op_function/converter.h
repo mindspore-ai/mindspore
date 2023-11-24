@@ -39,12 +39,19 @@ class Converter {
   std::optional<Int64ImmPtr> ToIntOptional(size_t i);
   template <typename T>
   ValueTuplePtr ToIntList(size_t i);
+  template <typename T>
+  std::optional<ValueTuplePtr> ToIntListOptional(size_t i);
   BoolImmPtr ToBool(size_t i);
+  std::optional<BoolImmPtr> ToBoolOptional(size_t i);
   template <typename T>
   ValueTuplePtr ToBoolList(size_t i);
+  template <typename T>
+  std::optional<ValueTuplePtr> ToBoolListOptional(size_t i);
   FP32ImmPtr ToFloat(size_t i);
   template <typename T>
   ValueTuplePtr ToFloatList(size_t i);
+  template <typename T>
+  std::optional<ValueTuplePtr> ToFloatListOptional(size_t i);
   ScalarPtr ToScalar(size_t i);
   StringImmPtr ToString(size_t i);
   TypePtr ToDtype(size_t i);
