@@ -69,7 +69,7 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
     GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
-    graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
+    (void)graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
     auto json_kernel_name = graph_kernel_json_generator.kernel_name();
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;
