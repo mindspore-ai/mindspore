@@ -92,7 +92,7 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
     scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<float>>();
+    scales_ = inputs[kIndex1]->GetValueWithCheck<std::vector<float>>();
     if (scales_.empty()) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
     }
