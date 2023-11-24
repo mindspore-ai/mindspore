@@ -53,6 +53,10 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   int InitMatrixBBuffer();
   int MallocQuantParam();
 
+ public:
+  int8_t *pack_b_ptr_ = nullptr;
+  int *weight_sums_ = nullptr;
+
  protected:
   int a_batch_ = 1;
   int b_batch_ = 1;
@@ -73,7 +77,6 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   MatMulParameter *param_ = nullptr;
   MatmulDynamicQuantParameter *quant_param_ = nullptr;
   int8_t *pack_a_ptr_ = nullptr;
-  int8_t *pack_b_ptr_ = nullptr;
 
   bool input_per_channel_ = false;
   bool filter_per_channel_ = true;
@@ -84,7 +87,7 @@ class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
   void *bias_ptr_ = nullptr;
   void *batch_c_ptr_ = nullptr;
   int *input_sums_ = nullptr;
-  int *weight_sums_ = nullptr;
+
   int row_tile_ = C4NUM;
   int col_tile_ = C4NUM;
   int deep_tile_ = C16NUM;

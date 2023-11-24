@@ -42,8 +42,14 @@ const char kAndroidArmCpuBackendOption[] = "ANDROID_ARM_CPU";
 mindspore::lite::InnerContext *InitInnerContextForAndroidArmCpu() {
   // if the operation use thread_pool in inner context will throw exception.
   auto inner_context = new (std::nothrow) lite::InnerContext();
-  inner_context->Init();
   MS_CHECK_TRUE_MSG(inner_context != nullptr, nullptr, "Create InnerContext failed.");
+  auto ret = inner_context->Init();
+  if (ret != RET_OK) {
+    delete inner_context;
+    MS_LOG(ERROR) << "InnerContext init failed.";
+    return nullptr;
+  }
+
   inner_context->thread_num_ = kSingleThread;
   inner_context->instructions_ctx_.support_sdot = true;
   return inner_context;

@@ -359,9 +359,9 @@ void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
     if (IsPartialNode(node->primitive_, model_->GetSchemaVersion())) {
       continue;
     }
-    int input_count =
+    int input_count = static_cast<int>(
       std::count_if(node->input_indices_.begin(), node->input_indices_.end(),
-                    [&](uint32_t in_tensor_index) { return tensors_[in_tensor_index].type_ != CONSTANT; });
+                    [&](uint32_t in_tensor_index) { return tensors_[in_tensor_index].type_ != CONSTANT; }));
     if (input_count > 1) {
       multy_in_nodes->push_back(node_index);
     }
