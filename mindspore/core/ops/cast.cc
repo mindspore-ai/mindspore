@@ -32,11 +32,11 @@ class CastInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto x = input_args[0];
     abstract::BaseShapePtr shape_ptr{nullptr};
-    if (x->isa<abstract::AbstractTensor>()) {
-      auto shape = x->BuildShape();
+    if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
+      auto shape = x->GetShape();
       MS_EXCEPTION_IF_NULL(shape);
       shape_ptr = shape->cast<abstract::ShapePtr>();
-    } else if (x->isa<abstract::AbstractScalar>()) {
+    } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex0])) {
       shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{});
     } else {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input should be a Tensor or a number.";
@@ -50,13 +50,13 @@ class CastInfer : public abstract::OpInferBase {
     const auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
 
     constexpr int64_t kCastInputNumWithDtype = 2;
     ValuePtr dst_type;
     if (input_args.size() == kCastInputNumWithDtype) {
-      dst_type = input_args[1]->BuildValue();
+      dst_type = input_args[1]->GetValue();
     } else {
       dst_type = primitive->GetAttr(kDstType);
     }

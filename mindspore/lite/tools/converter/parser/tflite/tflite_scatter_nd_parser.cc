@@ -17,7 +17,7 @@
 #include "tools/converter/parser/tflite/tflite_scatter_nd_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/scatter_nd.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

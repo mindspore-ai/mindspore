@@ -50,8 +50,9 @@ const std::vector<std::pair<KernelAttr, NthElementPtrCreatorFunc>> kernel_attr =
    CreateNthElementKernelPtr<double>}};
 }  // namespace
 
-bool NthElementGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool NthElementGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -61,10 +62,8 @@ bool NthElementGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   return true;
 }
 
-bool NthElementGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool NthElementGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -75,15 +74,14 @@ bool NthElementGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  attr_ptr_->reverse = kernel_ptr->get_reverse();
+  attr_ptr_->reverse = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int NthElementGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NthElementGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -93,16 +91,15 @@ int NthElementGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> input_n_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> input_n_shape = inputs[kIndex1]->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
   input_shapes.emplace_back(input_shape);
   input_shapes.emplace_back(input_n_shape);
   output_shapes.emplace_back(output_shape);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   return KRET_OK;
 }

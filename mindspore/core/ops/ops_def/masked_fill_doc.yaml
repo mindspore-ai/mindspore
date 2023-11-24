@@ -1,0 +1,42 @@
+masked_fill:
+    description: |
+        Fills elements of Tensor with value where mask is True.
+        The shapes of `input` and `mask` need to be the same or broadcastable.
+
+        Note:
+            If `value` is a floating-point number of Python, it will be converted to float32 later by default.
+            In this case, if `input` is a float16 Tensor, it will be converted to float32 for calculation,
+            and the result type will be converted back to float16 on the CPU and Ascend platforms, which may
+            cause the performance penalty. A TypeError may be raised on the GPU platform. Therefore,
+            it is recommended that 'value' should use a Tensor with the same dtype as `input`.
+
+        Args:
+            - **input** (Tensor): The source Tensor whose data type is one of bool, uint8, int8, int16, int32,
+                        int64, float16, float32, float64, complex64, complex128.
+            - **mask** (Tensor[bool]): The boolean mask.
+            - **value** (Union[number, Tensor]): The value to fill in with, which dtype is the same as `input`.
+
+        Returns:
+            Tensor, has the same type and shape as `input`.
+
+        Raises:
+            TypeError: If dtype of `mask` is not bool.
+            TypeError: If `input` or `mask` is not a Tensor.
+            ValueError: If the shapes of `input` and `mask` could not be broadcast.
+            TypeError: If dtype of `input` or `value` is not one of bool, uint8, int8, int16, int32,
+                    int64, float16, float32, float64, complex64, complex128.
+            TypeError: If dtype of `value` is different from that of `input`.
+            TypeError: If `value` is neither number nor Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+            >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+            >>> output = ops.masked_fill(input, mask, 0.5)
+            >>> print(output)
+        [0.5 0.5 3.  0.5]

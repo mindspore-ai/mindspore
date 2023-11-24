@@ -23,6 +23,7 @@
 #include "extendrt/utils/tensor_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 #include "mindspore/ccsrc/kernel/framework_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 TensorRefData::TensorRefData(void *data, size_t bytes_size, size_t data_size, size_t ndim,

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include "mindspore/core/ops/median.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -35,8 +36,8 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
   MedianGpuKernelMod() : global_median_(false), keep_dims_(false), axis_(0) {}
   ~MedianGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -52,34 +53,25 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(base_operator);
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
-      return false;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (inputs.size() != kMedianInputsNum || outputs.size() > kMedianOutputsNum) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kMedianInputsNum << " and "
                     << kMedianOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
       return false;
     }
-    if (kernel_ptr->get_ignore_nan()) {
+
+    if (GetValue<bool>(primitive_->GetAttr(ops::kIgnoreNan))) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attribute ignore_nan is not supported on GPU yet.";
       return false;
     }
-    global_median_ = kernel_ptr->get_global_median();
-    keep_dims_ = kernel_ptr->get_keep_dims();
-    attr_axis_ = kernel_ptr->get_axis();
+    global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+    keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+    attr_axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

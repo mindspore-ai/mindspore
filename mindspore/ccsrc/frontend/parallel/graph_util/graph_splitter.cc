@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -921,6 +921,9 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   // Step 2: Create the new node.
   auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
   (void)new_node_inputs.insert(new_node_inputs.cbegin(), new_node_prim);
+  if (many_to_one_node_name == kConcatOpName) {
+    (void)new_node_inputs.insert(new_node_inputs.cend(), NewValueNode(MakeValue(0L)));
+  }
 
   auto new_node = func_graph_->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -939,10 +942,6 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
     new_shape[0] = new_shape[0] * static_cast<int64_t>(total_inputs_number);
     new_abs->shape()->set_shape(new_shape);
     new_node->set_abstract(new_abs);
-
-    // Concat node must have attribute "axis" or kernel building will fail.
-    size_t axis_index = 0;
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(UlongToLong(axis_index)), new_node);
   } else if (many_to_one_node_name == kMakeTupleOpName) {
     AbstractBasePtrList abstract_list;
     auto first_input = new_node_inputs.begin();

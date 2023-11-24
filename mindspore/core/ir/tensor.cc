@@ -787,6 +787,11 @@ Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
       data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
       id_(MakeId()) {}
 
+Tensor::Tensor(const std::vector<float> &input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {static_cast<int>(input.size())}),
+      data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
+      id_(MakeId()) {}
+
 Tensor::Tensor(int64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeInt64), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
@@ -918,6 +923,24 @@ DeviceSyncPtr Tensor::device_address() const {
     device_sync_->ResetRefCount();
   }
   return device_sync_;
+}
+
+std::vector<int64_t> Tensor::stride() {
+  auto storage_info = storage_info_;
+  if (storage_info != nullptr) {
+    return storage_info->strides;
+  }
+
+  if (shape_.empty()) {
+    return {};
+  }
+  std::vector<int64_t> ret(shape_.size(), 1);
+  int64_t stride = 1;
+  for (size_t i = shape_.size() - 1; i > 0; --i) {
+    stride *= shape_[i];
+    ret[i - 1] = stride;
+  }
+  return ret;
 }
 
 void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count) {

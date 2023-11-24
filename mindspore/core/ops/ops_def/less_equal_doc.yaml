@@ -1,0 +1,30 @@
+less_equal:
+  description: |
+    Computes the boolean value of :math:`x <= y` element-wise.
+
+    Refer to :func:`mindspore.ops.le` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+        a bool or a tensor whose data type is
+        `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+        the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+        When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.less_equal(x, y)
+        >>> print(output)
+        [ True False  True]

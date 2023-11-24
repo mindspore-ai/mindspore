@@ -22,6 +22,7 @@
 #include <vector>
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/abstract/dshape.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
@@ -35,12 +36,13 @@ abstract::TupleShapePtr EllipsisToSliceInferShape(const PrimitivePtr &primitive,
   AbstractBasePtrList elements = input_args;
   const size_t kIntNums = 2;
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kEqual, kIntNums, prim_name);
-  if (!input_args[1]->isa<abstract::AbstractSequence>()) {
+  auto input_type = input_args[1]->GetType()->type_id();
+  if (!(input_type == kObjectTypeTuple || input_type == kObjectTypeList)) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', the input data type must be list or tuple of tensors.But got:"
                             << input_args[0]->ToString();
   }
-  auto data_shape = input_args[0]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+  auto data_shape = input_args[0]->GetShape()->cast<abstract::ShapePtr>()->shape();
   const size_t kSliceInfoNums = 3;
   // If any shape is dynamic rank, return a dynamic rank.
   if (IsDynamicRank(data_shape)) {

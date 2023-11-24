@@ -264,8 +264,6 @@ def get_mlp_cell_reuse_infer():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_mlp_cell_with_control_flow_reuse_0():
     """

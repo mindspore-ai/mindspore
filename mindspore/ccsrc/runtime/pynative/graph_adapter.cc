@@ -98,8 +98,10 @@ device::DeviceAddressPtr CreateValueNodeAddress(const ValueNodePtr &value_node,
   auto output_format = AnfAlgo::GetOutputFormat(value_node, 0);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  return device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format, data_type,
-                                                                  trans::GetRuntimePaddingShape(value_node, 0));
+  const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+    {value_node, 0}, nullptr, tensor_size, output_format, data_type, trans::GetRuntimePaddingShape(value_node, 0),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  return device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 }
 
 bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address,
@@ -329,7 +331,6 @@ void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
 
       auto abstract = parameter->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      // Shape contain max_shape and min_shape.
       auto shape = abstract->BuildShape();
       auto new_abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(address->type_id()), shape);
       parameter->set_abstract(new_abs);

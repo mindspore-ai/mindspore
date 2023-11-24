@@ -48,13 +48,10 @@ class AdaptiveAvgPool3DGradHelperGpuKernel : public GpuKernelHelperBase {
     if (cur_size_T == 0 && inp_flap == 0) {
       inp_flap = 1;
     }
-    input_size_list_.emplace_back(cur_size_T);
 
-    size_t cur_size = sizeof(int32_t);
     if (in_orig_input_size_shape_[0] == 0 && inp_flap == 0) {
       inp_flap = 1;
     }
-    input_size_list_.emplace_back(cur_size * in_orig_input_size_shape_[0]);
 
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);

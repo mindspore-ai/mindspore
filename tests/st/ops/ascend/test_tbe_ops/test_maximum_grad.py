@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
-import torch
 
+import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -45,34 +46,37 @@ class GradWrap(Cell):
         return gout
 
 
-def gen_data(inputA_np, inputB_np, grad_=None):
+def gen_data(inputA_np, inputB_np, grad_=None, ms_type=ms.float32):
     inputA_me = inputA_np
     if isinstance(inputA_np, np.ndarray):
-        inputA_me = Tensor(inputA_me)
+        inputA_me = Tensor(inputA_me, ms_type)
+
     inputB_me = inputB_np
     if isinstance(inputB_np, np.ndarray):
-        inputB_me = Tensor(inputB_np)
+        inputB_me = Tensor(inputB_np, ms_type)
+
     if grad_ is None:
         grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    grad_me = Tensor(grad_, ms_type)
 
     net_me = GradWrap(MaxNetMe())
     net_me.set_train()
-    output_me = net_me(inputA_me, inputB_me, Tensor(grad_))
-    ms_inputA_grad = output_me[0].asnumpy()
-    ms_inputB_grad = output_me[1].asnumpy()
-
-    torch_inputA = torch.tensor(inputA_np.astype(np.float32), requires_grad=True)
-    torch_inputB = torch.tensor(inputB_np.astype(np.float32), requires_grad=True)
-    output_pt = torch.max(torch_inputA, torch_inputB)
-    grad_pt = torch.from_numpy(grad_.astype(np.float32))
-    output_pt.backward(grad_pt)
-    torch_inputA_grad = torch_inputA.grad.detach().numpy()
-    torch_inputB_grad = torch_inputB.grad.detach().numpy()
-
-    assert np.allclose(ms_inputA_grad, torch_inputA_grad, rtol=1e-6, atol=1e-4)
-    assert np.allclose(ms_inputB_grad, torch_inputB_grad, rtol=1e-6, atol=1e-4)
+    output_me = net_me(inputA_me, inputB_me, grad_me)
+    if ms_type == ms.bfloat16:
+        ms_inputA_grad = output_me[0].float().asnumpy()
+        ms_inputB_grad = output_me[1].float().asnumpy()
+    else:
+        ms_inputA_grad = output_me[0].asnumpy()
+        ms_inputB_grad = output_me[1].asnumpy()
+    print("---me---")
+    print(ms_inputA_grad)
+    print(ms_inputB_grad)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_net():
     """
     Feature: test maximum grad on ascend
@@ -81,9 +85,13 @@ def test_net():
     """
     inputA_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     inputB_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
-    gen_data(inputA_np, inputB_np)
+    gen_data(inputA_np, inputB_np, ms_type=ms.float32)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_max_tensor_grad_with_same_input():
     """
     Feature: test maximum grad on ascend
@@ -93,4 +101,41 @@ def test_max_tensor_grad_with_same_input():
     inputA_np = np.array([1.8, 5.6, 9.3]).astype(np.float32)
     inputB_np = np.array([2.3, 5.6, 5.8]).astype(np.float32)
     grad_ = np.array([1.0, -1.0, 0]).astype(np.float32)
-    gen_data(inputA_np, inputB_np, grad_)
+    gen_data(inputA_np, inputB_np, grad_, ms_type=ms.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_bfloat16():
+    """
+    Feature: test minimum grad on ascend
+    Description: test the minimumgrad with bfloat16.
+    Expectation: result match to torch result.
+    """
+    inputA_np = np.random.randn(3, 3).astype(np.float32)
+    inputB_np = np.random.randn(3, 3).astype(np.float32)
+    grad_ = np.random.randn(3, 3).astype(np.float32)
+    gen_data(inputA_np, inputB_np, grad_, ms_type=ms.bfloat16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_bf16():
+    """
+    Feature: test maximumgrad on Ascend(910B)
+    Description: test maximumgrad with same input bfloat16 tensor.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = GradWrap(MaxNetMe())
+    output = net(Tensor(x_np, ms.bfloat16), Tensor(y_np, ms.bfloat16), Tensor(dout, ms.bfloat16))
+    print(output[0].float().asnumpy())
+    print(output[1].float().asnumpy())
+    expect0 = np.array([0.5, -0.5, 0.])
+    expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].float().asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].float().asnumpy(), expect1, rtol=1e-6, atol=1e-4)

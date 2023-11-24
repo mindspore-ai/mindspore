@@ -60,21 +60,8 @@ class AscendSession : public SessionBasic {
   void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   void BuildGraphImpl(GraphId) override;
 
-  KernelGraphPtr BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
-                             const std::vector<tensor::TensorPtr> &input_tensors,
-                             const std::vector<int64_t> &tensors_mask) override;
-
   void BindAddressToTensor(const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) const;
-  void RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                       std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                       const std::vector<int64_t> &tensors_mask) override;
 
-  void RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                 const std::vector<int64_t> &tensors_mask) override;
-  void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
-                       const std::vector<tensor::TensorPtr> &graph_inputs,
-                       const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
   void UpdateOutputTensors(const VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
@@ -136,12 +123,6 @@ class AscendSession : public SessionBasic {
 #endif
   void AssignStaticMemory(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void UpdateRefOutputMap(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
-  KernelGraphPtr PreBuildOp(const BackendOpRunInfoPtr &op_run_info, const std::vector<tensor::TensorPtr> &input_tensors,
-                            const std::vector<int64_t> &tensors_mask);
-  void GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
-                             const std::vector<tensor::TensorPtr> &graph_inputs,
-                             const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
-                             InputTensorInfo *input_tensor_info) const;
 
   void SelectKernel(const KernelGraphPtr &graph) const;
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const;

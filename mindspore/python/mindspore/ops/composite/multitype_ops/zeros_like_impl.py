@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Implementation for internal polymorphism `zeros_like_leaf` operations."""
+"""Implementation for internal polymorphism `zeros_like` operations."""
 
 from __future__ import absolute_import
 from mindspore.ops.composite import base
@@ -21,9 +21,9 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore.ops.primitive import Primitive
 
-zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
+zeros_like_leaf = base.MultitypeFuncGraph('zeros_like', True)
 """
-`zeros_like_leaf` is a metafuncgraph object which will generate a tensor filled with one according to its input type
+`zeros_like` is a metafuncgraph object which will generate a tensor filled with one according to its input type
 using ".register" decorator.
 """
 
@@ -41,15 +41,18 @@ def _zeros_like_bool(x):
     """Returns False if x is a bool."""
     return False
 
+
 @zeros_like_leaf.register("String")
 def _zeros_like_string(x):
     """Returns False if x is a string."""
     return 0
 
+
 @zeros_like_leaf.register("Tuple")
 def _zeros_like_tuple(x):
     """Returns False if x is a tuple."""
     return 0
+
 
 @zeros_like_leaf.register("Function")
 def _zeros_like_func(x):

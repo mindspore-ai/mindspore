@@ -30,11 +30,8 @@ constexpr size_t kNonMaxSuppressionWithOverlapsOutputsNum = 1;
 constexpr size_t kOverlapsRank = 2;
 }  // namespace
 
-bool NonMaxSuppressionWithOverlapsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NonMaxSuppressionWithOverlapsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNonMaxSuppressionWithOverlapsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNonMaxSuppressionWithOverlapsOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -47,34 +44,32 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Init(const BaseOperatorPtr &base
   return true;
 }
 
-int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int NonMaxSuppressionWithOverlapsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
     return ret;
   }
 
-  auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto overlaps_shape = inputs[kIndex0]->GetDeviceShapeVector();
   num_boxes_ = LongToInt(overlaps_shape[0]);
   return KRET_OK;
 }
 
-bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   Eigen::TensorMap<Eigen::Tensor<float, kOverlapsRank, Eigen::RowMajor>> overlaps_map(
-    reinterpret_cast<float *>(inputs[0]->addr), num_boxes_, num_boxes_);
+    reinterpret_cast<float *>(inputs[0]->device_ptr()), num_boxes_, num_boxes_);
   std::vector<float> scores_data(num_boxes_);
-  (void)std::copy_n(reinterpret_cast<float *>(inputs[1]->addr), num_boxes_, scores_data.begin());
-  auto max_output_size = *reinterpret_cast<int32_t *>(inputs[2]->addr);
+  (void)std::copy_n(reinterpret_cast<float *>(inputs[1]->device_ptr()), num_boxes_, scores_data.begin());
+  auto max_output_size = *reinterpret_cast<int32_t *>(inputs[2]->device_ptr());
   if (max_output_size < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input max_output_size must be non-negative.";
   }
-  auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->addr);
-  auto score_threshold = *reinterpret_cast<float *>(inputs[4]->addr);
+  auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->device_ptr());
+  auto score_threshold = *reinterpret_cast<float *>(inputs[4]->device_ptr());
   std::unique_ptr<int32_t[]> indices_data = std::make_unique<int32_t[]>(static_cast<size_t>(max_output_size));
   if (indices_data == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', new indices_data failed.";
@@ -115,7 +110,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
       cnt += 1;
     }
   }
-  auto value = reinterpret_cast<int32_t *>(outputs[0]->addr);
+  auto value = reinterpret_cast<int32_t *>(outputs[0]->device_ptr());
   real_output_size_ = std::min(cnt, max_output_size);
   for (int32_t j = 0; j < real_output_size_; ++j) {
     *(value + j) = indices_data[IntToSize(j)];
@@ -123,9 +118,11 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   return true;
 }
 
-void NonMaxSuppressionWithOverlapsCpuKernelMod::SyncOutputShape() {
+void NonMaxSuppressionWithOverlapsCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                         const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_shape = {real_output_size_};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 
 std::vector<KernelAttr> NonMaxSuppressionWithOverlapsCpuKernelMod::GetOpSupport() {

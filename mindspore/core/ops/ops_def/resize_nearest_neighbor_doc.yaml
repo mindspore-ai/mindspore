@@ -1,0 +1,41 @@
+resize_nearest_neighbor:
+    description: |
+        Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
+        neighbor algorithm selects the value of the nearest point and does not consider the
+        values of neighboring points at all, yielding a piecewise-constant interpolant.
+
+        Args:
+            size (Union[tuple, list]): The target size. The dimension of size must be 2.
+            align_corners (bool): Whether the centers of the 4 corner pixels of the input
+                                  and output tensors are aligned. Default: ``False`` .
+
+        Inputs:
+            - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
+            - **size** (Union[tuple, list]) - The target size. The dimension of size must be 2.
+            - **align_corners** (bool) - Whether the centers of the 4 corner pixels of the input
+                                         and output tensors are aligned. Default: ``False`` .
+            - **half_pixel_centers** (bool, optional): Whether half pixel center. If set to ``True``,
+                    `align_corners` should be False. Default: ``False``.
+
+        Outputs:
+            Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
+            The data type is the same as the `input_x`.
+
+        Raises:
+            TypeError: If `size` is neither tuple nor list.
+            TypeError: If `align_corners` is not a bool.
+            ValueError: If length of `size` is not equal to 2.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor, ops
+            >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
+            >>> size = (2, 2)
+            >>> output = ops.ResizeNearestNeighbor(size=size)(input_tensor)
+            >>> print(output)
+            [[[[-0.1  0.3]
+              [ 0.4  0.5]]]]

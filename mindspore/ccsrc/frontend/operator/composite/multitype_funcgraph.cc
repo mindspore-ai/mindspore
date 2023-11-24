@@ -259,29 +259,17 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     return stub;
   }
 
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
   bool has_dic = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<Dictionary>(); });
-  if (allow_fallback_runtime && (!need_raise_ || !has_dic)) {
+  if ((!need_raise_ || !has_dic) && name_ != "setitem") {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
     AnfNodePtrList node_inputs{};
     for (auto type : types) {
       node_inputs.push_back(func_graph->add_parameter());
     }
-    if (name_ == "ones_like_leaf") {
-      AnfNodePtr template_node = fallback::GenerateOnesOrZerosLikeNode(func_graph, node_inputs[0], "ones_like");
-      func_graph->set_output(template_node);
-      return func_graph;
-    }
-    if (name_ == "zeros_like_leaf") {
-      AnfNodePtr template_node = fallback::GenerateOnesOrZerosLikeNode(func_graph, node_inputs[0], "zeros_like");
-      func_graph->set_output(template_node);
-      return func_graph;
-    }
-    auto ret_node = fallback::GeneratePyInterpretNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
-    if (ret_node != nullptr) {
-      func_graph->set_output(ret_node);
-      return func_graph;
-    }
+    auto ret_node =
+      fallback::GeneratePyInterpretNodeFromMetaFuncGraph(func_graph, node_inputs, meta_obj_, types, name_);
+    func_graph->set_output(ret_node);
+    return func_graph;
   }
 
   auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx, has_any);

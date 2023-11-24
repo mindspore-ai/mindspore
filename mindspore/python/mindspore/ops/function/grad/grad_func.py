@@ -37,7 +37,6 @@ oneslike = P.OnesLike()
 def _check_has_aux_type(inputs):
     if not isinstance(inputs, bool):
         raise TypeError("The 'has_aux' must be bool type.")
-    return True
 
 
 @constexpr
@@ -362,8 +361,9 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
 
 def get_grad(gradients, identifier):
     """
-    When `return_ids` of :func:`mindspore.grad` is set to True, use its return value as gradients. Then find
-    the specific gradient from `gradients` according to `identifier` .
+    When `return_ids` of :func:`mindspore.grad` or :func:`mindspore.grad` is set to ``True`` ,
+    use return value of `mindspore.grad`, or the second return value of `mindspore.grad` as gradients.
+    Then find the specific gradient from `gradients` according to `identifier` .
 
     As for gradient, two typical cases are included:
 

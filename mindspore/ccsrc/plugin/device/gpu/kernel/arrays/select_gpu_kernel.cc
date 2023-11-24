@@ -21,13 +21,13 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-bool SelectGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+bool SelectGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *input_x = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *input_y = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto status =
     CalSelect(input_cond, input_x, input_y, output, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
@@ -125,24 +125,16 @@ const std::vector<selectPair> &SelectGpuKernelMod::GetFuncList() const {
   return func_list;
 }
 
-bool SelectGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Select>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SelectGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SelectGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
+int SelectGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

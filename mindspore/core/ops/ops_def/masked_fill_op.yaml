@@ -1,0 +1,20 @@
+#operator masked_fill
+masked_fill:
+    args:
+        input:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        value:
+            dtype: tensor
+            #type_cast: number
+    args_signature:
+        dtype_group: (input, value)
+    returns:
+        output:
+            dtype: tensor
+            inplace: input
+    dispatch:
+        enable: False
+
+

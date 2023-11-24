@@ -31,8 +31,8 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
   ResizeBilinearGradGpuKernelMod() = default;
   ~ResizeBilinearGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -40,13 +40,9 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -55,18 +51,18 @@ class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
                                            : in_size / static_cast<float>(out_size);
   }
   using ResizeBilinearGradFunc =
-    std::function<bool(ResizeBilinearGradGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+    std::function<bool(ResizeBilinearGradGpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
 
  private:
   void InitSizeLists() { workspace_size_list_.push_back(workspace_size_); }
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   template <typename T>
-  bool LaunchHalfKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                        const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchHalfKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                        const std::vector<KernelTensor *> &outputs, void *stream_ptr);
   static std::vector<std::pair<KernelAttr, ResizeBilinearGradFunc>> func_list_;
   ResizeBilinearGradFunc kernel_func_;
 

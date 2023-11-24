@@ -36,11 +36,14 @@ if platform.system() == "Linux":
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
 BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
+KEY_NAME = "name"
+ASCEND_CUSTOM_OPP_PATH = "ASCEND_CUSTOM_OPP_PATH"
+
 
 def _get_reg_info_attr(op_info, attr_name, default_value=None):
     """get attr value"""
     for _, item in enumerate(op_info.get("attr", [])):
-        if item.get("name") == attr_name:
+        if item.get(KEY_NAME) == attr_name:
             return item.get("defaultValue")
     return default_value
 
@@ -66,12 +69,12 @@ class _CustomInstaller:
     @staticmethod
     def _set_env(custom_opp_path):
         """set custom file path to env"""
-        if not os.environ.get("ASCEND_CUSTOM_OPP_PATH"):
-            os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path
+        if not os.environ.get(ASCEND_CUSTOM_OPP_PATH):
+            os.environ[ASCEND_CUSTOM_OPP_PATH] = custom_opp_path
         else:
-            paths = os.environ["ASCEND_CUSTOM_OPP_PATH"].split(':')
+            paths = os.environ[ASCEND_CUSTOM_OPP_PATH].split(':')
             if custom_opp_path not in paths:
-                os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path + ':' + os.environ["ASCEND_CUSTOM_OPP_PATH"]
+                os.environ[ASCEND_CUSTOM_OPP_PATH] = custom_opp_path + ':' + os.environ[ASCEND_CUSTOM_OPP_PATH]
 
     @staticmethod
     def _create_dir(*dir_names):
@@ -153,12 +156,12 @@ class _CustomInstaller:
         # attr
         attrs_name = []
         for _, item in enumerate(self.op_info.get("attr", [])):
-            attr_name = item.get("name")
+            attr_name = item.get(KEY_NAME)
             attrs_name.append(attr_name)
             key = "attr_" + attr_name
             op_info[key] = {}
             for k, v in item.items():
-                if k != "name":
+                if k != KEY_NAME:
                     op_info[key][k] = v
         if attrs_name:
             op_info["attr"] = {"list": ",".join(attrs_name)}
@@ -171,7 +174,7 @@ class _CustomInstaller:
             item = inputs[i] if i < input_num else outputs[i - input_num]
             key = "input" if i < input_num else "output"
             key += str(item.get("index"))
-            op_info[key] = {"name": item.get("name"),
+            op_info[key] = {KEY_NAME: item.get(KEY_NAME),
                             "paramType": item.get("paramType", "required"),
                             "shape": item.get("shape", "all")}
             dtype, formats = _get_dtype_format(i)
@@ -491,8 +494,10 @@ class RegOp:
             self._is_string(arg[0])
             self._is_string(arg[1])
             if len(arg) == 3:
-                self._is_string(arg[2])
-            dtype_format.append(arg)
+                if self._is_string(arg[2]):
+                    dtype_format.append(arg)
+            else:
+                dtype_format.append(arg)
         self.dtype_format_.append(tuple(dtype_format))
         return self
 
@@ -774,8 +779,8 @@ class TBERegOp(RegOp):
                                          False: indicates that the operator does not support dynamic rank.
                                          Default: ``False`` .
         """
-        self._is_bool(dynamic_rank_support)
-        self.dynamic_rank_support_ = dynamic_rank_support
+        if self._is_bool(dynamic_rank_support):
+            self.dynamic_rank_support_ = dynamic_rank_support
         return self
 
     def real_input_index(self, real_input_index):
@@ -888,8 +893,8 @@ class TBERegOp(RegOp):
         Args:
             dynamic_compile_static (bool): Value of dynamic compile static. Default: ``False`` .
         """
-        self._is_bool(dynamic_compile_static)
-        self.dynamic_compile_static_ = dynamic_compile_static
+        if self._is_bool(dynamic_compile_static):
+            self.dynamic_compile_static_ = dynamic_compile_static
         return self
 
     def need_check_supported(self, need_check_supported=False):
@@ -899,8 +904,8 @@ class TBERegOp(RegOp):
         Args:
             need_check_supported (bool): Value of need_check_supported. Default: ``False`` .
         """
-        self._is_bool(need_check_supported)
-        self.need_check_support_ = need_check_supported
+        if self._is_bool(need_check_supported):
+            self.need_check_support_ = need_check_supported
         return self
 
     def is_dynamic_format(self, is_dynamic_format=False):
@@ -910,8 +915,8 @@ class TBERegOp(RegOp):
         Args:
             is_dynamic_format (bool): Value of is_dynamic_format. Default: ``False`` .
         """
-        self._is_bool(is_dynamic_format)
-        self.dynamic_format_ = is_dynamic_format
+        if self._is_bool(is_dynamic_format):
+            self.dynamic_format_ = is_dynamic_format
         return self
 
     def op_pattern(self, pattern=None):

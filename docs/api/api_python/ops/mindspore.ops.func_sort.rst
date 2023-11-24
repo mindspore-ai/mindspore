@@ -11,7 +11,7 @@ mindspore.ops.sort
         - **descending** (bool，可选) - 按降序还是升序。如果为 ``True`` ，则元素按降序排列，否则按升序排列。默认值： ``False`` 。
 
     .. warning::
-        目前能良好支持的数据类型有：Float16、UInt8、Int8、Int16、Int32、Int64。如果使用Float32，可能产生精度误差。
+        目前能良好支持的数据类型有：float16、uint8、int8、int16、int32、int64。如果使用float32，可能产生精度误差。
 
     返回：
         - **y1** (Tensor) - 排序后的值，其shape和数据类型与输入一致。
@@ -20,5 +20,5 @@ mindspore.ops.sort
     异常：
         - **TypeError** - `axis` 不是int类型。
         - **TypeError** -  `descending` 不是bool类型。
-        - **TypeError** - `input_x` 不是Float16、Float32、UInt8、Int8、Int16、Int32或Int64。
+        - **TypeError** - `input_x` 不是float16、float32、uint8、int8、int16、int32或int64。
         - **ValueError** - `axis` 不在[-len(input_x.shape), len(input_x.shape))范围内。

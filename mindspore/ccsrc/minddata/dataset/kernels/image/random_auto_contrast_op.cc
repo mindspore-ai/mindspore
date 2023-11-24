@@ -20,10 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomAutoContrastOp::kCutOff = 0.0;
-const std::vector<uint32_t> RandomAutoContrastOp::kIgnore = {};
-const float RandomAutoContrastOp::kDefProbability = 0.5;
-
 Status RandomAutoContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // Check input
@@ -42,7 +38,7 @@ Status RandomAutoContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().AsCVType() != kCVInvalidType,
                                "RandomAutoContrast: Cannot convert from OpenCV type, unknown CV type. Currently "
                                "supported data type: [int8, uint8, int16, uint16, int32, float16, float32, float64].");
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     return AutoContrast(input, output, cutoff_, ignore_);
   }
   *output = input;

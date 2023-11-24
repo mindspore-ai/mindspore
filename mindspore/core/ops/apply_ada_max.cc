@@ -51,19 +51,19 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
   auto prim_name = primitive->name();
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto m_shape = input_args[kInputIndex1]->BuildShape();
-  auto v_shape = input_args[kInputIndex2]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto m_shape = input_args[kInputIndex1]->GetShape();
+  auto v_shape = input_args[kInputIndex2]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto m_shape_ptr = m_shape->cast<abstract::ShapePtr>();
   auto v_shape_ptr = v_shape->cast<abstract::ShapePtr>();
   auto beta1_power_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto beta1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto beta2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
-  auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  auto grad_shape = input_args[kInputIndex8]->BuildShape();
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto beta1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto beta2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
+  auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
+  auto grad_shape = input_args[kInputIndex8]->GetShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
 
   int64_t batch_rank = 0;
@@ -143,15 +143,15 @@ TuplePtr ApplyAdaMaxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto m_type = input_args[kInputIndex1]->BuildType();
-  auto v_type = input_args[kInputIndex2]->BuildType();
-  auto beta1_power_type = input_args[kInputIndex3]->BuildType();
-  auto lr_type = input_args[kInputIndex4]->BuildType();
-  auto beta1_type = input_args[kInputIndex5]->BuildType();
-  auto beta2_type = input_args[kInputIndex6]->BuildType();
-  auto epsilon_type = input_args[kInputIndex7]->BuildType();
-  auto grad_type = input_args[kInputIndex8]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto m_type = input_args[kInputIndex1]->GetType();
+  auto v_type = input_args[kInputIndex2]->GetType();
+  auto beta1_power_type = input_args[kInputIndex3]->GetType();
+  auto lr_type = input_args[kInputIndex4]->GetType();
+  auto beta1_type = input_args[kInputIndex5]->GetType();
+  auto beta2_type = input_args[kInputIndex6]->GetType();
+  auto epsilon_type = input_args[kInputIndex7]->GetType();
+  auto grad_type = input_args[kInputIndex8]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // m v grad must have the same type as var
   std::map<std::string, TypePtr> args;

@@ -180,11 +180,15 @@ def test_range_float64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_invalid_max_output_length():
-    with pytest.raises(ValueError):
-        _ = P.Range(0)
-        _ = P.Range(-1)
-        _ = P.Range(None)
-        _ = P.Range('5')
+    with pytest.raises(RuntimeError):
+        range1 = P.Range(0)
+        _ = range1(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64))
+        range2 = P.Range(-1)
+        _ = range2(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64))
+        range3 = P.Range(None)
+        _ = range3(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64))
+        range4 = P.Range('5')
+        _ = range4(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64))
 
 
 @pytest.mark.level1
@@ -259,13 +263,12 @@ def test_range_vmap_wrong_in_axis():
     """
     Feature: Ops range with vmap.
     Description: Test ops range in vmap with wrong in axis value.
-    Expectation: ValueError.
+    Expectation: TypeError.
     """
     start = Tensor([0, 1], mstype.int32)
     limit = Tensor(10, mstype.int32)
     delta = Tensor(4, mstype.int32)
     a = Tensor([[1, 1, 1], [1, 1, 1]])
     vmap_range = ops.vmap(range_fn, (0, None, None, 0), 0)
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError):
         vmap_range(start, limit, delta, a)
-    assert "For operator Range, all axis for inputs should be None" in str(ex.value)

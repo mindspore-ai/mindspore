@@ -97,7 +97,7 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
 
 inline bool IsPackTensor(const py::object &arg) { return py::hasattr(arg, "__pack__"); }
 
-inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->isa<ValueAny>()); }
+inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->ContainsValueAny()); }
 
 bool IsTensorSequence(const py::object &arg) {
   if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {
@@ -105,50 +105,77 @@ bool IsTensorSequence(const py::object &arg) {
   }
   py::tuple seq = py::cast<py::tuple>(arg);
   for (size_t i = 0; i < seq.size(); ++i) {
-    if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i])) {
+    if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i]) || IsTensorSequence(seq[i])) {
       return true;
     }
   }
   return false;
 }
 
-std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
-                                                        const bool &need_infer_value) {
-  auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
-  AbstractBasePtr infer_res = nullptr;
-  ValuePtr val = nullptr;
-  // C++ InferShape and InferValue.
-  if (found.has_value()) {
-    if (need_infer_value && found->IsImplInferValue()) {
-      val = found->InferValue(prim, abs_list);
-    } else if (found->IsImplInferShapeAndType()) {
-      infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
-      val = infer_res->BuildValue();
+void InferShapeAndValueFromPython(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list,
+                                  const bool &need_infer_value, AbstractBasePtr *infer_res, ValuePtr *val) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(infer_res);
+  MS_EXCEPTION_IF_NULL(val);
+  py::gil_scoped_acquire acquire;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  auto py_infer_args = PreparePyInputs(abs_list);
+  if ((*infer_res) == nullptr) {
+    auto py_infer_result = prim_py->RunInfer(py_infer_args);
+    (*infer_res) = abstract::PyInferRes2Abstract(prim_py, py_infer_result);
+  }
+  MS_EXCEPTION_IF_NULL((*infer_res));
+  if (need_infer_value && py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
+    py::tuple py_vals(py_infer_args.size());
+    for (size_t i = 0; i < py_infer_args.size(); ++i) {
+      py_vals[i] = py_infer_args[i][ATTR_VALUE];
+    }
+    py::object py_ret = prim_py->RunInferValue(py_vals);
+    if (!py::isinstance<py::none>(py_ret)) {
+      bool converted = parse::ConvertData(py_ret, val, false, (*infer_res)->BuildType());
+      if (!converted) {
+        MS_LOG(EXCEPTION) << "Convert data failed";
+      }
     }
   }
+}
+
+std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
+                                                        const bool &need_infer_value) {
+  AbstractBasePtr infer_res = nullptr;
+  ValuePtr val = nullptr;
+  bool has_infer_value_impl = false;
+  if (need_infer_value) {
+    auto value_opt = InferValueByFuncImpl(prim, abs_list);
+    if (value_opt.has_value()) {
+      has_infer_value_impl = true;
+      val = value_opt.value();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferValue()) {
+        has_infer_value_impl = true;
+        val = found->InferValue(prim, abs_list);
+      }
+    }
+  }
+
+  if (!need_infer_value || !has_infer_value_impl) {
+    auto out_abs_opt = InferAbstractByFuncImpl(prim, abs_list);
+    if (out_abs_opt.has_value()) {
+      infer_res = out_abs_opt.value();
+      val = infer_res->GetValue();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferShapeAndType()) {
+        infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
+        val = infer_res->BuildValue();
+      }
+    }
+  }
+
   // Python InferShape and InferValue.
   if ((infer_res == nullptr || need_infer_value) && !IsHasValue(val)) {
-    py::gil_scoped_acquire acquire;
-    auto prim_py = prim->cast<PrimitivePyPtr>();
-    auto py_infer_args = PreparePyInputs(abs_list);
-    if (infer_res == nullptr) {
-      auto py_infer_result = prim_py->RunInfer(py_infer_args);
-      infer_res = abstract::PyInferRes2Abstract(prim_py, py_infer_result);
-    }
-    MS_EXCEPTION_IF_NULL(infer_res);
-    if (need_infer_value && py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-      py::tuple py_vals(py_infer_args.size());
-      for (size_t i = 0; i < py_infer_args.size(); ++i) {
-        py_vals[i] = py_infer_args[i][ATTR_VALUE];
-      }
-      py::object py_ret = prim_py->RunInferValue(py_vals);
-      if (!py::isinstance<py::none>(py_ret)) {
-        bool converted = parse::ConvertData(py_ret, &val, false, infer_res->BuildType());
-        if (!converted) {
-          MS_LOG(EXCEPTION) << "Convert data failed";
-        }
-      }
-    }
+    InferShapeAndValueFromPython(prim, abs_list, need_infer_value, &infer_res, &val);
   }
   return {infer_res, val};
 }
@@ -176,7 +203,7 @@ py::object PackNode::GetDtype() const {
 }
 
 py::object PackNode::GetValue() const {
-  if (node_->abstract()->BuildValue() != kValueAny) {
+  if (!node_->abstract()->BuildValue()->ContainsValueAny()) {
     return ValueToPyData(node_->abstract()->BuildValue());
   }
   return py::none();
@@ -258,13 +285,7 @@ py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
 
 py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) const {
   auto val = abs->BuildValue();
-  if (IsHasValue(val)) {
-    if (!is_pynative_mode) {
-      auto param = graphs_.top()->add_parameter();
-      param->set_abstract(abs);
-    }
-    return ValueToPyData(val);
-  } else if (abs->isa<abstract::AbstractSequence>()) {
+  if (abs->isa<abstract::AbstractSequence>()) {
     if (!is_pynative_mode) {
       auto param = graphs_.top()->add_parameter();
       param->set_abstract(abs);
@@ -277,7 +298,7 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
       }
       return tuple_node;
     }
-  } else {
+  } else if (abs->isa<abstract::AbstractTensor>() || !IsHasValue(val)) {
     if (!abs->isa<abstract::AbstractTensor>()) {
       MS_LOG(WARNING) << "Input should be Tensor, but get " << abs->ToString() << ".";
     }
@@ -285,6 +306,12 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
     param->set_abstract(abs);
     auto ret = std::make_shared<PackNode>(param);
     return py::cast(ret);
+  } else {
+    if (!is_pynative_mode) {
+      auto param = graphs_.top()->add_parameter();
+      param->set_abstract(abs);
+    }
+    return ValueToPyData(val);
   }
 }
 

@@ -30,14 +30,12 @@ class AdaptiveMaxPool2DGradCpuKernelMod : public NativeCpuKernelMod {
   AdaptiveMaxPool2DGradCpuKernelMod() = default;
   ~AdaptiveMaxPool2DGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -46,10 +44,10 @@ class AdaptiveMaxPool2DGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename SCALAR_T, typename INDICES_T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   using AdaptiveMaxPool2DGradLaunchFunc = std::function<bool(
-    AdaptiveMaxPool2DGradCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    AdaptiveMaxPool2DGradCpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, AdaptiveMaxPool2DGradLaunchFunc>> func_list_;
   AdaptiveMaxPool2DGradLaunchFunc kernel_func_;
   ParallelSearchInfo search_info_;

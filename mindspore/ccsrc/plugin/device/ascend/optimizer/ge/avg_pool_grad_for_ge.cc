@@ -21,69 +21,63 @@
 #include <algorithm>
 #include <memory>
 #include "ops/conv_pool_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "ops/array_ops.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-constexpr char kPoolDataFormatAttrName[] = "format";
-constexpr char kPoolKernelSizeAttrName[] = "kernel_size";
-constexpr char kPoolStridesAttrName[] = "strides";
-constexpr char kPoolPadModeAttrName[] = "pad_mode";
-constexpr size_t kAvgPoolGradInputXIndex = 1;
-constexpr size_t kAvgPoolGradInputOriginOutIndex = 2;
-constexpr size_t kAvgPoolGradInputGradIndex = 3;
-}  // namespace
 
 const BaseRef AvgPoolGradForGE::DefinePattern() const {
-  VarPtr x1 = std::make_shared<Var>();
-  VarPtr x2 = std::make_shared<Var>();
-  VarPtr x3 = std::make_shared<Var>();
-  return VectorRef({prim::kPrimAvgPoolGrad, x1, x2, x3});
+  auto x = std::make_shared<SeqVar>();
+  return VectorRef({prim::kPrimAvgPoolGrad, x});
 }
 
 const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+  // AvgPoolGrad(x, out, dout, ....) ===> AvgPoolGrad(x_shape, dout, ....)
   MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto avg_pool_grad_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(avg_pool_grad_node);
-  auto origin_prim = common::AnfAlgo::GetCNodePrimitive(avg_pool_grad_node);
-  MS_EXCEPTION_IF_NULL(origin_prim);
-  auto format_value = origin_prim->GetAttr(kPoolDataFormatAttrName);
-  std::string format;
-  if (format_value == nullptr) {
-    format = "NCHW";
+  // get shape node
+  auto input_x = avg_pool_grad_node->input(kIndex1);
+  auto input_x_shape = input_x->Shape();
+  AnfNodePtr shape_node = nullptr;
+  if (input_x_shape->IsDynamic()) {
+    shape_node = CreateTensorShapeNode(graph, input_x);
   } else {
-    format = GetValue<std::string>(format_value);
+    auto shape_vector = input_x_shape->cast<abstract::ShapePtr>()->shape();
+    std::vector<int32_t> value_node_data;
+    (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(value_node_data), LongToInt);
+    auto shape_tensor = std::make_shared<tensor::Tensor>(value_node_data, TypeIdToType(TypeId::kNumberTypeInt32));
+    shape_node = AnfAlgo::ConvertValueToNode(kernel_graph, shape_tensor);
   }
-  auto pad_mode_value = origin_prim->GetAttr(kPoolPadModeAttrName);
-  auto pad_mode_type = pad_mode_value->type()->type_id();
-  std::string pad_mode;
-  if (pad_mode_type == TypeId::kNumberTypeInt64) {
-    auto pad_value = GetValue<int64_t>(pad_mode_value);
-    pad_mode = pad_value == 1 ? "SAME" : "VALID";
-  } else {
-    pad_mode = GetValue<std::string>(pad_mode_value);
+  // new avg_pool_grad_node
+  auto inputs = avg_pool_grad_node->inputs();
+  std::vector<AnfNodePtr> new_inputs = {inputs.at(0), shape_node};
+  constexpr size_t dout_index = kIndex3;
+  for (size_t i = dout_index; i < inputs.size(); ++i) {
+    new_inputs.push_back(inputs[i]);
   }
-  auto origin_shape = avg_pool_grad_node->input(kAvgPoolGradInputXIndex)->Shape();
-  if (origin_shape->IsDynamic()) {
-    MS_LOG(EXCEPTION) << "Do not support dynamic AvgPoolGrad in GE backend";
-  }
-  auto shape_vector = origin_shape->cast<abstract::ShapePtr>()->shape();
-  std::vector<int32_t> value_node_data;
-  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(value_node_data), LongToInt);
-  auto origin_shape_value = MakeValue(value_node_data);
-  auto origin_shape_node = NewValueNode(origin_shape_value);
-  origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
-  auto new_avg_pool_node = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kAvgPoolGradGeOpName)),
-                                            origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
-  MS_EXCEPTION_IF_NULL(new_avg_pool_node);
-  common::AnfAlgo::CopyNodeAttr(kPoolKernelSizeAttrName, avg_pool_grad_node, new_avg_pool_node);
-  common::AnfAlgo::CopyNodeAttr(kPoolStridesAttrName, avg_pool_grad_node, new_avg_pool_node);
-  common::AnfAlgo::SetNodeAttr(kPoolDataFormatAttrName, MakeValue(format), new_avg_pool_node);
-  common::AnfAlgo::SetNodeAttr(kPoolPadModeAttrName, MakeValue(pad_mode), new_avg_pool_node);
-  new_avg_pool_node->set_abstract(node->abstract());
-  return new_avg_pool_node;
+  auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, avg_pool_grad_node);
+  new_node->set_abstract(avg_pool_grad_node->abstract());
+  new_node->set_inputs(new_inputs);
+  return new_node;
+}
+
+CNodePtr AvgPoolGradForGE::CreateTensorShapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+  auto prim = std::make_shared<Primitive>(kTensorShapeOpName);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {NewValueNode(prim), node};
+  CNodePtr tensor_shape_node = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tensor_shape_node);
+  auto abs = InferAbstract(prim, {node});
+  MS_EXCEPTION_IF_NULL(abs);
+  tensor_shape_node->set_abstract(abs);
+  // cast int64 -> int32
+  auto cast_to_node = AddCastNode(func_graph, kNumberTypeInt32, tensor_shape_node, false);
+  return cast_to_node;
 }
 }  // namespace opt
 }  // namespace mindspore

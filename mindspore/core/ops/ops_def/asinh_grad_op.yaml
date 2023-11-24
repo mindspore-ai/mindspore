@@ -1,0 +1,10 @@
+#operator asinh_grad
+asinh_grad:
+  args:
+    out:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor

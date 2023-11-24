@@ -49,12 +49,8 @@ using SparseMatrix = Eigen::SparseMatrix<int32_t, Eigen::RowMajor>;
 using IndicesMap = Eigen::Map<Eigen::Matrix<int32_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 }  // namespace
 
-bool SparseMatrixOrderingAMDCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixOrderingAMD>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SparseMatrixOrderingAMDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -74,11 +70,9 @@ bool SparseMatrixOrderingAMDCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseMatrixOrderingAMDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseMatrixOrderingAMDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -89,13 +83,13 @@ int SparseMatrixOrderingAMDCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   return KRET_OK;
 }
 
-bool SparseMatrixOrderingAMDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto x_batch_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
-  auto x_row_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
-  auto x_col_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto y_ptr = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
+bool SparseMatrixOrderingAMDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_dense_shape_ptr = reinterpret_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto x_batch_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->device_ptr());
+  auto x_row_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex2]->device_ptr());
+  auto x_col_pointers_ptr = reinterpret_cast<int32_t *>(inputs[kIndex3]->device_ptr());
+  auto y_ptr = reinterpret_cast<int32_t *>(outputs[kIndex0]->device_ptr());
 
   const int64_t rank = x_dense_shape_shape_[0];
   const int64_t num_rows = x_dense_shape_ptr[(rank == 2) ? 0 : 1];

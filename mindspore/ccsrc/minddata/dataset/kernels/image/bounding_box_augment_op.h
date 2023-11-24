@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace dataset {
-class BoundingBoxAugmentOp : public TensorOp {
+class BoundingBoxAugmentOp : public RandomTensorOp {
  public:
   // Default values, also used by python_bindings.cc
   static const float kDefRatio;
@@ -55,7 +55,6 @@ class BoundingBoxAugmentOp : public TensorOp {
 
  private:
   float ratio_;
-  std::mt19937 rnd_;
   std::uniform_real_distribution<float> uniform_;
   std::shared_ptr<TensorOp> transform_;
 };

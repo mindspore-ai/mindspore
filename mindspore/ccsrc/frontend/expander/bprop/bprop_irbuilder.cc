@@ -20,9 +20,13 @@
 #include <limits>
 #include <vector>
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
+#include "include/common/expander/core/node.h"
 #include "include/common/utils/utils.h"
+#include "ir/anf.h"
 #include "ops/array_ops.h"
 #include "ops/sequence_op_name.h"
+#include "ops/tensor_to_scalar.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -234,6 +238,17 @@ NodePtr BpropIRBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &inde
 NodePtr BpropIRBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop,
                                       const NodePtr &step) {
   return Emit(kSequenceSliceOpName, {node, start, stop, step});
+}
+
+NodePtr BpropIRBuilder::TensorToScalar(const NodePtr &node) {
+  if (node->isa<ValueNode>()) {
+    auto value = GetIntList(node);
+    if (value.size() != 1) {
+      MS_LOG(EXCEPTION) << "For TensorToScalar, the input value should have only one element, but got " << value.size();
+    }
+    return Value(value[0]);
+  }
+  return Emit(ops::kNameTensorToScalar, {node});
 }
 }  // namespace bprop
 }  // namespace expander

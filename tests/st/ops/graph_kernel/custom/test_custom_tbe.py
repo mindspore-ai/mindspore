@@ -178,8 +178,6 @@ def multi_input_multi_output_with_attr():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net1_graph_mode():
     """
@@ -192,8 +190,6 @@ def test_net1_graph_mode():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net1_pynative_mode():
     """
@@ -254,8 +250,6 @@ def test_net2_graph_mode():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net2_pynative_mode():
     """
@@ -311,8 +305,6 @@ def bprop1():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net2_bprop1_graph_mode():
     """
@@ -326,8 +318,6 @@ def test_net2_bprop1_graph_mode():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net2_bprop1_pynative_mode():
     """

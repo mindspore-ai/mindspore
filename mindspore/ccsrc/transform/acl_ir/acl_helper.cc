@@ -16,6 +16,8 @@
 
 #include "transform/acl_ir/acl_helper.h"
 #include <set>
+#include <map>
+#include <unordered_map>
 #include <string>
 #include "include/api/data_type.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -32,6 +34,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "transform/acl_ir/acl_adapter_info.h"
 #include "transform/acl_ir/ge_adapter_info.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -216,6 +219,9 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
       (void)special_inputs.emplace_back(i);
     }
 
+    if (i >= input_info.size()) {
+      continue;
+    }
     // Get reshape type.
     auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
     if (ge_idx >= input_info.size()) {
@@ -327,6 +333,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
   size_t ms_real_idx = 0;  // index of actual input argument
+  auto value_depend_indices = ops::GetInputDependValueList(common::AnfAlgo::GetCNodePrimitive(cnode));
+
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
@@ -349,6 +357,13 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
 
     auto &ge_input_info = opt_ge_input_info.value();
     auto base_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, ms_real_idx);
+    bool is_value_depend = value_depend_indices.find(static_cast<int64_t>(ms_real_idx)) != value_depend_indices.end();
+    if (is_value_depend) {
+      // if the input is value_depend,  verification is performed in the launch and type conversion if necessary
+      MS_LOG(DEBUG) << "When input is value_depend, skip it." << cnode->fullname_with_scope();
+      continue;
+    }
+
     if (!std::any_of(
           input_supported_dtypes[ms_proto_idx].begin(), input_supported_dtypes[ms_proto_idx].end(),
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
@@ -369,9 +384,9 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
       if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
         dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
       }
-      if (dyn_input_sizes.size() != 1) {
+      if (dyn_input_sizes.empty()) {
         MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
-                          << ", of which size is not 1";
+                          << ", of which size is empty";
       }
       ms_real_idx += LongToSize(dyn_input_sizes[0]);
     } else {
@@ -456,6 +471,24 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
   return ACL_KERNEL;
 }
 
+bool AclHelper::IsInputDtypeSupport(const std::string &kernel_name, TypeId base_type, size_t idx) {
+  auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
+  if (idx >= info->GetNumInputsOfMsOpProto()) {
+    return true;
+  }
+  auto input_supported_dtypes = info->input_supported_dtypes();
+  if (idx >= info->GetNumInputsOfMsOpProto()) {
+    // this branch represent input_attr_map, didn't need check
+    return true;
+  }
+  if (!std::any_of(input_supported_dtypes[idx].begin(), input_supported_dtypes[idx].end(),
+                   [base_type](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
+    return false;
+  }
+  return true;
+}
+
 void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
                                         std::vector<std::string> *output_formats,
                                         std::vector<std::string> *input_reshape_types,
@@ -536,6 +569,28 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
 }
 
+void AclHelper::PaddingOriShape(const std::string &name, size_t idx, const std::string &format, ShapeVector *shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
+  auto op_type = info->op_type();
+  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    return;
+  }
+  auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
+  auto info_list = acl_info.inputs();
+  if (info_list.empty() || idx >= info_list.size()) {
+    return;
+  }
+  auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;
+  auto special_iter = info_list.find(ge_idx);
+  if (special_iter == info_list.end() || special_iter->second.ori_format.empty()) {
+    return;
+  }
+  if (!special_iter->second.ori_format.empty() && format == kOpFormat_NCHW && shape->size() < kDim4) {
+    *shape = trans::PaddingShape(*shape, kOpFormat_NCHW, special_iter->second.reshape_type);
+  }
+}
+
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                    ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -557,7 +612,7 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
   }
   // case2: no special config
   auto info_list = acl_info.inputs();
-  if (info_list.empty()) {
+  if (info_list.empty() || idx >= info_list.size()) {
     return ret_format;
   }
   auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;

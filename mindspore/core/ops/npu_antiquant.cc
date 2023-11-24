@@ -44,19 +44,17 @@ BaseShapePtr NPUAntiQuantInferShape(const PrimitivePtr &primitive, const std::ve
   constexpr int64_t kNumber1 = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kNumber1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x = input_args[kInputIndex0]->BuildShape();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto x = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  return x->Clone();
 }
 
 TypePtr NPUAntiQuantInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kInt8};
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   (void)types.emplace("input_x", input_x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   auto dst_type = primitive->GetAttr(kOutputDType);

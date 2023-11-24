@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/rl/tensor_array_create_kernel.h"
+#include <memory>
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_tensor_array.h"
 #include "runtime/device/tensor_array_manager.h"
@@ -25,23 +26,26 @@ using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
 TensorArrayCreateKernelMod::TensorArrayCreateKernelMod() : is_dynamic_(true), size_(0), type_(nullptr) {}
 
-bool TensorArrayCreateKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  shapes_ = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-
-  type_ = GetAttr<TypePtr>(kernel_node, "dtype");
-  size_ = GetAttr<int64_t>(kernel_node, "size");
-  is_dynamic_ = GetAttr<bool>(kernel_node, "dynamic_size");
-  name_ = GetAttr<std::string>(kernel_node, "name");
-  InitSizeLists();
+bool TensorArrayCreateKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-void TensorArrayCreateKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(int64_t)); }
+int TensorArrayCreateKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  shapes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("element_shape"));
 
-bool TensorArrayCreateKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  type_ = GetValue<TypePtr>(primitive_->GetAttr("dtype"));
+  size_ = GetValue<int64_t>(primitive_->GetAttr("size"));
+  is_dynamic_ = GetValue<bool>(primitive_->GetAttr("dynamic_size"));
+  name_ = GetValue<std::string>(primitive_->GetAttr("name"));
+  output_size_list_.clear();
+  output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
+}
+
+bool TensorArrayCreateKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   // Create a tensorarray, and generate an unique handle.
   int64_t tensor_array_handle = TensorArrayMgr::GetInstance().GetHandleCount();
   auto name = "GPUTensorArray_" + name_ + "_" + std::to_string(tensor_array_handle);
@@ -50,10 +54,10 @@ bool TensorArrayCreateKernelMod::Launch(const std::vector<AddressPtr> &, const s
   tensor_array->SetMaxSize(size_, is_dynamic_);
   auto out_addr = GetDeviceAddress<int64_t>(outputs, 0);
   // Set handle to out_addr.
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(out_addr, &tensor_array_handle, sizeof(int64_t), cudaMemcpyHostToDevice,
-                                             reinterpret_cast<cudaStream_t>(stream_ptr)),
-                             "Create TensorArray failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(out_addr, &tensor_array_handle, sizeof(int64_t), cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "Create TensorArray failed");
   MS_LOG(DEBUG) << "Create handle id " << tensor_array_handle;
   // Put tensorarray to a saved map : map<handle, tensorarray> in tensorarray manager.
   // And increase the handle count automatically in AddTensorArray function.

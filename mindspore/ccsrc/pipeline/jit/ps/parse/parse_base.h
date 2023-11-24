@@ -44,6 +44,7 @@ enum AstSubType : int64_t {
   AST_SUB_TYPE_SUBSCRIPT = 8,   // ast.Subscript
   AST_SUB_TYPE_STARRED = 9,     // ast.Starred
   AST_SUB_TYPE_ATTRIBUTE = 10,  // ast.Attribute
+  AST_SUB_TYPE_DICT = 11,       // ast.Dict
   AST_SUB_TYPE_UNKNOWN = 0xFF   // Unknown type
 };
 
@@ -58,6 +59,11 @@ enum ParseTargetType {
 // Define python module name.
 const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.gen_arg_handler";
+const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops_generate.arg_dtype_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE[] = "mindspore.ops.auto_generate.gen_labels";
+const char PYTHON_MOD_PRIMITIVE_OP_TYPE_CAST[] = "do_type_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT[] = "op_labels";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
@@ -81,6 +87,7 @@ const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
 const char PYTHON_MOD_IS_CELL_LIST[] = "is_cell_list";
+const char PYTHON_MOD_IS_MODULE_LIST[] = "is_module_list";
 const char PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE[] = "convert_cell_list_to_sequence";
 const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
@@ -92,9 +99,11 @@ const char PYTHON_MOD_GET_SCRIPT_ID_ATTRS[] = "get_script_id_attrs";
 const char PYTHON_MOD_PYTHON_ISINSTANCE[] = "python_isinstance";
 const char PYTHON_MOD_MS_ISINSTANCE[] = "ms_isinstance";
 const char PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION[] = "convert_class_to_function";
+const char PYTHON_MOD_GET_PRIMITIVE_SIGNATURES[] = "get_primitive_signatures";
 const char PYTHON_MOD_GET_CONST_ABS[] = "get_const_abs";
 const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";
+const char PYTHON_MOD_CHECK_ATTRS[] = "check_attrs";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";
@@ -103,9 +112,9 @@ const char PYTHON_PARSE_GET_AST_TYPE[] = "get_ast_type";
 const char PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL[] = "get_ast_namespace_symbol";
 const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
+const char PYTHON_PARSE_IS_CLASS_TENSOR_TYPE[] = "is_tensor_class_type";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
-const char PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE[] = "is_jit_supported_attribute";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
@@ -163,6 +172,9 @@ const char NAMED_PRIMITIVE_MAKELIST[] = "make_list";
 const char NAMED_PRIMITIVE_MAKESLICE[] = "make_slice";
 const char NAMED_PRIMITIVE_MAKEDICT[] = "make_dict";
 const char NAMED_METAGRAPH_UNPACKCALL[] = "unpack_call";
+const char NAMED_METAGRAPH_STARRED_UNPACK[] = "starred_unpack";
+const char NAMED_METAGRAPH_STARRED_GET_ITEM[] = "starred_get_item";
+const char NAMED_METAGRAPH_STARRED_UNPACK_MERGE[] = "starred_unpack_merge";
 
 // Define NAMED_PRIMITIVE_GETATTR "getattr".
 // Define python inline attr.

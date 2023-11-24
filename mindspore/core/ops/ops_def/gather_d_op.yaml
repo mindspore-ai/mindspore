@@ -1,0 +1,12 @@
+#operator gather_d
+gather_d:
+  args:
+    x:
+      dtype: tensor
+    dim:
+      dtype: int
+    index:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor

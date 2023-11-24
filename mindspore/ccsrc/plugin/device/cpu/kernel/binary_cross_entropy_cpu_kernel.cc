@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/binary_cross_entropy_cpu_kernel.h"
 #include <map>
 #include "mindspore/core/ops/binary_cross_entropy.h"
+#include "ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,12 +59,12 @@ inline void CheckInput(T x) {
 }
 
 template <typename T>
-void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
-  const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
-  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->addr) : nullptr;
-  auto *loss = reinterpret_cast<T *>(outputs[0]->addr);
+void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  const auto *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *input_y = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->device_ptr()) : nullptr;
+  auto *loss = reinterpret_cast<T *>(outputs[0]->device_ptr());
   std::vector<T> tmp_loss(input_size_);
   auto epsilon = static_cast<T>(1e-12);
   auto one = static_cast<T>(1);
@@ -117,8 +118,9 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 }
 
-bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   const size_t expect_inputs_num = weight_defined_ ? kBceInputsNumWithWeight : kBceInputsNumWithWeight - 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceOutputsNum, kernel_name_);
@@ -133,20 +135,12 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &input
   return true;
 }
 
-bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool BinaryCrossEntropyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
-  dtype_ = inputs[kIndex0]->GetDtype();
-
-  const auto reduction = kernel_ptr->get_reduction();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = kNone;
   } else if (reduction == Reduction::MEAN) {
@@ -157,11 +151,9 @@ bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int BinaryCrossEntropyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

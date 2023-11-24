@@ -25,17 +25,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool NormalizeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NormalizeTupleIndex>(base_operator);
-  index_types_ = GetValue<string>(kernel_ptr->GetAttr(kAttrOriginIndexType));
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  dim_index_ = LongToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrTupleIndexAxis)));
-  if (kernel_ptr->HasAttr(kAttrExpandDimsMask)) {
-    expand_dims_mask_ = LongToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsMask)));
+bool NormalizeTupleIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  index_types_ = GetValue<string>(primitive_->GetAttr(kAttrOriginIndexType));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  dim_index_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrTupleIndexAxis)));
+  if (primitive_->HasAttr(kAttrExpandDimsMask)) {
+    expand_dims_mask_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsMask)));
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -45,7 +41,6 @@ bool NormalizeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;
-  outputs_ = outputs;
   return true;
 }
 
@@ -78,12 +73,12 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeSequenceIndex(const ShapeVector &
   for (size_t i = 0; i < seq_size; i++) {
     int64_t int_index_val = index_val_addr[i];
     int_index_val = ops::NormalizeTupleIndex::CheckRange(int_index_val, dim);
-    out.emplace_back(int_index_val);
+    (void)out.emplace_back(int_index_val);
   }
 
   const auto output_size = seq_size * sizeof(int64_t);
   CheckCopy(output_addr, output_size, out.data(), output_size, kernel_name_);
-  output_sizes_.emplace_back(out.size());
+  (void)output_sizes_.emplace_back(out.size());
 }
 
 template <typename T>
@@ -99,7 +94,7 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeBoolSequenceIndex(const ShapeVect
   }
   for (size_t i = 0; i < seq_size; i++) {
     if (index_val_addr[i]) {
-      out.emplace_back(SizeToLong(i));
+      (void)out.emplace_back(SizeToLong(i));
     }
   }
   if (out.empty()) {
@@ -107,14 +102,12 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeBoolSequenceIndex(const ShapeVect
   }
   const auto output_size = out.size() * sizeof(int64_t);
   CheckCopy(output_addr, output_size, out.data(), output_size, kernel_name_);
-  output_sizes_.emplace_back(out.size());
+  (void)output_sizes_.emplace_back(out.size());
 }
 
-int NormalizeTupleIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int NormalizeTupleIndexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  (void)KernelMod::Resize(inputs, outputs);
   data_shapes_ = GetShapes(inputs);
   return KRET_OK;
 }
@@ -125,11 +118,11 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeNoneIndex(int64_t *output_addr, c
   int64_t dim_size = data_shape[new_dim_index];
   std::vector<int64_t> out;
   for (int64_t i = 0; i < dim_size; i++) {
-    out.emplace_back(i);
+    (void)out.emplace_back(i);
   }
   size_t output_size = sizeof(int64_t) * out.size();
   CheckCopy(output_addr, output_size, out.data(), output_size, kernel_name_);
-  output_sizes_.emplace_back(out.size());
+  (void)output_sizes_.emplace_back(out.size());
 }
 
 void NormalizeTupleIndexCpuKernelMod::NormalizeEllipsisIndex(int64_t *output_addr, const ShapeVector &data_shape,
@@ -146,28 +139,28 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeEllipsisIndex(int64_t *output_add
   size_t ellipse_occupy_dims = data_shape.size() - not_ellipse_occupy_dims;
   std::vector<int64_t> out;
   if (dim_index >= ellipse_occupy_dims) {
-    out.emplace_back(1);
+    (void)out.emplace_back(1);
     size_t output_size = sizeof(int64_t) * out.size();
     CheckCopy(output_addr, output_size, out.data(), output_size, kernel_name_);
-    output_sizes_.emplace_back(out.size());
+    (void)output_sizes_.emplace_back(out.size());
     return;
   }
   size_t ellipse_occupy_dims_i = ellipse_position + dim_index;
   int64_t ellipse_occupy_dim = data_shape[ellipse_occupy_dims_i];
   for (int64_t i = 0; i < ellipse_occupy_dim; i++) {
-    out.emplace_back(i);
+    (void)out.emplace_back(i);
   }
   size_t output_size = sizeof(int64_t) * out.size();
   CheckCopy(output_addr, output_size, out.data(), output_size, kernel_name_);
-  output_sizes_.emplace_back(out.size());
+  (void)output_sizes_.emplace_back(out.size());
 }
 
 template <typename T>
-bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
-  const auto index_val_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  const auto index_val_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
   const ShapeVector &data_shape = data_shapes_[0];
   output_sizes_.clear();
   if (index_types_ == kIntIndex) {
@@ -186,9 +179,9 @@ bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-bool NormalizeTupleIndexCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool NormalizeTupleIndexCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
@@ -201,23 +194,31 @@ std::vector<KernelAttr> NormalizeTupleIndexCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(
+  (void)std::transform(
     data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
     [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeTupleIndexFunc> {
       return {KernelAttr().AddInputAttr(data_type_id).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
               &NormalizeTupleIndexCpuKernelMod::LaunchKernel<int64_t>};
     });
-  std::transform(
+  (void)std::transform(
     data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
     [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeTupleIndexFunc> {
       return {KernelAttr().AddInputAttr(data_type_id).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
               &NormalizeTupleIndexCpuKernelMod::LaunchKernel<bool>};
     });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeTupleIndexFunc> {
+                         return {KernelAttr()
+                                   .AddInputAttr(data_type_id)
+                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeBool)
+                                   .AddOutputAttr(kNumberTypeInt64),
+                                 &NormalizeTupleIndexCpuKernelMod::LaunchKernel<bool>};
+                       });
   std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
                  [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeTupleIndexFunc> {
                    return {KernelAttr()
                              .AddInputAttr(data_type_id)
-                             .AddInputAttr(kObjectTypeTuple, kNumberTypeBool)
+                             .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
                              .AddOutputAttr(kNumberTypeInt64),
                            &NormalizeTupleIndexCpuKernelMod::LaunchKernel<bool>};
                  });

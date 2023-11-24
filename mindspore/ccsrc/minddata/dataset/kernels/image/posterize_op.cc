@@ -16,42 +16,15 @@
 
 #include "minddata/dataset/kernels/image/posterize_op.h"
 
-#include <opencv2/imgcodecs.hpp>
+#include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
-const uint8_t PosterizeOp::kBit = 8;
-
 PosterizeOp::PosterizeOp(uint8_t bit) : bit_(bit) {}
 
 Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  uint8_t mask_value = ~((uint8_t)(1 << (8 - bit_)) - 1);
-  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-  if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Posterize: load image failed.");
-  }
-  if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Posterize: input image is not in shape of <H,W,C> or <H,W>, but got rank: " +
-                             std::to_string(input_cv->Rank()));
-  }
-  std::vector<uint8_t> lut_vector;
-  for (std::size_t i = 0; i < 256; i++) {
-    lut_vector.push_back(i & mask_value);
-  }
-  cv::Mat in_image = input_cv->mat();
-
-  cv::Mat output_img;
-  CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
-                               "Posterize: data type of input image should be int8 or uint8, "
-                               "but got " +
-                                 input_cv->type().ToString());
-  cv::LUT(in_image, lut_vector, output_img);
-  std::shared_ptr<CVTensor> result_tensor;
-
-  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, input_cv->Rank(), &result_tensor));
-  *output = std::static_pointer_cast<Tensor>(result_tensor);
-  return Status::OK();
+  return Posterize(input, output, bit_);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -17,45 +17,72 @@
 
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/math_ops.h"
+#include "ops/sparse_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr size_t kIndicesRank = 2;
+std::vector<abstract::BaseShapePtr> GetOutputShapes(const int64_t max_value_num, const int64_t rank) {
+  ShapeVector y_indices_shape{max_value_num, rank};
+  ShapeVector y_value_shape{max_value_num};
+  ShapeVector y_shape_shape{rank};
+
+  std::vector<abstract::BaseShapePtr> out_shapes{std::make_shared<abstract::TensorShape>(std::move(y_indices_shape)),
+                                                 std::make_shared<abstract::TensorShape>(std::move(y_value_shape)),
+                                                 std::make_shared<abstract::TensorShape>(std::move(y_shape_shape))};
+
+  return out_shapes;
+}
+}  // namespace
 MIND_API_OPERATOR_IMPL(SparseSlice, BaseOperator);
 class SparseSliceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    if (!SparseSliceCheckShape(primitive, input_args)) {
-      auto y_indices_shape =
-        std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));
-      auto y_value_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
-      auto y_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    auto indices_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    MS_CHECK_VALUE(indices_shape.size() == kIndicesRank,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg("rank of indices", SizeToLong(indices_shape.size()),
+                                                               kEqual, SizeToLong(kIndicesRank), primitive));
 
-      return std::make_shared<abstract::TupleShape>(
-        std::vector<abstract::BaseShapePtr>{y_indices_shape, y_value_shape, y_shape_shape});
-    }
+    auto max_value_num = indices_shape[0];
+    auto rank = indices_shape[1];
+    auto out_shapes = GetOutputShapes(max_value_num, rank);
 
-    auto indices_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    int64_t nnz = indices_shape[0];
-    int64_t rank = indices_shape[1];
+    return std::make_shared<abstract::TupleShape>(std::move(out_shapes));
+  }
 
-    auto y_indices_shape =
-      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}), ShapeVector({nnz, rank}));
-    auto y_value_shape =
-      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), ShapeVector({nnz}));
-    auto y_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({rank}));
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    // check shapes
+    SparseSliceCheckShape(primitive, input_args);
 
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{y_indices_shape, y_value_shape, y_shape_shape});
+    // infer shapes
+    auto max_value_num = abstract::Shape::kShapeDimAny;
+    auto indices_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    auto rank = IsDynamicRank(indices_shape) ? abstract::Shape::kShapeDimAny : indices_shape[kInputIndex1];
+    auto out_shapes = GetOutputShapes(max_value_num, rank);
+
+    // get value type
+    auto value_tensor_type = input_args[kInputIndex1]->GetType()->cast_ptr<TensorType>();
+    MS_EXCEPTION_IF_NULL(value_tensor_type);
+    auto value_type = value_tensor_type->element();
+
+    // get outputs
+    auto y_indices = std::make_shared<abstract::AbstractTensor>(kInt64, out_shapes[kInputIndex0]);
+    auto y_value = std::make_shared<abstract::AbstractTensor>(value_type, out_shapes[kInputIndex1]);
+    auto y_shape = std::make_shared<abstract::AbstractTensor>(kInt64, out_shapes[kInputIndex2]);
+    AbstractBasePtrList outputs{y_indices, y_value, y_shape};
+
+    return std::make_shared<abstract::AbstractTuple>(std::move(outputs));
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -63,11 +90,11 @@ class SparseSliceInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 5;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    auto indices_type = input_args[kInputIndex0]->BuildType();
-    auto value_type = input_args[kInputIndex1]->BuildType();
-    auto shape_type = input_args[kInputIndex2]->BuildType();
-    auto start_type = input_args[kInputIndex3]->BuildType();
-    auto size_type = input_args[kInputIndex4]->BuildType();
+    auto indices_type = input_args[kInputIndex0]->GetType();
+    auto value_type = input_args[kInputIndex1]->GetType();
+    auto shape_type = input_args[kInputIndex2]->GetType();
+    auto start_type = input_args[kInputIndex3]->GetType();
+    auto size_type = input_args[kInputIndex4]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("start", start_type, {kInt64}, op_name);
@@ -82,22 +109,17 @@ class SparseSliceInfer : public abstract::OpInferBase {
   }
 
  private:
-  static bool SparseSliceCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  static void SparseSliceCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
     auto op_name = primitive->name();
-    auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
-    auto start_shape_ptr = input_args[kInputIndex3]->BuildShape();
-    auto size_shape_ptr = input_args[kInputIndex4]->BuildShape();
+    const auto &indices_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    const auto &values_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
+    const auto &shape_shape = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+    const auto &start_shape = input_args[kInputIndex3]->GetShape()->GetShapeVector();
+    const auto &size_shape = input_args[kInputIndex4]->GetShape()->GetShapeVector();
 
-    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
-    auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
-    auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_shape_ptr)[kShape];
-    auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
-    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(size_shape_ptr)[kShape];
     if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(shape_shape) || IsDynamic(start_shape) ||
         IsDynamic(size_shape)) {
-      return false;
+      return;
     }
 
     const int64_t indices_rank = 2;
@@ -110,25 +132,22 @@ class SparseSliceInfer : public abstract::OpInferBase {
 
     if (indices_shape[0] != values_shape[0]) {
       MS_EXCEPTION(ValueError)
-        << "For SparseSlice, indices.shape[0] must equal to values.shape[0], but got indices.shape = "
-        << indices_shape_ptr->ToString() << " and value.shape = " << values_shape_ptr->ToString() << ".";
+        << "For SparseSlice, indices.shape[0] must equal to values.shape[0], but got indices.shape = " << indices_shape
+        << " and value.shape = " << values_shape << ".";
     }
     if (indices_shape[1] != shape_shape[0]) {
       MS_EXCEPTION(ValueError)
-        << "For SparseSlice, indices.shape[1] must equal to shape.shape[0], but got indices.shape = "
-        << indices_shape_ptr->ToString() << " and shape.shape = " << shape_shape_ptr->ToString() << ".";
+        << "For SparseSlice, indices.shape[1] must equal to shape.shape[0], but got indices.shape = " << indices_shape
+        << " and shape.shape = " << shape_shape << ".";
     }
     if (shape_shape != start_shape) {
       MS_EXCEPTION(ValueError) << "For SparseSlice, shape.shape must equal to start.shape, but got shape.shape = "
-                               << shape_shape_ptr->ToString() << " and start.shape = " << start_shape_ptr->ToString()
-                               << ".";
+                               << shape_shape << " and start.shape = " << start_shape << ".";
     }
     if (shape_shape != size_shape) {
       MS_EXCEPTION(ValueError) << "For SparseSlice, shape.shape must equal to size.shape, but got shape.shape = "
-                               << shape_shape_ptr->ToString() << "and size.shape = " << size_shape_ptr->ToString()
-                               << ".";
+                               << shape_shape << "and size.shape = " << size_shape << ".";
     }
-    return true;
   }
 };
 

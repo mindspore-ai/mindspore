@@ -56,6 +56,7 @@ struct GeTensorInfo {
 
   // Attr
   mindspore::HashMap<std::string, std::string> attr_map;
+  // NOTE: input index starts with 0
   mindspore::HashMap<uint32_t, std::string> input_attr_map;
   mindspore::HashMap<size_t, std::string> attr_input_map;
 
@@ -153,8 +154,8 @@ class GeAdapterInfo {
   mindspore::HashMap<int, std::vector<enum ::ge::DataType>> output_supported_dtypes() const {
     return info_.output_supported_dtypes;
   }
-  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, const ValuePtr &ms_value, ValuePtr *ge_value);
-  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, const ValuePtr &ms_value, ValuePtr *ge_value);
+  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, ValuePtr *ms_value);
+  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, ValuePtr *ms_value);
 
  private:
   void InitOpType();

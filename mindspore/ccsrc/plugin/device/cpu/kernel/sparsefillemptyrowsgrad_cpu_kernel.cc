@@ -45,14 +45,8 @@ constexpr char kKernelName[] = "SparseFillEmptyRows";
   }
 }  // namespace
 
-bool SparseFillEmptyRowsGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
+bool SparseFillEmptyRowsGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsGradOutputsNum, kernel_name_);
 
@@ -62,17 +56,15 @@ bool SparseFillEmptyRowsGradCpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
 
-  output_y_values_type_ = inputs[kIndex0]->GetDtype();
-  output_y_default_value_type_ = inputs[kIndex1]->GetDtype();
+  output_y_values_type_ = inputs[kIndex0]->dtype_id();
+  output_y_default_value_type_ = inputs[kIndex1]->dtype_id();
 
   return true;
 }
 
-int SparseFillEmptyRowsGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseFillEmptyRowsGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -94,22 +86,22 @@ int SparseFillEmptyRowsGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 }
 
 template <typename T>
-bool SparseFillEmptyRowsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto reverse_index_map_ptr = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  auto grad_values_ptr = reinterpret_cast<T *>(inputs[1]->addr);
+bool SparseFillEmptyRowsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto reverse_index_map_ptr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
+  auto grad_values_ptr = reinterpret_cast<T *>(inputs[1]->device_ptr());
   const int64_t N = reverse_index_map_shape_[0];
   const int64_t N_full = grad_values_shape_[0];
-  auto y_values_ptr = reinterpret_cast<T *>(outputs[kOutput_y_values]->addr);
+  auto y_values_ptr = reinterpret_cast<T *>(outputs[kOutput_y_values]->device_ptr());
 
   auto ret1 = memset_s(y_values_ptr, N * sizeof(T), 0, N * sizeof(T));
   if (ret1 != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset y_values failed!";
   }
   std::vector<bool> visited(N_full, false);
-  auto y_default_value = reinterpret_cast<T *>(outputs[kOutput_y_default_value]->addr);
+  auto y_default_value = reinterpret_cast<T *>(outputs[kOutput_y_default_value]->device_ptr());
   *y_default_value = static_cast<T>(0);
-  size_t output_size = outputs[0]->size / sizeof(T);
+  size_t output_size = outputs[0]->size() / sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       size_t reverse_index = LongToSize(reverse_index_map_ptr[i]);
@@ -205,9 +197,9 @@ std::vector<KernelAttr> SparseFillEmptyRowsGradCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SparseFillEmptyRowsGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool SparseFillEmptyRowsGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   bool ret = false;
   auto data_type = output_y_default_value_type_;
   switch (data_type) {

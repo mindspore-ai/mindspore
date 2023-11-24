@@ -65,36 +65,30 @@ constexpr size_t kDilationWIndex = 3;
 constexpr size_t kKernelHIndex = 0;
 constexpr size_t kKernelWIndex = 1;
 
-void CheckSize(const std::string &kernel_name, const std::string &dim_name, size_t expect, size_t actual) {
+void CheckSize(const std::string &kernel_name_, const std::string &dim_name, size_t expect, size_t actual) {
   if (actual != expect) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of '" << dim_name << "' must be " << expect
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of '" << dim_name << "' must be " << expect
                       << ", but got " << actual;
   }
 }
 }  // namespace
 
-bool DeformableOffsetsGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   return kernel_func_(this, inputs, outputs);
 }
 
-bool DeformableOffsetsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool DeformableOffsetsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputNum << " and " << kOutputNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast DeformableOffsetsGrad failed!";
-    return false;
-  }
-  data_format_ = kernel_ptr->get_format();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr("format"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -107,33 +101,29 @@ bool DeformableOffsetsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-void DeformableOffsetsGradGpuKernelMod::SetDims(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast DeformableOffsetsGrad failed!";
-  }
-  dims_.deformable_group = LongToUint(kernel_ptr->get_deformable_groups());
+void DeformableOffsetsGradGpuKernelMod::SetDims(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto kernel_name_ = primitive_->name();
+  dims_.deformable_group = LongToUint(GetValue<int64_t>(primitive_->GetAttr("deformable_groups")));
   if (dims_.deformable_group == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', deformable group must be greater than 0.";
   }
-  std::vector<int64_t> pad = kernel_ptr->get_pads();
+  std::vector<int64_t> pad = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
   CheckSize(kernel_name_, kPadStr, kPadNum, pad.size());
   dims_.pad_top = LongToUint(pad[kPadTopIndex]);
   dims_.pad_left = LongToUint(pad[kPadLeftIndex]);
 
-  std::vector<int64_t> stride = kernel_ptr->get_strides();
+  std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   CheckSize(kernel_name_, kStrideStr, kStrideNum, stride.size());
   dims_.stride_h = LongToUint(stride[kStrideHIndex]);
   dims_.stride_w = LongToUint(stride[kStrideWIndex]);
 
-  std::vector<int64_t> dilation = kernel_ptr->get_dilations();
+  std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilations"));
   CheckSize(kernel_name_, kDilationStr, kDilationNum, dilation.size());
   dims_.dilation_h = LongToUint(dilation[kDilationHIndex]);
   dims_.dilation_w = LongToUint(dilation[kDilationWIndex]);
 
-  std::vector<int64_t> ksize = kernel_ptr->get_kernel_size();
+  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
   CheckSize(kernel_name_, kKernelSizeStr, kKernelSizeNum, ksize.size());
   dims_.kernel_h = LongToUint(ksize[kKernelHIndex]);
   dims_.kernel_w = LongToUint(ksize[kKernelWIndex]);
@@ -169,27 +159,25 @@ void DeformableOffsetsGradGpuKernelMod::SetDims(const BaseOperatorPtr &base_oper
     std::accumulate(grad_offset_shape.begin(), grad_offset_shape.end(), type_size_, std::multiplies<size_t>());
 }
 
-int DeformableOffsetsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DeformableOffsetsGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     MS_LOG(ERROR) << kernel_name_ << " kernel mode resize failed.";
     return ret;
   }
-  if (input_size_list_.size() != kInputNum || output_size_list_.size() != kOutputNum) {
+  if (inputs.size() != kInputNum || output_size_list_.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " resize : input and output size should be " << kInputNum << " and " << kOutputNum
-                  << ", but got " << input_size_list_.size() << " and " << output_size_list_.size();
+                  << ", but got " << inputs.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
-  SetDims(base_operator, inputs, outputs);
+  SetDims(inputs, outputs);
   return KRET_OK;
 }
 
 template <typename T>
-bool DeformableOffsetsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool DeformableOffsetsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   T *grad_addr = GetDeviceAddress<T>(inputs, kGradIndex);
   T *x_addr = GetDeviceAddress<T>(inputs, kXIndex);
   T *offset_addr = GetDeviceAddress<T>(inputs, kOffsetIndex);

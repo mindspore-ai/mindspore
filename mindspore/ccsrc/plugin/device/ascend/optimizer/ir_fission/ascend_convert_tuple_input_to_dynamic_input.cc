@@ -15,9 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 
-#include <memory>
-#include <vector>
-
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -45,9 +42,9 @@ const AnfNodePtr AscendConvertTupleInputToDynamicInput::Process(const FuncGraphP
   // pack_fission, addn_fission, and HandleControlFlow
 
   static const PrimitiveSet need_unfold_calculate_node = {
-    prim::kPrimAddN,          prim::kPrimConcatD,      prim::kPrimPack,          prim::kPrimStack,
-    prim::kPrimPrint,         prim::kPrimConcat,       prim::kPrimAccumulateNV2, prim::kPrimMeshgrid,
-    prim::kPrimTensorSummary, prim::kPrimDynamicStitch};
+    prim::kPrimAddN,          prim::kPrimConcatD,       prim::kPrimPack,          prim::kPrimStack,
+    prim::kPrimPrint,         prim::kPrimConcat,        prim::kPrimAccumulateNV2, prim::kPrimMeshgrid,
+    prim::kPrimTensorSummary, prim::kPrimDynamicStitch, prim::kPrimParallelConcat};
 
   static const PrimitiveSet need_unfold_control_node = {prim::kPrimSwitchLayer, prim::kPrimCall, prim::kPrimSwitch,
                                                         prim::kPrimCallInline};

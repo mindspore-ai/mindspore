@@ -282,4 +282,12 @@ void ActorMgr::Wait(const AID &id) {
     actor->Await();
   }
 }
+
+void ActorMgr::ChildAfterFork() {
+  if (inner_pool_) {
+    MS_LOG(DEBUG) << "ActorMgr reinitialize inner_pool_ after fork.";
+    inner_pool_->ChildAfterFork();
+  }
+}
+
 };  // end of namespace mindspore

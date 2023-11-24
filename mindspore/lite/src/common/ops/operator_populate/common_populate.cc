@@ -16,9 +16,8 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "ops/addn.h"
 #include "ops/depend.h"
-#include "ops/log1p.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/switch_layer.h"
-#include "ops/zeros_like.h"
 using mindspore::ops::kNameAddN;
 using mindspore::ops::kNameDepend;
 using mindspore::ops::kNameLog1p;

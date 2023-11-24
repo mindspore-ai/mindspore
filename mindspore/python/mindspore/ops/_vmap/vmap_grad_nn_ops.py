@@ -21,12 +21,11 @@ from functools import reduce
 import mindspore.numpy as mnp
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
-from mindspore.ops import constexpr
 from mindspore.ops.primitive import _primexpr
-from mindspore.ops.primitive import Primitive
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
     _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
+from mindspore.ops.auto_generate.gen_enum_def import PyFormat
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -45,15 +44,10 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
             lambda x, y: x * y, shape if keep_dim == 0 else shape[:-keep_dim])
         return (new_batch_size,) if keep_dim == 0 else (new_batch_size, *shape[-keep_dim:])
 
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        reduction_type = "none"
-    else:
-        reduction_type = prim.reduction
-
-    def vmap_rule(x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim):
-        is_all_none, result = vmap_general_preprocess(
-            prim, x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim)
+    def vmap_rule(x_bdim, loss_grad_bdim, target_bdim, weight_bdim, total_weight_bdim, reduction_bdim,
+                  ignore_index_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, loss_grad_bdim, target_bdim, weight_bdim,
+                                                      total_weight_bdim, reduction_bdim, ignore_index_bdim)
         if is_all_none:
             return result
 
@@ -62,6 +56,8 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         target, target_dim = target_bdim
         weight, w_dim = weight_bdim
         total_weight, tw_dim = total_weight_bdim
+        reduction, _ = reduction_bdim
+        ignore_index, _ = ignore_index_bdim
 
         x_shape = F.shape(x)
         loss_grad_shape = F.shape(loss_grad)
@@ -71,10 +67,10 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         if w_dim is not None or tw_dim is not None:
             _raise_value_error("The source axis of weight and total_weight in `NLLLossGrad` must be None for now, "
                                "but got {} and {}.".format(w_dim, tw_dim))
-        if lg_dim is not None and reduction_type != "none":
+        if lg_dim is not None and reduction != 0:
             _raise_value_error("The source axis of loss_grad in `NLLLossGrad` can be not None "
                                "just when reduction type is none for vmap, "
-                               "but reduction type is {}.".format(reduction_type))
+                               "but reduction type is {}.".format(reduction))
 
         # If stacked, move vmap_dim to first dim and reshape to right shape.
         if x_dim is not None:
@@ -97,7 +93,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
                 target_shape = F.shape(target)
             target = F.reshape(target, _get_reshape_shape(target_shape))
 
-        out = prim(x, loss_grad, target, weight, total_weight)
+        out = prim(x, loss_grad, target, weight, total_weight, reduction, ignore_index)
         output = F.reshape(out, x_shape)
         out_dim = 0
         return output, out_dim
@@ -106,9 +102,8 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.MaxPoolGrad)
-@vmap_rules_getters.register(G.AvgPoolGrad)
-def get_avg_pool_grad_vmap_rule(prim, axis_size):
-    """VmapRule for `AvgPoolGrad`."""
+def get_max_pool_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPoolGrad`."""
     chw_reverse_index = -3
 
     def vmap_rule(x_bdim, y_bdim, dy_bdim):
@@ -129,6 +124,41 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
         y = F.reshape(y, (-1,) + y_shape[chw_reverse_index:])
         dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
         out = prim(x, y, dy)
+        out = F.reshape(out, x_shape)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.AvgPoolGrad)
+def get_avg_pool_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `AvgPoolGrad`."""
+    chw_reverse_index = -3
+
+    def vmap_rule(x_bdim, y_bdim, dy_bdim, kernel_size_bdim,
+                  strides_bdim, pad_mode_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, dy_bdim, kernel_size_bdim,
+                                                      strides_bdim, pad_mode_bdim, data_format_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        dy, dy_dim = dy_bdim
+        kernel_size, _ = kernel_size_bdim
+        strides, _ = strides_bdim
+        pad_mode, _ = pad_mode_bdim
+        data_format, _ = data_format_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        dy_shape = F.shape(dy)
+        x = F.reshape(x, (-1,) + x_shape[chw_reverse_index:])
+        y = F.reshape(y, (-1,) + y_shape[chw_reverse_index:])
+        dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
+        out = prim(x, y, dy, kernel_size, strides, pad_mode, data_format)
         out = F.reshape(out, x_shape)
         return out, 0
 
@@ -276,16 +306,22 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.BatchNormGradGrad)
 def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNormGradGrad` operation."""
-    data_format = prim.format
+    NCHW = PyFormat.NCHW.value
 
     def vmap_rule(x_bdim, dy_bdim, scale_bdim, mean_bdim, variance_bdim, dout_dx_bdim,
-                  dout_dscale_bdim, dout_dbias_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, scale_bdim, mean_bdim, variance_bdim,
-                                                      dout_dx_bdim, dout_dscale_bdim, dout_dbias_bdim)
+                  dout_dscale_bdim, dout_dbias_bdim, is_training_bdim, epsilon_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, scale_bdim, mean_bdim,
+                                                      variance_bdim, dout_dx_bdim, dout_dscale_bdim,
+                                                      dout_dbias_bdim, is_training_bdim, epsilon_bdim,
+                                                      data_format_bdim)
         if is_all_none:
             return result
 
-        dst_dim = 1 if data_format == "NCHW" else 3
+        is_training, _ = is_training_bdim
+        epsilon, _ = epsilon_bdim
+        data_format, _ = data_format_bdim
+
+        dst_dim = 1 if data_format == NCHW else 3
         x = _bdim_at_any(*x_bdim, dst_dim, axis_size)
         dy = _bdim_at_any(*dy_bdim, dst_dim, axis_size)
         dout_dx = _bdim_at_any(*dout_dx_bdim, dst_dim, axis_size)
@@ -298,11 +334,11 @@ def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
 
         x_shape = x.shape
         scale_shape = scale.shape
-        shape = (x_shape[0], -1,) + x_shape[3:] if data_format == "NCHW" else x_shape[:-2] + (-1,)
+        shape = (x_shape[0], -1,) + x_shape[3:] if data_format == NCHW else x_shape[:-2] + (-1,)
         dx, ddy, dscale = prim(x.reshape(shape), dy.reshape(shape), scale.flatten(), mean.flatten(),
                                variance.flatten(), dout_dx.reshape(shape), dout_dscale.flatten(),
-                               dout_dbias.flatten())
-        pos = 1 if data_format == "NCHW" else 3
+                               dout_dbias.flatten(), is_training, epsilon, data_format)
+        pos = 1 if data_format == NCHW else 3
         return (dx.reshape(x_shape), pos), (ddy.reshape(x_shape), pos), (dscale.reshape(scale_shape), 0)
     return vmap_rule
 
@@ -347,25 +383,29 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNormGrad` operation."""
     bn_min_dim = 3
     bn_max_dim = 5
-    data_format = prim.data_format
     prim_name = prim.name
-    if data_format == "NHWC":
-        batchnorm_grad_nhwc_vmap = _VmapGeneralRule(prim, axis_size)
+    NHWC = PyFormat.NHWC.value
 
-    def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim):
-        is_all_none, result = \
-            vmap_general_preprocess(prim, grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
+    def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim,
+                  rsv_3_bdim, training_bdim, epsilon_bdim, format_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim,
+            rsv_3_bdim, training_bdim, epsilon_bdim, format_bdim)
         if is_all_none:
             return result
-        if data_format == "NHWC":
-            # BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
-            return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
         grad, grad_dim = grad_bdim
         input_x, input_x_dim = x_bdim
         scale, scale_dim = scale_bdim
         rsv_1, rsv_1_dim = rsv_1_bdim
         rsv_2, rsv_2_dim = rsv_2_bdim
         rsv_3, rsv_3_dim = rsv_3_bdim
+        training, _ = training_bdim
+        epsilon, _ = epsilon_bdim
+        data_format, _ = format_bdim
+        if data_format == NHWC:
+            batchnorm_grad_nhwc_vmap = _VmapGeneralRule(prim, axis_size)
+            # BatchNormGrad with NHWC format is a GPU backend operation and not supported for now.
+            return batchnorm_grad_nhwc_vmap(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim, rsv_3_bdim)
         x_ndim = F.rank(input_x)
         if x_ndim not in (bn_min_dim, bn_max_dim):
             raise ValueError("The dim of `input_x` in `{}` must be equal to {} or {}, "
@@ -387,7 +427,8 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
         rsv_1 = rsv_1.flatten()
         rsv_2 = rsv_2.flatten()
         rsv_3 = rsv_3.flatten()
-        grad_x, grad_scale, grad_offset = prim(grad, input_x, scale, rsv_1, rsv_2, rsv_3)
+        grad_x, grad_scale, grad_offset =\
+            prim(grad, input_x, scale, rsv_1, rsv_2, rsv_3, training, epsilon, data_format)
         grad_x = F.reshape(grad_x, x_shape)
         grad_scale = F.reshape(grad_scale, other_shape)
         grad_offset = F.reshape(grad_offset, other_shape)
@@ -553,7 +594,6 @@ def get_mirror_pad_grad_grad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register('LayerNormGrad')
 def get_layernormgrad_vmap_rule(prim, axis_size):
     """VmapRule for `LayerNormGrad` operation."""
-    @constexpr
     def process_attr_axis(prim_attr_axis):
         if prim_attr_axis < 0:
             return prim_attr_axis
@@ -571,13 +611,11 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
     def get_logical_shape(var_shape):
         return var_shape[1:]
 
-    norm_axis = process_attr_axis(prim.begin_norm_axis)
-    params_axis = process_attr_axis(prim.begin_params_axis)
-    batch_prim = G.LayerNormGrad(norm_axis, params_axis)
     eps = 1e-12
 
-    def vmap_rule(x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim)
+    def vmap_rule(x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim, begin_norm_axis_bdim, begin_params_axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim,
+                                                      begin_norm_axis_bdim, begin_params_axis_bdim)
         if is_all_none:
             return result
 
@@ -586,6 +624,11 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         var, var_dim = var_bdim
         mean, mean_dim = mean_bdim
         gamma, gamma_dim = gamma_bdim
+        begin_norm_axis, _ = begin_norm_axis_bdim
+        begin_params_axis, _ = begin_params_axis_bdim
+
+        begin_norm_axis = process_attr_axis(begin_norm_axis)
+        begin_params_axis = process_attr_axis(begin_params_axis)
 
         x = _bdim_at_front(x, x_dim, axis_size)
         dy = _bdim_at_front(dy, dy_dim, axis_size)
@@ -594,7 +637,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         gamma = _bdim_at_front(gamma, gamma_dim, axis_size)
 
         dy_shape = F.shape(dy)
-        batch_params_reduce_axes = get_batch_params_reduce_axes(params_axis, dy_shape)
+        batch_params_reduce_axes = get_batch_params_reduce_axes(begin_norm_axis, dy_shape)
 
         if not batch_params_reduce_axes:
             d_beta = dy
@@ -612,7 +655,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         dy = dy * gamma
         gamma_logical_shape = get_logical_shape(gamma_shape)
         ones_like_gamma = F.ones(gamma_logical_shape, F.dtype(gamma))
-        dx, _, _ = batch_prim(x, dy, var, mean, ones_like_gamma)
+        dx, _, _ = prim(x, dy, var, mean, ones_like_gamma, begin_norm_axis, begin_params_axis)
 
         return (dx, 0), (d_gamma, 0), (d_beta, 0)
     return vmap_rule
@@ -625,17 +668,24 @@ def get_grid_sampler_grad_vmap_rule(prim, axis_size):
     prim_name = prim.name
     if prim_name == "GridSampler2DGrad":
         non_batch_dim_index = -3
-    else:
+    elif prim_name == "GridSampler3DGrad":
         non_batch_dim_index = -4
+    else:
+        _raise_value_error("The prim name must be `GridSampler2D` or `GridSampler3D`, but got {}.".format(prim_name))
 
-    def vmap_rule(grad_bdim, input_x_bdim, grid_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, grad_bdim, input_x_bdim, grid_bdim)
+
+    def vmap_rule(grad_bdim, input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, grad_bdim, input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim)
         if is_all_none:
             return result
 
         grad, grad_dim = grad_bdim
         input_x, input_x_dim = input_x_bdim
         grid, grid_dim = grid_bdim
+        interpolation_mode, _ = interpolation_mode_bdim
+        padding_mode, _ = padding_mode_bdim
+        align_corners, _ = align_corners_bdim
 
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         grad_shape = F.shape(grad)
@@ -649,7 +699,7 @@ def get_grid_sampler_grad_vmap_rule(prim, axis_size):
         grid_shape = F.shape(grid)
         grid = F.reshape(grid, (-1,) + grid_shape[non_batch_dim_index:])
 
-        dx, dgrid = prim(grad, input_x, grid)
+        dx, dgrid = prim(grad, input_x, grid, interpolation_mode, padding_mode, align_corners)
         dx_shape = F.shape(dx)
         dx_return_shape = input_x_shape[:non_batch_dim_index] + dx_shape[non_batch_dim_index:]
         dx = F.reshape(dx, dx_return_shape)
@@ -697,25 +747,21 @@ def get_upsample_grad_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.LogSoftmaxGrad)
-def get_log_softmax_vmap_rule(prim, axis_size):
+def get_log_softmax_grad_vmap_rule(prim_func, axis_size):
     """VmapRule for 'LogSoftmaxGrad' operation."""
-    if isinstance(prim, str):
-        axis = -1
-    else:
-        axis = prim.axis
-
-    def vmap_rule(x_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, grad_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim_func, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
         grad, _ = grad_bdim
+        axis, _ = axis_bdim
         x_ndim = F.rank(x) - 1
 
         batch_axis = axis + x_ndim if axis < 0 else axis
         batch_axis = batch_axis if batch_axis < x_dim else batch_axis + 1
 
-        dx = G.LogSoftmaxGrad(axis=batch_axis)(x, grad)
+        dx = prim_func(x, grad, batch_axis)
         return dx, x_dim
 
     return vmap_rule

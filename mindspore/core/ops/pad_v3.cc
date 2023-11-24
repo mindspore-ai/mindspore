@@ -135,7 +135,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   constexpr int64_t kOtherMinDims = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_shape_ptr = input_args[0]->BuildShape();
+  auto input_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);
   if (input_shape_ptr->IsDimUnknown()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -150,24 +150,21 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   }
 
   std::vector<int64_t> paddings_arg;
-  auto padding_type = input_args[kInputIndex1]->BuildType();
+  auto padding_type = input_args[kInputIndex1]->GetType();
   if (padding_type->isa<TensorType>()) {
-    auto paddings_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto paddings_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
     if (paddings_shape_ptr->IsDynamic()) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
     }
-    auto paddings = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(paddings);
-    auto paddings_value = paddings->BuildValue();
+    auto paddings_value = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
-    if (!paddings_value->isa<tensor::Tensor>()) {
+    if (paddings_value->ContainsValueAny()) {
       return PaddingNoTensor(paddings_shape_ptr, x_shape);
     }
-    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
+    paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name, padding_type);
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
-    auto value = input_args[1]->BuildValue();
-    paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
+    paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", input_args[1], prim_name);
   } else {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
   }
@@ -225,7 +222,7 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
+  std::map<std::string, TypePtr> args = {{"x", input_args[0]->GetType()}};
   auto mode = GetValue<string>(prim->GetAttr("mode"));
   if (mode == kConstant) {
     return CheckAndConvertUtils::CheckTensorTypeSame(

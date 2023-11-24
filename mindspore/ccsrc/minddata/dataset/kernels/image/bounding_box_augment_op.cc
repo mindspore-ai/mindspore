@@ -28,9 +28,7 @@ namespace dataset {
 const float BoundingBoxAugmentOp::kDefRatio = 0.3;
 
 BoundingBoxAugmentOp::BoundingBoxAugmentOp(std::shared_ptr<TensorOp> transform, float ratio)
-    : ratio_(ratio), uniform_(0.0, 1.0), transform_(std::move(transform)) {
-  rnd_.seed(GetSeed());
-}
+    : ratio_(ratio), uniform_(0.0, 1.0), transform_(std::move(transform)) {}
 
 Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
@@ -41,7 +39,7 @@ Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) 
   std::shared_ptr<CVTensor> input_restore = CVTensor::AsCVTensor(input[0]);
   for (uint32_t i = 0; i < num_of_boxes; i++) {
     // using a uniform distribution to ensure op happens with probability ratio_
-    if (uniform_(rnd_) < ratio_) {
+    if (uniform_(random_generator_) < ratio_) {
       std::shared_ptr<BoundingBox> bbox;
       RETURN_IF_NOT_OK(BoundingBox::ReadFromTensor(input[1], i, &bbox));
       RETURN_IF_NOT_OK(Crop(input_restore, &crop_out, static_cast<int>(bbox->x()), static_cast<int>(bbox->y()),

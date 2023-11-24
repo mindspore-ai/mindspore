@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"
 #include "mindspore/core/ops/sequence_stack.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,20 +36,17 @@ constexpr int kInputsNum = 1;
 constexpr int kOutputsNum = 1;
 }  // namespace
 
-bool SequenceStackGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceStackGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceStackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -59,14 +57,12 @@ int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   std::vector<int64_t> shape_vec_item;
   std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceStack>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  axis_ = kernel_ptr->get_axis();
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   if (axis_ < 0) {
     axis_ += (SizeToInt(shape_vec_item.size()) + 1);
   }
   auto origin_data_format = kOpFormat_DEFAULT;
-  auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
+  auto input_format = GetFormatFromEnumToStr(inputs[0]->format());
   axis_ = AxisTransform(origin_data_format, input_format, axis_);
   input_num_ = tuple_shape_[0];
   inputs_host_.resize(input_num_);
@@ -84,13 +80,13 @@ int SequenceStackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool SequenceStackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool SequenceStackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
-  size_t element_num = outputs[0]->size / sizeof(T) / input_num_;
+  size_t element_num = outputs[0]->size() / sizeof(T) / input_num_;
   for (int i = 0; i < input_num_; i++) {
     T *tmp_addr = input_addr + i * element_num;
     inputs_host_[i] = tmp_addr;

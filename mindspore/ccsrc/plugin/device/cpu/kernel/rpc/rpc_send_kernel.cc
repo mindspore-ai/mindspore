@@ -22,11 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool RpcSendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool RpcSendKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
   // The workspace's memory size changes if is_dynamic_shape_.
   is_dynamic_shape_ = std::any_of(inputs.begin(), inputs.end(),
                                   [](const auto &kernel_tensor) { return kernel_tensor->IsDynamicShape(); });
@@ -34,10 +30,8 @@ bool RpcSendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int RpcSendKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int RpcSendKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   // After Resize, we still need to process the workspace size list so that it won't be empty.
   AssignWorkspaceSize(inputs);
   return ret;
@@ -48,13 +42,12 @@ std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
   return support_list;
 }
 
-size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) const {
+size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensor *dynamic_shape_input) {
   MS_EXCEPTION_IF_NULL(dynamic_shape_input);
-
   size_t msg_size = 0;
   auto shapes = dynamic_shape_input->GetShapeVector();
-  TypeId data_type = dynamic_shape_input->GetDtype();
-  size_t input_size = dynamic_shape_input->IsDynamicShape() ? kSizeZero : dynamic_shape_input->GetSizeInBytes();
+  TypeId data_type = dynamic_shape_input->dtype_id();
+  size_t input_size = dynamic_shape_input->IsDynamicShape() ? kSizeZero : dynamic_shape_input->size();
 
   runtime::rpc::DynamicShapeMessage pb_msg;
   pb_msg.set_type_id(static_cast<int>(data_type));
@@ -68,15 +61,15 @@ size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_s
   return msg_size;
 }
 
-void RpcSendKernelMod::AssignWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void RpcSendKernelMod::AssignWorkspaceSize(const std::vector<KernelTensor *> &inputs) {
   // Assign one piece of workspace memory with the same size of all inputs. It's the data which will be sent to remote.
   // Only allocate one piece of workspace memory to avoid extra memory copying and serialize inputs data to one message.
   workspace_size_list_.clear();
   size_t total_size = 0;
   total_size = std::accumulate(inputs.begin(), inputs.end(), total_size,
-                               [this](size_t total_size, const KernelTensorPtr &input_tensor) {
+                               [this](size_t total_size, const KernelTensor *input_tensor) {
                                  return is_dynamic_shape_ ? (total_size + GetDynamicShapeMsgSize(input_tensor))
-                                                          : (total_size + input_tensor->GetSizeInBytes());
+                                                          : (total_size + input_tensor->size());
                                });
 
   workspace_size_list_.push_back(total_size);

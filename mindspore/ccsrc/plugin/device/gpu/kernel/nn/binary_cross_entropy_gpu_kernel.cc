@@ -17,16 +17,17 @@
 #include <map>
 #include "mindspore/core/ops/binary_cross_entropy.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
+#include "ops/binary_cross_entropy.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 size_t kNumInputWithWeight = 3;
 }
-bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                                            const std::vector<AddressPtr> &workspace,
-                                                                            const std::vector<AddressPtr> &outputs,
-                                                                            void *stream_ptr) {
+bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<half>(inputs, workspace, outputs, stream_ptr);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -39,9 +40,9 @@ bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(cons
 }
 
 template <typename T>
-void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *weight = nullptr;
@@ -57,16 +58,9 @@ void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 }
 
-bool BinaryCrossEntropyGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  const auto reduction = kernel_ptr->get_reduction();
+bool BinaryCrossEntropyGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = ReductionMode::kNone;
   } else if (reduction == Reduction::MEAN) {
@@ -80,23 +74,21 @@ bool BinaryCrossEntropyGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kNumInputWithWeight);
   return true;
 }
 
-int BinaryCrossEntropyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_size_ = SizeOf(input_shape);
-  workspace_size_ = sizeof(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  workspace_size_ = sizeof(TypeIdToType(inputs[kIndex0]->dtype_id()));
   if (reduction_ != ReductionMode::kNone) {
     workspace_size_ *= input_size_;
   }

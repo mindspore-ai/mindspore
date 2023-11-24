@@ -16,61 +16,53 @@
 
 #include "plugin/device/cpu/kernel/bias_add_grad_cpu_kernel.h"
 #include <complex>
-#include "ops/grad/bias_add_grad.h"
+#include "ops/ops_func_impl/bias_add_grad.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kBiasAddGradInputsNum = 1;
-constexpr size_t kBiasAddGradOutputsNum = 1;
-constexpr size_t k2Dims = 2;
-}  // namespace
-
-bool BiasAddGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool BiasAddGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasAddGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BiasAddGrad ops failed!";
-    return false;
-  }
-  data_format_ = kernel_ptr->get_str_format();
   return true;
 }
 
-int BiasAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BiasAddGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
+  data_format_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
-  if (input_shape_.size() < k2Dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension must be at least 2, but got "
-                      << input_shape_.size();
+  if (data_format_ == Format::NCDHW && input_shape_.size() != kShape5dDims) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', NCDHW format only supports 5-D input on CPU, but got a "
+                             << input_shape_.size() << "-D input.";
+  }
+  const int64_t error_size = 1;
+  if (data_format_ == Format::NCHW && input_shape_.size() == kShape3dDims && input_shape_[kDim2] == error_size) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', input tensor's dimension is 3, when data_format is NCHW "
+                                "the last dimension size should greater than 1.";
   }
   return ret;
 }
 
-bool BiasAddGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddGradOutputsNum, kernel_name_);
+bool BiasAddGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
-bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  if (data_format_ == "NHWC") {
+  if (data_format_ == Format::NHWC) {
     int64_t input_shape_size = SizeToLong(input_shape_.size());
     size_t kStep = input_shape_[input_shape_size - 1];
     size_t num_value = 1;
@@ -88,9 +80,9 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
         output_addr[i % kStep] += input_addr[i];
       }
     }
-  } else if (input_shape_.size() > k2Dims) {
+  } else if (input_shape_.size() > kShape2dDims) {
     size_t hw_size = 1;
-    for (size_t i = k2Dims; i < input_shape_.size(); ++i) {
+    for (size_t i = kShape2dDims; i < input_shape_.size(); ++i) {
       hw_size *= input_shape_[i];
     }
 
@@ -122,7 +114,7 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
       }
     };
     ParallelLaunchAutoSearch(task, c_size, this, &parallel_search_info_);
-  } else if (input_shape_.size() == k2Dims) {
+  } else if (input_shape_.size() == kShape2dDims) {
     auto task = [this, input_addr, output_addr](size_t start, size_t end) {
       for (size_t k = 0; k < end - start; k++) {
         const T *inner_src = input_addr + start + k;
@@ -142,29 +134,65 @@ bool BiasAddGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 const std::vector<std::pair<KernelAttr, BiasAddGradCpuKernelMod::KernelRunFunc>> &BiasAddGradCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, BiasAddGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
      &BiasAddGradCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64),
      &BiasAddGradCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt8),
      &BiasAddGradCpuKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt16),
      &BiasAddGradCpuKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
      &BiasAddGradCpuKernelMod::LaunchKernel<int>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
      &BiasAddGradCpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt8),
      &BiasAddGradCpuKernelMod::LaunchKernel<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt16),
      &BiasAddGradCpuKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt32),
      &BiasAddGradCpuKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
      &BiasAddGradCpuKernelMod::LaunchKernel<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex64),
      &BiasAddGradCpuKernelMod::LaunchKernel<std::complex<float>>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
      &BiasAddGradCpuKernelMod::LaunchKernel<std::complex<double>>},
   };
   return func_list;

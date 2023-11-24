@@ -46,11 +46,11 @@ class PriorityReplayBuffer {
   ~PriorityReplayBuffer();
 
   // Push an experience transition to the buffer which will be given the highest priority.
-  bool Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream);
+  bool Push(const std::vector<KernelTensor *> &transition, float *priority, cudaStream_t stream);
 
   // Sample a batch transitions with indices and bias correction weights.
   bool Sample(const size_t &batch_size, float *beta, size_t *indices, float *weights,
-              const std::vector<AddressPtr> &transition, cudaStream_t stream);
+              const std::vector<KernelTensor *> &transition, cudaStream_t stream);
 
   // Update experience transitions priorities.
   bool UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream);
@@ -124,15 +124,16 @@ PriorityReplayBuffer<Tree>::~PriorityReplayBuffer() {
 }
 
 template <typename Tree>
-bool PriorityReplayBuffer<Tree>::Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream) {
+bool PriorityReplayBuffer<Tree>::Push(const std::vector<KernelTensor *> &transition, float *priority,
+                                      cudaStream_t stream) {
   total_num_++;
   size_t idx = total_num_ % capacity_;
 
   // Copy transition to FIFO.
   for (size_t i = 0; i < schema_.size(); i++) {
     size_t offset = idx * schema_[i];
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->addr, schema_[i],
-                                                      cudaMemcpyDeviceToDevice, stream),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->device_ptr(),
+                                                      schema_[i], cudaMemcpyDeviceToDevice, stream),
                                       "cudaMemcpyAsync failed.");
   }
 
@@ -144,7 +145,7 @@ bool PriorityReplayBuffer<Tree>::Push(const std::vector<AddressPtr> &transition,
 
 template <typename Tree>
 bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, size_t *indices, float *weights,
-                                        const std::vector<AddressPtr> &transition, cudaStream_t stream) {
+                                        const std::vector<KernelTensor *> &transition, cudaStream_t stream) {
   MS_EXCEPTION_IF_ZERO("batch size", batch_size);
 
   cudaError_t status = cudaErrorNotReady;
@@ -160,7 +161,7 @@ bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, s
   CHECK_CUDA_STATUS(status, "SumTreeSample called by Sample");
 
   for (size_t i = 0; i < schema_.size(); i++) {
-    auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
+    auto output_addr = static_cast<uint8_t *>(transition[i]->device_ptr());
     status = FifoSlice(fifo_replay_buffer_[i], indices, output_addr, batch_size, schema_[i], stream);
     CHECK_CUDA_STATUS(status, "FifoSlice called by Sample");
   }

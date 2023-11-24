@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -35,7 +37,27 @@ arr_x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
 
 
 def test_net():
+    """
+    Feature: test square function.
+    Description: test square op forward.
+    Expectation: expect correct result.
+    """
     square = Net()
     output = square(Tensor(arr_x))
     print(arr_x)
     print(output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_net_bf16():
+    """
+    Feature: test square function.
+    Description: test square op forward bf16.
+    Expectation: expect correct result.
+    """
+    square = Net()
+    output = square(Tensor(arr_x, mindspore.bfloat16))
+    except_out = np.array([1., 16., 81.]).astype(np.float32)
+    assert np.allclose(output.float().asnumpy(), except_out, 0.004, 0.004)

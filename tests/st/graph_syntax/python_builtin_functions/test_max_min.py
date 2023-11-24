@@ -18,6 +18,7 @@ import pytest
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
 from mindspore.common import mutable
+from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -184,8 +185,6 @@ def test_builtin_function_min_with_tensor_1d(mode):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_min_with_tuple_with_variable(mode):
@@ -228,3 +227,50 @@ def test_builtin_function_max_min_with_variable_length_tuple(mode):
     assert len(res) == 2
     assert res[0] == 4
     assert res[1] == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_min_mutable(mode):
+    """
+    Feature: Check the arg of min.
+    Description: Test max()/min() in graph mode.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def construct(self, x):
+            out = min(x)
+            return out
+
+    with pytest.raises(TypeError) as info:
+        context.set_context(mode=mode)
+        x = mutable(1)
+        net = Net()
+        out = net(x)
+        assert out == 1
+    assert "object is not iterable" in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_max_mutable(mode):
+    """
+    Feature: Check the arg of max.
+    Description: Test max()/min() in graph mode.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            out = max(x, y)
+            return out
+
+    context.set_context(mode=mode)
+    x = mutable(1)
+    y = mutable(2)
+    net = Net()
+    out = net(x, y)
+    assert out == 2

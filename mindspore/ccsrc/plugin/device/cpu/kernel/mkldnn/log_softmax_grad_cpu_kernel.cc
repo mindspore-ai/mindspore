@@ -21,17 +21,14 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kLogSoftmaxGradInputsNum = 2;
+constexpr size_t kLogSoftmaxGradInputsNum = 3;
 constexpr size_t kLogSoftmaxGradOutputsNum = 1;
 }  // namespace
 
-bool LogSoftmaxGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LogSoftmaxGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -41,17 +38,14 @@ bool LogSoftmaxGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int LogSoftmaxGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LogSoftmaxGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  axis_ = kernel_ptr->get_axis();
-  auto src_shape = inputs[0]->GetDeviceShapeAdaptively();
+  axis_ = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
+  auto src_shape = inputs[0]->GetDeviceShapeVector();
   if (axis_ >= SizeToLong(src_shape.size())) {
     axis_ = SizeToLong(src_shape.size()) - 1;
   }
@@ -71,14 +65,14 @@ int LogSoftmaxGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return ret;
 }
 
-bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_DST, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DST, inputs[0]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[1]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

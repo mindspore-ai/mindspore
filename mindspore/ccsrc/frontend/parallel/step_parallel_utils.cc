@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@
 #include <string>
 #include <utility>
 
+#include "abstract/dshape.h"
+#include "base/base.h"
+#include "base/bfloat16.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/device_manager.h"
@@ -497,10 +500,15 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
       MS_EXCEPTION_IF_NULL(each_shape);
       shapes.push_back(each_shape->shape());
     }
-  } else {
+  } else if (base_shape_ptr->isa<abstract::Shape>()) {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
     shapes.push_back(shape_ptr->shape());
+  } else if (base_shape_ptr->isa<abstract::NoShape>()) {
+    shapes.push_back(Shape{});
+  } else {
+    MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " should be Tuple/List/Tensor/Scalar, but got "
+                      << base_shape_ptr->ToString() << "full name is " << node->fullname_with_scope();
   }
   return shapes;
 }
@@ -597,22 +605,18 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
-  ValuePtr pyop_instance = CreateOpInstance(arg_replace_op.first, replace_op.first, instance_name);
-  if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreateOpInstance failed";
-  }
   OperatorParams params = arg_replace_op.second;
   if (node->inputs().size() < 2) {
     // GetNext operator dose not has input
     if (node->inputs().size() == 1) {
-      return {NewValueNode(pyop_instance)};
+      return ConvertToRealInputs(replace_op.first, instance_name, AnfNodePtrList{}, arg_replace_op.first);
     }
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
   }
-  std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
+  std::vector<AnfNodePtr> replace_input = {node->input(1)};
 
   if (replace_op.first == EMBEDDING_LOOKUP) {
-    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
+    replace_input = {node->input(1), node->input(2)};
   }
 
   if (!params.empty()) {
@@ -627,13 +631,15 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
         MS_LOG(EXCEPTION) << "Failure:val is nullptr";
       }
       int64_t position = param.second;
-      (void)replace_input.insert(replace_input.cbegin() + position, val);
+      (void)replace_input.insert(replace_input.cbegin() + position - 1, val);
     }
   } else if (replace_op.first == SYNC_BATCH_NORM) {
     for (size_t i = 2; i < node->inputs().size(); ++i) {
       replace_input.push_back(node->input(i));
     }
   }
+
+  replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
   SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
 }
@@ -926,7 +932,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA, IGAMMAC,
      LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D, MAXPOOL_3D,
      AVGPOOL_3D, FILLV2, FAKE_QUANT_PER_LAYER, FAKE_QUANT_PER_CHANNEL, MIN_MAX_UPDATE_PER_LAYER,
-     MIN_MAX_UPDATE_PER_CHANNEL, MOE_FFN, FLASH_ATTENTION_SCORE};
+     MIN_MAX_UPDATE_PER_CHANNEL, FFN, FLASH_ATTENTION_SCORE};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -1081,7 +1087,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   std::vector<Shapes> shape_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
 
-  const int concat_size = 2;
+  const int min_size = 2;
   size_t inputs_size = all_inputs.size();
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
@@ -1101,7 +1107,8 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       MS_LOG(INFO) << "Find parameter by ref key node" << node_pair.first;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
+               (IsValueSequence(input) &&
+                (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)))) {
       if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
           (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
@@ -1117,7 +1124,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       continue;
     }
     if (input_shapes.size() != 1) {
-      if (inputs_size == concat_size) {  // like concat
+      if (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) {
         shape_inputs = input_shapes;
         break;
       } else {

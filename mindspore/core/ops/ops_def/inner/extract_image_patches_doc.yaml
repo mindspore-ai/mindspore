@@ -1,0 +1,43 @@
+extract_image_patches:
+  description: |
+    Extracts patches from images.
+    The input tensor must be a 4-D tensor and the data format is NCHW.
+
+    Args:
+        input_x (Tensor): A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
+            the size must be 4, and the format is [1, 1, ksize_row, ksize_col].
+        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
+            must be a tuple or list of int, the size must be 4, and the format is [1, 1, stride_row, stride_col].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
+            pixel positions, must be a tuple or a list of integers, the size must be 4, and the format is [1, 1, rate_row, rate_col].
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
+            not case sensitive. Default: "valid".
+
+            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+
+            - valid: Means that the taken patch area must be completely covered in the original image.
+
+    Outputs:
+        Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
+        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
+        and
+
+        .. math::
+            out_depth=ksize\_row * ksize\_col * in\_depth
+
+        and
+        if 'padding' is "valid":
+
+        .. math::
+            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
+            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
+
+        if 'padding' is "same":
+
+        .. math::
+            out\_row=floor((in\_row - 1) / stride\_row) + 1
+            out\_col=floor((in\_col - 1) / stride\_col) + 1
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``

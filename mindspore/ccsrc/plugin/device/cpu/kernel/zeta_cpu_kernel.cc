@@ -24,15 +24,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool ZetaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ZetaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>
@@ -41,13 +38,13 @@ inline T ScalarZeta(T a, T b) {
 }
 
 template <typename T>
-bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  std::size_t total = inputs[0]->size / sizeof(T);
+bool ZetaCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  std::size_t total = inputs[0]->size() / sizeof(T);
   auto task = [input0, input1, output](std::size_t begin, std::size_t end) {
     std::transform(input0 + begin, input0 + end, input1 + begin, output + begin, ScalarZeta<T>);
   };

@@ -141,7 +141,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                            const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) const;
 
-  void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
+  void ReleaseForwardOutput(const std::vector<ValuePtr> &input_values);
 
   void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
 

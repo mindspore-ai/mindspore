@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomAdjustSharpnessOp::kDefProbability = 0.5;
-
 Status RandomAdjustSharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 
@@ -34,8 +32,8 @@ Status RandomAdjustSharpnessOp::Compute(const std::shared_ptr<Tensor> &input, st
                                "RandomAdjustSharpness: Cannot convert from OpenCV type, unknown CV type. Currently "
                                "supported data type: [int8, uint8, int16, uint16, int32, float16, float32, float64].");
 
-  if (distribution_(rnd_)) {
-    return SharpnessOp::Compute(input, output);
+  if (distribution_(random_generator_)) {
+    return AdjustSharpness(input, output, degree_);
   }
   *output = input;
   return Status::OK();

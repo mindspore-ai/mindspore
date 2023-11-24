@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 using Subpolicy = std::vector<std::pair<std::shared_ptr<TensorOp>, double>>;
 
-class RandomSelectSubpolicyOp : public TensorOp {
+class RandomSelectSubpolicyOp : public RandomTensorOp {
  public:
   /// constructor
   /// \param[in] policy policy to choose subpolicy from
@@ -68,7 +68,6 @@ class RandomSelectSubpolicyOp : public TensorOp {
 
  private:
   std::vector<Subpolicy> policy_;
-  std::mt19937 gen_;  // mersenne_twister_engine
   std::uniform_int_distribution<size_t> rand_int_;
   std::uniform_real_distribution<double> rand_double_;
 };

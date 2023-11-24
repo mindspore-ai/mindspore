@@ -161,9 +161,9 @@ void CPUMemoryManager::DecreaseSummaryRefCount(const session::NamedSummaryOutput
     auto address = AnfAlgo::GetMutableOutputAddr(node, index);
     MS_EXCEPTION_IF_NULL(address);
     address->ref_count_--;
-    if (address->ref_count_ == 0 && address->ptr_ != nullptr) {
-      MemFree(address->ptr_);
-      address->ptr_ = nullptr;
+    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+      MemFree(address->GetDevicePtr());
+      address->SetDevicePtr(nullptr);
     }
   }
 }
@@ -202,9 +202,9 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
     auto address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(address);
     address->ref_count_--;
-    if (address->ref_count_ == 0 && address->ptr_ != nullptr) {
-      MemFree(address->ptr_);
-      address->ptr_ = nullptr;
+    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+      MemFree(address->GetDevicePtr());
+      address->SetDevicePtr(nullptr);
     }
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -213,9 +213,9 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
     auto address = AnfAlgo::GetWorkspaceAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(address);
     address->ref_count_--;
-    if (address->ref_count_ == 0 && address->ptr_ != nullptr) {
-      MemFree(address->ptr_);
-      address->ptr_ = nullptr;
+    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+      MemFree(address->GetDevicePtr());
+      address->SetDevicePtr(nullptr);
     }
   }
 }

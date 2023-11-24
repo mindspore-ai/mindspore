@@ -23,14 +23,13 @@ constexpr size_t kNumber1 = 1;
 constexpr size_t kNumber4 = 4;
 }  // namespace
 
-bool SparseSegmentMeanGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentMeanGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   size_t inputs_num = kNumber4;
   size_t outputs_num = kNumber1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,15 +37,13 @@ bool SparseSegmentMeanGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
     return false;
   }
   kernel_func_ = kernel_attr_map_[index].second;
-  unit_grad_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_idx_seg_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  unit_grad_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_idx_seg_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   return true;
 }
 
-int SparseSegmentMeanGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseSegmentMeanGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -76,22 +73,16 @@ int SparseSegmentMeanGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   idx_seg_elements_ = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies{});
   output_dim0_ = LongToSize(output_shape.front());
 
-  size_t input_grad_size = grad_elements_ * unit_grad_size_;
-  size_t input_idx_seg_size = idx_seg_elements_ * unit_idx_seg_size_;
   size_t output_size = output_elements_ * unit_grad_size_;
-  input_size_list_.push_back(input_grad_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(unit_idx_seg_size_);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back((outer_size_ + 1) * sizeof(size_t));
   return KRET_OK;
 }
 
 template <typename R, typename S>
-bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs) {
+bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &workspace,
+                                                     const std::vector<KernelTensor *> &outputs) {
   R *grad_ptr = GetDeviceAddress<R>(inputs, kIndex0);
   S *indices_ptr = GetDeviceAddress<S>(inputs, kIndex1);
   S *segment_ids_ptr = GetDeviceAddress<S>(inputs, kIndex2);
@@ -99,7 +90,7 @@ bool SparseSegmentMeanGradGpuKernelMod::LaunchKernel(const std::vector<AddressPt
   size_t *segment_pos_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
   if (any(grad_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr)) {
-    cudaMemset(y_ptr, 0, outputs[0]->size);
+    cudaMemset(y_ptr, 0, outputs[0]->size());
     return true;
   }
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);

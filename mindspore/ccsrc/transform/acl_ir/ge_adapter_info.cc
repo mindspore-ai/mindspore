@@ -15,9 +15,6 @@
  */
 
 #include "transform/acl_ir/ge_adapter_info.h"
-#include <limits>
-#include <utility>
-#include <vector>
 #include "include/transform/graph_ir/utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "graph/operator_factory.h"
@@ -119,51 +116,40 @@ void GeAdapterInfo::InitOutputSupportedDataType() {
   }
 }
 
-void GeAdapterInfo::GetGeAttrValueByMsAttrValue(const std::string &attr_name, const ValuePtr &ms_value,
-                                                ValuePtr *ge_value) {
-  MS_EXCEPTION_IF_NULL(ge_value);
+void GeAdapterInfo::GetGeAttrValueByMsAttrValue(const std::string &attr_name, ValuePtr *ms_value) {
+  MS_EXCEPTION_IF_NULL(ms_value);
   // class Value is a abstract class
-  auto iter = get_attr_cache_.find({attr_name, ms_value});
+  auto iter = get_attr_cache_.find({attr_name, *ms_value});
   if (iter != get_attr_cache_.end()) {
-    *ge_value = iter->second;
+    *ms_value = iter->second;
     return;
   }
 
   int ret = 0;
-  if (ms_value != nullptr) {
-    ret = adapter_->setAttr(attr_name, ms_value);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "failed to set attr:" << attr_name << " for primitive " << info_.op_type;
-    }
-  }
-
-  ret = adapter_->getAttr(attr_name, ge_value);
+  auto old_value = *ms_value;
+  ret = adapter_->getAttr(attr_name, ms_value);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "failed to get attr:" << attr_name << " for primitive " << info_.op_type;
   }
-  get_attr_cache_[{attr_name, ms_value}] = *ge_value;
+  get_attr_cache_[{attr_name, old_value}] = *ms_value;
 }
 
-void GeAdapterInfo::GetGeAttrValueByMsInputValue(const uint32_t &input_idx, const ValuePtr &ms_value,
-                                                 ValuePtr *ge_value) {
-  MS_EXCEPTION_IF_NULL(ge_value);
+void GeAdapterInfo::GetGeAttrValueByMsInputValue(const uint32_t &input_idx, ValuePtr *ms_value) {
+  MS_EXCEPTION_IF_NULL(ms_value);
   // class Value is a abstract class
-  auto iter = get_input_attr_cache_.find({input_idx, ms_value});
+  auto iter = get_input_attr_cache_.find({input_idx, *ms_value});
   if (iter != get_input_attr_cache_.end()) {
-    *ge_value = iter->second;
+    *ms_value = iter->second;
     return;
   }
 
   int ret = 0;
-  ret = adapter_->setAttr(input_idx, ms_value);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "failed to set attr from input[" << input_idx << "] for primitive " << info_.op_type;
-  }
-  ret = adapter_->getAttr(input_idx, ge_value);
+  auto old_value = *ms_value;
+  ret = adapter_->getAttr(input_idx, ms_value);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "failed to get attr from input[" << input_idx << "] for primitive " << info_.op_type;
   }
-  get_input_attr_cache_[{input_idx, ms_value}] = *ge_value;
+  get_input_attr_cache_[{input_idx, old_value}] = *ms_value;
 }
 
 void GeAdapterInfo::InitAttrMap() {

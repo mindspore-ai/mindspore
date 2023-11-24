@@ -136,6 +136,7 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Try to build a real value from an abstract value.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetValue instead.
   /// \note If the value cannot be built, a default value (ValueAny) is returned.
   ///
   /// \return A pointer to the Value.
@@ -143,22 +144,39 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Build the type of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetType instead.
   /// \note Use this function to get the actual type, while track type is not enough accurate.
   ///
   /// \return A pointer to the Type.
-  virtual TypePtr BuildType() const = 0;
+  virtual TypePtr BuildType() const { MS_LOG(EXCEPTION) << "The method 'BuildType()' doesn't implement"; }
 
   /// \brief Build the shape of the abstract.
   ///
+  /// \note This is a deprecated function, please do not call it, use GetShape instead.
   /// \note Use this function to get the actual shape, while track shape is not enough accurate.
   ///
   /// \return A pointer to the BaseShape.
   virtual BaseShapePtr BuildShape() const;
 
+  /// \brief Get or build the shape of AbstractBase.
+  ///
+  /// \return The base shape got or built.
+  virtual BaseShapePtr GetShape() const;
+
+  /// \brief Get or build the object type of the AbstractBase.
+  ///
+  /// \return The object type.
+  virtual TypePtr GetType() const;
+
+  /// \brief Get or build the value of the AbstractBase.
+  ///
+  /// \return The value of the AbstractBase if exists, else return kValueAny.
+  virtual ValuePtr GetValue() const;
+
   /// \brief Clone an abstract from the abstract.
   ///
   /// \return A pointer to the cloned abstract.
-  virtual AbstractBasePtr Clone() const = 0;
+  virtual AbstractBasePtr Clone() const { MS_LOG(EXCEPTION) << "The method 'Clone()' doesn't implement"; }
 
   /// \brief Set the function, which prints the debug info.
   ///
@@ -223,12 +241,13 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the Value.
   virtual ValuePtr RealBuildValue() const;
 
- private:
   ValuePtr value_;
   TypePtr type_;
   BaseShapePtr shape_;
-  std::string value_desc_;                     // Store initial value description for error report.
-  std::string name_;                           // Store for mindir input and output names.
+  std::string value_desc_;  // Store initial value description for error report.
+  std::string name_;        // Store for mindir input and output names.
+
+ private:
   AbstractBasePtr inplace_abstract_{nullptr};  // Cover *this abstract for inplace primitive.
 };
 
@@ -657,32 +676,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   ~AbstractTensor() override = default;
   MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
 
-  /// \brief Set min value and max value.
-  ///
-  /// \param[in] min_value The min value of tensor.
-  /// \param[in] max_value The max value of tensor.
-  void set_value_range(const ValuePtr &min_value, const ValuePtr &max_value);
-
-  /// \brief Get the min value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_min_value() const;
-
-  /// \brief Get the max value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_max_value() const;
-
-  /// \brief Set shape value
-  ///
-  /// \param[in] shape_value The shape value of tensor.
-  void set_shape_value(const ValuePtr &shape_value);
-
-  /// \brief Get the shape value.
-  ///
-  /// \return A pointer to a value.
-  const ValuePtr &get_shape_value() const;
-
   TypePtr BuildType() const override;
 
   BaseShapePtr BuildShape() const override;
@@ -720,9 +713,6 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 
  protected:
   bool equal_to(const AbstractTensor &other) const;
-  ValuePtr min_value_ = nullptr;
-  ValuePtr max_value_ = nullptr;
-  ValuePtr shape_value_ = nullptr;
   bool is_adapter_ = false;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
@@ -1160,8 +1150,9 @@ class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
   /// \param[in] name The name of a namedtuple.
   /// \param[in] values  A List of data in namedtuple.
   /// \param[in] keys A list of label in namedtuple.
-  AbstractNamedTuple(const std::string &type_name, const AbstractBasePtrList &keys, const AbstractBasePtrList &values)
-      : AbstractTuple(values), type_name_{type_name}, keys_(keys) {}
+  AbstractNamedTuple(const std::string &sub_class_name, const AbstractBasePtrList &keys,
+                     const AbstractBasePtrList &values)
+      : AbstractTuple(values), sub_class_name_{sub_class_name}, keys_(keys) {}
 
   /// \brief Destructor of  AbstractNamedTuple.
   ~AbstractNamedTuple() override = default;
@@ -1173,13 +1164,13 @@ class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
   /// \brief Get the name of namedtuple object.
   ///
   /// \return A string of namedtuple's type name.
-  const std::string &name() const { return type_name_; }
+  const std::string &sub_class_name() const { return sub_class_name_; }
 
  protected:
   ValuePtr RealBuildValue() const override;
 
  private:
-  std::string type_name_;
+  std::string sub_class_name_;
   AbstractBasePtrList keys_;
 };
 using AbstractNamedTuplePtr = std::shared_ptr<AbstractNamedTuple>;

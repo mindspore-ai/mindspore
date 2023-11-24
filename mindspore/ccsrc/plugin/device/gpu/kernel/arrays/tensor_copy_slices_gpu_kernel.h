@@ -23,7 +23,6 @@
 #include <numeric>
 #include <functional>
 #include <map>
-#include "ops/tensor_copy_slices.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
@@ -41,8 +40,8 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   TensorCopySlicesGpuKernelMod() : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false) {}
   ~TensorCopySlicesGpuKernelMod() {}
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -51,7 +50,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "TensorCopySlices cudaMemcpyAsync outputs failed");
     auto status = CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,
@@ -60,15 +59,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
-    return true;
-  }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) { return true; }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();
@@ -86,9 +79,9 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << kMaxDims
                         << ", but got " << input_shape_.size();
     }
-    TryGetIntValue(inputs, kBeginIndex_, kernel_name_, &begin_, true);
-    TryGetIntValue(inputs, kEndIndex_, kernel_name_, &end_, true);
-    TryGetIntValue(inputs, kStrideIndex_, kernel_name_, &strides_, true);
+    begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the size of 'begin' cannot be greater than the dimension of input, but got the "
@@ -157,10 +150,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(update_size_);
     output_size_list_.push_back(output_size_);
     return;
   }

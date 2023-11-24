@@ -70,7 +70,7 @@ constexpr size_t DSD_MATMUL_STRATEGY_V_SIZE = 4;
 constexpr size_t SoftmaxCrossEntropyWithLogitsAttrSize = 1;
 constexpr size_t SoftmaxCrossEntropyWithLogitsInputsSize = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsOutputsSize = 2;
-constexpr int64_t ONE_HOT_CNODE_INPUT_SIZE = 5;
+constexpr int64_t ONE_HOT_CNODE_INPUT_SIZE = 6;
 constexpr size_t UNIQUE_INPUTS_SIZE = 1;
 constexpr size_t UNIQUE_INPUT_SIZE = 1;
 constexpr size_t UNIQUE_OUTPUTS_SIZE = 2;
@@ -173,6 +173,7 @@ constexpr char SIZE[] = "size";
 constexpr char ALIGN_CORNERS[] = "align_corners";
 constexpr char END[] = "end";
 constexpr char GROUP[] = "group";
+constexpr char RANK_SIZE[] = "rank_size";
 constexpr char FUSION[] = "fusion";
 constexpr char COMM_REUSE[] = "comm_reuse";
 constexpr char DO_MIRROR[] = "do_mirror";
@@ -583,7 +584,7 @@ constexpr char LIN_SPACE[] = "LinSpace";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
-constexpr char MOE_FFN[] = "MoeFFN";
+constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 
 // pipeline

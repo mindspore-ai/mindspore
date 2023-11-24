@@ -230,10 +230,11 @@ SendAttr FoldPipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_
     attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
     attr_rank = std::make_pair(DEST_RANK, MakeValue(1));
   }
+  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
+  std::vector<AnfNodePtr> send_input = {parameter};
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreateOpInstance(attrs, SEND, SEND);
-  auto send_node = NewValueNode(send_op);
-  auto prim = GetValueNode<PrimitivePtr>(send_node);
+  CNodePtr send = CreateCNodeByInputsAndAttr(graph, SEND, SEND, send_input, attrs);
+  auto prim = GetCNodePrimitive(send);
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(parameter, parameter, &care_node, &is_param);
@@ -245,9 +246,6 @@ SendAttr FoldPipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_
   auto shape_type_pair = GetShapeType(parameter, slice_shape, 0);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
-  std::vector<AnfNodePtr> send_input = {send_node, parameter};
-  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
-  CNodePtr send = graph->NewCNode(send_input);
   if (!is_param) {
     send->AddPrimalAttr(PIPELINE_END, value);
   } else {
@@ -262,9 +260,7 @@ SendAttr FoldPipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_
   MS_LOG(INFO) << "Insert Send op, segment is " << segment;
   send->AddPrimalAttr(DEST_RANK, MakeValue(user_node_stage));
   OperatorAttrs depend_attrs;
-  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
-  CNodePtr depend = graph->NewCNode(depend_input);
+  CNodePtr depend = CreateCNodeByInputsAndAttr(graph, DEPEND, DEPEND, AnfNodePtrList{parameter, send}, depend_attrs);
   auto abstract = parameter->abstract();
   if (care_node) {
     abstract = care_node->abstract();
@@ -334,14 +330,13 @@ AnfNodePtr FoldPipelineTransformer::InsertReceive(const FuncGraphPtr &graph, con
     attr_rank = std::make_pair(SRC_RANK, MakeValue(0));
   }
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
-  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
   std::vector<AnfNodePtr> recv_input;
   if (node->isa<Parameter>()) {
-    recv_input = {NewValueNode(recv_op), node};
+    recv_input = {node};
   } else {
-    recv_input = {NewValueNode(recv_op), virtual_param_};
+    recv_input = {virtual_param_};
   }
-  auto recv = graph->NewCNode(recv_input);
+  auto recv = CreateCNodeByInputsAndAttr(graph, RECEIVE, RECEIVE, recv_input, attrs);
   if (is_param) {
     recv->set_user_data<AnfNode>(PIPELINE_PARAM, node);
     recv->AddPrimalAttr(PIPELINE_PARAM, value);
@@ -408,7 +403,7 @@ AnfNodePtr FoldPipelineTransformer::Reuse(const AnfNodePtr &node, int64_t stage,
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
-      cnode = cnode->input(2)->cast<CNodePtr>();
+      cnode = cnode->input(DEPEND_NODE_SOURCE_INDEX)->cast<CNodePtr>();
     }
     if (cnode->input(1) == node) {
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));

@@ -27,7 +27,6 @@ namespace mindspore {
 namespace prim {
 GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbsOpName));
 GVAR_DEF(PrimitivePtr, kPrimInnerRound, std::make_shared<Primitive>("inner_round"));
-GVAR_DEF(PrimitivePtr, kPrimInnerLen, std::make_shared<Primitive>("inner_len"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
 GVAR_DEF(PrimitivePtr, kPrimScaleGrad, std::make_shared<Primitive>("ScaleGrad"));
 GVAR_DEF(PrimitivePtr, kPrimPopulationCount, std::make_shared<Primitive>("PopulationCount"));
@@ -103,7 +102,7 @@ GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatusV2, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
 
 // Fusion Inference OP
-GVAR_DEF(PrimitivePtr, kPrimMoeFFN, std::make_shared<Primitive>("MoeFFN"));
+GVAR_DEF(PrimitivePtr, kPrimFFN, std::make_shared<Primitive>("FFN"));
 }  // namespace prim
 }  // namespace mindspore
 

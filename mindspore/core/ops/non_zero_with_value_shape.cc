@@ -47,33 +47,68 @@ AbstractBasePtr NonZeroWithValueShapeInfer(const abstract::AnalysisEnginePtr &, 
   const std::string &op_name = primitive->name();
   constexpr size_t input_num = 3;
   abstract::CheckArgsSize(op_name, input_args, input_num);
-  abstract::AbstractTensorPtr x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  const auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
 
   MS_EXCEPTION_IF_NULL(x);
-  auto x_shape = x->shape();
+  auto x_shape = x->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   ShapeVector y_shape;
 
-  int64_t rank_base = SizeToLong(x_shape->shape().size());
-  int64_t max_size = 0;
-  if (std::any_of(x_shape->shape().begin(), x_shape->shape().end(), [](int64_t dim) { return dim < 0; })) {
-    max_size = std::accumulate(x_shape->max_shape().begin(), x_shape->max_shape().end(), 1, std::multiplies<int64_t>());
-  } else {
-    max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
+  int64_t rank_base = SizeToLong(x_shape->GetShapeVector().size());
+  auto shape_vec = x_shape->GetShapeVector();
+  if (shape_vec.size() == 1 && shape_vec[0] == abstract::TensorShape::kShapeRankAny) {
+    rank_base = abstract::Shape::kShapeDimAny;
   }
   (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-  ShapeVector max_shape = {rank_base, max_size};
 
-  auto value =
-    std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape, max_shape));
-  auto index =
-    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape, max_shape));
+  auto value = std::make_shared<abstract::AbstractTensor>(x->GetType(), std::make_shared<abstract::Shape>(y_shape));
+  auto index = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
   AbstractBasePtrList result = {value, index};
   return std::make_shared<abstract::AbstractTuple>(result);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NonZeroWithValueShape, prim::kPrimNonZeroWithValueShape, NonZeroWithValueShapeInfer,
-                             nullptr, true);
+
+class MIND_API AGNonZeroWithValueShapeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const std::string &op_name = primitive->name();
+    constexpr size_t input_num = 3;
+    abstract::CheckArgsSize(op_name, input_args, input_num);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+
+    MS_EXCEPTION_IF_NULL(x);
+    auto x_shape = x->GetShape();
+    MS_EXCEPTION_IF_NULL(x_shape);
+    ShapeVector y_shape;
+
+    int64_t rank_base = SizeToLong(x_shape->GetShapeVector().size());
+    int64_t max_size = std::accumulate(x_shape->GetShapeVector().begin(), x_shape->GetShapeVector().end(), 1,
+                                       std::multiplies<int64_t>());
+    (void)y_shape.emplace_back(rank_base);
+    // Set as max shape when in running process.
+    (void)y_shape.emplace_back(max_size);
+
+    auto value = std::make_shared<abstract::Shape>(y_shape);
+    auto index = std::make_shared<abstract::Shape>(y_shape);
+    abstract::BaseShapePtrList result = {value, index};
+    return std::make_shared<abstract::TupleShape>(result);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x = CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 0, kObjectTypeTensorType);
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x->GetType(), kInt32});
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonZeroWithValueShapeInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NonZeroWithValueShape, prim::kPrimNonZeroWithValueShape, AGNonZeroWithValueShapeInfer,
+                                 false);
 }  // namespace ops
 }  // namespace mindspore

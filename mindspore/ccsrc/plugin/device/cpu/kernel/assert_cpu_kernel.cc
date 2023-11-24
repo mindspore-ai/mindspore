@@ -20,10 +20,10 @@
 #include "abstract/utils.h"
 namespace mindspore {
 namespace kernel {
-void PrintDataInt8(const AddressPtr &input, int summarize) {
+void PrintDataInt8(const KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
-  int8_t *data = reinterpret_cast<int8_t *>(input->addr);
+  int8_t *data = reinterpret_cast<int8_t *>(input->device_ptr());
   MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << static_cast<int32_t>(data[j]) << " ";
@@ -33,10 +33,10 @@ void PrintDataInt8(const AddressPtr &input, int summarize) {
   return;
 }
 
-void PrintDataUInt8(const AddressPtr &input, int summarize) {
+void PrintDataUInt8(const KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
-  uint8_t *data = reinterpret_cast<uint8_t *>(input->addr);
+  uint8_t *data = reinterpret_cast<uint8_t *>(input->device_ptr());
   MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << static_cast<uint32_t>(data[j]) << " ";
@@ -47,10 +47,10 @@ void PrintDataUInt8(const AddressPtr &input, int summarize) {
 }
 
 template <typename T>
-void PrintData(const AddressPtr &input, int summarize) {
+void PrintData(const KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
-  T *data = reinterpret_cast<T *>(input->addr);
+  T *data = reinterpret_cast<T *>(input->device_ptr());
   MS_EXCEPTION_IF_NULL(data);
   for (int j = 0; j < summarize - 1; j++) {
     oss << data[j] << " ";
@@ -68,41 +68,29 @@ std::map<TypeId, AssertCpuKernelMod::AssertPrintFunc> AssertCpuKernelMod::func_m
   {kNumberTypeUInt16, PrintData<uint16_t>}, {kNumberTypeUInt32, PrintData<uint32_t>},
   {kNumberTypeUInt64, PrintData<uint64_t>}, {kNumberTypeBool, PrintData<bool>}};
 
-bool AssertCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assert>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast Assert ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  summarize_ = kernel_ptr->get_summarize();
-
+bool AssertCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  summarize_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSummarize));
   return true;
 }
 
-int AssertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AssertCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
   auto inputs_size = inputs.size();
-  if (inputs_size != input_size_list_.size()) {
-    return KRET_RESIZE_FAILED;
-  }
   kernel_funcs_.resize(inputs_size);
   summarizes_.resize(inputs_size);
   for (size_t i = 0; i < inputs_size; i++) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
-    auto input_type_id = inputs[i]->GetDtype();
+    auto input_type_id = inputs[i]->dtype_id();
     auto func_iter = func_map_.find(input_type_id);
     if (func_iter == func_map_.end()) {
       MS_LOG(ERROR) << "assert kernel does not support " << TypeIdToString(input_type_id);
       return KRET_RESIZE_FAILED;
     }
     kernel_funcs_[i] = func_iter->second;
-    auto element = input_size_list_[i] / abstract::TypeIdSize(input_type_id);
+    auto element = inputs[i]->size() / abstract::TypeIdSize(input_type_id);
     summarizes_[i] = static_cast<int>(std::min(static_cast<size_t>(summarize_), element));
   }
 
@@ -114,9 +102,9 @@ std::vector<KernelAttr> AssertCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs) {
-  auto cond = static_cast<bool *>(inputs[0]->addr);
+bool AssertCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                                const std::vector<KernelTensor *> &outputs) {
+  auto cond = static_cast<bool *>(inputs[0]->device_ptr());
   if (*cond) {
     return true;
   }
@@ -124,7 +112,7 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   std::cout << "For '" << kernel_name_ << "' condition is false." << std::endl;
   for (size_t i = 1; i < inputs.size(); i++) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
-    kernel_funcs_[i](inputs[i], summarizes_[i]);
+    kernel_funcs_[i](std::move(inputs[i]), summarizes_[i]);
   }
   MS_LOG(EXCEPTION) << "assert failed";
 

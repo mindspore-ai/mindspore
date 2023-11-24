@@ -49,7 +49,7 @@ constexpr int64_t kFormatNHWCIndW = 2;
 constexpr int64_t kFormatNHWCIndC = 3;
 abstract::ShapePtr AvgPoolV1InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   const int64_t x_size = 4;
   const int64_t attr_size = 4;
@@ -123,7 +123,7 @@ abstract::ShapePtr AvgPoolV1InferShape(const PrimitivePtr &primitive, const std:
 TypePtr AvgPoolV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto name = prim->name();
   const std::set<TypePtr> avgpool_v1_valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTypeValid("value", input_type, avgpool_v1_valid_types, name);
   return inferred_type;
 }

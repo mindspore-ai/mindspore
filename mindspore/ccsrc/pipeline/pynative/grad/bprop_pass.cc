@@ -91,65 +91,7 @@ void TraverseCnode(const CNodePtr &cnode, const std::string &device_target, bool
     }
   }
 }
-
-void ProcessValueNode(const ValueNodePtr &v_node) {
-  MS_EXCEPTION_IF_NULL(v_node);
-  const auto &value = v_node->value();
-  MS_EXCEPTION_IF_NULL(value);
-  auto type = value->type();
-  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-      (type != nullptr && type->isa<String>())) {
-    return;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else if (value->isa<ValueList>()) {
-    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-  } else {
-    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                      << ", value " << value->ToString();
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  v_node->set_value(tensor_ptr);
-  v_node->set_abstract(tensor_ptr->ToAbstract());
-}
 }  // namespace
-
-void ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
-  MS_EXCEPTION_IF_NULL(din);
-  if (din->isa<CNode>()) {
-    const auto &cnode = din->cast<CNodePtr>();
-    if (cnode->HasAttr(kIsKNode) || IsPrimitiveCNode(cnode, prim::kPrimBpropCut)) {
-      return;
-    }
-    if (IsPrimitiveCNode(din, prim::kPrimTupleGetItem)) {
-      ConvertValueNodeValueToTensor(cnode->input(kIndex1));
-      return;
-    }
-    mindspore::HashSet<size_t> none_inputs;
-    for (size_t i = 1; i < cnode->size(); ++i) {
-      if (cnode->input(i)->isa<ValueNode>() && cnode->input(i)->cast<ValueNodePtr>()->value()->isa<None>()) {
-        (void)none_inputs.insert(i);
-        continue;
-      }
-      ConvertValueNodeValueToTensor(cnode->input(i));
-    }
-    if (!none_inputs.empty()) {
-      AnfNodePtrList new_inputs;
-      for (size_t i = kIndex0; i < cnode->size(); ++i) {
-        if (none_inputs.count(i) == 0) {
-          new_inputs.emplace_back(cnode->input(i));
-        }
-      }
-      cnode->set_inputs(new_inputs);
-    }
-  } else if (din->isa<ValueNode>()) {
-    ProcessValueNode(din->cast<ValueNodePtr>());
-  }
-}
 
 void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
                                          autograd::AutoGradCellImpl *auto_grad_cell_ptr) {

@@ -27,15 +27,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomEqualizeOp : public TensorOp {
+class RandomEqualizeOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kDefProbability;
-
-  explicit RandomEqualizeOp(float prob = kDefProbability) : distribution_(prob) {
-    is_deterministic_ = false;
-    rnd_.seed(GetSeed());
-  }
+  explicit RandomEqualizeOp(float prob) : distribution_(prob) {}
 
   ~RandomEqualizeOp() override = default;
 
@@ -50,7 +44,6 @@ class RandomEqualizeOp : public TensorOp {
   std::string Name() const override { return kRandomEqualizeOp; }
 
  private:
-  std::mt19937 rnd_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

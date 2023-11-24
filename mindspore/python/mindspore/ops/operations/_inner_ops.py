@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Inner operators."""
+# pylint: disable=unused-import
 from types import FunctionType, MethodType
 from collections.abc import Iterable
 import numpy as np
@@ -26,7 +27,7 @@ from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
-from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive,\
+from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, \
     _run_op, _check_contains_variable
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
@@ -37,6 +38,9 @@ from mindspore.communication.management import GlobalComm, get_rank
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
+from mindspore.ops._tracefunc import PackFunc
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches
+
 
 # Bit operation
 bit_and = bit_and()
@@ -53,75 +57,6 @@ string_not = Primitive("string_not")
 string_in = Primitive("string_in")
 string_mul = Primitive("string_mul")
 string_getitem = Primitive("string_getitem")
-
-
-class ExtractImagePatches(Primitive):
-    r"""
-    Extracts patches from images.
-    The input tensor must be a 4-D tensor and the data format is NCHW.
-
-    Args:
-        ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-            and the format is [1, 1, ksize_row, ksize_col].
-        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            must be a tuple or list of int, and the format is [1, 1, stride_row, stride_col].
-        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, must be a tuple or a list of integers, and the format is [1, 1, rate_row, rate_col].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
-            not case sensitive. Default: "valid".
-
-            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
-
-            - valid: Means that the taken patch area must be completely covered in the original image.
-
-    Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
-
-    Outputs:
-        Tensor, a 4-D tensor whose data type is same as 'input_x', and the shape
-        is :math:`(out\_batch, out\_depth, out\_row, out\_col)`,where the out_batch is the same as the in_batch
-        and
-
-        .. math::
-            out_depth=ksize\_row * ksize\_col * in\_depth
-
-        and
-        if 'padding' is "valid":
-
-        .. math::
-            out\_row=floor((in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) / stride\_row) + 1
-            out\_col=floor((in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) / stride\_col) + 1
-
-        if 'padding' is "same":
-
-        .. math::
-            out\_row=floor((in\_row - 1) / stride\_row) + 1
-            out\_col=floor((in\_col - 1) / stride\_col) + 1
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, ksizes, strides, rates, padding="valid"):
-        """init"""
-
-        def _check_tuple_or_list(arg_name, arg_val, prim_name):
-            validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
-            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s must be [1, {arg_name}_row, "
-                                 f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
-                                 f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
-                                 f"{arg_name}_col is {arg_val[3]}")
-
-        _check_tuple_or_list("ksize", ksizes, self.name)
-        _check_tuple_or_list("stride", strides, self.name)
-        _check_tuple_or_list("rate", rates, self.name)
-        validator.check_value_type('padding', padding, [str], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
 
 
 class Quant(PrimitiveWithInfer):
@@ -491,7 +426,9 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
         self.add_prim_attr("no_eliminate", True)
-        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        valid_type = [mstype.float16, mstype.float32, mstype.float64,
+                      mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
         args = {"dtype": dtype}
         validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
@@ -1327,45 +1264,6 @@ class DynamicBroadcastGradientArgs(Primitive):
         """Init BroadcastGradientArgs"""
 
 
-class TensorCopySlices(Primitive):
-    """
-    Copy continues memory.
-
-    Inputs:
-        - **x** (Tensor) - The target Tensor.
-        - **value** (Tensor) - The tensor to update x.
-        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
-          constant value is allowed.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
-          Only constant value is allowed.
-        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
-          before reaching the maximum location. Only constant value is allowed.
-
-    Outputs:
-        - **y** (Tensor), has the same shape and data type of x.
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore.ops.operations import _inner_ops
-        >>> copy_slices = _inner_ops.TensorCopySlices()
-        >>> out = copy_slices(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
-        >>> print(out)
-            [[1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [0., 0., 0., 0., 0.],
-             [0., 0., 0., 0., 0.]]
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize TensorScatterUpdate"""
-        self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
-
-
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
@@ -1588,46 +1486,6 @@ class DynamicBroadcastTo(Primitive):
     def __init__(self):
         """Initialize DynamicBroadcastTo"""
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
-
-
-class Cummin(Primitive):
-    r"""
-    Returns the cumulative minimum of elements and the index.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.cummin` for more detail.
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor.
-
-    Outputs:
-        A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-        >>> func = ops.Cummin(axis=0)
-        >>> output = func(a)
-        >>> print(output[0])
-        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
-        >>> print(output[1])
-        [0 1 1 1 4 4]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize Cummin"""
-        validator.check_value_type('axis', axis, [int], self.name)
 
 
 class DynamicResizeNearestNeighbor(Primitive):
@@ -2521,6 +2379,8 @@ class ConvertToAdapterTensor(Primitive):
 
     def __call__(self, x):
         """Run in PyNative mode"""
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return super().__call__(x)
         return ms_adapter_registry.tensor(x, cast_tensor=True)
 
 
@@ -2554,9 +2414,11 @@ class ConvertToMsTensor(Primitive):
 
     def __call__(self, x):
         """Run in PyNative mode"""
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return super().__call__(x)
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
-        return ops.deepcopy(x)
+        return ops.auto_generate.deepcopy(x)
 
 
 convert_to_ms_tensor = ConvertToMsTensor()
@@ -2616,28 +2478,6 @@ class IsParameter(PrimitiveWithInfer):
         return {'shape': [],
                 'dtype': mstype.bool_,
                 'value': isinstance(x['dtype'], mstype.RefType)}
-
-
-class SiLU(Primitive):
-    r"""
-    Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.silu` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.SiLU(x)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SiLU"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class TileSize(Primitive):
@@ -2729,27 +2569,29 @@ class CopyWithSlice(Primitive):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])
 
 
-class MoeFFN(Primitive):
+class FFN(Primitive):
     r"""
-    The MoeFFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
+    The FFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
 
     Args:
         activation (string): The activation type, set to 'fastgelu' or 'gelu'.
-        Only support 'fastgelu' for now. Default: "fastgelu".
+            Only support 'fastgelu' for now. Default: "fastgelu".
+        inner_precise (int): The precise mode, set to 0 for high precision or 1 for high performance.
+            Only support 1 for now. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor with data type of int8, float16.
           Input tensor of shape :math:`(batch\_size * seq\_length, hidden\_size)`.
+        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
+          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
+        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
+          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **expert_tokens** (Tensor]) - The expert tokens tensor with data type of int64.
           Expert tokens tensor of shape :math:`(16,)`. For example, `(2, 1, 0, .., 9)`
           indicate that the 0th expert deals with 2 tokens, the 1th expert deals with 1 tokens,
           the 2th expert do noting and so on.
-        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
-          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
         - **bias1** (Tensor) - The bias1 tensor with data type of float16.
           Bias1 tensor of shape :math:`(expert\_num, ffn\_hidden\_size)`.
-        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
-          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **bias2** (Tensor) - The bias2 tensor with data type of float16.
           Bias2 tensor of shape :math:`(expert\_num, hidden\_size)`.
         - **scale** (Tensor) - The scale tensor with data type of float16. Not enable now.
@@ -2771,21 +2613,22 @@ class MoeFFN(Primitive):
         >>> h_f = 4 * h
         >>> e = 16
         >>> x = Tensor(np.random.randn(b * s, h).astype(np.float16))
-        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
         >>> w1 = Tensor(np.random.randn(e, h, h_f).astype(np.float16))
-        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> w2 = Tensor(np.random.randn(e, h_f, h).astype(np.float16))
+        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
+        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> bias2 = Tensor(np.random.randn(e, h).astype(np.float16))
-        >>> moe_ffn = _inner_ops.MoeFFN("fastgelu")
-        >>> output = moe_ffn(x, w1, bias1, w2, bias2)
+        >>> ffn = _inner_ops.FFN("fastgelu", 1)
+        >>> output = ffn(x, w1, w2, expert_tokens, bias1, bias2)
         >>> print(output)
     """
 
     @prim_attr_register
-    def __init__(self, activation):
-        """Initialize MoeFFN."""
-        self.init_prim_io_names(inputs=["x", "expert_tokens", "weight1", "bias1",
-                                        "weight2", "bias2", "scale", "offset", "deq_scale1"
-                                        "deq_scale2"],
+    def __init__(self, activation, inner_precise):
+        """Initialize FFN."""
+        self.init_prim_io_names(inputs=["x", "weight1", "weight2", "expert_tokens", "bias1",
+                                        "bias2", "scale", "offset", "deq_scale1", "deq_scale2"],
                                 outputs=["y"])
-        self.activation = activation
+        cls_name = self.name
+        validator.check_value_type("activation", activation, [str], cls_name)
+        validator.check_value_type("inner_precise", inner_precise, [int], cls_name)

@@ -23,7 +23,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "kernel/kernel.h"
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
 #include "hccl/hcom.h"
 #include "hccl/hccl_types.h"
@@ -31,33 +31,46 @@
 
 namespace mindspore {
 namespace kernel {
-class HcclKernel : public AscendKernelMod {
+class HcclKernel : public KernelMod {
  public:
+  // =========================================New interface==========================================================
   HcclKernel();
-  explicit HcclKernel(const AnfNodePtr &anf_node);
-  ~HcclKernel() override;
-  virtual bool Init(const AnfNodePtr &anf_node);
+  ~HcclKernel() override = default;
 
-  void SetInputSizeList(const std::vector<size_t> &size_list) override;
-  void SetOutputSizeList(const std::vector<size_t> &size_list) override;
-  void SetWorkspaceSizeList(const std::vector<size_t> &size_list) override;
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+  void SetIsGraphMode(bool is_graph_mode) { is_graph_mode_ = is_graph_mode; }
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    MS_LOG(EXCEPTION) << "This interface is not support in hccl kernel module.";
+  }
+
+  // =======================Old interface, will deleted after all kernel modified used new interface=================
+
+  virtual bool Init(const AnfNodePtr &anf_node) { MS_LOG(EXCEPTION) << "Deprecated hccl kernel initialize interface"; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    MS_LOG(EXCEPTION) << "Deprecated hccl kernel module launch interface";
+  }
 
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
+    MS_LOG(EXCEPTION) << "Deprecated hccl kernel module resize interface";
+  }
 
  protected:
-  virtual void UpdateOutputSizeList();
+  virtual HcclDataType GetHcclDataType() const;
   virtual void CalLoopSize();
+  void CalcWorkspaceSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  bool CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::vector<std::vector<int64_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
   std::vector<HcclDataType> hccl_data_type_list_;
@@ -67,15 +80,12 @@ class HcclKernel : public AscendKernelMod {
   uint32_t root_id_;
   uint32_t src_rank_;
   uint32_t dest_rank_;
-  mutable std::vector<size_t> mutable_input_size_list_;
-  mutable std::vector<size_t> mutable_output_size_list_;
-  mutable std::vector<size_t> mutable_workspace_size_list_;
-  std::string op_name_;
   std::string group_;
   HcclComm comm_;
   std::mutex hccl_mutex_;
   std::condition_variable cond_;
   ulong loop_size_{0};
+  bool is_graph_mode_{false};
 };
 
 using HcclKernelCreater = std::function<std::shared_ptr<HcclKernel>()>;

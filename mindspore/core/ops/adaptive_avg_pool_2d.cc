@@ -47,7 +47,7 @@ constexpr int64_t kValueNone = -1;
 abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     const int64_t input_num_dims = SizeToLong(x_shape.size());
     CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
@@ -82,7 +82,7 @@ abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
 
 TypePtr AdaptiveAvgPool2DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
   return x_dtype;

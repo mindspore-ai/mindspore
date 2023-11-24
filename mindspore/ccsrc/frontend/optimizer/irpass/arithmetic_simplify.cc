@@ -75,7 +75,7 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, one_scalar_, true), x);           // Scalar Mul by one
   }
   // Prim Eliminate (identity)
-  MATCH_REPLACE(node, PPrimitive(prim::kPrimIdentity, x), x);
+  MATCH_REPLACE(node, PPrimitive(prim::kPrimidentity, x), x);
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return nullptr;
   }

@@ -17,33 +17,24 @@
 #include "plugin/device/cpu/kernel/sequence/scalar_bool_cpu_kernel.h"
 #include <utility>
 #include <algorithm>
-#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kInputNum = 1;
-constexpr size_t kOutputNum = 1;
-}  // namespace
 
-int ScalarBoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ScalarBoolCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
   return KRET_OK;
 }
 
-bool ScalarBoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+bool ScalarBoolCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -54,10 +45,9 @@ bool ScalarBoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &outputs) {
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   bool *output = GetDeviceAddress<bool>(outputs, 0);

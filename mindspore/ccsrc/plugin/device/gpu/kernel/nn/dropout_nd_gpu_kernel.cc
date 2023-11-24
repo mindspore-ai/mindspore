@@ -61,19 +61,16 @@ bool DropoutNDGpuKernelMod::CheckDropOutNdShape() {
   return true;
 }
 
-bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool DropoutNDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   if (kernel_name_ == prim::kPrimDropout2D->name()) {
-    auto kernel_ptr = std::make_shared<ops::Dropout2D>(base_operator->GetPrim());
-    keep_prob_ = kernel_ptr->get_keep_prob();
+    keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
-    auto kernel_ptr = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
-    keep_prob_ = kernel_ptr->get_keep_prob();
+    keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   } else {
     MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod', it's must be Dropout2D or Dropout3D but get invalid kernel name : "
                   << kernel_name_;
@@ -84,7 +81,7 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << "but got " << keep_prob_;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   if (!states_init_) {
@@ -98,14 +95,13 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int DropoutNDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   input_shape_.clear();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   if (!CheckDropOutNdShape() || channels_ == 0) {
@@ -121,19 +117,19 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   bool *mask = GetDeviceAddress<bool>(outputs, kIndex1);
   auto *rand_f = GetDeviceAddress<float>(workspace, kIndex0);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
   if (keep_prob_ == 0.0) {
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, outputs.at(kIndex0)->size),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, outputs[kIndex0]->size()),
                                       "For DropoutNDGpuKernelMod failed to cudaMemset");
     // Default zero to be false.
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(mask, 0, outputs.at(kIndex1)->size),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(mask, 0, outputs[kIndex1]->size()),
                                       "For DropoutNDGpuKernelMod failed to cudaMemset");
     return true;
   }

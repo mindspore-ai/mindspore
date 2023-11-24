@@ -118,7 +118,7 @@ void PopulateGroupIndices(int64_t flat_group_index, ShapeVector group_shape, Sha
 }  // namespace
 
 template <typename T>
-bool PopulateFromDenseGroup(kernel::AddressPtr input, int64_t last_dim, std::vector<int64_t> input_strides,
+bool PopulateFromDenseGroup(kernel::KernelTensor *input, int64_t last_dim, std::vector<int64_t> input_strides,
                             ShapeVector group_indices, std::set<T> *result) {
   if (group_indices.size() != input_strides.size() - 1) {
     MS_EXCEPTION(ValueError) << "For 'DenseToSparseSetOperation', "
@@ -127,8 +127,8 @@ bool PopulateFromDenseGroup(kernel::AddressPtr input, int64_t last_dim, std::vec
   }
   // "for DenseToSparseSetOperation, group_indices size must be equal to input_strides.size-1 ");
   result->clear();
-  auto data_ptr = static_cast<T *>(input->addr);
-  Disze_rank1 dsize(input->size);
+  auto data_ptr = static_cast<T *>(input->device_ptr());
+  Disze_rank1 dsize(input->size());
   T_flat input_flat(data_ptr, dsize);
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0L);
   const auto end = start + last_dim;
@@ -139,10 +139,10 @@ bool PopulateFromDenseGroup(kernel::AddressPtr input, int64_t last_dim, std::vec
 }
 
 template <typename T>
-bool PopulateFromSparse(kernel::AddressPtr input, int64_t start, int64_t last_dim, std::set<T> *result) {
+bool PopulateFromSparse(kernel::KernelTensor *input, int64_t start, int64_t last_dim, std::set<T> *result) {
   result->clear();
-  auto data_ptr = static_cast<T *>(input->addr);
-  Disze_rank1 dsize(input->size);
+  auto data_ptr = static_cast<T *>(input->device_ptr());
+  Disze_rank1 dsize(input->size());
   T_flat input_flat(data_ptr, dsize);
   auto end = start + last_dim;
   for (int64_t i = start; i < end; ++i) {
@@ -156,10 +156,10 @@ bool pred(const int64_t a, const int64_t b) {
   return false;
 }
 
-bool SparseStride(kernel::AddressPtr indices, int64_t num_elements, ShapeVector group_shape,
+bool SparseStride(kernel::KernelTensor *indices, int64_t num_elements, ShapeVector group_shape,
                   std::vector<int64_t> *result, int64_t set2_nums, int64_t set2_dim) {
   ShapeVector group_indices;
-  auto indices_ptr = static_cast<int64_t *>(indices->addr);
+  auto indices_ptr = static_cast<int64_t *>(indices->device_ptr());
   Int64_matrix indices_flat(indices_ptr, set2_nums, set2_dim);
   result->clear();
   int64_t i = 0;
@@ -183,9 +183,9 @@ bool SparseStride(kernel::AddressPtr indices, int64_t num_elements, ShapeVector 
   return true;
 }
 
-void ValidateIndices(kernel::AddressPtr indices, ShapeVector shape2, int64_t set2_nums, int64_t set2_dim,
+void ValidateIndices(kernel::KernelTensor *indices, ShapeVector shape2, int64_t set2_nums, int64_t set2_dim,
                      int64_t shape2_size) {
-  auto indices_ptr = static_cast<int64_t *>(indices->addr);
+  auto indices_ptr = static_cast<int64_t *>(indices->device_ptr());
   Int64_matrix indices_flat(indices_ptr, set2_nums, set2_dim);
   for (int64_t i = 0; i < set2_nums; i++) {
     for (int64_t j = 0; j < shape2_size; j++) {
@@ -214,9 +214,9 @@ void ValidateIndices(kernel::AddressPtr indices, ShapeVector shape2, int64_t set
   }
 }
 
-bool DenseToSparseSetOperationCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool DenseToSparseSetOperationCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
 
@@ -255,19 +255,29 @@ void DenseToSparseSetOperationCpuKernelMod::ApplySetOperation(const std::set<T> 
   }
 }
 
-void DenseToSparseSetOperationCpuKernelMod::SyncOutputShape() {
-  outputs_[kOutput1]->SetShapeVector(infer_shape_[kOutput1]);
-  outputs_[kOutput2]->SetShapeVector(infer_shape_[kOutput2]);
-  outputs_[kOutput3]->SetShapeVector(infer_shape_[kOutput3]);
+void DenseToSparseSetOperationCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                     const std::vector<KernelTensor *> &outputs) {
+  outputs[kOutput1]->SetShapeVector(infer_shape_[kOutput1]);
+  outputs[kOutput2]->SetShapeVector(infer_shape_[kOutput2]);
+  outputs[kOutput3]->SetShapeVector(infer_shape_[kOutput3]);
+  outputs[kOutput1]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput1].begin(), infer_shape_[kOutput1].end(),
+                               UnitSizeInBytes(outputs[kOutput1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kOutput2]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput2].begin(), infer_shape_[kOutput2].end(),
+                               UnitSizeInBytes(outputs[kOutput2]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kOutput3]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput3].begin(), infer_shape_[kOutput3].end(),
+                               UnitSizeInBytes(outputs[kOutput3]->dtype_id()), std::multiplies<int64_t>())));
 }
 template <typename T>
-bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector<kernel::AddressPtr> &inputs,
-                                                               const std::vector<kernel::AddressPtr> &outputs,
+bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector<kernel::KernelTensor *> &inputs,
+                                                               const std::vector<kernel::KernelTensor *> &outputs,
                                                                ShapeVector *output_shape, const int64_t num_values,
                                                                const std::map<ShapeVector, std::set<T>> &sets) {
-  auto out_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput1]->addr);
-  auto out_values_ptr = reinterpret_cast<T *>(outputs[kOutput2]->addr);
-  auto out_shape_ptr = reinterpret_cast<int64_t *>(outputs[kOutput3]->addr);
+  auto out_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput1]->device_ptr());
+  auto out_values_ptr = reinterpret_cast<T *>(outputs[kOutput2]->device_ptr());
+  auto out_shape_ptr = reinterpret_cast<int64_t *>(outputs[kOutput3]->device_ptr());
 
   int64_t output_shape_size = SizeToLong(output_shape->size());
   infer_shape_ = {{num_values, output_shape_size}, {num_values}, {output_shape_size}};
@@ -309,12 +319,10 @@ bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector
   return true;
 }
 
-int DenseToSparseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DenseToSparseSetOperationCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     shape1_ = inputs.at(kInputX1)->GetShapeVector();
     set2_nums_ = SizeToLong(inputs.at(kInputX2Values)->GetShapeVector()[0]);
@@ -324,11 +332,11 @@ int DenseToSparseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_op
 }
 
 template <typename T>
-bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   ShapeVector group_shape;
-  auto shape2_ptr = static_cast<int64_t *>(inputs[kInputX2Shape]->addr);
-  auto shape2_size = (inputs[kInputX2Shape]->size) / sizeof(int64_t);
+  auto shape2_ptr = static_cast<int64_t *>(inputs[kInputX2Shape]->device_ptr());
+  auto shape2_size = (inputs[kInputX2Shape]->size()) / sizeof(int64_t);
   ShapeVector shape2(shape2_ptr, shape2_ptr + shape2_size);
 
   if (validate_indices_) {
@@ -383,18 +391,12 @@ bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kerne
   return OutputSparseTensor<T>(inputs, outputs, &group_shape, num_result_values, group_sets);
 }
 
-bool DenseToSparseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
-
-  std::string set_operation_str = GetValue<std::string>(prim->GetAttr("set_operation"));
+bool DenseToSparseSetOperationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  std::string set_operation_str = GetValue<std::string>(primitive_->GetAttr("set_operation"));
 
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
-  validate_indices_ = GetValue<bool>(prim->GetAttr("validate_indices"));
+  validate_indices_ = GetValue<bool>(primitive_->GetAttr("validate_indices"));
 
   if (set_operation_str == AMinusBStr) {
     set_operation_ = A_MINUS_B;
@@ -407,7 +409,7 @@ bool DenseToSparseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_ope
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "," << set_operation_str << " is an invalid 'set_operation'.";
   }
-  data_type_ = inputs[kInputX1]->GetDtype();
+  data_type_ = inputs[kInputX1]->dtype_id();
   is_need_retrieve_output_shape_ = true;
   return true;
 }

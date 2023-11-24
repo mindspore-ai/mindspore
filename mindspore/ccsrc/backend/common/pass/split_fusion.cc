@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -40,13 +41,26 @@ const AnfNodePtr SplitFusion::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (!(common::AnfAlgo::HasNodeAttr(kAxis, cnode) && common::AnfAlgo::HasNodeAttr(kOutputNum, cnode))) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << "does not have attr " << kAxis << " or " << kOutputNum;
+  size_t axis_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kAxis);
+  size_t out_num_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kOutputNum);
+
+  if (axis_idx == SIZE_MAX || out_num_idx == SIZE_MAX) {
+    MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of axis and output_num.";
+    return cnode;
+  }
+  auto axis_node = common::AnfAlgo::GetInputNode(cnode, axis_idx);
+  auto out_num_node = common::AnfAlgo::GetInputNode(cnode, out_num_idx);
+  if (!utils::isa<ValueNodePtr>(axis_node) || !utils::isa<ValueNodePtr>(out_num_node)) {
+    return cnode;
+  }
+  auto axis_v = ops::GetScalarValue<int64_t>(axis_node->cast<ValueNodePtr>()->value());
+  auto out_num_v = ops::GetScalarValue<int64_t>(out_num_node->cast<ValueNodePtr>()->value());
+  if (!out_num_v.has_value() || !axis_v.has_value()) {
     return cnode;
   }
 
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAxis);
-  int64_t output_num_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kOutputNum);
+  int64_t axis = axis_v.value();
+  int64_t output_num_value = out_num_v.value();
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   if (IsDynamicRank(x_shape)) {
     MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope()

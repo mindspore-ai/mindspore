@@ -30,6 +30,7 @@
 #include "include/backend/data_queue/data_queue.h"
 #ifndef BUILD_LITE
 #include "ir/anf.h"
+#include "kernel/kernel.h"
 #endif
 
 namespace mindspore {
@@ -143,8 +144,19 @@ class BACKEND_EXPORT DataQueueMgr {
 };
 #ifndef BUILD_LITE
 BACKEND_EXPORT void UpdateGetNextNode(const AnfNodePtr &data_kernel);
+
+BACKEND_EXPORT void UpdateGetNextNode(const PrimitivePtr &primitive, const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs,
+                                      std::vector<size_t> *output_size_list);
+
 BACKEND_EXPORT void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel,
                                                     const std::vector<device::DataQueueItem> &data);
+
+BACKEND_EXPORT void UpdateGetNextWithDataQueueItems(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &outputs,
+                                                    const std::vector<device::DataQueueItem> &data,
+                                                    std::vector<size_t> *output_size_list);
+
 BACKEND_EXPORT void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel,
                                                const std::shared_ptr<BlockingQueue> &data_queue,
                                                std::vector<device::DataQueueItem> *data);

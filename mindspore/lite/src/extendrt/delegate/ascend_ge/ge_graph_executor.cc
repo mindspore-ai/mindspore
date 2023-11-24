@@ -216,14 +216,8 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
   auto &ge_options = *ge_options_ptr;
   ge_options["ge.trainFlag"] = "0";
   ge_options["ge.enablePrintOpPass"] = "0";
-  auto config_it = config_infos_.find(lite::kGeSessionOptionsSection);
-  if (config_it != config_infos_.end()) {
-    for (auto &item : config_it->second) {
-      ge_options[item.first] = item.second;
-      MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
-    }
-  }
   ge_options["ge.exec.device_id"] = std::to_string(GetDeviceID());
+  ge_options["ge.exec.staticMemoryPolicy"] = "2";
   if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
     if (!offline_mode_) {
       ge_options["ge.featureBaseRefreshable"] = "1";
@@ -232,7 +226,13 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
     }
     ge_options["ge.constLifecycle"] = "graph";
   }
-
+  auto config_it = config_infos_.find(lite::kGeSessionOptionsSection);
+  if (config_it != config_infos_.end()) {
+    for (auto &item : config_it->second) {
+      ge_options[item.first] = item.second;
+      MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
+    }
+  }
   config_it = config_infos_.find(lite::kAscendContextSection);
   if (config_it != config_infos_.end()) {
     GetGeSessionOptionsFromAscendContext(config_it->second, ge_options_ptr);

@@ -65,8 +65,8 @@ void DivNoNanImpl(void *x1, void *x2, void *result, size_t size) {
 
 abstract::ShapePtr DivNoNanInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   return BroadCastInferShape(prim_name, input_args);
 }
 
@@ -74,10 +74,10 @@ TypePtr DivNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kInt8,    kInt32,   kInt64,     kUInt8,     kFloat16,
                                          kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)types.emplace("x1", input_args[0]->BuildType());
-  (void)types.emplace("x2", input_args[1]->BuildType());
+  (void)types.emplace("x1", input_args[0]->GetType());
+  (void)types.emplace("x2", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 
 ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -85,8 +85,8 @@ ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<Abstract
   constexpr auto kX2Index = 1;
   auto result_type = DivNoNanInferType(prim, input_args);
   auto result_shape = DivNoNanInferShape(prim, input_args)->cast<abstract::ShapePtr>();
-  auto x1 = input_args[kX1Index]->BuildValue();
-  auto x2 = input_args[kX2Index]->BuildValue();
+  auto x1 = input_args[kX1Index]->GetValue();
+  auto x2 = input_args[kX2Index]->GetValue();
   if (x1 == nullptr || x2 == nullptr) {
     return nullptr;
   }

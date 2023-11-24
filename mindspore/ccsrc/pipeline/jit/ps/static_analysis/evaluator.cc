@@ -80,13 +80,6 @@ bool ContainsAbstractAnyInner(const AbstractBasePtr &abs) {
   return abs->isa<AbstractAny>();
 }
 
-bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
-  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
-    MS_EXCEPTION_IF_NULL(item);
-    return ContainsAbstractAnyInner(item);
-  });
-}
-
 TypePtr GetArgsUniqueDtype(const AbstractBasePtrList &args_abs_list) {
   TypePtr res = nullptr;
   for (const auto &arg : args_abs_list) {
@@ -229,6 +222,13 @@ void PresetCertainSideEffect(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "Set isolated side-effect node flag for " << func_graph->ToString();
 }
 }  // namespace
+
+bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
+  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
+    MS_EXCEPTION_IF_NULL(item);
+    return ContainsAbstractAnyInner(item);
+  });
+}
 
 // MakeTuple and MakeList will handle AbstractAny in ops infer.
 const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{

@@ -27,16 +27,9 @@
 namespace mindspore {
 namespace kernel {
 constexpr int kQuantileDefaultDim = 10000;
-bool QuantileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  dim_ = kernel_ptr->get_dim();
-  ignorenan_ = kernel_ptr->get_ignorenan();
+bool QuantileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dim_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  ignorenan_ = GetValue<bool>(primitive_->GetAttr("ignore_nan"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -44,8 +37,8 @@ bool QuantileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  q_unit_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  input_unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  q_unit_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -72,11 +65,9 @@ uint32_t MaybeWrapDim(int dim, int dim_post_expr) {
   return dim;
 }
 
-int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int QuantileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   for (const auto &input : inputs) {
@@ -87,10 +78,8 @@ int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     }
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto q_shape = inputs.at(kIndex1)->GetShapeVector();
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
-  auto q_elements = std::accumulate(q_shape.begin(), q_shape.end(), size_t(1), std::multiplies<size_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), size_t(1), std::multiplies<size_t>());
   if (input_elements_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
@@ -112,9 +101,6 @@ int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   each_q_elements_ = input_elements_ / y_;
   size_t input_size = input_elements_ * input_unit_size_;
-  size_t q_size = q_elements * q_unit_size_;
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(q_size);
   output_size_list_.push_back(output_elements_ * input_unit_size_);
   ceil_power2_ = RoundUpPower2(y_);
   workspace_size_list_.push_back(input_size / y_ * ceil_power2_);
@@ -124,15 +110,16 @@ int QuantileGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool QuantileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool QuantileGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *q = GetDeviceAddress<T>(inputs, kIndex1);
   T *out = GetDeviceAddress<T>(outputs, kIndex0);
   T *sort = GetDeviceAddress<T>(workspace, kIndex0);
   int *ret_flag_device = GetDeviceAddress<int>(workspace, kIndex1);
   int *nan_flags = GetDeviceAddress<int>(workspace, kIndex2);
-  total_ = inputs[0]->size / sizeof(T);
+  total_ = inputs[0]->size() / sizeof(T);
   if (total_ <= 0) {
     MS_LOG(ERROR) << "For Quantile, input tensor must be non-empty";
   }

@@ -16,17 +16,21 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 
 #include <memory>
-#include <vector>
+#include <optional>
 #include <string>
-#include "ops/sequence_ops.h"
-#include "ops/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
+#include <vector>
+
 #include "abstract/abstract_value.h"
-#include "utils/ms_context.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ir/primitive.h"
+#include "mindapi/base/types.h"
+#include "ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/sequence_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,7 +39,24 @@ constexpr size_t kIdxScale = 2;
 constexpr size_t kIdxBias = 3;
 constexpr size_t kIdxMean = 4;
 constexpr size_t kIdxVariance = 5;
+constexpr size_t kIdxIsTraining = 6;
+constexpr size_t kIdxEpsilon = 7;
+constexpr size_t kIdxFormat = 9;
 constexpr size_t kBatchNormInputNum = 6;
+constexpr size_t kBatchNormAttrsNum = 4;
+
+template <typename T>
+std::optional<T> GetScalarAnfNodeValue(const AnfNodePtr &anf_node) {
+  if (!anf_node->isa<ValueNode>()) {
+    return std::nullopt;
+  }
+  auto value_node = anf_node->cast<ValueNodePtr>();
+  auto value_opt = mindspore::ops::GetScalarValue<T>(value_node->value());
+  if (!value_opt.has_value()) {
+    return std::nullopt;
+  }
+  return value_opt.value();
+}
 
 bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -44,10 +65,11 @@ bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
     MS_LOG(DEBUG) << "BatchNorm's input number less than " << kBnInputTensorNum;
     return false;
   }
-  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnorm)) {
+  auto is_training_opt = GetScalarAnfNodeValue<bool>(batchnorm->input(kIdxIsTraining));
+  if (!is_training_opt.has_value()) {
     return false;
   }
-  auto is_training = common::AnfAlgo::GetNodeAttr<bool>(batchnorm, kAttrIsTraining);
+  auto is_training = is_training_opt.value();
   if (is_training) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;
@@ -61,15 +83,24 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   MS_EXCEPTION_IF_NULL(batchnorm);
   auto prim = std::make_shared<Primitive>(kBNInferOpName);
 
+  // origin input: 5, attrs: 4
+  auto input_size = batchnorm->size();
+  if (input_size != (kBatchNormInputNum + kBatchNormAttrsNum)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "BatchNorm's inputs size is not equal to "
+                               << (kBatchNormAttrsNum + kBatchNormInputNum);
+  }
+
   // Format attr is needed in BatchNormInfer.
-  auto origin_prim = common::AnfAlgo::GetCNodePrimitive(batchnorm);
-  if (origin_prim->HasAttr(kAttrFormat)) {
-    auto format = origin_prim->GetAttr(kAttrFormat);
+  auto format_opt = GetScalarAnfNodeValue<int64_t>(batchnorm->input(kIdxFormat));
+  if (format_opt.has_value()) {
+    auto format_value = format_opt.value();
+    std::string format = format_value == 0 ? "NCHW" : "NHWC";
     (void)prim->AddAttr(kAttrFormat, MakeValue(format));
   }
 
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
-  for (size_t i = 1; i < batchnorm->size(); ++i) {
+  input_size -= kBatchNormAttrsNum;
+  for (size_t i = 1; i < input_size; ++i) {
     inputs.push_back(batchnorm->input(i));
   }
   auto new_node = NewCNode(inputs, graph);
@@ -83,8 +114,11 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
     MS_LOG(INTERNAL_EXCEPTION) << "BatchNorm's output abstract size is 0";
   }
   new_node->set_abstract(old_abs_list->elements()[0]);
-  common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
+
+  auto epsilon_opt = GetScalarAnfNodeValue<pyfloat>(batchnorm->input(kIdxEpsilon));
+  auto epsilon = epsilon_opt.has_value() ? epsilon_opt.value() : 1e-5;
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue(epsilon), new_node);
+
   return new_node;
 }
 

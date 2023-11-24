@@ -46,21 +46,23 @@ abstract::ShapePtr BatchToSpaceNDV2InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto out_shape = x_shape;
 
   int64_t block_shape_prod = 1;
-  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->BuildValue()->isa<tensor::Tensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[1]) && !IsValueKnown(input_args[1]->GetValue())) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
   constexpr auto index2 = 2;
-  if (input_args[index2]->isa<abstract::AbstractTensor>() && !input_args[index2]->BuildValue()->isa<tensor::Tensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[index2]) && !IsValueKnown(input_args[index2]->GetValue())) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
-  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->BuildValue(), prim_name);
-  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->BuildValue(), prim_name);
+  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->GetValue(), prim_name,
+                                                               input_args[1]->GetType());
+  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->GetValue(), prim_name,
+                                                         input_args[index2]->GetType());
   size_t size = block_shape.size();
   size_t offset = x_shape.size() - size;
   for (size_t i = 0; i < size; i++) {
@@ -89,7 +91,7 @@ TypePtr BatchToSpaceNDV2InferType(const std::vector<AbstractBasePtr> &input_args
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   // check_scalar_or_tensor_types_same
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "BatchToSpaceNDV2");
 }

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/grid_sampler_2d_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;
@@ -23,21 +24,20 @@ const size_t kZero = 0;
 const size_t kOne = 1;
 const size_t kTwo = 2;
 const size_t kThree = 3;
-const size_t kInputsNum = 2;
+const size_t kFour = 4;
+const size_t kInputsNum = 5;
 const size_t kOutputsNum = 1;
 }  // namespace
 
 namespace mindspore {
 namespace kernel {
-bool GridSampler2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool GridSampler2DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -46,25 +46,22 @@ bool GridSampler2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  interpolation_mode_ = kernel_ptr->get_interpolation_mode();
-  padding_mode_ = kernel_ptr->get_padding_mode();
-  align_corners_ = kernel_ptr->get_align_corners();
   return true;
 }
 
-int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int GridSampler2DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  x_shape_ = inputs[kZero]->GetDeviceShapeAdaptively();
-  grid_shape_ = inputs[kOne]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kZero]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kZero]->GetDeviceShapeVector();
+  grid_shape_ = inputs[kOne]->GetDeviceShapeVector();
+  interpolation_mode_ = inputs[kTwo]->GetValueWithCheck<int64_t>();
+  padding_mode_ = inputs[kThree]->GetValueWithCheck<int64_t>();
+  align_corners_ = inputs[kFour]->GetValueWithCheck<bool>();
+  output_shape_ = outputs[kZero]->GetDeviceShapeVector();
   output_number_ = LongToSize(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree]);
   x_stride_.clear();
   grid_stride_.clear();
@@ -84,9 +81,9 @@ int GridSampler2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return ret;
 }
 
-bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool GridSampler2DCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -122,7 +119,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(const T *x_addr, const T *grid_addr,
   auto x_ptr_NC = out_iter[kZero] * x_stride_[kZero];
   auto output_ptr_NCDHW = out_iter[kZero] * output_stride_[kZero] + out_iter[kTwo] * output_stride_[kTwo] +
                           out_iter[kThree] * output_stride_[kThree];
-  if (interpolation_mode_ == "bilinear") {
+  if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
     int64_t x_tnw = static_cast<int64_t>(std::floor(x));
     int64_t y_tnw = static_cast<int64_t>(std::floor(y));
     int64_t x_tne = x_tnw + 1;
@@ -156,7 +153,7 @@ void GridSampler2DCpuKernelMod::ComputeTask(const T *x_addr, const T *grid_addr,
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * tse;
       }
     }
-  } else if (interpolation_mode_ == "nearest") {
+  } else if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
     int64_t x_nearest = static_cast<int64_t>(std::round(x));
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     for (size_t c = 0; c < out_c; c++, x_ptr_NC += x_stride_[kOne], output_ptr_NCDHW += output_stride_[kOne]) {
@@ -200,8 +197,8 @@ void GridSampler2DCpuKernelMod::ComputeTask(const float16 *x_addr, const float16
 void GridSampler2DCpuKernelMod::Call2Half(const float16 *x_data_addr, float16 *y_data_addr,
                                           const float16 *grid_data_addr, std::vector<int64_t> x_dims,
                                           std::vector<int64_t> y_dims, int64_t *y_stride, int64_t *x_stride,
-                                          const int64_t *grid_stride, std::string interpolation_mode,
-                                          std::string padding_mode, bool align_corners) {
+                                          const int64_t *grid_stride, int64_t interpolation_mode, int64_t padding_mode,
+                                          bool align_corners) {
   uint32_t data_num = LongToSize(y_dims[0] * y_dims[2] * y_dims[3]);
   auto shard_compute = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -224,9 +221,9 @@ void GridSampler2DCpuKernelMod::Call2Half(const float16 *x_data_addr, float16 *y
       auto x_ptr_NC = y_iter[0] * x_stride[0];
       auto y_ptr_NCHW = y_iter[0] * y_stride[0] + y_iter[2] * y_stride[2] + y_iter[3] * y_stride[3];
 
-      if (interpolation_mode == "bilinear") {
+      if (interpolation_mode == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
         BilinearHalf(x, y, x_data_addr, y_data_addr, y_c, x_dims, y_stride, x_stride, x_ptr_NC, y_ptr_NCHW);
-      } else if (interpolation_mode == "nearest") {
+      } else if (interpolation_mode == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
         NearestHalf(x, y, x_data_addr, y_data_addr, y_c, x_dims, y_stride, x_stride, x_ptr_NC, y_ptr_NCHW);
       }
     }
@@ -291,11 +288,11 @@ void GridSampler2DCpuKernelMod::BilinearHalf(float x, float y, const float16 *x_
 }
 
 template <typename T>
-void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<T *>(inputs[0]->addr);
-  auto grid_data_addr = static_cast<T *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<T *>(outputs[0]->addr);
+void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto grid_data_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<T *>(outputs[0]->device_ptr());
   size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -309,11 +306,11 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
 }
 
-void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = static_cast<float16 *>(inputs[0]->addr);
-  auto grid_data_addr = static_cast<float16 *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<float16 *>(outputs[0]->addr);
+void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto x_data_addr = static_cast<float16 *>(inputs[0]->device_ptr());
+  auto grid_data_addr = static_cast<float16 *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<float16 *>(outputs[0]->device_ptr());
   size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -328,7 +325,7 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 }
 
 template <typename T>
-T GridSampler2DCpuKernelMod::GridSamplerComputeSourceIndex(T coord, int64_t size, const std::string &padding_mode,
+T GridSampler2DCpuKernelMod::GridSamplerComputeSourceIndex(T coord, int64_t size, int64_t padding_mode,
                                                            bool align_corners) const {
   const int64_t num2 = 2;
   if (align_corners) {
@@ -336,9 +333,9 @@ T GridSampler2DCpuKernelMod::GridSamplerComputeSourceIndex(T coord, int64_t size
   } else {
     coord = ((coord + 1.f) * size - 1) / num2;
   }
-  if (padding_mode == "border") {
+  if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::BORDER)) {
     coord = std::min(static_cast<T>(size - 1), std::max(coord, static_cast<T>(0)));
-  } else if (padding_mode == "reflection") {
+  } else if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::REFLECTION)) {
     if (align_corners) {
       coord = ReflectCoordinates(coord, 0, num2 * (size - 1));
     } else {

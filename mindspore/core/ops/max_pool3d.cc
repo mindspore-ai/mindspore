@@ -289,7 +289,7 @@ TypePtr MaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<Abst
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
 }
@@ -303,7 +303,7 @@ AbstractBasePtr MaxPool3DInfer(const abstract::AnalysisEnginePtr &, const Primit
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be tensor.";
   }
   return abstract::MakeAbstract(MaxPool3DInferShape(primitive, input_args), MaxPool3DInferType(primitive, input_args));

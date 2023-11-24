@@ -136,8 +136,6 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::shared_ptr<OperatorIn
 Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int64_t iter_ops);
 Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                            const size_t incoming_op_index, Dimensions strategy);
-bool GetKeepDims(const std::shared_ptr<OperatorInfo> &op);
-Dimensions GetDimList(const std::shared_ptr<OperatorInfo> &op);
 Dimensions ModifyStrategyIfReduceIncoming(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);
 Dimensions GetDimListFromAttrs(const std::shared_ptr<OperatorInfo> &op);
 Dimensions ModifyStrategyIfArgIncoming(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy);

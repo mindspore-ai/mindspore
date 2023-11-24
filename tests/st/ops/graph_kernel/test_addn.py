@@ -59,8 +59,6 @@ def test_basic_gpu():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", enable_graph_kernel=True)

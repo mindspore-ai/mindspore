@@ -1,0 +1,12 @@
+#operator gelu
+gelu:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GeLU
+    function:
+        name: gelu_

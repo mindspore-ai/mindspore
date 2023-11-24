@@ -23,7 +23,6 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {
 namespace kernel {
 class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<TransposeGpuKernelMod> {
@@ -35,15 +34,12 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     stream_ptr_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -54,8 +50,8 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
 
   void GetPermValue(const std::vector<int64_t> &perm, std::vector<int32_t> *input_perm);
 
@@ -65,8 +61,6 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   TransposeInfo info_;
 
   size_t shape_size_{0};
-  bool is_null_input_;
-  bool is_dynamic_perm_{false};
   bool is_copy_{false};
 };
 }  // namespace kernel

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+#include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "base/base.h"
@@ -35,6 +37,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -60,6 +63,8 @@ enum InferStrategyMode {
 
 class Edge;
 
+inline std::string GetPrimNameFromInfoName(const std::string &info_name);
+
 class OperatorInfo {
  public:
   OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs,
@@ -77,6 +82,7 @@ class OperatorInfo {
     stage_device_list_ = g_device_manager->GetDeviceListInThisStage();
     stage_device_size_ = SizeToLong(stage_device_list_.size());
     cnode_ = nullptr;
+    prim_name_ = GetPrimNameFromInfoName(this->name_);
   }
 
   virtual ~OperatorInfo() = default;
@@ -273,6 +279,7 @@ class OperatorInfo {
   }
 
   std::string name_;
+  std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
@@ -396,6 +403,82 @@ AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype);
 Operator CreateDivOpWithType(float divisor, const TypePtr &dtype);
 std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value);
+
+inline std::string GetPrimNameFromInfoName(const std::string &info_name) {
+  auto prim_name = info_name;
+  if (auto pos = info_name.rfind("Info"); pos != std::string::npos) {
+    prim_name = info_name.substr(0, pos);
+  }
+  return prim_name;
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  return ops::GetScalarValue<T>(input_value[idx]);
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                          const std::string &attr_name) {
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
+  return GetScalarValueFromInputs<T>(input_value, idx);
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  auto array_opt = ops::GetArrayValue<T>(input_value[idx]);
+  if (!array_opt.has_value() || array_opt.value().HasUnknownValue()) {
+    return std::nullopt;
+  }
+  return array_opt.value().ToVector();
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value,
+                                                      const std::string &op_name, const std::string &attr_name) {
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
+  return GetArrayValueFromInputs<T>(input_value, idx);
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value,
+                                                               const std::string &op_name,
+                                                               const std::string &attr_name) {
+  auto attr_opt = GetArrayValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                                   const std::string &attr_name) {
+  auto attr_opt = GetScalarValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
 }  // namespace parallel
 }  // namespace mindspore
 

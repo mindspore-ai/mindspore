@@ -17,8 +17,8 @@
 #include "transform/graph_ir/op_declare/nn_batch_norm_ops_declare.h"
 #include <string>
 #include <vector>
-#include "ops/nn_op_name.h"
 #include "ops/ascend_op_name.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore::transform {
 // BatchNorm
@@ -27,14 +27,20 @@ INPUT_MAP(BatchNorm) = {{1, INPUT_DESC(x)},
                         {3, INPUT_DESC(offset)},
                         {4, INPUT_DESC(mean)},
                         {5, INPUT_DESC(variance)}};
-ATTR_MAP(BatchNorm) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
-                       {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(BatchNorm) = {
+  {6, ATTR_DESC(is_training, AnyTraits<bool>())},
+  {7, ATTR_DESC(epsilon, AnyTraits<float>())},
+  {9, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())},
+};
+ATTR_MAP(BatchNorm) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {1, OUTPUT_DESC(batch_mean)},
                          {2, OUTPUT_DESC(batch_variance)},
                          {3, OUTPUT_DESC(reserve_space_1)},
                          {4, OUTPUT_DESC(reserve_space_2)}};
+REG_ADPT_DESC(BatchNorm, kNameBatchNorm, ADPT_DESC(BatchNorm))
+REG_ADPT_DESC(FusedBatchNorm, kNameFusedBatchNorm, ADPT_DESC(BatchNorm))
+
 // BNInference is BatchNorm for caffe
 INPUT_MAP(BNInference) = {{1, INPUT_DESC(x)},        {2, INPUT_DESC(mean)},  {3, INPUT_DESC(variance)},
                           {4, INPUT_DESC(momentum)}, {5, INPUT_DESC(scale)}, {6, INPUT_DESC(offset)}};
@@ -44,8 +50,6 @@ ATTR_MAP(BNInference) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
 OUTPUT_MAP(BNInference) = {{0, OUTPUT_DESC(y)}};
 
 REG_ADPT_DESC(BNInference, kNameBNInference, ADPT_DESC(BNInference))
-REG_ADPT_DESC(BatchNorm, kNameBatchNorm, ADPT_DESC(BatchNorm))
-REG_ADPT_DESC(FusedBatchNorm, kNameFusedBatchNorm, ADPT_DESC(BatchNorm))
 REG_ADPT_DESC(BNInferenceD, kBNInferenceDOpName, ADPT_DESC(BNInference))
 
 // BNInfer
@@ -54,6 +58,7 @@ INPUT_MAP(BNInfer) = {{1, INPUT_DESC(x)},
                       {3, INPUT_DESC(offset)},
                       {4, INPUT_DESC(mean)},
                       {5, INPUT_DESC(variance)}};
+INPUT_ATTR_MAP(BNInfer) = {{7, ATTR_DESC(epsilon, AnyTraits<float>())}};
 ATTR_MAP(BNInfer) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
 OUTPUT_MAP(BNInfer) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BNInfer, kBNInferOpName, ADPT_DESC(BNInfer))
@@ -65,14 +70,13 @@ OUTPUT_MAP(BNInferGrad) = {{0, OUTPUT_DESC(x_backprop)}};
 REG_ADPT_DESC(BNInferGrad, kBNInferGradOpName, ADPT_DESC(BNInferGrad))
 
 // BatchNormGrad
-INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
-                            {2, INPUT_DESC(x)},
-                            {3, INPUT_DESC(scale)},
-                            {4, INPUT_DESC(reserve_space_1)},
-                            {5, INPUT_DESC(reserve_space_2)}};
-ATTR_MAP(BatchNormGrad) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-                           {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
-                           {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
+INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},      {2, INPUT_DESC(x)},
+                            {3, INPUT_DESC(scale)},           {4, INPUT_DESC(reserve_space_1)},
+                            {5, INPUT_DESC(reserve_space_2)}, {6, INPUT_DESC(reserve_space_3)}};
+INPUT_ATTR_MAP(BatchNormGrad) = {{7, ATTR_DESC(is_training, AnyTraits<bool>())},
+                                 {8, ATTR_DESC(epsilon, AnyTraits<float>())},
+                                 {9, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+ATTR_MAP(BatchNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchNormGrad) = {{0, OUTPUT_DESC(x_backprop)},
                              {1, OUTPUT_DESC(scale_backprop)},
                              {2, OUTPUT_DESC(offset_backprop)},

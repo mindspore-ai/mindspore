@@ -83,7 +83,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
 
   if (IsMemoryPoolRecycle()) {
-    mem_bufs_.insert(device_addr);
+    (void)mem_bufs_.insert(device_addr);
   }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
@@ -480,7 +480,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   }
 
   if (IsMemoryPoolRecycle()) {
-    mem_bufs_.erase(device_addr);
+    (void)mem_bufs_.erase(device_addr);
   }
   MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()
@@ -698,7 +698,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
           total_eager_free_mem += mem_buf->size_;
         }
         MS_LOG(INFO) << "  MemBuf info: address[" << mem_buf->device_addr_ << "] size[" << mem_buf->size_ << "] status["
-                     << kBufStatusString.at(mem_buf->status_) << "] name[" << mem_buf->allocator_name_ << "] type["
+                     << kBufStatusString.at(mem_buf->status_) << "] name["
+                     << (mem_buf->allocator_name_.empty() ? "Unknown" : mem_buf->allocator_name_) << "] type["
                      << kAllocatorTypeString.at(mem_buf->allocator_type_) << "].";
       }
     }

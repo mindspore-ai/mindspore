@@ -50,18 +50,18 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     std::vector<void *> params;
 
     for (size_t i = 0; i < inputs.size(); i++) {
-      params.push_back(static_cast<void *>(inputs[i]->addr));
+      params.push_back(static_cast<void *>(inputs[i]->device_ptr()));
     }
     for (size_t i = 0; i < outputs.size(); i++) {
-      params.push_back(static_cast<void *>(outputs[i]->addr));
+      params.push_back(static_cast<void *>(outputs[i]->device_ptr()));
     }
     for (size_t i = 0; i < workspace.size(); i++) {
-      params.push_back(static_cast<void *>(workspace[i]->addr));
+      params.push_back(static_cast<void *>(workspace[i]->device_ptr()));
     }
     if (!handle_) {
 #ifdef _MSC_VER
@@ -121,14 +121,11 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->GetPrim()->name();
-    const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
-      if (base_operator->GetPrim()->HasAttr("path_from_env") &&
-          GetValue<bool>(base_operator->GetPrim()->GetAttr("path_from_env"))) {
+      if (primitive_->HasAttr("path_from_env") && GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
         const char *path_in_env = std::getenv(path.c_str());
         if (path_in_env == nullptr) {
           MS_LOG(WARNING) << "For '" << kernel_name_ << "' on GPU, the attr path_from_env is set but the env var ["
@@ -153,7 +150,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
 
     for (size_t i = 0; i < inputs.size(); i++) {
       auto in_shape = inputs[i]->GetShapeVector();
-      auto dtype = inputs[i]->GetDtype();
+      auto dtype = inputs[i]->dtype_id();
       (void)type_list_.emplace_back(TypeIdToString(dtype, true));
       ndims_.push_back(SizeToInt(in_shape.size()));
       (void)shape_list_.emplace_back(in_shape);
@@ -161,7 +158,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
 
     for (size_t i = 0; i < outputs.size(); i++) {
       auto out_shape = outputs[i]->GetShapeVector();
-      auto dtype = outputs[i]->GetDtype();
+      auto dtype = outputs[i]->dtype_id();
       (void)shape_list_.emplace_back(out_shape);
       ndims_.push_back(SizeToInt(out_shape.size()));
       (void)type_list_.emplace_back(TypeIdToString(dtype, true));
@@ -172,7 +169,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                    [](auto &str) { return str.c_str(); });
 
-    attrs_.SetKernelPrim(base_operator->GetPrim());
+    attrs_.SetKernelPrim(primitive_);
 
     if (!handle_) {
 #ifdef _MSC_VER
@@ -221,10 +218,8 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

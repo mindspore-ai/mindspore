@@ -19,6 +19,9 @@ import mindspore.ops.operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.train import Model
+import mindspore
+import pytest
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -36,13 +39,18 @@ class Net(Cell):
         return x
 
 
-def me_stridedslice(input1, begin, end, stride):
+def me_stridedslice(input1, begin, end, stride, mstype=None):
     input_me = Tensor(input1)
+    if mstype == mindspore.bfloat16:
+        input_me = Tensor(input1, mindspore.bfloat16)
     net = Net(begin, end, stride)
     net.set_train()
     model = Model(net)
     output = model.predict(input_me)
-    print(output.asnumpy())
+    if mstype == mindspore.bfloat16:
+        print(output.float().asnumpy())
+    else:
+        print(output.asnumpy())
 
 
 def test_stridedslice_input_2d():
@@ -60,3 +68,18 @@ def test_stridedslice_input_3d():
     end = (3, 3, 3)
     stride = (1, 1, 1)
     me_stridedslice(input_, begin, end, stride)
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_stridedslice_input_3d_bf16():
+    """
+    Feature: test fast_gelu functional API.
+    Description: Operation selects input is Tensor with bfloat16 type.
+    Expectation: execute without error.
+    """
+    input_ = np.random.randn(5, 5, 5).astype(np.float32)
+    begin = (0, 0, 0)
+    end = (3, 3, 3)
+    stride = (1, 1, 1)
+    me_stridedslice(input_, begin, end, stride, mstype=mindspore.bfloat16)

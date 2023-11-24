@@ -32,13 +32,13 @@ namespace ops {
 namespace {
 abstract::ShapePtr SparseAddmmInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
   const int kDimensionTwo = 2;
   const int kDimensionOne = 1;
   std::vector<ShapeVector> all_shapes = {indices_shape, values_shape, shape_shape, x2_shape, x3_shape};
@@ -89,13 +89,13 @@ TypePtr SparseAddmmInferType(const PrimitivePtr &primitive, const std::vector<Ab
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32,  kInt64,  kInt16,
                                    kInt8,    kUInt32,  kUInt64, kUInt16, kUInt8};
-  TypePtr indices_type = input_args[kInputIndex0]->BuildType();
-  TypePtr values_type = input_args[kInputIndex1]->BuildType();
-  TypePtr shape_type = input_args[kInputIndex2]->BuildType();
-  TypePtr x2_type = input_args[kInputIndex3]->BuildType();
-  TypePtr x3_type = input_args[kInputIndex4]->BuildType();
-  TypePtr alpha_type = input_args[kInputIndex5]->BuildType();
-  TypePtr beta_type = input_args[kInputIndex6]->BuildType();
+  TypePtr indices_type = input_args[kInputIndex0]->GetType();
+  TypePtr values_type = input_args[kInputIndex1]->GetType();
+  TypePtr shape_type = input_args[kInputIndex2]->GetType();
+  TypePtr x2_type = input_args[kInputIndex3]->GetType();
+  TypePtr x3_type = input_args[kInputIndex4]->GetType();
+  TypePtr alpha_type = input_args[kInputIndex5]->GetType();
+  TypePtr beta_type = input_args[kInputIndex6]->GetType();
   auto prim_name = primitive->name();
 
   (void)types.emplace("x1_values", values_type);

@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
@@ -28,13 +29,30 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.reshape = P.Reshape()
 
-    @jit
-    def construct(self, tensor):
-        return self.reshape(tensor, (1, 16))
+    def construct(self, tensor, shape):
+        return self.reshape(tensor, shape)
 
 
 def test_net():
     x = np.random.randn(1, 16, 1, 1).astype(np.float16)
     reshape = Net()
-    output = reshape(Tensor(x))
+    output = reshape(Tensor(x), (1, 16))
     print(output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+def test_reshape_bfloat16(mode):
+    """
+    Feature: test Reshape forward.
+    Description: test bfloat16 inputs.
+    Expectation: compare the result with exception value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    x = Tensor(np.random.randn(4096, 1536), mstype.bfloat16)
+    shape = (1, 4096, 12, 128)
+    reshape = Net()
+    output = reshape(x, shape)
+    assert output.shape == shape

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -31,12 +32,17 @@
 namespace mindspore {
 namespace parallel {
 Status BatchNormInfo::GetAttrs() {
-  is_training_ = GetBoolAttr(IS_TRAINING);
+  auto is_training_value = GetScalarValueFromInputsWithCheck<bool>(input_value_, name_, IS_TRAINING);
 
-  epsilon_ = GetFloatAttr(EPSILON);
+  auto epsilon_value = GetScalarValueFromInputsWithCheck<float>(input_value_, name_, EPSILON);
 
-  momentum_ = GetFloatAttr(MOMENTUM);
-
+  auto momentum_value = GetScalarValueFromInputsWithCheck<float>(input_value_, name_, MOMENTUM);
+  if (!is_training_value.has_value() || !epsilon_value.has_value() || !momentum_value.has_value()) {
+    return FAILED;
+  }
+  is_training_ = is_training_value.value();
+  epsilon_ = epsilon_value.value();
+  momentum_ = momentum_value.value();
   auto attr_iter = attrs_.find(GROUP_SIZE);
   if (attr_iter != attrs_.end()) {
     group_size_ = GetIntAttr(GROUP_SIZE);
@@ -51,7 +57,21 @@ Status BatchNormInfo::GetAttrs() {
     MS_LOG(INFO) << name_ << ": The group size is " << group_size_;
   }
 
-  format_ = GetStringAttr(FORMAT);
+  auto format_int_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, DATA_FORMAT);
+  if (!format_int_opt.has_value()) {
+    return FAILED;
+  }
+  auto format_int = format_int_opt.value();
+  std::string format_string;
+  if (format_int == 0) {
+    format_string = "NCHW";
+  } else if (format_int == 1) {
+    format_string = "NHWC";
+  } else {
+    MS_LOG(ERROR) << name_ << ": The data format must be 0 or 1, but got " << format_int;
+    return FAILED;
+  }
+  format_ = format_string;
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The data format must be 'NCHW', but got " << format_;
     return FAILED;
@@ -62,14 +82,11 @@ Status BatchNormInfo::GetAttrs() {
     return FAILED;
   }
 
-  if (inputs_shape_[0].size() == 2) {
-    input_is_4d_ = false;
-  } else if (inputs_shape_[0].size() == 4) {
-    input_is_4d_ = true;
-  } else {
-    MS_LOG(ERROR) << name_ << ": The size of input[0]'shape must be 2 or 4, but got " << inputs_shape_[0].size();
+  if (inputs_shape_[0].size() != 2 && inputs_shape_[0].size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of input[0]'s shape must be 2 or 4, but got " << inputs_shape_[0].size();
     return FAILED;
   }
+  input_is_4d_ = (inputs_shape_[0].size() == 4);
 
   MS_LOG(INFO) << name_ << ": The is_traing is " << is_training_ << ", epsilon is " << epsilon_ << ", momentum is "
                << momentum_ << ", data format is " << format_;
@@ -85,6 +102,7 @@ Status BatchNormInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   std::vector<Dimensions> stra = strategy->GetInputDim();
+
   if (stra.size() != 5) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be 5, but got " << stra.size();
     return FAILED;
@@ -123,6 +141,22 @@ Status BatchNormInfo::InferDevMatrixShape() {
   }
 
   dev_matrix_shape_ = stra[0];
+  return SUCCESS;
+}
+
+Status BatchNormInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  // Add empty mirror ops
+  for (size_t i = 0; i < kIndex4; i++) {
+    (void)mirror_ops_.emplace_back(OperatorVector());
+  }
   return SUCCESS;
 }
 
@@ -197,7 +231,7 @@ Status BatchNormInfo::InferForwardCommunication() {
   TensorMap tmp_map;
   if (input_is_4d_) {
     // input is 4d:
-    // if has not repeated calculation, the dev matirx is [n, c, h, w]
+    // if has not repeated calculation, the dev matrix is [n, c, h, w]
     // if repeated calculation and repeated num in the left of dev matrix, the dev matrix is [repeated_num, n, c, h, w]
     // if repeated calculation and repeated num in the right of dev matrix, the dev matrix is [n, c, h, w, repeated_num]
     // and the forward allreduce need to use the dimensions of n/h/w
@@ -213,7 +247,7 @@ Status BatchNormInfo::InferForwardCommunication() {
     }
   } else {
     // input is 2d:
-    // if has not repeated calculation, the dev matirx is [n, c]
+    // if has not repeated calculation, the dev matrix is [n, c]
     // if repeated calculation and repeated num in the left of dev matrix, the dev matrix is [repeated_num, n, c]
     // if repeated calculation and repeated num in the right of dev matrix, the dev matrix is [n, c, repeated_num]
     // and the forward allreduce need to use the dimensions of n
@@ -265,6 +299,13 @@ void BatchNormInfo::InferReplaceOps() {
 
   if (backend != kAscendDevice && backend != kDavinciDevice) {
     MS_LOG(INFO) << name_ << ": The backend is " << backend << ", it does not support SyncBatchNorm operator";
+    return;
+  }
+  const size_t InputNumUpperBound = 5;
+  auto prim_name = GetPrimNameFromInfoName(name_);
+  if (ops::GetOpInputsNum(prim_name) > InputNumUpperBound) {
+    MS_LOG(INFO) << name_ << ": The inputs num of " << prim_name << " is " << ops::GetOpInputsNum(prim_name)
+                 << ", it does not support SyncBatchNorm operator";
     return;
   }
 

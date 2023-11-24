@@ -34,14 +34,9 @@ const double kValueZero = 0.;
 constexpr int kInputsNum = 3;
 constexpr int kOutputsNum = 1;
 }  // namespace
-bool UpsampleTrilinear3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3DGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners_ = kernel_ptr->get_align_corners();
+bool UpsampleTrilinear3DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -52,15 +47,13 @@ bool UpsampleTrilinear3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleTrilinear3DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> grad_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> dinput_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> grad_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> dinput_shape = outputs[kIndex0]->GetShapeVector();
   n_ = grad_shape[kIndex0];
   c_ = grad_shape[kIndex1];
   // grad_output
@@ -72,25 +65,23 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   dinput_h_ = dinput_shape[kIndex3];
   dinput_w_ = dinput_shape[kIndex4];
   // none list
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+
+  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
-    scales_ = std::vector<double>(kIndex3, kValueZero);
+    scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_)) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
-    }
+    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<float>>();
   }
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs) {
   auto grad = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(grad);
   auto dinput = GetDeviceAddress<T>(outputs, kIndex0);

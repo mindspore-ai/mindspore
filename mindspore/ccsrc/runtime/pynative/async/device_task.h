@@ -89,6 +89,17 @@ class DeviceOpRunTask : public DeviceOpTask {
   std::future<bool> future_;
 };
 
+class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
+ public:
+  explicit PyBoostDeviceTask(std::function<void()> run_func) : AsyncTask(kPyBoostOpTask), run_func_(run_func) {}
+  ~PyBoostDeviceTask() = default;
+
+  void Run() override;
+
+ private:
+  std::function<void()> run_func_;
+};
+
 class DeviceOpBuildTask : public DeviceOpTask {
  public:
   DeviceOpBuildTask(std::shared_ptr<OpTaskContext> context, std::promise<bool> promise)

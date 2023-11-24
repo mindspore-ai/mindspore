@@ -45,8 +45,8 @@ namespace {
 abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primitive,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamic(x) || IsDynamic(target)) {
     return std::make_shared<abstract::Shape>(x);
   }
@@ -67,12 +67,12 @@ TypePtr MultilabelMarginLossGradInferType(const PrimitivePtr &primitive,
   const std::set<TypePtr> valid_types1 = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types2 = {kInt32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("x", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("y_grad", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("x", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types1, op_name);
-  auto target = input_args[kInputIndex2]->BuildType();
+  auto target = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("target", target, valid_types2, op_name);
-  return input_args[kInputIndex1]->BuildType();
+  return input_args[kInputIndex1]->GetType();
 }
 }  // namespace
 

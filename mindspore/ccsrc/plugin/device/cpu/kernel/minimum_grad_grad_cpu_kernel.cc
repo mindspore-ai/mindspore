@@ -34,11 +34,8 @@ constexpr size_t kOutputIndex1 = 1;
 constexpr size_t kOutputIndex2 = 2;
 }  // namespace
 
-bool MinimumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool MinimumGradGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,20 +46,18 @@ bool MinimumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MinimumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MinimumGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   tensor_size_ = 1;
 
-  x1_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  grad_y1_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
-  grad_y2_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  grad_y1_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
+  grad_y2_shape_ = inputs[kInputIndex3]->GetDeviceShapeVector();
 
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
   for (const int64_t &d : output_shape_) {
@@ -73,18 +68,18 @@ int MinimumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MinimumGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool MinimumGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradGradOutputsNum, kernel_name_);
 
-  auto x1_addr = static_cast<T *>(inputs[kInputIndex0]->addr);
-  auto x2_addr = static_cast<T *>(inputs[kInputIndex1]->addr);
-  auto grad_y1_addr = static_cast<T *>(inputs[kInputIndex2]->addr);
-  auto grad_y2_addr = static_cast<T *>(inputs[kInputIndex3]->addr);
-  auto sopd_x1_addr = static_cast<T *>(outputs[kOutputIndex0]->addr);
-  auto sopd_x2_addr = static_cast<T *>(outputs[kOutputIndex1]->addr);
-  auto sopd_grads_addr = static_cast<T *>(outputs[kOutputIndex2]->addr);
+  auto x1_addr = static_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  auto x2_addr = static_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  auto grad_y1_addr = static_cast<T *>(inputs[kInputIndex2]->device_ptr());
+  auto grad_y2_addr = static_cast<T *>(inputs[kInputIndex3]->device_ptr());
+  auto sopd_x1_addr = static_cast<T *>(outputs[kOutputIndex0]->device_ptr());
+  auto sopd_x2_addr = static_cast<T *>(outputs[kOutputIndex1]->device_ptr());
+  auto sopd_grads_addr = static_cast<T *>(outputs[kOutputIndex2]->device_ptr());
 
   auto ret_sopd_x1 = memset_s(sopd_x1_addr, 1, 0, 1);
   if (ret_sopd_x1 != EOK) {

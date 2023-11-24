@@ -28,12 +28,13 @@
 #include "kernel/framework_utils.h"
 
 namespace mindspore::opt::dynamic_shape {
+BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+void UpdateKernelTensorShape(const BaseShapePtr &base_shape,
+                             const std::vector<kernel::KernelTensor *> &output_kernel_tensors);
+
 bool IsRealCNode(const BaseRef &n);
 void InferOp(const CNodePtr &node, void *args = nullptr);
-kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-                           const std::vector<tensor::TensorPtr> &input_tensors);
-kernel::KernelArgs SetOpArgs(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-                             const std::vector<tensor::TensorPtr> &input_tensors);
 AnfNodePtr GenInferNode(const AnfNodePtr &node);
 AnfNodePtr GenInitNode(const AnfNodePtr &node);
 

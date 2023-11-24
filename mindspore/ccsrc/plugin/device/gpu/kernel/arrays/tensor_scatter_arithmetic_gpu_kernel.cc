@@ -18,7 +18,6 @@
 #include <functional>
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/base_operator.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
@@ -29,7 +28,7 @@ namespace kernel {
 
 constexpr auto kTensorScatterUpdate = "TensorScatterUpdate";
 
-bool TensorScatterArithmeticGpuKernelMod::GetOpType(const BaseOperatorPtr &base_operator) {
+bool TensorScatterArithmeticGpuKernelMod::GetOpType() {
   static const std::map<std::string, TensorScatterArithmeticFunctionType> tensor_scatter_op_map = {
     {prim::kPrimTensorScatterUpdate->name(), TENSOR_SCATTER_FUNC_UPDATE},
     {prim::kPrimTensorScatterMin->name(), TENSOR_SCATTER_FUNC_MIN},
@@ -68,20 +67,17 @@ void TensorScatterArithmeticGpuKernelMod::UpdateSize() {
   }
 }
 
-bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TensorScatterArithmeticGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetOpType(base_operator)) {
+  if (!GetOpType()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' it got op type and function type failed.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -90,16 +86,14 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input args not supports Complex.";
     return false;
   }
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
   return true;
 }
 
-int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int TensorScatterArithmeticGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -122,9 +116,9 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
-bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
-                                                       const std::vector<AddressPtr> &outputs) {
+bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &workspace,
+                                                       const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *update = GetDeviceAddress<T>(inputs, kIndex2);

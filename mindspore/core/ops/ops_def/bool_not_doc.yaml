@@ -1,0 +1,19 @@
+bool_not:
+  description: |
+    Returns bool_not `not` of bool input.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as 'not' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar, the type can be bool.
+
+    Outputs:
+        Scalar, the type is bool.
+
+    Raises:
+        TypeError: If `x` are not bool scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``

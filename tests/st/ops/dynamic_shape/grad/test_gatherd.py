@@ -47,7 +47,7 @@ def test_gatherd_dynamic_shape():
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
                          [122, 676, 714, 261, 19, 936]]), mindspore.int32)
-    dim = Tensor([0], mindspore.int64)
+    dim = 0
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
                              [0, 0, 0, 3, 3, -2],
@@ -73,7 +73,7 @@ def test_gatherd_dynamic_rank():
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
                          [122, 676, 714, 261, 19, 936]]), mindspore.int64)
-    dim = Tensor([1], mindspore.int64)
+    dim = 1
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
                              [0, 0, 0, 3, 3, -2],

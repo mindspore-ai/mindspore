@@ -26,12 +26,9 @@ const size_t kNumber3 = 3;
 
 namespace mindspore {
 namespace kernel {
-bool CrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool CrossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,19 +40,15 @@ bool CrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CrossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  input2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  input1_dtype_ = inputs[kIndex0]->GetDtype();
-  auto cross_ptr = std::dynamic_pointer_cast<ops::Cross>(base_operator);
-  MS_EXCEPTION_IF_NULL(cross_ptr);
-  dim_ = cross_ptr->get_dim();
+  input1_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  input2_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  input1_dtype_ = inputs[kIndex0]->dtype_id();
+  dim_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDim));
   int64_t default_dim = -65530;
   if (dim_ == default_dim) {
     int64_t dim_size_value = 3;
@@ -80,8 +73,9 @@ int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return KRET_OK;
 }
 
-bool CrossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool CrossCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   switch (input1_dtype_) {
     case kNumberTypeInt8:
       return LaunchKernel<int8_t>(inputs, outputs);
@@ -115,16 +109,16 @@ bool CrossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input1_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
+bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input1_data_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   int64_t tmp = 1;
   for (size_t i = 0; i < input1_shape_.size(); i++) {
     tmp = tmp * input1_shape_[i];
   }
   size_t input1_data_num = LongToSize(tmp);
-  auto input2_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input2_data_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output_data_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t total = input1_data_num / kNumber3;
   const size_t n = input1_shape_.size();
   std::vector<size_t> a_stride(n);

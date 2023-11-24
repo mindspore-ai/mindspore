@@ -23,6 +23,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ops/op_name.h"
 #include "ops/view/view_strides_calculator.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -71,10 +72,10 @@ struct AddressAndStorageInfo {
 };
 using AddressAndStorageInfoPtr = std::shared_ptr<AddressAndStorageInfo>;
 
-kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
-                                                const device::DeviceContext *device_context) {
+device::DeviceAddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
+                                                      const device::DeviceContext *device_context) {
   if (!device_address) {
-    return std::make_shared<kernel::Address>();
+    return std::make_shared<AscendDeviceAddress>(nullptr, 0);
   }
   if (device_address->GetPtr() == nullptr) {
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -82,14 +83,14 @@ kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &
     }
   }
 
-  return std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize());
+  return device_address;
 }
 
-kernel::AddressPtr MallocMemoryForDeviceAddressWithOffset(const AddressAndStorageInfoPtr &addr_info,
-                                                          const device::DeviceContext *device_context) {
+device::DeviceAddressPtr MallocMemoryForDeviceAddressWithOffset(const AddressAndStorageInfoPtr &addr_info,
+                                                                const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(addr_info);
   if (!addr_info->addr) {
-    return std::make_shared<kernel::Address>();
+    return std::make_shared<AscendDeviceAddress>(nullptr, 0);
   }
   auto device_address = addr_info->addr;
   if (device_address->GetPtr() == nullptr) {
@@ -99,15 +100,16 @@ kernel::AddressPtr MallocMemoryForDeviceAddressWithOffset(const AddressAndStorag
   }
 
   if (addr_info->storage == nullptr) {
-    return std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize());
+    return device_address;
   }
 
   auto offset = addr_info->storage_offset() * GetTypeByte(TypeIdToType(device_address->type_id()));
   if (offset > device_address->GetSize()) {
     MS_LOG(EXCEPTION) << "offset is out of bounds, offset:" << offset << " device size:" << device_address->GetSize();
   }
-  return std::make_shared<kernel::Address>(static_cast<uint8_t *>(device_address->GetMutablePtr()) + offset,
-                                           device_address->GetSize() - offset);
+
+  return std::make_shared<AscendDeviceAddress>(static_cast<uint8_t *>(device_address->GetMutablePtr()) + offset,
+                                               device_address->GetSize() - offset);
 }
 
 bool IdentityFunc(const DeviceAddressPtr &input_address, const TensorStorageInfoPtr &input_storage_info,
@@ -133,14 +135,16 @@ bool IdentityFunc(const DeviceAddressPtr &input_address, const TensorStorageInfo
     groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
   }
   prim->set_attr(kAttrFracZGroup, MakeValue(static_cast<int64_t>(groups)));
-  identity_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(identity_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   identity_kernel->CreateAclConverter();
   identity_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
   identity_kernel->PackageInput(0, "", &input_storage_info->ori_shape);
   identity_kernel->PackageOutput(0, input_storage_info->ori_shape);
 
   MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
-  auto ret = identity_kernel->Launch({input}, std::vector<AddressPtr>{}, {output}, stream_ptr);
+  auto ret = identity_kernel->Launch({input->kernel_tensor().get()}, std::vector<KernelTensor *>{},
+                                     {output->kernel_tensor().get()}, stream_ptr);
   MS_LOG(DEBUG) << "End launch kernel: " << prim->name();
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << prim->name();
@@ -172,7 +176,8 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   auto input_device_types = {src_addr_info->addr->type_id(), kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64};
   auto output_device_types = {dst_addr_info->addr->type_id()};
   kernel::AclKernelModPtr as_strided_kernel = std::make_shared<kernel::AclKernelMod>();
-  as_strided_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(as_strided_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   as_strided_kernel->CreateAclConverter();
   as_strided_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types,
                                    output_device_types);
@@ -187,7 +192,8 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   as_strided_kernel->PackageOutput(kIndex0, src_addr_info->storage->shape);
 
   MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
-  auto ret = as_strided_kernel->Launch({input}, std::vector<AddressPtr>{}, {output}, stream_ptr);
+  auto ret = as_strided_kernel->Launch({input->kernel_tensor().get()}, std::vector<KernelTensor *>{},
+                                       {output->kernel_tensor().get()}, stream_ptr);
   MS_LOG(DEBUG) << "End launch kernel: " << prim->name();
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << prim->name();
@@ -231,6 +237,8 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
 
   auto input = MallocMemoryForDeviceAddressWithOffset(src_addr_info, device_context);
   auto output = MallocMemoryForDeviceAddressWithOffset(dst_addr_info, device_context);
+  auto input_kt = input->kernel_tensor().get();
+  auto output_kt = output->kernel_tensor().get();
   if (dst_addr_info->GetSize() == 0) {
     MS_LOG(DEBUG) << "dst_addr_info is 0";
     return true;
@@ -247,7 +255,8 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
   auto input_device_types = {dst_addr_info->addr->type_id(), src_addr_info->addr->type_id()};
   auto output_device_types = {dst_addr_info->addr->type_id()};
   kernel::AclKernelModPtr view_copy_kernel = std::make_shared<kernel::AclKernelMod>();
-  view_copy_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(view_copy_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   view_copy_kernel->CreateAclConverter();
   view_copy_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
   auto dst_shape = (dst_addr_info->storage == nullptr ? src_storage->shape : dst_addr_info->storage->ori_shape);
@@ -256,7 +265,7 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
   view_copy_kernel->PackageOutput(0, dst_shape);
 
   MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
-  auto ret = view_copy_kernel->Launch({output, input}, std::vector<AddressPtr>{}, {output}, stream_ptr);
+  auto ret = view_copy_kernel->Launch({output_kt, input_kt}, std::vector<KernelTensor *>{}, {output_kt}, stream_ptr);
   MS_LOG(DEBUG) << "End launch kernel: " << prim->name();
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << prim->name();
@@ -286,21 +295,21 @@ bool LaunchAsyncCopy(const AddressAndStorageInfoPtr &src_addr_info, const Addres
   auto src_offset = src_addr_info->storage_offset() * type_size;
   auto dst_offset = dst_addr_info->storage_offset() * type_size;
 
-  if (copy_size + src_offset > src_addr->size) {
+  if (copy_size + src_offset > src_addr->GetSize()) {
     MS_LOG(EXCEPTION) << "Src copy out of bounds, copy_size:" << copy_size << ", src_offset:" << src_offset
-                      << ", src_addr->size:" << src_addr->size;
+                      << ", src_addr->GetSize():" << src_addr->GetSize();
   }
 
-  if (copy_size + dst_offset > dst_addr->size) {
+  if (copy_size + dst_offset > dst_addr->GetSize()) {
     MS_LOG(EXCEPTION) << "Dst copy out of bounds, copy_size:" << copy_size << ", src_offset:" << dst_offset
-                      << ", dst_addr->size:" << dst_addr->size;
+                      << ", dst_addr->GetSize():" << dst_addr->GetSize();
   }
 
-  aclError status = aclrtMemcpyAsync((static_cast<uint8_t *>(dst_addr->addr) + dst_offset), copy_size,
-                                     (static_cast<uint8_t *>(src_addr->addr) + src_offset), copy_size,
+  aclError status = aclrtMemcpyAsync((static_cast<uint8_t *>(dst_addr->GetMutablePtr()) + dst_offset), copy_size,
+                                     (static_cast<uint8_t *>(src_addr->GetMutablePtr()) + src_offset), copy_size,
                                      ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << dst_addr->size
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << dst_addr->GetSize()
                   << " count:" << copy_size;
     return false;
   }
@@ -338,7 +347,8 @@ bool LaunchTransData(const DeviceAddressPtr &input_address, const TensorStorageI
   auto input_device_types = {input_address->type_id()};
   auto output_device_types = {output_address->type_id()};
   kernel::AclKernelModPtr transdata_kernel = std::make_shared<kernel::AclKernelMod>();
-  transdata_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(transdata_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   transdata_kernel->CreateAclConverter();
   transdata_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
 
@@ -346,7 +356,8 @@ bool LaunchTransData(const DeviceAddressPtr &input_address, const TensorStorageI
   transdata_kernel->PackageOutput(0, input_storage_info->ori_shape);
 
   MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
-  auto ret = transdata_kernel->Launch({src_addr}, std::vector<AddressPtr>{}, {dst_addr}, stream_ptr);
+  auto ret = transdata_kernel->Launch({src_addr->kernel_tensor().get()}, std::vector<KernelTensor *>{},
+                                      {dst_addr->kernel_tensor().get()}, stream_ptr);
   MS_LOG(DEBUG) << "End launch kernel: " << prim->name();
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << prim->name();
@@ -369,8 +380,14 @@ bool ContiguousViewCopySrcAddr(const AddressAndStorageInfoPtr &src_addr_info,
 
   const auto &dst_shape = src_addr_info->storage->shape;
   auto tensor_size = SizeOf(dst_shape) * GetTypeByte(TypeIdToType(src_addr_info->addr->type_id()));
-  auto dst_addr = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
-                                                                           src_addr_info->addr->type_id(), dst_shape);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, kOpFormat_DEFAULT, src_addr_info->addr->type_id(), dst_shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(src_addr_info->addr->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(dst_shape));
+
+  auto dst_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   dst_addr->set_device_shape(dst_shape);
 
   auto dst_addr_info = std::make_shared<AddressAndStorageInfo>(dst_addr, nullptr);
@@ -473,8 +490,14 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
   if (base_format.empty()) {
     MS_LOG(DEBUG) << "Base format is empty, need to transdata first.";
     auto tensor_size = SizeOf(input_storage_info->ori_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
-    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_storage_info->ori_shape));
+
+    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     baseformat_addr->set_device_shape(input_storage_info->ori_shape);
     auto ret = LaunchTransData(input_address, input_storage_info, baseformat_addr, device_context, stream_ptr);
     if (!ret) {
@@ -486,8 +509,14 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
     const auto &device_shape =
       trans::TransShapeToDevice(input_storage_info->ori_shape, base_format, input_address->type_id());
     auto tensor_size = SizeOf(device_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
-    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, base_format,
-                                                                               input_address->type_id(), device_shape);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, tensor_size, base_format, input_address->type_id(), device_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(device_shape));
+
+    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     baseformat_addr->set_device_shape(device_shape);
     auto ret = IdentityFunc(input_address, input_storage_info, baseformat_addr, device_context, stream_ptr);
     if (!ret) {

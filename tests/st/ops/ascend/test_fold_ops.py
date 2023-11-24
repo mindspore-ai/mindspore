@@ -110,8 +110,6 @@ def test_fold_functional_api_with_invalid_output_size():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fold_tensor_functional_api_modes():
     """

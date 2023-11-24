@@ -58,7 +58,8 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)`
+            where :math:`*` is zero or more batch dimensions.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
             behavior. Default: ``None``.
 
@@ -292,14 +293,14 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         This function uses
         `svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ internally,
         (or `eigh <https://www.mindspore.cn/docs/en/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
-        when hermitian = True). So it has the same problem as these functions. For details,
+        when `hermitian = True` ). So it has the same problem as these functions. For details,
         see the warnings in svd() and eigh().
 
     Args:
         x (Tensor): A matrix to be calculated. Only `float32`, `float64` are supported Tensor dtypes.
             shape is :math:`(*, M, N)`, * is zero or more batch dimensions.
 
-            - When hermitian is true, batch dimensions are not supported temporarily.
+            - When `hermitian` is ``True``, batch dimensions are not supported temporarily.
 
     Keyword args:
         atol (float, Tensor): absolute tolerance value. Default: ``None`` .

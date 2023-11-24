@@ -29,17 +29,12 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kBitpack = 8;
-bool CompareAndBitpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CompareAndBitpackGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  kernel_ptr_ = std::make_shared<ops::CompareAndBitpack>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -54,12 +49,10 @@ bool CompareAndBitpackGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CompareAndBitpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+int CompareAndBitpackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_long_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -69,10 +62,6 @@ int CompareAndBitpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     x_count_ *= x_shape[i];
   }
   y_count_ = x_count_ / kBitpack;
-  size_t x_size = x_count_ * x_unit_size_;
-  input_size_list_.emplace_back(x_size);
-  size_t threshold_size = threshold_unit_size_;
-  input_size_list_.emplace_back(threshold_size);
   size_t output_size = y_count_ * sizeof(uint8_t);
   output_size_list_.emplace_back(output_size);
   size_t workspace_size = 0;
@@ -83,15 +72,14 @@ int CompareAndBitpackGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 void CompareAndBitpackGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
   x_count_ = 1;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T>
-bool CompareAndBitpackGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool CompareAndBitpackGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *threshold = GetDeviceAddress<T>(inputs, kIndex1);
   uint8_t *y = GetDeviceAddress<uint8_t>(outputs, kIndex0);

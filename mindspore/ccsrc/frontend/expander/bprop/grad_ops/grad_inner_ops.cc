@@ -19,6 +19,7 @@
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "ops/array_op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 
@@ -45,14 +46,45 @@ NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypeP
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
-REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DSDMatmul.NotReady").SetBody(BODYFUNC(ib) {
+  auto w1_gm = ib->GetInput(kIndex0);
+  auto w2_gm = ib->GetInput(kIndex1);
+  auto v_gm = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto tmp = ib->Emit("DSDGrad", {w1_gm, w2_gm, v_gm, out, dout});
+  auto d_w1_gm = ib->TupleGetItem(tmp, kIndex0);
+  auto d_w2_gm = ib->TupleGetItem(tmp, kIndex1);
+  auto d_v_gm = ib->TupleGetItem(tmp, kIndex2);
+  return {d_w1_gm, d_w2_gm, d_v_gm};
+});
+
+REG_BPROP_BUILDER("MatmulDDS.NotReady").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
+  auto q = ib->GetInput(kIndex0);
+  auto k = ib->GetInput(kIndex1);
+  auto local_mask = ib->GetInput(kIndex2);
+  auto global_mask = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto lc = ib->TupleGetItem(out, kIndex0);
+  auto gc = ib->TupleGetItem(out, kIndex1);
+  auto d_lc = ib->TupleGetItem(out, kIndex0);
+  auto d_gc = ib->TupleGetItem(out, kIndex1);
+  auto tmp = ib->Emit("MatmulDDSGrad", {q, k, lc, gc, d_lc, d_gc});
+  auto dq = ib->TupleGetItem(tmp, kIndex0);
+  auto dk = ib->TupleGetItem(tmp, kIndex1);
+  ShapeVector shape = {1, 0, 3, 2};
+  dk = ib->Transpose(dk, shape);
+  return {dq, dk, ib->OutZeros(local_mask), ib->OutZeros(global_mask)};
+});
+
+REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit(
-    "ResizeBilinearGrad", {dout, x},
-    {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->OutZeros(size)};
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("ResizeBilinearGrad", {dout, x, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -102,11 +134,29 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
   return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 
-REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
-  (void)std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
-  return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
+REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto shift = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto shift_value = shift->BuildValue();
+  MS_EXCEPTION_IF_NULL(shift_value);
+  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift->abstract());
+  if (!shift_array_opt.has_value()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  auto shift_array = shift_array_opt.value();
+  if (shift_array.HasUnknownValue()) {
+    MS_LOG(EXCEPTION)
+      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
+         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  }
+  std::vector<int64_t> shift_vec = shift_array.ToVector();
+  std::vector<int64_t> neg_shift(shift_vec.size());
+  (void)std::transform(shift_vec.begin(), shift_vec.end(), neg_shift.begin(),
+                       [](const int64_t &shift) { return shift * -1; });
+  return {ib->Emit("Roll", {dout, ib->Value(neg_shift), axis}), ib->OutZeros(shift), ib->OutZeros(axis)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dynamic_resize_nearest_neighbor)

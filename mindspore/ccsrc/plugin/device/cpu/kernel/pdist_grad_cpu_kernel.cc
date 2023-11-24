@@ -83,22 +83,15 @@ static inline T PdistNormalcompute(T diff, T grad, T dist, float p) {
   }
 }
 
-bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PdistGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "': cast PdistGrad ops failed!";
-    return false;
-  }
-  p_ = kernel_ptr->get_p();
+bool PdistGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
   if (inputs.size() != kPdistGradInputsNum || outputs.size() != kPdistGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kPdistGradInputsNum << " and "
                   << kPdistGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  auto x_dtype_ = inputs[1]->GetDtype();
+  auto x_dtype_ = inputs[1]->dtype_id();
   switch (x_dtype_) {
     case kNumberTypeFloat32:
       kernel_func_ = &PdistGradCpuKernelMod::LaunchKernel<float>;
@@ -113,10 +106,9 @@ bool PdistGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int PdistGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   const int THIRD_ELEMENT_INDEX = 2;
@@ -128,14 +120,14 @@ int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  T *grad = static_cast<T *>(inputs[0]->addr);
-  T *x = static_cast<T *>(inputs[1]->addr);
-  T *dist = static_cast<T *>(inputs[2]->addr);
-  T *y = static_cast<T *>(outputs[0]->addr);
-  auto output_addr = reinterpret_cast<char *>(outputs[0]->addr);
-  auto output_size = outputs[0]->size;
+bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  T *grad = static_cast<T *>(inputs[0]->device_ptr());
+  T *x = static_cast<T *>(inputs[1]->device_ptr());
+  T *dist = static_cast<T *>(inputs[2]->device_ptr());
+  T *y = static_cast<T *>(outputs[0]->device_ptr());
+  auto output_addr = reinterpret_cast<char *>(outputs[0]->device_ptr());
+  auto output_size = outputs[0]->size();
   while (output_size > 0) {
     auto copy_size = std::min(output_size, static_cast<size_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);

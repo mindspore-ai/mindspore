@@ -1,0 +1,6 @@
+asin_grad:
+    description: |
+        Computes AsinGrad of input element-wise.
+
+        Returns:
+            Tensor, has the same type as input.

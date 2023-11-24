@@ -15,6 +15,7 @@
  */
 
 #include "src/extendrt/kernel/ascend/model/acl_allocator.h"
+#include <utility>
 #include "src/common/log_adapter.h"
 #include "acl/acl.h"
 
@@ -113,22 +114,64 @@ void *AclAllocator::MallocHost(size_t size) {
     MS_LOG(WARNING) << "malloc host data size is zero.";
     return nullptr;
   }
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  auto itr = free_host_data_.lower_bound(size);
+  if (itr != free_host_data_.end()) {
+    auto membuf = itr->second;
+    (void)free_host_data_.erase(itr);
+    allocated_host_data_[membuf->buf] = membuf;
+    return membuf->buf;
+  }
   void *host_data = nullptr;
   auto acl_ret = aclrtMallocHost(&host_data, size);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMallocHost failed, err_code = " << acl_ret;
     return nullptr;
   }
-  MS_LOG(DEBUG) << "aclrtMallocHost data addr: " << host_data;
+  auto membuf = reinterpret_cast<MemBuf *>(malloc(sizeof(MemBuf)));
+  if (membuf == nullptr) {
+    MS_LOG(ERROR) << "malloc membuf failed.";
+    return nullptr;
+  }
+  membuf->size = size;
+  membuf->buf = host_data;
+  allocated_host_data_[host_data] = membuf;
   return host_data;
 }
 
 void AclAllocator::FreeHost(void *host_data) {
-  if (host_data != nullptr) {
-    MS_LOG(DEBUG) << "aclrtFreeHost data addr: " << host_data;
-    aclrtFreeHost(host_data);
-    host_data = nullptr;
+  if (host_data == nullptr) {
+    MS_LOG(WARNING) << "The data is nullptr.";
+    return;
   }
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  auto itr = allocated_host_data_.find(host_data);
+  if (itr != allocated_host_data_.end()) {
+    auto membuf = itr->second;
+    (void)allocated_host_data_.erase(itr);
+    (void)free_host_data_.insert(std::make_pair(membuf->size, membuf));
+    return;
+  }
+  aclrtFreeHost(host_data);
+  host_data = nullptr;
+}
+
+AclAllocator::~AclAllocator() {
+  std::unique_lock<std::mutex> l(acl_allocator_mutex_);
+  for (auto &pair : allocated_host_data_) {
+    if (pair.second != nullptr) {
+      aclrtFreeHost(pair.second->buf);
+      free(pair.second);
+    }
+  }
+  allocated_host_data_.clear();
+  for (auto &pair : free_host_data_) {
+    if (pair.second != nullptr) {
+      aclrtFreeHost(pair.second->buf);
+      free(pair.second);
+    }
+  }
+  free_host_data_.clear();
 }
 
 Status AclAllocator::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size, int device_id) {
@@ -242,6 +285,5 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
   }
   return kSuccess;
 }
-
 }  // namespace acl
 }  // namespace mindspore::kernel

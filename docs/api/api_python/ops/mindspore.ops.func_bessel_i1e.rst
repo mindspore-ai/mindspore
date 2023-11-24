@@ -3,7 +3,7 @@ mindspore.ops.bessel_i1e
 
 .. py:function:: mindspore.ops.bessel_i1e(x)
 
-    逐元素计算指数缩放第一类一阶修正贝塞尔函数。
+    逐元素计算指数缩放第一类一阶修正Bessel函数。
 
     计算公式定义如下：
 

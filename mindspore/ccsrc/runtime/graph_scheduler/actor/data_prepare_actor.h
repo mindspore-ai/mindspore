@@ -94,6 +94,10 @@ class DataPrepareActor : public DebugAwareActor {
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
   void PrepareDataForStringValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
                                  const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
+  // Sync host data of Sequence or Scalar type value to device side.
+  void PrepareDataForSequenceAndScalarValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
+                                            const DeviceContext *device_context,
+                                            OpContext<DeviceTensor> *const context) const;
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;

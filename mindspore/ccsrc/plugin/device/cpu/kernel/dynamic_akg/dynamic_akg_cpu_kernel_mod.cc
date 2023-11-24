@@ -130,18 +130,16 @@ DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack)
   }
 }
 
-bool DynamicAkgCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */,
-                                  const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool DynamicAkgCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
   return true;
 }
 
-int DynamicAkgCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicAkgCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Start resize for DynamicAkgCpuKernelMod.";
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
 
   ndims_.clear();
   shape_list_.clear();
@@ -160,8 +158,8 @@ int DynamicAkgCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   return ret;
 }
 
-bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs, void *) {
+bool DynamicAkgCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &outputs, void *) {
   if (launch_func_ == nullptr) {
     MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;
@@ -170,9 +168,9 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) { return input->addr; });
+                       [](const KernelTensor *input) { return input->device_ptr(); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) { return output->addr; });
+                       [](const KernelTensor *output) { return output->device_ptr(); });
 
   if (is_dynamic_) {
     MS_LOG(INFO) << "The kernel mod deals with dynamic shape inputs.";

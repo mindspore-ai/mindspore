@@ -19,12 +19,12 @@
 #include <functional>
 #include <unordered_map>
 #include "kernel/ops_utils.h"
-#include "ops/grad/resize_linear_1d_grad.h"
+#include "ops/ops_func_impl/resize_linear_1d_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1DGrad = "ResizeLinear1DGrad";
-constexpr const size_t kResizeLinear1DGradInputsNum = 2;
+constexpr const size_t kResizeLinear1DGradInputsNum = 3;
 constexpr const size_t kResizeLinear1DGradOutputsNum = 1;
 
 template <typename T>
@@ -47,9 +47,9 @@ void ResizeLinear1DGradCpuKernelMod::ComputeInterpolationCaches(const size_t out
 }
 
 template <typename T>
-bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   auto grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
   auto grad_input = GetDeviceAddress<T>(outputs, kIndex0);
@@ -61,11 +61,11 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
         grad_input[i] = grad_output[i];
       }
     };
-    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_, pool_);
+    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size() / sizeof(T), this, &parallel_search_info_, pool_);
     return true;
   }
 
-  if (memset_s(grad_input, outputs[kIndex0]->size, 0, outputs[kIndex0]->size) != EOK) {
+  if (memset_s(grad_input, outputs[kIndex0]->size(), 0, outputs[kIndex0]->size()) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
@@ -96,8 +96,12 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)                            \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)         \
+  KernelAttr()                                         \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(MS_T),                              \
     &ResizeLinear1DGradCpuKernelMod::LaunchKernel<T>
 
 const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>>
@@ -112,46 +116,31 @@ const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRu
 template <typename T>
 ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
-  CoordinateTransformationMode coordinate_transformation_mode) {
-  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}};
+  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode) {
+  const std::unordered_map<MsPyEnum::CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
+    {MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS, AlignCornersFunc<T>()},
+    {MsPyEnum::CoordinateTransformationMode::HALF_PIXEL, HalfPixelFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
-bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+bool ResizeLinear1DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeLinear1DGradInputsNum || outputs.size() != kResizeLinear1DGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DGradInputsNum
                   << " and " << kResizeLinear1DGradOutputsNum << ", but got " << inputs.size() << " and "
                   << outputs.size();
     return false;
   }
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
-  if (coordinate_transformation_mode == "align_corners") {
-    coordinate_transformation_mode_ = ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode == "half_pixel") {
-    coordinate_transformation_mode_ = HALF_PIXEL;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
-                  << " not support now.";
-    return false;
-  }
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
-  type_ = inputs[kIndex0]->GetDtype();
+  type_ = inputs[kIndex0]->dtype_id();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-void ResizeLinear1DGradCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void ResizeLinear1DGradCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensor *> &inputs) {
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
   workspace_size_list_.push_back(sizeof(size_t) * output_width_);
   if (type_ == kNumberTypeFloat32) {
@@ -161,12 +150,10 @@ void ResizeLinear1DGradCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTe
   }
 }
 
-int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeLinear1DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> grad_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -175,6 +162,13 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   batch_ = LongToSize(shape_[kIndex0]);
   channel_ = LongToSize(shape_[kIndex1]);
   input_width_ = LongToSize(shape_[kIndex2]);
+
+  coordinate_transformation_mode_ =
+    static_cast<MsPyEnum::CoordinateTransformationMode>(inputs.at(kIndex2)->GetValueWithCheck<int64_t>());
+  if (coordinate_transformation_mode_ != MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS &&
+      coordinate_transformation_mode_ != MsPyEnum::CoordinateTransformationMode::HALF_PIXEL) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";
+  }
   SetWorkSpaceSize(inputs);
   return KRET_OK;
 }

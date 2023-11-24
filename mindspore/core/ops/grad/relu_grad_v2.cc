@@ -49,10 +49,10 @@ class ReluGradV2Infer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto gradient_shape_ptr = input_args[kGradientIndex]->BuildShape();
+    auto gradient_shape_ptr = input_args[kGradientIndex]->GetShape();
     auto gradient_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(gradient_shape_ptr);
     auto gradient_input_shape = gradient_shape_map[kShape];
-    auto mask_shape_ptr = input_args[kMaskIndex]->BuildShape();
+    auto mask_shape_ptr = input_args[kMaskIndex]->GetShape();
     auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mask_shape_ptr);
     auto mask_input_shape = mask_shape_map[kShape];
     if (IsDynamicRank(gradient_input_shape) || IsDynamicRank(mask_input_shape)) {
@@ -84,7 +84,7 @@ class ReluGradV2Infer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     MS_EXCEPTION_IF_NULL(input_args[kGradientIndex]);
-    auto gradient_type = input_args[kGradientIndex]->BuildType();
+    auto gradient_type = input_args[kGradientIndex]->GetType();
     MS_EXCEPTION_IF_NULL(gradient_type);
     if (!gradient_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "

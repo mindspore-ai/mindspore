@@ -1,0 +1,42 @@
+addcmul:
+    description: |
+        Performs the element-wise product of tensor tensor1 and tensor tensor2,
+        multiply the result by the scalar value and add it to input_data.
+
+        .. math::
+            output[i] = input[i] + value[i] * (tensor1[i] * tensor2[i])
+
+        Args:
+            input (Tensor): The tensor to be added.
+            tensor1 (Tensor): The tensor to be multiplied.
+            tensor2 (Tensor): The tensor to be multiplied.
+            value (Tensor): The multiplier for tensor1*tensor2.
+
+        Returns:
+            Tensor, has the same shape and dtype as x1*x2.
+
+        Raises:
+            TypeError: If dtype of `tensor1`, `tensor2`, `input` is not Tensor.
+            TypeError: If dtype of `input` is not one of: float32, float16, int32.
+            TypeError: If dtype of `tensor1` or `tensor2` is not one of: float32, float16, int32.
+            TypeError: If dtype of `value` is not one of: float32, float16, int32.
+            ValueError: If `tensor1` could not be broadcast to a tensor with shape of `tensor2`.
+            ValueError: If `value` could not be broadcast to tensors with shapes of `tensor1` * `tensor2`.
+            ValueError: If `input` could not be broadcast to tensors with shapes of `value*(tensor1*tensor2)`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
+            >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+            >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
+            >>> value = Tensor([1], mindspore.float32)
+            >>> y = ops.addcmul_(input_data, x1, x2, value)
+            >>> print(y)
+            [[ 2.  3.  4.]
+            [ 3.  5.  7.]
+            [ 4.  7. 10.]]

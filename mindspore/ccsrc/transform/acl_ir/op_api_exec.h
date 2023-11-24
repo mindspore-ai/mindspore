@@ -25,6 +25,7 @@
 #include "acl/acl_base.h"
 #include "acl/acl.h"
 #include "transform/acl_ir/op_api_convert.h"
+#include "transform/acl_ir/op_api_cache.h"
 #include "transform/acl_ir/acl_allocator.h"
 
 namespace mindspore {
@@ -33,6 +34,7 @@ using InitHugeMemThreadLocal = std::function<int(void *, bool)>;
 using UnInitHugeMemThreadLocal = std::function<void(void *, bool)>;
 using ReleaseHugeMem = std::function<void(void *, bool)>;
 using ReleaseCallBack = std::function<void()>;
+using RunApiFunc = int (*)(void *, uint64_t, transform::aclOpExecutor *, const aclrtStream);
 
 class OpApiDefaultResource {
  public:
@@ -42,19 +44,13 @@ class OpApiDefaultResource {
   UnInitHugeMemThreadLocal uninit_mem_func();
   ReleaseHugeMem release_mem_func();
 
-  void *AllocWorkspace(size_t size) { return allocator.AllocFunc(&allocator, size); }
-
-  void FreeWorkspace(void *block) { allocator.FreeFunc(&allocator, block); }
-
  private:
-  OpApiDefaultResource() { allocator.Initialize(); }
-  ~OpApiDefaultResource() { allocator.Finalize(); }
+  OpApiDefaultResource() = default;
+  ~OpApiDefaultResource() = default;
 
   InitHugeMemThreadLocal init_mem_func_{nullptr};
   UnInitHugeMemThreadLocal uninit_mem_func_{nullptr};
   ReleaseHugeMem release_mem_func_{nullptr};
-
-  AclAllocator allocator;
 };
 
 template <typename Tuple>
@@ -111,152 +107,126 @@ auto call(Function f, Tuple t) {
   return call(f, t, std::make_index_sequence<size>{});
 }
 
-template <typename Tuple, size_t... I>
-auto PackageParams(Tuple t, std::index_sequence<I...>) {
-  return std::make_tuple(std::get<I>(t)...);
-}
-
-template <size_t N, typename Tuple>
-auto PackageParams(Tuple t) {
-  return PackageParams(t, std::make_index_sequence<N>{});
-}
-
-// Get Workspace size and op executor.
-template <typename... Args>
-auto GenerateExecutor(const std::string &aclnn_api, const Args &... args) {
-  auto workspace_func_name = aclnn_api + "GetWorkspaceSize";
-  static const auto get_workspace_size_func_ptr = GetOpApiFunc(workspace_func_name.c_str());
-  if (get_workspace_size_func_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << aclnn_api << " get_workspace_size func not in " << GetOpApiLibName() << ", please check!";
-  }
-  uint64_t workspace_size = 0;
-  uint64_t *workspace_size_addr = &workspace_size;
-  aclOpExecutor *executor = nullptr;
-  aclOpExecutor **executor_addr = &executor;
-  auto init_mem_func = OpApiDefaultResource::GetInstance().init_mem_func();
-  if (init_mem_func) {
-    init_mem_func(nullptr, false);
-  }
-  auto converted_params = ConvertTypes(args..., workspace_size_addr, executor_addr);
-  static auto get_workspace_size_func = ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);
-  auto workspace_status = call(get_workspace_size_func, converted_params);
-  if (workspace_status != 0) {
-    MS_LOG(EXCEPTION) << "Call " << aclnn_api << " get_workspace_size func failed, please check error!";
-  }
-  constexpr auto size = std::tuple_size<decltype(converted_params)>::value - 2;
-  return std::make_tuple(PackageParams<size>(converted_params), workspace_size, executor);
-}
-
-void RunOpApi(const std::string &aclnn_api, const aclrtStream acl_stream, void *workspace_addr, uint64_t workspace_size,
-              aclOpExecutor *executor, const ReleaseCallBack &release_func);
-
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
 
-#define GEN_EXECUTOR(aclnn_api, ...)                                                                    \
-  [](const std::string &api_name, const auto &... args) -> auto {                                       \
-    auto [converted_params, workspace_size, executor] = transform::GenerateExecutor(api_name, args...); \
-    auto release_func = [converted_params]() -> void {                                                  \
-      ReleaseConvertTypes(converted_params);                                                            \
-      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();        \
-      if (release_mem_func) {                                                                           \
-        release_mem_func(nullptr, false);                                                               \
-      }                                                                                                 \
-      auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();          \
-      if (uninit_mem_func) {                                                                            \
-        uninit_mem_func(nullptr, false);                                                                \
-      }                                                                                                 \
-    };                                                                                                  \
-    return std::make_tuple(workspace_size, executor, release_func);                                     \
-  }                                                                                                     \
-  (#aclnn_api, __VA_ARGS__)
+template <typename T>
+class ReleaseCall {
+ public:
+  explicit ReleaseCall(T &&param) : converted_params_(param) {}
+  void operator()() {
+    ReleaseConvertTypes(converted_params_);
+    auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();
+    if (release_mem_func) {
+      release_mem_func(nullptr, false);
+    }
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();
+    if (uninit_mem_func) {
+      uninit_mem_func(nullptr, false);
+    }
+  }
 
-#define GEN_EXECUTOR_CUSTOM(aclnn_api, ...)                                                        \
-  [](const std::string &api_name, const auto &... args) -> auto {                                  \
-    auto converted_params = transform::GenerateExecutor(api_name, args...);                        \
-    auto real_params = std::get<0>(converted_params);                                              \
-    return std::make_tuple(std::get<1>(converted_params), std::get<2>(converted_params),           \
-                           transform::OpApiParams<decltype(real_params)>(std::move(real_params))); \
-  }                                                                                                \
-  (#aclnn_api, __VA_ARGS__)
+ private:
+  T converted_params_;
+};
+
+// For normal generate executor.
+#define GEN_EXECUTOR(aclnn_api, ...)                                                                              \
+  [](const char *api_name, const std::string &workspace_api_name, const auto &... args) -> auto {                 \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
+    if (get_workspace_size_func_ptr == nullptr) {                                                                 \
+      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                             \
+    uint64_t workspace_size = 0;                                                                                  \
+    transform::aclOpExecutor *executor = nullptr;                                                                 \
+    std::function<void()> release_func = nullptr;                                                                 \
+    uint64_t *workspace_size_addr = &workspace_size;                                                              \
+    transform::aclOpExecutor **executor_addr = &executor;                                                         \
+    if (HitCache(api_name, executor_addr, workspace_size_addr, args...)) {                                        \
+      return std::make_tuple(workspace_size, executor, release_func);                                             \
+    }                                                                                                             \
+    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
+    if (init_mem_func) {                                                                                          \
+      init_mem_func(nullptr, false);                                                                              \
+    }                                                                                                             \
+    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                 \
+    static auto get_workspace_size_func =                                                                         \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                               \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                           \
+    if (workspace_status != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
+    }                                                                                                             \
+    auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
+    release_func = std::function<void()>(releas_call);                                                            \
+    return std::make_tuple(workspace_size, executor, release_func);                                               \
+  }                                                                                                               \
+  (aclnn_api.c_str(), aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
+
+// For custom generate executor.
+#define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                         \
+  [](const std::string &workspace_api_name, auto &... args) -> auto {                                             \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
+    if (get_workspace_size_func_ptr == nullptr) {                                                                 \
+      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                             \
+    static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");               \
+    static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");                                    \
+    transform::InitCacheThreadLocal init_cache_thread_local_func =                                                \
+      reinterpret_cast<transform::InitCacheThreadLocal>(init_cache_thread_local);                                 \
+    transform::SetHashKey set_hash_key_func = reinterpret_cast<transform::SetHashKey>(set_hash_key);              \
+    if (init_cache_thread_local_func && set_hash_key_func) {                                                      \
+      init_cache_thread_local_func();                                                                             \
+      set_hash_key_func(0);                                                                                       \
+    }                                                                                                             \
+    uint64_t workspace_size = 0;                                                                                  \
+    uint64_t *workspace_size_addr = &workspace_size;                                                              \
+    transform::aclOpExecutor *executor = nullptr;                                                                 \
+    transform::aclOpExecutor **executor_addr = &executor;                                                         \
+    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                 \
+    static auto get_workspace_size_func =                                                                         \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                               \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                           \
+    if (workspace_status != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
+    }                                                                                                             \
+    return std::make_tuple(workspace_size, executor,                                                              \
+                           transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)));      \
+  }                                                                                                               \
+  (aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // Async run op.
-#define RUN_OP_API(aclnn_api, acl_stream, ...)                \
-  do {                                                        \
-    transform::RunOpApi(#aclnn_api, acl_stream, __VA_ARGS__); \
+#define RUN_OP_API_ASYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream, release_func)  \
+  do {                                                                                                   \
+    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                          \
+    if (op_api_func == nullptr) {                                                                        \
+      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                    \
+    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                            \
+    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                   \
+    if (api_ret != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << aclGetRecentErrMsg();           \
+    }                                                                                                    \
+    if (release_func != nullptr) {                                                                       \
+      release_func();                                                                                    \
+    }                                                                                                    \
   } while (false)
 
 // Sync run op.
-#define RUN_OP_API_SYNC(aclnn_api, acl_stream, ...)                                              \
-  do {                                                                                           \
-    transform::RunOpApi(#aclnn_api, acl_stream, __VA_ARGS__, nullptr);                           \
-    auto ret = aclrtSynchronizeStream(acl_stream);                                               \
-    if (ret != 0) {                                                                              \
-      MS_LOG(EXCEPTION) << "Sync stream " #aclnn_api " failed, detail:" << aclGetRecentErrMsg(); \
-    }                                                                                            \
-    auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();   \
-    if (release_mem_func) {                                                                      \
-      release_mem_func(nullptr, false);                                                          \
-    }                                                                                            \
-    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();     \
-    if (uninit_mem_func) {                                                                       \
-      uninit_mem_func(nullptr, false);                                                           \
-    }                                                                                            \
-  } while (false)
-
-// Async execute simple micro.
-#define EXEC_NPU_CMD(aclnn_api, acl_stream, ...)                                                            \
-  do {                                                                                                      \
-    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(#aclnn_api "GetWorkspaceSize"); \
-    if (get_workspace_size_func_ptr == nullptr) {                                                           \
-      MS_LOG(EXCEPTION) << #aclnn_api "GetWorkspaceSize"                                                    \
-                        << " not in " << transform::GetOpApiLibName() << ", please check!";                 \
-    }                                                                                                       \
-    static const auto op_api_func = transform::GetOpApiFunc(#aclnn_api);                                    \
-    if (op_api_func == nullptr) {                                                                           \
-      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
-    }                                                                                                       \
-    uint64_t workspace_size = 0;                                                                            \
-    uint64_t *workspace_size_addr = &workspace_size;                                                        \
-    transform::aclOpExecutor *executor = nullptr;                                                           \
-    transform::aclOpExecutor **executor_addr = &executor;                                                   \
-    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                    \
-    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();                \
-    if (init_mem_func) {                                                                                    \
-      init_mem_func(nullptr, false);                                                                        \
-    }                                                                                                       \
-    auto converted_params = transform::ConvertTypes(__VA_ARGS__, workspace_size_addr, executor_addr);       \
-    static auto get_workspace_size_func =                                                                   \
-      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                         \
-    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                     \
-    if (workspace_status != 0) {                                                                            \
-      MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
-    }                                                                                                       \
-    void *workspace_addr = nullptr;                                                                         \
-    if (workspace_size != 0) {                                                                              \
-      workspace_addr = transform::OpApiDefaultResource::GetInstance().AllocWorkspace(workspace_size);       \
-    }                                                                                                       \
-    auto acl_call = [&converted_params, workspace_addr, &workspace_size, acl_stream, executor]() -> int {   \
-      using RunApiFunc = int (*)(void *, uint64_t, transform::aclOpExecutor *, const aclrtStream);          \
-      auto run_api_func = reinterpret_cast<RunApiFunc>(op_api_func);                                        \
-      auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                    \
-      if (api_ret != 0) {                                                                                   \
-        MS_LOG(EXCEPTION) << "call " #aclnn_api " failed, detail:" << aclGetRecentErrMsg();                 \
-      }                                                                                                     \
-      transform::ReleaseConvertTypes(converted_params);                                                     \
-      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();            \
-      if (release_mem_func) {                                                                               \
-        release_mem_func(nullptr, false);                                                                   \
-      }                                                                                                     \
-      return api_ret;                                                                                       \
-    };                                                                                                      \
-    auto call_ret = acl_call();                                                                             \
-    if (call_ret != 0) {                                                                                    \
-      MS_LOG(EXCEPTION) << #aclnn_api << " exec failed!" << aclGetRecentErrMsg();                           \
-    }                                                                                                       \
-    if (uninit_mem_func) {                                                                                  \
-      uninit_mem_func(nullptr, false);                                                                      \
-    }                                                                                                       \
+#define RUN_OP_API_SYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream)                 \
+  do {                                                                                                   \
+    static const auto op_api_func = transform::GetOpApiFunc(aclnn_api.c_str());                          \
+    if (op_api_func == nullptr) {                                                                        \
+      MS_LOG(EXCEPTION) << aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                    \
+    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                            \
+    auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                   \
+    if (api_ret != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << "Call " << aclnn_api << " failed, detail:" << aclGetRecentErrMsg();           \
+    }                                                                                                    \
+    auto ret = aclrtSynchronizeStream(acl_stream);                                                       \
+    if (ret != 0) {                                                                                      \
+      MS_LOG(EXCEPTION) << "Sync stream " << aclnn_api << " failed, detail:" << aclGetRecentErrMsg();    \
+    }                                                                                                    \
   } while (false)
 }  // namespace transform
 }  // namespace mindspore

@@ -34,28 +34,26 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   constexpr size_t y_index = 1;
   auto x_abs = input_args[x_index];
   auto y_abs = input_args[y_index];
-  if ((!x_abs->isa<abstract::AbstractSequence>()) || (!y_abs->isa<abstract::AbstractSequence>())) {
+  if (!CheckAndConvertUtils::IsSequence(x_abs) || !CheckAndConvertUtils::IsSequence(y_abs)) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }
-  auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
-  auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
-  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->BuildValue() == kValueAny ||
-      seqy_abs->BuildValue() == kValueAny) {
+  if (CheckAndConvertUtils::IsDynamicSequence(x_abs) || CheckAndConvertUtils::IsDynamicSequence(y_abs) ||
+      x_abs->GetValue()->ContainsValueAny() || y_abs->GetValue()->ContainsValueAny()) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
-  return std::make_shared<abstract::AbstractScalar>(*seqx_abs->BuildValue() == *seqy_abs->BuildValue());
+  return std::make_shared<abstract::AbstractScalar>(*x_abs->GetValue() == *y_abs->GetValue());
 }
 
 class SequenceEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceEqualInferInner(primitive, input_args)->BuildShape();
+    return SequenceEqualInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceEqualInferInner(prim, input_args)->BuildType();
+    return SequenceEqualInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

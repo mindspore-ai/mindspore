@@ -39,11 +39,8 @@ std::vector<KernelAttr> SoftmaxGradFusionCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SoftmaxGradFusionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SoftmaxGradFusionCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxGradFusionInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxGradFusionOutputsNum, kernel_name_);
 
@@ -71,12 +68,12 @@ bool SoftmaxGradFusionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SoftmaxGradFusionCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 [[maybe_unused]] const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *x0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *x1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[0]->addr);
+bool SoftmaxGradFusionCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 [[maybe_unused]] const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *x0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto *x1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *y = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto task = [this, &x0, &x1, &y](size_t a, size_t b) {
     for (auto tid = a; tid < b; tid++) {

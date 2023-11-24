@@ -33,25 +33,18 @@ constexpr size_t kHeightIndex = 2;
 constexpr size_t kWidthIndex = 3;
 }  // namespace
 
-bool PSROIPoolingV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PSROIPoolingV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG_ERROR << "Can not match kernel based on given attr!";
     return false;
   }
-
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
-    return false;
-  }
   return true;
 }
 
-int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) {
+int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor *> &inputs) {
   input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() != INPUT_SHAPE_SIZE) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[features] should be " << INPUT_SHAPE_SIZE
@@ -74,10 +67,8 @@ int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor
   return KRET_OK;
 }
 
-int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int PSROIPoolingV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto ret = ResizeCheckInputs(inputs);
@@ -93,7 +84,7 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_RESIZE_FAILED;
   }
 
-  data_type_id_ = inputs[0]->GetDtype();
+  data_type_id_ = inputs[0]->dtype_id();
 
   auto input_size = inputs[0]->GetShapeVector();
   feature_channels_ = static_cast<int32_t>(input_size[kInputChannelsIndex]);
@@ -105,19 +96,13 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PSROIPooling>(base_operator);
-  auto spatial_scale_ptr = kernel_ptr->GetAttr("spatial_scale");
-  MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
-  spatial_scale_ = GetValue<float>(spatial_scale_ptr);
+  spatial_scale_ = GetValue<float>(primitive_->GetAttr("spatial_scale"));
 
-  auto group_size_ptr = kernel_ptr->GetAttr("group_size");
-  MS_EXCEPTION_IF_NULL(group_size_ptr);
-  pooled_height_ = LongToInt(GetValue<int64_t>(group_size_ptr));
-  pooled_width_ = LongToInt(GetValue<int64_t>(group_size_ptr));
-  group_size_ = LongToInt(GetValue<int64_t>(group_size_ptr));
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
+  group_size_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
 
-  auto output_dim_ptr = kernel_ptr->GetAttr("output_dim");
-  output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
+  output_channels_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("output_dim")));
 
   for (auto tensor_ptr : inputs) {
     if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_SHAPE;
@@ -135,29 +120,26 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 
-  for (auto tensor_ptr : inputs) {
-    input_size_list_.push_back(tensor_ptr->GetSizeInBytes());
-  }
-
-  for (auto tensor_ptr : outputs) {
-    output_size_list_.push_back(tensor_ptr->GetSizeInBytes());
-  }
+  auto output_type = outputs[kIndex0]->dtype_id();
+  auto output_ele_size = GetTypeByte(TypeIdToType(output_type));
+  auto output_ele = batch_size_ * group_size_ * group_size_ * output_channels_;
+  output_size_list_.push_back(static_cast<size_t>(output_ele) * output_ele_size);
 
   return KRET_OK;
 }
 
 template <typename T>
-bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  T *input_data = GetDeviceAddress<T>(inputs, kIndex0);
+bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto input_data = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
-  T *rois = GetDeviceAddress<T>(inputs, kIndex1);
+  auto rois = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   MS_EXCEPTION_IF_NULL(rois);
-  T *output_data = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(rois);
+  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
 
   auto status = PSROIPoolForwardV2Launcher(input_data, static_cast<T>(spatial_scale_), output_n_, height_, width_,
@@ -167,8 +149,9 @@ bool PSROIPoolingV2GpuKernelMod::PSROIPoolingLauncher(const std::vector<AddressP
   return true;
 }
 
-bool PSROIPoolingV2GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PSROIPoolingV2GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (data_type_id_ == kNumberTypeFloat64) {
     return PSROIPoolingLauncher<double>(inputs, outputs, stream_ptr);
   }

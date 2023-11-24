@@ -36,7 +36,7 @@ void PowFusion::set_shift(const float &shift) { (void)this->AddAttr(kShift, api:
 float PowFusion::get_scale() const { return GetValue<float>(GetAttr(kScale)); }
 float PowFusion::get_shift() const { return GetValue<float>(GetAttr(kShift)); }
 
-MIND_API_OPERATOR_IMPL(PowFusion, Pow);
+MIND_API_OPERATOR_IMPL(PowFusion, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePowFusion, PowFusion);
 }  // namespace ops
 }  // namespace mindspore

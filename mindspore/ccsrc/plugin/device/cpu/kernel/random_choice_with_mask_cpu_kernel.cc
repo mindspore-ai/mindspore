@@ -18,6 +18,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/random_choice_with_mask.h"
 #include "kernel/philox_random.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -82,32 +83,25 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
   }
 }
 
-bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool RandomChoiceWithMaskCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 2;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
-  auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
-  count_ = random_choice_with_mask_ptr->get_count();
+  count_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("count")));
   return true;
 }
 
-int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandomChoiceWithMaskCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
@@ -135,28 +129,21 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return KRET_OK;
 }
 
-bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_dim = GetDeviceAddress<int>(workspace, kIndex0);
-  auto *tmp_output = GetDeviceAddress<int>(workspace, kIndex1);
-  auto *mask_dim = GetDeviceAddress<int>(workspace, kIndex2);
-  auto *output = GetDeviceAddress<int>(workspace, kIndex3);
-
-  auto *input_ptr = GetDeviceAddress<bool>(inputs, kIndex0);
-  auto *output_coordinate_ptr = GetDeviceAddress<int32_t>(outputs, kIndex0);
-  auto *output_ptr = GetDeviceAddress<bool>(outputs, kIndex1);
+bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *input_dim = reinterpret_cast<int *>(workspace[0]->device_ptr());
+  auto *tmp_output = reinterpret_cast<int *>(workspace[1]->device_ptr());
+  auto *mask_dim = reinterpret_cast<int *>(workspace[2]->device_ptr());
+  auto *output = reinterpret_cast<int *>(workspace[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_dim);
   MS_EXCEPTION_IF_NULL(tmp_output);
   MS_EXCEPTION_IF_NULL(mask_dim);
   MS_EXCEPTION_IF_NULL(output);
-  MS_EXCEPTION_IF_NULL(input_ptr);
-  MS_EXCEPTION_IF_NULL(output_coordinate_ptr);
-  MS_EXCEPTION_IF_NULL(output_ptr);
   for (size_t b = 0; b < batch_size_; b++) {
-    auto *input = input_ptr + b * input_total_count_;
-    auto *output_coordinate = output_coordinate_ptr + b * count_ * input_dim_size_;
-    auto *mask = output_ptr + b * count_;
+    auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr()) + b * input_total_count_;
+    auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->device_ptr()) + b * count_ * input_dim_size_;
+    auto *mask = reinterpret_cast<bool *>(outputs[1]->device_ptr()) + b * count_;
 
     int32_t non_zero_num = 0;
     for (int32_t i = 0; i < input_total_count_; i++) {
@@ -212,7 +199,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     }
 
     size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
-    auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
+    auto ret = memcpy_s(output_coordinate, outputs[0]->size(), output, copy_output_bytes);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
     }

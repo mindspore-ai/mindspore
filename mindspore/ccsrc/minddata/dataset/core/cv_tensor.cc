@@ -61,7 +61,7 @@ Status CVTensor::CreateFromMat(const cv::Mat &mat, const dsize_t rank, CVTensorP
   return Status::OK();
 }
 
-std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &shape, const DataType &type) {
+std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(uchar *data, const TensorShape &shape, const DataType &type) {
   constexpr int64_t array_size = 2;
   constexpr int64_t rank_two = 2;
   constexpr int64_t rank_three = 3;
@@ -82,6 +82,11 @@ std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &sha
       return std::make_pair(size, -1);
     }
     int cv_type = CV_MAKETYPE(type.AsCVType(), ch);
+    // update the n which in matrx(m*n) for bytes type
+    if (type == DataType::DE_BYTES) {
+      offset_t *offset = reinterpret_cast<offset_t *>(data);
+      size[1] = *(offset + 1) - *offset - 1;
+    }
     return std::make_pair(size, cv_type);
   }
   return std::make_pair(size, -1);
@@ -104,7 +109,7 @@ Status CVTensor::MatInit(uchar *data, const TensorShape &shape, const DataType &
   RETURN_UNEXPECTED_IF_NULL(data);
   RETURN_UNEXPECTED_IF_NULL(mat);
   const int kShapeAsDefault = 2;
-  std::pair<std::array<int, kShapeAsDefault>, int> cv_shape_type = IsValidImage(shape, type);
+  std::pair<std::array<int, kShapeAsDefault>, int> cv_shape_type = IsValidImage(data, shape, type);
   if (cv_shape_type.second == -1) {
     std::vector<dsize_t> sizes = shape.AsVector();
     std::vector<int> sizes32(sizes.begin(), sizes.end());  // convert long to int for usage with OpenCV
@@ -115,7 +120,14 @@ Status CVTensor::MatInit(uchar *data, const TensorShape &shape, const DataType &
     }
     *mat = cv::Mat(static_cast<int>(shape.Rank()), &sizes32[0], cv_type, data);
   } else {
-    *mat = cv::Mat(kShapeAsDefault, &(cv_shape_type.first[0]), cv_shape_type.second, data);
+    if (type == DataType::DE_BYTES) {
+      *mat = cv::Mat(kShapeAsDefault, &(cv_shape_type.first[0]), cv_shape_type.second, data + kOffsetSize * 2);
+    } else {
+      *mat = cv::Mat(kShapeAsDefault, &(cv_shape_type.first[0]), cv_shape_type.second, data);
+    }
+  }
+  if (mat == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Error in creating CV mat from dataset Tensor.");
   }
   return Status::OK();
 }

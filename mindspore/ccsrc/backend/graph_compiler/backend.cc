@@ -295,7 +295,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   }
 
   VectorRef outputs;
-  // Call ms RunGraphAsync or RunOpsInGraph (graphId, input ,output)
+  // Call ms RunGraphAsync
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
   MS_EXCEPTION_IF_NULL(exe_session);
 
@@ -310,10 +310,9 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
-    exe_session->RunOpsInGraph(g, inputs, &outputs);
-  } else {
-    exe_session->RunGraphAsync(g, inputs, &outputs);
+    MS_LOG(EXCEPTION) << "Pynative can't call this function anymore!";
   }
+  exe_session->RunGraphAsync(g, inputs, &outputs);
 
   MS_LOG(DEBUG) << "RunGraph finished:" << outputs.size();
   return outputs;
@@ -374,8 +373,7 @@ namespace {
 ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &parent_node,
                             const AnfNodePtr &input_node, const std::map<KernelWithIndex, TensorPtr> &op_output,
                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
-                            size_t input_index) {
+                            const std::vector<TensorPtr> &graph_inputs, InputInfo *input_info, size_t input_index) {
   if (!IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
     auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
     MS_EXCEPTION_IF_NULL(real_input);
@@ -385,7 +383,7 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
         value = TensorListToSparseTensor(real_input->abstract(), graph_inputs);
       } else {
         value = graph_compiler->GetSingleOpInputTensorByIndex(parent_node, op_output, parameter_index, graph_inputs,
-                                                              input_tensor_info, input_index);
+                                                              input_info, input_index);
       }
       MS_EXCEPTION_IF_NULL(value);
     } else {
@@ -402,8 +400,8 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
   std::vector<ValuePtr> args_tuple;
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto input = cnode->inputs()[i];
-    auto value = GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs,
-                                    input_tensor_info, i - 1);
+    auto value =
+      GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs, input_info, i - 1);
     MS_EXCEPTION_IF_NULL(value);
     (void)args_tuple.emplace_back(value);
   }
@@ -431,8 +429,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
                        const CNodePtr &front_cnode, const CNodePtr &backend_cnode,
                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
-                       const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
-                       VectorRef *args) {
+                       const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info, VectorRef *args) {
   MS_EXCEPTION_IF_NULL(front_cnode);
   MS_EXCEPTION_IF_NULL(backend_cnode);
   MS_EXCEPTION_IF_NULL(graph_compiler);
@@ -452,7 +449,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
       value = GetFrontArgByParameter(origin_paramters, front_args, front_input_node);
     } else {
       value = GetInputofBpropCut(graph_compiler, backend_cnode, input_node, op_output_map, parameter_index,
-                                 graph_inputs, input_tensor_info, index - 1);
+                                 graph_inputs, input_info, index - 1);
     }
     MS_EXCEPTION_IF_NULL(value);
     (void)args->emplace_back(value);
@@ -499,7 +496,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
                         const KernelGraphPtr &graph, const CNodePtr &kernel,
                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                         const std::map<AnfNodePtr, size_t> &parameter_index,
-                        const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
+                        const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info,
                         VectorRef *op_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(kernel);
@@ -530,7 +527,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
   if (prim->name() == kBpropCutOpName) {
     VectorRef args;
     GetControlOpInput(graph_compiler, origin_paramters, front_args, cnode, kernel, op_output_map, parameter_index,
-                      graph_inputs, input_tensor_info, &args);
+                      graph_inputs, input_info, &args);
     py::gil_scoped_acquire acquire;
     BaseRef out = python_adapter::PyAdapterCallback::RunPrimitivePyHookFunction(prim, args);
     // Convert pyobject output to tensor.
@@ -568,21 +565,26 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
 
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(output_node);
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
-  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
-    return AnfAlgo::CreateMapTensor(output_node, output_index);
-  }
-  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
-  // when infer type is not equal to device type.
-  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  const auto &shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
-  auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-
-  // Put device tensor into host tensor.
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+
+  const auto &user_data = device_tensor->user_data();
+  bool is_map_tensor_output = user_data && user_data->get<UserDataType>(kUserDataType) &&
+                              *(user_data->get<UserDataType>(kUserDataType)) == UserDataType::kUserTypeHashTable;
+  if (is_map_tensor_output) {
+    return AnfAlgo::CreateMapTensor(output_node, output_index);
+  }
+
   device_tensor->SetNodeIndex(output_node, output_index);
   device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+  const auto &kernel_tensor = device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto tensor = std::make_shared<tensor::Tensor>(kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector());
+
+  // Put device tensor into host tensor.
   tensor->set_device_address(device_tensor);
   tensor->set_sync_status(kNeedSyncDeviceToHost);
 
@@ -604,6 +606,13 @@ TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_inf
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
+
+  const auto &user_data = address->user_data();
+  bool is_map_tensor_output = user_data && user_data->get<UserDataType>(kUserDataType) &&
+                              *(user_data->get<UserDataType>(kUserDataType)) == UserDataType::kUserTypeHashTable;
+  if (is_map_tensor_output) {
+    return AnfAlgo::CreateMapTensor(address);
+  }
 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
@@ -804,23 +813,23 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     GilReleaseWithCheck gil_release;
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
-      InputTensorInfo input_tensor_info;
+      InputInfo input_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
         WaitTaskFinish();
         const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
         RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
-                           inputs[graph_index], &input_tensor_info, &op_outputs);
+                           inputs[graph_index], &input_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
       } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
-                                                 &input_tensor_info);
+                                                 &input_info);
         VectorRef input_args;
-        (void)std::transform(input_tensor_info.input_tensors.begin(), input_tensor_info.input_tensors.end(),
+        (void)std::transform(input_info.input_values.begin(), input_info.input_values.end(),
                              std::back_inserter(input_args.elements_),
-                             [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+                             [](ValuePtr &value) { return std::move(value); });
 
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
@@ -828,8 +837,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
-                                                 &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, is_dynamic, &op_run_info,
+                                                 &input_info);
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_info, is_dynamic, &op_run_info,
                                                         &graph_output_info);
         if (is_dynamic) {
           op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
@@ -840,7 +849,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         }
       }
 
-      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
+      graph_compiler_->UpdateRefCount(input_info.input_kernel, &cnode_ref_count, &op_output_map);
 
       graph_output_info.graph_output_tensors.clear();
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
@@ -887,8 +896,8 @@ void MindRTBackend::EraseSingleOpCache(const GraphInfo &graph_info) const {
   pynative::OpCompiler::GetInstance().ClearOpCache(graph_info);
 }
 
-void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
-  graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
+void MindRTBackend::ReleaseForwardOutput(const std::vector<ValuePtr> &input_values) {
+  graph_compiler_->UpdateForwardOpOutputRefCount(input_values, &forward_op_output_tensor_id_);
 }
 
 void MindRTBackend::CompileSingleOpGraphs(
@@ -926,7 +935,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
-    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);
   }
 
   ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info()->is_gradient_out);
@@ -949,7 +958,7 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskC
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
-    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);
   }
 
   ClearInputDeviceAddressDynamic(context->graph(), context->device_context());
@@ -1107,7 +1116,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
 
   if (!op_run_info->is_infer) {
-    ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(op_run_info->base_op_run_info.expanded_input_values);
   }
   UpdateOutput(op_run_info, output_nodes, outputs);
 
@@ -1176,7 +1185,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   runtime::RunSingleOpDynamic(op_run_info, op_compiler_info, &device_address_list);
 
   if (!op_run_info->is_infer) {
-    ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
+    ReleaseForwardOutput(op_run_info->base_op_run_info.expanded_input_values);
   }
 
   // Create output tensor
@@ -1244,15 +1253,22 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
     {base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
 
-  for (size_t idx = 0; idx < base_op_run_info.input_tensor.size(); idx++) {
-    auto input_tensor = base_op_run_info.input_tensor[idx];
+  for (size_t idx = 0; idx < base_op_run_info.expanded_input_values.size(); idx++) {
+    auto input_tensor = base_op_run_info.expanded_input_values[idx]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(input_tensor);
     if (input_tensor->device_address() == nullptr) {
       if (idx == 0) {
         MS_LOG(EXCEPTION) << "First tensor can not be nullptr";
       }
       auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
-      auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape());
+
+      auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape(),
+        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
+      kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+
+      auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 
       input_tensor->set_device_address(input_addr);
       RunAllocMemTask(device_context, input_tensor, enable_async);
@@ -1304,8 +1320,13 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
     MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
   }
   auto type_id = old_storage_info->data_type;
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(type_id)));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();

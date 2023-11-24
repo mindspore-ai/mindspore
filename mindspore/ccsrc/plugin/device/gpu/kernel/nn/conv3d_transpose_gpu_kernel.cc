@@ -20,9 +20,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool Conv3dTransposeFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &workspace,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -92,12 +92,8 @@ const std::vector<conv3dtransPair> &Conv3dTransposeFwdGpuKernelMod::GetFuncList(
   return func_list;
 }
 
-bool Conv3dTransposeFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DTranspose>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+bool Conv3dTransposeFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   InitResource();
 
   size_t input_num = inputs.size();
@@ -111,28 +107,24 @@ bool Conv3dTransposeFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   data_format_ = kOpFormat_NCDHW;  // only support NCDHW right now
-  format_attr_ = kernel_ptr->get_data_format();
-  group_ = static_cast<int>(kernel_ptr->get_group());
+  format_attr_ = GetValue<std::string>(primitive_->GetAttr(kAttrFormat));
+  group_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group")));
   if (format_attr_ == kOpFormat_NDHWC) {
     data_format_ = kOpFormat_NDHWC;
   }
   return true;
 }
 
-int Conv3dTransposeFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DTranspose>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+int Conv3dTransposeFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 
@@ -160,24 +152,24 @@ int Conv3dTransposeFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                       "cudnnSetConvGroupCount failed");
   std::vector<int> pad_list;
-  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));
+  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
   (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   std::vector<int> stride_pad_list(k3DPadSize, 0);
-  std::vector<int64_t> stride_me = kernel_ptr->get_stride();
-  std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
+  std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrStrides));
+  std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
   SetStrideAndDilation(stride_me, dilation_me);
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   SetPad(input_shape, filter_shape, &pad_list, &stride_pad_list);
   auto [input_desc_real, output_desc_real] = GetInputAndOutputDescReal(pad_list, stride_pad_list);
   SetConvolutionMathType(conv_desc_, cudnn_data_type_);
   algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, cudnn_data_type_, filter_desc_, input_desc_real, conv_desc_,
                                       output_desc_real, group_);
 
-  if (base_operator->GetAttr("inplace_algo") == nullptr) {
+  if (primitive_->GetAttr("inplace_algo") == nullptr) {
     beta_ = 0;
   } else {
-    beta_ = GetValue<std::string>(base_operator->GetAttr("inplace_algo")) == "cover" ? 0 : 1;
+    beta_ = GetValue<std::string>(primitive_->GetAttr("inplace_algo")) == "cover" ? 0 : 1;
   }
   constexpr int cudnn_major_num = 8;
   if (compute_format_ == CUDNN_TENSOR_NHWC && cudnn_data_type_ == CUDNN_DATA_HALF && CUDNN_MAJOR < cudnn_major_num) {

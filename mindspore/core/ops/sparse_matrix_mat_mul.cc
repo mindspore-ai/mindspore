@@ -34,17 +34,17 @@ namespace ops {
 namespace {
 void SparseMatrixMatMulCheckShape(const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> x1_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   std::vector<int64_t> x1_batch_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> x1_row_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   std::vector<int64_t> x1_col_indices =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   std::vector<int64_t> x1_values =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   std::vector<int64_t> x2_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
 
   std::vector<ShapeVector> check_shapes = {x1_dense_shape, x1_batch_pointer, x2_dense_shape};
   auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamic);
@@ -105,7 +105,7 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   SparseMatrixMatMulCheckShape(input_args);
   std::vector<int64_t> x2_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
 
   auto transpose_x1 = GetValue<bool>(primitive->GetAttr("transpose_x1"));
   auto transpose_x2 = GetValue<bool>(primitive->GetAttr("transpose_x2"));
@@ -136,14 +136,14 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
 
   // row and col of A
   const int kInputWithBatch = 3;
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
-    auto dense_shape_value = input_args[0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(dense_shape_value);
-    auto dense_shape_value_ptr = dense_shape_value->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[0]) && !input_args[0]->GetValue()->isa<ValueAny>() &&
+      !input_args[0]->GetValue()->isa<None>()) {
+    auto dense_shape_type_ptr = input_args[0]->GetType();
+    MS_EXCEPTION_IF_NULL(dense_shape_type_ptr);
+    auto dense_shape_value_ptr = input_args[0]->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value_ptr);
-    auto dense_shape_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x1_dense_shape", dense_shape_value_ptr, primitive->name());
+    auto dense_shape_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+      "x1_dense_shape", dense_shape_value_ptr, primitive->name(), dense_shape_type_ptr);
 
     const int64_t rank_x1 = static_cast<int64_t>(dense_shape_value_ptr_tensor.size());
     auto row_x1 = dense_shape_value_ptr_tensor[LongToSize(rank_x1 - 2)];
@@ -175,12 +175,12 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
 TypePtr SparseMatrixMatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto x1_dense_type = input_args[kInputIndex0]->BuildType();
-  auto x1_batch_type = input_args[kInputIndex1]->BuildType();
-  auto x1_row_type = input_args[kInputIndex2]->BuildType();
-  auto x1_col_type = input_args[kInputIndex3]->BuildType();
-  auto x1_values_type = input_args[kInputIndex4]->BuildType();
-  auto x2_values_type = input_args[kInputIndex5]->BuildType();
+  auto x1_dense_type = input_args[kInputIndex0]->GetType();
+  auto x1_batch_type = input_args[kInputIndex1]->GetType();
+  auto x1_row_type = input_args[kInputIndex2]->GetType();
+  auto x1_col_type = input_args[kInputIndex3]->GetType();
+  auto x1_values_type = input_args[kInputIndex4]->GetType();
+  auto x2_values_type = input_args[kInputIndex5]->GetType();
   std::map<std::string, TypePtr> types_values;
   (void)types_values.emplace("x1_values", x1_values_type);
   (void)types_values.emplace("x2_dense", x2_values_type);

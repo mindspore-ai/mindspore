@@ -105,7 +105,8 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
 
   if (!is_compute_v) {
     // _, v equal eigh(a)
-    auto v = ib->TupleGetItem(ib->Emit("Eigh", {a}, {{"compute_eigenvectors", MakeValue(true)}}), 1);
+    auto v = ib->TupleGetItem(
+      ib->Emit("Eigh", {a}, {{"compute_eigenvectors", MakeValue(true)}, {"lower", MakeValue(true)}}), 1);
     // grad_a is _matmul(v * F.expand_dims(dout, -2), _adjoint(v))
     grad_a = ib->MatMul(ib->Mul(v, ib->Emit("ExpandDims", {dout, kValueNeg2})), Adjoint(ib, v), false, false);
 

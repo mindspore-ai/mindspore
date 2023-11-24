@@ -19,14 +19,12 @@
 #include <vector>
 #include "securec/include/securec.h"
 #include "ops/fusion/prelu_fusion.h"
-#include "ops/elu.h"
-#include "ops/gelu.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
 #include "ops/softplus.h"
 #include "ops/selu.h"
-#include "ops/celu.h"
-#include "ops/hswish.h"
+#include "ops/ops_func_impl/hswish.h"
 
 namespace mindspore {
 namespace lite {

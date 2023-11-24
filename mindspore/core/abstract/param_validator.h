@@ -34,7 +34,7 @@ namespace abstract {
 // check if variable's type is an instance of any of accepts or of a subclass of it.
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix);
 
-TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &accepts,
+TypePtr CheckTensorDType(const AbstractBasePtr &tensor, const TypePtrList &accepts,
                          const std::string &error_message_prefix);
 
 TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const TypePtrList &accepts,
@@ -45,7 +45,18 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
 
 void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
 
+void CheckShapeSame(const std::string &op, const AbstractBasePtr &tensor_base, const AbstractBasePtr &tensor);
+
+inline void CheckDtypeSame(const std::string &op, const TypePtr &type1, const TypePtr &type2) {
+  if (*type1 != *type2) {
+    MS_EXCEPTION(TypeError) << "For '" << op << "', the dtype of two args should be same, but the first arg dtype "
+                            << type1->ToString() << " are not consistent with second arg dtype " << type2->ToString();
+  }
+}
+
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor);
+
+TypePtr CheckDtypeSame(const std::string &op, const AbstractBasePtr &tensor_base, const AbstractBasePtr &tensor);
 
 MS_CORE_API int64_t CheckAxis(const std::string &op, const std::string &args_name, const ValuePtr &axis, int64_t min,
                               int64_t max, const std::string &rank_name);

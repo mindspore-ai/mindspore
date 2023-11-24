@@ -26,12 +26,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool EllipsisToSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EllipsisToSlice>(base_operator);
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
+bool EllipsisToSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -39,7 +36,6 @@ bool EllipsisToSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  outputs_ = outputs;
   return true;
 }
 
@@ -50,11 +46,9 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int EllipsisToSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EllipsisToSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   data_shapes_ = GetShapes(inputs);
@@ -64,13 +58,13 @@ int EllipsisToSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
-  const auto input_addr1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  auto output_addr0 = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_addr1 = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
+  const auto input_addr1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->device_ptr());
+  auto output_addr0 = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_addr1 = reinterpret_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   size_t dim_size = data_shape.size();
   size_t slice_nums = data_shapes_[1][1];
@@ -122,9 +116,9 @@ bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   return true;
 }
 
-bool EllipsisToSliceCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool EllipsisToSliceCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
@@ -137,16 +131,16 @@ std::vector<KernelAttr> EllipsisToSliceCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
-                 [](TypeId data_type_id) -> std::pair<KernelAttr, EllipsisToSliceFunc> {
-                   return {KernelAttr()
-                             .AddInputAttr(data_type_id)
-                             .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64),
-                           &EllipsisToSliceCpuKernelMod::LaunchKernel};
-                 });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, EllipsisToSliceFunc> {
+                         return {KernelAttr()
+                                   .AddInputAttr(data_type_id)
+                                   .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64),
+                                 &EllipsisToSliceCpuKernelMod::LaunchKernel};
+                       });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, EllipsisToSliceFunc> &item) { return item.first; });
   return support_list;

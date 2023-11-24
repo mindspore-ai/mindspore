@@ -23,17 +23,15 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayCreateKernelMod : public DeprecatedNativeGpuKernelMod {
+class TensorArrayCreateKernelMod : public NativeGpuKernelMod {
  public:
   TensorArrayCreateKernelMod();
   ~TensorArrayCreateKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-
- protected:
-  void InitSizeLists() override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   bool is_dynamic_;

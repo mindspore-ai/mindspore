@@ -123,7 +123,7 @@ void FallbackIRBuilder::ConvertConstInputToTensorInput(const PrimitivePtr &p, No
     }
     const auto &value = inputs[i]->get<ValueNodePtr>()->value();
     if (value->isa<Scalar>()) {
-      inputs[i] = EmitValue(ScalarToTensor(value->cast<ScalarPtr>()));
+      inputs[i] = EmitValue(mindspore::ScalarToTensor(value->cast<ScalarPtr>()));
     } else if (value->isa<ValueTuple>()) {
       inputs[i] = EmitValue(opt::CreateTupleTensor(value->cast<ValueTuplePtr>()));
     } else if (value->isa<ValueList>()) {

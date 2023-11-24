@@ -1800,7 +1800,7 @@ def csr_asinh(x: CSRTensor) -> CSRTensor:
         out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function.
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic sine function, i.e. :math:`input_i`.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
@@ -1946,7 +1946,8 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
         out_i = \cosh^{-1}(input_i)
 
     Args:
-        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its element must be in range [1, inf].
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, i.e. :math:`input_i`,
+            its element must be in range [1, inf].
 
     Returns:
         CSRTensor, has the same shape and type as `x`.

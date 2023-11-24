@@ -52,8 +52,8 @@ TypePtr IgammaGradAInferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto a_type = input_args[kInputIndex0]->BuildType();
-  auto x_type = input_args[kInputIndex1]->BuildType();
+  auto a_type = input_args[kInputIndex0]->GetType();
+  auto x_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   (void)args.emplace("a", a_type);

@@ -58,7 +58,7 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
                              << input_args.size();
   }
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   if (shape_map.empty()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());
   }
@@ -106,7 +106,7 @@ TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<A
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto input_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim->name());
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->GetType(), valid_types, prim->name());
 
   auto indices_type = kInt64;
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, indices_type});

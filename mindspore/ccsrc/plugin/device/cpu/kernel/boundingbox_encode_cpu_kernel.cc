@@ -25,21 +25,18 @@ const size_t kInputRank = 2;
 const size_t kLastDim = 4;
 }  // namespace
 
-bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool BoundingBoxEncodeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
 
   const size_t coordinate_size = 4;
-  auto means = base_operator->GetAttr("means");
+  auto means = primitive_->GetAttr("means");
   MS_EXCEPTION_IF_NULL(means);
-  if (means->isa<api::ValueSequence>()) {
-    means_ = api::GetValue<std::vector<float>>(means);
-  } else if (means->isa<api::FloatImm>()) {
-    float mean = api::GetValue<float>(means);
+  if (means->isa<ValueSequence>()) {
+    means_ = GetValue<std::vector<float>>(means);
+  } else if (means->isa<FloatImm>()) {
+    float mean = GetValue<float>(means);
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)means_.emplace_back(mean);
     }
@@ -48,12 +45,12 @@ bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                       << "', the input 'means' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
-  auto stds = base_operator->GetAttr("stds");
+  auto stds = primitive_->GetAttr("stds");
   MS_EXCEPTION_IF_NULL(stds);
-  if (stds->isa<api::ValueSequence>()) {
-    stds_ = api::GetValue<std::vector<float>>(stds);
-  } else if (stds->isa<api::FloatImm>()) {
-    float std = api::GetValue<float>(stds);
+  if (stds->isa<ValueSequence>()) {
+    stds_ = GetValue<std::vector<float>>(stds);
+  } else if (stds->isa<FloatImm>()) {
+    float std = GetValue<float>(stds);
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)stds_.emplace_back(std);
     }
@@ -80,27 +77,28 @@ bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
-  auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
-  auto groundtruth_box = reinterpret_cast<T *>(inputs[1]->addr);
-  auto deltas = reinterpret_cast<T *>(outputs[0]->addr);
+bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto anchor_box = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto groundtruth_box = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto deltas = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
-  if (inputs[0]->size != inputs[1]->size) {
+  if (inputs[0]->size() != inputs[1]->size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the memory size of inputs 'anchor_box' and 'groundtruth_box' "
                      "must be the same, but got the memory size of 'anchor_box': "
-                  << inputs[0]->size << " and the memory size of 'groundtruth_box': " << inputs[1]->size;
+                  << inputs[0]->size() << " and the memory size of 'groundtruth_box': " << inputs[1]->size();
     return false;
   }
 
   const size_t coordinate = 4;
-  const size_t block_size = inputs[0]->size / sizeof(T);
+  const size_t block_size = inputs[0]->size() / sizeof(T);
   if ((block_size % coordinate) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the memory size of input 'anchor_box' must be a multiple of 4, "
                      "but got the memory size of 'anchor_box': "
-                  << inputs[0]->size;
+                  << inputs[0]->size();
     return false;
   }
 
@@ -144,11 +142,9 @@ bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   return true;
 }
 
-int BoundingBoxEncodeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int BoundingBoxEncodeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

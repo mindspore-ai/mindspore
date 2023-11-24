@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ from .array_func import (
     shape_,
     ger,
     dyn_shape,
-    rank,
     hamming_window,
     ravel,
     reshape,
@@ -87,7 +86,6 @@ from .array_func import (
     gather_nd,
     is_tensor,
     scalar_cast,
-    masked_fill,
     narrow,
     tensor_scatter_add,
     tensor_scatter_sub,
@@ -111,7 +109,6 @@ from .array_func import (
     is_nonzero,
     space_to_batch_nd,
     batch_to_space_nd,
-    range,
     arange,
     select,
     one_hot,
@@ -161,11 +158,9 @@ from .array_func import (
     searchsorted,
     aminmax,
     sort,
-    top_k,
-    deepcopy
+    top_k
 )
 from .parameter_func import (
-    assign,
     assign_add,
     assign_sub,
     index_add,
@@ -205,7 +200,6 @@ from .math_func import (
     tensor_sub,
     rsqrt,
     reciprocal,
-    real,
     sub,
     subtract,
     sqrt,
@@ -287,7 +281,6 @@ from .math_func import (
     inv,
     inverse,
     invert,
-    minimum,
     renorm,
     floor,
     logical_not,
@@ -298,8 +291,6 @@ from .math_func import (
     sign,
     signbit,
     sgn,
-    sin,
-    sinc,
     cos,
     t,
     tan,
@@ -311,7 +302,6 @@ from .math_func import (
     arccosh,
     arctan,
     arctan2,
-    sinh,
     cosh,
     tanh,
     tanhshrink,
@@ -506,7 +496,6 @@ from .nn_func import (
     softplus,
     pdist,
     pad,
-    prelu,
     mirror_pad,
     nll_loss,
     smooth_l1_loss,
@@ -611,7 +600,6 @@ from .random_func import (
     randint,
     randint_like,
     multinomial_with_replacement,
-    randperm,
 )
 from .grad import (
     grad_func,
@@ -720,8 +708,21 @@ from .other_func import (
     depend,
     partial,
 )
+from ..operations.manually_defined import (rank,)
+from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_,)
 
-__all__ = []
+__all__ = [
+    'assign',
+    'masked_fill',
+    'minimum',
+    'prelu',
+    'rank',
+    'randperm',
+    'real',
+    'sin',
+    'sinc',
+    'sinh',
+]
 __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)

@@ -1,0 +1,19 @@
+#operator resize_nearest_neighbor_v2
+resize_nearest_neighbor_v2:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor

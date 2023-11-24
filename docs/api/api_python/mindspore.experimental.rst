@@ -56,7 +56,6 @@ LRScheduler类
     :template: classtemplate.rst
 
     mindspore.experimental.optim.lr_scheduler.LRScheduler
-    mindspore.experimental.optim.lr_scheduler.ChainedScheduler
     mindspore.experimental.optim.lr_scheduler.ConstantLR
     mindspore.experimental.optim.lr_scheduler.CosineAnnealingLR
     mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts

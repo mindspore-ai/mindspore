@@ -73,3 +73,72 @@ def test_transpose_dynamic(mode):
     transpose.set_inputs(dyn_input)
     out = transpose(real_input)
     return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_transpose_dynamic_perm1(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (0, 1, 2, 3)
+    in_shape = (8, 24, 1, 1)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    transpose = Net(perm)
+    real_input = Tensor(np_value)
+    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
+    transpose.set_inputs(dyn_input)
+    out = transpose(real_input)
+    return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_transpose_dynamic_perm2(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (1, 2, 3, -1)
+    in_shape = (8, 24, 1, 1)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    transpose = Net(perm)
+    real_input = Tensor(np_value)
+    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
+    transpose.set_inputs(dyn_input)
+    out = transpose(real_input)
+    return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_transpose_dynamic_perm3(mode):
+    """
+    Feature: test transpose dynamic
+    Description: test transpose dynamic with graph and pynative mode
+    Expectation: none.
+    """
+    context.set_context(mode=mode)
+    perm = (2, 1, 0, 3)
+    in_shape = (8, 24, 1, 1)
+    np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
+    transpose = Net(perm)
+    real_input = Tensor(np_value)
+    dyn_input = Tensor(shape=[None for _ in real_input.shape], dtype=real_input.dtype)
+    transpose.set_inputs(dyn_input)
+    out = transpose(real_input)
+    return out

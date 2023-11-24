@@ -24,9 +24,9 @@ namespace kernel {
   KernelAttr().AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGpuKernelMod::LaunchKernel<T>
 
 template <typename T>
-bool SoftShrinkGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftShrinkGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
@@ -35,31 +35,24 @@ bool SoftShrinkGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   return true;
 }
 
-bool SoftShrinkGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SoftShrinkGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftShrink>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast SoftShrink ops failed!";
-    return false;
-  }
-  lambd_ = kernel_ptr->get_lambd();
+  lambd_ = GetValue<float>(primitive_->GetAttr("lambd"));
 
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+  if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }
   return true;
 }
 
-int SoftShrinkGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SoftShrinkGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

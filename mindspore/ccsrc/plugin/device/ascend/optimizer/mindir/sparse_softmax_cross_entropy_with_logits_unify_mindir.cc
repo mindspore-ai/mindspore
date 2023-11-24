@@ -52,7 +52,7 @@ bool CheckMulInputShapeEqual(const CNodePtr &mul_node) {
   return input1_shape == input2_shape;
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
+ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type, bool is_scalar = false) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -65,7 +65,11 @@ ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetOutputsFormat({kOpFormat_DEFAULT});
   builder1.SetOutputsDeviceType({output_type});
-  builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  if (is_scalar) {
+    builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::SCALAR});
+  } else {
+    builder1.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  }
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), new_node.get());
   return new_node;
 }
@@ -126,17 +130,18 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   auto value_off = std::make_shared<tensor::Tensor>(0.0, kFloat32);
   auto value_off_node = CreateValueNode(value_off, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(value_off_node);
+  auto value_axis_node = CreateValueNode(MakeValue<int64_t>(-1), kNumberTypeInt64, true);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddValueNodeToGraph(value_on_node);
   kernel_graph->AddValueNodeToGraph(value_off_node);
+  kernel_graph->AddValueNodeToGraph(value_axis_node);
 
   auto one_hot_primitive = std::make_shared<Primitive>(kOneHotOpName);
-  std::vector<std::string> input_names = {"indices", "depth", "on_value", "off_value"};
+  std::vector<std::string> input_names = {"indices", "depth", "on_value", "off_value", "axis"};
   std::vector<std::string> output_names = {"output"};
   one_hot_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   one_hot_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
-  one_hot_primitive->set_attr(kAttrAxis, MakeValue(static_cast<int64_t>(-1)));
 
   std::vector<AnfNodePtr> one_hot_inputs;
   if (is_convert_const_to_attr) {
@@ -144,7 +149,8 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   } else {
     auto depth_node = CreateTensorInput(kernel_graph, NewValueNode(depth));
     MS_EXCEPTION_IF_NULL(depth_node);
-    one_hot_inputs = {NewValueNode(one_hot_primitive), reshape_node, depth_node, value_on_node, value_off_node};
+    one_hot_inputs = {
+      NewValueNode(one_hot_primitive), reshape_node, depth_node, value_on_node, value_off_node, value_axis_node};
   }
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
   MS_EXCEPTION_IF_NULL(one_hot_node);

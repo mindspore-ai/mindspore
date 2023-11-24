@@ -22,14 +22,16 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <tuple>
 #include "acl/acl_base.h"
 #include "ir/tensor.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
+#include "transform/acl_ir/acl_helper.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore::transform {
-
 // Api data struct.
 typedef struct aclOpExecutor aclOpExecutor;
 typedef struct aclTensor aclTensor;
@@ -38,6 +40,7 @@ typedef struct aclIntArray aclIntArray;
 typedef struct aclFloatArray aclFloatArray;
 typedef struct aclBoolArray aclBoolArray;
 typedef struct aclTensorList aclTensorList;
+
 // Create operator.
 using _aclCreateTensor = aclTensor *(*)(const int64_t *view_dims, uint64_t view_dims_num, aclDataType data_type,
                                         const int64_t *stride, int64_t offset, aclFormat format,
@@ -64,7 +67,7 @@ inline void *GetOpApiFuncFromLib(void *handler, const char *lib_name, const char
   MS_EXCEPTION_IF_NULL(handler);
   auto func = dlsym(handler, api_name);
   if (func == nullptr) {
-    MS_LOG(WARNING) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
+    MS_LOG(INFO) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
   }
   return func;
 }
@@ -72,13 +75,13 @@ inline void *GetOpApiFuncFromLib(void *handler, const char *lib_name, const char
 inline void *GetOpApiLibHandler(const std::string &lib_path) {
   auto handler = dlopen(lib_path.c_str(), RTLD_LAZY);
   if (handler == nullptr) {
-    MS_LOG(WARNING) << "Dlopen " << lib_path << " failed!" << dlerror();
+    MS_LOG(INFO) << "Dlopen " << lib_path << " failed!" << dlerror();
   }
   return handler;
 }
 
 inline void *GetOpApiFunc(const char *api_name) {
-  std::string cust_path = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
+  static auto cust_path = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
   if (!cust_path.empty()) {
     auto cust_lib_path = cust_path + GetCustOpApiLibName();
     static auto cust_handler = GetOpApiLibHandler(cust_lib_path);
@@ -90,8 +93,8 @@ inline void *GetOpApiFunc(const char *api_name) {
     }
   }
 
-  auto ascend_path = device::ascend::GetAscendPath();
-  std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
+  static auto ascend_path = device::ascend::GetAscendPath();
+  static const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
   for (const auto &dep_lib : depend_libs) {
     (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
   }
@@ -121,25 +124,28 @@ auto ConvertToOpApiFunc(const Tuple &params, void *opApiAddr) {
 // Convert Value
 class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
  public:
+  OpApiAttrConverter() = default;
+  ~OpApiAttrConverter() = default;
+
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar *scalar) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar **scalar) {
     auto real_val = GetValue<T>(value);
     MS_EXCEPTION_IF_NULL(scalar);
     static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
     if (aclCreateScalar == nullptr) {
-      scalar = nullptr;
+      *scalar = nullptr;
     }
-    scalar = aclCreateScalar(&real_val, GetDataType(value));
+    *scalar = aclCreateScalar(&real_val, GetDataType(value));
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar *scalar) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar **scalar) {
     auto real_val = static_cast<int64_t>(GetValue<int32_t>(value));
     MS_EXCEPTION_IF_NULL(scalar);
     static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
     if (aclCreateScalar == nullptr) {
-      scalar = nullptr;
+      *scalar = nullptr;
     }
-    scalar = aclCreateScalar(&real_val, ACL_INT64);
+    *scalar = aclCreateScalar(&real_val, ACL_INT64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, aclIntArray *array) {
@@ -186,20 +192,17 @@ class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
   }
 
  private:
-  OpApiAttrConverter() = default;
-  ~OpApiAttrConverter() = default;
-
   inline aclDataType GetDataType(const ValuePtr &value) { return AclConverter::ConvertType(value->type()->type_id()); }
 };
 
-inline aclTensor *ConvertType(const device::ascend::AscendDeviceAddressPtr &tensor) {
+inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
     return nullptr;
   }
 
-  auto acl_data_type = AclConverter::ConvertType(tensor->type_id());
-  auto shape = tensor->host_shape();
+  auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
+  auto shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {
@@ -226,18 +229,132 @@ inline aclTensor *ConvertType(const device::ascend::AscendDeviceAddressPtr &tens
     strides[i] = strides[i] * strides[i + 1];
   }
   auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                    shape_size, tensor->GetMutablePtr());
+                                    shape_size, tensor->device_ptr());
   return acl_tensor;
 }
 
-template <typename T>
-T ConvertType(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  OpApiAttrConverter op_api_attr_converter;
-  T res;
-  op_api_attr_converter.ConvertValueToRealType(value, "", res);
-  return res;
+inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  MS_LOG(EXCEPTION) << "Current not support tensor list!";
+  return tensor_list;
 }
+
+inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
+  const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  const auto &storage_info = tensor->storage_info();
+  // Get dev shape
+  auto get_dev_shape = [device_address, tensor](const std::string &tensor_format, const auto &tensor_shape) {
+    if (transform::AclHelper::CheckDefaultSupportFormat(tensor_format)) {
+      return tensor_shape;
+    }
+    int64_t groups = 1;
+    auto node_idx = device_address->GetNodeIndex();
+    if (node_idx.first != nullptr) {
+      groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
+    }
+    return trans::TransShapeToDevice(tensor_shape, tensor_format, tensor->data_type(), groups);
+  };
+
+  const auto &tensor_shape = tensor->shape();
+  const auto &tensor_format = device_address->format();
+  if (storage_info == nullptr) {
+    const auto &dev_shape = get_dev_shape(tensor_format, tensor_shape);
+
+    // Get contiguous strides
+    std::vector<int64_t> strides(tensor_shape.size(), 1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = tensor_shape[i + 1] * strides[i + 1];
+    }
+
+    return std::make_tuple(tensor_shape, strides, 0, dev_shape);
+  } else {
+    const auto &dev_shape = get_dev_shape(tensor_format, storage_info->ori_shape);
+    return std::make_tuple(tensor_shape, storage_info->strides, storage_info->storage_offset, dev_shape);
+  }
+}
+
+inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+  auto shape = tensor->shape();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+  auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto [view_shape, strides, offset, ori_dev_shape] = GetViewShapeAndStride(tensor, device_address);
+  auto acl_tensor = aclCreateTensor(view_shape.data(), view_shape.size(), acl_data_type, strides.data(), offset, format,
+                                    ori_dev_shape.data(), ori_dev_shape.size(), device_address->GetMutablePtr());
+  return acl_tensor;
+}
+
+inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+  if (value.has_value()) {
+    return ConvertType(value.value());
+  }
+  return nullptr;
+}
+
+inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
+  if (int_array.empty()) {
+    MS_LOG(ERROR) << "int array is empty!";
+  }
+  static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
+  return aclCreateIntArray(int_array.data(), int_array.size());
+}
+
+inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](const tensor::TensorPtr &tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
+inline aclScalar *ConvertType(const ScalarPtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  aclScalar *acl_scalar;
+  OpApiAttrConverter converter;
+  if (value->isa<BoolImm>()) {
+    converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
+  } else if (value->isa<Int64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
+  } else if (value->isa<FP32Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
+  } else if (value->isa<Int32Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
+  } else {
+    MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
+  }
+  return acl_scalar;
+}
+
+inline aclDataType ConvertType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  return AclConverter::ConvertType(type->type_id());
+}
+
+inline const char *ConvertType(const std::string &value) { return value.c_str(); }
 
 template <typename T>
 T ConvertType(T value) {

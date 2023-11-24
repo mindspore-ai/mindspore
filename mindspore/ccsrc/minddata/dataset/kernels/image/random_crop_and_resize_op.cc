@@ -25,13 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomCropAndResizeOp::kDefScaleLb = 0.08;
-const float RandomCropAndResizeOp::kDefScaleUb = 1.0;
-const float RandomCropAndResizeOp::kDefAspectLb = 0.75;
-const float RandomCropAndResizeOp::kDefAspectUb = 1.333333;
-const InterpolationMode RandomCropAndResizeOp::kDefInterpolation = InterpolationMode::kLinear;
-const int32_t RandomCropAndResizeOp::kDefMaxIter = 10;
-
 RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t target_width, float scale_lb,
                                              float scale_ub, float aspect_lb, float aspect_ub,
                                              InterpolationMode interpolation, int32_t max_attempts)
@@ -42,10 +35,7 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
       interpolation_(interpolation),
       aspect_lb_(aspect_lb),
       aspect_ub_(aspect_ub),
-      max_iter_(max_attempts) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+      max_iter_(max_attempts) {}
 
 Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
@@ -145,10 +135,10 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     aspect_lb_ > 0,
     "RandomCropAndResize: 'ratio'(aspect) lower bound must be greater than 0, but got:" + std::to_string(aspect_lb_));
   for (int32_t i = 0; i < max_iter_; i++) {
-    double const sample_scale = rnd_scale_(rnd_);
+    double const sample_scale = rnd_scale_(random_generator_);
     // In case of non-symmetrical aspect ratios, use uniform distribution on a logarithmic sample_scale.
     // Note rnd_aspect_ is already a random distribution of the input aspect ratio in logarithmic sample_scale.
-    double const sample_aspect = exp(rnd_aspect_(rnd_));
+    double const sample_aspect = exp(rnd_aspect_(random_generator_));
 
     CHECK_FAIL_RETURN_UNEXPECTED(
       (std::numeric_limits<int32_t>::max() / h_in) > w_in,
@@ -174,8 +164,8 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     if (*crop_width <= w_in && *crop_height <= h_in) {
       std::uniform_int_distribution<> rd_x(0, w_in - *crop_width);
       std::uniform_int_distribution<> rd_y(0, h_in - *crop_height);
-      *x = rd_x(rnd_);
-      *y = rd_y(rnd_);
+      *x = rd_x(random_generator_);
+      *y = rd_y(random_generator_);
       return Status::OK();
     }
   }

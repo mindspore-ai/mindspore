@@ -104,13 +104,13 @@ void InputCheck(const PrimitivePtr &primitive, const std::vector<int64_t> &x_sha
 }
 abstract::TupleShapePtr FractionalMaxPoolWithFixedKsizeInferShape(const PrimitivePtr &primitive,
                                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     abstract::ShapePtr output0_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
     abstract::ShapePtr output1_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{output0_shape, output1_shape});
   }
-  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   InputCheck(primitive, x_shape, random_samples_shape);
   int64_t ksize_h = 0;
@@ -167,12 +167,12 @@ TuplePtr FractionalMaxPoolWithFixedKsizeInferType(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
 
   const std::set<TypePtr> random_samples_valid_types = {kFloat16, kFloat32, kFloat64};
-  auto random_samples_dtype = input_args[1]->BuildType();
+  auto random_samples_dtype = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("random_samples dtype", random_samples_dtype,
                                                    random_samples_valid_types, prim_name);
 
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   auto y_dtype = CheckAndConvertUtils::CheckTensorTypeValid("input_x dtype", x_dtype, x_valid_types, prim_name);
   TypePtr argmax_dtype = kInt64;
   return std::make_shared<Tuple>(std::vector<TypePtr>{y_dtype, argmax_dtype});

@@ -20,9 +20,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-bool Conv3dGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool Conv3dGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &workspace,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -71,11 +71,7 @@ const std::vector<conv3dPair> &Conv3dGpuKernelMod::GetFuncList() const {
   return func_list;
 }
 
-bool Conv3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+bool Conv3dGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   InitResource();
   size_t input_num = inputs.size();
   const size_t kInputNum = 2;
@@ -88,22 +84,18 @@ bool Conv3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   data_format_ = kOpFormat_NCDHW;
   return true;
 }
 
-int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto in_shape = inputs[kIndex0]->GetShapeVector();
@@ -125,22 +117,22 @@ int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   old_width_ = LongToInt(in_shape[kInDimIdxForW]);
   compute_format_ = CUDNN_TENSOR_NCHW;
   SetNDDesc(in_shape, filter_shape, output_shape);
-  group_ = static_cast<int>(kernel_ptr->get_group());
+  group_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group")));
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                       "cudnnSetConvGroupCount failed");
   std::vector<int> pad_list;
-  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));
+  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
   (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (pad_list.size() != k3DPadSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of 'pad' must be 6, but got " << pad_list.size();
     return KRET_RESIZE_FAILED;
   }
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   SetPad(pad_list);
   if (!IsDynamicRank(in_shape) && !IsDynamicRank(filter_shape)) {
-    std::vector<int64_t> stride_me = kernel_ptr->get_stride();
-    std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
+    std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrStrides));
+    std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
     SetStrideAndDilation(stride_me, dilation_me);
   }
   auto input_descriptor_real = GetInputDescReal(pad_list);

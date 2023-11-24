@@ -53,13 +53,16 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
   int64_t num_segments_v = 0;
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    if (input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
-      auto n_value = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_value);
-      auto n_value_ptr = n_value->BuildValue();
+  auto value = input_args[kInputIndex2]->GetValue();
+  MS_EXCEPTION_IF_NULL(value);
+  auto num_segments_type = input_args[kInputIndex2]->GetType();
+  MS_EXCEPTION_IF_NULL(num_segments_type);
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
+    if (IsValueKnown(value)) {
+      auto n_value_ptr = input_args[kInputIndex2]->GetValue();
       MS_EXCEPTION_IF_NULL(n_value_ptr);
-      auto n_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("num_segments", n_value_ptr, op_name);
+      auto n_value_ptr_tensor =
+        CheckAndConvertUtils::CheckTensorIntValue("num_segments", n_value_ptr, op_name, num_segments_type);
       if (n_value_ptr_tensor.empty()) {
         MS_EXCEPTION(ValueError) << "For '" << op_name << "' the third input should be an int value, but got empty.";
       }
@@ -68,22 +71,19 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
       num_segments_v = abstract::Shape::kShapeDimAny;
     }
     return num_segments_v;
-  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    auto value = input_args[kInputIndex2]->BuildValue();
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
     if (!IsValueKnown(value)) {
       num_segments_v = abstract::Shape::kShapeDimAny;
       return num_segments_v;
     }
-    auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
-    auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-    MS_EXCEPTION_IF_NULL(num_sample_ptr);
-    if (num_segments_input_type->type_id() == kNumberTypeInt64) {
-      num_segments_v = GetValue<int64_t>(value);
-    } else if (num_segments_input_type->type_id() == kNumberTypeInt32) {
-      num_segments_v = GetValue<int32_t>(value);
+
+    if (num_segments_type->type_id() == kNumberTypeInt64) {
+      num_segments_v = GetScalarValue<int64_t>(value).value();
+    } else if (num_segments_type->type_id() == kNumberTypeInt32) {
+      num_segments_v = GetScalarValue<int32_t>(value).value();
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "' the third input build type is invalid:"
-                              << TypeIdToString(num_segments_input_type->type_id()) << ".";
+                              << TypeIdToString(num_segments_type->type_id()) << ".";
     }
     (void)CheckAndConvertUtils::CheckInteger("num_segments's value", num_segments_v, kGreaterThan, 0, op_name);
     return num_segments_v;
@@ -97,10 +97,10 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
                               const int64_t &num_segments_value) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("input_x shape size", SizeToLong(x_shape.size()), kGreaterThan, 0,
                                            prim_name);
-  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (ids_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids value cannot be 0-D.";
   }
@@ -150,19 +150,19 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape])) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
-  auto segment_ids_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto segment_ids_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape])) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
-  auto num_segments_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto num_segments_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(num_segments_shape_ptr);
 
   if (x_shape_ptr->IsDynamic() || segment_ids_shape_ptr->IsDynamic() || num_segments_shape_ptr->IsDynamic()) {
@@ -184,7 +184,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
 
   /* check segment_ids */
-  auto ids_ptr = input_args[kInputIndex1]->BuildType();
+  auto ids_ptr = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(ids_ptr);
   if (!ids_ptr->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -194,12 +194,12 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids", ids_ptr, ids_type_set, prim_name);
 
   /* check num_segments */
-  auto num_ptr = input_args[kInputIndex2]->BuildType();
+  auto num_ptr = input_args[kInputIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(num_ptr);
   std::set<TypePtr> num_type_set = {kInt32, kInt64};
 
-  if (num_ptr->isa<TensorType>()) {
-    auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
+    auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
     if (num_shape.size() != 0) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', num_segments must be an integer, but got: " << num_ptr->ToString() << ".";
@@ -208,9 +208,9 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTypeValid("num_segments", num_ptr, num_type_set, prim_name);
 
   /* check input_x */
-  auto in_type_ptr = input_args[kInputIndex0]->BuildType();
+  auto in_type_ptr = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(in_type_ptr);
-  if (!in_type_ptr->isa<TensorType>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << in_type_ptr->ToString()
                             << ".";
   }

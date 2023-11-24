@@ -38,34 +38,25 @@ constexpr size_t kFminInputsNum = 2;
 constexpr size_t kFminOutputsNum = 1;
 }  // namespace
 
-bool FminCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Fmin>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Fmin ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool FminCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int FminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FminCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input_x_shape_ = inputs[0]->GetShapeVector();
   input_y_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
   output_num_ = 1;
-  TypeId input_x_dtype = inputs[0]->GetDtype();
-  TypeId input_y_dtype = inputs[1]->GetDtype();
+  TypeId input_x_dtype = inputs[0]->dtype_id();
+  TypeId input_y_dtype = inputs[1]->dtype_id();
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {
@@ -102,14 +93,15 @@ void FminCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dty
 }
 
 template <typename T>
-bool FminCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) const {
+bool FminCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFminInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFminOutputsNum, kernel_name_);
 
-  T *input_x_ = static_cast<T *>(inputs[0]->addr);
-  T *input_y_ = static_cast<T *>(inputs[1]->addr);
-  T *output_ = static_cast<T *>(outputs[0]->addr);
+  T *input_x_ = static_cast<T *>(inputs[0]->device_ptr());
+  T *input_y_ = static_cast<T *>(inputs[1]->device_ptr());
+  T *output_ = static_cast<T *>(outputs[0]->device_ptr());
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

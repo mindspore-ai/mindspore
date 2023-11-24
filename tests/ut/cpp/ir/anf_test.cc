@@ -38,7 +38,7 @@ class TestAnf : public UT::Common {
 };
 
 TEST_F(TestAnf, test_ValueNode) {
-  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim = std::make_shared<Primitive>("ScalarAdd");
   ValueNodePtr c = NewValueNode(prim);
   ASSERT_EQ(c->isa<ValueNode>(), true);
   ASSERT_EQ(IsValueNode<Primitive>(c), true);
@@ -175,5 +175,28 @@ TEST_F(TestAnf, test_CompressionTensor) {
   ASSERT_EQ(tensor_int16->DataSize(), data_size);
   ASSERT_EQ(tensor_int16->Size(), data_size);
   ASSERT_EQ(tensor_int16->compression_type(), kBitPacking);
+}
+
+/// Feature: Test scope name
+/// Description: test CNode scope name.
+/// Expectation: Tensor API work as expected.
+TEST_F(TestAnf, test_scope_name) {
+  auto scope_1 = std::make_shared<Scope>(std::string("test1"));
+  auto x = NewValueNode(1);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimScalarAdd), x, x};
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+
+  ScopeManager::GetInstance().EnterScope(scope_1);
+
+  auto cnode1 = fg->NewCNode(inputs);
+  auto cnode2 = fg->NewCNode(inputs);
+
+  assert(cnode1->fullname_with_scope() == std::string("test1/ScalarAdd-op0"));
+  assert(cnode2->fullname_with_scope() == std::string("test1/ScalarAdd-op1"));
+  auto scope_2 = std::make_shared<Scope>(std::string("test2"));
+  ScopeManager::GetInstance().EnterScope(scope_2);
+
+  auto cnode3 = fg->NewCNode(inputs);
+  assert(cnode3->fullname_with_scope() == std::string("test2/ScalarAdd-op0"));
 }
 }  // namespace mindspore

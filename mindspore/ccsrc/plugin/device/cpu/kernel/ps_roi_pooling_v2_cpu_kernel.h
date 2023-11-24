@@ -30,13 +30,10 @@ class PSROIPoolingCpuKernelMod : public NativeCpuKernelMod {
   PSROIPoolingCpuKernelMod() = default;
   ~PSROIPoolingCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -64,10 +61,10 @@ class PSROIPoolingCpuKernelMod : public NativeCpuKernelMod {
   void PSROIPoolForward(size_t start, size_t end, const T *input, const T *roi_boxes, T *output_data);
 
   template <typename T>
-  bool PSROIPoolingLauncher(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  bool PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                             const int output_size);
 
-  int ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs);
+  int ResizeCheckInputs(const std::vector<KernelTensor *> &inputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

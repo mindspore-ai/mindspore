@@ -40,12 +40,12 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
-  if (size > size_) {
-    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (size > GetSize()) {
+    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
     return true;
   }
 
@@ -58,9 +58,9 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
     MS_LOG(ERROR) << "SyncStream failed";
     return ret;
   }
-  if (size != size_) {
+  if (size != GetSize()) {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
-    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
+    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << GetSize();
   }
   MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
@@ -68,29 +68,29 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
     MS_EXCEPTION_IF_NULL(offload_ptr_);
     return GPUDeviceManager::GetInstance().CopyHostMemToHost(host_ptr, offload_ptr_, size);
   } else {
-    MS_EXCEPTION_IF_NULL(ptr_);
-    return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
+    MS_EXCEPTION_IF_NULL(GetDevicePtr());
+    return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, GetDevicePtr(), size);
   }
 }
 
 bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
-  if (size > size_) {
-    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (size > GetSize()) {
+    MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
     return true;
   }
   MS_EXCEPTION_IF_NULL(host_ptr);
-  if (size != size_) {
+  if (size != GetSize()) {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
-    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
+    MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << GetSize();
   }
 
   // Bind device by device name and device id on the current thread.
-  if (!device_name_.empty()) {
+  if (!device_name().empty()) {
     auto device_context = GetDeviceContext();
     auto gpu_device_context = dynamic_cast<GPUDeviceContext *>(device_context);
     MS_EXCEPTION_IF_NULL(gpu_device_context);
@@ -105,10 +105,10 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
     MS_EXCEPTION_IF_NULL(offload_ptr_);
     return GPUDeviceManager::GetInstance().CopyHostMemToHost(offload_ptr_, host_ptr, size);
   } else {
-    MS_EXCEPTION_IF_NULL(ptr_);
+    MS_EXCEPTION_IF_NULL(GetDevicePtr());
     auto &stream = GPUDeviceManager::GetInstance().default_stream();
     MS_EXCEPTION_IF_NULL(stream);
-    if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
+    if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream)) {
       MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
       return false;
     }
@@ -149,8 +149,8 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
 
 bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
                                         const std::string &format) const {
-  if (user_data_ != nullptr && user_data_->has(kUserDataType)) {
-    return SyncUserDataToDevice(user_data_, host_ptr, size);
+  if (user_data() != nullptr && user_data()->has(kUserDataType)) {
+    return SyncUserDataToDevice(user_data(), host_ptr, size);
   }
 
   MoveToDevice(false);
@@ -163,13 +163,13 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
 
   // PyNative mode need copy async to improve performance.
   MS_EXCEPTION_IF_NULL(host_ptr);
-  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
+  bool need_sync = (size != 0) && (GetSize() != 0) && (size <= GetSize());
   if (!need_sync) {
     return true;
   }
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
-  return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream);
+  return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream);
 }
 
 bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
@@ -189,34 +189,34 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
 
 bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
                                           const std::string &format) const {
-  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(address:" << ptr_ << " format:" << format_
-                << ", type_id:" << TypeIdLabel(type_id_) << ", size:" << size_ << "), src(address:" << src_ptr
+  MS_LOG(DEBUG) << "SyncDeviceToDevice, dst(address:" << GetDevicePtr() << " format:" << DeviceAddress::format()
+                << ", type_id:" << TypeIdLabel(type_id()) << ", size:" << GetSize() << "), src(address:" << src_ptr
                 << "format:" << format << ", type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
-  if (ptr_ == src_ptr) {
+  if (GetDevicePtr() == src_ptr) {
     MS_LOG(INFO) << "Dst addr is same with src addr, no need memcpy data.";
     return true;
   }
-  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+  if (type_id() > kMonadTypeBegin && type_id() < kMonadTypeEnd) {
     return true;
   }
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, src device size: " << size << ", dst device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << size << ", dst device size: " << GetSize();
     return true;
   }
-  if (size_ < size) {
-    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << size_;
+  if (GetSize() < size) {
+    MS_LOG(ERROR) << "Src size is greater than det size, src size is: " << size << ", dst size is: " << GetSize();
     return false;
   }
-  if (format_ != format || type_id_ != type) {
+  if (DeviceAddress::format() != format || type_id() != type) {
     MS_LOG(ERROR) << "Format or type is different, src(format:" << format << ", type_id:" << TypeIdLabel(type)
-                  << "), dst(format:" << format_ << "), type_id:" << TypeIdLabel(type_id_);
+                  << "), dst(format:" << DeviceAddress::format() << "), type_id:" << TypeIdLabel(type_id());
     return false;
   }
 
   MoveToDevice(false);
   MS_EXCEPTION_IF_NULL(src_ptr);
-  MS_EXCEPTION_IF_NULL(ptr_);
+  MS_EXCEPTION_IF_NULL(GetDevicePtr());
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   if (mem_offloaded()) {
@@ -224,7 +224,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
       MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
       return false;
     }
-  } else if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size, stream)) {
+  } else if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(GetDevicePtr(), src_ptr, size, stream)) {
     MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
     return false;
   }
@@ -235,11 +235,11 @@ bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeI
                                          size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MoveToDevice(false);
-  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(GetDevicePtr());
   const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
-  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream),
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream),
                               "CopyHostMemToDeviceAsync failed");
   return true;
 }
@@ -248,11 +248,11 @@ bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeI
                                          size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MoveToDevice(false);
-  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(GetDevicePtr());
   const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
-  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, ptr_, size, stream),
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, GetDevicePtr(), size, stream),
                               "CopyHostMemToDeviceAsync failed");
   return true;
 }
@@ -265,28 +265,28 @@ void GPUDeviceAddress::ClearDeviceMemory() {
     device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
     offload_ptr_ = nullptr;
   }
-  if (ptr_ != nullptr && from_mem_pool_) {
-    GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
-    ptr_ = nullptr;
+  if (GetDevicePtr() != nullptr && from_mem_pool_) {
+    GPUMemoryAllocator::GetInstance().FreeTensorMem(GetDevicePtr());
+    SetDevicePtr(nullptr);
   }
 }
 
 void GPUDeviceAddress::ClearUserData() {
-  if (user_data_ == nullptr || (!user_data_->has(kUserDataType))) {
+  if (user_data() == nullptr || (!user_data()->has(kUserDataType))) {
     return;
   }
 
-  auto user_data_type = user_data_->get<UserDataType>(kUserDataType);
+  auto user_data_type = user_data()->get<UserDataType>(kUserDataType);
   MS_EXCEPTION_IF_NULL(user_data_type);
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
 #if CUDA_VERSION > 11000 && defined(__linux__)
-    auto key_type = user_data_->get<TypeId>(kHashTableKeyType);
-    auto value_type = user_data_->get<TypeId>(kHashTableValueType);
+    auto key_type = user_data()->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data()->get<TypeId>(kHashTableValueType);
     MS_EXCEPTION_IF_NULL(key_type);
     MS_EXCEPTION_IF_NULL(value_type);
     const auto &iter = hashtable_func_list.find({*key_type, *value_type});
     if (iter != hashtable_func_list.end()) {
-      return std::get<kClearFuncIndex>(iter->second)(user_data_);
+      return std::get<kClearFuncIndex>(iter->second)(user_data());
     } else {
       MS_LOG(EXCEPTION) << "Unsupported hash table type:" << *key_type << " and:" << *value_type;
     }
@@ -344,7 +344,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
                                      uint32_t root_graph_id, bool force_update, bool) const {
   bool ret = false;
-  if (size_ == 0) {
+  if (GetSize() == 0) {
     return true;
   }
   auto debugger = Debugger::GetInstance();

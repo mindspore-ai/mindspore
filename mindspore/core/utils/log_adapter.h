@@ -65,6 +65,7 @@ enum ExceptionType {
   IndexError,
   ValueError,
   TypeError,
+  ShapeError,
   KeyError,
   AttributeError,
   NameError,

@@ -30,22 +30,16 @@ constexpr size_t kSelectInputsNum = 3;
 constexpr size_t kSelectOutputsNum = 1;
 }  // namespace
 
-bool SelectCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Select>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SelectCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
+int SelectCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -54,14 +48,14 @@ int SelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool SelectCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool SelectCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSelectOutputsNum, kernel_name_);
-  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input_cond = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *input_x = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *input_y = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task = [&input_x, &input_y, &output, &input_cond](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       output[i] = input_cond[i] ? input_x[i] : input_y[i];

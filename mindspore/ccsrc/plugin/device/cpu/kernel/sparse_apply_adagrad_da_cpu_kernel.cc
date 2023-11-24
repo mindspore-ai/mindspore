@@ -45,10 +45,8 @@ using KernelRunFunc = SparseApplyAdagradDACpuKernelMod::KernelRunFunc;
     .AddOutputAttr(kNumberType##t10)
 }  // namespace
 
-bool SparseApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdagradDACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -63,14 +61,13 @@ bool SparseApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator
                   << ", but got " << outputs.size();
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
 void SparseApplyAdagradDACpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -79,12 +76,10 @@ void SparseApplyAdagradDACpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyAdagradDACpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -148,23 +143,23 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename I, typename T>
-bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &,
-                                                    const std::vector<kernel::AddressPtr> &outputs) const {
+bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradDAOutputsNum, kernel_name_);
 
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto ga = reinterpret_cast<T *>(inputs[1]->addr);
-  auto da = reinterpret_cast<T *>(inputs[2]->addr);
-  auto g = reinterpret_cast<T *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<I *>(inputs[4]->addr);
-  auto lr_scalar = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto l1_scalar = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto l2_scalar = reinterpret_cast<T *>(inputs[7]->addr)[0];
-  int64_t global_step_scalar_int64 = reinterpret_cast<int64_t *>(inputs[8]->addr)[0];
+  auto var = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto ga = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto da = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto g = reinterpret_cast<T *>(inputs[3]->device_ptr());
+  auto indices = reinterpret_cast<I *>(inputs[4]->device_ptr());
+  auto lr_scalar = reinterpret_cast<T *>(inputs[5]->device_ptr())[0];
+  auto l1_scalar = reinterpret_cast<T *>(inputs[6]->device_ptr())[0];
+  auto l2_scalar = reinterpret_cast<T *>(inputs[7]->device_ptr())[0];
+  int64_t global_step_scalar_int64 = reinterpret_cast<int64_t *>(inputs[8]->device_ptr())[0];
   T global_step_scalar = static_cast<T>(global_step_scalar_int64);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto gs_lr = global_step_scalar * lr_scalar;
   for (size_t i = 0; i < indices_size_; ++i) {

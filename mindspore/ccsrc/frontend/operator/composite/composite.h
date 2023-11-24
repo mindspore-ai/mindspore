@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
+#include "frontend/operator/composite/starred_operation.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
@@ -69,6 +70,7 @@ class HyperMap : public MetaFuncGraph {
   abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_abs_list) const override;
   FuncGraphPtr GenerateFromTypes(const TypePtrList &args_abs_list) override;
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
+  void SetObjectForFnLeaf(const py::object &leaf_object);
 
  private:
   AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const;
@@ -89,8 +91,10 @@ using HyperMapPtr = std::shared_ptr<HyperMap>;
 
 class HyperMapPy : public HyperMap {
  public:
-  explicit HyperMapPy(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
-      : HyperMap(reverse, fn_leaf) {}
+  explicit HyperMapPy(bool reverse = false, const py::object &fn_leaf = py::none())
+      : HyperMap(reverse, fn_leaf.cast<prim::MultitypeFuncGraphPtr>()) {
+    SetObjectForFnLeaf(fn_leaf);
+  }
   ~HyperMapPy() override = default;
   MS_DECLARE_PARENT(HyperMapPy, HyperMap)
 };

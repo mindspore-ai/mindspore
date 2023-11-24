@@ -42,17 +42,9 @@ void CdistCpuKernelMod::InitFunc(float p) {
   }
 }
 
-bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Cdist>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast Cdist ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  p_ = kernel_ptr->get_p();
-
-  auto input_type_id = inputs[0]->GetDtype();
+bool CdistCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  auto input_type_id = inputs[0]->dtype_id();
   switch (input_type_id) {
     case kNumberTypeFloat32:
       InitFunc(p_);
@@ -64,11 +56,9 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CdistCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> in_shape0 = inputs[0]->GetShapeVector();
@@ -133,11 +123,11 @@ int CdistRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return 0;
 }
 
-bool CdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
-  in_data0_ = inputs[0]->addr;
-  in_data1_ = inputs[1]->addr;
-  out_data_ = outputs[0]->addr;
+bool CdistCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
+  in_data0_ = inputs[0]->device_ptr();
+  in_data1_ = inputs[1]->device_ptr();
+  out_data_ = outputs[0]->device_ptr();
   int ret = pool_->ParallelLaunch(CdistRun, this, thread_num_);
   if (ret != 0) {
     MS_LOG(ERROR) << "CdistCpuKernelMod ParallelLaunch failed, error_code[" << ret << "]";

@@ -97,9 +97,9 @@ class RandpermInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
 
-    auto shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto shape_ptr = input_args[kInputIndex0]->GetShape();
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_ptr);
     auto x_shape = shape_map[kShape];
     if (IsDynamic(x_shape)) {
@@ -116,13 +116,13 @@ class RandpermInfer : public abstract::OpInferBase {
 
     auto input_x = input_args[kInputIndex0];
     MS_EXCEPTION_IF_NULL(input_x);
-    auto x_value = input_x->BuildValue();
+    auto x_value = input_x->GetValue();
     MS_EXCEPTION_IF_NULL(x_value);
     auto value_ptr = primitive->GetAttr("max_length");
     auto max_length = GetValue<int64_t>(value_ptr);
-    if (input_x->isa<abstract::AbstractTensor>()) {
-      if (x_value->isa<tensor::Tensor>()) {
-        auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name());
+    if (input_x->GetType()->object_type() == kObjectTypeTensorType) {
+      if (!x_value->isa<ValueAny>()) {
+        auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name(), input_x->GetType());
         if (x_int[0] < 0) {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The value of the input n (" << x_int[0]
                                    << ") cannot be less than 0";
@@ -151,7 +151,7 @@ class RandpermInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
 
-    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
     const std::set<TypePtr> valid_types_x = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_x, prim_name);
 

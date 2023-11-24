@@ -25,12 +25,6 @@ namespace {
 constexpr size_t kGatherDInputsNum = 3;
 constexpr size_t kGatherDOutputsNum = 1;
 
-#define REGISTER(X1, X2, X3, OUTPUT, T1, T2)                                               \
-  {                                                                                        \
-    KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddInputAttr(X3).AddOutputAttr(OUTPUT), \
-      &GatherDCpuKernelMod::LaunchKernel<T1, T2>                                           \
-  }
-
 int64_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -73,79 +67,59 @@ void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, co
 }
 }  // namespace
 
-bool GatherDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool GatherDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   const size_t kThree = 3;
   if (inputs.size() != kThree) {
     MS_LOG(ERROR) << "GatherD input size must be equal to 3!";
     return false;
   }
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+  if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }
   return true;
 }
 
-int GatherDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int GatherDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
 
-  const size_t kIndexIdx = 2;
-  input_shape_ = Convert2SizeT(inputs[0]->GetShapeVector());
-  index_shape_ = Convert2SizeT(inputs[kIndexIdx]->GetShapeVector());
-  if (input_shape_.size() != index_shape_.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', shape size of 'x' must be equal to 'index', but got shape size of 'x': "
-                      << input_shape_.size() << ", and shape size of 'index': " << index_shape_.size();
-  }
+  input_shape_ = Convert2SizeT(inputs[kIndex0]->GetShapeVector());
+  index_shape_ = Convert2SizeT(inputs[kIndex2]->GetShapeVector());
   output_shape_ = index_shape_;
-
   return KRET_OK;
 }
 
 template <typename T, typename I>
-bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDOutputsNum, kernel_name_);
+bool GatherDCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto input_size = LongToSize(get_element_num(input_shape_)) * sizeof(T);
   auto index_size = LongToSize(get_element_num(index_shape_)) * sizeof(I);
-  size_t dim_size = sizeof(int);
   auto output_size = LongToSize(get_element_num(output_shape_)) * sizeof(T);
-  if (inputs[0]->size != input_size) {
+  if (inputs[0]->size() != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' must be " << input_size << ", but got "
-                      << inputs[0]->size << ".";
+                      << inputs[0]->size() << ".";
   }
-  if (inputs[1]->size != dim_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' must be " << dim_size << ", but got "
-                      << inputs[1]->size << ".";
-  }
-  if (inputs[2]->size != index_size) {
+  if (inputs[2]->size() != index_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'index' must be " << index_size
-                      << ", but got " << inputs[2]->size << ".";
+                      << ", but got " << inputs[2]->size() << ".";
   }
-  if (outputs[0]->size != output_size) {
+  if (outputs[0]->size() != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output must be " << output_size
-                      << ", but got " << outputs[0]->size << ".";
+                      << ", but got " << outputs[0]->size() << ".";
   }
-  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *dim = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto *index = reinterpret_cast<I *>(inputs[2]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *dim = reinterpret_cast<int64_t *>(inputs[1]->device_ptr());
+  auto *index = reinterpret_cast<I *>(inputs[2]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+
   int32_t input_rank = SizeToInt(input_shape_.size());
-  if (dim[0] >= input_rank || dim[0] < -input_rank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -input_rank << ", "
-                      << input_rank << "), but got: " << dim[0];
-  }
-  if (dim[0] < 0) {
-    dim[0] = static_cast<int>(dim[0] + input_rank);
-  }
+  int32_t copy_dim = LongToInt(*dim);
+  copy_dim = copy_dim < 0 ? copy_dim + input_rank : copy_dim;
+
   // check index
-  int max_index = SizeToInt(input_shape_[IntToSize(dim[0])]);
+  int max_index = SizeToInt(input_shape_[IntToSize(copy_dim)]);
   index_size = LongToSize(get_element_num(index_shape_));
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {
@@ -169,46 +143,39 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   }
   // copy task
   std::vector<size_t> pos(index_shape_.size(), 0);
-  int copy_dim = *dim;
   CopyTask<T, I>(0, &pos, input, index, copy_dim, output, output_shape_, out_cargo_size, input_cargo_size, false);
   return true;
 }
 
+#define REG_INDEX(DT1, DT2, T1, T2)                      \
+  {                                                      \
+    KernelAttr()                                         \
+      .AddInputAttr(DT1)                                 \
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+      .AddInputAttr(DT2)                                 \
+      .AddOutputAttr(DT1),                               \
+      &GatherDCpuKernelMod::LaunchKernel<T1, T2>         \
+  }
+
+#define GATHER_D_CPU_REGISTER(DT, T) \
+  REG_INDEX(DT, kNumberTypeInt64, T, int64_t), REG_INDEX(DT, kNumberTypeInt32, T, int32_t)
+
 const std::vector<std::pair<KernelAttr, GatherDCpuKernelMod::KernelRunFunc>> &GatherDCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, GatherDCpuKernelMod::KernelRunFunc>> func_list = {
-    REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex64, std::complex<float>,
-             int32_t),
-    REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex64, std::complex<float>,
-             int64_t),
-    REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeComplex128, std::complex<double>,
-             int32_t),
-    REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeComplex128, std::complex<double>,
-             int64_t),
-    REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat64, double, int32_t),
-    REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat64, double, int64_t),
-    REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, float, int32_t),
-    REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, float, int64_t),
-    REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, float16, int32_t),
-    REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, float16, int64_t),
-    REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt8, uint8_t, int32_t),
-    REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int64_t),
-    REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt8, int8_t, int32_t),
-    REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt8, int8_t, int64_t),
-    REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt16, uint16_t, int32_t),
-    REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt16, uint16_t, int64_t),
-    REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt16, int16_t, int32_t),
-    REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt16, int16_t, int64_t),
-    REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt32, uint32_t, int32_t),
-    REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt32, uint32_t, int64_t),
-    REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
-    REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int64_t),
-    REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeUInt64, uint64_t, int32_t),
-    REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
-    REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int64_t, int32_t),
-    REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
-    REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, bool, int32_t),
-    REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, bool, int64_t)};
-
+    GATHER_D_CPU_REGISTER(kNumberTypeComplex64, std::complex<float>),
+    GATHER_D_CPU_REGISTER(kNumberTypeComplex128, std::complex<double>),
+    GATHER_D_CPU_REGISTER(kNumberTypeFloat64, double),
+    GATHER_D_CPU_REGISTER(kNumberTypeFloat32, float),
+    GATHER_D_CPU_REGISTER(kNumberTypeFloat16, float16),
+    GATHER_D_CPU_REGISTER(kNumberTypeUInt8, uint8_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeInt8, int8_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeUInt16, uint16_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeInt16, int16_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeUInt32, uint32_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeInt32, int32_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeUInt64, uint64_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeInt64, int64_t),
+    GATHER_D_CPU_REGISTER(kNumberTypeBool, bool)};
   return func_list;
 }
 

@@ -35,7 +35,7 @@ TEST_F(MindDataTestRandomCropOp, TestOp1) {
   // Crop params
   unsigned int crop_height = 128;
   unsigned int crop_width = 128;
-  auto op = std::make_unique<RandomCropOp>(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant);
+  auto op = std::make_unique<RandomCropOp>(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant, 0, 0, 0);
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input1;
   Tensor::CreateFromTensor(input_tensor_, &input1);
@@ -69,8 +69,8 @@ TEST_F(MindDataTestRandomCropOp, TestOp2) {
   std::shared_ptr<Tensor> input2;
   Tensor::CreateFromTensor(input_tensor_, &input2);
   input_tensor_row.push_back(input2);
-  auto op = std::make_unique<RandomCropOp>(
-    crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant);
+  auto op =
+    std::make_unique<RandomCropOp>(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant, 0, 0, 0);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_EQ(true, s.IsOk());
   MS_LOG(INFO) << "testRandomCrop end.";

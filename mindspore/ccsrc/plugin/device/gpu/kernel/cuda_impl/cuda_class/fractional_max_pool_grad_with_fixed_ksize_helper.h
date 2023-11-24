@@ -113,41 +113,13 @@ class FractionalMaxPoolGradWithFixedKsizeHelperGpuKernel : public GpuKernelHelpe
       return dims_flag;
     }
 
-    int inp_flag = 0;
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : origin_input_shape_) {
-      cur_size_T *= val;
-    }
-    if (cur_size_T == 0 && inp_flag == 0) {
-      inp_flag = 1;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    cur_size_T = sizeof(T);
-    for (const auto &val : out_backprop_shape_) {
-      cur_size_T *= val;
-    }
-    if (cur_size_T == 0 && inp_flag == 0) {
-      inp_flag = 1;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    size_t cur_size_S = sizeof(S);
-    for (const auto &val : argmax_shape_) {
-      cur_size_S *= val;
-    }
-    if (cur_size_S == 0 && inp_flag == 0) {
-      inp_flag = 1;
-    }
-    input_size_list_.emplace_back(cur_size_S);
-
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
 
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return 0;
   }
 

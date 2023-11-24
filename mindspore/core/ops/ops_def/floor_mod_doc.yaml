@@ -1,0 +1,51 @@
+floor_mod:
+  description: |
+    Computes the remainder of division element-wise. It's a flooring divide.
+    E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    .. math::
+
+        out_{i} =\text{floor}(x_{i} // y_{i})
+
+    where the :math:`floor` indicates the Floor operator, for more details,
+    please refer to the :class:`mindspore.ops.Floor` operator.
+
+    .. warning::
+        - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
+        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+          double thousandths in the mini form.
+        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
+        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000,n<=8.
+
+    Args:
+        x (Union[Tensor, Number, bool]): The first input is a number or
+            a bool or a tensor whose data type is number or bool.
+        y (Union[Tensor, Number, bool]): The second input is a number or
+            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision of the two inputs.
+
+    Raises:
+        TypeError: If neither `x` nor `y` is a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> output = ops.floor_mod(x, y)
+        >>> print(output)
+        [2 1 2]

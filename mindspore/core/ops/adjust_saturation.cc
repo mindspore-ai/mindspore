@@ -43,12 +43,12 @@ namespace {
 abstract::ShapePtr AdjustSaturationInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // support dynamic rank and dynamic shape.
   if (IsDynamic(input_image_shape)) {
     return std::make_shared<abstract::Shape>(input_image_shape);
   }
-  auto input_scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   const int64_t min_image_dim = 3;
   const int64_t scale_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("dimension of AdjustSaturation input image",
@@ -64,10 +64,10 @@ abstract::ShapePtr AdjustSaturationInferShape(const PrimitivePtr &primitive,
 
 TypePtr AdjustSaturationInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto input_images_type = input_args[0]->BuildType();
-  auto input_scale_type = input_args[1]->BuildType();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  auto input_images_type = input_args[0]->GetType();
+  auto input_scale_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(input_images_type);
   MS_EXCEPTION_IF_NULL(input_scale_type);
   const std::set<TypePtr> valid_images_types = {kFloat16, kFloat32, kFloat64};

@@ -44,10 +44,10 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
 
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto accum_shape = input_args[kInputIndex1]->BuildShape();
-  auto accum_update_shape = input_args[kInputIndex2]->BuildShape();
-  auto grad_shape = input_args[kInputIndex6]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto accum_shape = input_args[kInputIndex1]->GetShape();
+  auto accum_update_shape = input_args[kInputIndex2]->GetShape();
+  auto grad_shape = input_args[kInputIndex6]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto accum_shape_ptr = accum_shape->cast<abstract::ShapePtr>();
   auto accum_update_shape_ptr = accum_update_shape->cast<abstract::ShapePtr>();
@@ -86,13 +86,13 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
 
 TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto accum_type = input_args[kInputIndex1]->BuildType();
-  auto accum_update_type = input_args[kInputIndex2]->BuildType();
-  auto lr_type = input_args[kInputIndex3]->BuildType();
-  auto rho_type = input_args[kInputIndex4]->BuildType();
-  auto epsilon_type = input_args[kInputIndex5]->BuildType();
-  auto grad_type = input_args[kInputIndex6]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto accum_type = input_args[kInputIndex1]->GetType();
+  auto accum_update_type = input_args[kInputIndex2]->GetType();
+  auto lr_type = input_args[kInputIndex3]->GetType();
+  auto rho_type = input_args[kInputIndex4]->GetType();
+  auto epsilon_type = input_args[kInputIndex5]->GetType();
+  auto grad_type = input_args[kInputIndex6]->GetType();
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;

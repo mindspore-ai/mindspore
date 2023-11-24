@@ -34,13 +34,12 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
   DynamicReshapeKernelMod() {}
   ~DynamicReshapeKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     is_need_retrieve_output_shape_ = true;
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -52,18 +51,24 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(DEBUG) << "Run PostExecute for DynamicReshape, real output shape is " << output_shape_;
-    outputs_[kIndex0]->SetShapeVector(output_shape_);
+    outputs[kIndex0]->SetShapeVector(output_shape_);
+    outputs[kIndex0]->set_size(
+      LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(),
+                                 UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
   }
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using LaunchFunc = std::function<bool(DynamicReshapeKernelMod *, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  using LaunchFunc =
+    std::function<bool(DynamicReshapeKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
   LaunchFunc kernel_func_;
   ShapeVector output_shape_;

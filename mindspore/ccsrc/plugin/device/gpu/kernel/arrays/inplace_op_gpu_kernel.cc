@@ -21,9 +21,8 @@ namespace mindspore {
 namespace kernel {
 static std::unordered_map<std::string, int> op_type_map = {
   {"InplaceUpdate", INPLACE_OP_TYPE_UPDATE}, {"InplaceAdd", INPLACE_OP_TYPE_ADD}, {"InplaceSub", INPLACE_OP_TYPE_SUB}};
-bool InplaceOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool InplaceOpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto iter = op_type_map.find(kernel_name_);
   if (iter == op_type_map.end()) {
     MS_LOG(ERROR) << "For InplaceOp kernel, Can only support InplaceUpdate, InplaceAdd, InplaceSub, but got "
@@ -45,23 +44,19 @@ bool InplaceOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
   if (kernel_name_ == "InplaceUpdate") {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceUpdate>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   } else if (kernel_name_ == "InplaceAdd") {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceAdd>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   } else {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceSub>(base_operator);
-    indices_ = kernel_ptr->get_indices();
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   }
   return true;
 }
 
-int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int InplaceOpGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -70,10 +65,10 @@ int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
   }
   ResetResource();
-  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                            inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_x = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> input_shape_v = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
+                                                            inputs.at(kIndex1)->GetDeviceShapeVector().end());
   band_size_ = 1;
   for (size_t i = 1; i < input_shape_x.size(); ++i) {
     band_size_ *= input_shape_x[i];
@@ -82,10 +77,7 @@ int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_elements_x = std::accumulate(input_shape_x.begin(), input_shape_x.end(), 1, std::multiplies<int64_t>());
   input_elements_v = std::accumulate(input_shape_v.begin(), input_shape_v.end(), 1, std::multiplies<int64_t>());
   size_t input_size_x = input_elements_x * unit_size_;
-  size_t input_size_v = input_elements_v * unit_size_;
   size_t indices_size = indices_.size() * sizeof(int64_t);
-  input_size_list_.push_back(input_size_x);
-  input_size_list_.push_back(input_size_v);
   output_size_list_.push_back(input_size_x);
   workspace_size_list_.push_back(indices_size);
   if (kernel_name_ == "InplaceUpdate") {
@@ -99,20 +91,20 @@ void InplaceOpGpuKernelMod::ResetResource() noexcept {
   input_elements_x = 0;
   input_elements_v = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 template <typename T>
-bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
-  if (inputs[kIndex1]->size == 0) {
+bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (inputs[kIndex1]->size() == 0) {
     MS_LOG(WARNING) << "For" << kernel_name_ << ", the input 'v' must be greater than 0 dimension,"
-                    << " but got: " << inputs[kIndex1]->size;
+                    << " but got: " << inputs[kIndex1]->size();
     return true;
   }
+
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_v = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);

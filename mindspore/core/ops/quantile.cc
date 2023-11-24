@@ -37,6 +37,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -50,11 +51,11 @@ constexpr int kQuantileDefaultDim = 10000;
 
 abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto input = input_args[0]->BuildShape();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto input = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto q_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto q_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   auto q_dim = q_shape.size();
   if (IsDynamicRank(input_shape) || IsDynamicRank(q_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -111,11 +112,11 @@ abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto q = input_args[1];
   MS_EXCEPTION_IF_NULL(q);
-  auto q_type = input_args[1]->BuildType();
+  auto q_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(q_type);
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
@@ -124,17 +125,18 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   (void)dict_type.insert(std::make_pair("input", input_type));
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, prim_name);
 
-  auto q_value = q->BuildValue();
+  auto q_value = q->GetValue();
   MS_EXCEPTION_IF_NULL(q_value);
-  if (q->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(q)) {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);
-  } else if (q->isa<abstract::AbstractScalar>()) {
+  } else if (CheckAndConvertUtils::IsScalar(q)) {
     if (q_value != nullptr) {
-      if (!q_value->isa<FloatImm>()) {
+      auto q_opt = GetScalarValue<float>(q_value);
+      if (!q_opt.has_value()) {
         MS_EXCEPTION(TypeError) << "For '" << prim_name
                                 << "', the type of 'q' must be float or tensor, but got: " << q_type->ToString() << ".";
       }
-      auto value = GetValue<float>(q_value);
+      auto value = q_opt.value();
       if (value < 0 || value > 1) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 'q' must in the range [0, 1], but got: " << value
                                  << ".";

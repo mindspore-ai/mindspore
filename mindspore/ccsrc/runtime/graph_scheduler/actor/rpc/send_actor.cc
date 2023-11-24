@@ -230,16 +230,9 @@ void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel:
   MS_EXCEPTION_IF_NULL(workspace_addr);
   size_t offset = 0;
   RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
-  size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
-  for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
-    auto real_input = input_node_with_index.first;
-    auto real_input_index = input_node_with_index.second;
-    MS_EXCEPTION_IF_NULL(real_input);
-
-    auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-    TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-
+  for (size_t i = 0; i < input_kernel_tensors_.size(); i++) {
+    auto shapes = input_kernel_tensors_[i]->GetShapeVector();
+    TypeId data_type = input_kernel_tensors_[i]->dtype_id();
     size_t serialized_data_size = SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, data_list[i]);
     offset += serialized_data_size;
   }

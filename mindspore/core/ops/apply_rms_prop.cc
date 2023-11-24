@@ -52,17 +52,14 @@ class ApplyRMSPropInfer : public abstract::OpInferBase {
     const int64_t kInputNum = 5;
     const int64_t kInputNumNormal = 8;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
-    auto var_shape = input_args[0]->BuildShape();
-    auto ms_shape = input_args[1]->BuildShape();
-    auto mom_shape = input_args[2]->BuildShape();
-    auto grad_shape = input_args[4]->BuildShape();
-    auto var_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto ms_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto mom_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-    auto grad_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    auto var_shape = input_args[0]->GetShape();
+    auto ms_shape = input_args[1]->GetShape();
+    auto mom_shape = input_args[2]->GetShape();
+    auto grad_shape = input_args[4]->GetShape();
+    auto var_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto ms_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+    auto mom_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+    auto grad_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
     if (IsDynamicRank(var_shape_map) || IsDynamicRank(ms_shape_map) || IsDynamicRank(mom_shape_map) ||
         IsDynamicRank(grad_shape_map)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -102,14 +99,14 @@ class ApplyRMSPropInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 8;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto var_dtype = input_args[0]->BuildType();
-    auto mean_square_dtype = input_args[1]->BuildType();
-    auto moment_dtype = input_args[2]->BuildType();
-    auto grad_dtype = input_args[4]->BuildType();
-    auto learning_rate_dtype = input_args[3]->BuildType();
-    auto decay_dtype = input_args[5]->BuildType();
-    auto momentum_dtype = input_args[6]->BuildType();
-    auto epsilon_dtype = input_args[7]->BuildType();
+    auto var_dtype = input_args[0]->GetType();
+    auto mean_square_dtype = input_args[1]->GetType();
+    auto moment_dtype = input_args[2]->GetType();
+    auto grad_dtype = input_args[4]->GetType();
+    auto learning_rate_dtype = input_args[3]->GetType();
+    auto decay_dtype = input_args[5]->GetType();
+    auto momentum_dtype = input_args[6]->GetType();
+    auto epsilon_dtype = input_args[7]->GetType();
     std::map<std::string, TypePtr> types;
     (void)types.emplace("var dtype", var_dtype);
     (void)types.emplace("mean square dtype", mean_square_dtype);

@@ -29,3 +29,11 @@ left_shift.set_need_raise()
 def _left_shift_scalar(x, y):
     """Returns x << y where x and y are all scalars."""
     return inner.bit_left_shift(x, y)
+
+
+@left_shift.register_default()
+def default_left_shift(x, y):
+    """
+    Default function for left shift.
+   """
+    return x << y

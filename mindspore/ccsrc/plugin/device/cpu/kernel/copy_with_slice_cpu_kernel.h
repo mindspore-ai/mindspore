@@ -34,8 +34,8 @@ class CopyWithSliceCpuKernel : public NativeCpuKernelMod {
   bool LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
                            const kernel::AddressPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
                            const kernel::AddressPtr &dst_addr);
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(EXCEPTION) << "This api is not external";
   }
 

@@ -36,6 +36,7 @@
 #include "mindspore/core/ops/image_ops.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "ops/upsample_interpolating_3d.h"
 #include "ops/upsample_nearest_3d.h"
@@ -58,10 +59,10 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
                         size_t *const scales_idx, const std::string &prim_name) {
   if (input_args.size() == kVALUE_3) {
     std::vector<int64_t> none_list{};
-    auto size_type = input_args[kInputIndex1]->BuildType();
+    auto size_type = input_args[kInputIndex1]->GetType();
     MS_EXCEPTION_IF_NULL(size_type);
     auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
-    auto scale_type = input_args[kInputIndex2]->BuildType();
+    auto scale_type = input_args[kInputIndex2]->GetType();
     MS_EXCEPTION_IF_NULL(scale_type);
     auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
@@ -83,11 +84,11 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
-  auto size_value_ptr = input_arg->BuildValue();
+  auto size_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector<int64_t>(kOutputSize, output_size, prim_name);
   }
   if (!IsDynamicRank(output_size)) {
     (void)CheckAndConvertUtils::CheckInteger("elements' number of output_size", SizeToLong(output_size.size()), kEqual,
@@ -100,18 +101,12 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
-  auto scales_value_ptr = input_arg->BuildValue();
+  auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
-  if (IsValueKnown(scales_value_ptr) && !IsDynamicRank(x_shape)) {
-    std::vector<double> scales;
-    if (scales_value_ptr->isa<tensor::Tensor>()) {
-      scales = CheckAndConvertUtils::CheckTensorFloatValue("scales", scales_value_ptr, prim_name);
-    } else if (scales_value_ptr->isa<ValueSequence>()) {
-      scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", scales_value_ptr, prim_name);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', scales should be 1D Tensor[Float] or Tuple[Float].";
-    }
-    (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
+  auto scales_opt = GetArrayValue<pyfloat>(scales_value_ptr);
+  if (scales_opt.has_value() && !scales_opt.value().HasUnknownValue()) {
+    const auto &scales = scales_opt.value().ToVector();
+    (void)CheckAndConvertUtils::CheckPositiveVector<pyfloat>(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements' number of scales", SizeToLong(scales.size()), kEqual, kVALUE_3,
                                              prim_name);
     for (int64_t idx = 0; idx < kVALUE_3; ++idx) {
@@ -154,7 +149,7 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
   for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, kVALUE_5, prim_name);
   }
@@ -187,7 +182,7 @@ TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std:
   }
   auto x_arg = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(x_arg);
-  auto x_type = x_arg->BuildType();
+  auto x_type = x_arg->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }
 }  // namespace

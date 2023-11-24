@@ -41,13 +41,10 @@ constexpr size_t kInputIndex3 = 3;
 constexpr size_t kInputIndex4 = 4;
 }  // namespace
 
-bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool FractionalMaxPoolGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
@@ -57,50 +54,46 @@ bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  overlapping_ = kernel_ptr->get_overlapping();
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int FractionalMaxPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPoolGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  tensor_in_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  tensor_out_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
+  tensor_in_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  tensor_out_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
   return ret;
 }
 
 template <typename T>
-bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradLaunch(const std::vector<AddressPtr> &inputs,
-                                                                    const std::vector<AddressPtr> &outputs) {
+bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradLaunch(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> ConstEigenMatrixMap;
   typedef Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> EigenMatrixMap;
   typedef Eigen::Map<Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic>> EigenIndexMatrixMap;
-  T *tensor_in = reinterpret_cast<T *>(inputs[0]->addr);
+  T *tensor_in = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(tensor_in);
-  T *tensor_out = reinterpret_cast<T *>(inputs[1]->addr);
+  T *tensor_out = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(tensor_out);
-  T *out_backprop = reinterpret_cast<T *>(inputs[2]->addr);
+  T *out_backprop = reinterpret_cast<T *>(inputs[2]->device_ptr());
   MS_EXCEPTION_IF_NULL(out_backprop);
-  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[3]->addr);
+  int64_t *row_seq = reinterpret_cast<int64_t *>(inputs[3]->device_ptr());
   MS_EXCEPTION_IF_NULL(row_seq);
-  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[4]->addr);
+  int64_t *col_seq = reinterpret_cast<int64_t *>(inputs[4]->device_ptr());
   MS_EXCEPTION_IF_NULL(col_seq);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output);
-  size_t tensor_in_num = inputs[0]->size / sizeof(T);
-  size_t tensor_out_num = inputs[1]->size / sizeof(T);
-  size_t back_in_nums = inputs[kInputIndex2]->size / sizeof(T);
-  size_t row_seq_num = inputs[kInputIndex3]->size / sizeof(int64_t);
-  size_t col_seq_num = inputs[kInputIndex4]->size / sizeof(int64_t);
-  size_t output_nums = outputs[0]->size / sizeof(T);
+  size_t tensor_in_num = inputs[0]->size() / sizeof(T);
+  size_t tensor_out_num = inputs[1]->size() / sizeof(T);
+  size_t back_in_nums = inputs[kInputIndex2]->size() / sizeof(T);
+  size_t row_seq_num = inputs[kInputIndex3]->size() / sizeof(int64_t);
+  size_t col_seq_num = inputs[kInputIndex4]->size() / sizeof(int64_t);
+  size_t output_nums = outputs[0]->size() / sizeof(T);
   std::vector<T> tensor_output(tensor_out_num);
   std::vector<int64_t> tensor_out_index(tensor_out_num);
   for (size_t i = 0; i < tensor_out_num; i++) {

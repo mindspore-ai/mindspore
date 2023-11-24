@@ -22,16 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-const int32_t RandomCropOp::kDefPadTop = 0;
-const int32_t RandomCropOp::kDefPadBottom = 0;
-const int32_t RandomCropOp::kDefPadLeft = 0;
-const int32_t RandomCropOp::kDefPadRight = 0;
-const BorderType RandomCropOp::kDefBorderType = BorderType::kConstant;
-const bool RandomCropOp::kDefPadIfNeeded = false;
-const uint8_t RandomCropOp::kDefFillR = 0;
-const uint8_t RandomCropOp::kDefFillG = 0;
-const uint8_t RandomCropOp::kDefFillB = 0;
-
 RandomCropOp::RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_top, int32_t pad_bottom,
                            int32_t pad_left, int32_t pad_right, bool pad_if_needed, BorderType padding_mode,
                            uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
@@ -45,10 +35,7 @@ RandomCropOp::RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_
       border_type_(padding_mode),
       fill_r_(fill_r),
       fill_g_(fill_g),
-      fill_b_(fill_b) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+      fill_b_(fill_b) {}
 
 Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *pad_image,
                                   int32_t *t_pad_top, int32_t *t_pad_bottom, int32_t *t_pad_left, int32_t *t_pad_right,
@@ -115,8 +102,8 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
 
 void RandomCropOp::GenRandomXY(int32_t *x, int32_t *y, int32_t padded_image_w, int32_t padded_image_h) {
   // GenCropPoints for cropping
-  *x = std::uniform_int_distribution<int>(0, padded_image_w - crop_width_)(rnd_);
-  *y = std::uniform_int_distribution<int>(0, padded_image_h - crop_height_)(rnd_);
+  *x = std::uniform_int_distribution<int>(0, padded_image_w - crop_width_)(random_generator_);
+  *y = std::uniform_int_distribution<int>(0, padded_image_h - crop_height_)(random_generator_);
 }
 
 Status RandomCropOp::RandomCropImg(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t *x,

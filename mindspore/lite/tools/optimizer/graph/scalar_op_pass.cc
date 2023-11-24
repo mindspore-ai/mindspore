@@ -16,12 +16,13 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/array_ops.h"
 #include "ops/lite_ops.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/mul.h"
+// #include "mindspore/core/ops/mul.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 #include "mindspore/core/abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/utils/anf_utils.h"
@@ -195,8 +196,6 @@ CNodePtr ScalarOpPass::GenerateTensorShape(const FuncGraphPtr &func_graph, const
     } else {
       auto elem = std::make_shared<abstract::AbstractScalar>(std::make_shared<ValueAny>(), std::make_shared<Int>(64));
       auto abs_tensor = std::make_shared<abstract::AbstractTensor>(elem, std::make_shared<abstract::Shape>(tensor_shp));
-      auto shape_value = MakeValue(shape);
-      abs_tensor->set_shape_value(shape_value);
       tmp_abstract = abs_tensor;
     }
   } else {

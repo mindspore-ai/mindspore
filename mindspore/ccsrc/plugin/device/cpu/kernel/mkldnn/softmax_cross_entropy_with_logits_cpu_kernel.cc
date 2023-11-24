@@ -30,18 +30,14 @@ constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputsNum = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(0)->GetShapeVector();
@@ -98,28 +94,28 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *
   ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
 }
 
-bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &workspace,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);
 
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
-  if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
-      inputs[1]->size != batch_class_float_size) {
+  if (inputs[0]->size() != workspace[0]->size() || inputs[0]->size() != batch_class_float_size ||
+      inputs[1]->size() != batch_class_float_size) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
-  if (outputs[1]->size != batch_class_float_size || outputs[0]->size != batch_float_size) {
+  if (outputs[1]->size() != batch_class_float_size || outputs[0]->size() != batch_float_size) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
 
-  const auto *logits = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto *labels = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *work = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *output1 = reinterpret_cast<float *>(outputs[0]->addr);
-  auto *output2 = reinterpret_cast<float *>(outputs[1]->addr);
+  const auto *logits = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  const auto *labels = reinterpret_cast<float *>(inputs[1]->device_ptr());
+  auto *work = reinterpret_cast<float *>(workspace[0]->device_ptr());
+  auto *output1 = reinterpret_cast<float *>(outputs[0]->device_ptr());
+  auto *output2 = reinterpret_cast<float *>(outputs[1]->device_ptr());
   ForwardPostExecute(logits, labels, output1, output2, work);
   return true;
 }

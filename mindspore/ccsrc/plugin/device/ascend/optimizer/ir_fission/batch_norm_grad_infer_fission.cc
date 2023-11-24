@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
-#include <vector>
 #include <string>
-#include "ops/sequence_ops.h"
-#include "ops/nn_ops.h"
-#include "include/backend/optimizer/helper.h"
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/sequence_ops.h"
+#include "plugin/device/ascend/optimizer/get_value_helper.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kElsilonIdx = 8;
 constexpr size_t kBatchNormGradInferOutputNum = 3;
 bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -93,8 +96,11 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
                                << trace::DumpSourceLines(bn_grad);
   }
   bn_infer_grad->set_abstract(bn_grad_abstract_tuple->elements()[0]);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_infer_grad);
   bn_infer_grad->set_scope(bn_grad->scope());
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad->cast<CNodePtr>()->input(kElsilonIdx));
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue<float>(epsilon), bn_infer_grad);
+
   return bn_infer_grad;
 }
 
@@ -142,8 +148,11 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
                                              bn_grad_abstract_tuple->elements()[kIndex2]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_grad->set_abstract(abstract_tuple);
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);
   bn_training_update_grad->set_scope(bn_grad->scope());
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad->cast<CNodePtr>()->input(kElsilonIdx));
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue<float>(epsilon), bn_training_update_grad);
+
   return bn_training_update_grad;
 }
 
@@ -162,18 +171,25 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                                     const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, node->cast<CNodePtr>())) {
-    MS_LOG(DEBUG) << "The BatchNormGrad " << node->DebugString() << " has no is_training attr, should not be changed";
+
+  // the 0's input of cnode is primitive
+  const size_t kIsTraningIdx = 7;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto is_training_input = cnode->input(kIsTraningIdx);
+  MS_EXCEPTION_IF_NULL(is_training_input);
+  auto value = is_training_input->abstract()->GetValue();
+  auto is_training = ops::GetValueWithCheck<bool>(value);
+  if (is_training) {
+    MS_LOG(DEBUG) << "The is_training value of " << node->DebugString() << " is true, no need change";
     return nullptr;
   }
-  if (common::AnfAlgo::GetNodeAttr<bool>(node, kAttrIsTraining)) {
-    MS_LOG(DEBUG) << "The is_training attr value of " << node->DebugString() << " is true, no need change";
-    return nullptr;
-  }
+
   if (!CheckOutputsIndex(func_graph, node)) {
     MS_LOG(DEBUG) << "The output 3 or 4 of BatchNormGrad is not null, no need change";
     return nullptr;
   }
+
   AnfNodePtr bn_infer_grad = CreateBNInferGrad(func_graph, node, equiv);
   AnfNodePtr bn_training_update_grad = CreateBNTrainingUpdateGrad(func_graph, node, equiv);
   std::vector<AnfNodePtr> bn_training_update_grad_outputs;

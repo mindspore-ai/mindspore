@@ -783,7 +783,7 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
     auto target_node = node_inputs[target_index];
     auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+    if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
       return nullptr;
     }
   }
@@ -1463,6 +1463,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the raise statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real raise operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1540,6 +1542,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertScalarCast(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the ScalarCast statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     constexpr size_t x_index = 1;
@@ -1650,6 +1654,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertIsInstance(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the isinstance statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real isinstance operator.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1673,6 +1679,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertJoinedStr(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the JoinedStr statement, it is best to set jit_syntax_level to LAX, "
+                      << "because there is no the real JoinedStr operator.\n";
       return nullptr;
     }
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1717,6 +1725,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the print statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1801,6 +1811,8 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertMakeRange(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the range statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
       return nullptr;
     }
     const auto &fg = cnode->func_graph();
@@ -1811,6 +1823,63 @@ class AfterOptARewriter : public BaseRewriter {
     auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "range");
     MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
     return pyexecute_node;
+  }
+
+  AnfNodePtr ConvertIsAndIsNot(const CNodePtr &cnode, bool is) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the is/is_not statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    constexpr auto data_str = "__data__";
+    constexpr auto target_str = "__target__";
+    std::stringstream script_buffer;
+    script_buffer << data_str;
+    if (is) {
+      script_buffer << " is ";
+    } else {
+      script_buffer << " is not ";
+    }
+    script_buffer << target_str;
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(data_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(target_str));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = cnode->inputs();
+    constexpr size_t inputs_size = 3;
+    if (node_inputs.size() != inputs_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The size of input to kPrimIs should be " << inputs_size << "but got "
+                                 << node_inputs.size();
+    }
+    constexpr size_t data_index = 1;
+    constexpr size_t target_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[data_index]);
+    (void)key_value_list.emplace_back(node_inputs[target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+    res->set_debug_info(cnode->debug_info());
+    return res;
+  }
+
+  AnfNodePtr ConvertIs_(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, true);
+    MS_LOG(DEBUG) << "Convert primitive Is_ to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  AnfNodePtr ConvertIsNot(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, false);
+    MS_LOG(DEBUG) << "Convert primitive IsNot to PyExecute node: " << res->DebugString();
+    return res;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
@@ -1848,7 +1917,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint},
     {prim::kPrimFormat, &ThisClass::ConvertFormat},
-    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange}};
+    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange},
+    {prim::kPrimIs_, &ThisClass::ConvertIs_},
+    {prim::kPrimIsNot, &ThisClass::ConvertIsNot}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
@@ -2285,6 +2356,9 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
+      if (value->ContainsValueAny()) {
+        return nullptr;
+      }
       if (value->isa<ValueDictionary>()) {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {

@@ -21,7 +21,6 @@
 #include <atomic>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "ops/reshape.h"
 #include "./kernel_log.h"
 #include "./kernel_errcode.h"
 #include "proto/node_def.pb.h"

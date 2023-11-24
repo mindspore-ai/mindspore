@@ -18,34 +18,23 @@
 
 namespace mindspore {
 namespace kernel {
-void AdamaxGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  input_size_list_.clear();
+void AdamaxGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   output_size_list_.clear();
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(),
-                                                       inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex8)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex8)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(),
+                                                       inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs[kIndex2]->GetDeviceShapeVector().begin(),
+                                                       inputs[kIndex2]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex8]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex8]->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
@@ -77,24 +66,12 @@ void AdamaxGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
     gradient_size_ *= gradient_shape_[i];
   }
 
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(m_size_);
-  input_size_list_.push_back(v_size_);
-  input_size_list_.push_back(beta1_power_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(beta1_size_);
-  input_size_list_.push_back(beta2_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(m_size_);
   output_size_list_.push_back(v_size_);
 }
 
-bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::ApplyAdaMax>(base_operator->GetPrim());
+bool AdamaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr int INPUT_NUM = 9;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 9, but got " << inputs.size();
@@ -112,21 +89,20 @@ bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).dtype);
   g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex8).dtype);
 
-  InOutputResize(base_operator, inputs, outputs);
+  InOutputResize(inputs, outputs);
   return true;
 }
 
-int AdamaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  InOutputResize(base_operator, inputs, outputs);
-  kernel_ptr_ = base_operator;
+int AdamaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  InOutputResize(inputs, outputs);
+
   return KRET_OK;
 }
 
 template <typename T, typename S, typename G>
-bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *m = GetDeviceAddress<T>(inputs, kIndex1);
   T *v = GetDeviceAddress<T>(inputs, kIndex2);
@@ -140,7 +116,7 @@ bool AdamaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   T *m_out = GetDeviceAddress<T>(outputs, kIndex1);
   T *v_out = GetDeviceAddress<T>(outputs, kIndex2);
 
-  auto status = ApplyAdamax(inputs[0]->size / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient,
+  auto status = ApplyAdamax(inputs[0]->size() / sizeof(T), beta1_power, learning_rate, beta1, beta2, epsilon, gradient,
                             variable, m, v, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,

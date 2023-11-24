@@ -25,9 +25,11 @@
 
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "backend/graph_compiler/transform.h"
+#include "backend/common/pass/erase_invalid_micro_depend.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/callbacks.h"
 #include "include/common/utils/scoped_long_running.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "ir/anf.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
@@ -610,6 +612,30 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   return actor_info;
 }
 
+namespace {
+void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_before_mindrt_unify_mindir_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
+  optimizer->AddPassManager(unify_mindir_pm);
+  (void)optimizer->Optimize(graph);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_end_mindrt_unify_mindir_graph_" + graph->ToString() + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+}
+}  // namespace
+
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
@@ -656,6 +682,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
     }
   }
+  DoUnifyMindIRPass(root_graph);
 }
 
 void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
@@ -1122,6 +1149,18 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
+  const auto &output_kernel_tensor = device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+  TypePtr output_type = output_kernel_tensor->GetType();
+  MS_EXCEPTION_IF_NULL(output_type);
+  TuplePtr output_tuple_type = output_type->cast<TuplePtr>();
+  MS_EXCEPTION_IF_NULL(output_tuple_type);
+  const auto &element_types = output_tuple_type->elements();
+  if (tensor_shape->size() != element_types.size()) {
+    MS_LOG(EXCEPTION) << "The tensor shape size[" << tensor_shape->size() << "] is not equal to output element size["
+                      << element_types.size() << "].";
+  }
+
   // Split the tensor of tuple to tensors.
   (void)tuple_tensors->emplace_back(output_tensor);
   size_t copy_offset_size = 0;
@@ -1130,8 +1169,14 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     auto split_tensor_shape = BaseShapeToShape((*tensor_shape)[i]);
     auto split_tensor_size = SizeOf(split_tensor_shape) * GetTypeByte(TypeIdToType(tensor_type_id));
     auto split_tensor = std::make_shared<tensor::Tensor>(tensor_type_id, split_tensor_shape);
-    auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, split_tensor_size, device_tensor->format(), device_tensor->type_id(), split_tensor_shape);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, split_tensor_size, device_tensor->format(), device_tensor->type_id(), split_tensor_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(element_types[i]);
+    kernel_tensor->SetShape((*tensor_shape)[i]);
+
+    auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo("Split tuple outputs", device::AllocatorType::kOther);

@@ -18,36 +18,27 @@
 
 namespace mindspore {
 namespace kernel {
-void AdadeltaGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  input_size_list_.clear();
+void AdadeltaGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   output_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).dtype);
   g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex6).dtype);
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(
-    inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(),
+                                                                  inputs[kIndex1]->GetDeviceShapeVector().end());
   std::vector<int64_t> accumulation_update_shape_ = std::vector<int64_t>(
-    inputs.at(kIndex2)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex2)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex6)->GetDeviceShapeAdaptively().end());
+    inputs[kIndex2]->GetDeviceShapeVector().begin(), inputs[kIndex2]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex6]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex6]->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
@@ -76,22 +67,12 @@ void AdadeltaGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
     gradient_size_ *= gradient_shape_[i];
   }
 
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(accumulation_size_);
-  input_size_list_.push_back(accumulation_update_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(rho_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(accumulation_size_);
   output_size_list_.push_back(accumulation_update_size_);
 }
 
-bool AdadeltaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::ApplyAdadelta>(base_operator->GetPrim());
+bool AdadeltaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr int INPUT_NUM = 7;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 7, but got " << inputs.size();
@@ -104,21 +85,20 @@ bool AdadeltaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  InOutputResize(base_operator, inputs, outputs);
+  InOutputResize(inputs, outputs);
   return true;
 }
 
-int AdadeltaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  kernel_ptr_ = base_operator;
-  InOutputResize(base_operator, inputs, outputs);
+int AdadeltaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  InOutputResize(inputs, outputs);
   return KRET_OK;
 }
 
 template <typename T, typename S, typename G>
-bool AdadeltaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool AdadeltaGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &workspace,
+                                        const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *accumulation = GetDeviceAddress<T>(inputs, kIndex1);
   T *accumulation_update = GetDeviceAddress<T>(inputs, kIndex2);
@@ -131,7 +111,7 @@ bool AdadeltaGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   T *accumulation_update_out = GetDeviceAddress<T>(outputs, kIndex2);
 
   auto status =
-    ApplyAdadelta(inputs[0]->size / sizeof(T), learning_rate, rho, epsilon, gradient, variable, accumulation,
+    ApplyAdadelta(inputs[0]->size() / sizeof(T), learning_rate, rho, epsilon, gradient, variable, accumulation,
                   accumulation_update, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,

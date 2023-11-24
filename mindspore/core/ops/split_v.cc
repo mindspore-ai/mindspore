@@ -47,7 +47,7 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1L, prim_name);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, prim_name);
 
@@ -115,7 +115,7 @@ TuplePtr SplitVInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
     MS_EXCEPTION_IF_NULL(item);
   }
   auto num_split = LongToInt(GetValue<int64_t>(prim->GetAttr("num_split")));
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(infer_type);
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,  kInt64,   kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat16, kFloat32};

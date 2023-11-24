@@ -34,11 +34,8 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInpuSizes = 2;
 }  // namespace
 
-bool NonDeterministicIntsCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NonDeterministicIntsCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -52,10 +49,11 @@ bool NonDeterministicIntsCPUKernelMod::Init(const BaseOperatorPtr &base_operator
 }
 
 template <typename T1, typename T2>
-bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                    const std::vector<AddressPtr> &outputs) {
-  auto output = reinterpret_cast<T1 *>(outputs[0]->addr);
-  size_t output_elem_num = outputs[0]->size / sizeof(T1);
+bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &,
+                                                    const std::vector<KernelTensor *> &,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  auto output = reinterpret_cast<T1 *>(outputs[0]->device_ptr());
+  size_t output_elem_num = outputs[0]->size() / sizeof(T1);
   auto task = [output](size_t start, size_t end) {
     auto max_data = std::numeric_limits<T1>::max();
     std::default_random_engine seed(time(nullptr));

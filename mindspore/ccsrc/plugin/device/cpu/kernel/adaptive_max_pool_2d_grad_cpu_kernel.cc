@@ -36,11 +36,8 @@ namespace {
 constexpr size_t kHWSize = 2;
 }  // namespace
 
-bool AdaptiveMaxPool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AdaptiveMaxPool2DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,11 +48,9 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_y_grad_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -88,8 +83,8 @@ int AdaptiveMaxPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
 }
 
 template <typename T, typename S>
-bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                     const std::vector<kernel::KernelTensor *> &outputs) {
   auto input_grad = GetDeviceAddress<T>(inputs, kIndex0);
   auto input_argmax = GetDeviceAddress<S>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -112,7 +107,7 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
       start += real_mem_size;
     }
   };
-  ParallelLaunchAutoSearch(init_task, outputs[kIndex0]->size, this, &search_info_);
+  ParallelLaunchAutoSearch(init_task, outputs[kIndex0]->size(), this, &search_info_);
   if (memset_ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << memset_ret;
   }

@@ -22,20 +22,16 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-class RandomVerticalFlipWithBBoxOp : public TensorOp {
+class RandomVerticalFlipWithBBoxOp : public RandomTensorOp {
  public:
-  static const float kDefProbability;
   // Constructor for RandomVerticalFlipWithBBoxOp
-  // @param probability: Probablity of Image flipping, 0.5 by default
-  explicit RandomVerticalFlipWithBBoxOp(float probability = kDefProbability) : distribution_(probability) {
-    rnd_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  // @param probability: Probablity of Image flipping
+  explicit RandomVerticalFlipWithBBoxOp(float probability) : distribution_(probability) {}
 
   ~RandomVerticalFlipWithBBoxOp() override = default;
 
@@ -44,7 +40,6 @@ class RandomVerticalFlipWithBBoxOp : public TensorOp {
   std::string Name() const override { return kRandomVerticalFlipWithBBoxOp; }
 
  private:
-  std::mt19937 rnd_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,18 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
     {kDynamicBroadcastTo,
-     {{KernelAttr()
+     {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeFloat32),
        &BroadcastToCpuKernelMod::LaunchKernel<float>},
       {KernelAttr()
@@ -120,17 +129,16 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
          .AddInputAttr(kNumberTypeUInt64)
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeUInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt64),
+       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>}}}};
 
-bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
-  }
-
+bool BroadcastToCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  kernel_type_ = kernel_name_;
   auto iter = func_list_.find(kernel_type_);
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "BroadcastTo cpu does not support " << kernel_type_;
@@ -146,9 +154,8 @@ bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int BroadcastToCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int BroadcastToCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
 
@@ -168,7 +175,7 @@ int BroadcastToCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
   shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   return ret;
 }
 
@@ -200,8 +207,9 @@ void BroadcastToCpuKernelMod::CheckArgs() {
 }
 
 template <typename T>
-bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
   CheckArgs();
 
@@ -210,8 +218,8 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     return true;
   }
 
-  const void *input_addr = inputs[0]->addr;
-  void *output_addr = outputs[0]->addr;
+  const void *input_addr = inputs[0]->device_ptr();
+  void *output_addr = outputs[0]->device_ptr();
   int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
     status = BroadcastToSize8(input_addr, &shape_info_, output_addr);

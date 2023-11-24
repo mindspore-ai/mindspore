@@ -106,8 +106,13 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   CNodePtr data_kernel_{nullptr};
   KernelInfo *kernel_info_{nullptr};
 
+  bool is_dynamic_shape_;
+
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
+
+  // The kernel tensors for resize and launch.
+  std::vector<KernelTensor *> output_kernel_tensors_;
 };
 
 // The class represents that the data source is host queue.

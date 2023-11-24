@@ -50,32 +50,9 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr int64_t kzero = 0;
-    constexpr int64_t kone = 1;
-    constexpr int64_t ktwo = 2;
-    constexpr int64_t kthree = 3;
-    constexpr int64_t kfour = 4;
     constexpr int64_t kfourbytes = 32;
     ResetResource();
-    std::vector<std::vector<int64_t>> input_shapes_1;
-    std::vector<std::vector<int64_t>> input_shapes_2;
-    std::vector<std::vector<int64_t>> input_shapes_3;
-    input_shapes_1.emplace_back(input_shapes[kzero]);
-    input_shapes_1.emplace_back(input_shapes[kone]);
-    input_shapes_2.emplace_back(input_shapes[ktwo]);
-    input_shapes_3.emplace_back(input_shapes[kthree]);
-    input_shapes_3.emplace_back(input_shapes[kfour]);
-    int inp_flag_1 = CalShapesSizeInBytes<T>(input_shapes_1, ktwo, kernel_name_, "input_shapes_1", &input_size_list_);
-    if (inp_flag_1 == -1) {
-      return inp_flag_1;
-    }
-    int inp_flag_2 = CalShapesSizeInBytes<S>(input_shapes_2, kone, kernel_name_, "input_shapes_2", &input_size_list_);
-    if (inp_flag_2 == -1) {
-      return inp_flag_2;
-    }
-    int inp_flag_3 = CalShapesSizeInBytes<M>(input_shapes_3, ktwo, kernel_name_, "input_shapes_3", &input_size_list_);
-    if (inp_flag_3 == -1) {
-      return inp_flag_3;
-    }
+
     output_size_list_.emplace_back(input_shapes[kzero][0] * sizeof(int));
     num_input = input_shapes[kzero][0];
     u_num = (num_input + kfourbytes - 1) / kfourbytes;
@@ -84,7 +61,7 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
     work_size_list_.emplace_back(num_input * sizeof(bool));                  // box mask
     work_size_list_.emplace_back(sizeof(int));                               // count
     work_size_list_.emplace_back(sizeof(int));                               // num_keep
-    is_null_input_ = (inp_flag_1 == 1 || inp_flag_2 == 1 || inp_flag_3 == 1);
+    is_null_input_ = HasZeroInShapes(input_shapes);
     return CheckKernelParam();
   }
 

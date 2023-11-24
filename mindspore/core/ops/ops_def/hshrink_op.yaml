@@ -1,0 +1,14 @@
+#operator hshrink
+hshrink:
+    args:
+        x:
+            dtype: tensor
+        lambd:
+            dtype: float
+            default: 0.5
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HShrink

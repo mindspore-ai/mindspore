@@ -158,7 +158,7 @@ TEST_F(TestPrim, test_list_reduce) {
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v1, false);
   auto abstract_list = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v1, abstract_v2}));
-  auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
   AbstractBasePtr abstract_func = ToAbstract(prim_scalar_add);
 
   args_spec_list.push_back(abstract_func);

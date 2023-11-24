@@ -50,8 +50,8 @@ abstract::TupleShapePtr Dropout2DInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_shape = input_shape_map[kShape];
   if (IsDynamicRank(input_shape)) {
     abstract::ShapePtr out_shape =
@@ -74,8 +74,8 @@ abstract::TupleShapePtr Dropout3DInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_shape = input_shape_map[kShape];
   if (IsDynamicRank(input_shape)) {
     auto unknow_shape_p = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
@@ -95,7 +95,7 @@ TypePtr DropoutNDInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto op_name = primitive->name();
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   std::set<TypePtr> check_list = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, check_list, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, kBool});

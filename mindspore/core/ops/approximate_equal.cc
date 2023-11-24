@@ -45,11 +45,11 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto x1 = input_args[0]->BuildShape();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  auto x1 = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x1);
-  auto x2 = input_args[1]->BuildShape();
+  auto x2 = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x2);
   auto shape_ptr_x1 = x1->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr_x1);
@@ -66,8 +66,8 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x1_dtype = input_args[0]->BuildType();
-  auto x2_dtype = input_args[1]->BuildType();
+  auto x1_dtype = input_args[0]->GetType();
+  auto x2_dtype = input_args[1]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_dtype, valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_dtype, valid_types, prim->name());

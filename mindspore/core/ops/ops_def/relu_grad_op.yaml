@@ -1,0 +1,12 @@
+#operator relu_grad
+relu_grad:
+  args:
+    y_backprop:
+      dtype: tensor
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: _relu_grad

@@ -17,8 +17,6 @@
 #include "backend/common/pass/add_dropout_attrs.h"
 
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

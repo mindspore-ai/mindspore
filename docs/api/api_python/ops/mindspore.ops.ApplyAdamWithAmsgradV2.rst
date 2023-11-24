@@ -16,6 +16,8 @@
             var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
         \end{array}
 
+    :math:`t` 表示更新步数， :math:`m` 为一阶矩， :math:`v` 为二阶矩， :math:`\hat v_t` 表示 `vhat`， :math:`lr` 代表学习率， :math:`g` 代表 `grad` ， :math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`\beta_1^{t}` 代表 `beta1_power` ， :math:`\beta_2^{t}` 代表 `beta2_power` ， :math:`var` 代表要更新的网络参数， :math:`\epsilon` 代表 `epsilon` 。
+
     所有输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
     参数：

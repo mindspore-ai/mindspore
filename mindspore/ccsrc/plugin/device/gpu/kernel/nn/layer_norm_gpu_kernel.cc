@@ -16,9 +16,9 @@
 
 #include "plugin/device/gpu/kernel/nn/layer_norm_gpu_kernel.h"
 #include <algorithm>
+#include <functional>
 #include <numeric>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_impl.cuh"
-#include "mindspore/core/ops/layer_norm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,18 +26,16 @@ namespace {
 constexpr size_t kLayerNormInputXIndex = 0;
 constexpr size_t kLayerNormInputGammaIndex = 1;
 constexpr size_t kLayerNormInputBetaIndex = 2;
+constexpr size_t kLayerNormInputBeginNormAxisIndex = 3;
+constexpr size_t kLayerNormInputBeginParamsAxisIndex = 4;
+constexpr size_t kLayerNormInputEpsilonIndex = 5;
 constexpr size_t kLayerNormOutputYIndex = 0;
 constexpr size_t kLayerNormOutputMeanIndex = 1;
 constexpr size_t kLayerNormOutputVarIndex = 2;
 }  // namespace
-bool LayerNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  epsilon_ = kernel_ptr->get_epsilon();
+bool LayerNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  epsilon_ = inputs[kLayerNormInputEpsilonIndex]->GetValueWithCheck<float_t>();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -48,22 +46,17 @@ bool LayerNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LayerNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
   }
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid LayerNormGpuKernelMod input size!";
   }
-  auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
-  auto begin_params_axis = kernel_ptr->get_begin_params_axis();
+  auto begin_norm_axis = inputs[kLayerNormInputBeginNormAxisIndex]->GetValueWithCheck<int64_t>();
+  auto begin_params_axis = inputs[kLayerNormInputBeginParamsAxisIndex]->GetValueWithCheck<int64_t>();
   auto input_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
   if (begin_norm_axis < 0) {
     begin_norm_axis += input_shape.size();
@@ -87,16 +80,16 @@ int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool LayerNormGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LayerNormGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
-void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void LayerNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto x = GetDeviceAddress<T>(inputs, kLayerNormInputXIndex);
   auto gamma = GetDeviceAddress<T>(inputs, kLayerNormInputGammaIndex);
   auto beta = GetDeviceAddress<T>(inputs, kLayerNormInputBetaIndex);
@@ -120,6 +113,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -128,6 +124,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -136,6 +135,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),

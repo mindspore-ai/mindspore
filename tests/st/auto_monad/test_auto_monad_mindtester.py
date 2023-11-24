@@ -125,8 +125,6 @@ class ControlGraphSupportNotEqual(Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_graph_support_not_equal_true():
     """
@@ -151,8 +149,6 @@ def test_ctrl_if_while_graph_support_not_equal_true():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_while_graph_support_not_equal_false():
     """
@@ -297,8 +293,6 @@ class ControlOneIfOneParaOneAddn(Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ctrl_if_para_addn_true():
     """

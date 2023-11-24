@@ -97,9 +97,8 @@ class Eig(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, compute_v=True):
         super().__init__(name="Eig")
-        self.init_prim_io_names(inputs=['a'], outputs=['w', 'v'])
         self.compute_v = validator.check_value_type("compute_v", compute_v, [bool], self.name)
-        self.add_prim_attr('compute_v', self.compute_v)
+        self._set_prim_arg("compute_v", compute_v)
         self.io_table = {
             mstype.TensorType(mstype.float32): mstype.complex64,
             mstype.TensorType(mstype.complex64): mstype.complex64,
@@ -128,6 +127,9 @@ class Eig(PrimitiveWithInfer):
                 'value': None
             }
         return output
+
+    def __call__(self, a):
+        return super().__call__(a, self.compute_v)
 
 
 class LU(PrimitiveWithInfer):

@@ -136,7 +136,6 @@ def test_reflection_pad2d_input3d(mode):
     output = net(x)
     expected_output = Tensor(np.array([[[7, 6, 7, 8, 7], [4, 3, 4, 5, 4], [1, 0, 1, 2, 1],
                                         [4, 3, 4, 5, 4], [7, 6, 7, 8, 7]]]).astype(np.float32))
-    print(output, expected_output)
 
     padding = 2
     output = nn.ReflectionPad2d(padding)(x)

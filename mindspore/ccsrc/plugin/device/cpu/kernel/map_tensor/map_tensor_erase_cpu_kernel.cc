@@ -41,11 +41,8 @@ std::vector<KernelAttr> MapTensorEraseCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool MapTensorEraseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MapTensorEraseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorEraseInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorEraseOutputNum, kernel_name_);
@@ -64,9 +61,8 @@ bool MapTensorEraseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int MapTensorEraseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+int MapTensorEraseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   ResetResource();
 
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex1));
@@ -80,17 +76,15 @@ int MapTensorEraseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename KeyType>
-bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) {
+bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorEraseInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapTensorEraseOutputNum, kernel_name_);
 
   // The real hash table should be accessed by user data.
-  if (input_user_data_.empty()) {
-    MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-  auto user_data = input_user_data_[kIndex0];
+  auto user_data = inputs[kIndex0]->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
 
   auto hash_table_value_type = user_data->get<TypeId>(kHashTableValueType);
@@ -101,8 +95,8 @@ bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
       MS_LOG(EXCEPTION) << "Failed to get gpu hash table pointer with value type:" << value_type;
     }
 
-    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs.at(kIndex1)->addr),
-                                 inputs.at(kIndex1)->size / sizeof(KeyType), nullptr);
+    return hash_table_ptr->Erase(static_cast<KeyType *>(inputs.at(kIndex1)->device_ptr()),
+                                 inputs.at(kIndex1)->size() / sizeof(KeyType), nullptr);
   } else {
     MS_LOG(EXCEPTION) << "GPU hash table does not support value type:" << value_type;
   }
@@ -112,12 +106,10 @@ bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 void MapTensorEraseCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape) {
   // Return size 1 as the first input size and the output size for MapTensorErase. Real map tensor is assigned by
   // framework.
-  input_size_list_.push_back(kSizeOne);
   output_size_list_.push_back(kSizeOne);
 
   auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
   MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_key_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapTensorErase, MapTensorEraseCpuKernelMod);

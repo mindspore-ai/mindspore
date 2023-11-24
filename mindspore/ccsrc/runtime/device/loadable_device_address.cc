@@ -32,18 +32,18 @@ bool LoadableDeviceAddress::Offload(size_t stream_id) {
     MS_LOG(WARNING) << "Trying to offload an offloaded AscendDeviceAddress.";
     return true;
   }
-  MS_EXCEPTION_IF_NULL(ptr_);
+  MS_EXCEPTION_IF_NULL(GetDevicePtr());
   auto device_context = GetDeviceContext();
   MS_EXCEPTION_IF_NULL(device_context);
-  offload_ptr_ = device_context->device_res_manager_->AllocateOffloadMemory(size_);
+  offload_ptr_ = device_context->device_res_manager_->AllocateOffloadMemory(GetSize());
   if (offload_ptr_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Alloc host memory for offloading failed, size: " << size_ << ".";
+    MS_LOG(EXCEPTION) << "Alloc host memory for offloading failed, size: " << GetSize() << ".";
   }
-  if (!AsyncDeviceToHost({}, size_, kTypeUnknown, offload_ptr_, stream_id)) {
+  if (!AsyncDeviceToHost({}, GetSize(), kTypeUnknown, offload_ptr_, stream_id)) {
     return false;
   }
-  device_context->device_res_manager_->FreeMemory(ptr_);
-  ptr_ = nullptr;
+  device_context->device_res_manager_->FreeMemory(GetDevicePtr());
+  SetDevicePtr(nullptr);
   mem_offloaded_ = true;
   return true;
 }
@@ -57,11 +57,11 @@ bool LoadableDeviceAddress::Load(size_t stream_id) {
   MS_EXCEPTION_IF_NULL(offload_ptr_);
   auto device_context = GetDeviceContext();
   MS_EXCEPTION_IF_NULL(device_context);
-  if (ptr_ == nullptr && !device_context->device_res_manager_->AllocateMemory(this)) {
-    MS_LOG(EXCEPTION) << "Alloc memory for loading failed, size: " << size_ << ".";
+  if (GetDevicePtr() == nullptr && !device_context->device_res_manager_->AllocateMemory(this)) {
+    MS_LOG(EXCEPTION) << "Alloc memory for loading failed, size: " << GetSize() << ".";
   }
-  MS_EXCEPTION_IF_NULL(ptr_);
-  if (!AsyncHostToDevice({}, size_, kTypeUnknown, offload_ptr_, stream_id)) {
+  MS_EXCEPTION_IF_NULL(GetDevicePtr());
+  if (!AsyncHostToDevice({}, GetSize(), kTypeUnknown, offload_ptr_, stream_id)) {
     return false;
   }
   device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
@@ -76,7 +76,7 @@ bool LoadableDeviceAddress::MoveTo(mindspore::device::StorageType dst, bool asyn
     MS_LOG(WARNING) << "Wait swapping DeviceAddress failed. Status: " << status_;
     return false;
   }
-  if (status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr) {
+  if (status_ == DeviceAddressStatus::kInDevice && GetDevicePtr() == nullptr) {
     MS_LOG(INFO) << "Skip move empty device address.";
     return true;
   }
@@ -108,12 +108,12 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   if (storage_info_.host_ptr_ == nullptr || storage_info_.host_ptr_mutable_) {
     storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
     if (storage_info_.host_ptr_ == nullptr) {
-      MS_LOG(WARNING) << "Allocating host memory failed, size: " << size_;
+      MS_LOG(WARNING) << "Allocating host memory failed, size: " << GetSize();
       return false;
     }
   }
   if (status_ == DeviceAddressStatus::kInFile) {
-    if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, size_, async)) {
+    if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, GetSize(), async)) {
       MS_LOG(WARNING) << "Copy data from file to host failed.";
       return false;
     }
@@ -128,7 +128,7 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
       status_ = DeviceAddressStatus::kInHost;
     }
   } else {
-    if (!CopyDeviceToHost(storage_info_.host_ptr_, ptr_, size_, async, stream_id)) {
+    if (!CopyDeviceToHost(storage_info_.host_ptr_, GetDevicePtr(), GetSize(), async, stream_id)) {
       MS_LOG(WARNING) << "Copy data from device to host failed.";
       return false;
     }
@@ -136,8 +136,8 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
       swap_manager->AddSwappingTensor(this);
       status_ = DeviceAddressStatus::kInDeviceToHost;
     } else {
-      swap_manager->FreeDeviceMemory(ptr_);
-      ptr_ = nullptr;
+      swap_manager->FreeDeviceMemory(GetDevicePtr());
+      SetDevicePtr(nullptr);
       status_ = DeviceAddressStatus::kInHost;
     }
   }
@@ -155,11 +155,11 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (status_ == DeviceAddressStatus::kInFile) {
 #if defined(RT_MEMORY_P2PDMA)
-    if (ptr_ == nullptr) {
-      ptr_ = swap_manager->AllocDeviceMemory(size_);
+    if (GetDevicePtr() == nullptr) {
+      SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize()));
     }
     MS_EXCEPTION_IF_NULL(ptr_);
-    if (FileToDeviceDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
+    if (FileToDeviceDirectly(GetDevicePtr(), GetSize(), storage_info_.file_name_, stream_id)) {
       if (storage_info_.file_name_mutable_ && !storage_info_.file_name.empty()) {
         (void)swap_manager->DeleteFile(storage_info_.file_name);
         storage_info_.file_name = "";
@@ -176,14 +176,14 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
       return false;
     }
   }
-  if (ptr_ == nullptr) {
-    ptr_ = swap_manager->AllocDeviceMemory(size_);
-    if (ptr_ == nullptr) {
-      MS_LOG(WARNING) << "Allocating device memory failed, size: " << size_;
+  if (GetDevicePtr() == nullptr) {
+    SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize()));
+    if (GetDevicePtr() == nullptr) {
+      MS_LOG(WARNING) << "Allocating device memory failed, size: " << GetSize();
       return false;
     }
   }
-  if (!CopyHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
+  if (!CopyHostToDevice(GetDevicePtr(), storage_info_.host_ptr_, GetSize(), async, stream_id)) {
     MS_LOG(WARNING) << "Copy data from host to device failed.";
     return false;
   }
@@ -215,10 +215,10 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
     if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
       storage_info_.file_name_ = GetSwapFileName();
     }
-    if (DeviceToFileDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
+    if (DeviceToFileDirectly(GetDevicePtr(), GetSize(), storage_info_.file_name_, stream_id)) {
       status_ = DeviceAddressStatus::kInFile;
       if (ptr_ != nullptr) {
-        swap_manager->FreeDeviceMemory(ptr_);
+        swap_manager->FreeDeviceMemory(GetDevicePtr());
         ptr_ = nullptr;
       }
       if (storage_info_.host_ptr_ != nullptr) {
@@ -239,7 +239,7 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
       return false;
     }
   }
-  if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, size_, async)) {
+  if (!CopyHostToFile(storage_info_.file_name_, storage_info_.host_ptr_, GetSize(), async)) {
     MS_LOG(WARNING) << "Copy data from host to file failed.";
     return false;
   }
@@ -314,7 +314,7 @@ void LoadableDeviceAddress::ReleaseResource() {
 }
 
 size_t LoadableDeviceAddress::GetFileAlignSize() const {
-  return (size_ + kFileAlignSize - 1) / kFileAlignSize * kFileAlignSize;
+  return (GetSize() + kFileAlignSize - 1) / kFileAlignSize * kFileAlignSize;
 }
 
 std::string LoadableDeviceAddress::GetSwapFileName() const {
@@ -396,7 +396,7 @@ bool LoadableDeviceAddress::Wait() const {
     }
     status_ = DeviceAddressStatus::kInHost;
   } else if (status_ == DeviceAddressStatus::kInDeviceToHost) {
-    swap_manager->FreeDeviceMemory(ptr_);
+    swap_manager->FreeDeviceMemory(GetDevicePtr());
     status_ = DeviceAddressStatus::kInHost;
   } else {
     if (storage_info_.host_ptr_mutable_) {
@@ -426,7 +426,7 @@ void *LoadableDeviceAddress::GetOffloadPtr() const {
 // Return whether DeviceAddress has a valid ptr.
 bool LoadableDeviceAddress::IsPtrValid() const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  return ptr_ != nullptr || offload_ptr_ != nullptr || storage_info_.host_ptr_ != nullptr ||
+  return GetDevicePtr() != nullptr || offload_ptr_ != nullptr || storage_info_.host_ptr_ != nullptr ||
          !storage_info_.file_name_.empty();
 }
 

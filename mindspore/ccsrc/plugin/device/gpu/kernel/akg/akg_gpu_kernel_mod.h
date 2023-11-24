@@ -27,6 +27,21 @@
 
 namespace mindspore {
 namespace kernel {
+using std::fstream;
+using std::string;
+using std::vector;
+
+const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
+const int REGISTER_UNIT_IN_WARP = 256;
+const int WARP_SIZE = 32;
+const int WARP_ALLOC_GRAN = 4;
+const int AKG_KERNEL_MOD_BX_IDX = 0;
+const int AKG_KERNEL_MOD_BY_IDX = 1;
+const int AKG_KERNEL_MOD_BZ_IDX = 2;
+const int AKG_KERNEL_MOD_TX_IDX = 3;
+const int AKG_KERNEL_MOD_TY_IDX = 4;
+const int AKG_KERNEL_MOD_TZ_IDX = 5;
+
 struct GpuKernelMeta {
   CUfunction func_addr_;
   CUmodule module_;
@@ -62,8 +77,8 @@ class AkgGpuKernelMod : public GpuKernelMod {
   explicit AkgGpuKernelMod(const KernelPackPtr &kernel_pack);
   virtual ~AkgGpuKernelMod() {}
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   static AkgGpuKernelManagerPtr kernel_manager_;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
@@ -77,8 +92,8 @@ class AkgGpuKernelModDebug : public AkgGpuKernelMod {
  public:
   explicit AkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : AkgGpuKernelMod(kernel_pack) {}
   virtual ~AkgGpuKernelModDebug() {}
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto ptr = reinterpret_cast<CUstream>(stream_ptr);
     CUresult before_launch = cuStreamSynchronize(ptr);
     const char *msg = nullptr;

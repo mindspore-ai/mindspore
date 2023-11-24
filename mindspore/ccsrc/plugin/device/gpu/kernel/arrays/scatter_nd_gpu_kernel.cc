@@ -70,9 +70,9 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
 }
 
 template <typename T, typename S>
-bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   S *indices = GetDeviceAddress<S>(inputs, 0);
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
@@ -88,7 +88,7 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     cudaMemsetAsync(output, static_cast<T>(0.0), output_size_list_[0], reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemSet failed in ScatterNdGpuKernelMod::LaunchKernel.");
 
-  const size_t input_size = input_size_list_[kIndex1] / sizeof(T);
+  const size_t input_size = inputs[kIndex1]->size() / sizeof(T);
   const size_t output_size = output_size_list_[kIndex0] / sizeof(T);
   auto status = ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
                           info, reinterpret_cast<cudaStream_t>(stream_ptr_));
@@ -96,34 +96,26 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool ScatterNdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool ScatterNdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   return true;
 }
 
-int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ScatterNdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
-  if (!TryGetIntValue(inputs, kShapeIndex_, kernel_name_, &attr_shape_)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << "can't get shape input!";
-    return KRET_RESIZE_FAILED;
-  }
-
+  attr_shape_ = inputs[kShapeIndex_]->GetValueWithCheck<ShapeVector>();
   CalSize(inputs, outputs);
   return KRET_OK;
 }
 
-void ScatterNdGpuKernelMod::CalSize(const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+void ScatterNdGpuKernelMod::CalSize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto indices_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
 

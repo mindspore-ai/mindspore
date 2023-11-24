@@ -23,29 +23,15 @@
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
 #include "include/common/thread_pool.h"
-#include "mindspore/core/ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
-constexpr size_t kGatherInputsNum = 3;
-constexpr size_t kGatherOutputsNum = 1;
-constexpr size_t kGatherInputParamsMaxDim = 8;
 }  // namespace
-bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Gather>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  batch_dims_ = kernel_ptr->get_batch_dims();
-
-  size_t input_num = inputs.size();
-  if (input_num != kGatherInputsNum) {
-    MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherCPUKernel needs 2.";
-  }
+bool GatherCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -55,60 +41,45 @@ bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_func_ = func_list_[index].second;
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   indices_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
-  axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
   return true;
 }
 
-int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int GatherCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   input_shape_ = inputs[kIndexZero]->GetShapeVector();
   indices_shape_ = inputs[kIndexOne]->GetShapeVector();
   output_shape_ = outputs[kIndexZero]->GetShapeVector();
-  if (IsDynamic(input_shape_) || IsDynamic(indices_shape_) || IsDynamic(output_shape_)) {
-    return KRET_UNKNOWN_SHAPE;
-  }
-  if (batch_dims_ < 0) {
-    batch_dims_ += SizeToLong(indices_shape_.size());
-  }
+  batch_dims_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  batch_dims_ = batch_dims_ < 0 ? batch_dims_ + SizeToLong(input_shape_.size()) : batch_dims_;
+
   is_null_input_ = input_shape_.empty() || indices_shape_.empty() || output_shape_.empty();
   if (is_null_input_) {
     InitSizeLists();
     return KRET_OK;
   }
-  if (input_shape_.size() > kGatherInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
-                      << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
-  }
+
   InitSizeLists();
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherOutputsNum, kernel_name_);
-  const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  S axis_temp = static_cast<S *>(inputs[kIndex2]->addr)[0];
-  axis_ = static_cast<int64_t>(axis_temp);
+bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->device_ptr());
+  const auto *indices_data = reinterpret_cast<S *>(inputs[1]->device_ptr());
+  auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
+  auto axis_v = *(reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr()));
 
   int dims = SizeToInt(input_shape_.size());
-  if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << ", " << dims
-                  << "), but got " << axis_ << ".";
-    return false;
-  } else if (axis_ < 0) {
-    axis_ = axis_ + dims;
+  if (axis_v < 0) {
+    axis_v = axis_v + dims;
   }
 
   size_t batch_size = 1;
   size_t outer_size = 1;
   size_t indices_element_size = 1;
   size_t inner_size = 1;
-  auto axis = LongToSize(axis_);
+  auto axis = LongToSize(axis_v);
   auto batch_dims = LongToSize(batch_dims_);
   for (size_t i = 0; i < batch_dims; i++) {
     batch_size *= LongToSize(input_shape_.at(i));
@@ -147,43 +118,33 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
     };
     ParallelLaunchAutoSearch(task, outer_size, this, &parallel_search_info_);
   }
-
   return true;
 }
 
-#define GATHER_CPU_REG(MS_T, MS_S, MS_G, T, S)                                               \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddInputAttr(MS_G).AddOutputAttr(MS_T), \
+#define GATHER_CPU_REG(MS_T, MS_S, T, S)               \
+  KernelAttr()                                         \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(MS_S)                                \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(MS_T),                              \
     &GatherCpuKernelMod::LaunchKernel<T, S>
 
 std::vector<std::pair<KernelAttr, GatherCpuKernelMod::GatherFunc>> GatherCpuKernelMod::func_list_ = {
-  {GATHER_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, uint8_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, uint8_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, uint16_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, uint16_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, uint32_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, uint32_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, int8_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, int8_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int16_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, int16_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, float16, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, float16, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, float, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, double, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, double, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, bool, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, bool, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt32, complex64, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeInt64, complex64, int64_t)},
-  {GATHER_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt32, complex128, int32_t)},
-  {GATHER_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeInt64, complex128, int64_t)}};
+  {GATHER_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64, int32_t)},
+  {GATHER_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128, int32_t)}};
 
 std::vector<KernelAttr> GatherCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

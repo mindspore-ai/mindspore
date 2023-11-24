@@ -18,19 +18,16 @@
 
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-const float RandomVerticalFlipWithBBoxOp::kDefProbability = 0.5;
-
 Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
   RETURN_IF_NOT_OK(ValidateImageDtype("RandomVerticalFlipWithBBox", input[0]->type()));
   RETURN_IF_NOT_OK(ValidateImageRank("RandomVerticalFlipWithBBox", input[0]->Rank()));
 
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     dsize_t imHeight = input[0]->shape()[0];
     size_t boxCount = input[1]->shape()[0];  // number of rows in tensor
 

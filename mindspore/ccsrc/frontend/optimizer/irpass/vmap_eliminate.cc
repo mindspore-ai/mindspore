@@ -332,6 +332,14 @@ ValuePtr CreatePrimtivePy(const mindspore::HashMap<std::string, ValuePtr> &attrs
   return op_instance;
 }
 
+py::object CreatePrimitiveFunctionAdapterPyObj(const PrimitivePtr &prim_func) {
+  const auto op_path = "mindspore.ops.primitive";
+  const auto func = "_create_primitive_function_obj";
+  py::object prim_func_adapter_obj = python_adapter::CallPyFn(op_path, func);
+  prim_func_adapter_obj.cast<PrimitiveFunctionAdapterPtr>()->set_attached_primitive_function(prim_func);
+  return prim_func_adapter_obj;
+}
+
 AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resource, int axis_size) {
   // Set a child scope named "vmap_'PrimitiveName'" for the vmap rule function,
   // and add "VmapRule" to the front.
@@ -355,18 +363,23 @@ AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
   }
 
   // Get vmap rule for specific primitive.
-  if (prim->is_base()) {
+  if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+    auto new_prim_func_adapter_py_obj = CreatePrimitiveFunctionAdapterPyObj(prim);
+    vmap_rule_fn = GetVmapRuleFunctionByObj(new_prim_func_adapter_py_obj, axis_size);
+  } else if (prim->is_base()) {
     if (prim->attrs().empty()) {
       vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
     } else {
       auto new_prim = CreatePrimtivePy(prim->attrs(), prim->name());
       vmap_rule_fn = new_prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
     }
-  } else {
+  } else if (prim->isa<PrimitivePy>()) {
     vmap_rule_fn = prim->cast<PrimitivePyPtr>()->GetVmapRuleFunction(is_side_effect, axis_size);
     if (py::isinstance<py::none>(vmap_rule_fn)) {
       vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
     }
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected prim:" << prim->ToString();
   }
 
   // If vmap rule for specific primitive not found, get vmap general rule.

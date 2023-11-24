@@ -28,10 +28,13 @@
 namespace mindspore {
 namespace parallel {
 Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
-  Strategies stra = strategy->GetInputDim();
+
+  std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   int64_t channel_a_strategy = sub_a_strategy.at(1);
@@ -53,6 +56,20 @@ Status BiasAddInfo::InferDevMatrixShape() {
 void BiasAddInfo::ReComputeBatchSplitFlagList() {
   split_flag_list_[0] = true;
   split_flag_list_[1] = false;
+}
+
+Status BiasAddInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_axis;
+  (void)mirror_ops_.emplace_back(std::move(op_for_axis));
+  return SUCCESS;
 }
 
 Status BiasAddInfo::InferTensorMap() {

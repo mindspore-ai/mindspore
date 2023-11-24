@@ -21,6 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.train import Model
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -54,3 +55,23 @@ def test_greater_2d_scalar0():
     out_me = me_greater(Tensor(a), Tensor(b))
     logger.info("Check me result:")
     logger.info(out_me)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_greater_bf16(mode):
+    """
+    Feature: primitive greater
+    Description: Verify the result of primitive Greater
+    Expectation: success
+    """
+    context.set_context(mode=mode)
+    net = Greater()
+
+    inputs = Tensor(np.array([[1.0, 0.0], [1.0, 2.0]]), mstype.bfloat16)
+    other = Tensor(np.array([[1.0, 1.0], [0.0, 1.0]]), mstype.bfloat16)
+    value = net(inputs, other)
+    expect_value = np.array([[False, False], [True, True]])
+    np.testing.assert_array_equal(expect_value, value.asnumpy())

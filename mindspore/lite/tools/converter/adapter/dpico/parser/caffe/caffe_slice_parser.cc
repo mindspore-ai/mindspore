@@ -16,7 +16,7 @@
 
 #include "parser/caffe/caffe_slice_parser.h"
 #include <memory>
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,7 +42,7 @@ BaseOperatorPtr CaffeSliceParser::Parse(const caffe::LayerParameter &proto, cons
       }
     }
     size_splits.push_back(-1);
-    prim->set_size_splits(size_splits);
+    prim->AddAttr("size_splits", api::MakeValue(size_splits));
   }
 
   if (slice_param.has_axis()) {

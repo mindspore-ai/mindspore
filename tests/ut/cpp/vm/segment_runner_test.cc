@@ -50,7 +50,7 @@ class TestCompileSegmentRunner : public UT::Common {
 };
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
-  FuncGraphPtr g = get_py_fun_(kScalarAddOpName);
+  FuncGraphPtr g = get_py_fun_("ScalarAdd");
   // g was managed by local variable manager in get_py_fun_ and that manager will be freed as no reference.
   // so a new manager should be declared to make get_outputs() in segment_runner.cc happy.
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
@@ -66,7 +66,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
 }
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
-  FuncGraphPtr g = get_py_fun_(kScalarMulOpName);
+  FuncGraphPtr g = get_py_fun_("ScalarMul");
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");

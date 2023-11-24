@@ -25,10 +25,8 @@ constexpr int kSearchSortedOutputsNum = 1;
 constexpr size_t kSearchSortedIndex0 = 0;
 constexpr size_t kSearchSortedIndex1 = 1;
 }  // namespace
-bool SearchSortedGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SearchSorted>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SearchSortedGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
   if (inputs.empty() || outputs.empty()) {
@@ -42,16 +40,15 @@ bool SearchSortedGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  sequence_per_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
-  value_per_size_ = abstract::TypeIdSize(inputs[1]->GetDtype());
-  unit_output_size_ = abstract::TypeIdSize(outputs[0]->GetDtype());
-  right = kernel_ptr_->get_right();
+  sequence_per_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
+  value_per_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
+  unit_output_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
+  right = GetValue<bool>(primitive_->GetAttr("right"));
   return true;
 }
 
-int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SearchSortedGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -59,8 +56,8 @@ int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           outputs.at(kIndex0)->GetDeviceShapeVector().end());
   auto sequence_shape = inputs.at(kSearchSortedIndex0)->GetShapeVector();
   auto value_shape = inputs.at(kSearchSortedIndex1)->GetShapeVector();
   (void)std::transform(sequence_shape.begin(), sequence_shape.end(), std::back_inserter(sequence_shape_),
@@ -77,8 +74,6 @@ int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_UNKNOWN_SHAPE;
   }
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(sequence_size_ * sequence_per_size_);
-  input_size_list_.push_back(value_size_ * value_per_size_);
   workspace_size_list_.push_back(sizeof(int));
   workspace_size_list_.push_back(sizeof(int));
   output_size_list_.push_back(output_size);
@@ -86,9 +81,9 @@ int SearchSortedGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename S, typename T>
-bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   CheckParam<S, T>(inputs, outputs);
   auto sequence_ptr = GetDeviceAddress<S>(inputs, kSearchSortedIndex0);
@@ -134,24 +129,24 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 }
 
 template <typename S, typename T>
-void SearchSortedGpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
+void SearchSortedGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   constexpr size_t kInputSize = 2;
   constexpr size_t kOutputSize = 1;
   if (inputs.size() != kInputSize) {
     MS_LOG(ERROR) << "Input number is: " << inputs.size() << ", but SearchSorted needs" << kInputSize << " inputs.";
   }
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
-                  << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
+                  << inputs[1]->size() << " and the dimension of output " << outputs[0]->size();
   }
   if (outputs.size() != kOutputSize) {
     MS_LOG(ERROR) << "Output number is " << outputs.size() << ", but SearchSorted needs " << kOutputSize << " outputs";
   }
-  if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
-    MS_LOG(ERROR) << "The output dimensions " << outputs[0]->size << " must match the dimensions of input values "
-                  << inputs[1]->size;
+  if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
+    MS_LOG(ERROR) << "The output dimensions " << outputs[0]->size() << " must match the dimensions of input values "
+                  << inputs[1]->size();
   }
 }
 

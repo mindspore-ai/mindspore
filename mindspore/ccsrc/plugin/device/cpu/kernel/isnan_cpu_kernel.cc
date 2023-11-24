@@ -26,11 +26,8 @@ constexpr size_t kIsNanInputsNum = 1;
 constexpr size_t kIsNanOutputsNum = 1;
 }  // namespace
 
-bool IsNanCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  input_dtype_ = inputs[kIndex0]->GetDtype();
+bool IsNanCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  input_dtype_ = inputs[kIndex0]->dtype_id();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'x' must be bool, int, float, or uint, but got: " << input_dtype_;
@@ -38,8 +35,9 @@ bool IsNanCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool IsNanCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool IsNanCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsNanInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsNanOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -54,12 +52,12 @@ bool IsNanCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   return true;
 }
 
-void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) const {
-  const auto *input = reinterpret_cast<float16 *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) const {
+  const auto *input = reinterpret_cast<float16 *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
 
-  size_t elem_num = inputs[0]->size / sizeof(float16);
+  size_t elem_num = inputs[0]->size() / sizeof(float16);
 
   for (size_t i = 0; i < elem_num; i++) {
     float temp_num = static_cast<float>(input[i]);
@@ -68,23 +66,23 @@ void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &input
 }
 
 template <typename T>
-void IsNanCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) const {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsNanCpuKernelMod::LaunchKernelFloat(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) const {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
 
-  size_t elem_num = inputs[0]->size / sizeof(T);
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = std::isnan(input[i]);
   }
 }
 
-void IsNanCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) const {
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+void IsNanCpuKernelMod::LaunchKernelOther(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) const {
+  bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
   auto type_iter = dtype_map_.find(input_dtype_);
-  size_t elem_num = inputs[0]->size / (type_iter->second);
+  size_t elem_num = inputs[0]->size() / (type_iter->second);
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = false;
   }

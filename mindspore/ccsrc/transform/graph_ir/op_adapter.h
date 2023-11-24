@@ -29,6 +29,7 @@
 #include "ops/other_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/op_utils.h"
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {
@@ -417,12 +418,22 @@ class OpAdapter : public BaseOpAdapter {
  private:
   template <typename S>
   static S ConvertAny(const ValuePtr &value, const AnyTraits<S> &) {
-    return GetValue<S>(value);
+    return ops::GetValueWithCheck<S>(value);
+  }
+
+  template <typename S>
+  static std::vector<S> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<S>> &, size_t size,
+                                   S default_val) {
+    auto v = ops::GetValueWithCheck<std::vector<S>>(value);
+    if (v.size() < size) {
+      v.insert(v.begin(), size - v.size(), default_val);
+    }
+    return v;
   }
 
   // specialization for reverse bool
   static bool ConvertAny(const ValuePtr &value, const AnyTraits<bool> &, bool reverse) {
-    return reverse != GetValue<bool>(value);
+    return reverse != ops::GetValueWithCheck<bool>(value);
   }
 
   template <typename P, typename Q>
@@ -438,8 +449,11 @@ class OpAdapter : public BaseOpAdapter {
 
   // specialization for int
   static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<int64_t>) {
-    return static_cast<int64_t>(GetValue<int64_t>(value));
+    return ops::GetValueWithCheck<int64_t>(value);
   }
+
+  // specialization for float
+  static float ConvertAny(const ValuePtr &value, const AnyTraits<float>) { return GetCastFloatValue<float>(value); }
 
   // specialization for int or tuple broadcast to Vector
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &name,
@@ -475,12 +489,12 @@ class OpAdapter : public BaseOpAdapter {
         }
         auto sub_vector = it->cast<ValueListPtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
         }
       } else {
         auto sub_vector = it->cast<ValueTuplePtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
         }
       }
       list.push_back(sublist);
@@ -504,10 +518,28 @@ class OpAdapter : public BaseOpAdapter {
       }
       auto sub_vector = it->cast<ValueSequencePtr>();
       for (auto &item : sub_vector->value()) {
-        list.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+        list.push_back(ops::GetValueWithCheck<int64_t>(item));
       }
     }
     return list;
+  }
+
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>, size_t index) {
+    MS_EXCEPTION_IF_NULL(value);
+    MS_LOG(DEBUG) << "Value: " << value->type_name();
+    if (!value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "Value should be ValueSequence, but got " << value->type_name();
+    }
+    std::vector<int64_t> list;
+    auto vec = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(vec);
+    for (auto &it : vec->value()) {
+      list.push_back(GetCastIntegralValue<int64_t>(it));
+    }
+    if (index >= list.size()) {
+      MS_LOG(EXCEPTION) << "reg dyn_input_sizes index error, must less than " << list.size() << "but got " << index;
+    }
+    return list[index];
   }
 
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>,
@@ -519,20 +551,12 @@ class OpAdapter : public BaseOpAdapter {
       auto vec = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
-        if (it->type()->type_id() == TypeId::kNumberTypeInt32) {
-          list.push_back(static_cast<int64_t>(GetValue<int32_t>(it)));
-        } else {
-          list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
-        }
+        list.push_back(GetCastIntegralValue<int64_t>(it));
       }
       return list;
     }
     if (value->isa<Scalar>()) {
-      if (value->type()->type_id() == TypeId::kNumberTypeInt32) {
-        list.push_back(static_cast<int64_t>(GetValue<int32_t>(value)));
-      } else {
-        list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
-      }
+      list.push_back(GetCastIntegralValue<int64_t>(value));
       return list;
     }
     if (value->isa<MeTensor>()) {
@@ -556,6 +580,8 @@ class OpAdapter : public BaseOpAdapter {
         }
         return v;
       }
+    } else {
+      return ops::GetValueWithCheck<std::vector<int64_t>>(value);
     }
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
   }
@@ -597,8 +623,30 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<GEType> anyTraitsGE,
+                            const AnyTraits<int64_t> anyTraitsInt) {
+    return static_cast<int64_t>(ConvertAnyUtil(value, anyTraitsGE));
+  }
+
   static std::vector<GeDataType> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<GEType>> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEDataFormat> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEPadMod> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEReduction> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
+                                const std::vector<std::string> &enum_string) {
+    return ConvertAnyUtil(value, enum_str, enum_string);
   }
 
   // convert any value to tensor

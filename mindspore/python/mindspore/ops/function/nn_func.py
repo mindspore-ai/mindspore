@@ -41,6 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
+from mindspore.ops.auto_generate import log_softmax
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -836,7 +837,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
 
     Args:
@@ -1898,7 +1899,8 @@ def hardshrink(x, lambd=0.5):
 
     Args:
         x (Tensor): The input of Hard Shrink with data type of float16 or float32.
-        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula.
+            Default: ``0.5`` .
 
     Returns:
         Tensor, has the same data type and shape as the input `x`.
@@ -2000,7 +2002,7 @@ def flip(input, dims):
     Raises:
         TypeError: If the input is not a tensor.
         ValueError: If `dims` is None.
-        ValueError: If `dims` is not a tuple of ints.
+        ValueError: If `dims` is not a list/tuple of ints.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2110,7 +2112,7 @@ def is_floating_point(input):
         >>> print(output2)
         False
     """
-    return input.dtype in [mstype.float32, mstype.float16, mstype.float64]
+    return input.dtype in [mstype.float32, mstype.bfloat16, mstype.float16, mstype.float64]
 
 
 def hardswish(x):
@@ -2542,7 +2544,7 @@ def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=
 
 def softsign(x):
     r"""
-    Softsign activation function.
+    SoftSign activation function.
 
     The function is shown as follows:
 
@@ -2641,9 +2643,9 @@ def softmax(x, axis=-1, *, dtype=None):
     where :math:`N` is the length of the tensor.
 
     Args:
-        axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: ``-1`` .
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
+        axis (int, optional): The axis to perform the Softmax operation. Default: ``-1`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
@@ -2653,10 +2655,8 @@ def softmax(x, axis=-1, *, dtype=None):
         Tensor, with the same type and shape as the logits.
 
     Raises:
-        TypeError: If `axis` is not an int or a tuple.
+        TypeError: If `axis` is not an int.
         TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape))
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3313,30 +3313,30 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`\text{padding_top}, \text{padding_bottom}`,
             :math:`\text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, ``"constant"`` , ``"reflect"`` , ``"replicate"``  or ``"circular"`` .
+        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
             Default: ``'constant'`` .
 
-            For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
+            For ``'constant'`` mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
 
-            For "reflect" mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
+            For ``'reflect'`` mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
             this filling pattern.
             The reflect mode is used to pad the last two dimensions of 3D or 4D input, or the last dimension of 2D or
             3D input.
 
-            For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
+            For ``'replicate'`` mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
             this filling pattern.
             The replicate mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
             or 4D input, or the last dimension of 2D or 3D input.
 
-            For "circular" mode, the pixels from one edge of the image are wrapped around to the opposite edge,
+            For ``'circular'`` mode, the pixels from one edge of the image are wrapped around to the opposite edge,
             such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
             and the pixel on the bottom edge is replaced with the pixel on the top edge.
             The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
             or 4D input, or the last dimension of 2D or 3D input.
 
-        value (Union[int, float, None], optional): Valid only in "constant" mode.
-            Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
+        value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
+            Set the padding value in ``'constant'`` mode. If the value is None, 0 is used as the default padding value.
             Default: ``None`` .
 
     Returns:
@@ -3347,7 +3347,7 @@ def pad(input_x, padding, mode='constant', value=None):
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
-        ValueError: If mode is not "constant" and value not None.
+        ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3505,61 +3505,6 @@ def relu6(x):
     """
     relu6_ = _get_cache_prim(NN_OPS.ReLU6)()
     return relu6_(x)
-
-
-def prelu(x, weight):
-    r"""
-    Parametric Rectified Linear Unit activation function.
-
-    PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
-    ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
-
-    .. math::
-        prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
-
-    where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
-
-    Note:
-        Scalar or 1-D Tensor is not supported on Ascend.
-
-    Args:
-        x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        weight (Tensor):  Weight Tensor. The data type is float16 or float32.
-          The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is :math:`(1,)` .
-
-    Returns:
-        Tensor, with the same shape and dtype as `x`.
-
-        For detailed information, please refer to :class:`mindspore.nn.PReLU`.
-
-    Raises:
-        TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
-        TypeError: If the `x` or the `weight` is not a Tensor.
-        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
-        ValueError: If the `weight` is not a 1-D Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
-        >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
-        >>> output = ops.prelu(x, weight)
-        >>> print(output)
-        [[[-0.60 -0.50]
-          [-2.40 -1.80]
-          [ 0.60  0.30]]
-         [[ 0.00  1.00]
-          [ 2.00  3.00]
-          [ 4.0   5.00]]]
-    """
-    prelu_ = _get_cache_prim(NN_OPS.PReLU)()
-    return prelu_(x, weight)
 
 
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
@@ -3956,8 +3901,9 @@ def l1_loss(input, target, reduction='mean'):
     r"""
     Calculate the mean absolute error between the `input` value and the `target` value.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to ``"none"``,
-    then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+    Assuming that the :math:`x` and :math:`y` (predicted and target value) are 1-D Tensor,
+    length :math:`N`, `reduction` is set to ``'none'``, then calculate the loss of
+    :math:`x` and :math:`y` without dimensionality reduction.
 
     The formula is as follows:
 
@@ -3966,7 +3912,7 @@ def l1_loss(input, target, reduction='mean'):
 
     where :math:`N` is the batch size.
 
-    If `reduction` is ``"mean"`` or ``"sum"`` , then:
+    If `reduction` is ``'mean'`` or ``'sum'`` , then:
 
     .. math::
         \ell(x, y) =
@@ -3987,13 +3933,13 @@ def l1_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``'none'``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `target` is not a Tensor.
-        ValueError: If `reduction` is not one of ``"none"``, ``"mean"`` or ``"sum"``.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4217,48 +4163,6 @@ def intopk(x1, x2, k):
     """
     _in_topk = _get_cache_prim(P.InTopK)(k)
     return _in_topk(x1, x2)
-
-
-def log_softmax(logits, axis=-1):
-    r"""
-    Applies the Log Softmax function to the input tensor on the specified axis.
-    Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
-    the Log Softmax function is shown as follows:
-
-    .. math::
-        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
-
-    where :math:`N` is the length of the Tensor.
-
-    Args:
-        logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-        axis (int): The axis to perform the Log softmax operation. Default: ``-1`` .
-
-    Returns:
-        Tensor, with the same type and shape as the logits.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
-        ValueError: If dimension of `logits` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.log_softmax(logits)
-        >>> print(output)
-        [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
-    """
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(axis)
-    return _log_softmax(logits)
-
 
 def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
     r"""
@@ -4618,6 +4522,19 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
+
+        .. math::
+            D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] - \text{dilation}[0] \times
+            (\text{kernel_size}[0] - 1) - 1}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] - \text{dilation}[1] \times
+            (\text{kernel_size}[1] - 1) - 1}{\text{stride}[1]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] - \text{dilation}[2] \times
+            (\text{kernel_size}[2] - 1) - 1}{\text{stride}[2]} + 1\right\rfloor
+
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
           only when `return_indices` is ``True`` .
 
@@ -4992,7 +4909,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         inputs (Tensor): Predicted values, represented as :math:`x` in the formula.
         targets (Tensor): Label values, represented as :math:`y` in the formula.
             Has the same shape as `inputs`, contains -1 or 1.
-        margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
+        margin (float, int): Threshold defined by Hinge Embedding Loss `margin`.
             Represented as :math:`\Delta` in the formula. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -5002,7 +4919,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
 
     Raises:
         TypeError: If `inputs` is not a Tensor.
@@ -5574,8 +5491,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     Args:
         input (Tensor): Input Tensor.
-        min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
-        max_val (Union[int, float]): Maximum value of the linear region range. Default: ``1.0`` .
+        min_val (Union[int, float], optional): Minimum value of the linear region range. Default: ``-1.0`` .
+        max_val (Union[int, float], optional): Maximum value of the linear region range. Default: ``1.0`` .
 
     Returns:
         Tensor, with the same dtype and shape as `input`.
@@ -5611,7 +5528,7 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     which has the best of both the loss of l1 and the loss of mse.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
-    is set to ``"none"`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+    is set to ``'none'`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
     The formula is as follows:
 
     .. math::
@@ -5652,14 +5569,14 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
             The value must be greater than zero. Default: ``1.0`` .
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``'none'``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` or `target` is not a Tensor.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
-        ValueError: If `reduction` is not one of ``"none"``, ``"mean"``, ``"sum"``.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `input` and `target` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
@@ -6406,10 +6323,11 @@ def multilabel_margin_loss(input, target, reduction='mean'):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        input (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
-            is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same shape as `input`, data type must be int32 and
-            label targets padded by -1.
+        input (Tensor): Predict data, :math:`x` in the formula above. Tensor of shape :math:`(C)`
+            or :math:`(N, C)`, where :math:`N` is the batch size and :math:`C` is the number of classes.
+            Data type must be float16 or float32.
+        target (Tensor): Ground truth data, :math:`y` in the formula above, with the same shape as `input`,
+            data type must be int32 and label targets padded by -1.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -7330,7 +7248,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
+        attn_mask = new_attn_mask.masked_fill(attn_mask, ops.scalar_cast(float("-inf"), attn_mask.dtype))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:
@@ -7494,7 +7412,6 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
-    'prelu',
     'mirror_pad',
     'cross_entropy',
     'grid_sample',

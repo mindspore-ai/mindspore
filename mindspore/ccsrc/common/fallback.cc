@@ -76,39 +76,6 @@ int GetJitSyntaxLevel() {
   return MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_SYNTAX_LEVEL);
 }
 
-template <typename T>
-bool CheckSequenceElementSame(const py::sequence &obj) {
-  // Check from second element, the type of first element is determined by T.
-  for (size_t i = 1; i < py::len(obj); ++i) {
-    if (!py::isinstance<T>(obj[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool CheckSequenceToMemory(const py::sequence &obj) {
-  // A sequence object can be passed to raw memory and used by other operator if:
-  //   1. The length of sequence is not empty.
-  //   2. The sequence is not nested.
-  //   3. The sequence only contains Scalar or Tensor elements.
-  //   4. All the elements in sequence should be the same.
-  if (py::len(obj) == 0) {
-    return false;
-  }
-  auto first_obj = obj[0];
-  if (py::isinstance<py::bool_>(first_obj)) {
-    return CheckSequenceElementSame<py::bool_>(obj);
-  } else if (py::isinstance<py::int_>(first_obj)) {
-    return CheckSequenceElementSame<py::int_>(obj);
-  } else if (py::isinstance<py::float_>(first_obj)) {
-    return CheckSequenceElementSame<py::float_>(obj);
-  } else if (py::isinstance<tensor::Tensor>(first_obj)) {
-    return CheckSequenceElementSame<tensor::Tensor>(obj);
-  }
-  return false;
-}
-
 TypePtrList GetTypeElements(const TypePtr &type) {
   if (type->isa<List>()) {
     auto type_list = type->cast_ptr<List>();

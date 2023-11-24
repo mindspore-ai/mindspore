@@ -48,26 +48,26 @@ constexpr size_t kMinInputNums = 2;
 constexpr size_t kMaxInputNums = 3;
 
 TypePtr MultiMarginLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex1]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex1]->GetType(), {kInt64},
                                                    prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   if (input_args.size() == kInputIndex3) {
-    if (input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
-      auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
+    if (input_args[kInputIndex2]->GetType()->isa<TensorType>()) {
+      auto tensor_type = input_args[kInputIndex2]->GetType()->cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(tensor_type);
       auto element = tensor_type->element();
       MS_EXCEPTION_IF_NULL(element);
       if (element->type_id() != kMetaTypeNone) {
-        (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
+        (void)types.emplace("weight", input_args[kInputIndex2]->GetType());
       }
     } else if (!input_args[kInputIndex2]->isa<abstract::AbstractNone>()) {
       MS_EXCEPTION(TypeError) << "For MultiMarginLoss, weight should be a tensor.";
     }
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 
 abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
@@ -76,8 +76,8 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
 
   int64_t reduction = 0;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
@@ -100,14 +100,13 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
                              << " while x_shape[0] is " << x_shape[kInputIndex0] << ", target_shape[0] is "
                              << target_shape[kInputIndex0];
   }
-  if (input_args.size() == kDim3 && input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
-    auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
+  if (input_args.size() == kDim3 && input_args[kInputIndex2]->GetType()->isa<TensorType>()) {
+    auto tensor_type = input_args[kInputIndex2]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
     if (element->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
       if (IsDynamic(weight_shape)) {
         return std::make_shared<abstract::Shape>(out_shape);
       }

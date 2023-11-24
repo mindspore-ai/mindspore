@@ -28,6 +28,7 @@
 #include "kernel/framework_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "ops/array_ops.h"
+#include "ops/op_def.h"
 #include "ops/framework_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "ops/other_ops.h"
@@ -393,7 +394,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   auto abs = node->abstract();
   auto abs_type = AnfAlgo::GetAbstractObjectType(abs);
   auto kernel_object_type = kernel::TypeIdToKernelObjectTypeForTupleUnfold(abs_type);
-  if (common::AnfAlgo::IsDynamicSequence(node)) {
+  if (common::AnfAlgo::IsDynamicSequence(node) || (node->isa<ValueNode>() && AnfAlgo::IsSequenceOutputOfScalar(node))) {
     kernel_object_type = kernel::KernelObjectType::TUPLE;
   } else if (abs_type == kObjectTypeTuple || abs_type == kObjectTypeList) {
     auto tuple_len = AnfAlgo::GetOutputElementNum(node);
@@ -485,6 +486,19 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   }
   MS_EXCEPTION_IF_NULL(value_node);
   value_node->set_abstract(input_tensor->ToAbstract());
+  // add value node to graph
+  auto input_value_node = NewValueNode(value_node);
+  AddValueNodeToGraph(input_value_node);
+  return input_value_node;
+}
+
+ValueNodePtr KernelGraph::NewValueNode(const ValuePtr &input_value) {
+  if (input_value->isa<tensor::Tensor>()) {
+    return NewValueNode(input_value->cast<tensor::TensorPtr>());
+  }
+
+  auto value_node = std::make_shared<ValueNode>(input_value);
+  value_node->set_abstract(input_value->ToAbstract());
   // add value node to graph
   auto input_value_node = NewValueNode(value_node);
   AddValueNodeToGraph(input_value_node);
@@ -692,7 +706,33 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
   tensor_to_value_node_map_[tensor] = value_node;
 }
 
-void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.emplace(value_node); }
+void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) {
+  if (graph_value_nodes_.find(value_node) != graph_value_nodes_.end()) {
+    ++graph_value_nodes_[value_node];
+  } else {
+    graph_value_nodes_[value_node] = 1;
+  }
+  MS_LOG(DEBUG) << "graph:" << ToString()
+                << " add value node:" << (value_node == nullptr ? "null" : value_node->DebugString())
+                << " num:" << graph_value_nodes_[value_node];
+}
+
+bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
+  if (graph_value_nodes_.find(value_node) != graph_value_nodes_.end() && graph_value_nodes_[value_node] > 1) {
+    --graph_value_nodes_[value_node];
+    return true;
+  }
+  MS_LOG(INFO) << "graph:" << ToString()
+               << " erase value node:" << (value_node == nullptr ? "null" : value_node->DebugString());
+  return graph_value_nodes_.erase(value_node) != 0;
+}
+
+mindspore::HashSet<ValueNodePtr> KernelGraph::graph_value_nodes() const {
+  mindspore::HashSet<ValueNodePtr> value_nodes;
+  (void)std::for_each(graph_value_nodes_.begin(), graph_value_nodes_.end(),
+                      [&value_nodes](const auto &node_pair) { (void)value_nodes.emplace(node_pair.first); });
+  return value_nodes;
+}
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 
@@ -734,10 +774,6 @@ void KernelGraph::ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithO
       item.second = new_pair;
     }
   }
-}
-
-bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
-  return graph_value_nodes_.erase(value_node) != 0;
 }
 
 void KernelGraph::SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) {
@@ -1262,7 +1298,7 @@ void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
     (void)backend_front_anf_map_.erase(iter);
   }
   if (node->isa<ValueNode>()) {
-    (void)graph_value_nodes_.erase(node->cast<ValueNodePtr>());
+    (void)RemoveValueNodeFromGraph(node->cast<ValueNodePtr>());
   }
 }
 
@@ -1381,6 +1417,23 @@ KernelGraph::~KernelGraph() {
   }
 }
 
+std::vector<abstract::AbstractBasePtr> FetchInputAbstracts(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<abstract::AbstractBasePtr> abstracts{};
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    const auto &input = cnode->inputs()[i];
+    MS_EXCEPTION_IF_NULL(input);
+    const auto &abstract = input->abstract();
+    if (abstract == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid abstract for input:" << input->DebugString()
+                        << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
+    }
+    MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
+    abstracts.emplace_back(abstract);
+  }
+  return abstracts;
+}
+
 void KernelGraph::InferType() {
   MS_LOG(DEBUG) << "Start infer type for graph:" << ToString();
   std::vector<AnfNodePtr> nodes = TopoSort(get_return());
@@ -1398,23 +1451,24 @@ void KernelGraph::InferType() {
     MS_LOG(DEBUG) << "Infer abstract for node:" << node->fullname_with_scope();
 
     // Fetch input abstracts.
-    std::vector<abstract::AbstractBasePtr> abstracts;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      const auto &input = cnode->inputs()[i];
-      MS_EXCEPTION_IF_NULL(input);
-      const auto &abstract = input->abstract();
-      if (abstract == nullptr) {
-        MS_LOG(EXCEPTION) << "Invalid abstract for input:" << input->DebugString()
-                          << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
-      }
-      MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
-      abstracts.emplace_back(abstract);
-    }
+    std::vector<abstract::AbstractBasePtr> abstracts = FetchInputAbstracts(cnode);
 
     // Fetch infer function.
     std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
     const auto &primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(primitive);
+
+    auto op_def = mindspore::ops::GetOpDef(primitive->name());
+    if (op_def) {
+      (void)op_def->func_impl_.CheckValidation(primitive, abstracts);
+      auto shape = op_def->func_impl_.InferShape(primitive, abstracts);
+      auto type = op_def->func_impl_.InferType(primitive, abstracts);
+      auto abstract = mindspore::abstract::MakeAbstract(shape, type);
+      cnode->set_abstract(abstract);
+      MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
+      continue;
+    }
+
     auto find = abstract::GetPrimitiveInferImpl(primitive);
     if (find.has_value()) {
       eval_impl = find.value();

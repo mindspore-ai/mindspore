@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ir/dtype/type.h"
 #include "ir/value.h"
 #include "abstract/dshape.h"

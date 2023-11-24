@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_set>
+#include "mindspore/core/ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "ops/nn_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -234,8 +235,8 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
     graph = session_->ConstructPackKernelGraph(func_graph, &all_out_graph, device_context->GetDeviceType());
     graph->set_attr(kAttrPackFunction, MakeValue(True));
   } else {
-    graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.input_tensor,
-                                             op_run_info->base_op_run_info.input_mask,
+    graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
+                                             op_run_info->base_op_run_info.input_masks,
                                              device_context->GetDeviceType() == device::DeviceType::kAscend);
   }
   graph->set_is_from_single_op(true);
@@ -390,52 +391,78 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
       transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
     auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
     if (!acl_info.input_selector().empty() || acl_info.output_selector() != nullptr) {
-      if (op_info.input_tensor.size() == 0) {
+      if (op_info.expanded_input_values.size() == 0) {
         return ascend_special_info;
       }
+      TypeId first_dtype = TypeId::kTypeUnknown;
       std::vector<ShapeVector> input_shapes;
-      (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
-                           [](const auto &tensor) {
-                             MS_EXCEPTION_IF_NULL(tensor);
-                             return tensor->shape();
+      (void)std::transform(op_info.expanded_input_values.begin(), op_info.expanded_input_values.end(),
+                           std::back_inserter(input_shapes), [&first_dtype](const ValuePtr &value) -> ShapeVector {
+                             auto tensor = value->cast<tensor::TensorPtr>();
+                             if (tensor != nullptr) {
+                               if (first_dtype == TypeId::kTypeUnknown) {
+                                 first_dtype = tensor->data_type();
+                               }
+                               return tensor->shape();
+                             }
+                             return {};
                            });
 
       auto in_func_map = acl_info.input_selector();
       for (auto [index, in_func] : in_func_map) {
         MS_EXCEPTION_IF_NULL(in_func);
-        ascend_special_info += in_func(op_info.input_tensor[index]->data_type(), input_shapes);
+        auto tensor = op_info.expanded_input_values[index]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        ascend_special_info += in_func(tensor->data_type(), input_shapes);
       }
 
       auto out_func = acl_info.output_selector();
       if (out_func != nullptr) {
-        auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
+        auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        auto out_format = out_func(tensor->data_type(), input_shapes);
         ascend_special_info += out_format;
       }
+      MS_EXCEPTION_IF_NULL(out_func);
+      auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto out_format = out_func(tensor->data_type(), input_shapes);
+      ascend_special_info += out_format;
     }
   }
   return ascend_special_info;
 }
 #endif
 
-std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
-  std::set<int64_t> depend_list;
-  auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
-  if (op_infer_opt.has_value()) {
-    auto op_infer = op_infer_opt.value().Get();
-    MS_EXCEPTION_IF_NULL(op_infer);
-    if (op_infer != nullptr) {
-      depend_list = op_infer->GetValueDependArgIndices();
+inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) {
+  auto depend_list = mindspore::ops::GetInputDependValueList(op_prim);
+  if (!op_info.dyn_input_sizes.empty()) {
+    auto list_tmp = depend_list;
+    depend_list.clear();
+    for (const auto item : list_tmp) {
+      int64_t bias = 0;
+      for (int64_t i = 0; i < item; i++) {
+        auto idx = static_cast<size_t>(i);
+        if (op_info.dyn_input_sizes[idx] == -1) {
+          bias += 1;
+        } else {
+          bias += op_info.dyn_input_sizes[idx];
+        }
+      }
+      depend_list.emplace(bias);
+      MS_LOG(DEBUG) << "Adjust depend list from " << item << " to " << bias << " for op: " << op_prim->name();
     }
   }
+
   return depend_list;
 }
 
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
-  if (op_info.input_tensor.size() != op_info.input_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << op_info.input_tensor.size()
-                      << " should be equal to tensors mask size " << op_info.input_mask.size();
+  if (op_info.expanded_input_values.size() != op_info.input_masks.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << op_info.expanded_input_values.size()
+                      << " should be equal to tensors mask size " << op_info.input_masks.size();
   }
   std::string graph_info = op_info.device_target;
 
@@ -463,40 +490,46 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       graph_info.append(element.second->ToString());
     });
   }
-  for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
-    const auto &input_tensor = op_info.input_tensor[index];
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    if (op_info.use_dynamic_shape_process) {
-      graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));
-    } else {
-      if (input_tensor->base_shape_ptr() != nullptr) {
-        graph_info += input_tensor->base_shape_ptr()->ToString();
+
+  const auto &depend_list = GetDependList(op_info, op_prim);
+  for (size_t index = 0; index < op_info.expanded_input_values.size(); ++index) {
+    auto const &value = op_info.expanded_input_values[index];
+    if (value->isa<tensor::Tensor>()) {
+      const auto &input_tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(input_tensor);
+      if (op_info.use_dynamic_shape_process) {
+        graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));
       } else {
-        if (!input_tensor->shape().empty()) {
-          const auto &shape_str =
-            std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
-                            std::to_string(input_tensor->shape()[0]),
-                            [](std::string cur, size_t n) { return cur.append("-").append(std::to_string(n)); });
-          graph_info += shape_str;
+        if (input_tensor->base_shape_ptr() != nullptr) {
+          graph_info += input_tensor->base_shape_ptr()->ToString();
+        } else {
+          if (!input_tensor->shape().empty()) {
+            const auto &shape_str =
+              std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
+                              std::to_string(input_tensor->shape()[0]),
+                              [](std::string cur, size_t n) { return cur.append("-").append(std::to_string(n)); });
+            graph_info += shape_str;
+          }
         }
       }
+
+      graph_info += GetNumString(input_tensor->data_type());
+      // In the case of the same shape, but dtype and format are inconsistent
+      auto tensor_addr = input_tensor->device_address();
+      if (tensor_addr != nullptr && !has_hidden_side_effect) {
+        auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
+        MS_EXCEPTION_IF_NULL(p_address);
+        graph_info += p_address->format();
+        graph_info += p_address->padding_type();
+      }
+
+      if (depend_list.find(index) != depend_list.end()) {
+        graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
+      }
+    } else {
+      graph_info += value->ToString();
     }
 
-    graph_info += GetNumString(input_tensor->data_type());
-    // In the case of the same shape, but dtype and format are inconsistent
-    auto tensor_addr = input_tensor->device_address();
-    if (tensor_addr != nullptr && !has_hidden_side_effect) {
-      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
-      MS_EXCEPTION_IF_NULL(p_address);
-      graph_info += p_address->format();
-      graph_info += p_address->padding_type();
-    }
-    // For constant input or op depend input value
-    const auto &depend_list = GetInputDependValueList(op_prim);
-    if (op_info.input_mask[index] == kValueNodeTensorMask ||
-        (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
-      graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
-    }
     graph_info += "_";
   }
 

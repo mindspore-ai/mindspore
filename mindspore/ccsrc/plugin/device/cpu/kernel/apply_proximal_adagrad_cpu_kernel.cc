@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/apply_proximal_adagrad_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,13 +32,10 @@ constexpr size_t kL1Index = 3;
 constexpr size_t kL2Index = 4;
 constexpr size_t kGradIndex = 5;
 
-bool ApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-
-  auto input_type_id = inputs[0]->GetDtype();
+bool ApplyProximalAdagradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  does not support " << TypeIdToString(input_type_id);
     return false;
@@ -47,17 +45,11 @@ bool ApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyProximalAdagradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-  if (input_size_list_.size() != kApplyProximalAdagradInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6.";
-    return KRET_RESIZE_FAILED;
   }
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> accum_shape = inputs[kAccIndex]->GetShapeVector();
@@ -140,16 +132,16 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   return ret;
 }
 
-bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &workspace,
-                                              const std::vector<kernel::AddressPtr> &) {
+bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &workspace,
+                                              const std::vector<kernel::KernelTensor *> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyProximalAdagradInputsNum, kernel_name_);
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr);
-  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr());
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->device_ptr());
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
 
   auto task = [this, &var, &accum, &lr, &l1, &l2, &grad](size_t start, size_t end) {
     auto cur_input_elements = end - start;

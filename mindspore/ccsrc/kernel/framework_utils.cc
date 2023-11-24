@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/format_utils.h"
 #include "kernel/oplib/oplib.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "ops/array_op_name.h"
@@ -79,8 +80,7 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
 }
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const ShapeVector &device_shape_adaptively, const std::string &format_str,
-                                   bool prev_node_has_getitem = false) {
+                                   const std::string &format_str, bool prev_node_has_getitem = false) {
   MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr tag_abstract = nullptr;
   if (prev_node_has_getitem) {
@@ -114,7 +114,7 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
     // Tensor
     auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract};
     res_tensor->SetTensorInfo(tensor_info);
     res_tensor->SetMetaType(kObjectTypeTensorType);
   }
@@ -155,11 +155,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "need changed type node:" << cnode->DebugString()
                     << "Real input type :" << TypeIdToType(real_input_type)->ToString();
     }
-    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor =
-      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str,
-                         ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
+    auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, format_str,
+                                           ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
     input_tensors.push_back(input_tensor);
   }
 
@@ -180,11 +178,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
                     << "Real output type :" << TypeIdToType(real_output_type)->ToString()
                     << " is dynamic len:" << common::AnfAlgo::IsDynamicSequence(cnode);
     }
-    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    auto output_tensor =
-      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str,
-                         is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
+    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, format_str,
+                                            is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
     output_tensors.push_back(output_tensor);
   }
   return std::make_pair(input_tensors, output_tensors);
@@ -213,8 +209,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
     auto shape = input_device_address->host_shape();
     auto new_abstract =
       std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract};
     input_tensor->SetTensorInfo(tensor_info);
     input_tensor->SetMetaType(kObjectTypeTensorType);
   }
@@ -242,8 +237,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
     }
     auto kernel_tensor_abstract = std::make_shared<abstract::AbstractTensor>(
       TypeIdToType(output_device_address->type_id()), new_abstract->BuildShape());
-    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract,
-                           AnfAlgo::GetDeviceShapeAdaptively(shape)};
+    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract};
     output_tensor->SetTensorInfo(tensor_info);
     output_tensor->SetMetaType(kObjectTypeTensorType);
   }
@@ -1190,80 +1184,22 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get(), true);
 }
 
-using ShapeSet = std::set<int64_t>;
-static const mindspore::HashMap<std::string, std::set<int64_t>> try_get_value_in_resize_map = {
-  {kReduceMeanOpName, ShapeSet{1}},
-  {kReduceMaxOpName, ShapeSet{1}},
-  {kReduceSumOpName, ShapeSet{1}},
-  {kReduceMinOpName, ShapeSet{1}},
-  {kReduceProdOpName, ShapeSet{1}},
-  {kReduceAllOpName, ShapeSet{1}},
-  {kReduceAnyOpName, ShapeSet{1}},
-  {kROIAlignGradOpName, ShapeSet{2}},
-  {kSliceOpName, ShapeSet{1, 2}},
-  {kSliceGradOpName, ShapeSet{2, 3, 4}},
-  {kTensorCopySlicesOpName, ShapeSet{2, 3, 4}},
-  {kTransposeOpName, ShapeSet{1}},
-  {kGatherDOpName, ShapeSet{1}},
-  {kGatherOpName, ShapeSet{2}},
-  {kGatherDGradV2OpName, ShapeSet{1}},
-  {kSparseGatherV2OpName, ShapeSet{2}},
-  {kScatterNdOpName, ShapeSet{2}},
-  {kStridedSliceOpName, ShapeSet{1, 2, 3}},
-  {kStridedSliceGradOpName, ShapeSet{1, 2, 3, 4}},
-  {kTileOpName, ShapeSet{1}},
-  {kConv2DBackpropFilterOpName, ShapeSet{2}},
-  {kConv2DBackpropInputOpName, ShapeSet{2}},
-  {kRandomCategoricalOpName, ShapeSet{1, 2}},
-  {kUpsampleTrilinear3DOpName, ShapeSet{1}},
-  {kUpsampleNearest3DOpName, ShapeSet{1}},
-  {kUpsampleTrilinear3DGradOpName, ShapeSet{2}},
-  {kUpsampleNearest3DGradOpName, ShapeSet{2}},
-  {kPadV3OpName, ShapeSet{1}},
-  {kPadV3GradOpName, ShapeSet{1}},
-};
-
-std::set<int64_t> GetShapeSetFromResizeMap(const CNodePtr &node) {
-  auto primitive = GetValueNode<PrimitivePtr>(node->input(0));
-  auto prim_name = primitive->ToString();
-  auto iter = try_get_value_in_resize_map.find(prim_name);
-  std::set<int64_t> res = {};
-  if (iter != try_get_value_in_resize_map.end()) {
-    res = iter->second;
-  }
-  return res;
-}
-
-bool IfNeedSkipResize(const CNodePtr &node) {
+// In compile stage, run resize when kernel is not dynamic shape or has no value depend list.
+bool CheckResizeCondition(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->input(0));
   if (!AnfAlgo::NodeValueIsFuncGraph(node->input(0))) {
-    auto input_size = common::AnfAlgo::GetInputTensorNum(node);
-    for (size_t i = 0; i < input_size; ++i) {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
-      auto real_input = input_node_with_index.first;
-
-      // Inverse op have constant input need infer ,then resize
-      auto shape_set = GetShapeSetFromResizeMap(node);
-      if (shape_set.find(i) != shape_set.end()) {
-        if (real_input->isa<Parameter>()) {
-          MS_LOG(DEBUG) << "Set Node Attr is Dynamic Shape";
-          common::AnfAlgo::SetNodeAttr(mindspore::kAttrOutputIsDynamicShape, MakeValue(true), node);
-          node->func_graph()->cast<KernelGraphPtr>()->SetGraphDynamicAttr(true);
-          return true;
-        } else if (real_input->isa<ValueNode>()) {
-          auto value_node = real_input->cast<ValueNodePtr>();
-          auto value = value_node->value();
-          MS_EXCEPTION_IF_NULL(value);
-          if (value->isa<tensor::Tensor>()) {
-            auto value_tensor_ptr = value->cast<tensor::TensorPtr>();
-            value_tensor_ptr->data_sync();
-          }
-        }
-      }
+    if (common::AnfAlgo::IsDynamicShape(node)) {
+      MS_LOG(DEBUG) << "Skip resize for " << node->DebugString() << ", for reason is dynamic shape";
+      return false;
+    }
+    if (common::AnfAlgo::IsDynamicValue(node)) {
+      MS_LOG(DEBUG) << "Skip resize for " << node->DebugString() << ", for reason is dynamic value";
+      return false;
     }
   }
-  return false;
+
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

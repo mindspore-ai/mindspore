@@ -335,33 +335,34 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
                              size_t *slice_len, bool *dyn_tuple) {
   bool is_dynamic = false;
   MS_EXCEPTION_IF_NULL(input_arg);
-  auto input_value = input_arg->BuildValue();
+  auto input_value = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(input_value);
-  if (input_arg->isa<abstract::AbstractTuple>()) {
+  if (CheckAndConvertUtils::IsTuple(input_arg)) {
     if (IsValueKnown(input_value)) {
       *slice_value = CheckAndConvertUtils::CheckTupleInt(arg_name, input_value, "StridedSlice");
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny
       is_dynamic = true;
-      auto tuple_arg = input_arg->cast<abstract::AbstractTuplePtr>();
-      if (tuple_arg->dynamic_len()) {
+      if (CheckAndConvertUtils::IsDynamicSequence(input_arg)) {
         *dyn_tuple = true;
       } else {
+        auto tuple_arg = input_arg->GetShape()->cast<abstract::SequenceShapePtr>();
+        MS_EXCEPTION_IF_NULL(tuple_arg);
         *slice_len = tuple_arg->size();
       }
     }
-  } else if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt32, kInt64},
-                                                     "StridedSlice");
+  } else if (CheckAndConvertUtils::IsTensor(input_arg)) {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt32, kInt64}, "StridedSlice");
     auto slice_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
     auto slice_shape = slice_shape_ptr->shape();
     if (slice_shape.size() != kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got" << slice_shape.size()
                                << "-D.";
     }
-    if (input_value->isa<tensor::Tensor>()) {
-      *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice");
+    if (IsValueKnown(input_value)) {
+      *slice_value =
+        CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice", input_arg->GetType());
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny
@@ -374,7 +375,7 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
     }
   } else {
     MS_EXCEPTION(TypeError) << "For 'StridedSlice', '" << arg_name
-                            << "' must be tuple or Tensor, but got: " << input_arg->BuildType()->ToString() << ".";
+                            << "' must be tuple or Tensor, but got: " << input_arg->GetType()->ToString() << ".";
   }
 
   if (arg_name == "strides") {
@@ -391,10 +392,10 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t x_index = 0;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->GetShape());
   auto x_shape = shape_map[kShape];
   if (x_shape.size() == 0) {
-    MS_EXCEPTION(IndexError) << "For 'StridedSlice', input shape can not be empty.";
+    MS_EXCEPTION(TypeError) << "For 'StridedSlice', input can not be a scalar.";
   }
   ShapeVector begin_v;
   ShapeVector end_v;

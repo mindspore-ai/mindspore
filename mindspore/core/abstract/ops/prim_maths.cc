@@ -21,30 +21,6 @@
 
 namespace mindspore {
 namespace abstract {
-AbstractBasePtr InferImplSqrt(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_abs_list) {
-  // Inputs: three tensors.
-  constexpr auto kSqrtInputNum = 1;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, kSqrtInputNum);
-  auto inp = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  return inp->Clone()->Broaden();
-}
-
-AbstractBasePtr InferImplSqrtGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list) {
-  // Inputs: two tensors.
-  constexpr auto kSqrtGradInputNum = 2;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, kSqrtGradInputNum);
-  auto out = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  auto dout = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
-  (void)CheckDtypeSame(op_name, out, dout);
-  CheckShapeSame(op_name, out, dout);
-
-  return out->Broaden();
-}
-
 int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
   int64_t dim_ = static_cast<int64_t>(dim);
   if (axis < -dim_ || axis >= dim_) {
@@ -199,88 +175,6 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
   }
   AbstractTensorPtr ret = std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape));
   return ret;
-}
-
-AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_abs_list) {
-  constexpr auto kMatMulInputNum = 2;
-  const std::string op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(args_abs_list.size()), kGreaterEqual,
-                                           kMatMulInputNum, op_name);
-  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  auto y = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
-  MS_EXCEPTION_IF_NULL(y);
-  MS_EXCEPTION_IF_NULL(y->shape());
-  auto x_shp = x->shape()->shape();
-  auto y_shp = y->shape()->shape();
-
-  TypePtr x_type = x->element()->GetTypeTrack();
-  if (x_type->type_id() == TypeId::kNumberTypeInt8) {
-    x_type = kInt32;
-  }
-  if (primitive->HasAttr("cast_type")) {
-    auto out_type = primitive->GetAttr("cast_type");
-    MS_EXCEPTION_IF_NULL(out_type);
-    if (!out_type->isa<Type>()) {
-      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
-    }
-    x_type = out_type->cast<TypePtr>();
-  }
-
-  ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
-  ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
-  bool transpose_a = GetValue<bool>(transpose_a_ptr);
-  bool transpose_b = GetValue<bool>(transpose_b_ptr);
-
-  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
-    ShapeVector ret_shape{Shape::kShapeRankAny};
-    return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape));
-  }
-
-  const size_t SHAPE_SIZE = 2;
-  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
-    MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
-  }
-  auto x_col = x_shp[(transpose_a ? 0 : 1)];
-  auto y_row = y_shp[(transpose_b ? 1 : 0)];
-  if (x_col != y_row && x_col >= 0 && y_row >= 0) {
-    MS_LOG(EXCEPTION) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
-                      << ". In MatMul x_col and y_row should be equal.";
-  }
-
-  ShapeVector ret_shape;
-  auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
-                                                 const ShapeVector yshp) -> void {
-    if (!xshp.empty() && !yshp.empty()) {
-      output.push_back(xshp[(transpose_a ? 1 : 0)]);
-      output.push_back(yshp[(transpose_b ? 0 : 1)]);
-    }
-    return;
-  };
-  make_shape(ret_shape, x_shp, y_shp);
-  return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape));
-}
-
-AbstractBasePtr InferImplLess(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_abs_list) {
-  constexpr auto kLessInputNum = 2;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, kLessInputNum);
-  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector x_shape = x->shape()->shape();
-
-  auto y = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
-  MS_EXCEPTION_IF_NULL(y);
-  MS_EXCEPTION_IF_NULL(y->shape());
-  ShapeVector y_shape = y->shape()->shape();
-
-  auto out_shape = BroadcastShape(x_shape, y_shape);
-  auto output_type = std::make_shared<Bool>();
-  return std::make_shared<AbstractTensor>(output_type, std::make_shared<Shape>(out_shape));
 }
 
 AbstractBasePtr InferImplRealInner(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

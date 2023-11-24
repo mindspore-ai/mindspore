@@ -35,19 +35,19 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
 
   auto overlaps_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape]);
   auto max_output_size_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape]);
   auto overlap_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape]);
   auto score_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape]);
   // support dynamic rank
   if (IsDynamicRank(overlaps_shape->shape()) || IsDynamicRank(scores_shape->shape()) ||
       IsDynamicRank(max_output_size_shape->shape()) || IsDynamicRank(overlap_threshold_shape->shape()) ||
@@ -57,7 +57,7 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
 
   (void)CheckAndConvertUtils::CheckInteger("rank of scores", SizeToLong(scores_shape->shape().size()), kEqual, 1,
                                            prim_name);
-  auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   if (scores_shape_map[kShape][0] != -1) {
     (void)CheckAndConvertUtils::CheckInteger("rank of overlaps", overlaps_shape->shape().size(), kEqual, kOverlapsRank,
                                              prim_name);
@@ -94,11 +94,11 @@ TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(i);
   }
 
-  auto overlaps_type = input_args[kInputIndex0]->BuildType();
-  auto scores_type = input_args[kInputIndex1]->BuildType();
-  auto max_output_size_type = input_args[kInputIndex2]->BuildType();
-  auto overlap_threshold_type = input_args[kInputIndex3]->BuildType();
-  auto score_threshold_type = input_args[kInputIndex4]->BuildType();
+  auto overlaps_type = input_args[kInputIndex0]->GetType();
+  auto scores_type = input_args[kInputIndex1]->GetType();
+  auto max_output_size_type = input_args[kInputIndex2]->GetType();
+  auto overlap_threshold_type = input_args[kInputIndex3]->GetType();
+  auto score_threshold_type = input_args[kInputIndex4]->GetType();
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,14 +177,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"SiLUGrad",
      {REGISTER_BINARY_FLOAT_TYPE(ElwiseOpType::kSiLUGrad), REGISTER_BINARY_COMPLEX_TYPE(ElwiseOpType::kSiLUGrad)}},
 };
-bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool ElementwiseOpsGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'elementwise op', the kernel name must be in "
@@ -203,10 +201,9 @@ bool ElementwiseOpsGpuKernel::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int ElementwiseOpsGpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ElementwiseOpsGpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ele_num_ = SizeOf(inputs.at(kIndex0)->GetShapeVector());
@@ -232,10 +229,10 @@ std::vector<KernelAttr> ElementwiseOpsGpuKernel::GetOpSupport() {
   return support_list;
 }
 template <ElwiseOpType Op, typename Inp_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = GetDeviceAddress<Inp_t>(inputs, kIndex0);
-  auto output_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input_ptr = reinterpret_cast<Inp_t *>(inputs.at(kIndex0)->device_ptr());
+  auto output_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);
   auto ret =
@@ -244,11 +241,11 @@ bool ElementwiseOpsGpuKernel::UnaryLaunchKernel(const std::vector<kernel::Addres
   return true;
 }
 template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
-bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0_ptr = GetDeviceAddress<In0_t>(inputs, kIndex0);
-  auto in1_ptr = GetDeviceAddress<In1_t>(inputs, kIndex1);
-  auto out_ptr = GetDeviceAddress<Out_t>(outputs, kIndex0);
+bool ElementwiseOpsGpuKernel::BinaryLaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0_ptr = reinterpret_cast<In0_t *>(inputs.at(kIndex0)->device_ptr());
+  auto in1_ptr = reinterpret_cast<In1_t *>(inputs.at(kIndex1)->device_ptr());
+  auto out_ptr = reinterpret_cast<Out_t *>(outputs.at(kIndex0)->device_ptr());
   MS_EXCEPTION_IF_NULL(in0_ptr);
   MS_EXCEPTION_IF_NULL(in1_ptr);
   MS_EXCEPTION_IF_NULL(out_ptr);

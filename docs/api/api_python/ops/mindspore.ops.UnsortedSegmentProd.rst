@@ -10,9 +10,9 @@
     输入：
         - **input_x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。
           数据类型支持float16、float32或int32。
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的一维张量，值必须是非负数。
+        - **segment_ids** (Tensor) - 用于指示每个元素所属段的标签，将shape设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
           数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。必须大于0。
+        - **num_segments** (Union[int, Tensor]) - 分段数量 :math:`z` ，可以为int或零维的Tensor。
 
     输出：
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
+        Tensor，shape为： :math:`(z, x_{N+1}, ..., x_R)` 。

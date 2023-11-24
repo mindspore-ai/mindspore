@@ -44,8 +44,8 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
-    auto logits_shape = input_args[0]->BuildShape();
-    auto label_shape = input_args[1]->BuildShape();
+    auto logits_shape = input_args[0]->GetShape();
+    auto label_shape = input_args[1]->GetShape();
     auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
     auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
@@ -70,8 +70,8 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto logits_type = input_args[kInputIndex0]->BuildType();
-    auto label_type = input_args[kInputIndex1]->BuildType();
+    auto logits_type = input_args[kInputIndex0]->GetType();
+    auto label_type = input_args[kInputIndex1]->GetType();
     const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                            kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
     std::map<std::string, TypePtr> args;

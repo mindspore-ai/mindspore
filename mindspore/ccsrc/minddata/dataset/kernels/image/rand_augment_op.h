@@ -39,7 +39,7 @@ typedef std::map<std::string, std::tuple<std::vector<float>, bool>> Space;
 
 namespace mindspore {
 namespace dataset {
-class RandAugmentOp : public TensorOp {
+class RandAugmentOp : public RandomTensorOp {
  public:
   RandAugmentOp(int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins, InterpolationMode interpolation,
                 std::vector<uint8_t> fill_value);
@@ -60,7 +60,6 @@ class RandAugmentOp : public TensorOp {
   int num_magnitude_bins_;
   InterpolationMode interpolation_;
   std::vector<uint8_t> fill_value_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

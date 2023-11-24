@@ -57,12 +57,15 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
     if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
       return false;
     }
-    return common::AnfAlgo::IsDynamicShape(node);
+    return common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicSequence(node) ||
+           common::AnfAlgo::IsNodeMutableScalar(node);
   });
 }
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
     opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
@@ -88,23 +91,27 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
         if (!transform::ConvertCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " can not find adpt, run on CPU";
           continue;
         }
         if (!transform::DynamicShapeSupportCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " not support dynamic shape, will run in KernelGraph";
           continue;
         }
         if (!transform::SinkGraphCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " have attrs is not ValueNode, will run in KernelGraph";
         }
       }
     }
+    if (!all_support) {
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+    }
     return all_support;
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
@@ -318,11 +325,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
-
-  (*ge_options)["ge.exec.formatMode"] = "0";
-  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
-    (*ge_options)["ge.exec.formatMode"] = "1";
-  }
 
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);

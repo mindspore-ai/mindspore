@@ -27,15 +27,43 @@ namespace ops {
 void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
                          const PadMode &pad_mode, const Format &format, const std::vector<int64_t> &pad,
                          const RoundMode &round_mode, const bool global, const ActivationType activation_type) {
-  this->set_pad_mode(pad_mode);
-  this->set_kernel_size(kernel_size);
-  this->set_strides(stride);
-  this->set_format(format);
-  this->set_pad(pad);
-  this->set_round_mode(round_mode);
   this->set_global(global);
   this->set_activation_type(activation_type);
 }
+
+void AvgPoolFusion::set_kernel_size(const std::vector<int64_t> &kernel_size) {
+  (void)this->AddAttr("kernel_size", api::MakeValue(kernel_size));
+}
+
+std::vector<int64_t> AvgPoolFusion::get_kernel_size() const {
+  return GetValue<std::vector<int64_t>>(GetAttr("kernel_size"));
+}
+
+void AvgPoolFusion::set_strides(const std::vector<int64_t> &strides) {
+  (void)this->AddAttr("strides", api::MakeValue(strides));
+}
+
+std::vector<int64_t> AvgPoolFusion::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr("strides")); }
+
+void AvgPoolFusion::set_pad_mode(const int64_t &pad_mode) { (void)this->AddAttr("pad_mode", api::MakeValue(pad_mode)); }
+
+int64_t AvgPoolFusion::get_pad_mode() const { return GetValue<int64_t>(GetAttr("pad_mode")); }
+
+void AvgPoolFusion::set_data_format(const int64_t &data_format) {
+  (void)this->AddAttr("data_format", api::MakeValue(data_format));
+}
+
+int64_t AvgPoolFusion::get_data_format() const { return GetValue<int64_t>(GetAttr("data_format")); }
+
+void AvgPoolFusion::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr("pad", api::MakeValue(pad)); }
+
+std::vector<int64_t> AvgPoolFusion::get_pad() const { return GetValue<std::vector<int64_t>>(GetAttr("pad")); }
+
+void AvgPoolFusion::set_round_mode(const int64_t &round_mode) {
+  (void)this->AddAttr("round_mode", api::MakeValue(round_mode));
+}
+
+int64_t AvgPoolFusion::get_round_mode() const { return GetValue<int64_t>(GetAttr("round_mode")); }
 
 void AvgPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, api::MakeValue(global)); }
 
@@ -56,7 +84,7 @@ ActivationType AvgPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_OPERATOR_IMPL(AvgPoolFusion, AvgPool);
+MIND_API_OPERATOR_IMPL(AvgPoolFusion, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

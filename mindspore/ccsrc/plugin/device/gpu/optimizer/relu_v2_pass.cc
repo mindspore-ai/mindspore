@@ -26,6 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/optimizer/helper.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -49,20 +50,26 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
+  // Get pre_node device format
+  auto pre_node_format = AnfAlgo::GetPrevNodeOutputFormat(node, kIndex0);
+
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
-    inputs_format.push_back(kOpFormat_DEFAULT);
+    inputs_format.push_back(input_index == 0 ? pre_node_format : kOpFormat_DEFAULT);
   }
   size_t output_num = AnfAlgo::GetOutputElementNum(node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
-    outputs_format.push_back(kOpFormat_DEFAULT);
+    outputs_format.push_back(output_index == 0 ? pre_node_format : kOpFormat_DEFAULT);
   }
   builder.SetInputsDeviceType(inputs_type);
   builder.SetInputsFormat(inputs_format);
   builder.SetOutputsDeviceType(outputs_type);
   builder.SetOutputsFormat(outputs_format);
+
+  const auto &object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(node));
+  builder.SetOutputsKernelObjectType(object_types);
   return builder.Build();
 }
 

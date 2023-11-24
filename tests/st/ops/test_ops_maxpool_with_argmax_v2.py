@@ -74,8 +74,6 @@ def test_maxpool_with_argmax_v2_float16(mode):
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dynamic_maxpool_with_argmax_v2(mode):
@@ -100,7 +98,6 @@ def test_dynamic_maxpool_with_argmax_v2(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_maxpool_with_argmax_v2_dynamic_shape(mode):

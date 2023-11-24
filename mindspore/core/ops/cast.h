@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_CAST_H_
 #include <memory>
 #include <vector>
-
 #include "ops/base_operator.h"
 
 namespace mindspore {

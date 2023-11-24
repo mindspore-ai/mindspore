@@ -181,7 +181,7 @@ class TrainSession : virtual public lite::LiteSession {
                   std::vector<std::string> out_put_tensor_name = {});
   lite::Tensor *FindObfTensor();
   int ChangeObfWeight(std::string tensor_name, float obf_ratio);
-  float ModelRecoverObfuscate();
+  float ModelRecoverObfuscate(bool change_weight = true);
   int ModelDeObfuscate(float obf_ratio);
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   std::vector<Tensor *> trainable_parameters_;

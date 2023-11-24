@@ -66,7 +66,6 @@ def test_max_unpool1d_normal_output_size(mode):
     context.set_context(mode=mode)
     x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
     incices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
-    print('incices', incices.shape)
     output_size = (1, 8)
     net = Net(kernel_size=2, stride=2, padding=0)
     output = net(x, incices, output_size).asnumpy()

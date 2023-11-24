@@ -37,15 +37,12 @@ constexpr size_t kCudnnGRUInputDim = 3;
 constexpr size_t kCudnnGRUHDim = 3;
 constexpr size_t kCudnnGRUWDim = 3;
 }  // namespace
-bool GruGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool GruGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGruInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGruOutputsNum, kernel_name_);
   InitResource();
 
-  if (!GetCudnnDataType(TypeIdLabel(inputs[kInputsXIndex]->GetDtype()), &cudnn_data_type_)) {
+  if (!GetCudnnDataType(TypeIdLabel(inputs[kInputsXIndex]->dtype_id()), &cudnn_data_type_)) {
     MS_LOG(ERROR) << kernel_name_ << ": Get cudnn data type failed.";
     return false;
   }
@@ -58,24 +55,23 @@ bool GruGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   }
 
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kInputsXIndex).dtype);
-  input_size_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("input_size")));
-  hidden_size_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("hidden_size")));
-  num_layers_ = static_cast<int>(GetValue<int64_t>(base_operator->GetAttr("num_layers")));
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
-  bidirectional_ = GetValue<bool>(base_operator->GetAttr("bidirectional"));
-  dropout_ = GetValue<float>(base_operator->GetAttr("dropout"));
+  input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
+  hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
+  num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
+  bidirectional_ = GetValue<bool>(primitive_->GetAttr("bidirectional"));
+  dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
 void GruGpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   reserved_size_ = 0;
 }
 
-int GruGpuKernelMod::CheckInputsShape(const std::vector<KernelTensorPtr> &inputs) {
+int GruGpuKernelMod::CheckInputsShape(const std::vector<KernelTensor *> &inputs) {
   auto input_shape = inputs[kInputsXIndex]->GetShapeVector();  // (seq_len, batch_size, input_size)
   auto hx_shape = inputs[kInputsHxIndex]->GetShapeVector();    // (num_directions * num_layers, batch_size, hidden_size)
   auto w_shape = inputs[kInputsWIndex]->GetShapeVector();
@@ -98,9 +94,7 @@ int GruGpuKernelMod::CheckInputsShape(const std::vector<KernelTensorPtr> &inputs
   return KRET_OK;
 }
 
-int GruGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
+int GruGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   auto ret = CheckInputsShape(inputs);
   if (ret != KRET_OK) {
@@ -167,8 +161,9 @@ int GruGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool GruGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool GruGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   VARIABLE_NOT_USED(stream_ptr);
 
@@ -236,14 +231,8 @@ std::vector<KernelAttr> GruGpuKernelMod::GetOpSupport() {
 }
 
 void GruGpuKernelMod::InitSizeLists() {
-  size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * input_type_size_;
-
   size_t h_size = 0;
   CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(h_size);
-  input_size_list_.push_back(weight_size_);
 
   size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * input_type_size_;
   output_size_list_.push_back(y_size);

@@ -95,6 +95,12 @@ HyperMap::HyperMap(const HyperMap &h)
   Init();
 }
 
+void HyperMap::SetObjectForFnLeaf(const py::object &leaf_object) {
+  if (fn_leaf_ != nullptr) {
+    fn_leaf_->set_meta_obj(leaf_object);
+  }
+}
+
 AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                               const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -593,6 +599,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 
   // Make fprop first result, PyExecute's forward result.
   AnfNodePtr out = fg->NewCNodeInOrder(params);
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(out);
 
   // Make fprop second result, PyExecute's backward function.
   FuncGraphPtr bprop = std::make_shared<FuncGraph>();
@@ -742,7 +749,7 @@ bool EnableGradForScalar(const AbstractBasePtr &abs) {
 bool CanGradArgument(const AbstractTuplePtr &tuple_arg, size_t pos) {
   MS_EXCEPTION_IF_NULL(tuple_arg);
   return tuple_arg->size() > pos && (*tuple_arg)[pos] != nullptr &&
-         ((*tuple_arg)[pos]->BuildValue() == kValueAny || EnableGradForScalar((*tuple_arg)[pos]));
+         ((*tuple_arg)[pos]->BuildValue()->ContainsValueAny() || EnableGradForScalar((*tuple_arg)[pos]));
 }
 
 void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr &tuple_arg, const AbstractTuplePtr &pos,
@@ -1284,6 +1291,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
     k_child = GetGrad(j, weights, position, forward_graph->parameters(),
                       forward_graph->has_flag("enable_tuple_grad_first"), is_weights_empty_or_none);
+    k_child->set_flag(FUNC_GRAPH_FLAG_ARGS_NO_EXPAND, true);
   }
   grad_fg->set_output(NewValueNode(k_child));
 

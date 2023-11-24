@@ -63,9 +63,9 @@ def vm_impl_flatten(self):
 def vm_impl_softmax(self):
     """Generate vm_impl function for Softmax"""
 
-    def vm_impl(x):
+    def vm_impl(x, axis):
         x = x.asnumpy()
-        return Tensor(vm.softmax(x))
+        return Tensor(vm.softmax(x, axis))
 
     return vm_impl
 
@@ -96,7 +96,7 @@ def vm_impl_tanh(self):
 def vm_impl_batch_norm(self):
     """Generate vm_impl function for BatchNorm"""
 
-    def vm_impl(x, scale, b, mean, variance):
+    def vm_impl(x, scale, b, mean, variance, reserve, is_training, epsilon, data_format):
         # pylint: disable=unused-argument
         x = x.asnumpy()
         scale = scale.asnumpy()
@@ -105,7 +105,7 @@ def vm_impl_batch_norm(self):
         variance = variance.asnumpy()
         out, x_mean, x_var, running_mean, running_var = vm.batch_norm(x, scale, b, mean, \
                                                                       variance, \
-                                                                      eps=self.epsilon)
+                                                                      eps=epsilon)
         return Tensor(out), Tensor(x_mean), Tensor(x_var), \
                Tensor(running_mean), Tensor(running_var)
 
@@ -182,9 +182,9 @@ def vm_impl_max_pool_grad(self):
 def vm_impl_avg_pool(self):
     """Generate vm_impl function for AvgPool"""
 
-    def vm_impl(x):
+    def vm_impl(x, kernel_size, strides, pad_mode, data_format):
         x = x.asnumpy()
-        out = vm.avg_pooling(x, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
+        out = vm.avg_pooling(x, kernel_size[-2], kernel_size[-1], strides[-2])
         return Tensor(out)
 
     return vm_impl
@@ -274,7 +274,7 @@ def vm_impl_flatten_grad(self):
 def vm_impl_bias_add(self):
     """Generate vm_impl function for BiasAdd"""
 
-    def vm_impl(wx, bias):
+    def vm_impl(wx, bias, data_format):
         wx = wx.asnumpy()
         bias = bias.asnumpy()
         out = wx + bias
@@ -287,7 +287,7 @@ def vm_impl_bias_add(self):
 def vm_impl_bias_add_grad(self):
     """Generate vm_impl function for BiasAddGrad"""
 
-    def vm_impl(dout):
+    def vm_impl(dout, data_format):
         dout = dout.asnumpy()
         shape = np.shape(dout)
         return Tensor(np.add.reduce(dout, axis=tuple(range(len(shape) - 1))))

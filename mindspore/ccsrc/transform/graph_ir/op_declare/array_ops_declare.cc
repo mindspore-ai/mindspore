@@ -175,6 +175,7 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityN, kNameIdentityN, ADPT_DESC(IdentityN))
 // TupleGetItem's output may be a tuple when input is a nested tuple
 REG_ADPT_DESC(IdentityNTupleGetItem, kNameTupleGetItem, ADPT_DESC(IdentityN))
 
@@ -237,8 +238,9 @@ CUST_OUTPUT_MAP(MaskedSelectGrad) = {{0, OUTPUT_DESC(dx)}};
 REG_ADPT_DESC(MaskedSelectGrad, prim::kPrimMaskedSelectGrad->name(), CUST_ADPT_DESC(MaskedSelectGrad))
 
 // GradDGradV2
-CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(index)}, {3, INPUT_DESC(grad)}};
-CUST_ATTR_MAP(GatherDGradV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}, {4, INPUT_DESC(grad)}};
+CUST_INPUT_ATTR_MAP(GatherDGradV2) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+CUST_ATTR_MAP(GatherDGradV2) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(GatherDGradV2) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(GatherDGradV2, prim::kPrimGatherDGradV2->name(), CUST_ADPT_DESC(GatherDGradV2))
 
@@ -345,4 +347,5 @@ INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
 OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
+REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
 }  // namespace mindspore::transform

@@ -25,10 +25,8 @@ constexpr size_t kHSwishGradInputsNum = 2;
 constexpr size_t kHSwishGradOutputsNum = 1;
 }  // namespace
 
-bool HSwishGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool HSwishGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kHSwishGradInputsNum || outputs.size() != kHSwishGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kHSwishGradInputsNum << " and "
                   << kHSwishGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -45,10 +43,9 @@ bool HSwishGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int HSwishGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int HSwishGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -58,15 +55,15 @@ int HSwishGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool HSwishGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool HSwishGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSwishGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSwishGradOutputsNum, kernel_name_);
-  const auto *dy = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *dy = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  const auto *x = reinterpret_cast<T *>(inputs[1]->addr);
+  const auto *x = reinterpret_cast<T *>(inputs[1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *out = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(out, false);
 
   auto zero = static_cast<T>(0);

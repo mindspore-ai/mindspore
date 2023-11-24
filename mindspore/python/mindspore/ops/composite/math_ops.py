@@ -15,7 +15,7 @@
 """math Operations."""
 import mindspore.ops as ops
 from mindspore.ops import functional as F
-from mindspore.ops.function.math_func import cummin as cummin_
+from mindspore.ops.function.math_func import cummin
 from mindspore.ops._primitive_cache import _get_cache_prim
 
 
@@ -94,9 +94,9 @@ def mm(input, mat2):
 
     Args:
         input (Tensor): The first matrix of matrix multiplication.
-          The last dimension of `input` must be the same size as the first dimension of `mat2`.
+            The last dimension of `input` must be the same size as the first dimension of `mat2`.
         mat2 (Tensor): The second matrix of matrix multiplication.
-          The last dimension of `input` must be the same size as the first dimension of `mat2`.
+            The last dimension of `input` must be the same size as the first dimension of `mat2`.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs.
@@ -104,7 +104,7 @@ def mm(input, mat2):
     Raises:
         ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `mat2`.
-        ValueError: If `input` or `mat2` is not a matrix.
+        ValueError: If `input` or `mat2` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -122,43 +122,3 @@ def mm(input, mat2):
     _matmul = _get_cache_prim(ops.MatMul)()
     out = _matmul(input, mat2)
     return out
-
-
-def cummin(x, axis):
-    r"""
-    Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `x`
-    along the dimension `axis`, and `indices` is the index location of each minimum value.
-
-    .. math::
-        \begin{array}{ll} \\
-            y{i} = min(x{1}, x{2}, ... , x{i})
-        \end{array}
-
-    Args:
-        x (Tensor): The input Tensor, rank of `x` > 0.
-        axis (int): The dimension to do the operation over. The value of `axis` must be in the range
-            `[-x.ndim, x.ndim - 1]`.
-
-    Returns:
-        tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
-        >>> output = ops.cummin(a, axis=0)
-        >>> print(output[0])
-        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
-        >>> print(output[1])
-        [0 1 1 1 4 4]
-    """
-    return cummin_(x, axis)

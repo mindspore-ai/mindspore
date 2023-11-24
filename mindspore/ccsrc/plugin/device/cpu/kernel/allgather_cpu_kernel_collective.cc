@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/allgather_cpu_kernel_collective.h"
 
 #include <set>
+#include <string>
 #include <functional>
 #include <memory>
 
@@ -31,23 +32,19 @@ using device::cpu::kMCCLGlobalGroupName;
 using device::cpu::MsCollectiveCommLib;
 #endif
 
-bool AllGatherCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool AllGatherCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto group = GetValue<std::string>(prim->GetAttr(GROUP));
+  auto group = GetValue<std::string>(primitive_->GetAttr(GROUP));
   if (group != kMCCLGlobalGroupName) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
-  input_dtype_ = inputs[0]->GetDtype();
+  input_dtype_ = inputs[0]->dtype_id();
 #else
   MS_LOG(EXCEPTION) << "The CPU kernel allgather is only supported on linux platform.";
 #endif
@@ -61,19 +58,19 @@ std::vector<KernelAttr> AllGatherCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AllGatherCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AllGatherCPUKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }
   std::size_t data_size = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    data_size += inputs[i]->size;
+    data_size += inputs[i]->size();
   }
-  bool ret = MsCollectiveCommLib::GetInstance().AllGather(inputs[0]->addr, outputs[0]->addr, data_size / sizeof(float),
-                                                          input_dtype_, "AllGather");
+  bool ret = MsCollectiveCommLib::GetInstance().AllGather(inputs[0]->device_ptr(), outputs[0]->device_ptr(),
+                                                          data_size / sizeof(float), input_dtype_, "AllGather");
   if (!ret) {
     MS_LOG(ERROR) << "AllGatherCPUKernelMod launch failed.";
   }

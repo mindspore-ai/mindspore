@@ -51,8 +51,8 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
   const size_t kBatchIndex = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
-  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
   ShapeVector out_shape = {};
@@ -119,10 +119,10 @@ TypePtr CholeskySolveInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("x1", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("x2", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("x1", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("x2", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, op_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

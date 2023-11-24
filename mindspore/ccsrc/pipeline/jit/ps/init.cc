@@ -131,6 +131,7 @@ void RegModule(py::module *m) {
   RegUpdateFuncGraphHyperParams(m);
   RegParamInfo(m);
   RegPrimitive(m);
+  RegPrimitiveFunction(m);
   RegSignatureEnumRW(m);
   mindspore::tensor::RegMetaTensor(m);
   mindspore::tensor::RegCSRTensor(m);
@@ -141,7 +142,9 @@ void RegModule(py::module *m) {
   mindspore::initializer::RegRandomNormal(m);
   RegMsContext(m);
   RegSecurity(m);
+  RegForkUtils(m);
   mindspore::pynative::RegPyNativeExecutor(m);
+  mindspore::pynative::RegisterPyBoostFunction(m);
   mindspore::prim::RegCompositeOpsGroup(m);
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);

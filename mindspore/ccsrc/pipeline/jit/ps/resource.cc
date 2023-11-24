@@ -56,7 +56,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__or__", prim::kPrimBoolOr},       // P.bool_or
        {"__eq__", prim::kPrimBoolEq},       // P.bool_eq
        {"__ne__", std::string("bool_ne")},  // C.bool_ne
-       {"__bool__", prim::kPrimIdentity}    // P.identity
+       {"__bool__", prim::kPrimidentity}    // P.identity
      }},
     {kNumberTypeInt,
      {
@@ -67,16 +67,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow
-       {"__floor__", prim::kPrimIdentity},             // P.identity
-       {"__trunc__", prim::kPrimIdentity},             // P.identity
+       {"__floor__", prim::kPrimidentity},             // P.identity
+       {"__trunc__", prim::kPrimidentity},             // P.identity
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -89,16 +89,16 @@ BuiltInTypeMap &GetMethodMap() {
        {"__truediv__", std::string("int_truediv")},    // C.int_truediv
        {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
        {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
-       {"__floor__", prim::kPrimIdentity},             // P.identity,
-       {"__trunc__", prim::kPrimIdentity},             // P.identity,
+       {"__floor__", prim::kPrimidentity},             // P.identity,
+       {"__trunc__", prim::kPrimidentity},             // P.identity,
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe,
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -115,56 +115,50 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
        {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                  // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                  // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                  // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                  // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                  // P.ScalarGe,
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
     {kObjectTypeTuple,
      {
-       {"__len__", prim::kPrimSequenceLen},               // P.sequence_len,
-       {"__getitem__", prim::kPrimTupleGetItem},          // P.tuple_getitem,
-       {"__setitem__", prim::kPrimTupleSetItem},          // P.tuple_setitem,
-       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
-       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-       {"count", prim::kPrimSequenceCount},               // P.sequence_count
-       {"index", std::string("sequence_index")},          // C.sequence_index
+       {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
+       {"__getitem__", prim::kPrimTupleGetItem},  // P.tuple_getitem,
+       {"__setitem__", prim::kPrimTupleSetItem},  // P.tuple_setitem,
+       {"count", prim::kPrimSequenceCount},       // P.sequence_count
+       {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeList,
      {
-       {"__len__", prim::kPrimSequenceLen},              // P.sequence_len,
-       {"__getitem__", prim::kPrimListGetItem},          // P.list_getitem,
-       {"__setitem__", prim::kPrimListSetItem},          // P.list_setitem,
-       {"__ms_next__", std::string("list_next")},        // C.list_next
-       {"append", std::string("list_append")},           // C.list_append
-       {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
-       {"insert", std::string("list_insert")},           // C.list_insert
-       {"pop", std::string("list_pop")},                 // C.list_pop
-       {"clear", std::string("list_clear")},             // C.list_clear
-       {"reverse", std::string("list_reverse")},         // C.list_reverse
-       {"extend", std::string("list_extend")},           // C.list_extend
-       {"count", prim::kPrimSequenceCount},              // P.sequence_count
-       {"index", std::string("sequence_index")},         // C.sequence_index
+       {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
+       {"__getitem__", prim::kPrimListGetItem},   // P.list_getitem,
+       {"__setitem__", prim::kPrimListSetItem},   // P.list_setitem,
+       {"append", std::string("list_append")},    // C.list_append
+       {"insert", std::string("list_insert")},    // C.list_insert
+       {"pop", std::string("list_pop")},          // C.list_pop
+       {"clear", std::string("list_clear")},      // C.list_clear
+       {"reverse", std::string("list_reverse")},  // C.list_reverse
+       {"extend", std::string("list_extend")},    // C.list_extend
+       {"count", prim::kPrimSequenceCount},       // P.sequence_count
+       {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeDictionary,
      {
-       {"__len__", prim::kPrimDictLen},                  // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},          // P.dict_getitem
-       {"__setitem__", std::string("dict_setitem")},     // C.dict_setitem,
-       {"__ms_hasnext__", std::string("dict_hasnext")},  // C.array_hasnext
-       {"__ms_next__", std::string("dict_next")},        // C.array_next
-       {"keys", prim::kPrimDictGetKeys},                 // P.dict_getkeys,
-       {"values", prim::kPrimDictGetValues},             // P.dict_getvalues,
-       {"items", prim::kPrimDictItems},                  // P.dict_items
-       {"get", std::string("dict_get")},                 // C.dict_get
-       {"has_key", std::string("dict_haskey")},          // C.dict_haskey
-       {"clear", std::string("dict_clear")},             // C.dict_clear
-       {"update", std::string("dict_update")},           // C.dict_update
-       {"fromkeys", std::string("dict_fromkeys")}        // C.dict_fromkeys
+       {"__len__", prim::kPrimDictLen},               // P.dict_len
+       {"__getitem__", prim::kPrimDictGetItem},       // P.dict_getitem
+       {"__setitem__", std::string("dict_setitem")},  // C.dict_setitem,
+       {"keys", prim::kPrimDictGetKeys},              // P.dict_getkeys,
+       {"values", prim::kPrimDictGetValues},          // P.dict_getvalues,
+       {"items", prim::kPrimDictItems},               // P.dict_items
+       {"get", std::string("dict_get")},              // C.dict_get
+       {"has_key", std::string("dict_haskey")},       // C.dict_haskey
+       {"clear", std::string("dict_clear")},          // C.dict_clear
+       {"update", std::string("dict_update")},        // C.dict_update
+       {"fromkeys", std::string("dict_fromkeys")}     // C.dict_fromkeys
      }},
     {kObjectTypeTensorType,
      {
@@ -211,9 +205,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
-       {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
-       {"__ms_next__", std::string("array_next")},                         // C.array_next
-       {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
+       {"__ms_to_array__", prim::kPrimidentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
        {"itemset", std::string("itemset")},                                // P.itemset,
@@ -555,24 +547,46 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
-    {kObjectTypeString, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeTuple, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeList, {{"__ms_iter__", prim::kPrimIdentity}}},
-    {kObjectTypeDictionary, {{"__ms_iter__", prim::kPrimDictGetKeys}}},
+    {kObjectTypeString,
+     {
+       {"__ms_iter__", prim::kPrimidentity},            // P.Identity
+       {"__ms_next__", std::string("str_next")},        // C.str_next
+       {"__ms_hasnext__", std::string("str_hasnext")},  // C.array_hasnext
+     }},
+    {kObjectTypeTuple,
+     {
+       {"__ms_iter__", prim::kPrimidentity},              // P.Identity
+       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
+       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
+     }},
+    {kObjectTypeList,
+     {
+       {"__ms_iter__", prim::kPrimidentity},             // P.Identity
+       {"__ms_next__", std::string("list_next")},        // C.list_next
+       {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
+     }},
+    {kObjectTypeDictionary,
+     {
+       {"__ms_iter__", prim::kPrimDictGetKeys},          // P.DictGetKeys
+       {"__ms_next__", std::string("dict_next")},        // C.dict_next
+       {"__ms_hasnext__", std::string("dict_hasnext")},  // C.dict_hasnext
+     }},
     {kObjectTypeTensorType,
      {
-       {"shape", prim::kPrimShape},             // C.shape_
-       {"dtype", prim::kPrimDType},             // C.dtype_
-       {"size", std::string("size_")},          // C.size_
-       {"ndim", std::string("ndim_")},          // C.ndim_
-       {"H", std::string("H")},                 // C.H
-       {"T", std::string("T_")},                // C.T_
-       {"itemsize", std::string("itemsize_")},  // C.itemsize_
-       {"nbytes", std::string("nbytes_")},      // C.nbytes_
-       {"strides", std::string("strides_")},    // C.strides_
-       {"mH", std::string("adjoint")},          // C.adjoint
-       {"mT", std::string("mT")},               // C.mT_
-       {"__ms_iter__", prim::kPrimIdentity},    // C.array_iter
+       {"shape", prim::kPrimShape},                       // C.shape_
+       {"dtype", prim::kPrimDType},                       // C.dtype_
+       {"size", std::string("size_")},                    // C.size_
+       {"ndim", std::string("ndim_")},                    // C.ndim_
+       {"H", std::string("H")},                           // C.H
+       {"T", std::string("T_")},                          // C.T_
+       {"itemsize", std::string("itemsize_")},            // C.itemsize_
+       {"nbytes", std::string("nbytes_")},                // C.nbytes_
+       {"strides", std::string("strides_")},              // C.strides_
+       {"mH", std::string("adjoint")},                    // C.adjoint
+       {"mT", std::string("mT")},                         // C.mT_
+       {"__ms_iter__", prim::kPrimidentity},              // C.array_iter
+       {"__ms_next__", std::string("array_next")},        // C.array_next
+       {"__ms_hasnext__", std::string("array_hasnext")},  // C.array_hasnext
      }},
     {kObjectTypeRowTensorType,
      {

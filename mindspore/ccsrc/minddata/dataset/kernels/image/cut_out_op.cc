@@ -29,8 +29,7 @@ const bool CutOutOp::kDefRandomColor = false;
 // constructor
 CutOutOp::CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color,
                    std::vector<uint8_t> fill_colors, bool is_hwc)
-    : rnd_(GetSeed()),
-      box_height_(box_height),
+    : box_height_(box_height),
       box_width_(box_width),
       num_patches_(num_patches),
       random_color_(random_color),
@@ -42,8 +41,8 @@ Status CutOutOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   IO_CHECK(input, output);
   std::shared_ptr<CVTensor> inputCV = CVTensor::AsCVTensor(input);
   // cut out will clip the erasing area if the box is near the edge of the image and the boxes are black
-  RETURN_IF_NOT_OK(
-    CutOut(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_colors_, is_hwc_));
+  RETURN_IF_NOT_OK(CutOut(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_,
+                          &random_generator_, fill_colors_, is_hwc_));
   return Status::OK();
 }
 }  // namespace dataset

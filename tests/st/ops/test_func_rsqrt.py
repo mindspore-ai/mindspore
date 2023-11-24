@@ -47,3 +47,21 @@ def test_rsqrt_normal(mode):
     out = net(x)
     expect_out = np.array([5.1987524, 1.8349396, 0.80530024, 1.047997])
     assert np.allclose(out.asnumpy(), expect_out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_rsqrt_bf16(mode):
+    """
+    Feature: rsqrt
+    Description: Verify the result of rsqrt
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+    x = ms.Tensor([1.0, 2.0, 3.0, 4.0], dtype=ms.bfloat16)
+    out = net(x)
+    expect_out = np.array([1.0000, 0.7071, 0.5774, 0.5000])
+    assert np.allclose(out.float().asnumpy(), expect_out, rtol=5e-3, atol=5e-3)

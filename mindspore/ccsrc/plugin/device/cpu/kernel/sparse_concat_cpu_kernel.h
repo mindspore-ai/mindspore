@@ -29,11 +29,10 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
   SparseConcatCpuKernelMod() = default;
   ~SparseConcatCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -43,14 +42,14 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename S, typename T>
-  bool SparseConcat(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size, const int size);
+  bool SparseConcat(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs, const size_t shape_size, const int size);
   template <typename S, typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
   template <typename S>
-  bool LaunchFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                  const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchFunc(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                  const std::vector<kernel::KernelTensor *> &outputs);
   int64_t concat_dim_;
   size_t input_num_;
   TypeId values_dtype_{kTypeUnknown};

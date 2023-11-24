@@ -32,8 +32,8 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
   ConcatOffsetGpuKernelMod() {}
   ~ConcatOffsetGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t out_size = out_offset_.size() * sizeof(S);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -43,9 +43,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    kernel_name_ = base_operator->GetPrim()->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     constexpr size_t outputs_num = 1;
     if (outputs.size() != outputs_num) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size();
@@ -58,8 +56,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     ResetResource();
     if (inputs[kIndex0]->IsDynamicShape()) {
       return KRET_UNKNOWN_SHAPE;
@@ -67,10 +64,10 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     auto input_shape = inputs[kIndex0]->GetShapeVector();
     auto rank = input_shape.size();
     auto rank_int = SizeToInt(rank);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ConcatOffset>(base_operator);
+
     int64_t axis = 0;
-    if (kernel_ptr->HasAttr(kAttrAxis)) {
-      axis = kernel_ptr->get_axis();
+    if (primitive_->HasAttr("axis")) {
+      axis = GetValue<int64_t>(primitive_->GetAttr("axis"));
     }
     if (axis < -rank_int || axis >= rank_int) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << rank << "," << rank
@@ -80,14 +77,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
       axis += rank_int;
     }
     size_t input_num = inputs.size();
-    for (size_t i = 0; i < input_num; i++) {
-      int64_t input_size = 1;
-      auto input_shape_i = inputs[i]->GetDeviceShapeAdaptively();
-      for (size_t j = 0; j < input_shape_i.size(); j++) {
-        input_size *= input_shape_i[j];
-      }
-      input_size_list_.push_back(LongToSizeClipNeg(input_size) * sizeof(T));
-    }
+
     // cal offset
     int64_t shape_offset = input_shape[axis];
     std::vector<size_t> offset(input_num, 0);
@@ -129,7 +119,6 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     out_offset_.clear();
   }

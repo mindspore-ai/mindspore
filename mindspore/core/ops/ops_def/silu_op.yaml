@@ -1,0 +1,12 @@
+#SiLU operator
+silu:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: SiLU
+    dispatch:
+        enable: False

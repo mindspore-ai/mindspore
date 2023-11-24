@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 
 #include <random>
+#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -24,13 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-const std::vector<float> RandomRotationOp::kDefCenter = {};
-const InterpolationMode RandomRotationOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
-const bool RandomRotationOp::kDefExpand = false;
-const uint8_t RandomRotationOp::kDefFillR = 0;
-const uint8_t RandomRotationOp::kDefFillG = 0;
-const uint8_t RandomRotationOp::kDefFillB = 0;
-
 // constructor
 RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample, bool expand,
                                    std::vector<float> center, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
@@ -41,15 +35,12 @@ RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, Interpo
       expand_(expand),
       fill_r_(fill_r),
       fill_g_(fill_g),
-      fill_b_(fill_b) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+      fill_b_(fill_b) {}
 
 // main function call for random rotation : Generate the random degrees
 Status RandomRotationOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  float random_double = distribution_(rnd_);
+  float random_double = distribution_(random_generator_);
   // get the degree rotation range, mod by 360 because full rotation doesn't affect
   // the way this op works (uniform distribution)
   // assumption here is that mDegreesEnd > mDegreeStart so we always get positive number

@@ -232,9 +232,9 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetUnusedInputs({i4}).SetBody(BODYF
   }
   constexpr int64_t axis = -1;
   constexpr int64_t output_num = 2;
-  auto split_indices = ib->Emit(
-    kSplitOpName, {indices},
-    {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(output_num)}, {"num_split", MakeValue(output_num)}});
+  auto split_indices =
+    ib->Emit(kSplitOpName, {indices, ib->EmitValue(MakeValue(axis)), ib->EmitValue(MakeValue(output_num))},
+             {{"num_split", MakeValue(output_num)}});
   auto rows = ib->ReduceSum(ib->TupleGetItem(split_indices, kIndex0), {axis});
   auto cols = ib->ReduceSum(ib->TupleGetItem(split_indices, kIndex1), {axis});
   auto zero = ib->Value<int64_t>(0);

@@ -537,11 +537,12 @@ NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const
   return ib->BroadcastTo(grad, x);
 }
 
-NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
-                     const NodePtr &dout) {
+NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                     const NodePtr &out, const NodePtr &dout) {
   auto y = out;
   auto grad = dout;
-  if (!ib->GetAttr<bool>("keep_dims")) {
+  auto keepdims = GetValue<bool>(keep_dims->BuildValue());
+  if (!keepdims) {
     auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
     y = ib->Reshape(out, output_shape_kept_dims);
     grad = ib->Reshape(dout, output_shape_kept_dims);
@@ -613,7 +614,7 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
     if (!IsDynamic(out_shape) && onehot_axis >= SizeToLong(out_shape.size())) {
       onehot_axis = -1;
     }
-    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value}, {{"axis", MakeValue(onehot_axis)}});
+    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value, ib->Value<int64_t>(onehot_axis)});
     if (x_shape.empty()) {
       dx = ib->Emit("Squeeze", {dx});
     }
@@ -623,7 +624,7 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
     auto res = ib->ShapeCalc(std::make_shared<ArgminOrArgmaxShapeCalc>(x_axis), {indices_expand, x});
     auto broad_shape = res[0];
     depth = res[1];
-    auto depth_range = ib->Range(depth);
+    auto depth_range = ib->Range(ib->TensorToScalar(depth));
     auto depth_broad = ib->Reshape(depth_range, broad_shape);
     auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
     auto one_hot_res = ib->Cast(one_hot_bool, type_x);
@@ -706,6 +707,7 @@ ShapeVector PoolToNHWC(const ShapeVector &v) {
   new_v[kIndex3] = v[kIndex1];
   return new_v;
 }
+
 ShapeVector ConvToNHWC(const ShapeVector &v) {
   ShapeVector new_v(v);
   new_v[kIndex0] = v[kIndex1];
@@ -728,7 +730,7 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
     auto dim = ib->Emit("Rank", {x});
-    auto perm = ib->Range(ib->Tensor(0, kInt64), ib->Emit("Cast", {dim, ib->EmitValue(kInt64)}), ib->Tensor(1, kInt64));
+    auto perm = ib->Range(dim);
     auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
       return ib->Emit("StridedSlice",
                       {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),
@@ -757,7 +759,7 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
     auto part_2 = stridedslice_helper(range_2);
     auto part_3 = stridedslice_helper(range_3);
     perm = ib->Concat({part_1, part_2, part_3}, -1);
-    return ib->Transpose(x, perm);
+    return ib->Transpose(x, ib->TensorToTuple(perm));
   }
   auto dim = shape.size();
   if (dim < kDim2) {

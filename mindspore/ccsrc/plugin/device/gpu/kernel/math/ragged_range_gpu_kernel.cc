@@ -92,8 +92,9 @@ const std::vector<std::pair<KernelAttr, RaggedRangePtrCreatorFunc>> kernel_attr 
 };
 }  // namespace
 
-bool RaggedRangeGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool RaggedRangeGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -103,24 +104,20 @@ bool RaggedRangeGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   return true;
 }
 
-bool RaggedRangeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RaggedRange>(base_operator);
-  std::string kernel_name = kernel_ptr->name();
-
+bool RaggedRangeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name, device_id_));
+  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
 
   return true;
 }
 
-int RaggedRangeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &others) {
+int RaggedRangeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   constexpr size_t startsIdx = 0;
   constexpr size_t limitsIdx = 1;
   constexpr size_t deltasIdx = 2;
@@ -139,13 +136,13 @@ int RaggedRangeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
   }
   auto starts_shape = inputs[startsIdx]->GetShapeVector();
-  auto starts_type = inputs[startsIdx]->GetDtype();
+  auto starts_type = inputs[startsIdx]->dtype_id();
   size_t starts_dim = starts_shape.size();
   auto limits_shape = inputs[limitsIdx]->GetShapeVector();
-  auto limits_type = inputs[limitsIdx]->GetDtype();
+  auto limits_type = inputs[limitsIdx]->dtype_id();
   size_t limits_dim = limits_shape.size();
   auto deltas_shape = inputs[deltasIdx]->GetShapeVector();
-  auto deltas_type = inputs[deltasIdx]->GetDtype();
+  auto deltas_type = inputs[deltasIdx]->dtype_id();
   size_t deltas_dim = deltas_shape.size();
   if (starts_dim > 1) {
     MS_LOG(EXCEPTION) << "For RaggedRange, the dimension of RaggedRange input starts must be less than 2, but got "
@@ -189,7 +186,6 @@ int RaggedRangeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

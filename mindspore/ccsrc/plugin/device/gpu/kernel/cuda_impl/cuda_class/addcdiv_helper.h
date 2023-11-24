@@ -49,29 +49,6 @@ class AddcdivHelperGpuKernel : public GpuKernelHelperBase {
     x1_shape_ = input_shapes[1];
     x2_shape_ = input_shapes[kIdx2];
     value_shape_ = input_shapes[kIdx3];
-    size_t input_data_size = sizeof(T);
-    for (auto val : input_shapes[0]) {
-      input_data_size *= val;
-    }
-    input_size_list_.emplace_back(input_data_size);
-
-    size_t x1_size = sizeof(T);
-    for (auto val : input_shapes[1]) {
-      x1_size *= val;
-    }
-    input_size_list_.emplace_back(x1_size);
-
-    size_t x2_size = sizeof(T);
-    for (auto val : input_shapes[kIdx2]) {
-      x2_size *= val;
-    }
-    input_size_list_.emplace_back(x2_size);
-
-    size_t value_size = sizeof(VT);
-    for (auto val : input_shapes[kIdx3]) {
-      value_size *= val;
-    }
-    input_size_list_.emplace_back(value_size);
 
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);

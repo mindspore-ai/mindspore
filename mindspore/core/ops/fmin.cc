@@ -51,8 +51,8 @@ class FminInfer : public abstract::OpInferBase {
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-    auto type_x = input_args[0]->BuildType();
-    auto type_y = input_args[1]->BuildType();
+    auto type_x = input_args[0]->GetType();
+    auto type_y = input_args[1]->GetType();
     MS_EXCEPTION_IF_NULL(type_x);
     MS_EXCEPTION_IF_NULL(type_y);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", type_x, valid_types, op_name);

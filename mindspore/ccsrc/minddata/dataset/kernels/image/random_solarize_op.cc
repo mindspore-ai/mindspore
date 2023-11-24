@@ -16,6 +16,8 @@
 
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 
+#include <utility>
+
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
@@ -30,10 +32,10 @@ Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
                                "RandomSolarize: min of threshold: " + std::to_string(threshold_min_) +
                                  " is greater than max of threshold: " + std::to_string(threshold_max_));
 
-  float threshold_min = static_cast<float>(
-    std::uniform_int_distribution(static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(rnd_));
-  float threshold_max = static_cast<float>(
-    std::uniform_int_distribution(static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(rnd_));
+  float threshold_min = static_cast<float>(std::uniform_int_distribution(
+    static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(random_generator_));
+  float threshold_max = static_cast<float>(std::uniform_int_distribution(
+    static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(random_generator_));
 
   if (threshold_max < threshold_min) {
     std::swap(threshold_min, threshold_max);

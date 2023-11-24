@@ -35,8 +35,6 @@ def test_avg_pool1d_forward_functional(nptype):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_avg_pool1d_forward_float32_functional():
     """
@@ -63,8 +61,6 @@ def test_avg_pool2d_forward_functional(nptype):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_avg_pool2d_forward_float32_functional():
     """
@@ -91,8 +87,6 @@ def test_avg_pool3d_forward_functional(nptype):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_forward_float32_functional():
     """

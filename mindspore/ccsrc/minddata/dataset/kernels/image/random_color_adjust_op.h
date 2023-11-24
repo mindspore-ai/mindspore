@@ -27,10 +27,8 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomColorAdjustOp : public TensorOp {
+class RandomColorAdjustOp : public RandomTensorOp {
  public:
-  static const uint32_t kDefSeed;
-
   // Constructor for RandomColorAdjustOp.
   // @param s_bright_factor brightness change range start value.
   // @param e_bright_factor brightness change range end value.
@@ -61,7 +59,6 @@ class RandomColorAdjustOp : public TensorOp {
     return (std::fabs(a - b) < epsilon);
   }
 
-  std::mt19937 rnd_;
   float bright_factor_start_;
   float bright_factor_end_;
   float contrast_factor_start_;

@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_ARRAY_OPS_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/dynamic_shape.h"
-#include "ops/tensor_shape.h"
 
 namespace mindspore {
 namespace lite {

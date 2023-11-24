@@ -3,7 +3,7 @@ mindspore.ops.renorm
 
 .. py:function:: mindspore.ops.renorm(input, p, axis, maxnorm)
 
-    对Tensor沿着指定维度 `dim` 进行重新规范化，要求每个子Tensor的 `p` 范数不超过 `maxnorm` 。如果子Tensor的 `p` 范数小于 `maxnorm` ，则其值不需要改变。否则，子Tensor需要修改为相应位置的原始值除以子Tensor的p范数，然后再乘以 `maxnorm` 。
+    对Tensor沿着指定维度 `dim` 进行重新规范化，要求每个子Tensor的 `p` 范数不超过 `maxnorm` 。如果子Tensor的 `p` 范数小于 `maxnorm` ，则其值不需要改变。否则，子Tensor需要修改为相应位置的原始值除以子Tensor的 `p` 范数，然后再乘以 `maxnorm` 。
 
     参数：
         - **input** (Tensor) - 输入张量，类型为float32或者float16。

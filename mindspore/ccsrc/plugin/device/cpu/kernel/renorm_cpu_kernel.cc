@@ -33,14 +33,7 @@ constexpr size_t kRenormInputsNum = 1;
 constexpr size_t kRenormOutputsNum = 1;
 }  // namespace
 
-bool RenormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Renorm>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Renorm ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool RenormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kRenormInputsNum || outputs.size() != kRenormOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kRenormInputsNum
                   << " and " << kRenormOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -58,18 +51,16 @@ bool RenormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int RenormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &others) {
+int RenormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " resize failed.";
     return ret;
   }
   x_shape_ = inputs[kIndex0]->GetShapeVector();
-  axis_ = GetValue<int64_t>(op_->GetAttr("dim"));
-  p_ = GetValue<float>(op_->GetAttr("p"));
-  max_norm_ = GetValue<float>(base_operator->GetAttr("maxnorm"));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
+  max_norm_ = GetValue<float>(primitive_->GetAttr("maxnorm"));
   return 0;
 }
 
@@ -113,13 +104,13 @@ void RenormCpuKernelMod::CheckAndInitParams() {
 }
 
 template <typename T>
-bool RenormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool RenormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRenormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRenormOutputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   CheckAndInitParams();
 
   auto axis_size = axis_size_;      // maximum parallel number

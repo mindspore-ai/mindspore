@@ -80,8 +80,8 @@ const std::vector<std::pair<KernelAttr, PadV3PtrCreatorFunc>> kernel_attr = {
 };
 }  // namespace
 
-bool PadV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool PadV3GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -91,46 +91,42 @@ bool PadV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
   return true;
 }
 
-bool PadV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool PadV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
   MS_ERROR_IF_NULL(attr_ptr_);
-  attr_ptr_->mode = kernel_ptr->get_mode();
-  attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
+  attr_ptr_->mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
+  attr_ptr_->paddings_contiguous = GetValue<bool>(primitive_->GetAttr("paddings_contiguous"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int PadV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
 
-  std::vector<int64_t> paddings_arg;
   std::vector<int64_t> paddings_val;
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &paddings_arg)) {
-    MS_LOG(EXCEPTION) << "Fot '" << kernel_name_ << "', can't get paddings value from input[1].";
+  auto paddings_type = inputs[kIndex1]->dtype_id();
+  if (paddings_type == kNumberTypeInt32) {
+    std::vector<int32_t> paddings_arg = inputs[kIndex1]->GetValueWithCheck<std::vector<int32_t>>();
+    for (size_t i = 0; i < paddings_arg.size(); ++i) {
+      paddings_val.push_back(static_cast<int64_t>(paddings_arg[i]));
+    }
+  } else if (paddings_type == kNumberTypeInt64) {
+    paddings_val = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  } else {
+    MS_LOG(ERROR) << "For Padv3, the paddings value type should be int64 or int32, but got " << paddings_type;
+    return KRET_RESIZE_FAILED;
   }
 
-  int64_t paddings_size = SizeToLong(paddings_arg.size());
-  for (int64_t i = 0; i < paddings_size; ++i) {
-    paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
-  }
-
-  auto prim = base_operator->GetPrim();
+  int64_t paddings_size = SizeToLong(paddings_val.size());
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   if (!GetValue<bool>(prim->GetAttr("paddings_contiguous"))) {
     constexpr int64_t nTwo = 2;
@@ -161,7 +157,6 @@ int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

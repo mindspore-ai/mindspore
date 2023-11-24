@@ -27,28 +27,18 @@ namespace {
 const size_t kSizeInputsNum = 1;
 const size_t kSizeOutputsNum = 1;
 };  // namespace
-bool SizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG_ERROR << "Can not match kernel based on given attr!";
     return false;
   }
-
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
-    return false;
-  }
   return true;
 }
 
-int SizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape_vector = inputs[kIndex0]->GetShapeVector();
@@ -56,15 +46,15 @@ int SizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   for (size_t i = 0; i < shape_vector.size(); i++) {
     elements *= shape_vector[i];
   }
-  input_elements = SizeToLong(elements);
+  input_elements = elements;
   return KRET_OK;
 }
 
-bool SizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool SizeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSizeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSizeOutputsNum, kernel_name_);
-  auto output_data = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_data = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
   output_data[kIndex0] = input_elements;
   return true;

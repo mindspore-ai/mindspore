@@ -11,7 +11,7 @@ mindspore.ops.CumProd
         y_i = x_1 * x_2 * x_3 * ... * x_i
 
     参数：
-        - **exclusive** (bool) - 如果为 ``True`` ，则排除末尾元素计算元素累计积（见示例）。默认值： ``False`` 。
+        - **exclusive** (bool) - 如果为 ``True`` ，则排除末尾元素计算元素累计积（见样例）。默认值： ``False`` 。
         - **reverse** (bool) - 如果为 ``True`` ，则沿 `axis` 反转结果。默认值： ``False`` 。
 
     输入：

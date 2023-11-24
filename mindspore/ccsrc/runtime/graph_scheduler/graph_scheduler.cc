@@ -609,6 +609,9 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   SignalGuard sg(IntHandler);
 #endif
+  // Some exception could happen after one step is completed, need to check exception at the beginning to avoid thread
+  // hanging.
+  MsException::Instance().CheckException();
 
   // Check the actor set state.
   if (actor_set->is_execution_failed_) {
@@ -672,7 +675,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     std::mutex mutex;
     std::unique_lock<std::mutex> locker(mutex);
     std::condition_variable thread_blocker;
-    const int64_t kTimeToWait = 2;
+    const int64_t kTimeToWait = 60;
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
     // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
     MsException::Instance().CheckException();
@@ -1600,10 +1603,6 @@ void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, Abs
                                                        const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
-  // Ignore the input address that is not used in the kernel launch.
-  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_kernel_with_input_idx.second)) {
-    return;
-  }
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
@@ -1664,37 +1663,6 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     }
   }
 
-  // Record the internal parameter of dynamic shape kernel.
-  if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
-      common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
-    AbstractActor *dynamic_shape_actor = nullptr;
-    auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
-    if (real_from_actor->type() == KernelTransformType::kAnyTypeKernelActor ||
-        AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
-      dynamic_shape_actor = real_from_actor;
-    } else {
-      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
-    }
-    MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
-    auto &internal_parameters = dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx];
-    auto repeat_it = std::find_if(internal_parameters.begin(), internal_parameters.end(),
-                                  [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
-                                    return internal_parameter == internal_parameter_weakptr.lock();
-                                  });
-    MS_LOG(DEBUG) << "Check internal parameter:" << internal_parameter->DebugString()
-                  << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
-                  << " actor:" << dynamic_shape_actor->GetAID();
-    // Any type input of graph cannot update shape, it would be fixed in any type kernel actor.
-    if (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
-        (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()) &&
-        repeat_it == internal_parameters.end() && to_actor->type() != KernelTransformType::kAnyTypeKernelActor) {
-      MS_LOG(DEBUG) << "Add internal parameter:" << internal_parameter->DebugString()
-                    << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
-                    << " actor:" << dynamic_shape_actor->GetAID();
-      (void)internal_parameters.emplace_back(internal_parameter);
-    }
-  }
-
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     MS_EXCEPTION_IF_NULL(internal_parameter);
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid internal parameter:"
@@ -1715,10 +1683,6 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   MS_EXCEPTION_IF_NULL(from_kernel);
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
-  // Ignore the input address that is not used in the kernel launch.
-  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) {
-    return;
-  }
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchNodePosition({from_kernel, 0});
@@ -1727,7 +1691,9 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   }
 
   // The custom actor will sync the device tensor data from the data arrow and no need copy.
+  // Ignore the input address that no need copy.
   if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
+      (!SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) &&
       IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
@@ -1835,9 +1801,15 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
       const auto &pre_device_tensor =
         AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false);
       MS_EXCEPTION_IF_NULL(pre_device_tensor);
-      copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, pre_device_tensor->GetSize(), pre_device_tensor->format(), pre_device_tensor->type_id(),
-        pre_device_tensor->host_shape());
+
+      const auto &pre_kernel_tensor = pre_device_tensor->kernel_tensor();
+      const auto new_kernel_tensor = pre_kernel_tensor->CloneKernelTensor();
+      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+      new_kernel_tensor->set_device_name(to_device_context->device_context_key().device_name_);
+      new_kernel_tensor->set_device_id(to_device_context->device_context_key().device_id_);
+      new_kernel_tensor->set_device_ptr(nullptr);
+
+      copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_LOG(DEBUG) << "Create device tensor:" << copy_actor->output_;
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
@@ -2702,10 +2674,14 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
   // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                 << ", type:" << device_context->GetDeviceType();
-    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+                 << ", type:" << device_context->GetDeviceType() << " dtype:" << device_tensor->type_id()
+                 << " current device address:" << device_tensor << " in value node:" << value_node->DebugString();
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
@@ -2748,9 +2724,12 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
                  << ", type:" << device_context->GetDeviceType();
-    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {parameter, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
     MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
@@ -2798,10 +2777,12 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, index, false);
     MS_EXCEPTION_IF_NULL(sub_device_tensor);
 
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {backend_node, index}, nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(),
+      sub_device_tensor->type_id(), sub_device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
     MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id(),
-      sub_device_tensor->host_shape());
+    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     new_device_tensor->SetNodeIndex(backend_node, index);
     new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());

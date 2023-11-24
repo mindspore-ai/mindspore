@@ -77,6 +77,10 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
+  return BaseCheckStrategy(strategy);
+}
+
+Status ArithmeticBase::BaseCheckStrategy(const StrategyPtr &strategy) {
   Shapes input_shapes = InferExpandShape();
   Strategies expand_strategy = ExpandStrategy(strategy);
   Dimensions sub_a_strategy = expand_strategy.at(0);
@@ -440,7 +444,24 @@ void LerpInfo::ReComputeBatchSplitFlagList() {
   (expand_weight_shape.at(0) != 1) ? (split_flag_list_[2] = true) : (split_flag_list_[2] = false);
 }
 
+Status MaskedFillInfo::CheckStrategy(const StrategyPtr &strategy) {
+  auto stra = strategy->GetInputDim();
+  if (stra.size() == kSizeThree) {
+    // The input strategy may be 2 or 3 in work script, so pop one here marking sure there are 2 in latter procession.
+    stra.pop_back();
+  }
+  if (CheckStrategyByVector(stra, inputs_shape_) != SUCCESS) {
+    return FAILED;
+  }
+
+  return BaseCheckStrategy(strategy);
+}
+
 Status MaskedFillInfo::GetAttrs() {
+  if (inputs_shape_.size() == kSizeThree) {
+    // For ArithmeticBase, the target inputs size is 2, so pop one here...
+    inputs_shape_.pop_back();
+  }
   input_size_ = inputs_shape_.size();
   if (input_size_ != 2 && input_size_ != 3) {
     MS_LOG(ERROR) << name_ << ": inputs_shape_.size() must be 2 or 3, but got size " << input_size_;

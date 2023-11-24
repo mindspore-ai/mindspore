@@ -92,14 +92,19 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              prim_name);
     auto elem = input_args[0];
-    if (!elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem)) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input should be scalar but got: " << elem->ToString();
     }
 
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
-      auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-      attr = type_abs->BuildValue();
+      auto type_abs = input_args[kIndex1];
+      if (type_abs->GetType()->type_id() != kMetaTypeTypeType) {
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input[" << kIndex1 << "] should be a "
+                                << TypeIdToType(kMetaTypeTypeType)->ToString() << ", but got "
+                                << type_abs->GetType()->ToString() << ".";
+      }
+      attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
@@ -128,8 +133,8 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     if (!elem->isa<abstract::AbstractScalar>()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got: " << elem->ToString();
     }
-    auto elem_value = elem->BuildValue();
-    if (elem_value == kValueAny) {
+    auto elem_value = elem->GetValue();
+    if (elem_value->ContainsValueAny()) {
       return nullptr;
     }
     if (!elem_value->isa<Scalar>()) {
@@ -142,7 +147,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     } else {
       res_dtype = InferType(primitive, input_args);
     }
-    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->BuildType(),
+    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->GetType(),
                                 res_dtype->cast<TensorTypePtr>()->element());
   }
 };

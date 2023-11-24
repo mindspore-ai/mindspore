@@ -50,20 +50,20 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithLogicCpuTypeFunc() = default;
   ~ArithLogicCpuTypeFunc() override = default;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
     compute_func_(this, input1, input2, output);
     return true;
   }
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
-    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
+    dtype_ = inputs.at(kIndex0)->dtype_id();
+    auto dtype_1 = inputs.at(kIndex1)->dtype_id();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
@@ -90,8 +90,7 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
     input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
     output_shape_ = outputs.at(kIndex0)->GetShapeVector();
@@ -146,20 +145,20 @@ class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithComplexLogicCpuTypeFunc() = default;
   ~ArithComplexLogicCpuTypeFunc() override = default;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    const auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    bool *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
     compute_func_(this, input1, input2, output);
     return true;
   }
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
-    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
+    dtype_ = inputs.at(kIndex0)->dtype_id();
+    auto dtype_1 = inputs.at(kIndex1)->dtype_id();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
@@ -175,8 +174,7 @@ class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
     input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
     output_shape_ = outputs.at(kIndex0)->GetShapeVector();
@@ -539,9 +537,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogFunc<bool>}}}};
 }  // namespace
 
-bool ArithmeticLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ArithmeticLogicCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
     return false;
@@ -554,18 +551,16 @@ bool ArithmeticLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   func_obj_ = kernel_attr_lists[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ArithmeticLogicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticLogicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticLogicCpuKernelMod::GetOpSupport() {
@@ -581,10 +576,8 @@ std::vector<KernelAttr> ArithmeticLogicCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ArithmeticComplexLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ArithmeticComplexLogicCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kernel_type_) {
     MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
     return false;
@@ -597,18 +590,16 @@ bool ArithmeticComplexLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operat
     return false;
   }
   func_obj_ = kernel_attr_lists[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ArithmeticComplexLogicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticComplexLogicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticComplexLogicCpuKernelMod::GetOpSupport() {

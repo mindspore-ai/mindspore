@@ -1,0 +1,48 @@
+logical_xor:
+    description: |
+        Computes the "logical XOR" of two tensors element-wise.
+
+        .. math::
+
+            out_{i} = x_{i} \oplus y_{i}
+
+        Args:
+            input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
+                converted to bool.
+            other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+                a tensor whose data type can be implicitly converted to bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If the dtype of `input` or `other` is not bool or can not be implicitly converted to bool.
+            ValueError: If the shape of two inputs cannot be broadcast.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+            >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+            >>> output = ops.logical_xor(x, y)
+            >>> print(output)
+            [False True True]
+            >>> x = Tensor(1, mindspore.bool_)
+            >>> y = Tensor(0, mindspore.bool_)
+            >>> output = ops.logical_xor(x, y)
+            >>> print(output)
+            True
+            >>> x = True
+            >>> y = Tensor(0, mindspore.bool_)
+            >>> output = ops.logical_xor(x, y)
+            >>> print(output)
+            True
+            >>> x = True
+            >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+            >>> output = ops.logical_xor(x, y)
+            >>> print(output)
+            [False True]

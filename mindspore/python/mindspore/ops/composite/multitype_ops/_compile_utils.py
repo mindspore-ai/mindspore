@@ -26,6 +26,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
     TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo, \
     SelectView, CopyWithSlice
+from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.initializer import Zero
@@ -1191,6 +1192,12 @@ def _tuple_index_transfer(broadcast_shape, final_shape, new_shape, x, all_empty_
     return _broadcast(final_shape, F.reshape(item, new_shape))
 
 
+def reshape_with_check(x, new_shape):
+    if isinstance(new_shape, Tensor):
+        new_shape = TensorToTuple()(new_shape)
+    return F.reshape(x, new_shape)
+
+
 class _TensorIndexSetitem(base.TensorIndexSetitem_):
     """
     Getting item of Tensor.
@@ -1218,9 +1225,20 @@ def tensor_setitem_by_slice(self, index, value):
         return self
     value = F.broadcast_to(value, value_shape)
     if not const_utils.is_ascend() and step == 1:
+        tensor_to_tuple = TensorToTuple()
+        if isinstance(start, Tensor):
+            start = tensor_to_tuple(start)
+        else:
+            start = (start,)
+        if isinstance(stop, Tensor):
+            stop = tensor_to_tuple(stop)
+        else:
+            stop = (stop,)
         if isinstance(step, Tensor):
-            return copy_slice(self, value, start, stop, step)
-        return copy_slice(self, value, (start,), (stop,), (step,))
+            step = tensor_to_tuple(step)
+        else:
+            step = (step,)
+        return copy_slice(self, value, start, stop, step)
     return F.tensor_scatter_update(self, indices, value)
 
 

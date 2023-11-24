@@ -63,6 +63,16 @@ def test_ops_select_scatter(mode):
                       [15., 16., 17.]]]
     assert np.allclose(output.asnumpy(), expect_output)
 
+    net = Net(1, -1)
+    output = net(x, y)
+    expect_output1 = [[[0., 1., 2.],
+                       [3., 4., 5.],
+                       [18., 19., 20.]],
+                      [[9., 10., 11.],
+                       [12., 13., 14.],
+                       [21., 22., 23.]]]
+    assert np.allclose(output.asnumpy(), expect_output1)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -89,3 +99,6 @@ def test_ops_select_scatter_error(mode):
     net = Net(2, 0)
     with pytest.raises(ValueError):
         net(x, y)
+
+    with pytest.raises(TypeError):
+        net(1., 2)

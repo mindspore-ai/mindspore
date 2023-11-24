@@ -51,9 +51,9 @@ abstract::TupleShapePtr ApplyKerasMomentumInferShape(const PrimitivePtr &primiti
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto var_shape = input_args[0]->BuildShape();
-  auto accum_shape = input_args[1]->BuildShape();
-  auto grad_shape = input_args[3]->BuildShape();
+  auto var_shape = input_args[0]->GetShape();
+  auto accum_shape = input_args[1]->GetShape();
+  auto grad_shape = input_args[3]->GetShape();
 
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
@@ -95,11 +95,11 @@ TuplePtr ApplyKerasMomentumInferType(const PrimitivePtr &prim, const std::vector
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto lr_type = input_args[2]->BuildType();
-  auto grad_type = input_args[3]->BuildType();
-  auto momentum_type = input_args[4]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto lr_type = input_args[2]->GetType();
+  auto grad_type = input_args[3]->GetType();
+  auto momentum_type = input_args[4]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, accum and grad must have the same type
   std::map<std::string, TypePtr> args;

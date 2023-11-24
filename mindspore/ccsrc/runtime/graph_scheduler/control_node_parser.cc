@@ -376,8 +376,11 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   } else {
     // Create device tensor.
     std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
-    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format,
-                                                                       output_type_id, ShapeVector());
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {backend_node, 0}, nullptr, tensor_size, output_format, output_type_id, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create address for front node:" << front_node->DebugString()
@@ -444,8 +447,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
     builder->SetOutputsDeviceType(types);
   }
 
-  const auto &abstract =
-    common::AnfAlgo::GetNodeAbstractByIndex(front_node_with_index.first, front_node_with_index.second);
+  const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(front_node_with_index.first, front_node_with_index.second);
   bool is_map_parameter = abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>();
   if (is_map_parameter) {
     DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(device_context, front_node_with_index.first,
@@ -469,13 +471,20 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
       address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     } else {
       // Create device tensor.
-      address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id,
-                                                                         ShapeVector());
+      const auto &sub_abstract = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), front_node_with_index.second);
+      MS_EXCEPTION_IF_NULL(sub_abstract);
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        sub_abstract->BuildShape(), sub_abstract->BuildType(), sub_abstract->BuildValue(), nullptr, size,
+        kOpFormat_DEFAULT, type_id, ShapeVector(), device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
+      address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     }
   } else {
     // Create device tensor.
-    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id,
-                                                                       ShapeVector());
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {node, front_node_with_index.second}, nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(INFO) << "Create address for node that has no corresponding backend node:"
@@ -1063,6 +1072,7 @@ void GetArgumentIndexForDynamicLenParameter(const abstract::AbstractBasePtr &arg
     return;
   }
   if ((!arg_seq_abs->dynamic_len()) && para_seq_abs->dynamic_len()) {
+    MS_LOG(DEBUG) << "Add argument index:" << argument_index << " size:" << arg_seq_abs->size();
     (*indexes)[argument_index] = arg_seq_abs->size();
     return;
   }
@@ -1110,14 +1120,8 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
                         << " parameters num:" << func_graph->parameters().size();
     }
     size_t start_index = 1;
-    for (size_t i = 0; i < para_num - args_num; ++i) {
-      MS_EXCEPTION_IF_NULL((func_graph->parameters())[i]);
-      const auto &abs = (func_graph->parameters())[i]->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      start_index += common::AnfAlgo::GetOutputNumByAbstract(abs);
-    }
     for (size_t i = 0; i < args_num; ++i) {
-      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      MS_EXCEPTION_IF_NULL(cnode->input(i + 1));
       MS_EXCEPTION_IF_NULL((func_graph->parameters())[i + para_num - args_num]);
       MS_LOG(DEBUG) << "Check formal parameter:" << cnode->input(i + 1)->DebugString()
                     << " real node:" << (func_graph->parameters())[i + para_num - args_num]->DebugString();
@@ -1127,6 +1131,11 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
       start_index += common::AnfAlgo::GetOutputNumByAbstract(cnode->input(i + 1)->abstract());
     }
     if (!sequence_indexes.empty()) {
+      for (const auto &pair : sequence_indexes) {
+        MS_LOG(DEBUG) << "Add dynamic len formal parameter for call node:" << node->DebugString()
+                      << " funcgraph:" << func_graph->ToString() << " argument index:" << pair.first
+                      << " size:" << pair.second;
+      }
       control_node_to_funcgraph_with_dynamic_sequence_index_[node][func_graph.get()] = sequence_indexes;
     }
   }
@@ -1142,7 +1151,10 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByPartial(const AnfNodePtr
     MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
   }
   const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
-  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph == nullptr) {
+    MS_LOG(WARNING) << "Failed to get funcgraph in partial node:" << node->DebugString();
+    return;
+  }
   if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
     MS_LOG(EXCEPTION) << "Invalid args num:" << input_num - kPartialInputStartPos
                       << " in partial node:" << cnode->DebugString() << " for fungraph:" << func_graph->ToString()
@@ -1868,7 +1880,7 @@ NodeWithIndexToContext ControlNodeParser::FetchBackendParameterWithContextByFron
     const auto &node = node_with_index_to_context.first.first;
     MS_EXCEPTION_IF_NULL(node);
     const auto &abstract =
-      common::AnfAlgo::GetNodeAbstractByIndex(front_parameter_with_index.first, front_parameter_with_index.second);
+      AnfAlgo::GetNodeAbstractByIndex(front_parameter_with_index.first, front_parameter_with_index.second);
     bool is_map_parameter = abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>();
     if (AnfAlgo::GetOutputTensorMemSize(node, node_with_index_to_context.first.second) != 0 || is_map_parameter) {
       return node_with_index_to_context;

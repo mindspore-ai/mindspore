@@ -53,10 +53,8 @@ void Swap(T *lhs, T *rhs) {
 }
 }  // namespace
 
-bool NMSWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NMSWithMaskCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size()
                   << "input(s).";
@@ -65,24 +63,25 @@ bool NMSWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << outputs.size()
                   << "output(s).";
   }
-  iou_value_ = GetValue<float>(base_operator->GetAttr(kAttrIouThreshold));
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+  if (primitive_->HasAttr(kAttrIouThreshold)) {
+    iou_value_ = GetValue<float>(primitive_->GetAttr(kAttrIouThreshold));
+  }
+  if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }
   return true;
 }
 
-int NMSWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NMSWithMaskCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto in_shape = inputs[kIndex0]->GetShapeVector();
   num_input_ = LongToInt(in_shape[0]);  //  Get N values in  [N, 5] data.
   ceil_power_2_ = static_cast<size_t>(NmsRoundUpPower2(num_input_));
 
-  workspace_size_list_.push_back(ceil_power_2_ * abstract::TypeIdSize(inputs[kIndex0]->GetDtype()));  //  data buff
+  workspace_size_list_.push_back(ceil_power_2_ * abstract::TypeIdSize(inputs[kIndex0]->dtype_id()));  //  data buff
   workspace_size_list_.push_back(ceil_power_2_ * sizeof(int));                                        //  index buff
   workspace_size_list_.push_back(IntToSize(num_input_ * num_input_) * sizeof(bool));                  //  mask list
   return KRET_OK;
@@ -243,23 +242,16 @@ void NMSWithMaskCpuKernelMod::ReducePass(const int num, bool *sel_boxes, const b
 }
 
 template <typename T>
-bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexDataBuff]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexIndexBuff]);
-  MS_EXCEPTION_IF_NULL(workspace[kIndexRowMask]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexOutput]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexSelIdx]);
-  MS_EXCEPTION_IF_NULL(outputs[kIndexSelBoxes]);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->addr);
-  auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->addr);
-  auto row_mask = reinterpret_cast<bool *>(workspace[kIndexRowMask]->addr);
-  auto output = reinterpret_cast<T *>(outputs[kIndexOutput]->addr);
-  auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->addr);
-  auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->addr);
+bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->device_ptr());
+  auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->device_ptr());
+  auto row_mask = reinterpret_cast<bool *>(workspace[kIndexRowMask]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[kIndexOutput]->device_ptr());
+  auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->device_ptr());
+  auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->device_ptr());
 
   NmsBitonicSortByKeyKernel<T>(num_input_, ceil_power_2_, input, data_buff, index_buff, box_size_);
   size_t total_val = IntToSize(num_input_ * num_input_);

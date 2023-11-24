@@ -55,15 +55,15 @@ const std::vector<std::pair<KernelAttr, AdaptiveMaxPool2DGradPtrCreatorFunc>> ke
 };
 }  // namespace
 
-bool AdaptiveMaxPool2DGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AdaptiveMaxPool2DGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(output_ptrs[0], 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(output_ptrs[0], 0, outputs[0]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
     "failed to set cuda memory with zeros.");
 
   if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
@@ -72,12 +72,8 @@ bool AdaptiveMaxPool2DGradGpuKernelMod::Launch(const std::vector<AddressPtr> &in
   return true;
 }
 
-bool AdaptiveMaxPool2DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2DGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool AdaptiveMaxPool2DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -90,11 +86,9 @@ bool AdaptiveMaxPool2DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int AdaptiveMaxPool2DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int AdaptiveMaxPool2DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

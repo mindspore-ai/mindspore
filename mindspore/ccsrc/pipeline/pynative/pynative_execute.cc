@@ -310,41 +310,35 @@ py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) con
   return actual_input;
 }
 
-void PyNativeExecutor::WaitBeforeFork() {
-  MS_LOG(INFO) << "fork event detected in main process, PyNativeExecutor will wait for async task finish.";
+void PyNativeExecutor::ParentBeforeFork() {
+  MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork.";
+  MS_LOG(DEBUG) << "Wait for OpExecutor.";
   runtime::OpExecutor::GetInstance().WaitAll();
+  MS_LOG(DEBUG) << "Wait for grad_executor_.";
   grad_executor_->bprop_queue()->Wait();
-  MS_LOG(INFO) << "PyNativeExecutor waits for async task finish done.";
-  // If the forked thread does not hold the gil lock, we need to manually acquire the gil lock before forking,
-  // otherwise the child process will block when acquiring the gil lock.
-  ForkUtils::GetInstance().set_gil_hold_before_fork(PyGILState_Check());
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    ForkUtils::GetInstance().set_gil_state(static_cast<int>(PyGILState_Ensure()));
-  }
+  MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork done.";
 }
 
-void PyNativeExecutor::ParentAfterFork() {
-  // Release the gil lock that was acquired manually before forking.
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+void PyNativeExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork.";
+  MS_LOG(DEBUG) << "Clear OpCompiler Cache.";
+  pynative::OpCompiler::GetInstance().ClearAllCache();
+  if (forward_executor_ != nullptr) {
+    MS_LOG(DEBUG) << "Clear forward_executor_ resources.";
+    forward_executor_->ClearRes();
+    // Call ForwardExecutor::ReInit() to update device_target_
+    forward_executor_->ReInit();
+    MS_LOG(DEBUG) << "Reinitialize forward_executor_.";
+    forward_executor_->ChildAfterFork();
   }
-}
-
-void PyNativeExecutor::ReinitAfterFork() {
-  MS_LOG(INFO) << "fork event detected in child process, PyNativeExecutor resources will be reinitialized.";
-  // Release the gil lock that was acquired manually before forking.
-  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
-    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+  // Reset PyNativeExecutor resources
+  if (grad_executor_ != nullptr) {
+    MS_LOG(DEBUG) << "Clear grad_executor_ resources.";
+    grad_executor_->ClearRes();
+    MS_LOG(DEBUG) << "Reinitialize grad_executor_.";
+    grad_executor_->ChildAfterFork();
   }
-  // reset ms context after fork
-  MsContext::GetInstance()->ResetContext();
-  // clear op cache after fork
-  OpCompiler::GetInstance().ClearAllCache();
-  // Reset ForwardExecuteor resources
-  forward_executor_->ClearRes();
-  // Reinit ForwardExecuteor
-  forward_executor_->ReInit();
-  MS_LOG(INFO) << "PyNativeExecutor resources reinitializing done.";
+  MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork done.";
 }
 
 void RegPyNativeExecutor(const py::module *m) {

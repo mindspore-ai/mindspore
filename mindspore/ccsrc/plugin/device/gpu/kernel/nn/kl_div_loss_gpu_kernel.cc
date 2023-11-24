@@ -26,9 +26,9 @@ namespace kernel {
 constexpr size_t kKLDivLossInputsNum = 2;
 
 template <typename T>
-bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   T *input_y = GetDeviceAddress<T>(inputs, 1);
   T *loss = GetDeviceAddress<T>(outputs, 0);
@@ -39,11 +39,9 @@ bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-bool KLDivLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::KLDivLoss>(base_operator);
-  string reduction = kernel_ptr->get_reduction();
+bool KLDivLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   reduction_ = kReductionModeMap[reduction];
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -56,11 +54,10 @@ bool KLDivLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int KLDivLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int KLDivLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kKLDivLossInputsNum, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

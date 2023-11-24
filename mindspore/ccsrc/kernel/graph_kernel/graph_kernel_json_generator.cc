@@ -335,7 +335,7 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
     vec.reserve(value_seq.size());
     for (auto v : value_seq) {
       if (v->isa<Int32Imm>() || v->isa<Int64Imm>()) {
-        vec.emplace_back(AnfUtils::GetIntValue(v));
+        (void)vec.emplace_back(AnfUtils::GetIntValue(v));
       } else {
         MS_LOG(EXCEPTION) << "Element in valuenode must be int" << input_node->fullname_with_scope();
       }

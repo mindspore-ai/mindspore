@@ -242,11 +242,11 @@ T IgammacSingle(const T &a, const T &x) {
 }
 
 template <typename T>
-void IgammacCpuKernelMod::BcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammacCpuKernelMod::BcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto a_data_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto x_data_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto z_data_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t data_num = LongToSize(get_element_num(z_shape_));
   auto output_shape = CPUKernelUtils::GetBroadcastShape(a_shape_, x_shape_);
   BroadcastIterator iter(a_shape_, x_shape_, output_shape);
@@ -317,11 +317,11 @@ void IgammacCpuKernelMod::SpecialCompute(int64_t type, int64_t start, int64_t en
 }
 
 template <typename T>
-void IgammacCpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto in0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto in1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto out0 = reinterpret_cast<T *>(outputs[0]->addr);
+void IgammacCpuKernelMod::NoBcastCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  auto in0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto in1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto out0 = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t in0_elements_nums = LongToSize(get_element_num(a_shape_));
   size_t in1_elements_nums = LongToSize(get_element_num(x_shape_));
   size_t data_num = LongToSize(get_element_num(z_shape_));
@@ -337,16 +337,13 @@ void IgammacCpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &
   }
 }
 
-bool IgammacCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool IgammacCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputNum;
   constexpr size_t output_num = kOutputNum;
-  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kInputIndex0]);
-  dtype_ = inputs[kInputIndex0]->GetDtype();
+  dtype_ = inputs[kInputIndex0]->dtype_id();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -356,21 +353,20 @@ bool IgammacCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int IgammacCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IgammacCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  a_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  x_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  z_shape_ = outputs[kOutputIndex0]->GetDeviceShapeAdaptively();
+  a_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  x_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  z_shape_ = outputs[kOutputIndex0]->GetDeviceShapeVector();
   return ret;
 }
 
-bool IgammacCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool IgammacCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &,
+                                 const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -383,8 +379,8 @@ bool IgammacCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void IgammacCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+void IgammacCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   size_t in0_elements_nums = LongToSize(get_element_num(a_shape_));

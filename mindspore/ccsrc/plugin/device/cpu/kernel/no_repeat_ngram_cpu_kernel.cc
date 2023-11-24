@@ -36,14 +36,8 @@ constexpr size_t kNoRepeatNGramDim = 3;
 constexpr int64_t kNoRepeatNGramParamValue = 0;
 }  // namespace
 
-bool NoRepeatNGramCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NoRepeatNGram>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast NoRepeatNGram ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool NoRepeatNGramCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNoRepeatNGramInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNoRepeatNGramOutputsNum, kernel_name_);
 
@@ -57,17 +51,16 @@ bool NoRepeatNGramCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int NoRepeatNGramCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &others) {
+int NoRepeatNGramCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " resize failed.";
     return ret;
   }
   state_seq_shape_ = inputs[kIndex0]->GetShapeVector();
   log_probs_shape_ = inputs[kIndex1]->GetShapeVector();
-  ngram_size_ = GetValue<int64_t>(base_operator->GetAttr("ngram_size"));
+  ngram_size_ = GetValue<int64_t>(primitive_->GetAttr("ngram_size"));
   return 0;
 }
 
@@ -91,14 +84,14 @@ void NoRepeatNGramCpuKernelMod::CheckAndInitParams() {
 }
 
 template <typename T>
-bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNoRepeatNGramInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNoRepeatNGramOutputsNum, kernel_name_);
-  auto state_seq = GetDeviceAddress<int32_t>(inputs, kIndex0);
-  auto log_probs = GetDeviceAddress<T>(inputs, kIndex1);
-  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto *state_seq = reinterpret_cast<int32_t *>(inputs[kIndex0]->device_ptr());
+  auto *log_probs = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_EXCEPTION_IF_NULL(state_seq);
   MS_EXCEPTION_IF_NULL(log_probs);
   MS_EXCEPTION_IF_NULL(output);

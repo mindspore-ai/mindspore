@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
 }
 
 std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) const {
-  static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
-                                               "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
+  static std::set<std::string> same_op_name = {"Pack",   "Stack", "Split",        "Transpose",
+                                               "Unpack", "AddN",  "ConcatOffset", "DynamicStitch"};
   std::vector<KernelAttr> support_kernel_attrs;
   auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kImplyCPU);
   if (op_info == nullptr) {
@@ -614,7 +614,7 @@ int Sign(float x) {
 void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const std::vector<size_t> &output_shape,
                        std::vector<size_t> *index_list) {
   // Given unaligned input shape and output shape, this function returns the mapping
-  // from indices of output (logical) to corespondingly real input indices (physical).
+  // from indices of output (logical) to correspondingly real input indices (physical).
   // The return will write to index_list, whose size is equal to total elements of output.
   constexpr size_t kIsCloseMaxDim = 10;
   size_t logical_shape[kIsCloseMaxDim];

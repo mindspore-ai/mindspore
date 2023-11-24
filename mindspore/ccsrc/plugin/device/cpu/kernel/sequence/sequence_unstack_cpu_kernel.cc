@@ -31,15 +31,9 @@ constexpr size_t kSequenceUnstackWorkspaceMinNum = 1;
 constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
-bool SequenceUnstackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceUnstack>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast sequence unstack ops failed!";
-    return false;
-  }
-  sequence_unstack_param_.axis_ = kernel_ptr->get_axis();
+bool SequenceUnstackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  sequence_unstack_param_.axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   origin_axis_ = sequence_unstack_param_.axis_;
   sequence_unstack_param_.pre_dims_ = 1;
   sequence_unstack_param_.axis_dim_ = 1;
@@ -60,12 +54,9 @@ bool SequenceUnstackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int SequenceUnstackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceUnstackCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -101,18 +92,19 @@ int SequenceUnstackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SequenceUnstackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SequenceUnstackCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &workspace,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSequenceUnstackInputsNum, kernel_name_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
 template <typename T>
-bool SequenceUnstackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SequenceUnstackCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   const auto input = GetDeviceAddress<T>(inputs, 0);
-  auto *outputs_host = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *outputs_host = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   size_t total_size = input_size_ * sizeof(T);
   if (total_size >= kMaxDataSize) {

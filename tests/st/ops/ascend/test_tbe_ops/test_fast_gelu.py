@@ -19,6 +19,7 @@ from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import FastGelu
 from mindspore.train import Model
+import mindspore
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -28,12 +29,16 @@ def fast_gelu_forward_me_impl(input_):
     n.set_train()
     m = Model(n)
     out = m.predict(input_)
+    if out.dtype == mindspore.bfloat16:
+        return out.float().asnumpy()
     return out.asnumpy()
 
 
-def fast_gelu_forward_cmp(input_shape, data_type=np.float32):
+def fast_gelu_forward_cmp(input_shape, data_type=np.float32, mstype=None):
     input_np = np.random.randn(*input_shape).astype(data_type)
     input_me = Tensor(input_np)
+    if mstype == mindspore.bfloat16:
+        input_me = Tensor(input_np, mindspore.bfloat16)
     fast_gelu_forward_me_impl(input_me)
 
 
@@ -120,3 +125,15 @@ def test_fast_gelu_input_dim_20_1024():
 def test_fast_gelu_input_dim_20480_1024():
     input_shape = [20480, 1024]
     fast_gelu_forward_cmp(input_shape)
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_fast_gelu_input_dim_20480_1024_bf16():
+    """
+    Feature: test fast_gelu functional API.
+    Description: Operation selects input is Tensor with bfloat16 type.
+    Expectation: execute without error.
+    """
+    input_shape = [20480, 1024]
+    fast_gelu_forward_cmp(input_shape, mstype=mindspore.bfloat16)

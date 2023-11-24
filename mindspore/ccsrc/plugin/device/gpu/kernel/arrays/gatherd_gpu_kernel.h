@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHERD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_GATHERD_GPU_KERNEL_H_
-
 #include <vector>
 #include <map>
 #include <utility>
@@ -27,50 +26,43 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherDFwdGpuKernelMod : public NativeGpuKernelMod {
+class GatherDGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GatherDFwdGpuKernelMod() {}
-  ~GatherDFwdGpuKernelMod() = default;
+  GatherDGpuKernelMod() {}
+  ~GatherDGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (!kernel_func_) {
-      MS_LOG(ERROR) << "GatherDFwdGpu's kernel function is not initialized.";
+      MS_LOG(ERROR) << "GatherFwdGpu's kernel function is not initialized.";
       return false;
     }
-
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   bool SetDimParam(int64_t dim_value);
 
-  using GatherDFwdFunc =
-    std::function<bool(GatherDFwdGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using GatherFwdFunc = std::function<bool(GatherDGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &, void *)>;
 
-  GatherDFwdFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, GatherDFwdFunc>> func_list_;
+  GatherFwdFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, GatherFwdFunc>> func_list_;
 
   ShapeVector input_shapes_;
   ShapeVector index_shapes_;
   ShapeVector output_shapes_;
 
   size_t dims_[4] = {};
-  TypeId dim_type_{0};
   bool is_null_input_{false};
 };
 }  // namespace kernel

@@ -35,12 +35,13 @@ constexpr size_t kUniformRealOutputsNum = 1;
 constexpr size_t kStandardNormalOutputsNum = 1;
 constexpr char kKernelName[] = "Random";
 }  // namespace
-void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<AddressPtr> &outputs) {
+
+void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<KernelTensor *> &outputs) {
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(float);
+  size_t num_sample = outputs[0]->size() / sizeof(float);
 
   // Init random normal generator.
   std::normal_distribution<float> distribution;
@@ -51,20 +52,20 @@ void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<Add
   }
 }
 
-void LaunchUniformInt(std::mt19937 *rng, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &outputs) {
+void LaunchUniformInt(std::mt19937 *rng, const std::vector<KernelTensor *> &inputs,
+                      const std::vector<KernelTensor *> &outputs) {
   // Init min/max values.
-  int min_val = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  int max_val = reinterpret_cast<int *>(inputs[2]->addr)[0];
+  int min_val = reinterpret_cast<int *>(inputs[1]->device_ptr())[0];
+  int max_val = reinterpret_cast<int *>(inputs[2]->device_ptr())[0];
   if (max_val <= min_val) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', invalid min/max values: (" << min_val << "/" << max_val << ")";
   }
 
   // Init output address.
-  auto output = reinterpret_cast<int *>(outputs[0]->addr);
+  auto output = reinterpret_cast<int *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(int);
+  size_t num_sample = outputs[0]->size() / sizeof(int);
 
   // Init random int generator.
   std::uniform_int_distribution<> distrib(min_val, max_val - 1);
@@ -75,12 +76,12 @@ void LaunchUniformInt(std::mt19937 *rng, const std::vector<AddressPtr> &inputs,
   }
 }
 
-void LaunchUniformReal(std::mt19937 *rng, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs) {
+void LaunchUniformReal(std::mt19937 *rng, const std::vector<KernelTensor *> &outputs) {
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
   // Init sample number.
-  size_t num_sample = outputs[0]->size / sizeof(int);
+  size_t num_sample = outputs[0]->size() / sizeof(int);
 
   // Init random real generator.
   std::uniform_real_distribution<> distrib(0.0, 1.0);
@@ -91,8 +92,7 @@ void LaunchUniformReal(std::mt19937 *rng, const std::vector<AddressPtr> &, const
   }
 }
 
-bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
+bool RandomCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto iter = kRandomOpTypeMap.find(kernel_type_);
   if (iter == kRandomOpTypeMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_
@@ -101,8 +101,8 @@ bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   } else {
     random_op_type_ = iter->second;
   }
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   mtrng_.seed(init_seed);
   dfrng_.seed(init_seed);
@@ -115,18 +115,16 @@ bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int RandomCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RandomCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   return KRET_OK;
 }
 
-bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool RandomCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (random_op_type_ == RANDOM_OP_NORMAL) {
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_type_);
     LaunchStandardNormal(&dfrng_, outputs);
@@ -137,7 +135,7 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_type_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_type_);
-    LaunchUniformReal(&mtrng_, inputs, outputs);
+    LaunchUniformReal(&mtrng_, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
@@ -148,14 +146,33 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 std::vector<KernelAttr> RandomCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-    {kStandardNormal, {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kStandardNormal,
+     {KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)}},
     {kUniformInt,
      {KernelAttr()
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeInt32)}},
-    {kUniformReal, {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)}}};
+    {kUniformReal,
+     {KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)}}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
     MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";

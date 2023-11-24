@@ -15,21 +15,22 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 
-#include <vector>
+#include <limits>
 #include <memory>
 #include <string>
-#include <limits>
+#include <vector>
 
-#include "ops/other_op_name.h"
-#include "ops/math_op_name.h"
-#include "ops/array_op_name.h"
-#include "ops/nn_ops.h"
-#include "include/common/utils/utils.h"
-#include "utils/ms_context.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ops/array_op_name.h"
+#include "ops/math_op_name.h"
+#include "ops/nn_ops.h"
+#include "ops/other_op_name.h"
+#include "plugin/device/ascend/optimizer/get_value_helper.h"
+#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -39,6 +40,10 @@ constexpr auto kReduceOpSum = "sum";
 constexpr auto kDeviceNum = "device_num";
 constexpr size_t kPositionOffset = 3;
 constexpr int64_t kFusionNumThreshold = 2;
+constexpr size_t kIdxIsTrain = 6;
+constexpr size_t kIdxEpsilon = 7;
+constexpr size_t kIdxMomentum = 8;
+constexpr size_t kIdxFormat = 9;
 }  // namespace
 
 bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
@@ -50,25 +55,29 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
     MS_LOG(INFO) << "BatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
     return false;
   }
+
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName))};
-  bn_training_reduce_inputs.push_back(bn_cnode->input(kIndex1));
+    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(kIndex1),
+    bn_cnode->input(kIdxFormat)};
+
   auto bn_training_reduce = NewCNode(bn_training_reduce_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
+
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   bn_training_reduce->set_kernel_info(kernel_info);
+
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1),
                 common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
   auto shapes = {AnfAlgo::GetOutputDetailShape(bn_cnode, 1), AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
+
   bn_training_reduce->set_scope(bn_cnode->scope());
   if (is_dynamic) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
   }
-  common::AnfAlgo::CopyNodeAttrs(bn_cnode, bn_training_reduce);
-
   CreateMultipleOutputsOfAnfNode(graph, bn_training_reduce, kBNTrainingReduceOutputNum, bn_training_reduce_outputs);
+
   return true;
 }
 
@@ -81,6 +90,7 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(INTERNAL_EXCEPTION) << "BN1 outputs has wrong input size" << trace::DumpSourceLines(bn_cnode);
   }
+
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
   std::vector<AnfNodePtr> bn_training_update_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateOpName))};
@@ -91,6 +101,8 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex3));
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex4));
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex5));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIdxFormat));
+
   auto bn_training_update = NewCNode(bn_training_update_inputs, graph);
   MS_EXCEPTION_IF_NULL(bn_training_update);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -98,19 +110,22 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   bn_training_update->set_kernel_info(kernel_info);
   bn_training_update->set_abstract(bn_cnode->abstract());
   bn_training_update->set_scope(bn_cnode->scope());
-  auto factor = common::AnfAlgo::GetNodeAttr<float>(bn_cnode, kAttrMomentum);
+
+  auto factor = GetNodeScalarValue<float>(bn_cnode->input(kIdxMomentum));
   common::AnfAlgo::SetNodeAttr(kAttrFactor, MakeValue<float>(factor), bn_training_update);
+
+  auto epsilon = GetNodeScalarValue<float>(bn_cnode->input(kIdxEpsilon));
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue(epsilon), bn_training_update);
+
+  auto format = GetNodeFormatValue(bn_cnode->input(kIdxFormat));
+  common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(format), bn_training_update);
+
   if (is_dynamic) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_update);
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
   }
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update);
-  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_cnode)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_training_update);
-  }
   common::AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
+
   return bn_training_update;
 }
 
@@ -120,6 +135,12 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto is_training = GetNodeScalarValue<bool>(cnode->input(kIdxIsTrain));
+  if (!is_training) {
+    MS_LOG(INFO) << "Attr is_training should be true if do fusion";
+    return nullptr;
+  }
+
   bool is_dynamic = common::AnfAlgo::IsDynamicShape(cnode);
   if (common::AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
     MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
@@ -253,7 +274,7 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
 
   // user defined fusion should be greater than 1
   if (opid < kFusionNumThreshold) {
-    opid = opid - kFusionNumThreshold + std::numeric_limits<int64_t>::max();
+    opid = opid - kFusionNumThreshold + std::numeric_limits<int32_t>::max();
   }
   common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
 
@@ -295,10 +316,6 @@ const BaseRef BnSplit::DefinePattern() const {
 }
 
 const AnfNodePtr BnSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
-  if (!GetBoolAttr(node, kAttrIsTraining)) {
-    MS_LOG(INFO) << "Attr is_training should be true if do fusion";
-    return nullptr;
-  }
   return SplitBatchNormForTBE(func_graph, node);
 }
 

@@ -133,6 +133,10 @@ static inline bool UseDynamicCluster() {
 // UseDynamicCluster or UseMPI. If false, means use rank table file.
 static inline bool UseHostCollective() { return common::UseDynamicCluster() || common::UseMPI(); }
 
+static inline bool IsEnableRefMode() {
+  return (common::GetEnv("MS_ENABLE_REF_MODE") == "1" || !common::GetEnv("MS_DEV_FORCE_ACL").empty());
+}
+
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
   if (a == b) {
@@ -193,7 +197,7 @@ inline bool IsNeedMemoryStatistic() {
 inline bool IsNeedProfileMemory() {
   static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
   static const auto launch_skipped = GetEnv(kLaunchSkippedEnv);
-  static bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL");
+  static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL");
   return skip_launch && IsNeedMemoryStatistic();
 }
 

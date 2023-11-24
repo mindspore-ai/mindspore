@@ -130,7 +130,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
+    if ((param_abs->BuildValue()->ContainsValueAny() && !ContainsAbstractFunction(param_abs)) ||
         EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
@@ -167,7 +167,7 @@ bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
                     << " has no abstract, Debug String: " << node->DebugString();
       return false;
     }
-    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kValueAny &&
+    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue()->ContainsValueAny() &&
            !IsPrimitiveCNode(node, prim::kPrimDepend);
   });
 }
@@ -1652,6 +1652,11 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
       }
     }
 #endif
+  }
+  auto is_precompile_only = MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY);
+  if (is_precompile_only) {
+    MS_LOG(INFO) << "PrecompileOnly, stop run graph";
+    return actions;
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

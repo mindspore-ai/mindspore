@@ -29,10 +29,7 @@ constexpr size_t kFillV2InputsNum = 2;
 constexpr size_t kFillV2OutputsNum = 1;
 }  // namespace
 
-bool FillV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool FillV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -44,13 +41,13 @@ bool FillV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-bool FillV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool FillV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   const auto output = outputs[kIndex0];
-  auto *output_data = static_cast<T *>(output->addr);
-  auto *value_data = static_cast<T *>(inputs[kIndex1]->addr);
-  size_t lens = static_cast<size_t>(output->size / sizeof(T));
+  auto *output_data = static_cast<T *>(output->device_ptr());
+  auto *value_data = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  size_t lens = static_cast<size_t>(output->size() / sizeof(T));
   auto task = [output_data, value_data](const size_t start, const size_t end) {
     for (size_t i = start; i < end; i++) {
       output_data[i] = *value_data;
@@ -60,37 +57,46 @@ bool FillV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
-#define FILL_V2_CPU_REG(MS_T, MS_S, T) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), &FillV2CpuKernelMod::LaunchKernel<T>
+#define FILL_V2_CPU_REG_1(MS_T, MS_S, T) \
+  { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), &FillV2CpuKernelMod::LaunchKernel<T> }
+
+#define FILL_V2_CPU_REG_2(MS_T, MS_S, T)                                                      \
+  {                                                                                           \
+    KernelAttr().AddInputAttr(kObjectTypeTuple, MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), \
+      &FillV2CpuKernelMod::LaunchKernel<T>                                                    \
+  }
+
+#define FILL_V2_CPU_REG(MS_T, MS_S, T) FILL_V2_CPU_REG_1(MS_T, MS_S, T), FILL_V2_CPU_REG_2(MS_T, MS_S, T)
 
 std::vector<std::pair<KernelAttr, FillV2CpuKernelMod::FillV2LaunchFunc>> FillV2CpuKernelMod::func_list_ = {
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeBool, bool)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt8, int8_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt16, int16_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int64_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt8, uint8_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt16, uint16_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt32, uint32_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt64, uint64_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat16, float16)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat32, float)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat64, double)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, std::complex<float>)},
-  {FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeComplex128, std::complex<double>)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeBool, bool)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt8, int8_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt16, int16_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt8, uint8_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt16, uint16_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt32, uint32_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt64, uint64_t)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat16, float16)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat32, float)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat64, double)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, std::complex<float>)},
-  {FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeComplex128, std::complex<double>)}};
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeBool, bool),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt8, int8_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt16, int16_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int64_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat16, float16),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat32, float),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeFloat64, double),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, std::complex<float>),
+  FILL_V2_CPU_REG(kNumberTypeInt32, kNumberTypeComplex128, std::complex<double>),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeBool, bool),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt8, int8_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt16, int16_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int32_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat16, float16),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat32, float),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeFloat64, double),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, std::complex<float>),
+  FILL_V2_CPU_REG(kNumberTypeInt64, kNumberTypeComplex128, std::complex<double>)};
 
 std::vector<KernelAttr> FillV2CpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

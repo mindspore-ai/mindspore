@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMinimumGradInputsNum = 3;
+constexpr size_t kMinimumGradInputsNum = 5;
 constexpr size_t kMinimumGradOutputsNum = 2;
 
 void GetCargo(std::vector<size_t> *cargo, const std::vector<size_t> &shape, const std::vector<size_t> &dout_shape) {
@@ -60,20 +60,17 @@ void CheckShape(ShapeVector *shape) {
 }
 }  // namespace
 
-bool MinimumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool MinimumGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
-  dtype_ = inputs[kIndex0]->GetDtype();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  dtype_ = inputs[kIndex0]->dtype_id();
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MinimumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MinimumGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -95,6 +92,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeInt32),
      &MinimumGradCpuKernelMod::LaunchKernel<int>},
@@ -102,6 +101,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeUInt32)
        .AddInputAttr(kNumberTypeUInt32)
        .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeUInt32)
        .AddOutputAttr(kNumberTypeUInt32),
      &MinimumGradCpuKernelMod::LaunchKernel<uint32_t>},
@@ -109,6 +110,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &MinimumGradCpuKernelMod::LaunchKernel<float>},
@@ -116,6 +119,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
      &MinimumGradCpuKernelMod::LaunchKernel<int64_t>},
@@ -123,6 +128,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeUInt64)
        .AddInputAttr(kNumberTypeUInt64)
        .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeUInt64)
        .AddOutputAttr(kNumberTypeUInt64),
      &MinimumGradCpuKernelMod::LaunchKernel<uint64_t>},
@@ -130,6 +137,8 @@ const std::vector<std::pair<KernelAttr, MinimumGradCpuKernelMod::KernelRunFunc>>
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat64)
        .AddOutputAttr(kNumberTypeFloat64),
      &MinimumGradCpuKernelMod::LaunchKernel<double>},
@@ -199,13 +208,14 @@ void MinimumGradCpuKernelMod::MinimumGradRecTaskSerialized(
 }
 
 template <typename T>
-bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *dout_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *dx_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto *dy_addr = reinterpret_cast<T *>(outputs[1]->addr);
+bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto *x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *y_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *dout_addr = reinterpret_cast<T *>(inputs[2]->device_ptr());
+  auto *dx_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto *dy_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   size_t x_tensor_len = GetTensorLen(x_shape_);
   size_t y_tensor_len = GetTensorLen(y_shape_);

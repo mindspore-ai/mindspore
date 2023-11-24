@@ -21,7 +21,6 @@ import math
 import ctypes
 import functools
 
-import mindspore
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched
@@ -97,16 +96,6 @@ def _jit_fallback_set_attr(class_obj, attr_name, target_obj):
     return target_obj
 
 
-def ones_like(x):
-    """Implement `oneslike`."""
-    return mindspore.ops.composite.ones_like(x)
-
-
-def zeros_like(x):
-    """Implement `zeroslike`."""
-    return mindspore.ops.composite.zeros_like(x)
-
-
 def load_lib(lib_path):
     """load specified library."""
     try:
@@ -116,3 +105,27 @@ def load_lib(lib_path):
         logger.warning(f'Loading {lib_path} lib error.')
         return False
     return True
+
+
+def _jit_fallback_next_func(xs):
+    """Generate ms_next for xs"""
+    if hasattr(xs, "__next__"):
+        # Convert an iterator to tuple first.
+        xs = tuple(xs)
+    return xs[0], xs[1:]
+
+
+def _jit_fallback_has_next_func(xs):
+    """Determine whether xs has next value"""
+    if hasattr(xs, "__next__"):
+        # Convert an iterator to tuple first.
+        xs = tuple(xs)
+    return len(xs) > 0
+
+
+def _jit_fallback_len_func(obj):
+    """Calculate length for obj"""
+    if hasattr(obj, "__next__"):
+        # Convert an iterator to tuple first.
+        return len(tuple(obj))
+    return len(obj)

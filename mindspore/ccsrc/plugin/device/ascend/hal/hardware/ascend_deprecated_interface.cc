@@ -168,7 +168,10 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
     // Release GIL before calling into (potentially long-running) C++ code
     ScopedLongRunning release;
     Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-    if (ret != Status::SUCCESS) {
+    if (ret == Status::NOT_FOUND) {
+      MS_LOG(INFO) << "Exec graph:" << run_options.name << "not found, skip.";
+      return;
+    } else if (ret != Status::SUCCESS) {
       MS_LOG(WARNING) << "Exec graph:" << run_options.name << " failed";
       return;
     }
@@ -413,7 +416,8 @@ void SetContextSocVersion(MsContext *ctx) {
   const std::map<std::string, std::string> kAscendSocVersions = {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"}};
   auto soc_version = GetSocVersion();
   auto iter = kAscendSocVersions.find(soc_version);
   if (iter == kAscendSocVersions.end()) {

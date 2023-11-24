@@ -19,18 +19,24 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
+from mindspore.ops.auto_generate.gen_ops_def import *
 from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P
 from mindspore.ops.operations import array_ops
+from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _sequence_ops, other_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
+from mindspore.ops import auto_generate
+from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul,\
+    scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow,\
+    scalar_uadd, scalar_usub
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -48,6 +54,7 @@ tensor_range = P.Range()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
+_py_interpret = other_ops.PyInterpret()
 
 # Dynamic shape
 is_sequence_value_unknown = Primitive("IsShapeUnKnown")
@@ -60,22 +67,6 @@ partial = P.Partial()
 depend = P.Depend()
 identity = P.identity()
 # tuple/list/scalar ops
-scalar_div = _scalar_ops.ScalarDiv()
-scalar_mod = _scalar_ops.ScalarMod()
-scalar_add = _scalar_ops.ScalarAdd()
-scalar_mul = _scalar_ops.ScalarMul()
-scalar_sub = _scalar_ops.ScalarSub()
-scalar_gt = _scalar_ops.scalar_gt()
-scalar_ge = _scalar_ops.scalar_ge()
-scalar_le = _scalar_ops.scalar_le()
-scalar_lt = _scalar_ops.scalar_lt()
-scalar_eq = _scalar_ops.scalar_eq()
-scalar_floordiv = _scalar_ops.ScalarFloordiv()
-scalar_log = _scalar_ops.ScalarLog()
-scalar_pow = _scalar_ops.ScalarPow()
-scalar_uadd = _scalar_ops.ScalarUadd()
-scalar_usub = _scalar_ops.ScalarUsub()
-
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)
 list_getitem = Primitive('list_getitem')
@@ -96,7 +87,7 @@ list_equal = Primitive("list_equal")
 scalar_ne = Primitive('scalar_ne')
 string_eq = Primitive('string_eq')
 string_concat = Primitive('string_concat')
-bool_not = Primitive("bool_not")
+bool_not = auto_generate.bool_not
 bool_or = Primitive("bool_or")
 bool_and = Primitive("bool_and")
 bool_eq = Primitive("bool_eq")
@@ -405,7 +396,8 @@ tensor_operator_registry.register('long', P.Cast)
 tensor_operator_registry.register('cholesky', P.Cholesky)
 tensor_operator_registry.register('cholesky_inverse', P.CholeskyInverse)
 tensor_operator_registry.register('cholesky_solve', cholesky_solve)
-tensor_operator_registry.register('expand', expand)
+tensor_operator_registry.register('expand', P.BroadcastTo)
+tensor_operator_registry.register('tensortotuple', TensorToTuple)
 tensor_operator_registry.register('cumprod', cumprod)
 tensor_operator_registry.register('diff', diff)
 tensor_operator_registry.register('div', div)

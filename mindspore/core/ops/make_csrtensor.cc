@@ -51,8 +51,8 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexTwo);
   auto shape = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexThree);
 
-  auto indptr_dtype = indptr->element()->BuildType();
-  auto indices_dtype = indices->element()->BuildType();
+  auto indptr_dtype = indptr->element()->GetType();
+  auto indices_dtype = indices->element()->GetType();
   CheckSparseIndicesDtype(indptr_dtype, "indptr");
   CheckSparseIndicesDtype(indices_dtype, "indices");
 
@@ -71,7 +71,7 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
 
   // convert shape from tuple to shapevector(shape_vec)
   auto shape_vec = GetShapeValue(primitive, shape);
-  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  auto shape_value = shape->GetValue()->cast<ValueTuplePtr>();
 
   if (IsShapeEmpty(indptr_shp) && IsShapeEmpty(indices_shp) && IsShapeEmpty(values_shp)) {
     MS_LOG(DEBUG) << "Constructing empty CSRTensor! Ignore further shape check.";

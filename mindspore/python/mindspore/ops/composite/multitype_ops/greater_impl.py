@@ -102,3 +102,11 @@ def _greater_than_list(x, y):
        bool, if x > y return true in python logic, x <= y return false.
    """
     return list_greater_than()(x, y)
+
+
+@greater.register_default()
+def default_greater(x, y):
+    """
+    Default function for greater.
+   """
+    return x > y

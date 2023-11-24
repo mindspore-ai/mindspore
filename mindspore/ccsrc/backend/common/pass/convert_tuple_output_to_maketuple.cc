@@ -21,6 +21,7 @@
 #include "include/backend/kernel_graph.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -42,6 +43,9 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   }
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf)) {
+    if (tuple_anf->isa<ValueNode>()) {
+      kernel_graph->RemoveValueNodeFromGraph(tuple_anf->cast<ValueNodePtr>());
+    }
     return kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf);
   }
   auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);
@@ -63,7 +67,8 @@ bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
   MS_EXCEPTION_IF_NULL(input);
   return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
           !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
-          (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)) &&
+          (input->isa<Parameter>() || (input->isa<ValueNode>() && !AnfAlgo::IsSequenceOutputOfScalar(input)) ||
+           IsKerenlGraphOutput(func_graph, input)) &&
           (!common::AnfAlgo::IsDynamicSequence(input)));
 }
 }  // namespace

@@ -51,17 +51,15 @@ inline uint8_t Table_PopCnt(T n) {
 }
 }  // namespace
 
-bool PopulationCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PopulationCountCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kPopulationCountInputsNum || outputs.size() != kPopulationCountOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kPopulationCountInputsNum
                   << " and " << kPopulationCountOutputsNum << ", but get " << inputs.size() << " and "
                   << outputs.size();
     return false;
   }
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   switch (dtype_) {
     case kNumberTypeInt8:
       kernel_func_ = &PopulationCountCpuKernelMod::LaunchKernel<int8_t>;
@@ -95,11 +93,11 @@ bool PopulationCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool PopulationCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  uint8_t *output_0_addr = reinterpret_cast<uint8_t *>(outputs[kZero]->addr);
-  size_t length = inputs[kZero]->size / sizeof(T);
+bool PopulationCountCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  uint8_t *output_0_addr = reinterpret_cast<uint8_t *>(outputs[kZero]->device_ptr());
+  size_t length = inputs[kZero]->size() / sizeof(T);
   auto task = [this, input_0_addr, output_0_addr](size_t start, size_t end) {
     for (size_t index = start; index < end; index++) {
       output_0_addr[index] = Table_PopCnt<T>(input_0_addr[index]);

@@ -27,10 +27,8 @@ constexpr size_t kConcatOffsetV1AxisNum = 1;
 constexpr int64_t kInputMinNumber = 2;
 constexpr auto kInputStr = "input number";
 }  // namespace
-bool ConcatOffsetV1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ConcatOffsetV1CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   (void)CheckAndConvertUtils::CheckInteger(kInputStr, SizeToLong(inputs.size()), kGreaterEqual, kInputMinNumber,
                                            kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), inputs.size() - kConcatOffsetV1AxisNum, kernel_name_);
@@ -44,10 +42,9 @@ bool ConcatOffsetV1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ConcatOffsetV1CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ConcatOffsetV1CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -57,9 +54,9 @@ int ConcatOffsetV1CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto axis = static_cast<int64_t>(*static_cast<int32_t *>(inputs[kIndex0]->addr));
+bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  auto axis = static_cast<int64_t>(*static_cast<int32_t *>(inputs[kIndex0]->device_ptr()));
   int64_t input_0_elem_num = input0_[0];
   if (axis >= input_0_elem_num || axis < -input_0_elem_num) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' must be fall in range [-" << input_0_elem_num << ", "
@@ -75,10 +72,10 @@ bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   size_t input_tensor_num = inputs.size() - kConcatOffsetV1AxisNum;
   size_t elem_num = LongToSize(output_[kIndex0]);
   int32_t offset = 0;
-  auto input0_addr = static_cast<int32_t *>(inputs[1]->addr);
+  auto input0_addr = static_cast<int32_t *>(inputs[1]->device_ptr());
   for (size_t i = 0; i < input_tensor_num; ++i) {
-    auto input_i_addr = static_cast<int32_t *>(inputs[i + 1]->addr);
-    auto output_i_addr = static_cast<int32_t *>(outputs[i]->addr);
+    auto input_i_addr = static_cast<int32_t *>(inputs[i + 1]->device_ptr());
+    auto output_i_addr = static_cast<int32_t *>(outputs[i]->device_ptr());
     for (size_t j = 0; j < elem_num; ++j) {
       if (j == axis_) {
         output_i_addr[j] = offset;

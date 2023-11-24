@@ -19,7 +19,6 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/op_utils.h"
-#include "ops/reshape.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "include/registry/converter_context.h"

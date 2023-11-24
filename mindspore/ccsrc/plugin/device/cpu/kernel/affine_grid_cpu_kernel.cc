@@ -47,41 +47,36 @@ enum kColNum : size_t {
 };
 }  // namespace
 
-bool AffineGridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AffineGridCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  auto prim = base_operator->GetPrim();
-  align_corners_ = GetValue<bool>(prim->GetAttr("align_corners"));
+  align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
   return true;
 }
 
-int AffineGridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AffineGridCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  output_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
-  output_type_ = outputs[0]->GetDtype();
+  output_size_dims_ = inputs[1]->GetDeviceShapeVector();
+  output_type_ = outputs[0]->dtype_id();
   return KRET_OK;
 }
 
 template <typename T>
-void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<int64_t> out_shape;
-  auto data_theta = reinterpret_cast<T *>(inputs[0]->addr);
+  auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  MS_EXCEPTION_IF_NULL(output_size_data);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_size_data = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
   size_t H = static_cast<size_t>(output_size_data[2]);
@@ -144,14 +139,13 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
 }
 
 template <typename T>
-void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<int64_t> out_shape;
-  auto data_theta = reinterpret_cast<T *>(inputs[0]->addr);
+  auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  MS_EXCEPTION_IF_NULL(output_size_data);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_size_data = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+  auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
   size_t D = static_cast<size_t>(output_size_data[2]);
@@ -236,9 +230,9 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
 }
 
 template <typename T>
-bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (output_size_dims_[0] == 4) {
     LaunchKernel_3D<T>(inputs, outputs);
   } else if (output_size_dims_[0] == kColNum5) {
@@ -248,9 +242,15 @@ bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
 }
 
 std::vector<std::pair<KernelAttr, AffineGridCpuKernelMod::AffineGridFunc>> AffineGridCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
    &AffineGridCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
    &AffineGridCpuKernelMod::LaunchKernel<float16>}};
 
 std::vector<KernelAttr> AffineGridCpuKernelMod::GetOpSupport() {

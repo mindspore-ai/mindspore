@@ -72,15 +72,11 @@ class MatMulInfer : public abstract::OpInferBase {
     const std::string op_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
                                              kMatMulInputNum, op_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
 
-    MS_EXCEPTION_IF_NULL(x);
-    MS_EXCEPTION_IF_NULL(x->shape());
-    auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-    MS_EXCEPTION_IF_NULL(y);
-    MS_EXCEPTION_IF_NULL(y->shape());
-    auto x_shp = x->shape()->shape();
-    auto y_shp = y->shape()->shape();
+    auto y = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
+    const auto &x_shp = x->GetShape()->GetShapeVector();
+    const auto &y_shp = y->GetShape()->GetShapeVector();
 
     ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
     ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
@@ -126,18 +122,15 @@ class MatMulInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
                                              kMatMulInputNum, op_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+    auto y = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
 
-    MS_EXCEPTION_IF_NULL(x);
-    MS_EXCEPTION_IF_NULL(x->element());
-    MS_EXCEPTION_IF_NULL(x->element()->GetTypeTrack());
-    auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-    MS_EXCEPTION_IF_NULL(y);
-    MS_EXCEPTION_IF_NULL(y->element());
-    MS_EXCEPTION_IF_NULL(y->element()->GetTypeTrack());
-
-    TypePtr x_type = x->element()->GetTypeTrack();
-    TypePtr y_type = y->element()->GetTypeTrack();
+    auto x_tensor_type = x->GetType()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(x_tensor_type);
+    auto y_tensor_type = y->GetType()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(y_tensor_type);
+    TypePtr x_type = x_tensor_type->element();
+    TypePtr y_type = y_tensor_type->element();
 
     if (x_type->type_id() != y_type->type_id()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name
@@ -165,8 +158,8 @@ class MatMulInfer : public abstract::OpInferBase {
       valid_types = {kUInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
     }
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("y", input_args[kInputIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
     return x_type;
   }

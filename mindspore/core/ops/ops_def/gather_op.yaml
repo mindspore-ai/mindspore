@@ -1,0 +1,17 @@
+#operator gather
+gather:
+  args:
+    input_params:
+      dtype: tensor
+    input_indices:
+      dtype: tensor
+    axis:
+      dtype: int
+      type_cast: tensor
+    batch_dims:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor

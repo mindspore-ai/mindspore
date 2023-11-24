@@ -137,18 +137,15 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    auto queue = abstract::CheckArg<abstract::AbstractSequence>(prim_name, input_args, 0);
+    auto seq_input = input_args[0];
     ShapeVector shape;
-
-    // For list/tuple with dynamic len, convert to a dynamic tensor.
-    if (queue->dynamic_len()) {
-      shape.push_back(abstract::Shape::kShapeDimAny);
-    } else {
-      shape.push_back(queue->elements().size());
+    if (seq_input->GetShape()->isa<abstract::DynamicSequenceShape>()) {
+      // For list/tuple with dynamic len, convert to a dynamic tensor.
+      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::Shape::kShapeDimAny});
     }
-
-    return std::make_shared<abstract::Shape>(shape);
+    auto seq_shape = seq_input->GetShape()->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape);
+    return std::make_shared<abstract::Shape>(ShapeVector{SizeToLong(seq_shape->size())});
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -158,7 +155,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              prim_name);
     auto elem = input_args[0];
-    if (!elem->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(elem)) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', the input should be sequence but got: " << elem->ToString();
     }
@@ -166,7 +163,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
       auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-      attr = type_abs->BuildValue();
+      attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
@@ -194,12 +191,12 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len,
                                              prim_name);
     auto elem = abstract::CheckArg<abstract::AbstractSequence>(prim_name, input_args, 0);
-    auto elem_value = elem->BuildValue();
-    if (elem_value == kValueAny) {
+    auto elem_value = elem->GetValue();
+    if (elem_value->ContainsValueAny()) {
       return nullptr;
     }
     auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-    auto dst_type = type_abs->BuildValue()->cast<TypePtr>();
+    auto dst_type = type_abs->GetValue()->cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(dst_type);
     auto value_tuple = elem_value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);

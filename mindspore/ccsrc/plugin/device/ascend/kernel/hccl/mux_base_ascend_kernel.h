@@ -30,6 +30,7 @@ class MuxBaseAscendKernel : public HcclKernel {
   ~MuxBaseAscendKernel() = default;
 
  protected:
+  void CalLoopSize() override { loop_size_ = hccl_kernel_output_shape_list_.size(); }
   static int src_rank_id_;
 };
 }  // namespace kernel

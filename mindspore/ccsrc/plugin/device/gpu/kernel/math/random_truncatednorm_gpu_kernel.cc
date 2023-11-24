@@ -18,9 +18,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool TruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool TruncatedNormalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -32,18 +31,16 @@ bool TruncatedNormalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   return true;
 }
 
-int TruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int TruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (!IsValidShape(inputs[0]->GetShapeVector())) {
     return KRET_UNKNOWN_SHAPE;
   }
@@ -52,10 +49,10 @@ int TruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return false;
   }
   ResetResource();
-  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
   for (size_t i = 0; i < input_shape_.size(); i++) {
     input_num_ *= input_shape_[i];
@@ -63,7 +60,6 @@ int TruncatedNormalGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = 0; i < output_shape_.size(); i++) {
     output_num_ *= output_shape_[i];
   }
-  input_size_list_.emplace_back(input_num_ * unit_input_size_);
   output_size_list_.emplace_back(output_num_ * unit_output_size_);
   workspace_size_list_.emplace_back(output_num_ * sizeof(curandState));
   return KRET_OK;
@@ -73,14 +69,13 @@ void TruncatedNormalGpuKernelMod::ResetResource() noexcept {
   input_num_ = 1;
   output_num_ = 1;
   workspace_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
 template <typename S>
-bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool TruncatedNormalGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   S *output = GetDeviceAddress<S>(outputs, 0);
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);

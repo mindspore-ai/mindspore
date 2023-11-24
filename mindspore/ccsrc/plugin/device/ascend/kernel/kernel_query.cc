@@ -35,6 +35,7 @@
 #include "utils/trace_base.h"
 #include "kernel/common_utils.h"
 #include "kernel/oplib/oplib.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -167,7 +168,7 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
   MS_EXCEPTION_IF_NULL(primitive);
   auto found = abstract::GetPrimitiveInferImpl(primitive);
   if (!found.has_value()) {
-    MS_LOG(INTERNAL_EXCEPTION) << primitive->name() << " infer is not registered.";
+    MS_LOG(INTERNAL_EXCEPTION) << primitive->name() << "infer is not registered.";
   }
 
   std::vector<AbstractBasePtr> input_args;

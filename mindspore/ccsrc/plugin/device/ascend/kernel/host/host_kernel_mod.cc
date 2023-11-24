@@ -41,59 +41,33 @@ HostKernelFactory &HostKernelFactory::Get() {
   return instance;
 }
 
-bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
+bool HostKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
+int HostKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input_size_list_.clear();
   output_size_list_.clear();
 
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
-
-  for (size_t i = 0; i < input_num; i++) {
-    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
-    TypePtr type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, i));
-    int64_t size_i = 1;
-    if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
-      return false;
+  auto calc_size_list = [](const std::vector<KernelTensor *> &tensors, std::vector<size_t> *list_ptr) -> bool {
+    for (KernelTensor *tensor : tensors) {
+      int64_t size = 1;
+      if (!GetShapeSize(tensor->GetShapeVector(), tensor->dtype(), &size)) {
+        return false;
+      }
+      list_ptr->push_back(LongToSize(size));
     }
-    input_size_list_.push_back(LongToSize(size_i));
+    return true;
+  };
+
+  if (!calc_size_list(inputs, &input_size_list_)) {
+    return KRET_RESIZE_FAILED;
+  }
+  if (!calc_size_list(outputs, &output_size_list_)) {
+    return KRET_RESIZE_FAILED;
   }
 
-  for (size_t i = 0; i < output_num; i++) {
-    auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
-    TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    int64_t size_i = 1;
-    if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
-      return false;
-    }
-    output_size_list_.push_back(LongToSize(size_i));
-  }
-  anf_node_ = anf_node;
-  return true;
-}
-
-bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                           const std::vector<AddressPtr> &, void *) {
-  return true;
-}
-
-int HostKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
-                          const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  if (!Init(cnode)) {
-    MS_LOG(EXCEPTION) << "Init failed, node:" << cnode->fullname_with_scope();
-  }
-  return 0;
-}
-
-std::vector<TaskInfoPtr> HostKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &, uint32_t) {
-  return {};
+  return KRET_OK;
 }
 }  // namespace kernel
 }  // namespace mindspore

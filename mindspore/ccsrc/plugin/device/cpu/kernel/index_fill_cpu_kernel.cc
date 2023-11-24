@@ -40,15 +40,13 @@ const uint32_t kInputIndex2 = 2;
 const uint32_t kInputIndex3 = 3;
 }  // namespace
 
-bool IndexFillCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool IndexFillCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  x_type_ = inputs[kInputIndex0]->GetDtype();
-  dim_type_ = inputs[kInputIndex1]->GetDtype();
-  indices_type_ = inputs[kInputIndex2]->GetDtype();
+  x_type_ = inputs[kInputIndex0]->dtype_id();
+  dim_type_ = inputs[kInputIndex1]->dtype_id();
+  indices_type_ = inputs[kInputIndex2]->dtype_id();
   if (dim_type_ != kNumberTypeInt32) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'dim' must be int32 or int64, but got "
                             << dim_type_;
@@ -66,22 +64,22 @@ bool IndexFillCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int IndexFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IndexFillCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[kInputIndex0]->GetDeviceShapeAdaptively();
-  dim_shape_ = inputs[kInputIndex1]->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs[kInputIndex2]->GetDeviceShapeAdaptively();
-  value_shape_ = inputs[kInputIndex3]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[kInputIndex0]->GetDeviceShapeVector();
+  dim_shape_ = inputs[kInputIndex1]->GetDeviceShapeVector();
+  indices_shape_ = inputs[kInputIndex2]->GetDeviceShapeVector();
+  value_shape_ = inputs[kInputIndex3]->GetDeviceShapeVector();
   return ret;
 }
 
-bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool IndexFillCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   switch (x_type_) {
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
@@ -146,18 +144,18 @@ void IndexFillCpuKernelMod::DoFill(int32_t data_num, const T *input_x, const int
 }
 
 template <typename T>
-void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+void IndexFillCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  T *input_0 = static_cast<T *>(inputs[0]->addr);
-  int32_t *input_1 = static_cast<int32_t *>(inputs[1]->addr);
-  int32_t *input_2 = static_cast<int32_t *>(inputs[2]->addr);
-  T *input_3 = static_cast<T *>(inputs[3]->addr);
-  T *output_0 = static_cast<T *>(outputs[0]->addr);
+  T *input_0 = static_cast<T *>(inputs[0]->device_ptr());
+  int32_t *input_1 = static_cast<int32_t *>(inputs[1]->device_ptr());
+  int32_t *input_2 = static_cast<int32_t *>(inputs[2]->device_ptr());
+  T *input_3 = static_cast<T *>(inputs[3]->device_ptr());
+  T *output_0 = static_cast<T *>(outputs[0]->device_ptr());
   int32_t x_dim_nums = static_cast<int32_t>(x_shape_.size());
-  int32_t data_num = static_cast<int32_t>(inputs[0]->size / sizeof(T));
-  uint32_t index_num = inputs[2]->size / sizeof(int32_t);
+  int32_t data_num = static_cast<int32_t>(inputs[0]->size() / sizeof(T));
+  uint32_t index_num = inputs[2]->size() / sizeof(int32_t);
   int32_t cur_dim = *input_1;
   if (cur_dim < 0) {
     *input_1 = *input_1 + x_dim_nums;

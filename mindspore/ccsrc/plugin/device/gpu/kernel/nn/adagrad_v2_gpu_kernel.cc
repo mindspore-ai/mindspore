@@ -24,31 +24,25 @@
 
 namespace mindspore {
 namespace kernel {
-void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  input_size_list_.clear();
+void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   output_size_list_.clear();
   workspace_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(
-    inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(), inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(),
+                                                                  inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex3]->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     return;
@@ -68,20 +62,14 @@ void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   for (int64_t i = 0; i < static_cast<int64_t>(gradient_shape_.size()); i++) {
     gradient_size_ *= gradient_shape_[i];
   }
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(accumulation_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(accumulation_size_);
 }
 
-bool AdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
-  epsilon_ = kernel_ptr_->get_epsilon();
-  update_slots_ = kernel_ptr_->get_update_slots();
+bool AdagradV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
   constexpr int INPUT_NUM = 4;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << inputs.size();
@@ -94,29 +82,27 @@ bool AdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  InOutputResize(base_operator, inputs, outputs);
+  InOutputResize(inputs, outputs);
   return true;
 }
 
-int AdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  kernel_ptr_ = base_operator;
-  InOutputResize(base_operator, inputs, outputs);
+int AdagradV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  InOutputResize(inputs, outputs);
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool AdagradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool AdagradV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   T *variable = GetDeviceAddress<T>(inputs, kIndex0);
   T *accumulation = GetDeviceAddress<T>(inputs, kIndex1);
   S *learning_rate = GetDeviceAddress<S>(inputs, kIndex2);
   T *gradient = GetDeviceAddress<T>(inputs, kIndex3);
   T *variable_out = GetDeviceAddress<T>(outputs, kIndex0);
   T *accumulation_out = GetDeviceAddress<T>(outputs, kIndex1);
-  auto status = ApplyAdagradV2(size_t(inputs[0]->size / sizeof(T)), epsilon_, update_slots_, variable, accumulation,
+  auto status = ApplyAdagradV2(size_t(inputs[0]->size() / sizeof(T)), epsilon_, update_slots_, variable, accumulation,
                                learning_rate, gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,

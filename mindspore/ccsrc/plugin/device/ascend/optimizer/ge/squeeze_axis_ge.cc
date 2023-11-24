@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
-#include <memory>
-#include <string>
-#include <vector>
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/array_ops.h"

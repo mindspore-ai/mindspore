@@ -37,6 +37,7 @@ from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
 from mindspore import context
+from mindspore import tensor
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
@@ -85,6 +86,7 @@ AST_SUB_TYPE_LIST = 7                  # ast.List
 AST_SUB_TYPE_SUBSCRIPT = 8             # ast.Subscript
 AST_SUB_TYPE_STARRED = 9               # ast.Starred
 AST_SUB_TYPE_ATTRIBUTE = 10            # ast.Attribute
+AST_SUB_TYPE_DICT = 11                 # ast.Dict
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Syntax support
@@ -111,10 +113,6 @@ _builtin_function_or_method_type = type(abs)
 # Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
     set, dict, slice, complex, reversed, type,
-)
-
-_unsupported_internal_type = (
-    Tensor,
 )
 
 _hybrid_type = (
@@ -493,9 +491,14 @@ def is_cell_list(obj):
     return isinstance(obj, nn.CellList)
 
 
+def is_module_list(obj):
+    """Check if obj is nn.ModuleList"""
+    return hasattr(obj, "__cell_as_list__") and not isinstance(obj, nn.CellList)
+
+
 def convert_cell_list_to_sequence(obj):
     """Convert nn.CellList to sequence."""
-    if not isinstance(obj, nn.CellList):
+    if not hasattr(obj, "__cell_as_list__"):
         raise TypeError(f"Obj should be nn.CellList, but got {obj}")
     if not hasattr(obj, "_cells"):
         raise AttributeError(f"nn.CellList is missing _cells property.")
@@ -676,7 +679,6 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info: %r", ops_info)
     return ops_info
 
-
 def get_ast_type(node):
     """Get the ast type."""
     ast_type = AST_SUB_TYPE_UNKNOWN
@@ -696,6 +698,8 @@ def get_ast_type(node):
         ast_type = AST_SUB_TYPE_STARRED
     elif isinstance(node, ast.Attribute):
         ast_type = AST_SUB_TYPE_ATTRIBUTE
+    elif isinstance(node, ast.Dict):
+        ast_type = AST_SUB_TYPE_DICT
     else:
         ast_type = AST_SUB_TYPE_UNKNOWN
     return ast_type
@@ -762,6 +766,14 @@ def get_args(node):
     if node.args.kwarg:
         args.append(node.args.kwarg)
     return args
+
+
+def get_primitive_signatures(prim):
+    """Get primitive signatures."""
+    if not hasattr(prim, "__mindspore_signature__"):
+        return ()
+    signatures = getattr(prim, "__mindspore_signature__")
+    return ops.Primitive._fill_signature(prim, signatures)
 
 
 def _convert_stub_tensor(data):
@@ -839,6 +851,13 @@ def get_global_params():
 def get_dtype(name: str):
     """get mstype from name"""
     return get_attr_from_object(mstype, name)
+
+
+def check_attrs(target_object, func_name: str):
+    if hasattr(target_object, func_name) and hasattr(target_object.__class__.__base__, func_name):
+        if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
+            return True
+    return False
 
 
 class ThirdPartyLibraryChecker:
@@ -947,7 +966,12 @@ class ThirdPartyLibraryChecker:
             module = value
         elif (isinstance(value, types.FunctionType) and not hasattr(value, "__jit_function__")) or \
             (isinstance(value, types.MethodType) and not hasattr(value.__func__, "__jit_function__")):
-            if value in _convert_map():
+            value_hashable = True
+            try:
+                hash(value)
+            except TypeError:
+                value_hashable = False
+            if value_hashable and value in _convert_map():
                 return False
             module = inspect.getmodule(value)
             if module is None:
@@ -1004,6 +1028,8 @@ class Parser:
 
         # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(self.fn.__module__)
+        self.global_namespace.dicts[0]["__ms_tensor_func__"] = tensor
+
         self.function_module = self.fn.__module__
         # Used to resolve the function's nonlocals.
         self.closure_namespace = ClosureNamespace(self.fn)
@@ -1028,12 +1054,16 @@ class Parser:
         return unsupported
 
     @staticmethod
+    def is_tensor_class_type(value):
+        """To check if is class Tensor type"""
+        return value == Tensor
+
+    @staticmethod
     def is_unsupported_internal_type(value):
         """To check if not supported internal type, such as Tensor"""
-        for item in _unsupported_internal_type:
-            if value == item:
-                logger.debug(f"Found unsupported internal type: '{value}'.")
-                return True
+        if value == Tensor:
+            logger.debug(f"Found unsupported internal type: '{value}'.")
+            return True
         if ms_adapter_registry.is_registered and value == ms_adapter_registry.tensor:
             return True
         return False
@@ -1125,22 +1155,6 @@ class Parser:
 
         logger.error("Fn type is invalid")
         return None, None
-
-    def is_jit_supported_attribute(self, var, attr):
-        """Check whether the value is a constant."""
-        if var in self.global_namespace:
-            module = self.global_namespace[var]
-            if hasattr(module, attr):
-                value = getattr(module, attr)
-                # Check if value is constant.
-                if isinstance(value, (int, float, bool)):
-                    return True
-                # Check if value in convert_map.
-                if isinstance(value, (tuple, list, dict)) or getattr(value, "__hash__") is None:
-                    return False
-                if inspect.ismodule(module) and value in _convert_map():
-                    return True
-        return False
 
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""

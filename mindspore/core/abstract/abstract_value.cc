@@ -148,16 +148,22 @@ const BaseShapePtr &AbstractBase::GetShapeTrack() const { return shape_; }
 
 BaseShapePtr AbstractBase::BuildShape() const { return kNoShape; }
 
+BaseShapePtr AbstractBase::GetShape() const { return BuildShape(); }
+
+TypePtr AbstractBase::GetType() const { return BuildType(); }
+
+ValuePtr AbstractBase::GetValue() const { return BuildValue(); }
+
 void AbstractBase::set_trace_node_provider(const TraceNodeProvider &trace_node_provider) {
   trace_node_provider_ = trace_node_provider;
 }
 
-inline AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) {
+AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   return shared_from_base<AbstractBase>();
 }
 
-bool AbstractBase::IsBroaden() const { return value_ == kValueAny; }
+bool AbstractBase::IsBroaden() const { return value_->ContainsValueAny(); }
 
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
@@ -211,16 +217,16 @@ std::string AbstractBase::ToString(bool verbose) const {
   }
   std::ostringstream buffer;
   auto tensor_value = BuildValue();
-  auto shape = BuildShape();
+  auto shape = GetShape();
   auto type = BuildType();
   if (shape != nullptr && type != nullptr) {
     buffer << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   } else if (type != nullptr) {
     buffer << type;
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   }
@@ -535,19 +541,6 @@ AbstractTensor::AbstractTensor(const tensor::TensorPtr &tensor)
 AbstractTensor::AbstractTensor(const TypePtr &element_type, const BaseShapePtr &shape)
     : AbstractUndetermined(element_type, shape) {}
 
-void AbstractTensor::set_value_range(const ValuePtr &min_value, const ValuePtr &max_value) {
-  min_value_ = min_value;
-  max_value_ = max_value;
-}
-
-const ValuePtr &AbstractTensor::get_min_value() const { return min_value_; }
-
-const ValuePtr &AbstractTensor::get_max_value() const { return max_value_; }
-
-void AbstractTensor::set_shape_value(const ValuePtr &shape_value) { shape_value_ = shape_value; }
-
-const ValuePtr &AbstractTensor::get_shape_value() const { return shape_value_; }
-
 std::size_t AbstractTensor::hash() const {
   // We have to exclude value pointer from hash, because CSE (Common Subexpression Elimination)
   // will use this hash to find duplicate ValueNodes that Tensor values are equal.
@@ -761,6 +754,59 @@ AnfNodeWeakPtrList SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtr
   SynchronizeSequenceNodesElementsUseFlagsInner(sequence_nodes);
   CheckSequenceNodesValid(sequence_nodes);
   return sequence_nodes;
+}
+
+bool AbstractCanJoin(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2) {
+  try {
+    MS_LOG_TRY_CATCH_SCOPE;
+    (void)abs1->Join(abs2);
+  } catch (std::exception &) {
+    return false;
+  }
+  return true;
+}
+
+bool CheckElementAbstractSame(const AbstractBasePtr &first_element, const AbstractBasePtr &cur_element, const size_t i,
+                              bool raise_exception) {
+  MS_EXCEPTION_IF_NULL(first_element);
+  MS_EXCEPTION_IF_NULL(cur_element);
+  if (first_element->isa<abstract::AbstractAny>() || cur_element->isa<abstract::AbstractAny>()) {
+    return true;
+  }
+  auto first_element_type_id = first_element->BuildType()->generic_type_id();
+  auto cur_element_type_id = cur_element->BuildType()->generic_type_id();
+  if (first_element_type_id != cur_element_type_id) {
+    if (!raise_exception) {
+      return false;
+    }
+    MS_EXCEPTION(ValueError) << "In graph mode, the element type of dynamic length array must be the same."
+                             << "The element type do not match, can not convert to dynamic length sequence. "
+                             << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The " << i
+                             << "th element type is: " << TypeIdToString(cur_element_type_id);
+  }
+  auto first_element_shape = first_element->GetShape();
+  MS_EXCEPTION_IF_NULL(first_element_shape);
+  auto cur_element_shape = cur_element->GetShape();
+  MS_EXCEPTION_IF_NULL(cur_element_shape);
+  if (*first_element_shape != *cur_element_shape) {
+    if (!raise_exception) {
+      return false;
+    }
+    MS_EXCEPTION(ValueError) << "In graph mode, the element shape of dynamic length array must be the same."
+                             << "The element shape do not match, can not convert to dynamic length sequence. "
+                             << "The 0th element shape is: " << first_element_shape->ToString() << ". The " << i
+                             << "th element shape is: " << cur_element_shape->ToString();
+  }
+  if (!AbstractCanJoin(first_element, cur_element)) {
+    if (!raise_exception) {
+      return false;
+    }
+    MS_EXCEPTION(TypeError) << "In graph mode, the element shape of dynamic length array must be the same."
+                            << "The element do not match, can not convert to dynamic length sequence. "
+                            << "The 0th element is: " << first_element->ToString() << ". The " << i
+                            << "th element shape is: " << cur_element->ToString();
+  }
+  return true;
 }
 }  // namespace
 
@@ -1026,7 +1072,7 @@ bool AbstractSequence::PurifyElements() {
   for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
-      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
+      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(0));
       if (elements_[i]->isa<AbstractProblem>()) {
         unuse_node_none->set_type(std::make_shared<Problem>());
       }
@@ -1039,16 +1085,6 @@ bool AbstractSequence::PurifyElements() {
   return true;
 }
 
-bool AbstractCanJoin(const AbstractBasePtr &abs1, const AbstractBasePtr &abs2) {
-  try {
-    MS_LOG_TRY_CATCH_SCOPE;
-    (void)abs1->Join(abs2);
-  } catch (std::exception &) {
-    return false;
-  }
-  return true;
-}
-
 // Convert self from a fixed length sequence to dynamic length sequence.
 void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception) {
   // Can not use size() since it will raise error when sequence is already dynamic length.
@@ -1056,41 +1092,12 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
   if (input_len > 1) {
     auto first_element = elements()[0];
     MS_EXCEPTION_IF_NULL(first_element);
-    auto first_element_shape = first_element->BuildShape();
-    MS_EXCEPTION_IF_NULL(first_element_shape);
-    auto first_element_type_id = first_element->BuildType()->generic_type_id();
     for (size_t i = 1; i < input_len; ++i) {
       auto cur_element = elements()[i];
       MS_EXCEPTION_IF_NULL(cur_element);
-      auto cur_element_type_id = cur_element->BuildType()->generic_type_id();
-      if (first_element_type_id != cur_element_type_id) {
-        if (!raise_exception) {
-          return;
-        }
-        MS_EXCEPTION(ValueError) << "In graph mode, the element type of dynamic length array must be the same."
-                                 << "The element type do not match, can not convert to dynamic length sequence. "
-                                 << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The "
-                                 << i << "th element type is: " << TypeIdToString(cur_element_type_id);
-      }
-      auto cur_element_shape = cur_element->BuildShape();
-      MS_EXCEPTION_IF_NULL(cur_element_shape);
-      if (*first_element_shape != *cur_element_shape) {
-        if (!raise_exception) {
-          return;
-        }
-        MS_EXCEPTION(ValueError) << "In graph mode, the element shape of dynamic length array must be the same."
-                                 << "The element shape do not match, can not convert to dynamic length sequence. "
-                                 << "The 0th element shape is: " << first_element_shape->ToString() << ". The " << i
-                                 << "th element shape is: " << cur_element_shape->ToString();
-      }
-      if (!AbstractCanJoin(first_element, cur_element)) {
-        if (!raise_exception) {
-          return;
-        }
-        MS_EXCEPTION(TypeError) << "In graph mode, the element shape of dynamic length array must be the same."
-                                << "The element do not match, can not convert to dynamic length sequence. "
-                                << "The 0th element is: " << first_element->ToString() << ". The " << i
-                                << "th element shape is: " << cur_element->ToString();
+      bool ret = CheckElementAbstractSame(first_element, cur_element, i, raise_exception);
+      if (!ret) {
+        return;
       }
     }
     set_dynamic_len_element_abs(first_element);
@@ -1137,7 +1144,7 @@ BaseShapePtrList AbstractSequence::ElementsShape() const {
   BaseShapePtrList element_shape_list;
   for (const auto &element : elements_) {
     MS_EXCEPTION_IF_NULL(element);
-    BaseShapePtr element_shape = element->BuildShape();
+    BaseShapePtr element_shape = element->GetShape();
     element_shape_list.push_back(element_shape);
   }
   return element_shape_list;
@@ -1339,7 +1346,7 @@ BaseShapePtr AbstractTuple::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<TupleShape>(ElementsShape());
 }
@@ -1409,7 +1416,7 @@ bool AbstractTuple::ContainsAllConstants() const {
     MS_EXCEPTION_IF_NULL(element_value);
     // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
     if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
-          (element->isa<abstract::AbstractTensor>() && element_value != kValueAny) ||
+          (element->isa<abstract::AbstractTensor>() && !element_value->ContainsValueAny()) ||
           element->isa<abstract::AbstractTuple>())) {
       return false;
     }
@@ -1468,7 +1475,7 @@ BaseShapePtr AbstractList::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<ListShape>(ElementsShape());
 }
@@ -1606,7 +1613,7 @@ ValuePtr AbstractNamedTuple::RealBuildValue() const {
     MS_EXCEPTION_IF_NULL(key_value);
     key_value_list.push_back(key_value);
   }
-  return std::make_shared<ValueNamedTuple>(type_name_, key_value_list, element_value_list);
+  return std::make_shared<ValueNamedTuple>(sub_class_name_, key_value_list, element_value_list);
 }
 
 TypePtr AbstractSlice::BuildType() const {
@@ -1798,15 +1805,7 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
     return false;
   }
   // Check shape.
-  if (!IsEqual(shape(), other.shape())) {
-    return false;
-  }
-  // Check shape value.
-  if (!IsEqual(get_shape_value(), other.get_shape_value())) {
-    return false;
-  }
-  // Check min and max values.
-  return IsEqual(get_min_value(), other.get_min_value()) && IsEqual(get_max_value(), other.get_max_value());
+  return IsEqual(shape(), other.shape());
 }
 
 bool AbstractTensor::operator==(const AbstractTensor &other) const { return equal_to(other); }
@@ -1827,8 +1826,6 @@ AbstractBasePtr AbstractTensor::Clone() const {
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
-  clone->set_value_range(get_min_value(), get_max_value());
-  clone->set_shape_value(get_shape_value());
   clone->set_is_adapter(is_adapter());
   return clone;
 }
@@ -2452,11 +2449,11 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
     MS_EXCEPTION_IF_NULL(element);
     auto abs_tuple = element->cast_ptr<AbstractTuple>();
     if (abs_tuple == nullptr) {
-      element_shape_list.push_back(element->BuildShape());
+      element_shape_list.push_back(element->GetShape());
     } else {
       for (const auto &scalar : abs_tuple->elements()) {
         MS_EXCEPTION_IF_NULL(scalar);
-        element_shape_list.push_back(scalar->BuildShape());
+        element_shape_list.push_back(scalar->GetShape());
       }
     }
   }
@@ -2791,21 +2788,21 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
 
   // Join the default_value.
   auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
-  if (joined_default_value == kValueAny) {
+  if (joined_default_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
                              << " != " << other_abs->default_value_->ToString();
   }
 
   // Join the permit_filter_value.
   auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
-  if (joined_permit_filter_value == kValueAny) {
+  if (joined_permit_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
                              << " != " << other_abs->permit_filter_value_->ToString();
   }
 
   // Join the evict_filter_value.
   auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
-  if (joined_evict_filter_value == kValueAny) {
+  if (joined_evict_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
                              << " != " << other_abs->evict_filter_value_->ToString();
   }

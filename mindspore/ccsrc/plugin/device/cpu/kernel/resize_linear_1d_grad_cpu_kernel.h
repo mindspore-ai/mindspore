@@ -24,6 +24,7 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore::kernel {
 constexpr auto kUnknown = "Unknown";
@@ -35,16 +36,12 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   explicit ResizeLinear1DGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ResizeLinear1DGradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -53,13 +50,11 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::OpSupport(); }
 
  private:
-  void SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs);
+  void SetWorkSpaceSize(const std::vector<KernelTensor *> &inputs);
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-
-  enum CoordinateTransformationMode { ALIGN_CORNERS = 0, HALF_PIXEL = 1, INVALID_MODE = 255 };
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   using CoordinateTransformationFunc = std::function<T(const T &new_x, const int &old_length, const int &new_length)>;
@@ -71,7 +66,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    CoordinateTransformationMode coordinate_transformation_mode);
+    MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode);
 
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};
@@ -81,7 +76,8 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   size_t channel_{0};
   size_t input_width_{0};
   size_t output_width_{0};
-  CoordinateTransformationMode coordinate_transformation_mode_{ALIGN_CORNERS};
+  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode_ =
+    MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 

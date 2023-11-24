@@ -57,7 +57,7 @@ class ReLUV2Infer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
 
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape)) {
       auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -65,7 +65,7 @@ class ReLUV2Infer : public abstract::OpInferBase {
         std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
     }
 
-    auto x_type_tmp = input_args[0]->BuildType();
+    auto x_type_tmp = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(x_type_tmp);
     auto input_type = x_type_tmp->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(input_type);
@@ -82,7 +82,7 @@ class ReLUV2Infer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input type must be tensor, but got: " << x_type->ToString()

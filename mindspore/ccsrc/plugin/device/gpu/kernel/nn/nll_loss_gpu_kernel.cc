@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,15 @@
 #include "plugin/device/gpu/kernel/nn/nll_loss_gpu_kernel.h"
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/nllloss.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-std::map<Reduction, ReductionMode> kReductionMap = {{Reduction::MEAN, ReductionMode::kMean},
-                                                    {Reduction::REDUCTION_SUM, ReductionMode::kSum},
-                                                    {Reduction::NONE, ReductionMode::kNone}};
-}
-bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLoss>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NLLLoss ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->GetPrim()->name();
-
-  auto reduction = kernel_ptr->get_reduction();
-  reduction_ = kReductionMap[reduction];
-
+constexpr auto kReductionIdx = 3;
+constexpr auto kIgnoreIndexIdx = 4;
+}  // namespace
+bool NLLLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -46,18 +33,17 @@ bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
   return true;
 }
 
-int NLLLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int NLLLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
-
+  auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
+  reduction_ = static_cast<ReductionMode>(reduction);
+  ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
   label_size_ = logits_shape[0];
   num_classes_ = logits_shape[1];
@@ -65,8 +51,9 @@ int NLLLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T, typename S>
-bool NLLLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool NLLLossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *logits = GetDeviceAddress<T>(inputs, 0);
   auto *labels = GetDeviceAddress<int32_t>(inputs, 1);
   S *weights = GetDeviceAddress<S>(inputs, 2);
@@ -83,6 +70,8 @@ std::vector<std::pair<KernelAttr, NLLLossGpuKernelMod::NLLLossLaunchFunc>> NLLLo
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossGpuKernelMod::LaunchKernel<float, float>},
@@ -90,6 +79,8 @@ std::vector<std::pair<KernelAttr, NLLLossGpuKernelMod::NLLLossLaunchFunc>> NLLLo
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat16),
    &NLLLossGpuKernelMod::LaunchKernel<float, half>},
@@ -97,6 +88,8 @@ std::vector<std::pair<KernelAttr, NLLLossGpuKernelMod::NLLLossLaunchFunc>> NLLLo
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat32),
    &NLLLossGpuKernelMod::LaunchKernel<half, float>},
@@ -104,6 +97,8 @@ std::vector<std::pair<KernelAttr, NLLLossGpuKernelMod::NLLLossLaunchFunc>> NLLLo
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
    &NLLLossGpuKernelMod::LaunchKernel<half, half>}};

@@ -18,14 +18,14 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include "utils/hash_map.h"
-#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
+#include "ir/value.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace parallel {
@@ -314,6 +314,8 @@ class GatherInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
+  virtual void DealWithBatchDimsMirrorOp() noexcept;
+  virtual void GetBatchDims() noexcept;
 
  private:
   GatherMode GetGatherMode(const Shape &param_strategy, const Shape &indices_strategy) const;
@@ -335,20 +337,28 @@ class GatherInfo : public OperatorInfo {
   GatherUtilPtr gather_util_;
 };
 
-class SparseGatherV2Info : public GatherInfo {
+class SparseGatherV2Info final : public GatherInfo {
  public:
   SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                      const PrimitiveAttrs &attrs, const std::string &replace_op_name = SPARSE_GATHERV2)
       : GatherInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
   ~SparseGatherV2Info() override = default;
+
+ protected:
+  void DealWithBatchDimsMirrorOp() noexcept override {}
+  void GetBatchDims() noexcept override {}
 };
 
-class EmbeddingLookupInfo : public GatherInfo {
+class EmbeddingLookupInfo final : public GatherInfo {
  public:
   EmbeddingLookupInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                       const PrimitiveAttrs &attrs)
       : GatherInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~EmbeddingLookupInfo() override = default;
+
+ protected:
+  void DealWithBatchDimsMirrorOp() noexcept override {}
+  void GetBatchDims() noexcept override {}
 };
 }  // namespace parallel
 }  // namespace mindspore

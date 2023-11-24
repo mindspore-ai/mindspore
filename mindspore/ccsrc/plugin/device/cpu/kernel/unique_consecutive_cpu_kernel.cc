@@ -142,22 +142,15 @@ void OutputYSet(const std::vector<int64_t> &y_shape_, const std::vector<int64_t>
 }
 }  // namespace
 
-bool UniqueConsecutiveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniqueConsecutive>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast UniqueConsecutive ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool UniqueConsecutiveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get attrs from primitive.
-  auto axis_ptr = base_operator->GetAttr("axis");
-  return_idx_ = GetValue<bool>(base_operator->GetAttr("return_idx"));
-  return_counts_ = GetValue<bool>(base_operator->GetAttr("return_counts"));
+  auto axis_ptr = primitive_->GetAttr("axis");
+  return_idx_ = GetValue<bool>(primitive_->GetAttr("return_idx"));
+  return_counts_ = GetValue<bool>(primitive_->GetAttr("return_counts"));
   // Get input shape
   if (axis_ptr == nullptr || GetValue<int64_t>(axis_ptr) == kNone) {
     axis_ = kNone;
@@ -168,11 +161,9 @@ bool UniqueConsecutiveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UniqueConsecutiveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   input_shape_ = inputs[0]->GetShapeVector();
   int64_t input_size = SizeToLong(input_shape_.size());
   axis_ = axis_ < 0 ? (axis_ + input_size) : axis_;
@@ -180,8 +171,8 @@ int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T1, typename T2>
-void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &outputs) {
+void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
   // Get the input and output
   const T1 *input_x = GetDeviceAddress<T1>(inputs, kIndex0);
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
@@ -243,8 +234,8 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<Addr
 }
 
 template <typename T1, typename T2>
-void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &outputs) {
+void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   // Get the inuput and output
   T1 *input_x = GetDeviceAddress<T1>(inputs, kIndex0);
   T1 *output_y = GetDeviceAddress<T1>(outputs, kIndex0);
@@ -317,8 +308,9 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveDim(const std::vector<Addre
 }
 
 template <typename T1, typename T2>
-bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                 const std::vector<AddressPtr> &outputs) {
+bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &,
+                                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniqueConsecutiveInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueConsecutiveOutputsNum, kernel_name_);
   output_shape_.clear();
@@ -330,9 +322,17 @@ bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     UniqueConsecutiveDim<T1, T2>(inputs, outputs);
   }
   // Update output shape and type
-  outputs_[kIndex0]->SetShapeVector(output_shape_);
-  outputs_[kIndex1]->SetShapeVector(idx_shape_);
-  outputs_[kIndex2]->SetShapeVector(count_shape_);
+  outputs[kIndex0]->SetShapeVector(output_shape_);
+  auto ele_size =
+    LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kIndex0]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->SetShapeVector(idx_shape_);
+  ele_size = LongToSize(std::accumulate(idx_shape_.begin(), idx_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kIndex1]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->SetShapeVector(count_shape_);
+  ele_size = LongToSize(std::accumulate(count_shape_.begin(), count_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kIndex2]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+
   return true;
 }
 

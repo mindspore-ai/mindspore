@@ -3,7 +3,7 @@ mindspore.get_grad
 
 .. py:function:: mindspore.get_grad(gradients, identifier)
 
-    当 :func:`mindspore.grad` 的 `return_ids` 参数设置为True时，将其返回值作为 `gradients` 。再根据 `identifier` 在 `gradients` 中找到对应的梯度值。
+    当 :func:`mindspore.grad` 或 :func:`mindspore.value_and_grad` 的 `return_ids` 参数设置为 ``True`` 时，将 `mindspore.grad` 的返回值，或 `mindspore.value_and_grad` 的第二个返回值作为 `gradients` 。再根据 `identifier` 在 `gradients` 中找到对应的梯度值。
 
     根据 `identifier` 查找梯度值包含以下两种场景：
 

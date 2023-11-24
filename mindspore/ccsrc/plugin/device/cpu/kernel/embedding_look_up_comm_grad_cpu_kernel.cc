@@ -21,15 +21,9 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kEmbeddingLookupCommGradInputsNum = 2;
-constexpr size_t kEmbeddingLookupCommGradOutputsNum = 1;
-constexpr size_t kIndex1 = 1;
-}  // namespace
-
 template <typename T>
-void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel::AddressPtr> &inputs) {
-  T split_num = static_cast<T *>(inputs[kIndex1]->addr)[0];
+void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel::KernelTensor *> &inputs) {
+  T split_num = static_cast<T *>(inputs[kIndex1]->device_ptr())[0];
   split_num_ = LongToSize(static_cast<int64_t>(split_num));
   if (split_num <= 0 || split_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
@@ -42,40 +36,38 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel:
   }
 }
 
-void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  split_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(input_shape_)) {
-    return;
+int EmbeddingLookUpCommGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  split_type_ = inputs[kIndex1]->dtype_id();
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
   if (input_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input must be at least 1-D, but got: " << input_shape_.size() << "-D";
   }
+  return KRET_OK;
 }
 
-bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupCommGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupCommGradOutputsNum, kernel_name_);
+bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
 #else
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->device_ptr());
   if (split_type_ == kNumberTypeInt32) {
     InitSplitNum<int32_t>(inputs);
   } else {
     InitSplitNum<int64_t>(inputs);
   }
-  size_t input_size = inputs[0]->size;
-  size_t output_size = outputs[0]->size;
+  size_t input_size = inputs[0]->size();
+  size_t output_size = outputs[0]->size();
   MS_LOG(DEBUG) << "input addr: " << input_addr << "input size: " << input_size;
   MS_LOG(DEBUG) << "output addr: " << output_addr << "output size: " << output_size;
   auto ret = memset_s(output_addr, output_size, 0, output_size);

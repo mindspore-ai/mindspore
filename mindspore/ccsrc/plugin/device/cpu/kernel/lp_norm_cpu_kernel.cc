@@ -54,28 +54,25 @@ std::vector<size_t> CalPhysicalIndexes(const std::vector<size_t> &input_shape,
 }
 }  // namespace
 
-bool LpNormCpuKernelMod::GetReductionAttr(const BaseOperatorPtr &base_operator) {
+bool LpNormCpuKernelMod::GetReductionAttr() {
   if (kernel_name_ != ops::kNameLpNorm) {
     MS_LOG(ERROR) << "For 'LpNorm', it's kernel name get failed, but got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
-  int64_t p = kernel_ptr->get_p();
+  int64_t p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   is_p_zero_ = (p == 0);
   p_ = LongToFloat(p);
-  epsilon_ = kernel_ptr->get_epsilon();
-  axis_ = kernel_ptr->get_axis();
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  axis_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kAxis));
   return true;
 }
 
-bool LpNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool LpNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetReductionAttr(base_operator)) {
+  if (!GetReductionAttr()) {
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -88,10 +85,8 @@ bool LpNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int LpNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LpNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // For Scalar Tensor, input shape is empty.
@@ -137,8 +132,8 @@ int LpNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T>
-bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                      const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   auto template_one = static_cast<T>(1);

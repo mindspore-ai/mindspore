@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-constexpr size_t extract_image_rank_size = 4;
+constexpr size_t extract_image_rank_size = 2;
 void ExtractImagePatchesKernelMod::ResetResource() noexcept {
   input_size_ = 1;
   output_size_ = 1;
@@ -52,26 +52,19 @@ void ExtractImagePatchesKernelMod::ResetResource() noexcept {
   t_output_shape_.clear();
 }
 
-bool ExtractImagePatchesKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool ExtractImagePatchesKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractImagePatches>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractImagePatches ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ExtractImagePatchesKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -96,17 +89,19 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_row_size_ = t_input_shape[kIndex1];
 
   // get attr
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractImagePatches>(base_operator);
-  auto ksizes = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
-  auto rates = kernel_ptr->get_rates();
-  auto padding = kernel_ptr->get_padding();
-  ksize_row_ = ksizes[kIndex2];
-  ksize_col_ = ksizes[kIndex3];
-  stride_row_ = strides[kIndex2];
-  stride_col_ = strides[kIndex3];
-  rate_row_ = rates[kIndex2];
-  rate_col_ = rates[kIndex3];
+  auto ksizes = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  auto strides = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  auto rates = inputs[kIndex3]->GetValueWithCheck<std::vector<int64_t>>();
+  mindspore::PadMode padding = static_cast<mindspore::PadMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+
+  // After arg_handle: to_kernel_sizes, the ksizes tuple will return (input[2], input[3]).
+  // strides and rates are the same as ksizes.
+  ksize_row_ = ksizes[kIndex0];
+  ksize_col_ = ksizes[kIndex1];
+  stride_row_ = strides[kIndex0];
+  stride_col_ = strides[kIndex1];
+  rate_row_ = rates[kIndex0];
+  rate_col_ = rates[kIndex1];
   MS_EXCEPTION_IF_ZERO("stride row", stride_row_);
   MS_EXCEPTION_IF_ZERO("stride col", stride_col_);
   patch_rows_eff_ = ksize_row_ + (ksize_row_ - 1) * (rate_row_ - 1);
@@ -114,14 +109,14 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ksizes.size() != extract_image_rank_size || strides.size() != extract_image_rank_size ||
       rates.size() != extract_image_rank_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the size of 'ksizes', 'strides' and 'rates' must be 4, but got the size of 'ksizes': "
+                      << "', the size of 'ksizes', 'strides' and 'rates' must be 2, but got the size of 'ksizes': "
                       << ksizes.size() << ", the size of 'strides': " << strides.size()
                       << ", the size of 'rates': " << rates.size();
   }
-  if (padding == "VALID") {
+  if (padding == PadMode::VALID) {
     output_rows_ = std::ceil((input_row_size_ - patch_rows_eff_ + 1.f) / static_cast<float>(stride_row_));
     output_cols_ = std::ceil((input_col_size_ - patch_cols_eff_ + 1.f) / static_cast<float>(stride_col_));
-  } else if (padding == "SAME") {
+  } else if (padding == PadMode::SAME) {
     output_rows_ = std::ceil(input_row_size_ / static_cast<float>(stride_row_));
     output_cols_ = std::ceil(input_col_size_ / static_cast<float>(stride_col_));
   } else {
@@ -144,44 +139,41 @@ int ExtractImagePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   MS_EXCEPTION_IF_ZERO("other stride", other_stride_);
   need_batch_ = (output_size_ - 1) / other_stride_;
 
-  size_t type_size = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   workspace_size_list_.push_back(input_size_ * type_size);
   workspace_size_list_.push_back(output_size_ * type_size);
   return static_cast<int>(KRET_OK);
 }
 
+#define EXTRACT_IMAGE_PATCHES_REGISTER(INPUTX, T)      \
+  KernelAttr()                                         \
+    .AddInputAttr(INPUTX)                              \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(INPUTX),                            \
+    &ExtractImagePatchesKernelMod::LaunchKernel<T>
+
 using KernelRunFunc = ExtractImagePatchesKernelMod::KernelRunFunc;
 // int the python api description, input data type is number but CalExtractImagePatchesNHWC only support four type.
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ExtractImagePatchesKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &ExtractImagePatchesKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ExtractImagePatchesKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &ExtractImagePatchesKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-     &ExtractImagePatchesKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-     &ExtractImagePatchesKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-     &ExtractImagePatchesKernelMod::LaunchKernel<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-     &ExtractImagePatchesKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &ExtractImagePatchesKernelMod::LaunchKernel<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-     &ExtractImagePatchesKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-     &ExtractImagePatchesKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-     &ExtractImagePatchesKernelMod::LaunchKernel<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     &ExtractImagePatchesKernelMod::LaunchKernel<Complex<float>>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     &ExtractImagePatchesKernelMod::LaunchKernel<Complex<double>>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &ExtractImagePatchesKernelMod::LaunchKernel<bool>}};
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeBool, bool)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeFloat16, half)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeFloat32, float)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeFloat64, double)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeInt8, int8_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeInt16, int16_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeInt32, int32_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeInt64, int64_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeUInt8, uint8_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeUInt16, uint16_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeUInt32, uint32_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeUInt64, uint64_t)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeComplex64, Complex<float>)},
+    {EXTRACT_IMAGE_PATCHES_REGISTER(kNumberTypeComplex128, Complex<double>)},
+  };
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ExtractImagePatches, ExtractImagePatchesKernelMod);

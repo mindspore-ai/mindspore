@@ -36,7 +36,7 @@ bool TopK::get_sorted() const {
 namespace {
 abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     abstract::BaseShapePtr out_shape_ptr =
@@ -44,23 +44,18 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   int64_t k_v = 0;
-  auto input1_value = input_args[kInputIndex1]->BuildValue();
-  if ((IsDynamicRank(x_shape)) || !IsValueKnown(input1_value)) {
+  if ((IsDynamicRank(x_shape)) || !IsValueKnown(input_args[kInputIndex1])) {
     auto unknown_shape_p = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknown_shape_p, unknown_shape_p});
   }
 
   // 2rd input is a Tensor when TopK is a dynamic shape operator
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION_IF_NULL(input1_value);
-    if (input1_value->isa<tensor::Tensor>()) {
-      auto k_tensor_ptr = input1_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(k_tensor_ptr);
-      k_v = *static_cast<int32_t *>(k_tensor_ptr->data_c());
-    }
-  } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
-    k_v = GetValue<int64_t>(input1_value);
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
+    auto k_val = GetArrayValue<int64_t>(input_args[kInputIndex1]).value();
+    k_v = k_val[0];
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
+    k_v = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue()).value();
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }
@@ -79,9 +74,9 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
 TuplePtr TopKInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto output0_type = input_args[kInputIndex0]->BuildType();
+  auto output0_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, common_valid_types, prim_name);
-  auto k_type = input_args[kInputIndex1]->BuildType();
+  auto k_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("k", k_type, int_types, prim_name);
   auto output1_type = kInt32;

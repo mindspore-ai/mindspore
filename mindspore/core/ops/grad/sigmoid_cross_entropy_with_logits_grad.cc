@@ -51,10 +51,10 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsGradInferShape(const PrimitivePt
   const int64_t kInputNum = 3;
   (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_shape",
                                            SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  auto x_ptr = x->BuildShape()->cast<abstract::ShapePtr>();
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  auto x_ptr = x->GetShape()->cast<abstract::ShapePtr>();
   abstract::CheckShapeSame(prim_name, x, y);
   abstract::CheckShapeSame(prim_name, x, dout);
   MS_EXCEPTION_IF_NULL(x_ptr);
@@ -68,9 +68,9 @@ TypePtr SigmoidCrossEntropyWithLogitsGradInferType(const PrimitivePtr &primitive
   const int64_t kInputNum = 3;
   (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_type",
                                            SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
-  auto x_type = input_args[0]->BuildType();
-  auto y_type = input_args[1]->BuildType();
-  auto dout_type = input_args[2]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto y_type = input_args[1]->GetType();
+  auto dout_type = input_args[2]->GetType();
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;

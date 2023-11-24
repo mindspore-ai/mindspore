@@ -66,7 +66,7 @@ abstract::ShapePtr HistogramInferShape(const PrimitivePtr &primitive, const std:
 TypePtr HistogramInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, op_name);
   return kInt32;
 }
 }  // namespace

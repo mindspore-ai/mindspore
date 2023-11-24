@@ -34,12 +34,11 @@ class ReservoirReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
   ~ReservoirReplayBufferCreateCpuKernel() override = default;
 
   // Collect and prepare kernel algorithm parameter.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
@@ -57,12 +56,11 @@ class ReservoirReplayBufferPushCpuKernel : public NativeCpuKernelMod {
   ~ReservoirReplayBufferPushCpuKernel() override = default;
 
   // Init kernel from CNode.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() {
     static const std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
@@ -80,12 +78,11 @@ class ReservoirReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
   ~ReservoirReplayBufferSampleCpuKernel() override = default;
 
   // Init kernel from CNode.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() {
     static const std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
@@ -105,12 +102,11 @@ class ReservoirReplayBufferDestroyCpuKernel : public NativeCpuKernelMod {
   ~ReservoirReplayBufferDestroyCpuKernel() override = default;
 
   // Collect and prepare kernel algorithm parameter.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};

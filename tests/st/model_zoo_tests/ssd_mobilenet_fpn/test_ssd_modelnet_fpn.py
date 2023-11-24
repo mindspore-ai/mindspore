@@ -20,8 +20,6 @@ from tests.st.model_zoo_tests import utils
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_SSD_mobilenet_v1_fpn_coco2017():

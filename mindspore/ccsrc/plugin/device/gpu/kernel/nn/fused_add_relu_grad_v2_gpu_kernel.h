@@ -27,13 +27,13 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedAddReluGradV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class FusedAddReluGradV2GpuKernelMod : public NativeGpuKernelMod {
  public:
   FusedAddReluGradV2GpuKernelMod() { ResetResource(); }
   ~FusedAddReluGradV2GpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -47,39 +47,29 @@ class FusedAddReluGradV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    element_num_ = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
-    InitSizeLists();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     return true;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     element_num_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {
-    auto size = element_num_ * sizeof(T);
-    input_size_list_.push_back(size);
-    input_size_list_.push_back(size);
-    input_size_list_.push_back(size);
-    output_size_list_.push_back(size);
-
-    size = (element_num_ + 31) / 32 * sizeof(uint32_t);
-    input_size_list_.push_back(size);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto shape = inputs[kIndex0]->GetDeviceShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+    if (is_null_input_) {
+      output_size_list_.push_back(element_num_ * sizeof(T));
+      return KRET_UNKNOWN_SHAPE;
+    }
+    element_num_ = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
+    output_size_list_.push_back(element_num_ * sizeof(T));
+    return KRET_OK;
   }
 
  private:

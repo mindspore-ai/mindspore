@@ -43,12 +43,12 @@ abstract::ShapePtr MatrixSolveInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto matrix_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto matrix_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(matrix_shape_ptr);
-  auto rhs_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto rhs_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(rhs_shape_ptr);
   if (matrix_shape_ptr->IsDynamic() || rhs_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
 
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(matrix_shape_ptr)[kShape];
@@ -81,8 +81,8 @@ abstract::ShapePtr MatrixSolveInferShape(const PrimitivePtr &primitive,
 
 TypePtr MatrixSolveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto matrix_dtype = input_args[kInputIndex0]->BuildType();
-  auto rhs_dtype = input_args[kInputIndex1]->BuildType();
+  auto matrix_dtype = input_args[kInputIndex0]->GetType();
+  auto rhs_dtype = input_args[kInputIndex1]->GetType();
 
   const std::map<std::string, TypePtr> type_dict = {{"matrix type", matrix_dtype}, {"rhs type", rhs_dtype}};
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},

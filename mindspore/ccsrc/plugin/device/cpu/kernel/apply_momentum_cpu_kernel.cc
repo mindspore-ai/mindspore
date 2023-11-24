@@ -24,37 +24,32 @@ namespace {
 constexpr size_t kApplyMomentumInputsNum = 5;
 }  // namespace
 
-bool ApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
+bool ApplyMomentumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-int ApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int ApplyMomentumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
-bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyMomentumInputsNum, kernel_name_);
-  if (inputs[0]->size != inputs[1]->size) {
+  if (inputs[0]->size() != inputs[1]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of input 'accumulation' and 'variable' must be "
                          "same, but got the memory size of 'accumulation': "
-                      << inputs[1]->size << " and 'variable': " << inputs[0]->size;
+                      << inputs[1]->size() << " and 'variable': " << inputs[0]->size();
   }
-  if (inputs[0]->size != inputs[3]->size) {
+  if (inputs[0]->size() != inputs[3]->size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of input 'gradient' and 'variable' must be "
                          "same, but got the memory size of 'gradient': "
-                      << inputs[3]->size << " and 'variable': " << inputs[0]->size;
+                      << inputs[3]->size() << " and 'variable': " << inputs[0]->size();
   }
 
   if (dtype_ == kNumberTypeFloat32) {
@@ -93,14 +88,14 @@ bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void ApplyMomentumCpuKernelMod::LaunchApplyMomentum(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &) {
-  T *weight = static_cast<T *>(inputs[0]->addr);
-  T *accumulate = static_cast<T *>(inputs[1]->addr);
-  T learning_rate = static_cast<T *>(inputs[2]->addr)[0];
-  const T *gradient = static_cast<T *>(inputs[3]->addr);
-  T moment = static_cast<T *>(inputs[4]->addr)[0];
-  size_t elem_num = inputs[0]->size / sizeof(T);
+void ApplyMomentumCpuKernelMod::LaunchApplyMomentum(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &) {
+  T *weight = static_cast<T *>(inputs[0]->device_ptr());
+  T *accumulate = static_cast<T *>(inputs[1]->device_ptr());
+  T learning_rate = static_cast<T *>(inputs[2]->device_ptr())[0];
+  const T *gradient = static_cast<T *>(inputs[3]->device_ptr());
+  T moment = static_cast<T *>(inputs[4]->device_ptr())[0];
+  size_t elem_num = inputs[0]->size() / sizeof(T);
 
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {

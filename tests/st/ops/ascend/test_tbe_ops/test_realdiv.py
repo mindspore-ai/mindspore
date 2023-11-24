@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 
 context.set_context(device_target="Ascend")
 
@@ -43,3 +46,23 @@ def test_net():
     print(arr_x1)
     print(arr_x2)
     print(output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_realdiv_bf16(mode):
+    """
+    Feature: Test realdiv forward tensor api.
+    Description: Test realdiv for bfloat16.
+    Expectation: the result match with the expected result.
+    :return:
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    realdiv = Net()
+    inputa_bf16 = Tensor([0.2, 0.74, 0.04], mstype.bfloat16)
+    inputb_bf16 = Tensor([0.102, 0.55, 0.88], mstype.bfloat16)
+    output = realdiv(inputa_bf16, inputb_bf16).float().asnumpy()
+    expected = np.array([1.9617225, 1.3404255, 0.04555555]).astype(np.float32)
+    assert np.allclose(output, expected, rtol=0.007, atol=0.007)

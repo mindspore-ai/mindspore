@@ -112,6 +112,8 @@ const AnfNodePtr ProcessGetNextForDynamicShape(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(dynamic_getnextv2_node);
   common::AnfAlgo::CopyNodeAttr(kTypesAttrName, kOutputTypesAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::CopyNodeAttr(kShapesAttrName, kOutputShapesAttrName, cnode, dynamic_getnextv2_node);
+  common::AnfAlgo::CopyNodeAttr(kTypesAttrName, cnode, dynamic_getnextv2_node);
+  common::AnfAlgo::CopyNodeAttr(kShapesAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::CopyNodeAttr(kSharedNameAttrName, kChannelNameAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::SetNodeAttr(kExecuteModeAttrName, MakeValue("dynamic_execute"), dynamic_getnextv2_node);
   auto input_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(cnode, kShapesAttrName);

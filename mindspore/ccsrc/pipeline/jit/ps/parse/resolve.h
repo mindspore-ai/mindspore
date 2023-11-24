@@ -41,7 +41,7 @@ namespace parse {
 // NameSpace class for resolving python code.
 class NameSpace final : public Named {
  public:
-  NameSpace(const std::string &module, const py::object &namespace_obj, const py::object &module_obj = py::object())
+  NameSpace(const std::string &module, const py::object &namespace_obj, const py::object &module_obj = py::none())
       : Named(module + ": \'" + std::string(py::str(namespace_obj)) + "\'"),
         module_(module),
         namespace_obj_(namespace_obj),
@@ -51,6 +51,7 @@ class NameSpace final : public Named {
 
   const py::object &namespace_obj() const { return namespace_obj_; }
   const py::object &module_obj() const { return module_obj_; }
+  void set_module_obj(py::object module_obj) { module_obj_ = module_obj; }
   const std::string &module() const { return module_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<NameSpace>(), std::make_shared<External>());

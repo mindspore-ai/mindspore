@@ -5,10 +5,10 @@ mindspore.train.MSE
 
     测量均方差MSE（Mean Squared Error）。
 
-    计算输入 :math:`x` 和目标 :math:`y` 各元素之间的平均平方误差。
+    计算输入 :math:`y\_pred` 和目标 :math:`y` 各元素之间的平均平方误差。
 
     .. math::
-        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n({y\_pred}_i - y_i)^2}{n}
+        \text{MSE}(y\_pred,\ y) = \frac{\sum_{i=1}^n({y\_pred}_i - y_i)^2}{n}
 
     其中， :math:`n` 为batch size。
 

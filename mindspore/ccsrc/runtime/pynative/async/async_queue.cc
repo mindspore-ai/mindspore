@@ -32,15 +32,6 @@ constexpr size_t kMaxSpinCount = 300000;
 constexpr size_t kThreadNameThreshold = 15;
 thread_local kThreadWaitLevel current_level_{kThreadWaitLevel::kLevelUnknown};
 
-AsyncQueue::AsyncQueue(std::string name, kThreadWaitLevel wait_level)
-    : name_(std::move(name)), wait_level_(wait_level) {
-  // If the fork occurs, thread resources are not forked to child processes, so
-  // we need to reinitialize threads in child processes.
-  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (AsyncQueue::*)()>(nullptr),
-                                             static_cast<void (AsyncQueue::*)()>(nullptr),
-                                             &AsyncQueue::ReinitAfterFork);
-}
-
 AsyncQueue::~AsyncQueue() {
   try {
     WorkerJoin();
@@ -199,7 +190,6 @@ void AsyncQueue::Clear() {
   }
   // There is still one task in progress
   Wait();
-  ForkUtils::GetInstance().DeregCallbacks(this);
 }
 
 void AsyncQueue::Reset() {
@@ -250,16 +240,19 @@ void AsyncQueue::WorkerJoin() {
   }
 }
 
-void AsyncQueue::ReinitAfterFork() {
-  MS_LOG(INFO) << "fork event detected in child process, worker thread will be recreated.";
+void AsyncQueue::ChildAfterFork() {
+  MS_LOG(DEBUG) << "AsyncQueue reinitialize after fork";
   if (task_cond_var_ != nullptr) {
+    MS_LOG(DEBUG) << "Release and recreate task_cond_var_.";
     (void)task_cond_var_.release();
     task_cond_var_ = std::make_unique<std::condition_variable>();
   }
   if (worker_ != nullptr) {
+    MS_LOG(DEBUG) << "Release and recreate worker_.";
     (void)worker_.release();
     worker_ = std::make_unique<std::thread>(&AsyncQueue::WorkerLoop, this);
   }
+  MS_LOG(DEBUG) << "AsyncQueue reinitialize after fork done.";
 }
 }  // namespace pynative
 }  // namespace mindspore

@@ -111,7 +111,8 @@ def test_float_tensor_and_str_add():
     y = "ok"
     with pytest.raises(TypeError) as er:
         ret = x + y
-    assert "For 'Add', the 2th input var can not be implicitly converted. Its type is" in str(er.value)
+    assert "Failed calling Add with" in str(er.value)
+    assert "Add()(x=Tensor, y=string)" in str(er.value)
 
 
 def test_float_tensor_and_tuple_add():

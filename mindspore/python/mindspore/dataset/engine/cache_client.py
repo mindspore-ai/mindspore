@@ -23,11 +23,11 @@ from ..core.validator_helpers import type_check, check_pos_int32, check_pos_uint
 
 
 class DatasetCache:
-    """
+    r"""
     A client to interface with tensor caching service.
 
-    For details, please check `Tutorial <https://www.mindspore.cn/
-    tutorials/experts/en/master/dataset/cache.html>`_ .
+    For details, please check
+    `Tutorial <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.
@@ -46,7 +46,8 @@ class DatasetCache:
         >>>
         >>> # Create a cache instance with command line `cache_admin --start` and create a session with `cache_admin -g`
         >>> # After creating cache with a valid session, get session id with command `cache_admin --list_sessions`
-        >>> session_id = subprocess.getoutput('cache_admin --list_sessions | tail -1 | awk -F " " \'{{print $1;}}\'')
+        >>> command = "cache_admin --list_sessions | tail -1 | awk -F ' ' '{{print $1;}}'"
+        >>> session_id = subprocess.getoutput(command).split('\n')[-1]
         >>> some_cache = ds.DatasetCache(session_id=int(session_id), size=0)
         >>>
         >>> dataset_dir = "/path/to/image_folder_dataset_directory"
@@ -81,18 +82,20 @@ class DatasetCache:
         self.cache_client = CacheClient(session_id, size, spilling, hostname, port, num_connections, prefetch_size)
 
     def get_stat(self):
-        """
+        r"""
         Get the statistics from a cache. After data pipeline, three types of statistics can be obtained,
         including average number of cache hits (avg_cache_sz), number of caches in memory (num_mem_cached)
         and number of caches in disk (num_disk_cached).
 
         Examples:
             >>> import os
+            >>> import subprocess
             >>> import mindspore.dataset as ds
             >>>
             >>> # In example above, we created cache with a valid session id
-            >>> id = int(os.popen('cache_admin --list_sessions | tail -1 | awk -F " " \'{{print $1;}}\'').read())
-            >>> some_cache = ds.DatasetCache(session_id=id, size=0)
+            >>> command = "cache_admin --list_sessions | tail -1 | awk -F ' ' '{{print $1;}}'"
+            >>> id = subprocess.getoutput(command).split('\n')[-1]
+            >>> some_cache = ds.DatasetCache(session_id=int(id), size=0)
             >>>
             >>> # run the dataset pipeline to trigger cache
             >>> dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory", cache=some_cache)

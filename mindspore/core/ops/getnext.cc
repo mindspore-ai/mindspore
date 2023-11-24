@@ -32,6 +32,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "ops/dynamic_getnext_v2.h"
 
 namespace mindspore {
 namespace ops {
@@ -78,14 +79,14 @@ AbstractBasePtr GetNextInferInner(const PrimitivePtr &primitive) { return Getnex
 
 abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
-  auto shape = abs->BuildShape();
+  auto shape = abs->GetShape();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }
 
 TypePtr GetnextInferType(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
-  auto type = abs->BuildType();
+  auto type = abs->GetType();
   MS_EXCEPTION_IF_NULL(type);
   return type;
 }
@@ -113,5 +114,6 @@ class MIND_API AGGetnextInfer : public abstract::OpInferBase {
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(GetNext, prim::kPrimGetNext, AGGetnextInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicGetNextV2, prim::kPrimDynamicGetNextV2, AGGetnextInfer, false);
 }  // namespace ops
 }  // namespace mindspore

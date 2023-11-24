@@ -59,7 +59,7 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto x_shape = shapeMap[kShape];
   auto block_size = GetValue<int64_t>(primitive->GetAttr("block_size"));
   const int64_t c_of_nchw = 1;
@@ -75,7 +75,7 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For SpaceToDepth, block_size must greater than 2, but got the block_size is "
                              << block_size;
   }
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   if (IsDynamicRank(x_shape) || x_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
@@ -101,7 +101,7 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
 TypePtr SpaceToDepthInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   std::set<TypePtr> valid_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);

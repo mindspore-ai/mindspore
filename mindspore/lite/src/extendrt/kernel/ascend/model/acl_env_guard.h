@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <mutex>
+#include <vector>
 #include "acl/acl_base.h"
 
 namespace mindspore::kernel {
@@ -38,6 +39,7 @@ class AclInitAdapter {
   std::mutex flag_mutex_;
 };
 
+class ModelInfer;
 class AclEnvGuard {
  public:
   AclEnvGuard();
@@ -46,9 +48,12 @@ class AclEnvGuard {
   aclError GetErrno() const { return errno_; }
   static std::shared_ptr<AclEnvGuard> GetAclEnv();
   static std::shared_ptr<AclEnvGuard> GetAclEnv(std::string_view cfg_file);
+  static void AddModel(const std::shared_ptr<ModelInfer> &model_infer);
+  static bool Finalize();
 
  private:
   static std::shared_ptr<AclEnvGuard> global_acl_env_;
+  static std::vector<std::shared_ptr<ModelInfer>> model_infers_;
   static std::mutex global_acl_env_mutex_;
 
   aclError errno_;

@@ -33,6 +33,7 @@
 #endif
 #include "minddata/dataset/engine/tree_adapter.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/mindrecord/include/shard_header.h"
 #include "minddata/mindrecord/include/shard_index_generator.h"
 #include "minddata/mindrecord/include/shard_writer.h"
@@ -604,9 +605,6 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
       mr_type = mindrecord::kTypesMap.at(el);
     }
     if (mr_shape.empty()) {
-      if (mr_type == "bytes") {  // map to int32 when bytes without shape.
-        mr_type = "int32";
-      }
       (*schema)[column_name] = {{"type", mr_type}};
     } else {
       if (mr_type == "string") {  // mindrecord can not support string with shape.
@@ -644,23 +642,93 @@ inline Status ValidateInputParams(nlohmann::json *row_raw_data,
   return Status::OK();
 }
 
+Status SaveToDisk::FetchIntData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
+                                std::unique_ptr<std::vector<uint8_t>> *data_ptr) {
+  RETURN_UNEXPECTED_IF_NULL(row_raw_data);
+  RETURN_UNEXPECTED_IF_NULL(data_ptr);
+  auto column_type = tensor->type();
+  Status s;
+  if (column_type == DataType::DE_INT8) {
+    std::unique_ptr<int32_t> data;
+    std::unique_ptr<int8_t> dummy;
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy, true));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_UINT8) {
+    std::unique_ptr<int32_t> data;
+    std::unique_ptr<uint8_t> dummy;
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy, true));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_INT16) {
+    std::unique_ptr<int32_t> data;
+    std::unique_ptr<int16_t> dummy;
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy, true));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_UINT16) {
+    std::unique_ptr<int32_t> data;
+    std::unique_ptr<uint16_t> dummy;
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy, true));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_INT32) {
+    std::unique_ptr<int32_t> data, dummy;
+    RETURN_IF_NOT_OK(TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_UINT32) {
+    std::unique_ptr<int64_t> data;
+    std::unique_ptr<uint32_t> dummy;
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy, true));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_INT64 || column_type == DataType::DE_UINT64) {
+    std::unique_ptr<int64_t> data, dummy;
+    RETURN_IF_NOT_OK(TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  }
+
+  return Status::OK();
+}
+
 Status SaveToDisk::FetchFloatData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
                                   std::unique_ptr<std::vector<uint8_t>> *data_ptr) {
   RETURN_UNEXPECTED_IF_NULL(row_raw_data);
   RETURN_UNEXPECTED_IF_NULL(data_ptr);
   auto column_type = tensor->type();
   Status s;
-  if (column_type == DataType::DE_FLOAT32) {
+  if (column_type == DataType::DE_FLOAT16) {
     std::unique_ptr<float> data, dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy);
-    RETURN_IF_NOT_OK(s);
+    std::shared_ptr<Tensor> out_tensor;
+    RETURN_IF_NOT_OK(TypeCast(tensor, &out_tensor, DataType("float32")));
+    RETURN_IF_NOT_OK(
+      TransformTensor(out_tensor->GetBuffer(), out_tensor->shape(), out_tensor->Size(), &data, data_ptr, &dummy));
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
+  } else if (column_type == DataType::DE_FLOAT32) {
+    std::unique_ptr<float> data, dummy;
+    RETURN_IF_NOT_OK(TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy));
     if (data != nullptr) {
       (*row_raw_data)[column_name] = std::move(*data);
     }
   } else if (column_type == DataType::DE_FLOAT64) {
     std::unique_ptr<double> data, dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy);
-    RETURN_IF_NOT_OK(s);
+    RETURN_IF_NOT_OK(TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy));
     if (data != nullptr) {
       (*row_raw_data)[column_name] = std::move(*data);
     }
@@ -676,62 +744,38 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
   auto column_type = tensor->type();
   Status s;
   std::unique_ptr<std::vector<uint8_t>> data_ptr;
-  if (column_type == DataType::DE_INT8) {
+  if (column_type == DataType::DE_BOOL) {
     std::unique_ptr<int32_t> data;
     std::unique_ptr<int8_t> dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
-    RETURN_IF_NOT_OK(s);
+    RETURN_IF_NOT_OK(
+      TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true));
     if (data != nullptr) {
       (*row_raw_data)[column_name] = std::move(*data);
     }
-  } else if (column_type == DataType::DE_INT16) {
-    std::unique_ptr<int32_t> data;
-    std::unique_ptr<int16_t> dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
+  } else if (column_type == DataType::DE_INT8 || column_type == DataType::DE_UINT8 ||
+             column_type == DataType::DE_INT16 || column_type == DataType::DE_UINT16 ||
+             column_type == DataType::DE_INT32 || column_type == DataType::DE_UINT32 ||
+             column_type == DataType::DE_INT64 || column_type == DataType::DE_UINT64) {
+    s = FetchIntData(tensor, column_name, row_raw_data, &data_ptr);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_UINT16) {
-    std::unique_ptr<int32_t> data;
-    std::unique_ptr<uint16_t> dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
-    RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_UINT8) {
-    std::unique_ptr<uint8_t> data, dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
-    RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_INT32) {
-    std::unique_ptr<int32_t> data, dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
-    RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_UINT32) {
-    std::unique_ptr<int64_t> data;
-    std::unique_ptr<uint32_t> dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
-    RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_INT64) {
-    std::unique_ptr<int64_t> data, dummy;
-    s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
-    RETURN_IF_NOT_OK(s);
-    if (data != nullptr) {
-      (*row_raw_data)[column_name] = std::move(*data);
-    }
-  } else if (column_type == DataType::DE_FLOAT32 || column_type == DataType::DE_FLOAT64) {
+  } else if (column_type == DataType::DE_FLOAT16 || column_type == DataType::DE_FLOAT32 ||
+             column_type == DataType::DE_FLOAT64) {
     s = FetchFloatData(tensor, column_name, row_raw_data, &data_ptr);
     RETURN_IF_NOT_OK(s);
+  } else if (column_type == DataType::DE_BYTES) {
+    std::unique_ptr<char> data;
+    std::unique_ptr<char> dummy;
+    CHECK_FAIL_RETURN_UNEXPECTED(tensor->shape().Rank() == 1 || tensor->shape().Rank() == 0,
+                                 "Currently, multi-dimensional bytes cannot be converted to MindRecord.");
+    if (tensor->shape().Rank() == 1) {
+      CHECK_FAIL_RETURN_UNEXPECTED(tensor->shape().AsVector()[0] == 1,
+                                   "Currently, multi-dimensional bytes cannot be converted to MindRecord.");
+    }
+    // current only support one bytes to mindrecord field
+    uint32_t string_length = 0;
+    RETURN_IF_NOT_OK(tensor->GetStringLength(&string_length));
+    RETURN_IF_NOT_OK(TransformTensor(tensor->GetBuffer() + kOffsetSize * 2, TensorShape({1}), string_length, &data,
+                                     &data_ptr, &dummy));
   } else if (column_type.IsString()) {
     std::string_view sv;
     RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {}));  // assume scalar string tensor

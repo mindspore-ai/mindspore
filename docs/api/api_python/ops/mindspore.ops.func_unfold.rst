@@ -22,11 +22,8 @@ mindspore.ops.unfold
     `dilation`， `padding` 和 `stride` 决定了滑块如何被取出。
 
     .. warning::
-        - 在2.0rc1版本，该算子的输出为四维Tensor，其shape为 :math:`(N, C, \prod(\text{kernel_size}), L)` 。
-        - 在之后的版本中，其输出则为三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。 
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 该算子的输出为三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。 
+        - 这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 四维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。

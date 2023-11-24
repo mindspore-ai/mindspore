@@ -19,7 +19,7 @@
 #include <utility>
 #include <limits>
 #include <vector>
-#include "ops/batch_norm.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "op/batch_norm_operator.h"

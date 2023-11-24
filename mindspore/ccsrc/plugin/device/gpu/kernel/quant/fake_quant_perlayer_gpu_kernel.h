@@ -23,17 +23,16 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantPerLayerGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class FakeQuantPerLayerGpuKernelMod : public NativeGpuKernelMod {
  public:
   FakeQuantPerLayerGpuKernelMod();
   ~FakeQuantPerLayerGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel) override;
-
- protected:
-  void InitSizeLists() override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  void SetSizeLists();
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   size_t input_size_;

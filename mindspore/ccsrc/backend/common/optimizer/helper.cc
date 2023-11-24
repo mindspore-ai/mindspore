@@ -15,12 +15,14 @@
  */
 
 #include "include/backend/optimizer/helper.h"
+#include <memory>
 #include <string>
 #include <utility>
 #include <algorithm>
 #include <map>
 #include <set>
 #include <deque>
+#include "kernel/kernel_build_info.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -30,6 +32,7 @@
 #include "base/base_ref.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/kernel_info.h"
@@ -41,6 +44,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/common/profiler.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace opt {
@@ -1020,6 +1024,37 @@ AbstractBasePtrList RectifyAbstract(const PrimitivePtr &prim, const AbstractBase
   }
   return RectifyAbstractFromDynamicInput(prim, input_abstract);
 }
+
+inline AbstractBasePtr InferShapeWithCheck(const PrimitivePtr &prim, const PrimitivePtr &prim_clone,
+                                           const AbstractBasePtrList &infer_spec_list, const AbstractBasePtr &orig_abs,
+                                           const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(prim_clone);
+  MS_EXCEPTION_IF_NULL(orig_abs);
+  AbstractBasePtr out_abs;
+  if (auto shape_optional = abstract::InferShapeByFuncImpl(prim_clone, infer_spec_list); shape_optional.has_value()) {
+    out_abs = orig_abs->Clone();
+    out_abs->set_shape(shape_optional.value());
+  } else if (auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone); found.has_value()) {
+    auto infer = found.value();
+    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::IsDynamicSequence(cnode)) {
+      out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
+    } else {
+      out_abs = orig_abs->Clone();
+      auto shape = infer.InferShape(prim_clone, infer_spec_list);
+      if (shape == nullptr) {
+        MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
+      }
+      out_abs->set_shape(shape);
+    }
+  } else {
+    MS_EXCEPTION_IF_NULL(prim);
+    MS_LOG(EXCEPTION) << "Get infer functions failed, the operator is not support dynamic shape yet, primitive name:"
+                      << prim->name() << " primitive type:" << prim->type_name();
+  }
+  return out_abs;
+}
 }  // namespace
 
 AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
@@ -1186,14 +1221,15 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
   MS_EXCEPTION_IF_NULL(cnode);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
                                      prim->name(), true);
-  AbstractBasePtr out_abs;
   auto old_abs = cnode->abstract();
   MS_EXCEPTION_IF_NULL(old_abs);
 
-  MS_LOG(DEBUG) << "Infer name = " << cnode->fullname_with_scope();
-  for (size_t i = 0; i < args_spec_list.size(); i++) {
-    MS_LOG(DEBUG) << "Infer name '" << cnode->fullname_with_scope() << "', The input[" << i
-                  << "] abs is : " << args_spec_list[i]->ToString();
+  if (IS_OUTPUT_ON(mindspore::kDebug)) {
+    MS_LOG(DEBUG) << "Infer name = " << cnode->fullname_with_scope();
+    for (size_t i = 0; i < args_spec_list.size(); i++) {
+      MS_LOG(DEBUG) << "Infer name '" << cnode->fullname_with_scope() << "', The input[" << i
+                    << "] abs is : " << args_spec_list[i]->ToString();
+    }
   }
 
   PrimitivePtr prim_clone = prim;
@@ -1207,33 +1243,17 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
     ori_name = prim->name();
     prim_clone->set_name(me_name);
   }
-  auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone);
-  if (found.has_value()) {
-    auto infer = found.value();
-    MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
-    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
-    if (common::AnfAlgo::IsDynamicSequence(cnode)) {
-      out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
-    } else {
-      out_abs = old_abs->Clone();
-      auto shape = infer.InferShape(prim_clone, infer_spec_list);
-      if (shape == nullptr) {
-        MS_LOG(EXCEPTION) << "Infer shape with backend function failed";
-      }
-      out_abs->set_shape(shape);
-    }
-    if (prim_clone != prim) {
-      *prim = *prim_clone;
-      prim->set_name(ori_name);
-    }
-    cnode->set_abstract(out_abs);
-    MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
-                  << out_abs;
-    return;
-  }
 
-  MS_LOG(EXCEPTION) << "Get infer functions failed, the operator is not support dynamic shape yet, primitive name:"
-                    << prim->name() << " primitive type:" << prim->type_name();
+  auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
+  AbstractBasePtr out_abs = InferShapeWithCheck(prim, prim_clone, infer_spec_list, old_abs, cnode);
+
+  if (prim_clone != prim) {
+    *prim = *prim_clone;
+    prim->set_name(ori_name);
+  }
+  cnode->set_abstract(out_abs);
+  MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << old_abs << " to "
+                << out_abs;
 }
 
 AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
@@ -1249,20 +1269,27 @@ AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBas
     ori_name = prim->name();
     prim_clone->set_name(me_name);
   }
-  auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone);
-  if (found.has_value()) {
+
+  AbstractBasePtr ret;
+  if (auto abstract_optional = abstract::InferAbstractByFuncImpl(prim_clone, args_spec_list);
+      abstract_optional.has_value()) {
+    ret = abstract_optional.value();
+  } else if (auto found = abstract::GetBackendPrimitiveInferImpl(prim_clone); found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
     auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
-    auto ret = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
-    if (prim_clone != prim) {
-      *prim = *prim_clone;
-      prim->set_name(ori_name);
-    }
-    return ret;
+    ret = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
+  } else {
+    MS_LOG(EXCEPTION)
+      << "Get infer shape function failed, the operator is not support dynamic shape yet, primitive name:"
+      << prim->name() << " primitive type:" << prim->type_name();
   }
-  MS_LOG(EXCEPTION) << "Get infer shape function failed, the operator is not support dynamic shape yet, primitive name:"
-                    << prim->name() << " primitive type:" << prim->type_name();
+
+  if (prim_clone != prim) {
+    *prim = *prim_clone;
+    prim->set_name(ori_name);
+  }
+  return ret;
 }
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
@@ -1389,6 +1416,24 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
   return input_size;
 }
 
+static bool IsNotSequenceOfTensor(const abstract::AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return false;
+  }
+
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    if (seq_abs->size() == 0) {
+      return true;
+    }
+
+    return IsNotSequenceOfTensor(seq_abs->elements()[0]);
+  }
+
+  return true;
+}
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1415,7 +1460,12 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     if (output_is_tuple && cnode_is_print) {
       (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
     } else if (output_is_tuple) {
-      auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      int64_t dyn_input_size;
+      if (IsNotSequenceOfTensor(input_node->abstract())) {
+        dyn_input_size = 0;
+      } else {
+        dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      }
       if (dyn_input_size == 0) {
         dyn_input_sizes.push_back(-1);
         plant_inputs.push_back(input_node);
@@ -1449,6 +1499,55 @@ void InferOp(const CNodePtr &node, void *args) { dynamic_shape::InferOp(node, ar
 
 void SetCppInferPyHanbdler(const InfPyHandler &infer_handler) {
   dynamic_shape::set_cpp_infer_py_handler(infer_handler);
+}
+
+AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &op_name = primitive->name();
+  std::vector<AbstractBasePtr> input_args;
+  std::for_each(input_list.begin(), input_list.end(),
+                [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
+  auto shape_optional = abstract::InferAbstractByFuncImpl(primitive, input_args);
+  if (shape_optional.has_value()) {
+    return shape_optional.value();
+  }
+
+  auto infer_impl = abstract::GetBackendPrimitiveInferImpl(primitive);
+  if (infer_impl.has_value()) {
+    auto infer = infer_impl.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferShapeAndType(nullptr, primitive, input_args);
+    }
+  }
+  MS_LOG(EXCEPTION) << "The InferAbstract function of [" << op_name << "] is not defined.";
+}
+
+AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto value_node = NewValueNode(value);
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value_abs = value->ToAbstract();
+  value_node->set_abstract(value_abs);
+
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  if (kernel_graph != nullptr) {
+    // In kernel graph case, a new value node should set kernel_info and kernel_build_info here for no-kernel-selecting.
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    value_node->set_kernel_info(kernel_info);
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    builder.SetOutputsFormat({kOpFormat_DEFAULT});
+    MS_EXCEPTION_IF_NULL(value->type());
+    auto type_id = value->type()->type_id();
+    builder.SetOutputsDeviceType({type_id});
+    auto object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAbstractObjectType(value_abs));
+    builder.SetOutputsKernelObjectType({object_type});
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), value_node.get());
+
+    kernel_graph->AddValueNodeToGraph(value_node);
+  }
+
+  return value_node;
 }
 }  // namespace opt
 }  // namespace mindspore

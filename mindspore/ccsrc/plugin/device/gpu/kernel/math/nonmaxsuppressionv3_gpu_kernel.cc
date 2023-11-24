@@ -94,9 +94,9 @@ const std::vector<std::pair<KernelAttr, NonMaxSuppressionV3PtrCreatorFunc>> kern
    CreateNonMaxSuppressionV3KernelPtr<half, half, int64_t>}};
 }  // namespace
 
-bool NonMaxSuppressionV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool NonMaxSuppressionV3GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -106,11 +106,8 @@ bool NonMaxSuppressionV3GpuKernelMod::Launch(const std::vector<AddressPtr> &inpu
   return true;
 }
 
-bool NonMaxSuppressionV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NonMaxSuppressionV3>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool NonMaxSuppressionV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -121,10 +118,8 @@ bool NonMaxSuppressionV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int NonMaxSuppressionV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NonMaxSuppressionV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -148,17 +143,19 @@ int NonMaxSuppressionV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;
 }
 
-void NonMaxSuppressionV3GpuKernelMod::SyncOutputShape() {
+void NonMaxSuppressionV3GpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> shape = {-1};
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   shape[0] = dyn_out.shapes[0][0];
-  outputs_[0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  outputs[0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  size_t size = LongToSize(std::accumulate(shape.begin(), shape.end(), sizeof(int64_t), std::multiplies<int64_t>()));
+  outputs[0]->set_size(size);
 }
 
 std::vector<KernelAttr> NonMaxSuppressionV3GpuKernelMod::GetOpSupport() {

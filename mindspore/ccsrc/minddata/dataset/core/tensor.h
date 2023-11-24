@@ -60,6 +60,9 @@ using TensorAllocPtr = std::shared_ptr<Allocator<Tensor>>;  // An allocator shar
 using offset_t = uint32_t;                                  // type of offset values to store strings locations
 using TensorPtr = std::shared_ptr<Tensor>;
 
+/// const of the size of the offset variable
+constexpr uint8_t kOffsetSize = sizeof(offset_t);
+
 class DATASET_API Tensor {
  public:
   Tensor() = delete;
@@ -201,11 +204,13 @@ class DATASET_API Tensor {
   /// Offsets is of type offset_t
   /// strings will ne null-terminated
   /// example: Tensor(['abc', 'de'], shape={2}, type=DE_STRING)
-  /// |----------------------------------------------------------------|
-  /// |             OFFSET ARRAY           |            STRINGS        |
-  /// | bytes 0-3 | bytes 3-6 | bytes 7-10 | bytes 11-14 | bytes 15-17 |
-  /// |     11    |    15     |     18     |     abc\0   |      de\0   |
-  /// |----------------------------------------------------------------|
+  /// |------------------------------------------------------------------------|
+  /// |             OFFSET ARRAY                  |            STRINGS         |
+  /// |  bytes 0-3   |   bytes 4-7   | bytes 8-11 | bytes 12-15 | bytes 16-18  |
+  /// |      12      |      16       |     19     |     abc\0   |      de\0    |
+  /// |------------------------------------------------------------------------|
+  /// | first offset | second offset | end offset | first value | second value |
+  /// |------------------------------------------------------------------------|
   /// \param[in] items elements of the tensor
   /// \param[in] shape shape of the output tensor
   /// \param[in] type data type of the output tensor, can only be DE_STRING or DE_BYTES
@@ -421,6 +426,13 @@ class DATASET_API Tensor {
       return type_.SizeInBytes() * shape_.NumOfElements();
     }
     return data_end_ - data_;
+  }
+
+  /// Get the exact length of string / bytes
+  Status GetStringLength(uint32_t *length) {
+    CHECK_FAIL_RETURN_UNEXPECTED(type().IsString(), "Only support to get the length of string or bytes Tensor.");
+    *length = data_end_ - data_ - (Size() + 1) * kOffsetSize - Size();
+    return Status::OK();
   }
 
   /// \return the rank of the tensor
@@ -872,9 +884,6 @@ class DATASET_API Tensor {
   /// \return Status Code
   static Status CopyStridedArray(unsigned char *dst, unsigned char *src, std::vector<dsize_t> shape,
                                  std::vector<dsize_t> strides, uint8_t type_size);
-
-  /// const of the size of the offset variable
-  static constexpr uint8_t kOffsetSize = sizeof(offset_t);
 
 #ifdef ENABLE_PYTHON
   /// Helper function to create a tensor from Numpy array of strings

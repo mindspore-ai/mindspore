@@ -14,8 +14,6 @@
 # ============================================================================
 """unit tests for numpy array operations"""
 
-import functools
-
 import pytest
 import numpy as onp
 
@@ -1319,24 +1317,6 @@ class RollSwap(Cell):
         return x
 
 
-test_case_array_ops = [
-    ('ReshapeExpandSqueeze', {
-        'block': ReshapeExpandSqueeze(),
-        'desc_inputs': [mnp.ones((2, 3, 4))]}),
-
-    ('TransposeConcatRavel', {
-        'block': TransposeConcatRavel(),
-        'desc_inputs': [mnp.ones((2, 3, 4)),
-                        mnp.ones((2, 3, 4)),
-                        mnp.ones((2, 4, 1))]}),
-
-    ('RollSwap', {
-        'block': RollSwap(),
-        'desc_inputs': [mnp.ones((2, 3, 4))]})
-]
-
-test_case_lists = [test_case_array_ops]
-test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
@@ -1557,8 +1537,6 @@ def test_tensor_resize():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1594,8 +1572,6 @@ def test_piecewise():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

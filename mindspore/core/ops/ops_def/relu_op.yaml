@@ -1,0 +1,10 @@
+#operator relu
+relu:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU

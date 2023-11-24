@@ -20,10 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool UpperBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool UpperBoundCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -38,16 +36,15 @@ bool UpperBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int UpperBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int UpperBoundCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  sorted_x_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  values_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  sorted_x_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  values_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
 
   size_t size_exp = 2;
   if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
@@ -67,12 +64,12 @@ int UpperBoundCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename I, typename O>
-bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->addr);
-  auto values_data_addr = static_cast<I *>(inputs[1]->addr);
-  auto output_data_addr = static_cast<O *>(outputs[0]->addr);
+bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->device_ptr());
+  auto values_data_addr = static_cast<I *>(inputs[1]->device_ptr());
+  auto output_data_addr = static_cast<O *>(outputs[0]->device_ptr());
   size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
   size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,

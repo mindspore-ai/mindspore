@@ -95,7 +95,8 @@ class Optimizer(Cell):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              :class:`mindspore.train.LearningRateSchedule` with step as the input to get the learning rate
+              of current step.
 
         parameters (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `parameters` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
@@ -764,7 +765,7 @@ class Optimizer(Cell):
             param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
 
         Returns:
-            Parameter, single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
+            A single `Parameter` or `list[Parameter]` according to the input type. If learning rate is dynamic,
             `LearningRateSchedule` or `list[LearningRateSchedule]` that used to calculate the learning rate will be
             returned.
 

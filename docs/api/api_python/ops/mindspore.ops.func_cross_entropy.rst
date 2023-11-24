@@ -7,7 +7,7 @@
 
     cross_entropy方法支持两种不同的目标值(target)：
 
-    - 类别索引 (int)，取值范围为 :math:`[0, C)` ，其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
+    - 类别索引 (int)，取值范围为 :math:`[0, C)` ，其中 :math:`C` 为类别数，当reduction为 ``'none'`` 时，交叉熵损失公式如下：
 
       .. math::
 
@@ -17,7 +17,7 @@
 
       其中， :math:`x` 表示预测值， :math:`y` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]` ，表示类索引，其中 :math:`C` 表示类的数量。
 
-      若reduction不为'none'（默认为'mean'），则
+      若reduction不为 ``'none'`` （默认为 ``'mean'`` ），则
 
       .. math::
 
@@ -28,7 +28,7 @@
               \text{if reduction} = \text{'sum'.}
               \end{cases}
 
-    - 类别概率 (float)，用于目标值为多个类别标签的情况。当reduction为'none'时，交叉熵损失公式如下：
+    - 类别概率 (float)，用于目标值为多个类别标签的情况。当reduction为 ``'none'`` 时，交叉熵损失公式如下：
 
       .. math::
 
@@ -37,7 +37,7 @@
 
       其中， :math:`x` 表示预测值， :math:`y` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为 :math:`[0, C-1]` ，表示类索引，其中 :math:`C` 表示类的数量。
 
-      若reduction不为'none'（默认为'mean'），则
+      若reduction不为 ``'none'`` （默认为 ``'mean'`` ），则
 
       .. math::
 
@@ -58,9 +58,9 @@
         - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值： ``-100`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的加权平均值。
-          - ``"sum"``：计算输出元素的总和。
+          - ``''none'``：不应用规约方法。
+          - ``'mean'``：计算输出元素的加权平均值。
+          - ``'sum'``：计算输出元素的总和。
 
         - **label_smoothing** (float) - 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。默认值： ``0.0`` 。
 

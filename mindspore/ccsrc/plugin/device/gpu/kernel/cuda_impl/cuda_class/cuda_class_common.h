@@ -34,6 +34,16 @@ inline std::string ConvertVectorToString(const std::vector<int64_t> &value) {
   return ss.str();
 }
 
+inline bool HasZeroInShapes(const std::vector<std::vector<int64_t>> &shapes) {
+  for (const auto &shape : shapes) {
+    auto has_zero = std::any_of(shape.cbegin(), shape.cend(), [](int64_t s) { return s == 0; });
+    if (has_zero) {
+      return true;
+    }
+  }
+  return false;
+}
+
 template <typename T>
 int CalShapesSizeInBytes(const std::vector<std::vector<int64_t>> &shapes, const size_t shape_num,
                          const std::string kernel_name, const std::string param_name,

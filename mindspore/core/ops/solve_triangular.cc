@@ -30,9 +30,9 @@ abstract::ShapePtr SolveTriangularInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto a_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto a_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(a_shape_ptr);
-  auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto b_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(b_shape_ptr);
 
   if (a_shape_ptr->IsDimUnknown() || b_shape_ptr->IsDimUnknown()) {
@@ -88,8 +88,8 @@ abstract::ShapePtr SolveTriangularInferShape(const PrimitivePtr &primitive,
 
 TypePtr SolveTriangularInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto a_dtype = input_args[kInputIndex0]->BuildType();
-  auto b_dtype = input_args[kInputIndex1]->BuildType();
+  auto a_dtype = input_args[kInputIndex0]->GetType();
+  auto b_dtype = input_args[kInputIndex1]->GetType();
 
   const std::map<std::string, TypePtr> type_dict = {{"a type", a_dtype}, {"b type", b_dtype}};
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat32, kFloat64}, prim_name);

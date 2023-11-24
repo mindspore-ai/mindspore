@@ -57,14 +57,14 @@ AbstractBasePtr CSRReduceSumInfer(const abstract::AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(axis);
 
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
-  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->GetType(), "Indices");
 
   ShapeVector sparse_shape = ConvertToShapeVector(shape);
   ShapeVector out_shape = sparse_shape;
-  MS_EXCEPTION_IF_NULL(axis->BuildValue());
-  if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
-    int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
+  MS_EXCEPTION_IF_NULL(axis->GetValue());
+  if (axis->GetValue()->isa<Int32Imm>() || axis->GetValue()->isa<Int64Imm>()) {
+    int64_t axis_value = GetValue<int64_t>(axis->GetValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
     if (axis_value != 1 && axis_value != 1 - dim) {
       MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be 1 or 1-dim. But got `axis`: " << axis_value
@@ -77,11 +77,11 @@ AbstractBasePtr CSRReduceSumInfer(const abstract::AnalysisEnginePtr &, const Pri
     primitive->set_attr(kCSRAxis, MakeValue(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For CSRReduceSum, `axis` should be int32 or int64, but got "
-                            << axis->BuildType()->ToString() << ".";
+                            << axis->GetType()->ToString() << ".";
   }
 
   MS_EXCEPTION_IF_NULL(values->element());
-  auto ret = std::make_shared<AbstractTensor>(values->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(values->element()->GetType(), out_shape);
   // SetAttr
   auto nnz_vec = indices->shape()->shape();
   auto csr_avg_rows = nnz_vec[0] / sparse_shape[0];

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,22 +213,31 @@ class Parser {
   AnfNodePtr ParseLambda(const FunctionBlockPtr &block, const py::object &node);
   // Process a tuple.
   AnfNodePtr ParseTuple(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple.
+  // Process a list.
   AnfNodePtr ParseList(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple.
+  // Process a tuple or list.
+  AnfNodePtr ParseTupleOrList(const FunctionBlockPtr &block, const py::object &node, bool is_tuple);
+  // Process a tuple or list with starred expression.
+  AnfNodePtr ParseTupleOrListWithStarred(const FunctionBlockPtr &block, const py::object &node, bool is_tuple,
+                                         const std::vector<AnfNodePtr> &starred_flags);
+  // Process a subscript.
   AnfNodePtr ParseSubscript(const FunctionBlockPtr &block, const py::object &node);
   // Process a slice.
   AnfNodePtr ParseSlice(const FunctionBlockPtr &block, const py::object &node);
   // Process a extslice.
   AnfNodePtr ParseExtSlice(const FunctionBlockPtr &block, const py::object &node);
-  // Process a tuple.
+  // Process a index.
   AnfNodePtr ParseIndex(const FunctionBlockPtr &block, const py::object &node);
   // Process a unaryop.
   AnfNodePtr ParseUnaryOp(const FunctionBlockPtr &block, const py::object &node);
   // Process a dict ast node expression.
   AnfNodePtr ParseDictByKeysAndValues(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &key_nodes,
                                       const std::vector<AnfNodePtr> &value_nodes);
+  // Process a dict.
   AnfNodePtr ParseDict(const FunctionBlockPtr &block, const py::object &node);
+
+  std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> GetRealKeysValues(const FunctionBlockPtr &block,
+                                                                                const py::object &node);
   // Process DictComp expression.
   AnfNodePtr ParseDictComp(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseDictCompIter(const FunctionBlockPtr &block, const py::object &node,
@@ -243,6 +252,7 @@ class Parser {
                               const py::object &node, const py::object &generator_node);
   AnfNodePtr ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ParseFormattedValue(const FunctionBlockPtr &block, const py::object &node);
+  AnfNodePtr ParseStarred(const FunctionBlockPtr &block, const py::object &node);
   std::vector<AnfNodePtr> HandleException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void HandleStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
@@ -266,26 +276,14 @@ class Parser {
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) const;
-  // Set the interpret flag for the node calling the interpret node.
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const;
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) const;
   // Make interpret node.
   AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
-  // Convert interpret iter node to list.
-  AnfNodePtr ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
-                                            const py::object &iter_obj);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                             const py::object &value_object, bool force_interpret = false);
+                             const py::object &value_object);
 
-  AnfNodePtr HandleCondInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                                 const py::object &value_object);
   bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
                                  const string &script_text) const;
-  // Handle interpret for augassign expression.
-  AnfNodePtr HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
-                                         const py::object &op_object, const py::object &target_object,
-                                         const py::object &value_object);
 
   // Generate argument nodes for ast function node.
   void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &fn_node);
@@ -301,8 +299,6 @@ class Parser {
   FunctionBlockPtr ParseStatement(const FunctionBlockPtr &block, const py::object &node);
   // Parse an ast expression node.
   AnfNodePtr ParseExprNode(const FunctionBlockPtr &block, const py::object &node);
-
-  std::string GetExprStr(const AnfNodePtr &node, const py::object &ast_node);
 
   void MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
                            const FunctionBlockPtr &false_block) const;
@@ -327,9 +323,16 @@ class Parser {
   // Assign value to single variable name.
   void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node) const;
 
+  // Assign value to starred expression.
+  void HandleAssignStarred(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
+
   // Assign value to tuple.
   void HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::object &target,
                                const AnfNodePtr &assigned_node);
+
+  // Assign value to tuple with starred expression.
+  void HandleAssignTupleWithStarredExpression(const FunctionBlockPtr &block, const py::object &target,
+                                              const AnfNodePtr &assigned_node, const std::vector<int64_t> &positions);
 
   // Assign value to class Parameter member. Return false if not a Parameter member.
   bool HandleAssignClassParameterMember(const FunctionBlockPtr &block, const py::object &target,
@@ -340,10 +343,6 @@ class Parser {
 
   // Assign value to subscript.
   void HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
-
-  // Interpret the return node.
-  AnfNodePtr HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
-                                  const py::object &value_object);
 
   // Process a bool operation value list.
   AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
@@ -399,6 +398,9 @@ class Parser {
                    bool *bool_res) const;
   bool CompareLessEqual(const FunctionBlockPtr &block, const py::object &left_obj, const py::object &comparator_obj,
                         bool *bool_res) const;
+  py::object GetValuePythonObject(const py::object &value_node);
+  CNodePtr MakeSetitemNode(const FunctionBlockPtr &block, const py::object &value_obj, const py::object &slice_obj,
+                           const AnfNodePtr &assigned_node, const AnfNodePtr &value_node);
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;

@@ -185,6 +185,11 @@ std::string ValueSequence::DumpText() const {
   return oss.str();
 }
 
+bool ValueSequence::ContainsValueAny() const {
+  return std::any_of(elements_.cbegin(), elements_.cend(),
+                     [](const ValuePtr &elem) { return elem->ContainsValueAny(); });
+}
+
 bool FP64Imm::operator==(const FP64Imm &other) const {
   if ((std::isinf(v_) && std::isinf(other.v_)) || (std::isnan(v_) && std::isnan(other.v_))) {
     return true;
@@ -215,7 +220,7 @@ bool ValueProblem::operator==(const ValueProblem &other) const { return err_type
 
 std::string ValueNamedTuple::ToString() const {
   std::ostringstream buffer;
-  buffer << "namedtuple[" << type_name_ << "](";
+  buffer << "namedtuple[" << sub_class_name_ << "](";
   for (size_t i = 0; i < keys_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(keys_[i]);
     MS_EXCEPTION_IF_NULL(elements_[i]);
@@ -226,6 +231,10 @@ std::string ValueNamedTuple::ToString() const {
   }
   buffer << ")";
   return buffer.str();
+}
+
+bool ValueNamedTuple::ContainsValueAny() const {
+  return std::any_of(keys_.cbegin(), keys_.cend(), [](const ValuePtr &value) { return value->ContainsValueAny(); });
 }
 
 std::size_t ValueSlice::hash() const {

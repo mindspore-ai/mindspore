@@ -282,22 +282,9 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     }
   }
 
-  bool interpret_without_internal =
-    (IsPrimitiveCNode(origin_node, prim::kPrimPyInterpret) && !origin_node->interpret_internal_type()) ||
-    origin_node->interpret();
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  MS_EXCEPTION_IF_NULL(convert_result);
-  if (allow_fallback_runtime) {
-    AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
-    if (interpreted_output != nullptr) {
-      return interpreted_output;
-    }
-  } else if (!interpret_without_internal && convert_result->isa<InterpretedObject>()) {
-    auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
-    MS_EXCEPTION(TypeError) << "Do not support to convert " << py::str(type_str) << " object into graph node."
-                            << ".\nFor more details, please refer to "
-                            << "https://mindspore.cn/docs/zh-CN/master/search.html?q=Do+not+support+to+convert+object"
-                            << "+into+graph+node&check_keywords=yes&area=default\n";
+  AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
+  if (interpreted_output != nullptr) {
+    return interpreted_output;
   }
 
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
@@ -525,6 +512,11 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   auto obj = GetSymbolObject(name_space, symbol, node);
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
+  if (IsValueNode<NameSpace>(resolved_node) && !py::isinstance<py::none>(name_space->module_obj())) {
+    auto name_value = GetValueNode(resolved_node);
+    auto nameptr = name_value->cast<NameSpacePtr>();
+    nameptr->set_module_obj(name_space->module_obj());
+  }
   fallback::SetPyObjectToNode(resolved_node, obj);
   return resolved_node;
 }
@@ -532,7 +524,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
 AnfNodePtr CreateResolveNode(const py::object &obj, const AnfNodePtr &attr, const AnfNodePtr &get_attr_node) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object namespace_obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
-  auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
+  auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj, obj);
   auto attr_string = GetValuePtr<StringImm>(attr);
   MS_EXCEPTION_IF_NULL(attr_string);
   const std::string &attr_as_string = attr_string->value();

@@ -56,7 +56,7 @@ class MIND_API DropoutInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     auto shape_ptr = std::make_shared<abstract::Shape>(x_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape_ptr, shape_ptr});
   }
@@ -67,7 +67,7 @@ class MIND_API DropoutInfer : public abstract::OpInferBase {
     for (auto &input : input_args) {
       MS_EXCEPTION_IF_NULL(input);
     }
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});

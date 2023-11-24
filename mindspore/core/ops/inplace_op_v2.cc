@@ -47,17 +47,15 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsIndicesDynamic(const PrimitivePtr &, const AbstractBasePtr &indices_abs) {
-  if (indices_abs->isa<abstract::AbstractTensor>()) {
-    auto abs_tensor = indices_abs->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(abs_tensor);
-    ShapeVector indices_shape = abs_tensor->shape()->shape();
+  if (CheckAndConvertUtils::IsTensor(indices_abs)) {
+    ShapeVector indices_shape = indices_abs->GetShape()->GetShapeVector();
     if (indices_shape.size() != kSizeOne) {
       MS_LOG(EXCEPTION) << "Shape of indices only could be one-dimensional. But got " << indices_shape;
     }
     return IsDynamic(indices_shape);
-  } else if (indices_abs->isa<abstract::AbstractSequence>()) {
-    return indices_abs->cast<abstract::AbstractSequencePtr>()->dynamic_len();
-  } else if (indices_abs->isa<abstract::AbstractScalar>()) {
+  } else if (CheckAndConvertUtils::IsSequence(indices_abs)) {
+    return indices_abs->GetShape()->isa<abstract::DynamicSequenceShape>();
+  } else if (CheckAndConvertUtils::IsScalar(indices_abs)) {
     return false;
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be scalar, tuple or Tensor.";
@@ -65,10 +63,10 @@ bool IsIndicesDynamic(const PrimitivePtr &, const AbstractBasePtr &indices_abs) 
 }
 
 ShapeVector GetIndicesShape(const PrimitivePtr &primitive, const AbstractBasePtr &indices_abs) {
-  if (indices_abs->isa<abstract::AbstractTensor>() || indices_abs->isa<abstract::AbstractSequence>()) {
+  if (CheckAndConvertUtils::IsTensor(indices_abs) || CheckAndConvertUtils::IsSequence(indices_abs)) {
     ShapeVector indices_shape = GetShapeValue(primitive, indices_abs);
     return {SizeToLong(indices_shape.size())};
-  } else if (indices_abs->isa<abstract::AbstractScalar>()) {
+  } else if (CheckAndConvertUtils::IsScalar(indices_abs)) {
     return {1};
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be scalar, tuple or Tensor.";
@@ -79,9 +77,9 @@ abstract::ShapePtr InplaceOpV2InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto v_shape_ptr = input_args[2]->BuildShape();
+  auto v_shape_ptr = input_args[2]->GetShape();
   MS_EXCEPTION_IF_NULL(v_shape_ptr);
   if (x_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic() || IsIndicesDynamic(primitive, input_args[kInputIndex1])) {
     return x_shape_ptr->cast<abstract::ShapePtr>();
@@ -115,21 +113,23 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
   }
   const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32};
   std::map<std::string, TypePtr> args = {
-    {"x", input_args[0]->BuildType()},
-    {"v", input_args[2]->BuildType()},
+    {"x", input_args[0]->GetType()},
+    {"v", input_args[2]->GetType()},
   };
 
   const auto &indices_abs = input_args[1];
   const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
-  if (indices_abs->isa<abstract::AbstractTensor>() || indices_abs->isa<abstract::AbstractScalar>()) {
-    (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->BuildType(), indices_valid_types, prim->name());
-  } else if (indices_abs->isa<abstract::AbstractTuple>()) {
-    const auto &seq_ele = indices_abs->cast<abstract::AbstractSequencePtr>()->elements();
-    if (seq_ele.empty()) {
+  if (CheckAndConvertUtils::IsTensor(indices_abs) || CheckAndConvertUtils::IsScalar(indices_abs)) {
+    (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->GetType(), indices_valid_types, prim->name());
+  } else if (CheckAndConvertUtils::IsTuple(indices_abs)) {
+    auto indices_type = indices_abs->GetType();
+    MS_EXCEPTION_IF_NULL(indices_type);
+    auto const &type_ele = indices_type->cast<TuplePtr>()->elements();
+    if (type_ele.empty()) {
       MS_EXCEPTION(ValueError) << "Input indices should not be empty: " << indices_abs->ToString();
     }
-    const auto &element0 = seq_ele[kInputIndex0];
-    (void)CheckAndConvertUtils::CheckTypeValid("indices", element0->BuildType(), indices_valid_types, prim->name());
+    const auto &ele0_type = type_ele[kInputIndex0];
+    (void)CheckAndConvertUtils::CheckTypeValid("indices", ele0_type, indices_valid_types, prim->name());
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be int scalar, tuple or Tensor, but got "
                             << indices_abs->ToString();

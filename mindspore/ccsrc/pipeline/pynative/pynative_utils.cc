@@ -26,6 +26,7 @@
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/primfunc_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
@@ -35,6 +36,7 @@
 #include "ops/sequence_op_name.h"
 #include "ops/structure_ops.h"
 #include "ops/other_ops.h"
+#include "pipeline/pynative/predict_out_type_map.h"
 
 namespace mindspore {
 namespace pynative {
@@ -506,6 +508,36 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (utils::isa<stub::StubNode>(v)) {
+    auto stub = utils::cast<stub::StubNodePtr>(v);
+    return stub->WaitValue()->cast<tensor::TensorPtr>();
+  } else if (v->isa<tensor::Tensor>()) {
+    return v->cast<tensor::TensorPtr>();
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
+}
+
+std::optional<tensor::TensorPtr> Common::StubNodeToTensorOptional(const std::optional<ValuePtr> &value) {
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(StubNodeToTensor(value.value()));
+}
+
+ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
+  if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    std::vector<ValuePtr> tensor_list;
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
+                         [](const ValuePtr &value) { return StubNodeToTensor(value); });
+    return std::make_shared<ValueTuple>(tensor_list);
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
+}
+
 void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                  const std::string &device_target, bool is_dynamic_shape,
                                  mindspore::HashSet<size_t> *input_to_attr_index) {
@@ -763,17 +795,189 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   }
   prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = prim;
+  op_run_info->base_op_run_info.op_name = prim->name();
   op_run_info->signatures = prim->signatures();
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
+}
+
+static std::string BuilidPyInputTypeString(const py::object &obj) {
+  if (py::isinstance<py::bool_>(obj)) {
+    return "bool";
+  }
+
+  if (py::isinstance<py::int_>(obj)) {
+    return "int";
+  }
+
+  if (py::isinstance<py::float_>(obj)) {
+    return "float";
+  }
+
+  if (py::isinstance<py::str>(obj)) {
+    return "string";
+  }
+
+  if (py::isinstance<py::none>(obj)) {
+    return "None";
+  }
+
+  if (py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return "Tensor";
+  }
+
+  if (IsStubTensor(obj)) {
+    return "Tensor";
+  }
+
+  if (py::isinstance<py::tuple>(obj)) {
+    std::stringstream ss;
+    ss << "tuple<";
+    auto tuple = obj.cast<py::tuple>();
+    for (size_t i = 0; i < tuple.size(); i++) {
+      if (i == 0) {
+        ss << BuilidPyInputTypeString(tuple[i]);
+      } else {
+        ss << ", " << BuilidPyInputTypeString(tuple[i]);
+      }
+    }
+    ss << ">";
+    return ss.str();
+  }
+
+  if (py::isinstance<py::list>(obj)) {
+    std::stringstream ss;
+    ss << "list<";
+    auto list = obj.cast<py::list>();
+    for (size_t i = 0; i < list.size(); i++) {
+      if (i == 0) {
+        ss << BuilidPyInputTypeString(list[i]);
+      } else {
+        ss << ", " << BuilidPyInputTypeString(list[i]);
+      }
+    }
+    ss << ">";
+    return ss.str();
+  }
+
+  std::stringstream ss;
+  ss << obj.get_type();
+  return ss.str();
+}
+
+inline ValuePtr ConvertScalarToTensor(const ValuePtr &value) {
+  auto fp32_imm = value->cast<FP32ImmPtr>();
+  if (fp32_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(fp32_imm->value());
+  }
+
+  auto bool_imm = value->cast<BoolImmPtr>();
+  if (bool_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(bool_imm->value());
+  }
+
+  auto int64_imm = value->cast<Int64ImmPtr>();
+  if (int64_imm != nullptr) {
+    return std::make_shared<tensor::Tensor>(int64_imm->value());
+  }
+
+  MS_LOG(EXCEPTION) << "Unsupported type: " << value->ToString();
+}
+
+inline ValuePtr ConvertBySignature(const py::object &obj, const FrontendOpRunInfoPtr &op_run_info, size_t index) {
+  if (op_run_info->signatures.size() <= index) {
+    return nullptr;
+  }
+
+  if (op_run_info->signatures[index].dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
+    auto convert_func = parse::GetConverterByType(static_cast<int32_t>(ops::DT_NUMBER));
+    MS_EXCEPTION_IF_NULL(convert_func);
+    return convert_func(obj);
+  }
+  return nullptr;
+}
+
+inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
+  std::vector<std::string> op_type_list;
+  for (size_t index = 0; index < op_inputs.size(); ++index) {
+    (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
+  }
+  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+}
+
+void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
+                         std::vector<ValuePtr> *input_values, const FrontendOpRunInfoPtr &op_run_info) {
+  if (op_inputs.size() != op_def->args_.size()) {
+    MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
+                      << " but got " << op_inputs.size() << ".";
+  }
+
+  parse::OpDefConvertFunc convert_func;
+  size_t hit_signature_cast_num = 0;
+  for (size_t i = 0; i < op_def->args_.size(); i++) {
+    auto const &op_arg = op_def->args_[i];
+    op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
+    ValuePtr value = nullptr;
+    convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
+    MS_EXCEPTION_IF_NULL(convert_func);
+    value = convert_func(op_inputs[i]);
+    if (value != nullptr) {
+      input_values->emplace_back(value);
+      continue;
+    }
+
+    // for ops those have signature cast, the Number value must be convert to Tensor with the other arg's dtype
+    // e.g: for Add(Tensor(1.0, dtype=ms.float16), 4.1), 4.1 is casted into a Tensor whose dtype is ms.float16
+    // init arg has no signature
+    if (!op_arg.as_init_arg_) {
+      value = ConvertBySignature(op_inputs[i], op_run_info, i);
+      if (value != nullptr) {
+        // 'value' is a Scalar and will be convert to Tensor in the following step(SetImplicitCast)
+        MS_LOG(DEBUG) << "Convert arg " << i << " with type " << op_inputs[i].get_type()
+                      << " to Number by signature cast, its value is: " << value->ToString();
+        input_values->emplace_back(value);
+        hit_signature_cast_num++;
+        continue;
+      }
+    }
+
+    // type cast has lower priority then signature cast
+    if (!op_arg.cast_dtype_.empty()) {
+      for (auto cast_dtype : op_arg.cast_dtype_) {
+        convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+        MS_EXCEPTION_IF_NULL(convert_func);
+        value = convert_func(op_inputs[i]);
+        if (value != nullptr) {
+          break;
+        }
+      }
+    }
+
+    if (value == nullptr) {
+      PrintTypeError(op_def, op_inputs);
+    }
+    input_values->emplace_back(value);
+  }
+
+  if (hit_signature_cast_num == op_run_info->none_init_inputs_num) {
+    PrintTypeError(op_def, op_inputs);
+  }
 }
 
 void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs, bool stub) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
   op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
-  op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
-  for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
+
+  auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
+  if (op_def == nullptr) {
+    op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
+    op_run_info->none_init_inputs_num = op_run_info->input_size;
+    for (size_t i = 0; i < op_run_info->input_size; ++i) {
+      op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
+    }
+  } else {
+    op_run_info->none_init_inputs_num = 0;
+    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value, op_run_info);
   }
   PrepareOpGradInfo(op_run_info);
 }
@@ -918,11 +1122,91 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
+FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
+  if (args.size() != kIndex2) {
+    MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
+                      << ", but got " << args.size();
+  }
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward_executor = pynative_executor->forward_executor();
+  const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
+  PyParser::SetPrim(op_run_info, args[kIndex0]);
+  pynative_executor->StoreAsyncStatus(op_run_info);
+  forward_executor->InitOpRunInfo(op_run_info);
+  return op_run_info;
+}
+
+void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
+  std::vector<ValuePtr> output_values;
+  for (auto &output_tensor : outputs) {
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    if (op_run_info->requires_grad) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    }
+    (void)output_values.emplace_back(output_tensor);
+  }
+  auto result_value = std::make_shared<ValueTuple>(output_values);
+  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    op_run_info->real_out = result_value->value().front();
+  } else {
+    op_run_info->real_out = result_value;
+  }
+}
+
+void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract) {
+  if (op_run_info->stub_output == nullptr) {
+    return;
+  }
+
+  auto success = op_run_info->stub_output->SetAbstract(abstract);
+  if (!success) {
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                            << PredictOutType(op_run_info) << ", infer type is " << abstract->BuildType()
+                            << ", the name of operator is [" << op_name
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
+  MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
+
+  op_run_info->stub_output->SetValue(op_run_info->real_out);
+}
+
+void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // Set result to python
+  op_run_info->base_op_run_info.abstract = op->output_abs();
+  MakeOutputValue(op_run_info, op->outputs());
+  UpdateStubOutput(op_run_info, op->output_abs());
+
+  // Update op run info for auto grad
+  if (op_run_info->requires_grad) {
+    op_run_info->op_grad_info->input_abs = op->input_abs();
+    op_run_info->op_grad_info->out_value = op_run_info->real_out;
+    op_run_info->op_grad_info->out_abs = op->output_abs();
+    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
+  }
+}
+
+void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward = pynative_executor->forward_executor();
+
+  PyParser::PrepareOpGradInfo(op_run_info);
+  for (size_t index = 0; index < op_run_info->input_size; ++index) {
+    const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
+    DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
+  }
+  forward->ForwardOpGradImpl(op_run_info);
+}
+
 void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                            size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
-  ValuePtrList fake_tensor_list;
   if (op_run_info->requires_grad) {
     op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
   }
@@ -941,17 +1225,11 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
       if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
-      MS_EXCEPTION_IF_NULL(top_cell);
-      if (!top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-        (void)fake_tensor_list.emplace_back(Common::CreateFakeTensorWithoutDeviceAddress(tensor));
-      }
     }
-    (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(tensor_mask);
   }
-  if (op_run_info->requires_grad && !top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-    op_run_info->op_grad_info->input_value[index] = std::make_shared<ValueTuple>(fake_tensor_list);
-  }
+
   if (!op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
     int64_t elem_size = SizeToLong(value_seq->size());
     if (op_run_info->base_op_run_info.dyn_input_sizes.size() != op_run_info->input_size) {
@@ -968,22 +1246,6 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     }
     (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(SizeToLong(value_seq->size()));
   }
-}
-
-void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info,
-                                            const ValueSequencePtr &value_seq) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(value_seq);
-  ValueTuplePtr value_tuple;
-  if (value_seq->isa<ValueList>()) {
-    value_tuple = std::make_shared<ValueTuple>(value_seq->value());
-  } else {
-    value_tuple = value_seq->cast<ValueTuplePtr>();
-  }
-  MS_EXCEPTION_IF_NULL(value_tuple);
-  auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
 }
 
 ValuePtr DataConvert::ConvertValueDictToValueTuple(const ValuePtr &v) {
@@ -1006,12 +1268,11 @@ void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, cons
     MS_LOG(DEBUG) << "input_names are nullptr";
     return;
   }
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(map_tensor);
-  const auto it = op_run_info->base_op_run_info.input_mask.end();
-  (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterWeightTensorMask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(map_tensor);
+  const auto it = op_run_info->base_op_run_info.input_masks.end();
+  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterWeightTensorMask);
   if (op_run_info->requires_grad) {
-    op_run_info->op_grad_info->input_value_grad_type[index] =
-      Common::SetTensorGradInfo(op_run_info->base_op_run_info.input_tensor.back(), top_cell);
+    op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(map_tensor, top_cell);
   }
 }
 
@@ -1027,18 +1288,18 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
     return;
   }
 
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetIndptr());
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetIndices());
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetValues());
-  const auto it = op_run_info->base_op_run_info.input_mask.end();
-  (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterDataTensorMask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndptr());
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndices());
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetValues());
+  const auto it = op_run_info->base_op_run_info.input_masks.end();
+  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterDataTensorMask);
   op_run_info->op_grad_info->op_prim->set_attr("is_csr", MakeValue(true));
   op_run_info->op_grad_info->op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
   if (op_run_info->requires_grad) {
     op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
     for (int i = 0; i < input_num; ++i) {
-      auto iter = op_run_info->base_op_run_info.input_tensor.rbegin() + i;
-      auto grad_type = Common::SetTensorGradInfo(*iter, top_cell);
+      auto iter = op_run_info->base_op_run_info.expanded_input_values.rbegin() + i;
+      auto grad_type = Common::SetTensorGradInfo((*iter)->cast<tensor::TensorPtr>(), top_cell);
       if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
@@ -1053,64 +1314,48 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
 
   const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
-    std::vector<int64_t> axis = {};
-    (void)op_run_info->base_op_run_info.input_tensor.emplace_back(std::make_shared<tensor::Tensor>(axis, kInt64));
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
   }
   if (tuple_inputs[0]->isa<tensor::Tensor>()) {
     PlantTensorTupleToVector(op_run_info, value_seq, index, top_cell);
   } else {
-    ConvertValueTupleToTensor(op_run_info, value_seq);
-    (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
   }
 }
 
-void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
-                                       const TopCellInfoPtr &top_cell) {
+void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
+                             const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
   tensor::TensorPtr tensor_ptr = nullptr;
-  int64_t tensor_mask = kParameterDataTensorMask;
+  int64_t input_mask = kParameterDataTensorMask;
   if (v->isa<tensor::MapTensor>()) {
     ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), top_cell, index);
     return;
   } else if (v->isa<tensor::Tensor>()) {
     tensor_ptr = v->cast<tensor::TensorPtr>();
     if (tensor_ptr->is_parameter()) {
-      tensor_mask = kParameterWeightTensorMask;
+      input_mask = kParameterWeightTensorMask;
     }
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
-      if (!top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-        op_run_info->op_grad_info->input_value[index] = Common::CreateFakeTensorWithoutDeviceAddress(tensor_ptr);
-      }
     }
-  } else if (v->isa<FloatImm>()) {
-    double input_value = v->cast<FP32ImmPtr>()->value();
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<BoolImm>()) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(v->cast<BoolImmPtr>()->value(), kBool);
-    tensor_mask = kValueNodeTensorMask;
+  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>()) {
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    return;
   } else if (v->isa<IntegerImm>()) {
-    int64_t input = v->cast<Int64ImmPtr>()->value();
     if (op_run_info->op_grad_info->op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+      int64_t input = v->cast<Int64ImmPtr>()->value();
       op_run_info->op_grad_info->op_prim->set_attr("axis", MakeValue(input));
       return;
     }
-    tensor_ptr = std::make_shared<tensor::Tensor>(input, kInt64);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<Type>()) {
-    int64_t type_id = v->cast<TypePtr>()->type_id();
-    tensor_ptr = std::make_shared<tensor::Tensor>(type_id, kInt64);
-    tensor_ptr->set_user_data(kTensorValueIsType, v);
-    tensor_mask = kValueNodeTensorMask;
-  } else if (v->isa<StringImm>()) {
-    auto value_string = GetValue<std::string>(v);
-    const ShapeVector shape = {1, SizeToLong(value_string.size())};
-    tensor_ptr = std::make_shared<tensor::Tensor>(kObjectTypeString, shape, value_string.data(), value_string.size());
-    tensor_mask = kValueNodeTensorMask;
+    (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
+    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    return;
   } else if (v->isa<ValueSequence>()) {
     ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), index, top_cell);
     return;
@@ -1125,8 +1370,8 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
   }
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
+  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor_ptr);
+  (void)op_run_info->base_op_run_info.input_masks.emplace_back(input_mask);
 }
 
 void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
@@ -1134,10 +1379,10 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   if (!common::AnfAlgo::IsReduceOp(op_run_info->base_op_run_info.op_name)) {
     return;
   }
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  const auto &inputs = op_run_info->base_op_run_info.expanded_input_values;
   constexpr size_t kReduceOpInputNum = 2;
-  if (input_tensors.size() < kReduceOpInputNum) {
-    MS_LOG(EXCEPTION) << "Invalid input tensor size " << input_tensors.size() << " of Op "
+  if (inputs.size() < kReduceOpInputNum) {
+    MS_LOG(EXCEPTION) << "Invalid input tensor size " << inputs.size() << " of Op "
                       << op_run_info->base_op_run_info.op_name;
   }
 
@@ -1148,41 +1393,25 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
 
-  const auto &axis_shape = input_tensors[1]->shape();
+  auto seq = inputs[1]->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq);
   // 2nd input tensor is {}, means reduce all axis.
-  if (axis_shape.size() == 1 && axis_shape[0] == 0) {
-    auto size = input_tensors[0]->shape().size();
+  if (seq->size() == 0) {
+    auto size = inputs[0]->cast<tensor::TensorPtr>()->shape().size();
     // For example, input 0 is Tensor(shape=[], value=1), the axis to reduce is 0.
-    std::vector<int64_t> axis = {0};
+    std::vector<ValuePtr> axis = {std::make_shared<Int64Imm>(0)};
     for (size_t i = 1; i < size; ++i) {
-      axis.push_back(SizeToLong(i));
+      axis.push_back(std::make_shared<Int64Imm>(static_cast<int64_t>(i)));
     }
-    op_run_info->base_op_run_info.input_tensor[1] = std::make_shared<tensor::Tensor>(axis);
-  }
-}
-
-void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
-  if (!op_run_info->base_op_run_info.use_dynamic_shape_process) {
-    return;
-  }
-
-  auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
-    std::replace_if(
-      op_run_info->base_op_run_info.input_mask.begin(), op_run_info->base_op_run_info.input_mask.end(),
-      [](auto mask) { return mask == kValueNodeTensorMask; }, kParameterDataTensorMask);
-  };
-
-  // value to parameter(onehot)
-  if (op_run_info->base_op_run_info.device_target != kAscendDevice) {
-    replace_tensor_mask(op_run_info);
+    op_run_info->base_op_run_info.expanded_input_values[1] = std::make_shared<ValueTuple>(axis);
   }
 }
 
 void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
 
-  (void)op_run_info->base_op_run_info.input_tensor.reserve(op_run_info->input_size);
-  (void)op_run_info->base_op_run_info.input_mask.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.expanded_input_values.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.input_masks.reserve(op_run_info->input_size);
   // Get input tensors.
   op_run_info->op_grad_info->op_prim->BeginRecordAddAttr();
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
@@ -1192,14 +1421,13 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
       continue;
     }
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
-    ConvertValueToTensor(op_run_info, input_object, index, top_cell);
+    MarkInputs(op_run_info, input_object, index, top_cell);
     // -1 indicates input_object is not a dynInput
     if (!op_run_info->base_op_run_info.dyn_input_sizes.empty() && !input_object->isa<ValueSequence>()) {
       (void)op_run_info->base_op_run_info.dyn_input_sizes.emplace_back(-1);
     }
   }
   op_run_info->op_grad_info->op_prim->EndRecordAddAttr();
-  ReplaceValueNodeWithParameter(op_run_info);
   ReplaceReduceAxis(op_run_info);
   AddDynInputsSizesAttr(op_run_info);
 }
@@ -1256,5 +1484,13 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
   }
 }
 }  // namespace PyNativeAlgo
+
+void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
+  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+  forward_executor->frontend_queue()->Push(task);
+  if (!forward_executor->enable_async()) {
+    forward_executor->frontend_queue()->Wait();
+  }
+}
 }  // namespace pynative
 }  // namespace mindspore

@@ -1,0 +1,32 @@
+matrix_determinant:
+    description: |
+        Computes the determinant of one or more square matrices.
+
+        Args:
+            input (Tensor): A matrix to be calculated, its shape should be :math:`[..., M, M]` who must
+            have at least two dimensions, and the last two
+            dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
+
+        Returns:
+            Tensor. The shape is :math:`input.shape[:-2]`, and the dtype is same as `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` not float32, float64, complex64 or complex128.
+            ValueError: If the last two dimensions of `input` is not same size.
+            ValueError: If the dimension of `input` is less than 2.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+            >>> output = ops.matrix_determinant(input)
+            >>> print(output)
+            [-16.5 21. ]
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``

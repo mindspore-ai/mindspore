@@ -28,19 +28,16 @@ constexpr int kInputsNum = 1;
 constexpr int kOutputsNum = 1;
 }  // namespace
 
-bool SequenceAddNGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceAddNGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceAddNGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceAddNGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -48,14 +45,14 @@ int SequenceAddNGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
-  workspace_size_list_.push_back(input_size_list_.front());
+  workspace_size_list_.push_back(inputs[kIndex0]->size());
   return KRET_OK;
 }
 
 template <typename T>
-bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   auto work_addr = output_addr;
   auto input_0 = GetDeviceAddress<T>(inputs, 0);
@@ -63,11 +60,12 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     work_addr = GetDeviceAddress<T>(workspace, 0);
   }
   cudaError_t status = cudaErrorNotReady;
-  size_t element_num = outputs[0]->size / sizeof(T);
+  size_t element_num = outputs[0]->size() / sizeof(T);
   status =
-    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    FillDeviceArray(outputs[0]->size() / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
-  status = FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  status =
+    FillDeviceArray(outputs[0]->size() / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   std::vector<int64_t> ele_shape = {static_cast<int64_t>(element_num)};
   for (int64_t i = 0; i < tuple_shape_[0]; i++) {
@@ -80,7 +78,7 @@ bool SequenceAddNGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 
   if (work_addr != output_addr) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size, cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "Addn cudaMemcpyAsync outputs failed");
   }

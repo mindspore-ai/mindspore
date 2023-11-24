@@ -139,7 +139,7 @@ class NetWorkSliceStep(Cell):
         return ret1, ret2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 # ascend op stridedslice has bug, and has not been fixed.
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -242,7 +242,7 @@ class TensorItemByNone(Cell):
         return ret
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -255,7 +255,7 @@ def test_item_by_none():
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
     output_ms = net(input_1d_ms)
-    assert np.all(output_ms.asnumpy() == input_1d_np.item())
+    assert np.all(output_ms == input_1d_np.item())
 
     with pytest.raises(ValueError):
         net(input_3d_ms)
@@ -861,7 +861,7 @@ class TensorAssignWithSlice(Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -912,8 +912,6 @@ def test_tensor_assign_slice_value_2():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_exception():
@@ -991,8 +989,6 @@ def test_tensor_assign_exception():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_exception_2():

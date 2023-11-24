@@ -176,6 +176,40 @@ uint32_t DiagonalCpuKernel::DoComputeType(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
+uint32_t DiagonalCpuKernel::ComputeWithType(CpuKernelContext &ctx) {
+  Tensor *input_x = ctx.Input(0);
+  auto data_type = input_x->GetDataType();
+  switch (data_type) {
+    case DT_FLOAT:
+      return DoComputeType<float>(ctx);
+    case DT_DOUBLE:
+      return DoComputeType<double>(ctx);
+    case DT_BOOL:
+      return DoComputeType<bool>(ctx);
+    case DT_INT8:
+      return DoComputeType<std::int8_t>(ctx);
+    case DT_INT16:
+      return DoComputeType<std::int16_t>(ctx);
+    case DT_INT32:
+      return DoComputeType<std::int32_t>(ctx);
+    case DT_INT64:
+      return DoComputeType<std::int64_t>(ctx);
+    case DT_UINT8:
+      return DoComputeType<std::uint8_t>(ctx);
+    case DT_UINT16:
+      return DoComputeType<std::uint16_t>(ctx);
+    case DT_UINT32:
+      return DoComputeType<std::uint32_t>(ctx);
+    case DT_UINT64:
+      return DoComputeType<std::uint64_t>(ctx);
+    case DT_FLOAT16:
+      return DoComputeType<Eigen::half>(ctx);
+    default:
+      KERNEL_LOG_ERROR("[Diagonal]: Diagonal kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      return KERNEL_STATUS_PARAM_INVALID;
+  }
+}
+
 uint32_t DiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
   // Check params
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Diagonal check input and output number failed.");
@@ -212,16 +246,7 @@ uint32_t DiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  auto data_type = input_x->GetDataType();
-  switch (data_type) {
-    case DT_FLOAT:
-      return DoComputeType<float>(ctx);
-    case DT_DOUBLE:
-      return DoComputeType<double>(ctx);
-    default:
-      KERNEL_LOG_ERROR("[Diagonal]: Diagonal kernel data type [%s] not support.", DTypeStr(data_type).c_str());
-      return KERNEL_STATUS_PARAM_INVALID;
-  }
+  return ComputeWithType(ctx);
 }
 
 REGISTER_CPU_KERNEL(kDiagonal, DiagonalCpuKernel);

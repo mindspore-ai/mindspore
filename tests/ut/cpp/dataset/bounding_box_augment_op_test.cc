@@ -34,8 +34,9 @@ class MindDataTestBoundingBoxAugmentOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
 TEST_F(MindDataTestBoundingBoxAugmentOp, TestOp) {
   MS_LOG(INFO) << "Doing testBoundingBoxAugment.";
   TensorTable results;
-  std::unique_ptr<BoundingBoxAugmentOp> op =
-    std::make_unique<BoundingBoxAugmentOp>(std::make_shared<RandomRotationOp>(90, 90), 1);
+  auto random_rotation_op = std::make_shared<RandomRotationOp>(90, 90, InterpolationMode::kNearestNeighbour, false,
+                                                               std::vector<float>(), 0, 0, 0);
+  std::unique_ptr<BoundingBoxAugmentOp> op = std::make_unique<BoundingBoxAugmentOp>(random_rotation_op, 1);
   for (const auto &row : images_and_annotations_) {
     TensorRow output_row;
     Status s = op->Compute(row, &output_row);

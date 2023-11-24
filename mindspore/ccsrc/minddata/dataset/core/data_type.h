@@ -82,7 +82,7 @@ class DataType {
     {"float32", 4, "float32", py::format_descriptor<float>::format(), CV_32F},           // DE_FLOAT32
     {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
     {"string", 0, "str", "U", kCVInvalidType},                                           // DE_STRING
-    {"bytes", 0, "bytes", "S", kCVInvalidType},                                          // DE_BYTES
+    {"bytes", 0, "bytes", "S", CV_8U},                                                   // DE_BYTES
     {"python", 0, "object", "O", kCVInvalidType}                                         // DE_PYTHON
   };
 #else
@@ -103,7 +103,7 @@ class DataType {
     {"float32", 4, "float32", "", CV_32F},         // DE_FLOAT32
     {"float64", 8, "double", "", CV_64F},          // DE_FLOAT64
     {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
-    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
+    {"bytes", 0, "bytes", "", CV_8U}               // DE_BYTES
   };
 #else
   // android and no python
@@ -123,7 +123,7 @@ class DataType {
     {"float32", 4, "float32", ""},                 // DE_FLOAT32
     {"float64", 8, "double", ""},                  // DE_FLOAT64
     {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
-    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
+    {"bytes", 0, "bytes", ""}                      // DE_BYTES
   };
 #endif
 #endif

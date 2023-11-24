@@ -38,20 +38,20 @@ constexpr auto kEnd = "end";
 constexpr auto kStrides = "strides";
 constexpr auto kSize = "size";
 
-std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, const kernel::AddressPtr &address,
+std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, const kernel::KernelTensor *address,
                                             const size_t elem_size) {
   std::vector<int64_t> res;
   if (dtype == kNumberTypeInt32) {
-    MS_EXCEPTION_IF_CHECK_FAIL(address->size == elem_size * sizeof(int32_t),
+    MS_EXCEPTION_IF_CHECK_FAIL(address->size() == elem_size * sizeof(int32_t),
                                "Address data size should be " + std::to_string(elem_size * sizeof(int32_t)) +
-                                 ", but got " + std::to_string(address->size));
-    auto data_ptr = reinterpret_cast<int32_t *>(address->addr);
+                                 ", but got " + std::to_string(address->size()));
+    auto data_ptr = reinterpret_cast<int32_t *>(address->device_ptr());
     res.assign(data_ptr, data_ptr + elem_size);
   } else if (dtype == kNumberTypeInt64) {
-    MS_EXCEPTION_IF_CHECK_FAIL(address->size == elem_size * sizeof(int64_t),
+    MS_EXCEPTION_IF_CHECK_FAIL(address->size() == elem_size * sizeof(int64_t),
                                "Address data size should be " + std::to_string(elem_size * sizeof(int64_t)) +
-                                 ", but got " + std::to_string(address->size));
-    auto data_ptr = reinterpret_cast<int64_t *>(address->addr);
+                                 ", but got " + std::to_string(address->size()));
+    auto data_ptr = reinterpret_cast<int64_t *>(address->device_ptr());
     res.assign(data_ptr, data_ptr + elem_size);
   } else {
     MS_LOG(EXCEPTION) << "Only support int32 or int64, but got " << TypeIdLabel(dtype);
@@ -62,23 +62,23 @@ std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, const kernel::A
 }  // namespace
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
+using KernelTensor = kernel::KernelTensor;
 
-bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SliceGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   MS_EXCEPTION_IF_CHECK_FAIL(input_num == kSliceGradInputsNum || input_num == kStridedSliceGradInputsNum,
                              "Input number check failed!");
-  dtype_ = inputs.at(0)->GetDtype();
-  begin_dtype_ = inputs.at(kBeginIndex_)->GetDtype();
+  dtype_ = inputs.at(0)->dtype_id();
+  begin_dtype_ = inputs.at(kBeginIndex_)->dtype_id();
   return true;
 }
 
-std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensorPtr> &inputs, const size_t idx,
+std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensor *> &inputs, const size_t idx,
                                              const std::string &kernel_name, std::vector<int64_t> *attr_value,
                                              const std::string &param_name, size_t *len) {
-  auto res = TryGetIntValue(inputs, idx, kernel_name, attr_value, false);
-  if (!res) {
+  *attr_value = inputs[idx]->GetValueWithCheck<std::vector<int64_t>>();
+  if (!attr_value->empty()) {
     auto shape = inputs[idx]->GetShapeVector();
     if (shape.size() != 1) {
       MS_LOG(ERROR) << kernel_name << "'s `" << param_name << "` shape should be one dim, but got " << shape.size();
@@ -91,10 +91,9 @@ std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensorPtr> 
   return {true, true};
 }
 
-int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SliceGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -180,9 +179,9 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 }
 
-bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                   const std::vector<kernel::KernelTensor *> &,
+                                   const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input can not be empty.";
   }
@@ -224,8 +223,8 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 template <typename T>
-bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (!get_attr_value_) {
     begin_ = GetIntValueFormAddress(begin_dtype_, inputs[kBeginIndex_], begin_len_);
     if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
@@ -241,9 +240,9 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
   }
 
-  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+  auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto ret = memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size());
   if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
     return false;
@@ -252,8 +251,8 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr) {
+bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs, T *input_addr, T *output_addr) {
   bool can_copy_memory[7] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2),
                              CanCopyMemoryOnAxis(3), CanCopyMemoryOnAxis(4), CanCopyMemoryOnAxis(5),
                              CanCopyMemoryOnAxis(6)};
@@ -370,13 +369,13 @@ int SliceGradCpuKernelMod::SignOfStride(size_t axis) const {
 }
 
 template <typename T>
-void SliceGradCpuKernelMod::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
-                                             const std::vector<kernel::AddressPtr> &outputs, size_t out_offset,
+void SliceGradCpuKernelMod::CopyDataToOutput(const std::vector<kernel::KernelTensor *> &inputs, size_t in_offset,
+                                             const std::vector<kernel::KernelTensor *> &outputs, size_t out_offset,
                                              size_t copy_num, int id) const {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto in_buff_size = inputs[0]->size;
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto out_buff_size = outputs[0]->size;
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto in_buff_size = inputs[0]->size();
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  auto out_buff_size = outputs[0]->size();
 
   if ((in_offset + copy_num) * sizeof(T) > in_buff_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", " << id << " input memory out of bounds.";

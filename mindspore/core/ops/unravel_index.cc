@@ -48,12 +48,12 @@ abstract::ShapePtr UravelIndexInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  if (!input_args[0]->isa<abstract::AbstractTensor>() || !input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[0]) || !CheckAndConvertUtils::IsTensor(input_args[1])) {
     MS_EXCEPTION(TypeError) << "Input must be a Tensor.";
   }
 
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   // support dynamic shape
   if (IsDynamicRank(indices_shape) || IsDynamicRank(dims_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -87,8 +87,8 @@ TypePtr UravelIndexInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   auto op_name = prim->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  (void)types.emplace("indices", input_args[0]->BuildType());
-  (void)types.emplace("dims", input_args[1]->BuildType());
+  (void)types.emplace("indices", input_args[0]->GetType());
+  (void)types.emplace("dims", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32, kInt64}, prim->name());
 }
 }  // namespace

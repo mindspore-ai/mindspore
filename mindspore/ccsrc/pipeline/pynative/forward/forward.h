@@ -24,6 +24,7 @@
 #include <stack>
 #include <vector>
 #include "pipeline/pynative/forward/do_cast.h"
+#include "pipeline/pynative/forward/do_pyboost_cast.h"
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
@@ -42,6 +43,7 @@ class ForwardExecutor {
  public:
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
+        pyboost_cast_operation_(std::make_shared<PyBoostCastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
         frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)),
         backend_queue_(std::make_shared<AsyncQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)) {}
@@ -94,6 +96,7 @@ class ForwardExecutor {
   inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
   bool is_jit_compiling() const { return is_jit_compiling_; }
 
+  const AsyncQueuePtr &frontend_queue() const { return frontend_queue_; }
   void WorkerJoin() {
     frontend_queue_->WorkerJoin();
     backend_queue_->WorkerJoin();
@@ -105,9 +108,18 @@ class ForwardExecutor {
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
   void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor);
+  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
+  GradExecutorPtr grad() const;
+  void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
+  // Mix precision and Implicit transform
+  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
+  inline const PyBoostCastOperationPtr &pyboost_cast_operation() const {
+    MS_EXCEPTION_IF_NULL(pyboost_cast_operation_);
+    return pyboost_cast_operation_;
+  }
+  void ChildAfterFork();
 
  private:
-  GradExecutorPtr grad() const;
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
@@ -122,8 +134,6 @@ class ForwardExecutor {
   void RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info);
 
   VectorRef RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
-  // Mix precision and Implicit transform
-  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
   // Infer output abstract
   void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
   // Check sync condition in heterogeneous
@@ -136,7 +146,6 @@ class ForwardExecutor {
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type);
   void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
                                 bool enable_async);
-  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);
@@ -171,6 +180,7 @@ class ForwardExecutor {
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
+  PyBoostCastOperationPtr pyboost_cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   AsyncQueuePtr frontend_queue_;

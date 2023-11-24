@@ -1,0 +1,75 @@
+nllloss:
+    description: |
+        Gets the negative log likelihood loss between logits and labels.
+
+        The nll loss with reduction=none can be described as:
+
+        .. math::
+
+            \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
+            \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
+            \quad w_{c}=\text { weight }[c] \cdot 1
+
+        where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
+        N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+        If reduction is not ``'none'`` (default ``'mean'`` ), then
+
+        .. math::
+
+            \ell(x, t)=\left\{\begin{array}{ll}
+            \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+            \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
+            \end{array}\right.
+
+        Inputs:
+            - **logits** (Tensor) - Input logits, with shape :math:`(N, C)` or `(C)`. Data type only supports float32 or float16.
+            - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)` or `(1)`, where each value belong to
+            :math:`[0, C-1]`. Data type only supports int32 or int64.
+            - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
+            supports float32 or float16.
+            - **reduction** (str, optional): - Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+                ``'sum'`` . Default: ``'mean'`` .
+
+                - ``'none'``: no reduction will be applied.
+                - ``'mean'``: compute and return the weighted mean of elements in the output.
+                - ``'sum'``: the output elements will be summed.
+
+            - **ignore_index** (int): Specifies a target value that is ignored
+                and does not contribute to the input gradient. Default: ``-100`` .
+
+        Outputs:
+            Tuple of 2 tensors composed with `loss` and `total_weight`.
+
+            - **loss** (Tensor) - When `reduction` is ``'none'`` and `logits` is a 2D tensor,
+            the `loss` shape is :math:`(N,)`. Otherwise, the `loss` is a scalar.
+            The data type is the same with `input's`.
+            - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is the same with `weight's`.
+
+        Raises:
+            TypeError: If dtype of `logits` or `weight` is neither float16 nor float32.
+            TypeError: If dtype of `labels` is neither int32 nor int64.
+            ValueError: If `logits` is not a one or two dimension tensor, `labels` and `weight` are not
+                        one dimension tensors.
+                        When `logits` is a two dimension tensor, the first dimension of `logits` is not equal to `labels`,
+                        and second dimension of `logits` is not equal to `weight`.
+                        When `logits` is a one dimension tensor, the dimensions of `logits`, `labels`
+                        and `weight` should be equal to each other.
+            ValueError: If the value of `labels` exceed :math:`[0, C-1]`, where :math:`C` is the number of classes.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> logits = Tensor(np.array([[0.5488135, 0.71518934],
+            ...                           [0.60276335, 0.5448832],
+            ...                           [0.4236548, 0.6458941]]).astype(np.float32))
+            >>> labels = Tensor(np.array([0, 0, 0]).astype(np.int32))
+            >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
+            >>> loss, weight = ops.nll_loss_(logits, labels, weight, "mean")
+            >>> print(loss)
+            -0.52507716
+            >>> print(weight)
+            1.1503246

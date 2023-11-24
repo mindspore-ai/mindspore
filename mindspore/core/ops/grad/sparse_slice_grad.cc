@@ -50,8 +50,7 @@ class SparseSliceGradInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(y_grad_shape);
     }
 
-    auto indices_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto y_grad_shape = ShapeVector({indices_shape[0]});
     return std::make_shared<abstract::Shape>(y_grad_shape);
   }
@@ -61,26 +60,25 @@ class SparseSliceGradInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->BuildType(),
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->GetType(),
                                                      {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64,
                                                       kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
                                                      op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), {kInt64},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->GetType(), {kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("new_indices", input_args[kInputIndex3]->GetType(), {kInt64},
                                                      op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex2]->BuildType(), {kInt64}, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("new_indices", input_args[kInputIndex3]->BuildType(), {kInt64},
-                                                     op_name);
-    auto output_type = input_args[kInputIndex0]->BuildType();
+    auto output_type = input_args[kInputIndex0]->GetType();
     return output_type;
   }
 
  private:
   static bool SparseSliceGradCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
     auto op_name = primitive->name();
-    auto grad_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto start_shape_ptr = input_args[kInputIndex2]->BuildShape();
-    auto new_indices_shape_ptr = input_args[kInputIndex3]->BuildShape();
+    auto grad_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto start_shape_ptr = input_args[kInputIndex2]->GetShape();
+    auto new_indices_shape_ptr = input_args[kInputIndex3]->GetShape();
 
     auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
     auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];

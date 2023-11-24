@@ -989,7 +989,7 @@ int LiteSession::AscendInit(const std::shared_ptr<InnerContext> &context) {
 }
 
 int LiteSession::CreateTensorRTDelegate() {
-#if GPU_TENSORRT
+#ifdef GPU_TENSORRT
   std::string cache_model_path;
   std::string serialize_path;
   size_t vocab_size = 0;
@@ -1044,7 +1044,7 @@ int LiteSession::CreateTensorRTDelegate() {
 }
 
 int LiteSession::CreateNPUDelegate() {
-#if SUPPORT_NPU
+#ifdef SUPPORT_NPU
   std::string model_cache_dir;
   if (config_info_ != nullptr) {
     auto common_context_iter = config_info_->find(kCommonContextSection);
@@ -1068,7 +1068,7 @@ int LiteSession::CreateNPUDelegate() {
 }
 
 int LiteSession::CreateNNAPIDelegate() {
-#if SUPPORT_NNAPI
+#ifdef SUPPORT_NNAPI
   bool enable_fp16 =
     context_->IsCpuFloat16Enabled() || context_->IsGpuFloat16Enabled() || context_->IsNpuFloat16Enabled();
   bool only_acc_device = !context_->IsDeviceTypeEnabled(DT_CPU) && !context_->IsDeviceTypeEnabled(DT_GPU) &&
@@ -1253,7 +1253,7 @@ LiteSession::~LiteSession() {
 
   delete this->executor_;
   this->executor_ = nullptr;
-#if GPU_OPENCL
+#ifdef GPU_OPENCL
   delete opencl_runtime_wrapper_;
   opencl_runtime_wrapper_ = nullptr;
 #endif
@@ -1374,7 +1374,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
         }
       }
       if (kernel->subgraph_type() == kernel::kGpuFp16SubGraph || kernel->subgraph_type() == kernel::kGpuFp32SubGraph) {
-#if GPU_OPENCL
+#ifdef GPU_OPENCL
         auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
         ret = sub_graph->ReSize();
 #endif
@@ -1413,7 +1413,7 @@ void LiteSession::SynIsolateInOutputDataType() {
 
 int LiteSession::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
                                        std::map<std::string, unsigned int> *outputGLTexture) {
-#if GPU_OPENCL
+#ifdef GPU_OPENCL
   if (!this->context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_) {
     MS_LOG(ERROR) << "the context isn't set to support OpenGL texture";
     return RET_ERROR;
@@ -1785,7 +1785,7 @@ int LiteSession::InitGPURuntime() {
       thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
     }
   }
-#if GPU_OPENCL
+#ifdef GPU_OPENCL
   if (this->context_->IsDeviceTypeEnabled(DT_GPU)) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeInnerWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
@@ -2119,9 +2119,9 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   return RET_OK;
 }
 
-bool lite::LiteSession::IsMmapEnable() {
+bool lite::LiteSession::IsMmapEnable() const {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(MS_COMPILE_IOS)
-  if (delegate_device_type_ == DT_NPU) {
+  if (delegate_device_type_ == static_cast<int>(DT_NPU)) {
     return false;
   }
   return true;

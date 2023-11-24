@@ -23,7 +23,7 @@
 #include "nnacl/op_base.h"
 #include "ops/affine_grid.h"
 #include "ops/histogram.h"
-#include "ops/logical_not.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/xlogy.h"
 #include "ops/op_name.h"
 

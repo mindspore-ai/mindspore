@@ -22,7 +22,7 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto &value_nodes = kernel_graph->graph_value_nodes();
+  const auto &value_nodes = kernel_graph->graph_value_nodes();
   bool changed = false;
   auto mng = func_graph->manager();
   if (mng == nullptr) {
@@ -30,10 +30,11 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
     func_graph->set_manager(mng);
   }
   for (auto node : todos) {
-    if (!GetValueNode<tensor::TensorPtr>(node)) {
+    auto value = GetValuePtr(node);
+    if (value == nullptr || (!value->isa<tensor::Tensor>() && !value->isa<Scalar>() && !value->isa<ValueSequence>())) {
       continue;
     }
-    if (auto vptr = node->cast<ValueNodePtr>(); value_nodes.count(vptr) == 0) {
+    if (auto vptr = node->cast<ValueNodePtr>(); vptr != nullptr && value_nodes.count(vptr) == 0) {
       auto new_node = kernel_graph->NewValueNode(vptr);
       auto ori_kernel_info = dynamic_cast<device::KernelInfo *>(vptr->kernel_info());
       if (ori_kernel_info != nullptr && ori_kernel_info->has_build_info()) {

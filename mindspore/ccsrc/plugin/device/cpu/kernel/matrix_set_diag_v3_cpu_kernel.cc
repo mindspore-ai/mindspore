@@ -35,14 +35,9 @@ constexpr size_t kIndexK = 2;
 constexpr int64_t ZERO = 0;
 }  // namespace
 
-bool MatrixSetDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixSetDiagV3>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast MatrixSetDiagV3 ops failed";
-  }
-  kernel_name_ = kernel_ptr->name();
-  align_ = kernel_ptr->get_align();
+bool MatrixSetDiagV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  align_ = GetValue<std::string>(primitive_->GetAttr(ops::kAlign));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -51,9 +46,9 @@ bool MatrixSetDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   }
   kernel_func_ = func_list_[index].second;
 
-  auto diagonal_data_type = inputs.at(kIndex1)->GetDtype();
-  input_dtype_ = inputs.at(kIndex0)->GetDtype();
-  auto output_data_type = outputs.at(kIndex0)->GetDtype();
+  auto diagonal_data_type = inputs.at(kIndex1)->dtype_id();
+  input_dtype_ = inputs.at(kIndex0)->dtype_id();
+  auto output_data_type = outputs.at(kIndex0)->dtype_id();
 
   if (diagonal_data_type != input_dtype_) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, the data type of x need be same diagonal.";
@@ -65,16 +60,14 @@ bool MatrixSetDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MatrixSetDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSetDiagV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  diagonal_shape_ = inputs[1]->GetDeviceShapeAdaptively();
-  k_shape_ = inputs[kIndexK]->GetDeviceShapeAdaptively();
+  x_shape_ = inputs[0]->GetDeviceShapeVector();
+  diagonal_shape_ = inputs[1]->GetDeviceShapeVector();
+  k_shape_ = inputs[kIndexK]->GetDeviceShapeVector();
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {
@@ -84,8 +77,8 @@ int MatrixSetDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixSetDiagV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixSetDiagV3OutputsNum, kernel_name_);
   size_t input_dims = x_shape_.size();
@@ -97,7 +90,7 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   }
   input_columns_ = static_cast<size_t>(x_shape_[input_dims - 1]);
   input_rows_ = static_cast<size_t>(x_shape_[input_dims - toCalRow]);
-  input_numelements_ = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  input_numelements_ = static_cast<size_t>(inputs[0]->size() / sizeof(T));
 
   size_t diagonal_dims = diagonal_shape_.size();
   diagonal_columns_ = static_cast<size_t>(diagonal_shape_[diagonal_dims - 1]);
@@ -106,10 +99,10 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     diagonal_rows_ = static_cast<size_t>(diagonal_shape_[diagonal_dims - toCalRow]);
   }
 
-  k_len_ = static_cast<size_t>(inputs[kIndexK]->size / sizeof(int32_t));
+  k_len_ = static_cast<size_t>(inputs[kIndexK]->size() / sizeof(int32_t));
   k_lower_ = 0;
   k_upper_ = 0;
-  auto k_Data = static_cast<int32_t *>(inputs[kIndexK]->addr);
+  auto k_Data = static_cast<int32_t *>(inputs[kIndexK]->device_ptr());
   MS_EXCEPTION_IF_NULL(k_Data);
   if (k_len_ == 0 || k_len_ > kKLengthMax) {
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k must have only one or two elements, received " << k_len_
@@ -131,13 +124,13 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 }
 
 template <typename T>
-void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_data = static_cast<T *>(outputs[0]->addr);
+void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
-  auto diagonal_data = static_cast<T *>(inputs[1]->addr);
+  auto diagonal_data = static_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(diagonal_data);
-  auto input_data = static_cast<T *>(inputs[0]->addr);
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
   if (k_len_ == 1 || (k_len_ == kKLengthMax && k_lower_ == k_upper_)) {
     for (size_t elem = 0; elem < input_numelements_; ++elem) {
@@ -180,17 +173,17 @@ void MatrixSetDiagV3CpuKernelMod::singleCal(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_data = static_cast<T *>(outputs[0]->addr);
+bool MatrixSetDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
-  auto diagonal_data = static_cast<T *>(inputs[1]->addr);
+  auto diagonal_data = static_cast<T *>(inputs[1]->device_ptr());
   MS_EXCEPTION_IF_NULL(diagonal_data);
-  auto input_data = static_cast<T *>(inputs[0]->addr);
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_data);
 
   // 64K boundary value to determine whether to use all cores
-  size_t input_size = inputs[0]->size;
+  size_t input_size = inputs[0]->size();
   if (input_size < kParallelDataNum) {
     singleCal<T>(inputs, outputs);
   } else {

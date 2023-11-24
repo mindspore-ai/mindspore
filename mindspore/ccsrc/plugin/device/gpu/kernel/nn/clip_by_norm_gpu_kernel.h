@@ -32,14 +32,12 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
 
   ~ClipByNormGpuKernelMod() override { DestroyResource(); }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-             const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -50,18 +48,18 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void ResetResource();
-  void InitIOShape(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  void InitAxisAndEpsilon(const ops::ClipByNormPtr &prim);
+  void InitIOShape(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void InitAxisAndEpsilon(const PrimitivePtr &prim);
   void InitSizeLists();
   // Do broadcast infer
   void BroadcastInfer();
   // Chose `cudnnReduceNorm2` to achieve `l2_norm` calculation
   void ChoseCudnnReduceTensorOp();
   // Determine data shape, type and format for `inputA_descriptor` and `outputC_descriptor`
-  void DetermineDeviceDataInfoForCudnn(const KernelTensorPtr &x_tensor);
+  void DetermineDeviceDataInfoForCudnn(const KernelTensor *x_tensor);
   // Launch `ClipByNorm` calculation
-  bool DoLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool DoLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   // Define cudnn variables for running `cudnnReduceTensor`
   cudnnHandle_t cudnn_handle_{nullptr};

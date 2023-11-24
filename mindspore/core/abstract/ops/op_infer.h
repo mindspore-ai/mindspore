@@ -75,6 +75,17 @@ class OpInferBase {
     auto shape = InferShape(primitive, input_args);
     return MakeAbstract(shape, type);
   }
+
+  /// \brief Infer the related Abstract for target operator.
+  ///
+  /// \param[in] primitive Operator's primitive.
+  /// \param[in] input_args Operator's inputs.
+  ///
+  /// \return AbstractBasePtr with inferred shape and inferred type.
+  virtual AbstractBasePtr InferAbstract(const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) const {
+    return nullptr;
+  }
 };
 
 using OpInferBasePtr = std::shared_ptr<OpInferBase>;

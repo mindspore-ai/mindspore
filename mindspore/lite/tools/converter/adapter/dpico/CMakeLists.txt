@@ -28,10 +28,11 @@ file(GLOB_RECURSE DPICO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/checker/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mapper/*.cc
-        ${TOOLS_DIR}/converter/adapter/utils.cc
         ${PROTO_OUTPUT_PATH}/onnx.pb.cc
         ${PROTO_OUTPUT_PATH}/pico_caffe.pb.cc
         )
+
+set(DPICO_SRC ${DPICO_SRC} ${TOOLS_DIR}/converter/adapter/utils.cc)
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE ${OPENCV_PATH}include/opencv4)

@@ -113,7 +113,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
 }  // namespace
 
 template <typename T>
-void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const std::vector<size_t> &input_strides,
+void GetGroupSet(const kernel::KernelTensor *input, const size_t last_dim, const std::vector<size_t> &input_strides,
                  const std::vector<size_t> &group_indices, std::set<T> *result) {
   if (group_indices.size() != input_strides.size() - 1) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "
@@ -121,7 +121,7 @@ void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const st
                       << "but got " << group_indices.size() << " and " << input_strides.size() << ".";
   }
   result->clear();
-  auto data_ptr = static_cast<T *>(input->addr);
+  auto data_ptr = static_cast<T *>(input->device_ptr());
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0UL);
   const auto end = start + last_dim;
   for (size_t i = start; i < end; ++i) {
@@ -129,11 +129,9 @@ void GetGroupSet(const kernel::AddressPtr input, const size_t last_dim, const st
   }
 }
 
-bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  std::string kernel_name = base_operator->GetPrim()->name();
-  std::string set_operation_str = GetValue<std::string>(base_operator->GetAttr(SET_OPERATION));
+bool DenseToDenseSetOperationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  std::string set_operation_str = GetValue<std::string>(primitive_->GetAttr(SET_OPERATION));
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   if (set_operation_str == "a-b") {
     set_operation_ = A_MINUS_B;
@@ -144,7 +142,7 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   } else if (set_operation_str == "union") {
     set_operation_ = UNION;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << ","
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ","
                       << ", the attr set_operation must be any one of "
                          "['a-b','b-a','intersection','union'], "
                       << "but got " << set_operation_str << ".";
@@ -153,7 +151,7 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -161,16 +159,14 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   return true;
 }
 
-int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseToDenseSetOperationCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
-  x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kInputX1]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kInputX2]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
@@ -197,13 +193,13 @@ void DenseToDenseSetOperationCpuKernelMod::SetCompute(const std::set<T> &set1, c
 }
 
 template <typename T>
-bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs,
+bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::KernelTensor *> &,
+                                                          const std::vector<kernel::KernelTensor *> &outputs,
                                                           const ShapeVector &output_shape, const size_t num_values,
                                                           const std::map<std::vector<size_t>, std::set<T>> *sets) {
-  auto out_indices_ptr = static_cast<int64_t *>(outputs[kOutput1]->addr);
-  auto out_values_ptr = static_cast<T *>(outputs[kOutput2]->addr);
-  auto out_shape_ptr = static_cast<int64_t *>(outputs[kOutput3]->addr);
+  auto out_indices_ptr = static_cast<int64_t *>(outputs[kOutput1]->device_ptr());
+  auto out_values_ptr = static_cast<T *>(outputs[kOutput2]->device_ptr());
+  auto out_shape_ptr = static_cast<int64_t *>(outputs[kOutput3]->device_ptr());
   size_t output_shape_size = output_shape.size();
   auto num_values_signed = SizeToLong(num_values);
   auto output_shape_size_signed = SizeToLong(output_shape_size);
@@ -239,8 +235,8 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
 }
 
 template <typename T>
-bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                        const std::vector<kernel::KernelTensor *> &outputs) {
   ShapeVector group_shape;
   GetCommonShape(x1_shape_, x2_shape_, &group_shape);
   const auto x1_strides = GetStrides(x1_shape_);
@@ -271,9 +267,13 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   return PopulateOutput<T>(inputs, outputs, group_shape, res_num, &res_sets_map);
 }
 
-void DenseToDenseSetOperationCpuKernelMod::SyncOutputShape() {
+void DenseToDenseSetOperationCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   for (uint32_t i = 0; i < real_infer_shape_.size(); i++) {
-    outputs_[i]->SetShapeVector(real_infer_shape_[i]);
+    outputs[i]->SetShapeVector(real_infer_shape_[i]);
+    size_t out_ele = LongToSize(
+      std::accumulate(real_infer_shape_[i].begin(), real_infer_shape_[i].end(), 1, std::multiplies<int64_t>()));
+    outputs[i]->set_size(out_ele * UnitSizeInBytes(outputs[i]->dtype_id()));
   }
 }
 

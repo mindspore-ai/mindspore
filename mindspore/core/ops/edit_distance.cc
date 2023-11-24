@@ -89,7 +89,7 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   auto GetShape = [&input_args](size_t index) {
     auto &abs = input_args[index];
     MS_EXCEPTION_IF_NULL(abs);
-    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
+    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->GetShape())[kShape];
   };
 
   auto hypothesis_indices_shape = GetShape(kIndex0);
@@ -146,16 +146,17 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  auto hypothesis_shape_value_ptr = input_args[kIndex2]->BuildValue();
+  auto hypothesis_shape_value_ptr = input_args[kIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(hypothesis_shape_value_ptr);
-  auto truth_shape_value_ptr = input_args[kIndex5]->BuildValue();
+  auto truth_shape_value_ptr = input_args[kIndex5]->GetValue();
   MS_EXCEPTION_IF_NULL(truth_shape_value_ptr);
   if (!IsValueKnown(hypothesis_shape_value_ptr) || !IsValueKnown(truth_shape_value_ptr)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  auto hypothesis_shape_value =
-    CheckAndConvertUtils::CheckTensorIntValue("hypothesis_shape", hypothesis_shape_value_ptr, prim_name);
-  auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name);
+  auto hypothesis_shape_value = CheckAndConvertUtils::CheckTensorIntValue(
+    "hypothesis_shape", hypothesis_shape_value_ptr, prim_name, input_args[kIndex2]->GetType());
+  auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name,
+                                                                     input_args[kIndex2]->GetType());
   ShapeVector infer_shape;
   for (size_t i = 0; i < hypothesis_shape_value.size() - 1; ++i) {
     if (hypothesis_shape_value[i] < 0 || truth_shape_value[i] < 0) {
@@ -173,28 +174,28 @@ TypePtr EditDistanceInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> indices_valid_types = {kInt64};
   const std::set<TypePtr> values_valid_types = {kNumber};
 
-  auto hypothesis_indices_type = input_args[kIndex0]->BuildType();
+  auto hypothesis_indices_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_indices_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_indices", hypothesis_indices_type, indices_valid_types,
                                                    prim_name);
-  auto hypothesis_values_type = input_args[kIndex1]->BuildType();
+  auto hypothesis_values_type = input_args[kIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_values", hypothesis_values_type, values_valid_types,
                                                    prim_name);
 
-  auto hypothesis_shape_type = input_args[kIndex2]->BuildType();
+  auto hypothesis_shape_type = input_args[kIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_shape_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_shape", hypothesis_shape_type, indices_valid_types,
                                                    prim_name);
 
-  auto truth_indices_type = input_args[kIndex3]->BuildType();
+  auto truth_indices_type = input_args[kIndex3]->GetType();
   MS_EXCEPTION_IF_NULL(truth_indices_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_indices", truth_indices_type, indices_valid_types, prim_name);
-  auto truth_values_type = input_args[kIndex4]->BuildType();
+  auto truth_values_type = input_args[kIndex4]->GetType();
   MS_EXCEPTION_IF_NULL(truth_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_values", truth_values_type, values_valid_types, prim_name);
 
-  auto truth_shape_type = input_args[kIndex5]->BuildType();
+  auto truth_shape_type = input_args[kIndex5]->GetType();
   MS_EXCEPTION_IF_NULL(truth_shape_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_shape", truth_shape_type, indices_valid_types, prim_name);
 

@@ -19,6 +19,7 @@
 #include <utility>
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
@@ -364,8 +365,8 @@ bool AscendKernelExecutor::PySyncRuning() const {
   return true;
 }
 
-bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs,
-                                           const vector<AddressPtr> &outputs) const {
+bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
+                                           const vector<KernelTensor *> &outputs) const {
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(WARNING) << "Kernel " << node->fullname_with_scope() << " input output size should be 1 but"
@@ -374,18 +375,18 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   MS_EXCEPTION_IF_NULL(stream);
-  aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
+  aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                     inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size
-                  << " count:" << inputs[0]->size;
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size()
+                  << " count:" << inputs[0]->size();
     return false;
   }
   return true;
 }
 
-bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                               std::vector<AddressPtr> *real_inputs) const {
+bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
+                                               std::vector<KernelTensor *> *real_inputs) const {
   if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
     *real_inputs = inputs;
     return true;
@@ -408,8 +409,8 @@ bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vec
   return true;
 }
 
-bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                        const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
+bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
+                                        const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                         size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
@@ -418,7 +419,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 
   uint64_t start_time = 0;
   PROFILER_START(start_time);
-  std::vector<AddressPtr> real_inputs;
+  std::vector<KernelTensor *> real_inputs;
   bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);
   if (!ret) {
     MS_LOG(ERROR) << "Get real input fail for kernel " << kernel->fullname_with_scope();
@@ -491,8 +492,8 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   return sync_ret;
 }
 
-bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream) const {
+bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs, void *stream) const {
   auto iter = node_atomics_persistent_cache_.find(node);
   if (iter == node_atomics_persistent_cache_.end()) {
     return true;
@@ -502,7 +503,7 @@ bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::ve
   }
   MS_LOG(DEBUG) << "Launch atomic clean for kernel " << node->fullname_with_scope();
   auto atomic_node = iter->second.at(0);
-  vector<AddressPtr> atomic_inputs;
+  vector<KernelTensor *> atomic_inputs;
   // The output addr need to clean
   MS_EXCEPTION_IF_NULL(atomic_node);
   if (atomic_node->inputs().size() != kAtomicCleanInputSize) {

@@ -27,21 +27,17 @@ namespace mindspore {
 namespace kernel {
 static constexpr size_t INPUT_NUM = 2;
 static constexpr size_t OUTPUT_NUM = 1;
-bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomGamma>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
-  int64_t seed = kernel_ptr->get_seed();
-  int64_t seed2 = kernel_ptr->get_seed2();
+bool GammaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  int64_t seed2 = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
 
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   output_shape_ = outputs[0]->GetShapeVector();
   alpha_shape_ = inputs[1]->GetShapeVector();
-  alpha_dtype_ = inputs[1]->GetDtype();
-  shape_dtype_ = inputs[0]->GetDtype();
+  alpha_dtype_ = inputs[1]->dtype_id();
+  shape_dtype_ = inputs[0]->dtype_id();
   shape_shape_ = inputs[0]->GetShapeVector();
   rng_.Init(seed, seed2);
 
@@ -51,8 +47,8 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T>
-void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
-  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->addr);
+void GammaCpuKernelMod::InferShape(const std::vector<KernelTensor *> &inputs) {
+  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->device_ptr());
   for (int64_t i = 0; i < shape_shape_[0]; i++) {
     output_shape_.emplace_back(static_cast<int64_t>(shape_value[i]));
   }
@@ -61,28 +57,27 @@ void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
   }
 }
 
-int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int GammaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     ret = KRET_UNKNOWN_OUT_SHAPE;
     return ret;
   }
   alpha_shape_ = inputs[1]->GetShapeVector();
-  alpha_dtype_ = inputs[1]->GetDtype();
-  shape_dtype_ = inputs[0]->GetDtype();
+  alpha_dtype_ = inputs[1]->dtype_id();
+  shape_dtype_ = inputs[0]->dtype_id();
   shape_shape_ = inputs[0]->GetShapeVector();
   return KRET_OK;
 }
 
 // T: float16 float32 float64 dtype of alpha, beta and output
 template <typename T>
-void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *samples_flat = reinterpret_cast<T *>(outputs[0]->addr);
+void GammaCpuKernelMod::Generate(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto *samples_flat = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   int64_t num_samples = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
   if (num_samples == 0) {
@@ -192,8 +187,8 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
   ParallelLaunchAutoSearch(DoWork, static_cast<size_t>(num_alphas * sample_shape_per_al), this, &parallel_search_info_);
 }
 
-bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs) {
+bool GammaCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
   output_shape_.clear();
   if (output_shape_.empty()) {
     if (shape_dtype_ == kNumberTypeInt32) {
@@ -201,7 +196,11 @@ bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
     } else if (shape_dtype_ == kNumberTypeInt64) {
       InferShape<int64_t>(inputs);
     }
-    outputs_[0]->SetShapeVector(output_shape_);
+    outputs[0]->SetShapeVector(output_shape_);
+    auto ele_size =
+      LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+    outputs[0]->set_size(ele_size * UnitSizeInBytes(outputs[0]->dtype_id()));
+
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' output size and input size mismatch.";
   }

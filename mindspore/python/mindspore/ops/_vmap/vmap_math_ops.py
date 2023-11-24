@@ -45,6 +45,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.Xdivy)
 @vmap_rules_getters.register(P.RealDiv)
 @vmap_rules_getters.register(P.FloorDiv)
+@vmap_rules_getters.register(P.FloorMod)
 @vmap_rules_getters.register(P.Maximum)
 @vmap_rules_getters.register(P.Minimum)
 @vmap_rules_getters.register(P.Atan2)
@@ -53,8 +54,8 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.Equal)
 @vmap_rules_getters.register(P.GreaterEqual)
 @vmap_rules_getters.register(P.Greater)
-@vmap_rules_getters.register(P.LessEqual)
-@vmap_rules_getters.register(P.Less)
+@vmap_rules_getters.register("LessEqual")
+@vmap_rules_getters.register("Less")
 @vmap_rules_getters.register(P.NotEqual)
 @vmap_rules_getters.register(P.LogicalOr)
 @vmap_rules_getters.register(P.LogicalAnd)
@@ -384,17 +385,15 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.ReduceSum)
 @vmap_rules_getters.register(P.ReduceMax)
 @vmap_rules_getters.register(P.ReduceMin)
 @vmap_rules_getters.register(P.ReduceMean)
 @vmap_rules_getters.register(P.ReduceProd)
 @vmap_rules_getters.register(P.ReduceAll)
 @vmap_rules_getters.register(P.ReduceAny)
-def get_reducer_vmap_rule(prim, axis_size):
-    """VmapRule for reduce operations, such as `ReduceSum`."""
+def get_reduce_vmap_rule(prim, axis_size):
+    """VmapRule for reduce operations, such as `ReduceMean`."""
     reduce_op_map = {
-        "ReduceSum": P.ReduceSum,
         "ReduceMax": P.ReduceMax,
         "ReduceMin": P.ReduceMin,
         "ReduceMean": P.ReduceMean,
@@ -406,24 +405,43 @@ def get_reducer_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = reduce_op_map.get(prim)()
 
-    keep_dims = prim.keep_dims
-    prim_name = prim.name
-
-    def vmap_rule(operand_bdim, axis_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, operand_bdim, axis_bdim)
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, keep_dims_bdim)
         if is_all_none:
             return result
 
-        x, x_dim = operand_bdim
-        axis, axis_dim = axis_bdim
-        if axis_dim is not None:
-            _raise_value_error("The source axis of `axis` in `{}` must be None, "
-                               "but got {}.".format(prim_name, axis_dim))
+        x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        keep_dims, _ = keep_dims_bdim
 
         x_ndim = F.rank(x)
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
 
-        out = prim(x, batch_axis)
+        out = prim(x, batch_axis, keep_dims)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
+        return out, out_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.ReduceSum)
+def get_reduce_sum_vmap_rule(prim, axis_size):
+    """VmapRule for `ReduceSum`."""
+
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim, skip_mode_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, keep_dims_bdim, skip_mode_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        keep_dims, _ = keep_dims_bdim
+        skip_mode, _ = skip_mode_bdim
+
+        x_ndim = F.rank(x)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+
+        out = prim(x, batch_axis, keep_dims, skip_mode)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return out, out_dim
 
@@ -542,22 +560,21 @@ def get_svd_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(math_ops.ReduceStd)
-def get_reducer_std_vmap_rule(prim, axis_size):
-    """VmapRule for reduce operations, such as `ReduceStd`."""
-    axis = prim.axis
-    keep_dims = prim.keep_dims
-    unbiased = prim.unbiased
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+def get_reduce_std_vmap_rule(prim, axis_size):
+    """VmapRule for `ReduceStd`."""
+    def vmap_rule(x_bdim, axis_bdim, unbiased_bdim, keep_dims_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, unbiased_bdim, keep_dims_bdim)
         if is_all_none:
             return result
+
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
+        unbiased, _ = unbiased_bdim
+        keep_dims, _ = keep_dims_bdim
         x_ndim = F.rank(x)
         # LpNorm is a reduction class op, so just reuse the common function.
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        reduce_std = math_ops.ReduceStd(batch_axis, unbiased=unbiased, keep_dims=keep_dims)
-        out_std, out_mean = reduce_std(x)
+        out_std, out_mean = prim(x, batch_axis, unbiased, keep_dims)
         out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return (out_std, out_dim), (out_mean, out_dim)
 
@@ -631,14 +648,12 @@ def get_renorm_rule(prim, axis_size):
 @vmap_rules_getters.register(P.LinSpace)
 def get_linspace_rule(prim, axis_size):
     """VmapRule for `LinSpace` operation."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
     else:
         batch_rank = 1
 
-    batch_linspace = P.LinSpace()
-    batch_linspace.add_prim_attr('batch_rank', batch_rank)
-    prim_name = batch_linspace.name
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(start_bdim, stop_bdim, num_bdim):
         is_all_none, result = vmap_general_preprocess(prim, start_bdim, stop_bdim, num_bdim)
@@ -651,7 +666,7 @@ def get_linspace_rule(prim, axis_size):
 
         if num_dim is not None:
             _raise_value_error("The source axis of `num` in `{}` must be None, "
-                               "but got {}.".format(prim_name, num_dim))
+                               "but got {}.".format(prim.name, num_dim))
 
         out_dim = start_dim
         if start_dim != stop_dim:
@@ -661,7 +676,7 @@ def get_linspace_rule(prim, axis_size):
             else:
                 stop = _bdim_at_any(stop, stop_dim, start_dim, axis_size)
 
-        result = batch_linspace(start, stop, num)
+        result = prim(start, stop, num)
         return result, out_dim
 
     return vmap_rule
@@ -716,24 +731,17 @@ def get_log_matrix_determinant_vmap_rule(prim, axis_size):
 def get_cum_min_max_vmap_rule(prim, axis_size):
     """VmapRule for `Cummax` and `Cummin` operation."""
 
-    cum_fun_map = {
-        "Cummin": _inner_ops.Cummin,
-        "Cummax": P.Cummax,
-    }
-    axis = prim.axis
-    prim_name = prim.name
-    prim_class = cum_fun_map.get(prim_name)
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
         old_x_ndim = F.rank(x) - 1
         old_axis = axis if axis >= 0 else axis + old_x_ndim
         new_axis = old_axis if old_axis < x_dim else old_axis + 1
-        value, index = prim_class(new_axis)(x)
+        value, index = prim(x, new_axis)
         return (value, x_dim), (index, x_dim)
 
     return vmap_rule
@@ -842,6 +850,19 @@ def get_fft_with_size_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+@vmap_rules_getters.register(math_ops.Logit)
+def get_logit_vmap_rule(prim_func, axis_size):
+    """VmapRule for `Logit` operation"""
+    if isinstance(prim_func, str):
+        raise TypeError("prim_func can't be str.")
+
+    def vmap_rule(x_bdim, eps_bdim):
+        x, x_dim = x_bdim
+        eps, _ = eps_bdim
+        out = prim_func(x, eps)
+        return out, x_dim
+
+    return vmap_rule
 
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
@@ -868,7 +889,6 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Exp)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Expm1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Floor)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Log)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(math_ops.Logit)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Log1p)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.LogicalNot)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Mish)(get_unop_vmap_rule)
@@ -879,7 +899,7 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Invert)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rint)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Round)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rsqrt)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Sigmoid)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register("Sigmoid")(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sqrt)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sign)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Real)(get_unop_vmap_rule)

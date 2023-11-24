@@ -540,7 +540,8 @@ void RegMetaTensor(const py::module *m) {
         return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
       },
       [](const py::tuple &t) {  // __setstate__
-        if (t.size() != 2) {
+        constexpr size_t expect_size = 2;
+        if (t.size() != expect_size) {
           throw std::runtime_error("Invalid state!");
         }
         /* Create a new C++ instance */
@@ -840,6 +841,8 @@ void RegMetaTensor(const py::module *m) {
     .def("data_sync", &Tensor::data_sync)
     .def("contiguous", &Tensor::contiguous)
     .def("is_contiguous", &Tensor::is_contiguous)
+    .def("stride", &Tensor::stride)
+    .def("storage_offset", &Tensor::storage_offset)
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)

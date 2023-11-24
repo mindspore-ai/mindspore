@@ -30,36 +30,37 @@ BufferAppendKernelMod::BufferAppendKernelMod() : element_nums_(0), exp_batch_(0)
 
 BufferAppendKernelMod::~BufferAppendKernelMod() {}
 
-bool BufferAppendKernelMod::Init(const CNodePtr &kernel_node) {
-  kernel_node_ = kernel_node;
-  auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-  auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-  capacity_ = GetAttr<int64_t>(kernel_node, "capacity");
-  exp_batch_ = GetAttr<int64_t>(kernel_node, "exp_batch");
+bool BufferAppendKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
+int BufferAppendKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  workspace_size_list_.clear();
+  output_size_list_.clear();
+  auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
+  auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));
+  capacity_ = GetValue<int64_t>(primitive_->GetAttr("capacity"));
+  exp_batch_ = GetValue<int64_t>(primitive_->GetAttr("exp_batch"));
   element_nums_ = shapes.size();
   for (size_t i = 0; i < element_nums_; i++) {
     exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
   }
-  // buffer size
-  for (auto i : exp_element_list) {
-    input_size_list_.push_back(i * capacity_);
-  }
-  // exp size
-  for (auto i : exp_element_list) {
-    input_size_list_.push_back(i * exp_batch_);
-  }
-  // count and head
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
   output_size_list_.push_back(0);
   workspace_size_list_.push_back(sizeof(int));
-  return true;
+  return KRET_OK;
 }
 
-void BufferAppendKernelMod::InitSizeLists() { return; }
-
-bool BufferAppendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &, void *stream) {
+bool BufferAppendKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &,
+                                   void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, kDouble * element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, kDouble * element_nums_ + 1);
   int *index_addr = GetDeviceAddress<int>(workspace, 0);
@@ -69,12 +70,18 @@ bool BufferAppendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto exp_addr = GetDeviceAddress<unsigned char>(inputs, i + element_nums_);
-    size_t one_exp_len = input_size_list_[i + element_nums_];
+    size_t one_exp_len = inputs[i + element_nums_]->size();
     status =
       BufferAppend(capacity_, one_exp_len, index_addr, LongToInt(exp_batch_), buffer_addr, exp_addr, cuda_stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
   }
   return true;
 }
+std::vector<KernelAttr> BufferAppendKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BufferAppend, BufferAppendKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

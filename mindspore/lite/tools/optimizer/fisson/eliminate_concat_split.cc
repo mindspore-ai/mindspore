@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/split_with_overlap.h"
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"

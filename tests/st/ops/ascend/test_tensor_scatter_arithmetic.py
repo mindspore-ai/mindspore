@@ -105,8 +105,6 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.int32, mstype.int64])

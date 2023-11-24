@@ -1,0 +1,12 @@
+#operator hswish_grad
+hswish_grad:
+    args:
+        y_grad:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: HSwishGrad

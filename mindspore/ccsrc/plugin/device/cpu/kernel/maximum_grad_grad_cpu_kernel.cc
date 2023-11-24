@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMaximumGradGradInputsNum = 4;
+constexpr size_t kMaximumGradGradInputsNum = 6;
 constexpr size_t kMaximumGradGradOutputsNum = 3;
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;
@@ -32,11 +32,8 @@ constexpr size_t kOutputIndex1 = 1;
 constexpr size_t kOutputIndex2 = 2;
 }  // namespace
 
-bool MaximumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool MaximumGradGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -47,18 +44,16 @@ bool MaximumGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MaximumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaximumGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  x1_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  x2_shape_ = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  grad_y1_shape_ = inputs[kIndex2]->GetDeviceShapeAdaptively();
-  grad_y2_shape_ = inputs[kIndex3]->GetDeviceShapeAdaptively();
+  x1_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  x2_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
+  grad_y1_shape_ = inputs[kIndex2]->GetDeviceShapeVector();
+  grad_y2_shape_ = inputs[kIndex3]->GetDeviceShapeVector();
 
   tensor_size_ = 1;
   output_shape_ = CPUKernelUtils::GetBroadcastShape(x1_shape_, x2_shape_);
@@ -70,28 +65,29 @@ int MaximumGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MaximumGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumGradGradOutputsNum, kernel_name_);
 
-  auto x1_addr = static_cast<T *>(inputs[kInputIndex0]->addr);
-  auto x2_addr = static_cast<T *>(inputs[kInputIndex1]->addr);
-  auto grad_y1_addr = static_cast<T *>(inputs[kInputIndex2]->addr);
-  auto grad_y2_addr = static_cast<T *>(inputs[kInputIndex3]->addr);
-  auto sopd_x1_addr = static_cast<T *>(outputs[kOutputIndex0]->addr);
-  auto sopd_x2_addr = static_cast<T *>(outputs[kOutputIndex1]->addr);
-  auto sopd_grads_addr = static_cast<T *>(outputs[kOutputIndex2]->addr);
+  auto x1_addr = static_cast<T *>(inputs[kInputIndex0]->device_ptr());
+  auto x2_addr = static_cast<T *>(inputs[kInputIndex1]->device_ptr());
+  auto grad_y1_addr = static_cast<T *>(inputs[kInputIndex2]->device_ptr());
+  auto grad_y2_addr = static_cast<T *>(inputs[kInputIndex3]->device_ptr());
+  auto sopd_x1_addr = static_cast<T *>(outputs[kOutputIndex0]->device_ptr());
+  auto sopd_x2_addr = static_cast<T *>(outputs[kOutputIndex1]->device_ptr());
+  auto sopd_grads_addr = static_cast<T *>(outputs[kOutputIndex2]->device_ptr());
 
-  auto ret_sopd_x1 = memset_s(sopd_x1_addr, 1, 0, 1);
+  auto tensor_bytes = tensor_size_ * sizeof(T);
+  auto ret_sopd_x1 = memset_s(sopd_x1_addr, tensor_bytes, 0, tensor_bytes);
   if (ret_sopd_x1 != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output[0] failed. Error no: " << ret_sopd_x1;
   }
-  auto ret_sopd_x2 = memset_s(sopd_x2_addr, 1, 0, 1);
+  auto ret_sopd_x2 = memset_s(sopd_x2_addr, tensor_bytes, 0, tensor_bytes);
   if (ret_sopd_x2 != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output[1] failed. Error no: " << ret_sopd_x2;
   }
-  auto ret_sopd_grads = memset_s(sopd_grads_addr, tensor_size_, 0, tensor_size_);
+  auto ret_sopd_grads = memset_s(sopd_grads_addr, tensor_bytes, 0, tensor_bytes);
   if (ret_sopd_grads != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output[2] failed. Error no: " << ret_sopd_grads;
   }
@@ -136,6 +132,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeFloat32)
                                                 .AddInputAttr(kNumberTypeFloat32)
                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeFloat32)
                                                 .AddOutputAttr(kNumberTypeFloat32)
                                                 .AddOutputAttr(kNumberTypeFloat32),
@@ -145,6 +143,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeInt32)
                                                 .AddInputAttr(kNumberTypeInt32)
                                                 .AddInputAttr(kNumberTypeInt32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeInt32)
                                                 .AddOutputAttr(kNumberTypeInt32)
                                                 .AddOutputAttr(kNumberTypeInt32),
@@ -154,6 +154,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeUInt32)
                                                 .AddInputAttr(kNumberTypeUInt32)
                                                 .AddInputAttr(kNumberTypeUInt32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeUInt32)
                                                 .AddOutputAttr(kNumberTypeUInt32)
                                                 .AddOutputAttr(kNumberTypeUInt32),
@@ -163,6 +165,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeInt64)
                                                 .AddInputAttr(kNumberTypeInt64)
                                                 .AddInputAttr(kNumberTypeInt64)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeInt64)
                                                 .AddOutputAttr(kNumberTypeInt64)
                                                 .AddOutputAttr(kNumberTypeInt64),
@@ -172,6 +176,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeUInt64)
                                                 .AddInputAttr(kNumberTypeUInt64)
                                                 .AddInputAttr(kNumberTypeUInt64)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeUInt64)
                                                 .AddOutputAttr(kNumberTypeUInt64)
                                                 .AddOutputAttr(kNumberTypeUInt64),
@@ -181,6 +187,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeFloat16)
                                                 .AddInputAttr(kNumberTypeFloat16)
                                                 .AddInputAttr(kNumberTypeFloat16)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeFloat16)
                                                 .AddOutputAttr(kNumberTypeFloat16)
                                                 .AddOutputAttr(kNumberTypeFloat16),
@@ -190,6 +198,8 @@ std::vector<std::pair<KernelAttr, MaximumGradGradCpuKernelMod::MaximumGradGradCP
                                                 .AddInputAttr(kNumberTypeFloat64)
                                                 .AddInputAttr(kNumberTypeFloat64)
                                                 .AddInputAttr(kNumberTypeFloat64)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                 .AddOutputAttr(kNumberTypeFloat64)
                                                 .AddOutputAttr(kNumberTypeFloat64)
                                                 .AddOutputAttr(kNumberTypeFloat64),

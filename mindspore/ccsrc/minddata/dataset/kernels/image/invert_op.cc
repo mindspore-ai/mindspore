@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/kernels/image/invert_op.h"
 
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
@@ -24,35 +23,13 @@ namespace dataset {
 // only supports RGB images
 Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-
-  try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    cv::Mat input_img = input_cv->mat();
-    if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Invert: load image failed.");
-    }
-
-    if (input_cv->Rank() != 3) {
-      RETURN_STATUS_UNEXPECTED("Invert: image shape is not <H,W,C>, got rank: " + std::to_string(input_cv->Rank()));
-    }
-    auto num_channels = input_cv->shape()[2];
-    if (num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED(
-        "Invert: image shape is incorrect, expected num of channels is 3, "
-        "but got:" +
-        std::to_string(num_channels));
-    }
-    std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-    RETURN_UNEXPECTED_IF_NULL(output_cv);
-
-    constexpr auto kMaxPixel = 255.0;
-    output_cv->mat() = cv::Scalar::all(kMaxPixel) - input_img;
-    *output = std::static_pointer_cast<Tensor>(output_cv);
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));
-  }
-  return Status::OK();
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->Rank() == kDefaultImageRank,
+    "Invert: input tensor is not in shape of <H,W,C>, but got rank: " + std::to_string(input->Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape()[kChannelIndexHWC] == kDefaultImageChannel,
+                               "Invert: the number of channels of input tensor is not 3, but got: " +
+                                 std::to_string(input->shape()[kChannelIndexHWC]));
+  return Invert(input, output);
 }
 }  // namespace dataset
 }  // namespace mindspore

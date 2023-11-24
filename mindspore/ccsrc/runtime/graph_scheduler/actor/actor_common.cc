@@ -74,7 +74,7 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strateg
     return false;
   }
 
-  if (node->isa<CNode>() && (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
+  if (node->isa<CNode>() && common::AnfAlgo::IsGetNextNode(node)) {
     return true;
   }
   return false;
@@ -150,7 +150,7 @@ bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
     return true;
   }
 
-  return (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName);
+  return !common::AnfAlgo::IsGetNextNode(node);
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {

@@ -1062,8 +1062,6 @@ def test_ascend_train_graph():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_train_pynative():
     """

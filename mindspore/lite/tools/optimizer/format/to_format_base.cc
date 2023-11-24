@@ -176,12 +176,6 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
           }
           post_node = tuple_get_item;
         }
-      } else {
-        auto status = node_infer_shape_->InferShape(post_node->cast<CNodePtr>());
-        if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-          MS_LOG(ERROR) << "infer shape failed.";
-          return lite::RET_ERROR;
-        }
       }
       if (manager_->node_users()[post_node].empty()) {
         continue;
@@ -378,7 +372,7 @@ void SetCNodeFormat(const CNodePtr &cnode, mindspore::Format dst_format) {
   if (prim->GetAttr(ops::kFormat) == nullptr && format_value != nullptr) {
     auto format = GetValue<int64_t>(format_value);
     if (format == dst_format) {
-      prim->AddAttr(ops::kFormat, format_value);
+      (void)prim->AddAttr(ops::kFormat, format_value);
     }
   }
   return;

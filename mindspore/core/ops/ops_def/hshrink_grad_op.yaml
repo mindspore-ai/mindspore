@@ -1,0 +1,16 @@
+#operator hshrink_grad
+hshrink_grad:
+    args:
+        gradients:
+            dtype: tensor
+        features:
+            dtype: tensor
+        lambd:
+            dtype: float
+            default: 0.5
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HShrinkGrad

@@ -38,18 +38,11 @@ constexpr size_t kOutputYIndex = 0;
 constexpr size_t kOutputMaskIndex = 1;
 }  // namespace
 
-bool BiasDropoutAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BiasDropoutAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputNum << " and " << kOutputNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasDropoutAdd>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BiasDropoutAdd failed!";
     return false;
   }
 
@@ -61,10 +54,10 @@ bool BiasDropoutAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
   kernel_func_ = func_list_[index].second;
 
-  keep_prob_ = kernel_ptr->get_keep_prob();
-  int64_t seed = kernel_ptr->get_seed0();
+  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr("seed0"));
   if (seed == 0) {
-    seed = kernel_ptr->get_seed1();
+    seed = GetValue<int64_t>(primitive_->GetAttr("seed1"));
     if (seed == 0) {
       seed = time(NULL);
     }
@@ -73,16 +66,15 @@ bool BiasDropoutAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int BiasDropoutAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BiasDropoutAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kInputNum || output_size_list_.size() != kOutputNum) {
+  if (inputs.size() != kInputNum || output_size_list_.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " resize : input and output size should be " << kInputNum << " and " << kOutputNum
-                  << ", but get " << input_size_list_.size() << " and " << output_size_list_.size();
+                  << ", but get " << inputs.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
   auto x_shape = inputs[kInputXIndex]->GetShapeVector();
@@ -107,8 +99,8 @@ int BiasDropoutAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool BiasDropoutAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+bool BiasDropoutAddGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kInputXIndex);
   T *bias = GetDeviceAddress<T>(inputs, kInputBiasIndex);
   T *residual = GetDeviceAddress<T>(inputs, kInputResidualIndex);

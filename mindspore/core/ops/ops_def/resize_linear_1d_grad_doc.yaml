@@ -1,0 +1,13 @@
+#operator resize_linear_1d_grad
+resize_linear_1d_grad:
+  description: |
+    Compute gradient of `ResizeLinear1D` operator.
+
+    .. warning::
+        This is an experimental API that is subject to change.
+
+    Args:
+        grads (Tensor): A Tensor of type float. 3-D with shape [batch, channel, width].
+        x (Tensor): A origin input Tensor. 3-D with shape [batch, channel, orig_width], The origin tensor that was resized.
+        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.

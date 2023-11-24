@@ -34,8 +34,8 @@ class CastCpuKernelFunc : public CpuKernelFunc {
   CastCpuKernelFunc() = default;
   ~CastCpuKernelFunc() override = default;
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  private:
   TypeId source_dtype_{kTypeUnknown};
@@ -67,14 +67,12 @@ void Cast(CastCpuKernelFunc<S, T> *content, const S *in, T *out, size_t size) {
 }
 
 template <typename S, typename T>
-bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = GetDeviceAddress<S>(inputs, kIndex0);
-  auto *output = GetDeviceAddress<T>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input);
-  MS_EXCEPTION_IF_NULL(output);
+bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<S *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
-  Cast<S, T>(this, input, output, outputs[0]->size / sizeof(T));
+  Cast<S, T>(this, input, output, outputs[0]->size() / sizeof(T));
   return true;
 }
 
@@ -815,12 +813,9 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
    CreateCastFunc<std::complex<double>, std::complex<double>>}};
 }  // namespace
 
-bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  source_dtype_ = inputs[kIndex0]->GetDtype();
-  target_dtype_ = outputs[kIndex0]->GetDtype();
+bool CastCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  source_dtype_ = inputs[kIndex0]->dtype_id();
+  target_dtype_ = outputs[kIndex0]->dtype_id();
 
   ResetKernelFunc(inputs, outputs);
   return true;
@@ -835,17 +830,15 @@ std::vector<KernelAttr> CastCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-int CastCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->GetDtype())->ToString()
-                << ", out : " << TypeIdToType(outputs[0]->GetDtype())->ToString();
+int CastCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  MS_LOG(DEBUG) << "Cast resize info :input : " << TypeIdToType(inputs[0]->dtype_id())->ToString()
+                << ", out : " << TypeIdToType(outputs[0]->dtype_id())->ToString();
   ResetKernelFunc(inputs, outputs);
-  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  return KernelMod::Resize(inputs, outputs);
 }
 
-void CastCpuKernelMod::ResetKernelFunc(const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
+void CastCpuKernelMod::ResetKernelFunc(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),

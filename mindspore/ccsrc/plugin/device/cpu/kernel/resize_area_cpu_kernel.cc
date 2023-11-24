@@ -27,10 +27,8 @@ constexpr size_t kResizeAreaOutputsNum = 1;
 int64_t ResizeAreaBound(int64_t val, int64_t limit) { return std::min(limit - 1, std::max(int64_t{0}, val)); }
 }  // namespace
 
-bool ResizeAreaCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeAreaCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeAreaInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeAreaOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -41,25 +39,22 @@ bool ResizeAreaCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   }
   kernel_func_ = func_list_[index].second;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeArea>(base_operator);
-  MS_ERROR_IF_NULL(kernel_ptr);
-  align_corners_ = kernel_ptr->get_align_corners();
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   return true;
 }
 
-int ResizeAreaCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeAreaCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input0_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input0_shape = inputs[kIndex0]->GetDeviceShapeVector();
   batch_size_ = input0_shape[kIndex0];
   in_height_ = input0_shape[kIndex1];
   in_width_ = input0_shape[kIndex2];
   channels_ = input0_shape[kIndex3];
 
-  auto output_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   out_height_ = output_shape[kIndex1];
   out_width_ = output_shape[kIndex2];
   height_scale_ = Scaling(in_height_, out_height_, align_corners_);
@@ -81,10 +76,11 @@ int ResizeAreaCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs,
                                           const std::vector<ResizeAreaCachedInterpolation> &x_interps_) const {
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<float *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_addr = static_cast<float *>(outputs[0]->device_ptr());
   float scale = 1.0 / (height_scale_ * width_scale_);
   std::vector<float> y_scales;
   std::vector<const T *> y_ptrs;

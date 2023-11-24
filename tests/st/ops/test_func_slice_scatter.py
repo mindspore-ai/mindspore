@@ -91,3 +91,29 @@ def test_ops_slice_scatter_error(mode):
     net = Net(1, 1, 1, 1)
     with pytest.raises(ValueError):
         net(x, y)
+
+    with pytest.raises(TypeError):
+        net(1., 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_slice_scatter_empty_input(mode):
+    """
+    Feature: ops.slice_scatter error
+    Description: Verify slice_scatter with empty input
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = Tensor([], ms.float32)
+    y = Tensor([], ms.float32)
+    net = Net(0, 0, 1, 1)
+    output = net(x, y)
+    expect_output = []
+    assert np.allclose(output.asnumpy(), expect_output)

@@ -31,7 +31,7 @@ PrimitiveCPtr TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  prim->set_format(mindspore::Format::NHWC);
+  prim->set_data_format(mindspore::Format::NHWC);
   prim->set_round_mode(mindspore::RoundMode::FLOOR);
   prim->set_global(false);
 

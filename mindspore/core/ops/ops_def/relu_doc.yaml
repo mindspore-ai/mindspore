@@ -1,0 +1,37 @@
+relu:
+    description: |
+        Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
+
+        It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
+        will be suppressed and the active neurons will stay the same.
+
+        .. math::
+
+            ReLU(input) = (input)^+ = \max(0, input)
+
+        Note:
+            In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
+            output one more Mask.
+
+        Args:
+            x (Tensor): Input Tensor of numeric types.
+
+        Returns:
+            Tensor, has the same dtype and shape as `x`.
+
+        Raises:
+            TypeError: If dtype of `x` is not a number.
+            TypeError: If `x` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> output = ops.relu(x)
+            >>> print(output)
+            [[0. 4. 0.]
+             [2. 0. 9.]]

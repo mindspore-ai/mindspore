@@ -40,23 +40,26 @@ struct PyFuncArgumentInfo {
   std::vector<PythonOjectType> object_types;
 };
 
-class PyFuncCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class PyFuncCpuKernelMod : public NativeCpuKernelMod {
  public:
   PyFuncCpuKernelMod() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
   ~PyFuncCpuKernelMod() = default;
 
-  // Init kernel including analyse PyFunc input and output info.
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   // Construct arguments with raw memory, invoke Python function and then convert result to raw memory.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   // Analyse PyFunc input/output spec.
-  void BuildFuncInfo(const CNodePtr &kernel_node);
+  void BuildFuncInfo(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                     const std::vector<KernelTensor *> &outputs);
   // Get Python function from anchor.
   py::function GetPythonFunc() const;
-  bool ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool ExecuteKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   bool init_;
   bool fake_output_;

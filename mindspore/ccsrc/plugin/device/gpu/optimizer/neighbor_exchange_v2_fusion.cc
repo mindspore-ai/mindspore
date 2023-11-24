@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 
+#include "base/base.h"
 #include "ops/array_op_name.h"
 #include "ops/sequence_ops.h"
 #include "ops/other_ops.h"
@@ -568,11 +569,11 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNode(const FuncGraphPtr &graph,
                                                     const std::vector<TypeId> &output_dtype, int64_t axis,
                                                     int64_t input_nums) const {
   MS_EXCEPTION_IF_NULL(graph);
-  auto concat = NewCNode(concat_input, graph);
+  std::vector<AnfNodePtr> new_concat_input(concat_input.begin(), concat_input.end());
+  new_concat_input.push_back(NewValueNode(MakeValue<int64_t>(axis)));
+  auto concat = NewCNode(new_concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
   common::AnfAlgo::SetOutputInferTypeAndShape(output_dtype, output_shape, concat.get());
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
   std::vector<int64_t> dyn_input_size_empty{input_nums};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   return concat;

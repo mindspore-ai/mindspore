@@ -14,4 +14,4 @@ mindspore.ops.atleast_1d
         Tensor或Tensor列表。如果返回列表，则列表中的每一个元素 `a` 满足： `a`.ndim >= 1。
 
     异常：
-        - **TypeError** - `input` 不是一个Tensor或Tensor列表。
+        - **TypeError** - `inputs` 不是一个Tensor或Tensor列表。

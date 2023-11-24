@@ -34,37 +34,38 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
   DynamicBroadcastGradientArgsCpuKernelMod() : r0_size_(0), r1_size_(0) {}
   ~DynamicBroadcastGradientArgsCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
 
-  void SyncOutputShape() override {
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     ShapeVector r0_shape{SizeToLong(r0_size_)};
     ShapeVector r1_shape{SizeToLong(r1_size_)};
 
-    outputs_[0]->SetShapeVector(r0_shape);
-    outputs_[1]->SetShapeVector(r1_shape);
+    outputs[0]->SetShapeVector(r0_shape);
+    outputs[1]->SetShapeVector(r1_shape);
+    outputs[0]->set_size(r0_size_ * UnitSizeInBytes(outputs[0]->dtype_id()));
+    outputs[1]->set_size(r1_size_ * UnitSizeInBytes(outputs[1]->dtype_id()));
 
     return;
   }
 
  protected:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   size_t r0_size_;
   size_t r1_size_;

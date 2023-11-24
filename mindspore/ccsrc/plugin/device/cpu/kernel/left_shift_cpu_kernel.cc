@@ -26,14 +26,12 @@ const size_t kLeftShiftInputsNum = 2;
 const size_t kLeftShiftOutputsNum = 1;
 }  // namespace
 
-bool LeftShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LeftShiftCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLeftShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLeftShiftOutputsNum, kernel_name_);
-  input_type_1_ = inputs[0]->GetDtype();
-  input_type_2_ = outputs[0]->GetDtype();
+  input_type_1_ = inputs[0]->dtype_id();
+  input_type_2_ = outputs[0]->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'x2' must be the same as the type of 'x1', "
@@ -49,10 +47,9 @@ bool LeftShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int LeftShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LeftShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -62,9 +59,9 @@ int LeftShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   return ret;
 }
 
-bool LeftShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                   const std::vector<AddressPtr> & /* workspace */,
-                                   const std::vector<AddressPtr> &outputs) {
+bool LeftShiftCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> & /* workspace */,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (input_type_1_ == kNumberTypeInt8) {
     return IntCompute<int8_t>(inputs, outputs);
   } else if (input_type_1_ == kNumberTypeInt16) {
@@ -90,10 +87,11 @@ bool LeftShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-bool LeftShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool LeftShiftCpuKernelMod::IntCompute(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
@@ -121,10 +119,11 @@ bool LeftShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, co
 }
 
 template <typename T>
-bool LeftShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = static_cast<T *>(inputs[0]->addr);
-  const auto *input2 = static_cast<T *>(inputs[1]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
+bool LeftShiftCpuKernelMod::UIntCompute(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto *input1 = static_cast<T *>(inputs[0]->device_ptr());
+  const auto *input2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *output = static_cast<T *>(outputs[0]->device_ptr());
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }

@@ -36,8 +36,6 @@ class BoolTensorIndexSetItem(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_5_index_5(mode):
@@ -66,8 +64,6 @@ def test_bool_tensor_index_get_item_x_5_index_5(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448x448(mode):
@@ -216,8 +212,6 @@ def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
@@ -245,8 +239,6 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
@@ -270,7 +262,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

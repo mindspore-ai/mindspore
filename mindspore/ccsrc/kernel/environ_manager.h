@@ -39,8 +39,11 @@ class BACKEND_EXPORT EnvironMgr {
 
   void Clear();
 
-  // Check whether the inputs of EnvironGet kernel or EnvironSet kernel are valid.
+  // Check whether the inputs of EnvironGet or EnvironSet are valid.
   bool CheckEnvInput(const CNodePtr &kernel_node) const;
+
+  bool CheckEnvInput(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                     const std::vector<KernelTensor *> &outputs) const;
   // Check whether is scalar tensor. Environ handle and env key only support scalar tensor currently.
   bool IsScalarTensor(TypeId type, const std::vector<int64_t> &shape) const;
 

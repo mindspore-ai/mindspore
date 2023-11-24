@@ -219,23 +219,6 @@ std::string GetAscendPath() {
   return path_tmp.substr(0, pos);
 }
 
-std::string GetAICoreNumber() {
-  constexpr int32_t kModelTypeAiCore = 4;  // enum DEV_MODULE_TYPE { MODULE_TYPE_AICORE = 4 }
-  constexpr int32_t kInfoTypeCoreNum = 3;  // enum DEV_INFO_TYPE { INFO_TYPE_CORE_NUM = 3 }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  int64_t aicore_number = 0;
-  auto rt_ret = rtGetDeviceInfo(device_id, kModelTypeAiCore, kInfoTypeCoreNum, &aicore_number);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(WARNING) << "Get aicore number for device " << device_id
-                    << " failed, will compile tbe op with empty core_num.";
-    return "";
-  }
-  MS_LOG(DEBUG) << "AiCore number of device " << device_id << " is " << aicore_number;
-  return std::to_string(aicore_number);
-}
-
 std::string GetErrorMsg(uint32_t rt_error_code) {
   auto find_iter = error_msg.find(rt_error_code);
   if (find_iter == error_msg.end()) {
@@ -250,7 +233,8 @@ constexpr auto k910BAscendVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
   {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
   {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-  {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+  {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+  {"Ascend910B4", "ascend910b"}};
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
@@ -276,19 +260,24 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
     exit(0);
   }
-  if (iter->second == k910BAscendVersion) {
+
+  auto enable_ge = common::GetEnv("MS_ENABLE_GE");
+  if (enable_ge.empty()) {
     common::SetEnv("MS_ENABLE_GE", "1");
-    auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
-    if (format_mode.empty()) {
-      common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
-    }
-    auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
-    auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
-    // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
-    if (force_acl.empty() && disable_ref != "1") {
-      common::SetEnv("MS_DEV_FORCE_ACL", "1");
-    }
   }
+
+  auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
+  if (format_mode.empty()) {
+    common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
+  }
+
+  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+  auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
+  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
+  if (force_acl.empty() && disable_ref != "1") {
+    common::SetEnv("MS_DEV_FORCE_ACL", "1");
+  }
+
   return true;
 }();
 #endif

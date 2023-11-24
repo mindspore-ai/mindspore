@@ -20,10 +20,8 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kNumTwo = 2;
 
-bool SparseAddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseAddmm>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool SparseAddmmGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -41,14 +39,13 @@ bool SparseAddmmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
-  unit_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  unit_indices_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  unit_values_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   return true;
 }
 
-int SparseAddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseAddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -58,19 +55,15 @@ int SparseAddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   ResetResource();
 
-  std::vector<int64_t> indices_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> mat2_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex3)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> mat3_shape_ = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex4)->GetDeviceShapeAdaptively().end());
-  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> indices_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                             inputs.at(kIndex0)->GetDeviceShapeVector().end());
+  std::vector<int64_t> mat2_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> mat3_shape_ = std::vector<int64_t>(inputs.at(kIndex4)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex4)->GetDeviceShapeVector().end());
+  std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
-  int64_t mat2_elements_ =
-    std::accumulate(mat2_shape_.begin(), mat2_shape_.end(), int64_t(1), std::multiplies<int64_t>());
-  int64_t mat3_elements_ =
-    std::accumulate(mat3_shape_.begin(), mat3_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t out_elements_ =
     std::accumulate(output_shape_.begin(), output_shape_.end(), int64_t(1), std::multiplies<int64_t>());
 
@@ -85,21 +78,15 @@ int SparseAddmmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (input_values_num_ == 0) {
     is_null_input_ = true;
   }
-  input_size_list_.emplace_back(input_values_num_ * unit_indices_size_ * kNumTwo);  // input_index
-  input_size_list_.emplace_back(input_values_num_ * unit_values_size_);             // input_value
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                      // input_shape
-  input_size_list_.emplace_back(mat2_elements_ * unit_values_size_);                // x2_dense
-  input_size_list_.emplace_back(mat3_elements_ * unit_values_size_);                // x3_dense
-  input_size_list_.emplace_back(unit_values_size_);                                 // alpha
-  input_size_list_.emplace_back(unit_values_size_);                                 // beta
-  output_size_list_.emplace_back(out_elements_ * unit_values_size_);                // output_dense
+
+  output_size_list_.emplace_back(out_elements_ * unit_values_size_);  // output_dense
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SparseAddmmGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   S *input_indices = GetDeviceAddress<S>(inputs, 0);
   T *input_values = GetDeviceAddress<T>(inputs, 1);
   S *input_shape = GetDeviceAddress<S>(inputs, 2);

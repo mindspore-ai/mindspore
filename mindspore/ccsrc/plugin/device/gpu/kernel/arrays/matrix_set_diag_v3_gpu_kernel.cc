@@ -26,9 +26,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool MatrixSetDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MatrixSetDiagV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimMatrixSetDiagV3->name()) {
     MS_LOG(ERROR) << "For 'MatrixSetDiagV3GpuKernelMod', it should get MatrixSetDiagV3 but got invalid kernel name: "
                   << kernel_name_;
@@ -41,17 +40,15 @@ bool MatrixSetDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto kernel_ptr = std::make_shared<ops::MatrixSetDiagV3>(base_operator->GetPrim());
-  auto alignment = kernel_ptr->get_align();
+
+  auto alignment = GetValue<std::string>(primitive_->GetAttr("align"));
   alignment_ = GetAlignments(alignment);
   return true;
 }
 
-int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixSetDiagV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -91,8 +88,8 @@ int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -100,16 +97,16 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   auto diag = inputs.at(kIndex1);
   auto k = inputs.at(kIndex2);
   auto output = outputs.at(kIndex0);
-  auto input_device_address = reinterpret_cast<T *>(input->addr);
-  auto diag_device_address = reinterpret_cast<T *>(diag->addr);
-  auto k_device_address = reinterpret_cast<int *>(k->addr);
-  auto output_device_address = reinterpret_cast<T *>(output->addr);
+  auto input_device_address = reinterpret_cast<T *>(input->device_ptr());
+  auto diag_device_address = reinterpret_cast<T *>(diag->device_ptr());
+  auto k_device_address = reinterpret_cast<int *>(k->device_ptr());
+  auto output_device_address = reinterpret_cast<T *>(output->device_ptr());
 
   std::vector<int> host_k_vec;
-  size_t k_length = k->size / sizeof(int);
+  size_t k_length = k->size() / sizeof(int);
   host_k_vec.resize(k_length);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(host_k_vec.data(), k_device_address, k->size, cudaMemcpyDeviceToHost,
+    cudaMemcpyAsync(host_k_vec.data(), k_device_address, k->size(), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "MatrixSetDiagV3GpuKernelMod cuda copy device to host Fail");
   if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
@@ -153,7 +150,7 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 
   // Copy input to output first, then set diagonal value to output.
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpy(output_device_address, input_device_address, input->size, cudaMemcpyDeviceToDevice),
+    cudaMemcpy(output_device_address, input_device_address, input->size(), cudaMemcpyDeviceToDevice),
     "MatrixSetDiagV3GpuKernelMod cuda copy input to output Fail");
   bool right_align_super_diagonal = (alignment_.first == MatrixDiag::RIGHT);
   bool right_align_sub_diagonal = (alignment_.second == MatrixDiag::RIGHT);

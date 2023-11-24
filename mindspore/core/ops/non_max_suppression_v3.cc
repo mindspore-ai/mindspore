@@ -48,23 +48,23 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   auto boxes_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape]);
   auto max_output_size_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape]);
   auto iou_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape]);
   auto score_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape]);
-  auto in_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto in_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  auto in_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
-  auto in_shape4 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape];
-  auto in_shape5 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape]);
+  auto in_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto in_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto in_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto in_shape4 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  auto in_shape5 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
   if (IsDynamicRank(in_shape1) || IsDynamicRank(in_shape2) || IsDynamicRank(in_shape3) || IsDynamicRank(in_shape4) ||
       IsDynamicRank(in_shape5)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -89,7 +89,7 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
                                            kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("score_threshold size", SizeToLong(score_threshold_shape->shape().size()),
                                            kEqual, 0, prim_name);
-  auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   // calculate output shape
   ShapeVector selected_indices_shape = {-1};
   auto selected_indices_max_shape = scores_shape_map[kShape];
@@ -104,11 +104,11 @@ TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto boxes_type = input_args[0]->BuildType();
-  auto scores_type = input_args[1]->BuildType();
-  auto max_output_size_type = input_args[2]->BuildType();
-  auto iou_threshold_type = input_args[3]->BuildType();
-  auto score_threshold_type = input_args[4]->BuildType();
+  auto boxes_type = input_args[0]->GetType();
+  auto scores_type = input_args[1]->GetType();
+  auto max_output_size_type = input_args[2]->GetType();
+  auto iou_threshold_type = input_args[3]->GetType();
+  auto score_threshold_type = input_args[4]->GetType();
   // boxes and scores must have same type
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;

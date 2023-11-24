@@ -18,26 +18,23 @@
 #include <functional>
 #include <map>
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/image_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/resize_bilinear.h"
-#include "ops/resize_bilinear_v2.h"
+#include "ops/ops_func_impl/resize_bilinear_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kResizeBilinearInputsNum = 1;
-constexpr size_t kResizeBilinearV2InputsNum = 2;
+constexpr size_t kResizeBilinearV2InputsNum = 4;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 }  // namespace
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelMod::KernelRunFunc>>;
 
-bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool ResizeBilinearCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum << " or "
                   << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
@@ -48,32 +45,29 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                   << ", but got " << outputs.size();
     return false;
   }
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
+}
 
-  if (kernel_name_ == prim::kPrimResizeBilinear->name()) {
-    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinear>(base_operator);
-    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
-    align_corners_ = resize_bilinear_op->get_align_corners();
-    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
-  } else {
-    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinearV2>(base_operator);
-    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
-    align_corners_ = resize_bilinear_op->get_align_corners();
-    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
+int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-
+  // for ResizeBilinear, the inputs index will be out of range.
+  if (kernel_name_ == "ResizeBilinear") {
+    auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
+    MS_EXCEPTION_IF_NULL(align_corners_ptr);
+    align_corners_ = GetValue<bool>(align_corners_ptr);
+    auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
+    MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
+    half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
+  } else {
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+    half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  }
   if (half_pixel_centers_ == true && align_corners_ == true) {
     MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;
-  }
-
-  return MatchKernelFunc(base_operator, inputs, outputs);
-}
-
-int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
-    return ret;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
   output_shape_ = Convert2SizeTClipNeg(outputs.at(kIndex0)->GetShapeVector());
@@ -93,9 +87,9 @@ int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return static_cast<int>(KRET_OK);
 }
 
-bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &,
-                                                     const std::vector<AddressPtr> &outputs) const {
+bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &,
+                                                     const std::vector<KernelTensor *> &outputs) const {
   auto output_addr = GetDeviceAddress<float16>(outputs, kIndex0);
   auto input_addr = GetDeviceAddress<float16>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(output_addr);
@@ -103,17 +97,17 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 
   float *float_input_addr = nullptr;
   float *float_output_addr = nullptr;
-  size_t input_mem_size = inputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t input_mem_size = inputs[0]->size() / sizeof(float16) * sizeof(float);
   float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
   if (float_input_addr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc memory failed.";
     return false;
   }
-  for (size_t i = 0; i < ((inputs[0]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[0]->size()) / sizeof(float16)); ++i) {
     float_input_addr[i] = static_cast<float>(input_addr[i]);
   }
 
-  size_t output_mem_size = outputs[0]->size / sizeof(float16) * sizeof(float);
+  size_t output_mem_size = outputs[0]->size() / sizeof(float16) * sizeof(float);
   float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
   if (float_output_addr == nullptr) {
     free(float_input_addr);
@@ -174,8 +168,9 @@ bool ResizeBilinearCpuKernelMod::LaunchFloat16Kernel(const std::vector<AddressPt
 }
 
 template <typename T>
-bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs) const {
+bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &outputs) const {
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   auto float_input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   auto float_output_addr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -241,17 +236,26 @@ FuncVec &ResizeBilinearCpuKernelMod::GetFuncList() const {
      &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat16),
      &ResizeBilinearCpuKernelMod::LaunchFloat16Kernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-     &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-     &ResizeBilinearCpuKernelMod::LaunchFloat16Kernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-     &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

@@ -25,9 +25,9 @@ constexpr int64_t kSparseSparseMinimumInputsNum = 6;
 constexpr int64_t kSparseSparseMinimumOutputsNum = 2;
 }  // namespace
 
-bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeUInt8) {
     LaunchKernel<uint8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt16) {
@@ -52,30 +52,24 @@ bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::AddressPt
   return true;
 }
 
-bool SparseSparseMinimumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool SparseSparseMinimumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;
-  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseMinimumOutputsNum, kernel_name_);
-  dtype_ = inputs.at(kIndex1)->GetDtype();
-  itype_ = inputs.at(kIndex0)->GetDtype();
+  dtype_ = inputs.at(kIndex1)->dtype_id();
+  itype_ = inputs.at(kIndex0)->dtype_id();
   value_size_ = SizeToLong(abstract::TypeIdSize(dtype_));
   indice_size_ = SizeToLong(abstract::TypeIdSize(itype_));
-  shape_size_ = SizeToLong(abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype()));
+  shape_size_ = SizeToLong(abstract::TypeIdSize(inputs.at(kIndex2)->dtype_id()));
   return true;
 }
 
-int SparseSparseMinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+int SparseSparseMinimumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
   auto x1_indice_shape = inputs.at(kIndex0)->GetShapeVector();
   auto x2_indice_shape = inputs.at(kIndex3)->GetShapeVector();
@@ -83,28 +77,22 @@ int SparseSparseMinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   x2_nnz_ = x2_indice_shape[0];
   num_dims_ = x1_indice_shape[1];
   auto max_nnz = x1_nnz_ + x2_nnz_;
-  (void)input_size_list_.emplace_back(x1_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(x1_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
-  (void)input_size_list_.emplace_back(x2_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(x2_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
   (void)output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
   (void)output_size_list_.emplace_back(max_nnz * value_size_);
   return KRET_OK;
 }
 
 template <typename T>
-void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto x1_indices_addr = static_cast<int64_t *>(inputs[0]->addr);
-  auto x1_values_addr = static_cast<T *>(inputs[1]->addr);
-  auto x1_shape_addr = static_cast<int64_t *>(inputs[2]->addr);
-  auto x2_indices_addr = static_cast<int64_t *>(inputs[3]->addr);
-  auto x2_values_addr = static_cast<T *>(inputs[4]->addr);
-  auto x2_shape_addr = static_cast<int64_t *>(inputs[5]->addr);
-  auto y_indices_addr = static_cast<int64_t *>(outputs[0]->addr);
-  auto y_values_addr = static_cast<T *>(outputs[1]->addr);
+void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x1_indices_addr = static_cast<int64_t *>(inputs[0]->device_ptr());
+  auto x1_values_addr = static_cast<T *>(inputs[1]->device_ptr());
+  auto x1_shape_addr = static_cast<int64_t *>(inputs[2]->device_ptr());
+  auto x2_indices_addr = static_cast<int64_t *>(inputs[3]->device_ptr());
+  auto x2_values_addr = static_cast<T *>(inputs[4]->device_ptr());
+  auto x2_shape_addr = static_cast<int64_t *>(inputs[5]->device_ptr());
+  auto y_indices_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
+  auto y_values_addr = static_cast<T *>(outputs[1]->device_ptr());
 
   for (size_t n = 0; n < static_cast<size_t>(num_dims_); n++) {
     if (x1_shape_addr[n] != x2_shape_addr[n]) {
@@ -192,16 +180,17 @@ void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   }
 }
 
-void SparseSparseMinimumCpuKernelMod::SyncOutputShape() {
+void SparseSparseMinimumCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> dims;
   (void)dims.emplace_back(y_nnz_);
   (void)dims.emplace_back(num_dims_);
   std::vector<int64_t> dim;
   (void)dim.emplace_back(y_nnz_);
-  outputs_[0]->SetShapeVector(dims);
-  outputs_[1]->SetShapeVector(dim);
-  outputs_[0]->SetDtype(TypeIdToType(itype_));
-  outputs_[1]->SetDtype(TypeIdToType(dtype_));
+  outputs[0]->SetShapeVector(dims);
+  outputs[1]->SetShapeVector(dim);
+  outputs[0]->set_size(LongToSize(y_nnz_ * num_dims_) * UnitSizeInBytes(itype_));
+  outputs[1]->set_size(LongToSize(y_nnz_) * UnitSizeInBytes(dtype_));
 }
 
 #define ADD_KERNEL(t1, t2, t3, t4, t5, t6, t7, t8) \

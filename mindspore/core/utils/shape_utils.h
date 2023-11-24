@@ -18,8 +18,8 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include <algorithm>
-#include <vector>
 #include <string>
+#include <vector>
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 
@@ -49,15 +49,44 @@ inline size_t SizeOf(const ShapeVector &shape) {
   return data_size;
 }
 
-inline bool IsDynamicRank(const ShapeVector &shape) {
-  if ((shape.size() == abstract::Shape::kDynamicRankLen) && (shape[0] == abstract::Shape::kShapeRankAny)) {
+inline bool IsOneElementShape(const ShapeVector &shape) {
+  if (shape.empty()) {
+    return true;
+  } else if (shape.size() == 1 && shape[0] == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+inline bool IsMactchedShapeInferValue(const ShapeVector &shape1, const ShapeVector &shape2) {
+  if (IsOneElementShape(shape1) && IsOneElementShape(shape2)) {
     return true;
   }
-  if (std::any_of(shape.cbegin(), shape.cend(),
-                  [](ShapeValueDType s) { return s == abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got (" << ShapeVectorToString(shape)
-                             << ").";
+  if (shape1 == shape2) {
+    return true;
   }
+  return false;
+}
+
+inline bool IsDynamicRank(const ShapeVector &shape) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] > abstract::Shape::kShapeRankAny) {
+      continue;
+    }
+
+    if (shape.size() == abstract::Shape::kDynamicRankLen) {
+      return true;
+    } else if (i == 1) {
+      MS_LOG(DEBUG) << "Shape(" << ShapeVectorToString(shape) << ") is a valid shape for real tuple tensor.";
+      return true;
+    } else {
+      MS_EXCEPTION(ValueError) << "Shape should have only one -2 for normal tensor,or [not -2, -2] for real tuple "
+                                  "tensor, or no -2 at all, but got ("
+                               << ShapeVectorToString(shape) << ").";
+    }
+  }
+
   return false;
 }
 
@@ -67,17 +96,64 @@ inline bool IsDynamicShape(const ShapeVector &shape) {
 }
 
 inline bool IsDynamic(const ShapeVector &shape) {
-  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < abstract::Shape::kShapeRankAny; })) {
-    MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << ShapeVectorToString(shape)
-                             << ").";
+  for (auto &s : shape) {
+    if (s > abstract::Shape::kShapeDimAny) {
+      continue;
+    }
+
+    if (s < abstract::Shape::kShapeRankAny) {
+      MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << ShapeVectorToString(shape)
+                               << ").";
+    }
+
+    return true;
   }
-  return IsDynamicRank(shape) || IsDynamicShape(shape);
+
+  return false;
 }
 
 inline bool IsShapeEmpty(const ShapeVector &shape) {
   constexpr size_t kOne = 1;
   constexpr size_t kZero = 0;
   return shape.size() == kOne && shape[0] == kZero;
+}
+
+// use for the op with the constraint that output shape must be same as input shape
+inline ShapeVector InferOutShapeSameAsInShape(const ShapeArray &input_shapes) {
+  ShapeVector out_shape{};
+  for (size_t i = 0; i < input_shapes.size(); i++) {
+    auto in_shape = input_shapes[i];
+    // scalar case
+    if (in_shape.empty()) {
+      return out_shape;
+    }
+    // skip to next input shape if current shape is dynamic rank
+    if (IsDynamicRank(in_shape)) {
+      continue;
+    }
+    // initialize output shape
+    auto rank = in_shape.size();
+    if (out_shape.empty()) {
+      out_shape.resize(rank, abstract::Shape::kShapeDimAny);
+    }
+    if (out_shape.size() != rank) {
+      MS_EXCEPTION(ValueError) << "Ranks of inputs must be all same if they are not dynamic.";
+    }
+    for (size_t j = 0; j < rank; j++) {
+      if (out_shape[j] != abstract::Shape::kShapeDimAny && in_shape[j] != abstract::Shape::kShapeDimAny &&
+          out_shape[j] != in_shape[j]) {
+        MS_EXCEPTION(ValueError) << "Corresponding axis of input shapes must be same if they are not dynamic.";
+      }
+      if (out_shape[j] == abstract::Shape::kShapeDimAny && in_shape[j] != abstract::Shape::kShapeDimAny) {
+        out_shape[j] = in_shape[j];
+      }
+    }
+  }
+  // if all input shapes are dynamic rank, return dynamic rank output
+  if (out_shape.empty()) {
+    return {abstract::Shape::kShapeRankAny};
+  }
+  return out_shape;
 }
 
 template <typename T>

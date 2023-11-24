@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/less.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ir/dtype/type.h"
 #include "ir/value.h"
 #include "abstract/dshape.h"

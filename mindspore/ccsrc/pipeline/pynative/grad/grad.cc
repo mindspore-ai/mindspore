@@ -291,14 +291,14 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
     //    so if y is a valuenode, the dy is useless, we can free x in ahead.
     bool x_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex0]);
     bool y_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex1]);
-    if (x_is_const_value) {
-      op_run_info->op_grad_info->input_value[kIndex1] =
-        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex1]);
+    if (x_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex1]->isa<tensor::Tensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex1] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex1]->cast<tensor::TensorPtr>());
       MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << op_name;
     }
-    if (y_is_const_value) {
-      op_run_info->op_grad_info->input_value[kIndex0] =
-        PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(op_run_info->base_op_run_info.input_tensor[kIndex0]);
+    if (y_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex0]->isa<tensor::Tensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex0] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex0]->cast<tensor::TensorPtr>());
       MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << op_name;
     }
   } else if (kDivOp.find(op_name) != kDivOp.end()) {
@@ -310,20 +310,37 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
   }
 }
 
+void FreeUselessValue(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(top_cell);
+  if (top_cell->is_high_order_top_cell()) {
+    return;
+  }
+
+  // Free bprop not used input
+  for (size_t i = 0; i < op_run_info->input_size; i++) {
+    if (!op_run_info->input_unused_in_bprop[i]) {
+      continue;
+    }
+    op_run_info->op_grad_info->input_value[i] =
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->input_value[i]);
+  }
+
+  // Free bprop not used output
+  if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
+    // Process output
+    op_run_info->op_grad_info->out_value =
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
+  }
+  // Free special op memory
+  FreeSpecialOpValue(op_run_info->op_grad_info->op_prim->name(), op_run_info, &op_run_info->op_grad_info->out_value);
+}
+
 GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   bool out_used_in_bporp_graph = true;
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
-  // Free bprop not used output
-  if (!top_cell->is_high_order_top_cell()) {
-    if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
-      // Process output
-      op_run_info->op_grad_info->out_value =
-        PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
-    }
-    // Free special op memory
-    FreeSpecialOpValue(op_run_info->op_grad_info->op_prim->name(), op_run_info, &op_run_info->op_grad_info->out_value);
-  }
+  FreeUselessValue(op_run_info, top_cell);
 
   op_run_info->op_grad_info->out_abs = op_run_info->base_op_run_info.abstract;
   auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
@@ -1793,6 +1810,14 @@ CNodePtr GradExecutor::ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_
 void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const {
   if (save_graphs_ || grad_is_running_) {
     MS_EXCEPTION_IF_NULL(op_run_info);
+    if (op_run_info->input_value_id.empty()) {
+      (void)std::transform(op_run_info->op_grad_info->input_value.begin(), op_run_info->op_grad_info->input_value.end(),
+                           std::back_inserter(op_run_info->input_value_id),
+                           [](const ValuePtr &value) { return PyNativeAlgo::Common::GetIdByValue(value); });
+    }
+    if (op_run_info->out_value_id == "") {
+      op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->op_grad_info->out_value);
+    }
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_abstract(op_run_info->base_op_run_info.abstract);
@@ -1948,6 +1973,19 @@ void GradExecutor::DispatchAssistQueueTask(std::function<void(void)> task) const
   if (!success) {
     assist_queue_->CheckException();
   }
+}
+
+void GradExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "GradExecutor reinitialize after fork.";
+  if (bprop_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize bprop_queue_.";
+    bprop_queue_->ChildAfterFork();
+  }
+  if (assist_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize assist_queue_.";
+    assist_queue_->ChildAfterFork();
+  }
+  MS_LOG(DEBUG) << "GradExecutor reinitialize after fork done.";
 }
 }  // namespace pynative
 }  // namespace mindspore

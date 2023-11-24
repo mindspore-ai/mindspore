@@ -16,11 +16,11 @@
 #include <unordered_set>
 
 #include "frontend/expander/bprop/bprop_irbuilder.h"
-#include "include/common/utils/utils.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
-#include "utils/ms_context.h"
+#include "include/common/utils/utils.h"
 #include "ir/functor.h"
 #include "ops/math_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
@@ -277,6 +277,70 @@ NodePtrList FminFmaxGrad(BpropIRBuilder *ib, bool if_fmin) {
   brrx2 = ib->Cast(brrx2, x2_dtype);
   return {brrx1, brrx2};
 }
+
+inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
+                                std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
+  auto [offset, dim1, dim2, x_dim] = int_tuple;
+  auto value = ib->Tensor(0, x_dtype);
+  auto dx = ib->Emit("FillV2", {dx_trans_shape, value});
+  auto k = ib->Tensor(offset, kInt32);
+  constexpr int64_t max_length = 200000000;
+  dx = ib->Emit("MatrixSetDiagV3", {dx, dout, k},
+                {{"align", MakeValue("LEFT_RIGHT")}, {"max_length", MakeValue(max_length)}});
+  int64_t dim = 0;
+  ShapeVector perm(x_dim, 0);
+  for (size_t i = 0; i < x_dim; ++i) {
+    if (i == static_cast<size_t>(dim1)) {
+      perm[i] = static_cast<int64_t>(x_dim - i2);
+    } else if (i == static_cast<size_t>(dim2)) {
+      perm[i] = static_cast<int64_t>(x_dim - i1);
+    } else {
+      perm[i] = dim;
+      dim++;
+    }
+  }
+  dx = ib->Transpose(dx, perm);
+  return {dx};
+}
+
+class DiagonalShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_Diagonal", DiagonalShapeCalc)
+  explicit DiagonalShapeCalc(int64_t dim1, int64_t dim2)
+      : ShapeCalcFunctor("ShapeCalc_Diagonal"), dim1_(dim1), dim2_(dim2) {}
+  ValuePtr ToValue() const override {
+    auto values = {MakeValue(dim1_), MakeValue(dim2_)};
+    return std::make_shared<ValueTuple>(values);
+  }
+  void FromValue(const ValuePtr &value) override {
+    auto values = value->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(values);
+    if (values->value().size() != i2) {
+      MS_LOG(EXCEPTION) << "DiagonalShapeCalc's value size should be 2, but got " << values->value().size();
+    }
+    dim1_ = GetValue<int64_t>(values->value()[0]);
+    dim2_ = GetValue<int64_t>(values->value()[1]);
+  }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto x_shape = inputs.at(i0);
+    auto out_shape = inputs.at(i1);
+    ShapeVector dx_trans_shape(out_shape.begin(), out_shape.end() - i1);
+    dx_trans_shape.push_back(x_shape[static_cast<size_t>(dim1_)]);
+    dx_trans_shape.push_back(x_shape[static_cast<size_t>(dim2_)]);
+    return {dx_trans_shape};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    auto out_shape = inputs.at(1);
+    auto rank = IsDynamicRank(out_shape) ? -1 : SizeToLong(out_shape.size() + 1);
+    return {rank};
+  }
+
+ protected:
+  int64_t dim1_;
+  int64_t dim2_;
+};
+REG_FUNCTOR("ShapeCalc_Diagonal", DiagonalShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -637,11 +701,13 @@ REG_BPROP_BUILDER("Maximum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return MinimumMaximumGrad(ib, x, y, dout, false);
 });
 
-REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  return {ib->CumSum(dout, axis, ib->GetAttr("exclusive"), MakeValue(!reverse)), ib->OutZeros(axis)};
+  auto exclusive = ib->GetInput(kIndex2);
+  auto reverse = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  return {ib->CumSum(dout, axis, GetValue<bool>(exclusive->BuildValue()), !GetValue<bool>(reverse->BuildValue())),
+          ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
 });
 
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -823,11 +889,12 @@ REG_BPROP_BUILDER("IndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib)
   return {dout, ib->OutZeros(indices), dy};
 });
 
-REG_BPROP_BUILDER("Logit").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Logit").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("LogitGrad", {dout, x}, {{"eps", ib->GetAttr("eps")}});
-  return {dx};
+  auto eps = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("LogitGrad", {dout, x, eps});
+  return {dx, ib->OutZeros(eps)};
 });
 
 DEF_PURE_SHAPE_CALC(g_cdist)
@@ -889,12 +956,14 @@ REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto reverse = GetValue<bool>(ib->GetAttr("reverse"));
-  auto prod = ib->CumProd(x, axis, ib->GetAttr("exclusive"), MakeValue(reverse));
-  out = ib->CumSum(ib->Mul(prod, dout), axis, ib->GetAttr("exclusive"), MakeValue(!reverse));
-  return {ib->RealDiv(out, x), ib->OutZeros(axis)};
+  auto exclusive = ib->GetInput(kIndex2);
+  auto reverse = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+  auto prod = ib->Emit("CumProd", {x, axis, exclusive, reverse});
+  out = ib->CumSum(ib->Mul(prod, dout), axis, GetValue<bool>(exclusive->BuildValue()),
+                   !GetValue<bool>(reverse->BuildValue()));
+  return {ib->RealDiv(out, x), ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
 });
 
 REG_BPROP_BUILDER("IsFinite").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
@@ -903,9 +972,9 @@ REG_BPROP_BUILDER("IsNan").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("IsInf").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("ReduceAll").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ReduceAll").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("ReduceAny").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("ReduceAny").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("ApproximateEqual").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
@@ -1173,12 +1242,14 @@ REG_BPROP_BUILDER("Erfinv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Bernoulli").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = SumGrad(ib, x, axis, dout, ib->GetAttr<bool>("keep_dims"));
-  return {dx, ib->OutZeros(axis)};
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto skip_mode = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(skip_mode)};
 });
 
 DEF_PURE_SHAPE_CALC(g_reduce_prod)
@@ -1196,19 +1267,22 @@ DEF_PURE_SHAPE_CALC(g_reduce_prod)
     auto size = SizeToLong(inputs.at(0).size());
     return {size, 2, size, size};
   });
-REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+
+REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
   }
   auto axis = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
   if (ib->GetRank(x) == 0) {
     return {dout, ib->OutZeros(axis)};
   }
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
-  auto grad = ib->GetAttr<bool>("keep_dims") ? dout : ib->Reshape(dout, res[0]);
+  auto keep_dims_value = GetValue<bool>(keep_dims->BuildValue());
+  auto grad = keep_dims_value ? dout : ib->Reshape(dout, res[0]);
   grad = ib->BroadcastTo(grad, x);
 
   auto permuted = ib->Transpose(x, res[2]);
@@ -1219,47 +1293,50 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   auto out = ib->Mul(ib->Transpose(y, res[3]), grad);
   auto dx = ib->Reshape(out, ib->Shape(x));
-  return {dx, ib->OutZeros(axis)};
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
 
 REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMax', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
-    return {dx, ib->OutZeros(axis)};
+    auto dx = MinOrMaxGrad(ib, x, axis, keep_dims, out, dout);
+    return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
   }
 });
 
 REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMin', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
-    return {dx, ib->OutZeros(axis)};
+    auto dx = MinOrMaxGrad(ib, x, axis, keep_dims, out, dout);
+    return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
   }
 });
 
-REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
   }
   auto axis = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto grad = SumGrad(ib, x, axis, dout, ib->GetAttr<bool>("keep_dims"));
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto grad = SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
   NodePtr div_shape_node;
   if (IsDynamic(ib->GetShape(x)) || IsDynamic(ib->GetShape(out))) {
     auto shape_out_sz = ib->DynSize(out, kFloat32);
@@ -1274,7 +1351,7 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     div_shape_node = ib->Tensor(div_shape, ib->GetDtype(grad));
   }
   auto dx = ib->RealDiv(grad, div_shape_node);
-  return {dx, ib->OutZeros(axis)};
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
 
 REG_BPROP_BUILDER("ArgMaxWithValue").SetBody(BODYFUNC(ib) {
@@ -1454,11 +1531,9 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x_transpose = ib->Transpose(x, input_perm);
   auto zero_matrix = ib->ZerosLike(x);
   zero_matrix = ib->Cast(zero_matrix, ib->GetDtype(dout));
-  auto meta_grad_up = ib->Emit("Concat", {ib->MakeTuple({x_transpose, dout})}, {{"axis", MakeValue<int64_t>(-1)}});
-  auto meta_grad_down =
-    ib->Emit("Concat", {ib->MakeTuple({zero_matrix, x_transpose})}, {{"axis", MakeValue<int64_t>(-1)}});
-  auto meta_grad =
-    ib->Emit("Concat", {ib->MakeTuple({meta_grad_up, meta_grad_down})}, {{"axis", MakeValue<int64_t>(-2)}});
+  auto meta_grad_up = ib->Emit("Concat", {ib->MakeTuple({x_transpose, dout}), ib->Value<int64_t>(-1)});
+  auto meta_grad_down = ib->Emit("Concat", {ib->MakeTuple({zero_matrix, x_transpose}), ib->Value<int64_t>(-1)});
+  auto meta_grad = ib->Emit("Concat", {ib->MakeTuple({meta_grad_up, meta_grad_down}), ib->Value<int64_t>(-2)});
   meta_grad = ib->Emit("MatrixExp", {meta_grad});
   return {ib->Slice(meta_grad, begins, sizes)};
 });
@@ -1471,14 +1546,14 @@ REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
 });
 
 REG_BPROP_BUILDER("CholeskyInverse").SetBody(BODYFUNC(ib) {
-  auto upper = GetValue<bool>(ib->GetAttr("upper"));
   auto input_x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto upper = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   ShapeVector input_perm = {1, 0};
   NodePtr dx;
   auto DealWithUpper = [&upper, &dx, &ib, &input_x](const NodePtr &common_term) {
-    if (upper) {
+    if (ib->Equal(upper, ib->Value<bool>(true))) {
       dx = ib->Emit("Neg", {ib->MatMul(input_x, common_term, false, false)});
     } else {
       dx = ib->Emit("Neg", {ib->MatMul(common_term, input_x, false, false)});
@@ -1493,12 +1568,12 @@ REG_BPROP_BUILDER("CholeskyInverse").SetBody(BODYFUNC(ib) {
     common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
     DealWithUpper(common_term);
     dx = ib->Cast(dx, kFloat64);
-    return {dx};
+    return {dx, ib->OutZeros(upper)};
   }
   auto common_term = ib->Add(dout, ib->Transpose(dout, input_perm));
   common_term = ib->MatMul(out, ib->MatMul(common_term, out, false, false), false, false);
   DealWithUpper(common_term);
-  return {dx};
+  return {dx, ib->OutZeros(upper)};
 });
 
 REG_BPROP_BUILDER("CholeskySolve").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -1829,37 +1904,92 @@ REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {ib->Select(q, grad_norm, dout)};
 });
 
+DEF_PURE_SHAPE_CALC(g_reduce_std)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    auto new_axis = inputs.at(1);
+    if (new_axis.empty() && !x_shape.empty()) {
+      for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
+        new_axis.push_back(i);
+      }
+    }
+    (void)std::transform(new_axis.begin(), new_axis.end(), new_axis.begin(), [&x_shape](const int64_t &c) {
+      if (c < 0) {
+        return c + SizeToLong(x_shape.size());
+      }
+      return c;
+    });
+    for (size_t i = 1; i < new_axis.size(); ++i) {
+      for (size_t j = 0; j < new_axis.size() - i; ++j) {
+        if (new_axis[j] > (new_axis[j + 1])) {
+          std::swap(new_axis[j], new_axis[j + 1]);
+        }
+      }
+    }
+    // input_x:[2,3,4,5]  new_axis:   [0, 2]
+    // reduce: [3,5]      reshape:[1,3,1,5]
+    auto reshape = x_shape;
+    for (auto &i : new_axis) {
+      reshape[LongToSize(i)] = 1;
+    }
+    int64_t num = 1;
+    for (const auto &i : new_axis) {
+      num *= x_shape[LongToSize(i)];
+    }
+    return {reshape, {num - 1}, {num}};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> ShapeVector {
+    auto shape_x = inputs.at(0);
+    auto rank = IsDynamicRank(shape_x) ? -1 : SizeToLong(shape_x.size());
+    return {rank, 1, 1};
+  });
+
 REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
-  auto axis = GetIntList(ib->GetAttr("axis"));
-  auto keep_dims = GetValue<bool>(ib->GetAttr("keep_dims"));
-  auto unbiased = GetValue<bool>(ib->GetAttr("unbiased"));
   auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto axis = ib->GetInput(kIndex1);
+  auto unbiased = ib->GetInput(kIndex2);
+  auto keep_dims = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
   auto std_d = ib->TupleGetItem(dout, 0);
   auto std = ib->TupleGetItem(out, 0);
   auto mean_d = ib->TupleGetItem(dout, 1);
   auto mean = ib->TupleGetItem(out, 1);
-  auto res = ib->ShapeCalc(std::make_shared<ReduceStdShapeCalc>(axis), {x});
+  auto res = ib->ShapeCalc(g_reduce_std, {x, axis}, {1});
   res[1] = ib->SequenceToTensor(res[1]);
   res[2] = ib->SequenceToTensor(res[2]);
-  if (!keep_dims && !ib->GetShape(x).empty()) {
-    std_d = ib->Reshape(std_d, res[0]);
-    std = ib->Reshape(std, res[0]);
-    mean_d = ib->Reshape(mean_d, res[0]);
-    mean = ib->Reshape(mean, res[0]);
-  }
+  auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
+    auto std_d_r = ib->Reshape(std_d, res[0]);
+    auto std_r = ib->Reshape(std, res[0]);
+    auto mean_d_r = ib->Reshape(mean_d, res[0]);
+    auto mean_r = ib->Reshape(mean, res[0]);
+    return {std_d_r, std_r, mean_d_r, mean_r};
+  };
+  auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
+    return {std_d, std, mean_d, mean};
+  };
+  auto keep_dims_t = ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value(kBool)});
+  auto cond = ib->LogicalAnd(keep_dims_t, ib->Tensor(!(ib->GetShape(x).empty()), kBool));
+  auto cond_block = ib->Conditional(cond, true_branch, false_branch);
+  std_d = ib->TupleGetItem(cond_block, 0);
+  std = ib->TupleGetItem(cond_block, 1);
+  mean_d = ib->TupleGetItem(cond_block, 2);
+  mean = ib->TupleGetItem(cond_block, 3);
+
   auto dx = ib->Sub(x, mean);
   dx = ib->Mul(dx, std_d);
   dx = ib->Div(dx, std);
-  if (unbiased) {
-    dx = ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)));
-  } else {
-    dx = ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)));
-  }
+  auto unbiased_true_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
+    return {ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)))};
+  };
+  auto unbiased_false_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
+    return {ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)))};
+  };
+  auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
+  auto unbiased_cond_block = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
   auto temp = ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d)));
-  dx = ib->Add(dx, temp);
-  return {dx};
+  dx = ib->Add(unbiased_cond_block, temp);
+  return {dx, ib->OutZeros(axis), ib->OutZeros(unbiased), ib->OutZeros(keep_dims)};
 });
 
 REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
@@ -2003,11 +2133,14 @@ REG_BPROP_BUILDER("MatrixTriangularSolve").SetUnusedInputs({i1}).SetBody(BODYFUN
   return {grad_matrix, grad_rhs};
 });
 
-REG_BPROP_BUILDER("NanToNum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("NanToNum").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
+  auto nan = ib->GetInput(kIndex1);
+  auto posinf = ib->GetInput(kIndex2);
+  auto neginf = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto dx = ib->Mul(dout, (ib->Emit("IsFinite", {x})));
-  return {dx};
+  return {dx, ib->OutZeros(nan), ib->OutZeros(posinf), ib->OutZeros(neginf)};
 });
 
 REG_BPROP_BUILDER("Fmin").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) { return FminFmaxGrad(ib, true); });
@@ -2052,7 +2185,12 @@ REG_BPROP_BUILDER("Polygamma").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Cholesky").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto upper = ib->GetAttr<bool>("upper");
+  auto upper_input = ib->GetInput(kIndex1);
+  auto upper_input_value = upper_input->BuildValue();
+  if (upper_input_value->ContainsValueAny()) {
+    MS_EXCEPTION(ValueError) << "Input `upper` does not support variable in GRAPH_MODE currently.";
+  }
+  auto upper = GetValue<bool>(upper_input_value);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   if (upper) {
@@ -2076,6 +2214,64 @@ REG_BPROP_BUILDER("Zeta").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dq =
     ib->Mul((ib->Mul((ib->Neg(x)), (ib->Emit("Zeta", {ib->Add(x, (ib->Tensor(1, ib->GetDtype(x)))), q})))), dout);
   return {ib->OutZeros(x), dq};
+});
+
+REG_BPROP_BUILDER("Baddbmm").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto batch1 = ib->GetInput(kIndex1);
+  auto batch2 = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto alpha = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto beta_tensor = ib->ScalarToTensor(beta);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto input_grad = ib->Mul(beta_tensor, dout);
+  auto batch1_grad = ib->Mul(alpha_tensor, ib->BatchMatMul(dout, batch2, false, true));
+  auto batch2_grad = ib->Mul(alpha_tensor, ib->BatchMatMul(batch1, dout, true, false));
+  auto dout_shape = ib->GetShape(dout);
+  auto input_shape = ib->GetShape(input);
+  if (input_shape != dout_shape) {
+    auto bc_axis = ib->BroadcastGradientArgs(input, dout);
+    input_grad = ib->Reshape(ib->ReduceSum(input_grad, bc_axis[0], false, true), input_shape);
+  }
+  return {input_grad, batch1_grad, batch2_grad, ib->OutZeros(beta), ib->OutZeros(alpha)};
+});
+
+REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto offset = GetValue<int64_t>(ib->GetAttr("offset"));
+  auto dim1 = GetValue<int64_t>(ib->GetAttr("dim1"));
+  auto dim2 = GetValue<int64_t>(ib->GetAttr("dim2"));
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+  if (IsDynamicRank(x_shape)) {
+    MS_LOG_EXCEPTION << "Diagonal doesn't support dynamic rank now, because it need rank of x to do transpose";
+  }
+  auto x_dtype = ib->GetDtype(x);
+  auto x_dim = ib->GetRank(x);
+  if (dim1 < 0) {
+    dim1 += x_dim;
+  }
+  if (dim2 < 0) {
+    dim2 += x_dim;
+  }
+  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, x_dim](Emitter *ib) -> NodePtrList {
+    auto dx_trans_shape = ib->ShapeCalc(std::make_shared<DiagonalShapeCalc>(dim1, dim2), {x, out})[0];
+    return GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+  };
+  auto false_case = [&x](Emitter *ib) -> NodePtrList { return {ib->ZerosLike(x)}; };
+  if (IsDynamic(ib->GetShape(out))) {
+    auto out_size = ib->Emit("Size", {out});
+    auto cond = ib->Emit("scalar_eq", {out_size, ib->Value<int64_t>(0)});
+    auto dx = ib->Conditional(cond, false_case, true_case);
+    return {dx};
+  }
+  if (ib->GetSize(out) > 0) {
+    return true_case(ib);
+  } else {
+    return false_case(ib);
+  }
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

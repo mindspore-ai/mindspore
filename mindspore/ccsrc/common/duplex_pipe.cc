@@ -207,7 +207,7 @@ void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
 
 void DuplexPipe::SignalHandler::SigChildHandler(int /* sig */) {
   int status;
-  if (child_pid_ != nullptr) {
+  if (child_pid_ != nullptr && *child_pid_ != -1) {
     (void)waitpid(*child_pid_, &status, WNOHANG | WUNTRACED);
     *child_pid_ = -1;
   }

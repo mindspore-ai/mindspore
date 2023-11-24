@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomSendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                            const std::vector<AddressPtr> &, void *stream_ptr) {
+bool HcomSendKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                            const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomSend launch";
   if (inputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid HcomSend input size or data type size (" << inputs.size() << ", "
@@ -29,8 +29,8 @@ bool HcomSendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                                               dest_rank_, stream_ptr, comm_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->device_ptr(), hccl_count_,
+                                                               hccl_data_type_list_[0], dest_rank_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomSend failed, ret:" << hccl_result;
     return false;

@@ -36,21 +36,19 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
   UniformCandidateSamplerGpuKernelMod() = default;
   ~UniformCandidateSamplerGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   template <typename T>
   int64_t Sampling(const std::set<T> &set_input, std::vector<T> *sampled_candidates) {
@@ -60,7 +58,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
     int64_t counter = 0;
     std::set<T> set_container;
     // pick between [0, range_max_-1]
-    if (range_max_ > static_cast<int64_t>(std::numeric_limits<T>::max())) {
+    if (std::numeric_limits<T>::max() < std::numeric_limits<int64_t>::max() &&
+        range_max_ > static_cast<int64_t>(std::numeric_limits<T>::max())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', range_max_ failed to cast";
     }
     range = static_cast<T>(range_max_);
@@ -90,7 +89,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
   template <typename S>
   S Probability() {
     S range;
-    if (range_max_ > static_cast<int64_t>(std::numeric_limits<S>::max())) {
+    if (std::numeric_limits<S>::max() < std::numeric_limits<int64_t>::max() &&
+        range_max_ > static_cast<int64_t>(std::numeric_limits<S>::max())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', range_max_ failed to cast";
     }
     range = static_cast<S>(range_max_);
@@ -104,9 +104,9 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
     return -std::expm1(counter * std::log1p(-p));
   }
 
-  using UCSGpuLaunchFunc =
-    std::function<bool(UniformCandidateSamplerGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  using UCSGpuLaunchFunc = std::function<bool(
+    UniformCandidateSamplerGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+    const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
 
  private:
   UCSGpuLaunchFunc kernel_func_;

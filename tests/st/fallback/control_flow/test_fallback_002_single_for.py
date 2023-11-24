@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import pytest
+import itertools
 import numpy as np
 from mindspore import Tensor, jit, context
 from mindspore import dtype as mstype
@@ -101,3 +102,24 @@ def test_single_for_builtin_function_int():
         return Tensor(x, mstype.float32)
     res = control_flow_for()
     assert res == 8.1
+
+
+@case_register.level0
+@case_register.target_gpu
+def test_single_for_iter_object():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def control_flow_for(x, y, z):
+        a = 0
+        m = (x, y, z)
+        n = (x + 3, y + 3, z + 3)
+        for i, j in itertools.product(m, n):
+            a = a + i * j
+        return a
+
+    ret = control_flow_for(Tensor([1]), Tensor([2]), Tensor([3]))
+    assert ret == 90

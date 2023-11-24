@@ -56,16 +56,19 @@ class AllGatherInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(x);
+    if (!primitive->HasAttr(kRankSize)) {
+      MS_LOG(EXCEPTION) << "AllGather doesn't have rank_size attr.";
+    }
     auto rank_size_ptr = primitive->GetAttr(kRankSize);
     auto rank_size = GetValue<int64_t>(rank_size_ptr);
     MS_LOG(INFO) << "For '" << prim_name << "', input rank_size : " << rank_size << ".";
-    MS_LOG(INFO) << "For '" << prim_name << "', x->shape()->shape()[0] : " << x->shape()->shape()[0] << ".";
+    MS_LOG(INFO) << "For '" << prim_name << "', x->shape()->shape()[0] : " << x->GetShape()->GetShapeVector()[0] << ".";
     if (rank_size <= 0) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input rank_size must > 0, but got: " << rank_size << ".";
     }
-    auto x_shape = x->shape()->shape();
+    auto x_shape = x->GetShape()->GetShapeVector();
     int64_t ret_shape_0;
     if (x_shape[0] >= 1) {
       ret_shape_0 = x_shape[0] * rank_size;
@@ -91,7 +94,7 @@ class AllGatherInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

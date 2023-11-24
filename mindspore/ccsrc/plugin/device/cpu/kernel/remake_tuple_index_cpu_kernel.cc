@@ -27,14 +27,10 @@
 
 namespace mindspore {
 namespace kernel {
-bool RemakeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RemakeTupleIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RemakeTupleIndex>(base_operator);
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
@@ -44,20 +40,19 @@ bool RemakeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int RemakeTupleIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RemakeTupleIndexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   valid_tensor_num_ = GetShapes(inputs)[0].size();
   return KRET_OK;
 }
 
-bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                                const std::vector<AddressPtr> &outputs) {
-  auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->addr);
+bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->device_ptr());
   size_t ellipse_position = 0;
   size_t not_ellipsis_position_cnt = 0;
   for (size_t i = 0; i < 8; i++) {
@@ -70,15 +65,16 @@ bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   std::vector<char *> inputs_host;
 
   for (size_t i = 0; i < ellipse_position; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + i]->device_ptr()));
   }
   size_t ellipse_count = valid_tensor_num_ - not_ellipsis_position_cnt;
   for (size_t i = 0; i < ellipse_count; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->addr));
+    (void)inputs_host.emplace_back(
+      reinterpret_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->device_ptr()));
   }
   size_t remain_dims = valid_tensor_num_ - inputs_host.size();
   for (size_t i = 0; i < remain_dims; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + ellipse_position + i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + ellipse_position + i]->device_ptr()));
   }
   // multi-threading
   size_t copy_time = output_size_list_[0] / sizeof(int64_t);

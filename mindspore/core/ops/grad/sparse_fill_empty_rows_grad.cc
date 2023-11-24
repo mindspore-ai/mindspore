@@ -52,9 +52,9 @@ abstract::TupleShapePtr SparseFillEmptyRowsGradInferShape(const PrimitivePtr &pr
   }
   auto prim_name = primitive->name();
   constexpr size_t number_one = 1;
-  auto map_shape_dtype = input_args[kInputIndex0]->BuildShape();
+  auto map_shape_dtype = input_args[kInputIndex0]->GetShape();
   auto map_shape_vec = CheckAndConvertUtils::ConvertShapePtrToShapeMap(map_shape_dtype)[kShape];
-  auto d_value_dtype = input_args[kInputIndex1]->BuildShape();
+  auto d_value_dtype = input_args[kInputIndex1]->GetShape();
   auto grad_values_shape_vec = CheckAndConvertUtils::ConvertShapePtrToShapeMap(d_value_dtype)[kShape];
   if (IsDynamicRank(map_shape_vec) || IsDynamicRank(grad_values_shape_vec)) {
     abstract::ShapePtr map_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -80,8 +80,8 @@ TypePtr SparseFillEmptyRowsGradInferType(const PrimitivePtr &primitive,
   const std::set<TypePtr> common_valid_types_with_bool_and_complex = {
     kInt8,   kInt16,   kInt32,   kInt64,   kUInt8, kUInt16,    kUInt32,
     kUInt64, kFloat16, kFloat32, kFloat64, kBool,  kComplex64, kComplex128};
-  auto reverse_index_map_type = input_args[kInputIndex0]->BuildType();
-  auto grad_values_type = input_args[kInputIndex1]->BuildType();
+  auto reverse_index_map_type = input_args[kInputIndex0]->GetType();
+  auto grad_values_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("reverse_index_map", reverse_index_map_type, {kInt64}, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grad_values", grad_values_type,
                                                    common_valid_types_with_bool_and_complex, op_name);

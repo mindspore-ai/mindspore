@@ -794,6 +794,8 @@ class MS_CORE_API Value : public Base {
   /// \return Whether the input is the current Value object.
   Value &operator=(const Value &other);
 
+  virtual bool ContainsValueAny() const;
+
  protected:
   TypePtr type_{nullptr};
 };
@@ -1049,7 +1051,7 @@ inline S *GetValuePtr(const AnfNodePtr &node) {
 MS_CORE_API SeenNum NewSeenGeneration();
 
 namespace id_generator {
-MS_CORE_API std::string get_id(const AnfNodePtr &node);
+MS_CORE_API std::string get_id(const std::string &front_string);
 MS_CORE_API void reset_id();
 MS_CORE_API void reset_id_with_offset();
 }  // namespace id_generator

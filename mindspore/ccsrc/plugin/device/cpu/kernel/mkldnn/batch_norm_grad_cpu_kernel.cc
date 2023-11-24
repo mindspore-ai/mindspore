@@ -17,29 +17,16 @@
 #include "plugin/device/cpu/kernel/mkldnn/batch_norm_grad_cpu_kernel.h"
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/batch_norm_grad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBatchNormGradInputsNum = 6;
-constexpr size_t kBatchNormGradOutputsNum = 3;
 constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
 constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 constexpr size_t kScaleShiftNum = 2;
 }  // namespace
-bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast BatchNormGrad ops failed!";
-    return false;
-  }
-  is_train_ = kernel_ptr->get_is_training();
-  epsilon_ = kernel_ptr->get_epsilon();
-  kernel_name_ = kernel_ptr->GetPrim()->name();
-
+bool BatchNormGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -48,18 +35,19 @@ bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BatchNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
 
-  auto x_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  is_train_ = inputs[kIndex6]->GetValueWithCheck<bool>();
+  epsilon_ = inputs[kIndex7]->GetValueWithCheck<float>();
+
+  auto x_shape = inputs[kIndex0]->GetDeviceShapeVector();
   const size_t x_shape_size = x_shape.size();
   (void)x_shape.insert(x_shape.end(), kBatchNormGradInputShapeMaxSize - x_shape_size, 1);
-
   batch_size_ = x_shape[N];
   channel_ = x_shape[C];
   hw_size_ = x_shape[H] * x_shape[W];
@@ -99,68 +87,74 @@ int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
 
   InitWorkspaceSize(inputs);
-  inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
 
-void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor *> &inputs) {
   size_t type_size = sizeof(float);
-  auto shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto shape = inputs[kIndex0]->GetDeviceShapeVector();
   size_t tensor_size = static_cast<size_t>(shape[C]) * kScaleShiftNum * type_size;
-  input_size_list_.pop_back();
   // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
   // [2, c] to store diff_scale and diff_bias
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &workspace,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
-  // From CPUKernelExecutor::LaunchKernel
-  if (!Init(op_, inputs_, outputs_)) {
-    MS_LOG(ERROR) << "Re-init BatchNormGradCpuKernelMod while launching failed";
-    return false;
-  }
-  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
-  if (resize_ret != KRET_OK) {
-    MS_LOG(ERROR) << "Resize BatchNormGradCpuKernelMod while launching failed: " << resize_ret;
-    return false;
-  }
-
-  auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
-  auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
+bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &workspace,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
+  auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->device_ptr());
+  auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size(), inputs[SCALE]->device_ptr(), inputs[SCALE]->size());
   if (scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Scale memcpy error!";
   }
-  auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
-  auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size / sizeof(float)), max_size, 0, max_size);
+  auto max_size = workspace[SCALE_BIAS]->size() - inputs[SCALE]->size();
+  auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size() / sizeof(float)), max_size, 0, max_size);
   if (bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Bias memset 0 error.";
   }
 
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->addr);
-  SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->addr);
-  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->addr);
-  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->device_ptr());
   ExecutePrimitive();
 
-  auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->addr);
-  auto diff_scale_ret = memcpy_s(outputs[DSCALE]->addr, outputs[DSCALE]->size, wksp_out, inputs[SCALE]->size);
+  auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->device_ptr());
+  auto diff_scale_ret =
+    memcpy_s(outputs[DSCALE]->device_ptr(), outputs[DSCALE]->size(), wksp_out, inputs[SCALE]->size());
   if (diff_scale_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_scale memcpy to output[1] error.";
   }
-  auto diff_bias_ret = memcpy_s(outputs[DBIAS]->addr, outputs[DBIAS]->size,
-                                wksp_out + (outputs[DSCALE]->size / sizeof(float)), outputs[DBIAS]->size);
+  auto diff_bias_ret = memcpy_s(outputs[DBIAS]->device_ptr(), outputs[DBIAS]->size(),
+                                wksp_out + (outputs[DSCALE]->size() / sizeof(float)), outputs[DBIAS]->size());
   if (diff_bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
   }
   return true;
+}
+
+#define BATCH_NORM_GRAD_CPU_REG(MS)                      \
+  KernelAttr()                                           \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(MS)                                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32) \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(MS)                                   \
+    .AddOutputAttr(MS)
+
+std::vector<KernelAttr> BatchNormGradCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {BATCH_NORM_GRAD_CPU_REG(kNumberTypeFloat32)};
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNormGrad, BatchNormGradCpuKernelMod);

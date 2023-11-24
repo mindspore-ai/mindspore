@@ -55,6 +55,7 @@ enum class ProfilerEvent {
   kDefault,
   kKernelInfer,
   kKernelResize,
+  kKernelInferAndResize,
   kKernelLaunch,
   kKernelUpdate,
   kGraphLaunch,

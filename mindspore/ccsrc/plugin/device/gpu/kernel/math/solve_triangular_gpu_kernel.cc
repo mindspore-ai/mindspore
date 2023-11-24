@@ -23,22 +23,19 @@
 namespace mindspore {
 namespace kernel {
 using KernelRunFunc = SolveTriangularGpuKernelMod::KernelRunFunc;
-bool SolveTriangularGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SolveTriangularGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  auto kernel_ptr = std::make_shared<ops::SolveTriangular>(base_operator->GetPrim());
-
-  bool lower = kernel_ptr->get_lower();
+  bool lower = GetValue<bool>(primitive_->GetAttr("lower"));
   // reverting the trans flag by default, so also flip the lower flag
   lower = !lower;
   uplo_ = lower ? CUBLAS_FILL_MODE_LOWER : CUBLAS_FILL_MODE_UPPER;
 
-  bool unit_diagonal = kernel_ptr->get_unit_diagonal();
+  bool unit_diagonal = GetValue<bool>(primitive_->GetAttr("unit_diagonal"));
   unit_diagonal_ = unit_diagonal ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
 
-  const std::string trans = kernel_ptr->get_trans();
+  const std::string trans = GetValue<std::string>(primitive_->GetAttr("trans"));
   if (trans == "N") {
     trans_ = CUBLAS_OP_T;
   } else if (trans == "T") {
@@ -50,17 +47,15 @@ bool SolveTriangularGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'trans' must be in ['N', 'T', 'C'], but got [" << trans << "].";
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
-int SolveTriangularGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SolveTriangularGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -79,7 +74,7 @@ int SolveTriangularGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   lda_ = SizeToInt(m_);
   ldb_ = SizeToInt(m_);
 
-  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->GetDtype()));
+  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->dtype_id()));
   constexpr size_t pointer_size = sizeof(float *);
   size_t b_size = batch_ * m_ * n_ * unit_size;
   workspace_size_list_.clear();
@@ -109,9 +104,9 @@ int SolveTriangularGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs) {
+bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs) {
   CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, cuda_stream_), "cublasSetStream failed");
   auto inputa_addr = GetDeviceAddress<T>(inputs, 0);
   auto inputb_addr = GetDeviceAddress<T>(inputs, 1);

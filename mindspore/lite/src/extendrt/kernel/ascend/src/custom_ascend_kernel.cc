@@ -42,6 +42,8 @@ CustomAscendKernelMod::~CustomAscendKernelMod() {
   }
 }
 
+bool CustomAscendKernelMod::Finalize() { return AclEnvGuard::Finalize(); }
+
 void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs) {
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
     if (inputs[idx] == nullptr) {
@@ -153,6 +155,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   UpdateOutputKernelTensorInfo();
   MS_LOG(INFO) << "Load om data success.";
   load_model_ = true;
+  AclEnvGuard::AddModel(model_infer_);
   return true;
 }
 
@@ -264,7 +267,7 @@ void CustomAscendKernelMod::UpdateOutputKernelTensorInfo() {
     auto &output = outputs_[i];
     output->SetShapeVector(shapes[i]);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), output->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract, output->GetDeviceShapeAdaptively()};
+    TensorInfo tensor_info{formats[i], new_abstract};
     output->SetTensorInfo(tensor_info);
   }
   return;
@@ -286,7 +289,7 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
     auto &input = inputs_[i];
     input->SetShapeVector(shapes[i]);
     auto new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), input->GetBaseShape());
-    TensorInfo tensor_info{formats[i], new_abstract, input->GetDeviceShapeAdaptively()};
+    TensorInfo tensor_info{formats[i], new_abstract};
     input->SetTensorInfo(tensor_info);
   }
 }

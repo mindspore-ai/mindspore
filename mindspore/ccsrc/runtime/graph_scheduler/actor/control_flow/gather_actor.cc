@@ -32,7 +32,6 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   {
     // 1.Send data with branch id.
-    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
     const auto &iter = output_data_with_branch_id_arrows_.find(gather_input_->func_graph_);
     if (iter != output_data_with_branch_id_arrows_.end()) {
       OpRealParameterWithBranchID output;
@@ -52,7 +51,6 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // 3.Send data and control in base class. Control arrow needs to be sent after the real parameter data and branch id.
   AbstractActor::SendOutput(context);
 
-  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // 4.Send Partial.
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);

@@ -321,8 +321,6 @@ class CreateDynTensor(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_tensor():
     """
@@ -378,8 +376,6 @@ class CreateDynTensorWithInputDtype(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_dtype_tensor():
     """
@@ -433,8 +429,6 @@ class MakeTensorWithShapeDtype(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_make_tensor_with_dynamic_shape_dtype():
     """
@@ -450,8 +444,6 @@ def test_make_tensor_with_dynamic_shape_dtype():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_gelu():
     """
@@ -603,8 +595,6 @@ def test_np_save_with_call_kw2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pyexecute_raise_error_with_dynamic_length_sequence():
     """
@@ -634,8 +624,6 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     """
@@ -774,3 +762,23 @@ def test_fallback_tensor_with_variable_input():
     ret = foo(Tensor([1, 2, 3]))
     assert ret == Tensor([0])
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
+
+
+@pytest.mark.skip(reason="Function graph cannot convert to object, fix later")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_map_with_variable_input():
+    """
+    Feature: JIT Fallback
+    Description: Generate Tensor with graph.
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x, y):
+        m = map(lambda a, b: a + b, x.asnumpy(), y.asnumpy())
+        return tuple(m)
+
+    ret = foo(Tensor([1, 2, 3]), Tensor([4, 5, 6]))
+    assert ret == (5, 7, 9)

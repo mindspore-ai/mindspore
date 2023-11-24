@@ -30,14 +30,14 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t RenormInputsNum = 1;
 constexpr size_t RenormOutputsNum = 1;
-bool RenormGpuKernelMod::GetRenormAttr(const BaseOperatorPtr &base_operator) {
-  dim_ = GetValue<int64_t>(base_operator->GetAttr("dim"));
-  p_ = GetValue<float>(base_operator->GetAttr("p"));
+bool RenormGpuKernelMod::GetRenormAttr() {
+  dim_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
   if (p_ <= 0.0f) {
     MS_LOG(ERROR) << "For 'Renorm', it's op attribute 'p'" << p_ << "less than or equals to zero is invalid.";
     return false;
   }
-  max_norm_ = GetValue<float>(base_operator->GetAttr("maxnorm"));
+  max_norm_ = GetValue<float>(primitive_->GetAttr("maxnorm"));
   if (max_norm_ < 0) {
     MS_LOG(ERROR) << "For 'Renorm', it's op attribute 'maxnorm'" << max_norm_ << "less than zero is invalid.";
     return false;
@@ -46,11 +46,12 @@ bool RenormGpuKernelMod::GetRenormAttr(const BaseOperatorPtr &base_operator) {
 }
 
 template <typename T>
-bool RenormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto norm_value = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
+bool RenormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
+  auto norm_value = reinterpret_cast<float *>(workspace.at(kIndex0)->device_ptr());
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(norm_value, 0, input_shape_[dim_] * sizeof(float), reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'Renorm', it's cudaMemsetAsync failed.");
@@ -81,10 +82,8 @@ std::vector<KernelAttr> RenormGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-int RenormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RenormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -123,8 +122,7 @@ void RenormGpuKernelMod::InitParams() {
   }
 }
 
-bool RenormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
+bool RenormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'Renorm', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -140,7 +138,7 @@ bool RenormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  return GetRenormAttr(base_operator);
+  return GetRenormAttr();
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Renorm, RenormGpuKernelMod);
 }  // namespace kernel

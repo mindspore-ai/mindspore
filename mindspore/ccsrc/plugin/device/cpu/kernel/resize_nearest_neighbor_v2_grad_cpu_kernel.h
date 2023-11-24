@@ -34,18 +34,14 @@ class ResizeNearestNeighborV2GradCpuKernelMod : public NativeCpuKernelMod {
   ResizeNearestNeighborV2GradCpuKernelMod() = default;
   ~ResizeNearestNeighborV2GradCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
-
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -55,11 +51,11 @@ class ResizeNearestNeighborV2GradCpuKernelMod : public NativeCpuKernelMod {
   void RealCompute(T *const input, S *const output);
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using ResizeNearestNeighborV2GradLaunchFunc =
-    std::function<bool(ResizeNearestNeighborV2GradCpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+    std::function<bool(ResizeNearestNeighborV2GradCpuKernelMod *, const std::vector<KernelTensor *> &,
+                       const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, ResizeNearestNeighborV2GradLaunchFunc>> func_list_;
   ResizeNearestNeighborV2GradLaunchFunc kernel_func_;
 

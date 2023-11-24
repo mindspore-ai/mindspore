@@ -1,0 +1,23 @@
+hsigmoid:
+    description: |
+        Hard sigmoid activation function.
+
+        Refer to :func:`mindspore.ops.hardsigmoid` for more details.
+
+        Args:
+            input_x (Tensor) - The input Tensor.
+
+        Returns:
+            Tensor, with the same type and shape as the `input_x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+            >>> result = ops.hsigmoid(input_x)
+            >>> print(result)
+            [0.3333 0.1666 0.5    0.8335 0.6665]

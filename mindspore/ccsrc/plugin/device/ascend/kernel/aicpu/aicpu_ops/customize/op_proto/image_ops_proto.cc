@@ -236,9 +236,6 @@ bool ResizeConstInferShape(const Operator &op, const std::pair<uint32_t, std::st
   y_shape.SetDim(image_w_idx, size_out[1]);
   // infer shape end
 
-  // charge whether is dynamic, when output is static shape, return true
-  CHECK(!y_shape.IsUnknownShape(), OP_LOGD(TbeGetName(op), "the output is static shape. infer succ"), return true);
-
   OP_LOGD(TbeGetName(op), "the output is dynamic shape. will infer range");
   // infer shape_range start
   std::vector<std::pair<int64_t, int64_t>> x_range;

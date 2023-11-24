@@ -49,11 +49,11 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &prim, const std::vector<A
   const size_t kTwo = 2;
   MS_EXCEPTION_IF_NULL(prim);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, prim->name());
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamic(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
-  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
@@ -99,9 +99,9 @@ TypePtr OrgqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)types.emplace("x", x_type);
-  (void)types.emplace("tau", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("tau", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return x_type;
 }

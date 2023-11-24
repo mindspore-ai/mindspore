@@ -104,3 +104,11 @@ def _less_list(x, y):
        bool, if x < y return true in python logic, x >= y return false.
    """
     return _seq.list_lt()(x, y)
+
+
+@less.register_default()
+def default_less(x, y):
+    """
+    Default function for less.
+   """
+    return x < y

@@ -18,7 +18,10 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import nn
-from mindspore import Tensor, mutable
+from mindspore import Tensor, mutable, jit, ops
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from . import utils
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -1040,3 +1043,173 @@ def test_shift_operator_error_list_input():
     with pytest.raises(TypeError) as err:
         net()
     assert "unsupported operand type" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = 2
+
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+
+        def construct(self, input2):
+            x1_1 = utils.add(self.inner.number, input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    res = net(input2)
+    assert res == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg_with_error():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = Tensor(2)
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+
+        def construct(self, input2):
+            x1_1 = utils.add(self.inner.number, input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    with pytest.raises(ValueError) as err:
+        net(input2)
+    assert "cannot find fn match given args." in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_user_made_meta_fg_with_hyper_map():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.number = 2
+
+    class Net(nn.Cell):
+        def __init__(self, inner):
+            super().__init__()
+            self.inner = inner
+            self.common_map = C.HyperMap()
+
+        def construct(self, input2):
+            x1_1 = self.common_map(F.partial(utils.add, self.inner.number), input2)
+            return x1_1
+
+    input2 = 1
+    net = Net(Inner())
+    res = net(input2)
+    assert res == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getitem_with_no_script():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    class Inner:
+        def __init__(self):
+            self.list = (1, 2)
+
+    @jit
+    def run(z):
+        x, y = z.list
+        return (x, y)
+    res = run(Inner())
+    assert res == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_with_cache():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    @jit
+    def foo(x):
+        a = 2 * x
+        a = a.asnumpy()
+        b = 2 * a
+        return Tensor(b)
+
+    ret = foo(Tensor([1, 2, 3], dtype=ms.float32))
+    assert np.allclose(ret.asnumpy(), np.array([4.0, 8.0, 12.0]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_as_input_hyper_map():
+    """
+    Feature: user made multitypefuncgraph
+    Description: test user made multitypefuncgraph as input of hypermap
+    Expectation: throw RuntimeError
+    """
+
+    class ConcatNet(nn.Cell):
+        def __init__(self, mtfg):
+            super().__init__()
+            self.hyper_map = ops.HyperMap(mtfg)
+
+        def construct(self, x):
+            out = self.hyper_map([x, x], [x, x])
+            return out
+
+    x = Tensor([1, 2, 3])
+    net = ConcatNet(utils.c)
+    with pytest.raises((RuntimeError, TypeError)):
+        net(x)

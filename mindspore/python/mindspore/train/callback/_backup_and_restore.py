@@ -34,7 +34,7 @@ class BackupAndRestore(Callback):
 
     Args:
         backup_dir (str): Path to store and load the checkpoint file.
-        save_freq(Union['epoch', int]): When set to 'epoch' the callback saves the checkpoint at the end of
+        save_freq(Union["epoch", int]): When set to ``"epoch"`` the callback saves the checkpoint at the end of
                                         each epoch. When set to an integer, the callback saves the checkpoint
                                         every `save_freq` epoch. Default: ``"epoch"`` .
         delete_checkpoint(bool): If `delete_checkpoint=True`, the checkpoint will be deleted after
@@ -42,7 +42,7 @@ class BackupAndRestore(Callback):
 
     Raises:
         ValueError: If backup_dir is not str.
-        ValueError: If save_freq is not 'epoch' or int.
+        ValueError: If save_freq is not ``"epoch"`` or int.
         ValueError: If delete_checkpoint is not bool.
 
     Examples:

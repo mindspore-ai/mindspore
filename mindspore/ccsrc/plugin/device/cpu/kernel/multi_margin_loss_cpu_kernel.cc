@@ -30,27 +30,20 @@ const size_t kTwo = 2;
 constexpr char kKernelName[] = "MultiMarginLoss";
 }  // namespace
 
-bool MultiMarginLossCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool MultiMarginLossCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
+  p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  margin = GetValue<float>(primitive_->GetAttr(ops::kMargin));
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLoss>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  reduction = kernel_ptr->get_reduction();
-  p = kernel_ptr->get_p();
-  margin = kernel_ptr->get_margin();
-
-  dtype_ = inputs[kZero]->GetDtype();
+  dtype_ = inputs[kZero]->dtype_id();
   input_num = inputs.size();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MultiMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MultiMarginLossCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -60,8 +53,9 @@ int MultiMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernelFP16<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -106,10 +100,10 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFu
 }
 
 template <typename T>
-void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = static_cast<T *>(inputs[kZero]->addr);
-  auto target_addr = static_cast<int64_t *>(inputs[kOne]->addr);
+void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::KernelTensor *> &inputs,
+                                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = static_cast<T *>(inputs[kZero]->device_ptr());
+  auto target_addr = static_cast<int64_t *>(inputs[kOne]->device_ptr());
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -118,9 +112,9 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kern
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 3);
   if (weight_defined_) {
-    weight_addr = static_cast<T *>(inputs[kTwo]->addr);
+    weight_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
   }
-  auto y_addr = static_cast<T *>(outputs[kZero]->addr);
+  auto y_addr = static_cast<T *>(outputs[kZero]->device_ptr());
   std::vector<T> tmp_loss(batch_size);
   auto task = [&](size_t start, size_t end) {
     start *= dims;
@@ -169,10 +163,10 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kern
 }
 
 template <typename T>
-void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto target_addr = reinterpret_cast<int64_t *>(inputs[kOne]->addr);
+void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::KernelTensor *> &inputs,
+                                                   const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_addr = reinterpret_cast<T *>(inputs[kZero]->device_ptr());
+  auto target_addr = reinterpret_cast<int64_t *>(inputs[kOne]->device_ptr());
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -181,9 +175,9 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::Add
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 3);
   if (weight_defined_) {
-    weight_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
+    weight_addr = reinterpret_cast<T *>(inputs[kTwo]->device_ptr());
   }
-  auto y_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+  auto y_addr = reinterpret_cast<T *>(outputs[kZero]->device_ptr());
   std::vector<float> tmp_loss(batch_size);
   auto task = [&](size_t start, size_t end) {
     start *= dims;

@@ -16,26 +16,12 @@
 
 #include "tools/converter/parser/pytorch/pytorch_unaryop_parser.h"
 #include <memory>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/tile_fusion.h"
-#include "ops/identity.h"
-#include "ops/erf.h"
 #include "ops/fusion/exp_fusion.h"
-#include "ops/floor.h"
-#include "ops/abs.h"
-#include "ops/cos.h"
-#include "ops/ceil.h"
-#include "ops/log.h"
-#include "ops/atan.h"
-#include "ops/asin.h"
-#include "ops/neg.h"
 #include "ops/round.h"
 #include "ops/tan.h"
-#include "ops/sqrt.h"
-#include "ops/minimum.h"
-#include "ops/maximum.h"
 #include "ops/eltwise.h"
-#include "ops/sin.h"
-#include "ops/reciprocal.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

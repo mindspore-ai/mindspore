@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TRANSPOSE_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 using mindspore::ops::kNameTranspose;
 

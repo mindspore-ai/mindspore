@@ -40,13 +40,8 @@ TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp1) {
   GlobalContext::config_manager()->set_seed(327362);
   TensorRow output_tensor_row_;
   TensorTable results;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 2;
-  float aspect_ub = 2.5;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
-  auto op = std::make_unique<RandomCropAndResizeWithBBoxOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op =
+    std::make_unique<RandomCropAndResizeWithBBoxOp>(1024, 2048, 0.2, 2.0, 2.0, 2.5, InterpolationMode::kLinear, 10);
   Status s;
   for (auto tensor_row_ : images_and_annotations_) {
     s = op->Compute(tensor_row_, &output_tensor_row_);
@@ -73,13 +68,8 @@ TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp2) {
   GlobalContext::config_manager()->set_seed(327362);
 
   TensorRow output_tensor_row_;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 1;
-  float aspect_ub = 1.5;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
-  auto op = std::make_unique<RandomCropAndResizeWithBBoxOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op =
+    std::make_unique<RandomCropAndResizeWithBBoxOp>(1024, 2048, 0.2, 2.0, 1.0, 1.5, InterpolationMode::kLinear, 10);
   Status s;
   for (auto tensor_row_ : images_and_annotations_) {
     s = op->Compute(tensor_row_, &output_tensor_row_);
@@ -94,13 +84,8 @@ TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp2) {
 TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp3) {
   MS_LOG(INFO) << "Doing testRandomCropAndResizeWithBBoxOp3.";
   TensorRow output_tensor_row_;
-  int h_out = 1024;
-  int w_out = 2048;
-  float aspect_lb = 0.2;
-  float aspect_ub = 3;
-  float scale_lb = 0.2;
-  float scale_ub = 2.0;
-  auto op = std::make_unique<RandomCropAndResizeWithBBoxOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
+  auto op =
+    std::make_unique<RandomCropAndResizeWithBBoxOp>(1024, 2048, 0.2, 2.0, 0.2, 3.0, InterpolationMode::kLinear, 10);
   Status s;
   for (auto tensor_row_ : images_and_annotations_) {
     s = op->Compute(tensor_row_, &output_tensor_row_);

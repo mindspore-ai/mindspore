@@ -198,13 +198,19 @@ class AscendMsprofExporter:
 
         for model_id, value in step_trace.items():
             for iteration_id in value:
-                tag = f"_{device_id}_{model_id}_{iteration_id}.csv"
-                op_summary_file_name = self._op_summary_mark + tag
-                op_statistic_file = self._op_statistic_mark + tag
-                if op_summary_file_name not in op_summary:
+                tag = f"_{device_id}_{model_id}_{iteration_id}"
+                op_summary_name = self._op_summary_mark + tag + '.csv'
+                op_statistic_file = self._op_statistic_mark + tag + '.csv'
+                for name in op_summary:
+                    if tag in name:
+                        break
+                else:
                     logger.warning("[Profiler]The file {} was not found, " \
-                                   "perhaps the original data was not collected.".format(op_summary_file_name))
-                if op_statistic_file not in op_statistic:
+                                   "perhaps the original data was not collected.".format(op_summary_name))
+                for name in op_statistic:
+                    if tag in name:
+                        break
+                else:
                     logger.warning("[Profiler]The file {} was not found, " \
                                    "perhaps the original data was not collected.".format(op_statistic_file))
 

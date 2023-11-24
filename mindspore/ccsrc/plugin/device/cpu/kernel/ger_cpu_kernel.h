@@ -38,16 +38,14 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
   explicit GerCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~GerCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -55,35 +53,38 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using LaunchFunc = std::function<bool(GerCpuKernelMod *, const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs)>;
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
+  using LaunchFunc = std::function<bool(GerCpuKernelMod *, const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &workspace,
+                                        const std::vector<kernel::KernelTensor *> &outputs)>;
   LaunchFunc launch_func_;
 
   template <typename T>
   void InitLaunchFunc();
 
   template <typename T>
-  bool LaunchBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
-                         const std::vector<kernel::AddressPtr> &workspace,
-                         const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchBatchesElse(const std::vector<kernel::KernelTensor *> &inputs,
+                         const std::vector<kernel::KernelTensor *> &workspace,
+                         const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
-  bool LaunchNoBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs);
-  bool LaunchBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                     const std::vector<kernel::AddressPtr> &outputs);
-  bool LaunchNoBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                       const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchNoBatchesElse(const std::vector<kernel::KernelTensor *> &inputs,
+                           const std::vector<kernel::KernelTensor *> &workspace,
+                           const std::vector<kernel::KernelTensor *> &outputs);
+  bool LaunchBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                     const std::vector<kernel::KernelTensor *> &workspace,
+                     const std::vector<kernel::KernelTensor *> &outputs);
+  bool LaunchNoBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &workspace,
+                       const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
-  bool LaunchMacBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                        const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchMacBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                        const std::vector<kernel::KernelTensor *> &workspace,
+                        const std::vector<kernel::KernelTensor *> &outputs);
   template <typename T>
-  bool LaunchMacNoBatches(const std::vector<kernel::AddressPtr> &inputs,
-                          const std::vector<kernel::AddressPtr> &workspace,
-                          const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchMacNoBatches(const std::vector<kernel::KernelTensor *> &inputs,
+                          const std::vector<kernel::KernelTensor *> &workspace,
+                          const std::vector<kernel::KernelTensor *> &outputs);
 
   std::string kernel_type_{"Unknown"};
   TypeId input_type_1_{kTypeUnknown};

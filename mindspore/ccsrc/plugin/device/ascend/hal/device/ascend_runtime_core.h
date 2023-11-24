@@ -54,8 +54,9 @@ class AscendRuntimeCore : public AscendKernelRuntime {
   void *GetModelStreamCore(uint32_t graph_id) const override;
   bool LoadDataCore() override;
   void UnloadModelCore(uint32_t graph_id = UINT32_MAX) override;
-  void RegTaskFailCallback(const bool &is_release = false) override;
   bool CheckAndUnloadModelInAdvance(uint32_t model_id) override;
+  void KernelLaunchProfilingCore(const std::string &kernel_name) override;
+  aclrtExceptionInfoCallback GetCallBackFunc() override;
 
  private:
 #ifndef ENABLE_SECURITY
@@ -68,7 +69,7 @@ class AscendRuntimeCore : public AscendKernelRuntime {
   bool GraphWithEmptyTaskList(const session::KernelGraph &graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
 
-  static void TaskFailCallback(rtExceptionInfo *task_fail_info);
+  static void TaskFailCallback(aclrtExceptionInfo *task_fail_info);
   static std::pair<CNodePtr, std::string> GetErrorNodeInfo(uint32_t streamid, uint32_t taskid);
   static std::string GetDumpPath(const std::string &suffix);
   static bool DeleteDumpDir(const std::string &path);
@@ -79,6 +80,7 @@ class AscendRuntimeCore : public AscendKernelRuntime {
   static std::map<std::string, uint32_t> overflow_tasks_;
   tasksink::RtModelZeroCopy rt_model_zero_copy_;
   std::unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
+  std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   std::unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
 };
 

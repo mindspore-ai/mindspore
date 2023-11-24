@@ -56,12 +56,12 @@ class IOUInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
 
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
-    auto y_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto y_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(y_shape_ptr);
     auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
     auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);
@@ -96,13 +96,13 @@ class IOUInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
 
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("y", input_args[kInputIndex1]->GetType());
     return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   }
 };

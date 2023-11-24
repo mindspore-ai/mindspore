@@ -36,19 +36,14 @@ constexpr size_t kKernelSizeAttrNum = 2;
 constexpr size_t kDilationAttrNum = 4;
 }  // namespace
 
-bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
-bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsets>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool DeformableOffsetsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it should get two inputs and one output, but got " << inputs.size()
                   << "inputs and " << outputs.size() << " outputs";
@@ -61,15 +56,16 @@ bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   kernel_func_ = func_list_[index].second;
 
-  if (!CheckParam(kernel_ptr)) {
+  if (!CheckParam(primitive_)) {
     return false;
   }
   return true;
 }
 
-bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::DeformableOffsets> &kernel) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  data_format_ = kernel->get_data_format();
+bool DeformableOffsetsGpuKernelMod::CheckParam(const PrimitivePtr &primitive_) {
+  MS_EXCEPTION_IF_NULL(primitive_);
+  auto kernel_name_ = primitive_->name();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr("format"));
   if (data_format_ == kOpFormat_NCHW) {
     n_axis_ = 0;
     c_axis_ = 1;
@@ -80,7 +76,7 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
     return false;
   }
   const auto to_unsigned = [](const int64_t &value) { return LongToUint(value); };
-  const auto &strides = kernel->get_strides();
+  const auto &strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   std::transform(strides.begin(), strides.end(), std::back_inserter(strides_), to_unsigned);
   if (strides_.size() != kStrideAttrNum || strides_[n_axis_] != 1 || strides_[c_axis_] != 1) {
     MS_LOG(ERROR) << "Get invalid strides attr form " << kernel_name_
@@ -88,21 +84,21 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
                   << strides_;
     return false;
   }
-  const auto &pads = kernel->get_pads();
+  const auto &pads = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
   std::transform(pads.begin(), pads.end(), std::back_inserter(pads_), to_unsigned);
   if (pads_.size() != kPadAttrNum) {
     MS_LOG(ERROR) << "Get invalid pads attr form " << kernel_name_
                   << ", padding should be a vector constructed by 4 integer, but got" << pads_;
     return false;
   }
-  const auto &kernel_size = kernel->get_kernel_size();
+  const auto &kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
   std::transform(kernel_size.begin(), kernel_size.end(), std::back_inserter(kernel_size_), to_unsigned);
   if (kernel_size_.size() != kKernelSizeAttrNum) {
     MS_LOG(ERROR) << "Get invalid ksize attr form " << kernel_name_
                   << ", ksize should be a vector constructed by 2 integer, but got" << kernel_size_;
     return false;
   }
-  const auto &dilations = kernel->get_dilations();
+  const auto &dilations = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilations"));
   std::transform(dilations.begin(), dilations.end(), std::back_inserter(dilations_), to_unsigned);
   if (dilations_.size() != kDilationAttrNum || dilations_[n_axis_] != 1 || dilations_[c_axis_] != 1) {
     MS_LOG(ERROR) << "Get invalid dilations attr form " << kernel_name_
@@ -110,12 +106,12 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
                   << dilations_;
     return false;
   }
-  deformable_groups_ = static_cast<size_t>(kernel->get_deformable_groups());
+  deformable_groups_ = static_cast<uint32_t>(GetValue<int64_t>(primitive_->GetAttr("deformable_groups")));
   if (deformable_groups_ <= 0) {
     MS_LOG(ERROR) << kernel_name_ << "'s deformable_groups should greater than 0, but got " << deformable_groups_;
     return false;
   }
-  modulated_ = kernel->get_modulated();
+  modulated_ = GetValue<bool>(primitive_->GetAttr("modulated"));
   if (!modulated_) {
     MS_LOG(ERROR) << kernel_name_ << "only support v2, and the modulated should be true, but got false";
     return false;
@@ -123,15 +119,13 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
   return true;
 }
 
-int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+int DeformableOffsetsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", it should get two inputs and one output, but got "
                       << inputs.size() << " inputs and " << outputs.size() << "outputs.";
   }
-  if (KernelMod::Resize(base_operator, inputs, outputs) == KRET_UNKNOWN_SHAPE) {
+  if (KernelMod::Resize(inputs, outputs) == KRET_UNKNOWN_SHAPE) {
     return KRET_UNKNOWN_SHAPE;
   }
   const auto &x_shape = inputs[0]->GetShapeVector();
@@ -149,9 +143,9 @@ int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <class T>
-bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   int32_t *position_addr = GetDeviceAddress<int32_t>(workspace, 0);
   const size_t num = output_h_ * output_w_;
   cudaError_t status = cudaErrorNotReady;

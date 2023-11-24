@@ -130,9 +130,10 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const input_device_tensors,
-                                            std::vector<DeviceTensor *> *const memory_free_tensors,
-                                            OpContext<DeviceTensor> *const context) const {
+void AbstractActor::FetchInputByTensorStore(
+  std::vector<DeviceTensor *> *const input_device_tensors, std::vector<KernelTensor *> *const input_kernel_tensors,
+  std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
+  std::vector<DeviceTensor *> *const memory_free_tensors, OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(input_device_tensors);
   MS_EXCEPTION_IF_NULL(memory_free_tensors);
   MS_EXCEPTION_IF_NULL(context);
@@ -148,7 +149,10 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
         ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-
+    MS_LOG(DEBUG) << "Actor:" << GetAID()
+                  << " fetch device tensor store by node:" << device_tensor_store_key.second->DebugString()
+                  << " node addr:" << device_tensor_store_key.second.get() << " device address:" << device_tensor
+                  << " device type:" << device_contexts_[0]->GetDeviceType() << " dtype:" << device_tensor->type_id();
     if ((device_tensor_store_key.first >= input_device_tensors->size()) ||
         (device_tensor_store_key.first >= memory_free_tensors->size())) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
@@ -159,6 +163,13 @@ void AbstractActor::FetchInputByTensorStore(std::vector<DeviceTensor *> *const i
       MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
                     << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                     << " key node:" << device_tensor_store_key.second->DebugString();
+    }
+    // Collect the input kernel tensor.
+    const auto &kernel_tensor = (*input_device_tensors)[device_tensor_store_key.first]->kernel_tensor();
+    if (input_kernel_tensors && input_kernel_tensors_for_infer &&
+        ((*input_kernel_tensors)[device_tensor_store_key.first] != kernel_tensor.get())) {
+      (*input_kernel_tensors)[device_tensor_store_key.first] = kernel_tensor.get();
+      (*input_kernel_tensors_for_infer)[device_tensor_store_key.first] = kernel_tensor;
     }
   }
 }
@@ -271,9 +282,6 @@ void AbstractActor::SendOutputData(
 }
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
   MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
   // 1.Send output data.
@@ -301,11 +309,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
-
-  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
-  if (ActorDispatcher::is_multi_thread_execution()) {
-    PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name(), false);
   }
 }
 

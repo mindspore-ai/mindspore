@@ -43,13 +43,13 @@ abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, primitive->name());
-  auto superdiag_shape_ptr = input_args[0]->BuildShape();
+  auto superdiag_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(superdiag_shape_ptr);
-  auto maindiag_shape_ptr = input_args[1]->BuildShape();
+  auto maindiag_shape_ptr = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(maindiag_shape_ptr);
-  auto subdiag_shape_ptr = input_args[2]->BuildShape();
+  auto subdiag_shape_ptr = input_args[2]->GetShape();
   MS_EXCEPTION_IF_NULL(subdiag_shape_ptr);
-  auto rhs_shape_ptr = input_args[3]->BuildShape();
+  auto rhs_shape_ptr = input_args[3]->GetShape();
   MS_EXCEPTION_IF_NULL(rhs_shape_ptr);
   if (superdiag_shape_ptr->IsDynamic() || maindiag_shape_ptr->IsDynamic() || subdiag_shape_ptr->IsDynamic() ||
       rhs_shape_ptr->IsDynamic()) {
@@ -115,10 +115,10 @@ TypePtr TridiagonalMatMulInferType(const PrimitivePtr &prim, const std::vector<A
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  auto superdiag_infer_type = input_args[0]->BuildType();
-  auto maindiag_infer_type = input_args[1]->BuildType();
-  auto subdiag_infer_type = input_args[2]->BuildType();
-  auto rhs_infer_type = input_args[3]->BuildType();
+  auto superdiag_infer_type = input_args[0]->GetType();
+  auto maindiag_infer_type = input_args[1]->GetType();
+  auto subdiag_infer_type = input_args[2]->GetType();
+  auto rhs_infer_type = input_args[3]->GetType();
   (void)types.emplace("superdiag", superdiag_infer_type);
   (void)types.emplace("maindiag", maindiag_infer_type);
   (void)types.emplace("subdiag", subdiag_infer_type);

@@ -70,6 +70,9 @@ class BNTrainingUpdate(Primitive):
 class MaxPoolWithArgmax(Primitive):
     """
     Please use MaxPoolWithArgmaxV2 instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.MaxPoolWithArgmaxV2", False)
     @prim_attr_register
@@ -160,6 +163,9 @@ class TensorAdd(_MathBinaryOp):
 class InplaceUpdate(Primitive):
     """
     Please use InplaceUpdateV2 instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.InplaceUpdateV2", False)
     @prim_attr_register
@@ -239,6 +245,9 @@ class Unpack(Primitive):
 class ScatterNonAliasingAdd(Primitive):
     """
     Please use TensorScatterAdd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -257,6 +266,9 @@ class ScatterNonAliasingAdd(Primitive):
 class BatchToSpaceND(Primitive):
     """
     Please use batch_to_space_nd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.batch_to_space_nd", False)
     @prim_attr_register

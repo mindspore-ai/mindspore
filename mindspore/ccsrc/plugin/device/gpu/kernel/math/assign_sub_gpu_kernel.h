@@ -39,8 +39,8 @@ class AssignSubFwdGpuKernelMod : public NativeGpuKernelMod {
   AssignSubFwdGpuKernelMod() { ResetResource(); }
   ~AssignSubFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -48,43 +48,34 @@ class AssignSubFwdGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
   void ResetResource() noexcept {
     is_null_input_ = false;
     input_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
  protected:
-  void InitSizeLists() {
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-  }
+  void InitSizeLists() { output_size_list_.push_back(input_size_); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using AssignSubFunc = std::function<bool(AssignSubFwdGpuKernelMod *, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
+  using AssignSubFunc = std::function<bool(AssignSubFwdGpuKernelMod *, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
  private:
   bool is_null_input_;
   int64_t input_size_;
   int64_t input_elements_;
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   AssignSubFunc kernel_func_{};
   void *stream_ptr_{nullptr};
   static std::vector<std::pair<KernelAttr, AssignSubFunc>> func_list_;

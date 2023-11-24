@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "frontend/operator/composite/zip_operation.h"
 #include "frontend/operator/composite/tensor_index.h"
+#include "frontend/operator/composite/starred_operation.h"
 namespace mindspore {
 namespace prim {
 void RegCompositeOpsGroup(const py::module *m) {
   //  Reg HyperMap
   (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-    .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
+    .def(py::init<bool, py::object>(), py::arg("reverse"), py::arg("ops"))
     .def(py::init<bool>(), py::arg("reverse"));
 
   // Reg Tail
@@ -146,6 +147,18 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg ZipOperation
   (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m, "ZipOperation_")
+    .def(py::init<std::string &>());
+
+  // Reg StarredUnpack
+  (void)py::class_<StarredUnpack, MetaFuncGraph, std::shared_ptr<StarredUnpack>>(*m, "StarredUnpack_")
+    .def(py::init<std::string &>());
+
+  // Reg StarredGetItem
+  (void)py::class_<StarredGetItem, MetaFuncGraph, std::shared_ptr<StarredGetItem>>(*m, "StarredGetItem_")
+    .def(py::init<std::string &>());
+
+  // Reg StarredUnpackMerge
+  (void)py::class_<StarredUnpackMerge, MetaFuncGraph, std::shared_ptr<StarredUnpackMerge>>(*m, "StarredUnpackMerge_")
     .def(py::init<std::string &>());
 
   // Reg VmapGeneralPreprocess

@@ -75,7 +75,9 @@ REG_ADPT_DESC(IFMR, kNameIFMR, ADPT_DESC(IFMR))
 
 // NLLLoss
 INPUT_MAP(NLLLoss) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}};
-ATTR_MAP(NLLLoss) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(NLLLoss) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(NLLLoss) = {{4, ATTR_DESC(reduction, AnyTraits<GEReduction>())},
+                           {5, ATTR_DESC(ignore_index, AnyTraits<int64_t>())}};
 OUTPUT_MAP(NLLLoss) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(total_weight)}};
 REG_ADPT_DESC(NLLLoss, kNameNLLLoss, ADPT_DESC(NLLLoss))
 
@@ -85,7 +87,9 @@ INPUT_MAP(NLLLossGrad) = {{1, INPUT_DESC(x)},
                           {3, INPUT_DESC(target)},
                           {4, INPUT_DESC(weight)},
                           {5, INPUT_DESC(total_weight)}};
-ATTR_MAP(NLLLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(NLLLossGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(NLLLossGrad) = {{6, ATTR_DESC(reduction, AnyTraits<GEReduction>())},
+                               {7, ATTR_DESC(ignore_index, AnyTraits<int64_t>())}};
 OUTPUT_MAP(NLLLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(NLLLossGrad, kNameNLLLossGrad, ADPT_DESC(NLLLossGrad))
 
@@ -270,9 +274,16 @@ REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DES
 
 // Eig
 CUST_INPUT_MAP(Eig) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(Eig) = {{"compute_v", ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(Eig) = {{2, ATTR_DESC(compute_v, AnyTraits<bool>())}};
+CUST_ATTR_MAP(Eig) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Eig) = {{0, OUTPUT_DESC(eigen_values)}, {1, OUTPUT_DESC(eigen_vectors)}};
 REG_ADPT_DESC(Eig, prim::kPrimEig->name(), CUST_ADPT_DESC(Eig));
+
+// Eps
+CUST_INPUT_MAP(Eps) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Eps) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Eps) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Eps, prim::kPrimEps->name(), CUST_ADPT_DESC(Eps));
 
 // Hypot
 CUST_INPUT_MAP(Hypot) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -335,8 +346,17 @@ CUST_OUTPUT_MAP(Lgamma) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Lgamma, prim::kPrimLgamma->name(), CUST_ADPT_DESC(Lgamma));
 
 // Real
-INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
+INPUT_MAP(Real) = {{kIndex1, INPUT_DESC(input)}};
 ATTR_MAP(Real) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real));
+INPUT_ATTR_MAP(Real) = {{kIndex2, ATTR_DESC(Tout, AnyTraits<GEType>())}};
+OUTPUT_MAP(Real) = {{kIndex0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real))
+
+// Diagonal
+CUST_INPUT_MAP(Diagonal) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Diagonal) = {{"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                           {"dim1", ATTR_DESC(dim1, AnyTraits<int64_t>())},
+                           {"dim2", ATTR_DESC(dim2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Diagonal) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal))
 }  // namespace mindspore::transform

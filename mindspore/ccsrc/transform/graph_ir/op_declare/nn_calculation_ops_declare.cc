@@ -19,12 +19,14 @@
 #include <vector>
 #include "ops/conv_pool_ops.h"
 #include "ops/nn_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::transform {
 // BiasAddGrad
-INPUT_MAP(BiasAddGrad) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(BiasAddGrad) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
-OUTPUT_MAP(BiasAddGrad) = {{0, OUTPUT_DESC(y)}};
+INPUT_MAP(BiasAddGrad) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(BiasAddGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BiasAddGrad) = {{kIndex2, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+OUTPUT_MAP(BiasAddGrad) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BiasAddGrad, prim::kPrimBiasAddGrad->name(), ADPT_DESC(BiasAddGrad))
 
 // Conv2D

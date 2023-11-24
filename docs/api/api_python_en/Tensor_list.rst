@@ -301,6 +301,8 @@
     mindspore.Tensor.square
     mindspore.Tensor.squeeze
     mindspore.Tensor.std
+    mindspore.Tensor.storage_offset
+    mindspore.Tensor.stride
     mindspore.Tensor.strides
     mindspore.Tensor.sub
     mindspore.Tensor.subtract

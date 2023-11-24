@@ -85,8 +85,6 @@ def scatter_mul_dynamic_indices():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_mul_forward_float16():
     """
@@ -101,8 +99,6 @@ def test_scatter_mul_forward_float16():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_mul_forward_float32():
     """
@@ -117,8 +113,6 @@ def test_scatter_mul_forward_float32():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scatter_mul_forward_int32():
     """

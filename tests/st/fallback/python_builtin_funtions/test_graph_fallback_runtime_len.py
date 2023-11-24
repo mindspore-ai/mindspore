@@ -15,6 +15,7 @@
 
 import pytest
 import numpy as np
+import mindspore as ms
 from mindspore import Tensor, jit, context, mutable
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -38,7 +39,7 @@ def test_fallback_len_asnumpy():
         return len(a), len(x.asnumpy())
 
     out = foo(Tensor([1, 2, 3, 4]))
-    assert out[0] == 5, out[1] == 1
+    assert out == (5, 4)
 
 
 @pytest.mark.level1
@@ -59,7 +60,7 @@ def test_len_numpy_string():
         return len(x), len("string")
 
     out = foo()
-    assert out[0] == 2, out[1] == 4
+    assert out == (2, 6)
 
 
 @pytest.mark.level1
@@ -79,4 +80,56 @@ def test_len_mutable():
 
     with pytest.raises(TypeError) as e:
         foo()
-    assert "object of type Int64 has no len()." in str(e.value)
+    assert "'Int' object is not iterable" in str(e.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_len_cust_class():
+    """
+    Feature: JIT Fallback
+    Description: Test len() in fallback runtime
+    Expectation: No exception
+    """
+    class GetattrClass():
+        def __init__(self):
+            self.attr1 = [1, 2, 3, 4]
+
+    class GetattrClassNet(ms.nn.Cell):
+        def __init__(self):
+            super(GetattrClassNet, self).__init__()
+            self.cls = GetattrClass()
+
+        def construct(self):
+            return len(self.cls.attr1)
+
+    net = GetattrClassNet()
+    out = net()
+    assert out == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_len_seq_cell():
+    """
+    Feature: JIT Fallback
+    Description: Test len() in fallback runtime
+    Expectation: No exception
+    """
+    class BasicBlock(ms.nn.Cell):
+        def __init__(self):
+            super(BasicBlock, self).__init__()
+            self.model = ms.nn.SequentialCell([ms.nn.ReLU(), ms.nn.ReLU()])
+
+        def construct(self):
+            return len(self.model)
+
+    block = BasicBlock()
+    out = block()
+    assert out == 2

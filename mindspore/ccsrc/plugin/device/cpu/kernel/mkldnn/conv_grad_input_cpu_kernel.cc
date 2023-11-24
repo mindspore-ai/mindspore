@@ -29,18 +29,14 @@ constexpr size_t kConvGradInputInputsMinNum = 2;
 constexpr size_t kConvGradInputOutputsNum = 1;
 }  // namespace
 
-bool ConvGradInputCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ConvGradInputCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ == kConv2DBackpropInputOpName) {
     weight_index_ = 1;
     diff_dst_index_ = 0;
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  group_ = GetValue<int64_t>(prim->GetAttr(GROUP));
-  format_ = GetValue<std::string>(prim->GetAttr(FORMAT));
+  group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP));
+  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
   if (format_ != NCHW && format_ != NCDHW) {
     MS_LOG(ERROR) << kernel_name_ << " only supports " << NCHW << " or " << NCDHW << " format "
                   << ", but got format: " << format_;
@@ -48,21 +44,30 @@ bool ConvGradInputCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   const auto stride_attr = format_ == NCHW ? STRIDE : STRIDES;
   const auto dilation_attr = format_ == NCHW ? DILATION : DILATIONS;
-  pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
-  strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(stride_attr));
-  dilation_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(dilation_attr));
+  auto pad_mode_str = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  std::map<std::string, mindspore::PadMode> str2padmode_map = {
+    {PAD_MODE_LOWER_SAME, PadMode::SAME},   {PAD_MODE_UPPER_SAME, PadMode::SAME},
+    {PAD_MODE_LOWER_VALID, PadMode::VALID}, {PAD_MODE_UPPER_VALID, PadMode::VALID},
+    {PAD_MODE_LOWER_PAD, PadMode::PAD},     {PAD_MODE_UPPER_PAD, PadMode::PAD}};
+  auto iter = str2padmode_map.find(pad_mode_str);
+  if (iter == str2padmode_map.end()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad_mode is illegal, got " << pad_mode_str;
+  } else {
+    pad_mode_ = iter->second;
+  }
+  strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(stride_attr));
+  dilation_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(dilation_attr));
   return true;
 }
 
-int ConvGradInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ConvGradInputCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> src_shape = outputs[0]->GetDeviceShapeAdaptively();
-  std::vector<int64_t> weight_shape = inputs[weight_index_]->GetDeviceShapeAdaptively();
-  std::vector<int64_t> dst_shape = inputs[diff_dst_index_]->GetDeviceShapeAdaptively();
+  std::vector<int64_t> src_shape = outputs[0]->GetDeviceShapeVector();
+  std::vector<int64_t> weight_shape = inputs[weight_index_]->GetDeviceShapeVector();
+  std::vector<int64_t> dst_shape = inputs[diff_dst_index_]->GetDeviceShapeVector();
   size_t src_dim = src_shape.size();
   if (src_dim != weight_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -110,7 +115,7 @@ int ConvGradInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                        [](const int64_t &value) { return value - 1; });
   const auto &pad_mode = pad_mode_;
   PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(base_operator, src_shape, padding_info);
+  GetPadding(src_shape, padding_info);
 
   const auto forward_desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
@@ -127,16 +132,16 @@ int ConvGradInputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   if (inputs.size() < kConvGradInputInputsMinNum) {
     MS_LOG(EXCEPTION) << "Input numbers can not less " << kConvGradInputInputsMinNum << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvGradInputOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->addr);
-  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[weight_index_]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[weight_index_]->device_ptr());
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->device_ptr());
   ExecutePrimitive();
   return true;
 }

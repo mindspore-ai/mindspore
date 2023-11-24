@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool RpcRecvKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &) {
+bool RpcRecvKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &) {
   if (recv_monad_) {
     MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
     return true;
@@ -40,8 +40,9 @@ bool RpcRecvKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
       MS_LOG(EXCEPTION) << "Dynamic shape data must have data offsets to copy from source message.";
     }
     for (size_t i = 0; i < inputs.size(); i++) {
-      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + real_data_offset_[i], inputs[i]->size);
+      MS_EXCEPTION_IF_NULL(inputs[i]->device_ptr());
+      int ret =
+        memcpy_s(inputs[i]->device_ptr(), inputs[i]->size(), data_ptr + real_data_offset_[i], inputs[i]->size());
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "memcpy_s for recv output " << i << " failed, ret code: " << ret;
       }
@@ -49,13 +50,13 @@ bool RpcRecvKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   } else {
     size_t offset = 0;
     for (size_t i = 0; i < inputs.size(); i++) {
-      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, data_ptr + offset, inputs[i]->size);
+      MS_EXCEPTION_IF_NULL(inputs[i]->device_ptr());
+      int ret = memcpy_s(inputs[i]->device_ptr(), inputs[i]->size(), data_ptr + offset, inputs[i]->size());
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
       }
 
-      offset += inputs[i]->size;
+      offset += inputs[i]->size();
       // Maybe the size of data from remote is smaller than inputs size, need to break in advance to avoid illegal
       // memory access. For example, the 'umonad' inputs of RpcRecvKernel is not sent from remote.
       // This should be fixed in graph optimizing step.
@@ -71,10 +72,7 @@ bool RpcRecvKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
-bool RpcRecvKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RpcRecvKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   // If the inputs size is 0, this means the input is a monad value.
   if (inputs.empty()) {
     recv_monad_ = true;

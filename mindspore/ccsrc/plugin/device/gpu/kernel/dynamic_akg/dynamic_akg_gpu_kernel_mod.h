@@ -27,18 +27,18 @@
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_utils.h"
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
+#include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_mod.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-struct GpuKernelMeta {
-  CUfunction func_addr_;
-  CUmodule module_;
-  std::vector<uint32_t> thread_info_;
-  GpuKernelMeta(CUfunction funcAddr, CUmodule module, const std::vector<uint32_t> &thread_info)
-      : func_addr_(funcAddr), module_(module), thread_info_(thread_info) {}
-};
-using GpuKernelMetaPtr = std::shared_ptr<GpuKernelMeta>;
+constexpr auto kMappingUpdated = "updated";
+constexpr auto kBlockIdxX = "blockIdx.x";
+constexpr auto kBlockIdxY = "blockIdx.y";
+constexpr auto kBlockIdxZ = "blockIdx.z";
+constexpr auto kThreadIdxX = "threadIdx.x";
+constexpr auto kThreadIdxY = "threadIdx.y";
+constexpr auto kThreadIdxZ = "threadIdx.z";
 
 class DynamicAkgGpuKernelManager {
  public:
@@ -68,14 +68,11 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   explicit DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack);
   virtual ~DynamicAkgGpuKernelMod() {}
 
-  bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     return true;
   };
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
@@ -93,7 +90,7 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   void UpdateDynamicShapeMappingInfo();
   void InitAkgKernelImpls();
   void UpdateStaticShapeMappingInfo();
-  void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
+  void UpdateShapeList(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }

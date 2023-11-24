@@ -81,13 +81,8 @@ void CheckPaddingValue(int64_t *paddings, const std::vector<int64_t> &input_shap
   }
 }
 
-bool MirrorPadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
+bool MirrorPadCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
@@ -96,7 +91,7 @@ bool MirrorPadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  std::string mode = kernel_ptr->get_mode();
+  std::string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "REFLECT") {
     mode_ = 1;
   } else if (mode == "SYMMETRIC") {
@@ -104,16 +99,15 @@ bool MirrorPadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int MirrorPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int MirrorPadCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -140,12 +134,12 @@ int MirrorPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T1, typename T2>
-bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                         const std::vector<kernel::KernelTensor *> &workspace,
+                                         const std::vector<kernel::KernelTensor *> &outputs) {
+  auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->device_ptr());
+  auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->device_ptr());
+  auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->device_ptr());
 
   const int64_t padd_dim = num_paddings_;
   const int64_t mode = mode_;

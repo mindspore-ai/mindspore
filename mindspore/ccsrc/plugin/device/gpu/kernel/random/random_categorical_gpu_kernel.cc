@@ -144,5 +144,131 @@ MS_REG_GPU_KERNEL_THREE(RandomCategorical,
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeInt64),
                         RandomCategoricalGpuKernelMod, double, int64_t, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, half, int, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, half, int, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, half, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, float, int, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, float, int, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, float, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, double, int, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, double, int, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, double, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, half, int64_t, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, half, int64_t, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, half, int64_t, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, float, int64_t, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, float, int64_t, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, float, int64_t, int64_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt16),
+                        RandomCategoricalGpuKernelMod, double, int64_t, int16_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        RandomCategoricalGpuKernelMod, double, int64_t, int32_t)
+MS_REG_GPU_KERNEL_THREE(RandomCategorical,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeFloat64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt64),
+                        RandomCategoricalGpuKernelMod, double, int64_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

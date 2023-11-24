@@ -17,13 +17,12 @@
 #include "common/format_utils.h"
 #include <set>
 #include <string>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/tuple_get_item.h"
 #include "ops/depend.h"
 #include "ops/make_tuple.h"
 #include "ops/return.h"
-#include "ops/batch_norm.h"
 #include "ops/batch_to_space.h"
-#include "ops/bias_add.h"
 #include "ops/depth_to_space.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/avg_pool_fusion.h"

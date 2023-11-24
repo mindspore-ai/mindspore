@@ -18,48 +18,28 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-size_t GetBaseTypeSize(TypeId type_id) {
-  switch (type_id) {
-    case kNumberTypeFloat16:
-      return sizeof(half);
-    case kNumberTypeFloat32:
-      return sizeof(float);
-    default:
-      MS_LOG(EXCEPTION) << "For Scale Grad input type is error: " << type_id;
-  }
-}
-
-size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
-  size_t input_size = GetBaseTypeSize(type_id);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= LongToSize(input_shape[i]);
-  }
-  return input_size;
-}
-}  // namespace
-
 template <typename T>
-void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr,
+void ScaleGradGpuKernelMod::LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr,
                                                    const half *scale_addr_half, const float *scale_addr_float,
                                                    size_t index) {
   T *input_addr = GetDeviceAddress<T>(inputs, index);
   T *output_addr = GetDeviceAddress<T>(outputs, index);
   cudaError_t status = cudaErrorNotReady;
   if (scale_addr_half != nullptr) {
-    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_half, output_addr,
+    status = ScaleGradKernel(outputs[index]->size() / sizeof(T), input_addr, *scale_addr_half, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     MS_EXCEPTION_IF_NULL(scale_addr_float);
-    status = ScaleGradKernel(outputs[index]->size / sizeof(T), input_addr, *scale_addr_float, output_addr,
+    status = ScaleGradKernel(outputs[index]->size() / sizeof(T), input_addr, *scale_addr_float, output_addr,
                              reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   CHECK_CUDA_STATUS(status, kernel_name_);
 }
 
-bool ScaleGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ScaleGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   half *scale_addr_half = nullptr;
   float *scale_addr_float = nullptr;
   if (input_info_.back() == kNumberTypeFloat16) {
@@ -85,22 +65,15 @@ bool ScaleGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   return true;
 }
 
-bool ScaleGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool ScaleGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto input_size = inputs.size();
   for (size_t index = 0; index < input_size; index++) {
-    auto type_id = inputs[index]->GetDtype();
+    auto type_id = inputs[index]->dtype_id();
     input_info_.push_back(type_id);
-    auto size = GetInputSize(inputs[index]->GetShapeVector(), type_id);
-    input_size_list_.push_back(size);
-  }
-
-  for (size_t index = 0; index < input_size - 1; index++) {
-    output_size_list_.push_back(input_size_list_[index]);
+    if (index < input_size - 1) {
+      output_size_list_.push_back(inputs[index]->size());
+    }
   }
 
   return true;

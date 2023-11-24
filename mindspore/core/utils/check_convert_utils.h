@@ -125,6 +125,64 @@ class MS_CORE_API CheckAndConvertUtils {
   static int64_t CheckInteger(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
                               int64_t match_value, const std::string &prim_name = "");
 
+  template <class T, class U>
+  static std::string FormatCheckIntegerMsg(const std::string &arg_name, T arg_value, CompareEnum compare_operator,
+                                           U match_value, const PrimitivePtr &prim) {
+    std::ostringstream buffer;
+    if (prim == nullptr) {
+      buffer << "The argument[" << arg_name << "] must ";
+    } else {
+      auto prim_name = prim->name();
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
+    }
+    auto iter_to_string = kCompareToString.find(compare_operator);
+    if (iter_to_string == kCompareToString.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+                                   << " cannot find in the compare string map";
+    }
+    buffer << iter_to_string->second << match_value << ", but got " << arg_value << ".";
+    return buffer.str();
+  }
+
+  static std::string FormatCheckMsg(const std::string &arg_name, const std::vector<int64_t> &arg_value,
+                                    CompareEnum compare_type, const std::vector<int64_t> &value,
+                                    const PrimitivePtr &prim);
+
+  template <typename T>
+  static std::string FormatCommMsg(T arg0) {
+    std::ostringstream buffer;
+    buffer << arg0;
+    return buffer.str();
+  }
+
+  template <typename T, typename... Args>
+  static std::string FormatCommMsg(T arg0, Args... args) {
+    std::ostringstream buffer;
+    buffer << arg0 << FormatCommMsg(args...);
+    return buffer.str();
+  }
+
+  template <typename T>
+  static std::string FormatCheckInRangeMsg(const std::string &arg_name, T arg_value, CompareRange compare_operator,
+                                           const std::pair<T, T> &range, const PrimitivePtr &prim) {
+    std::ostringstream buffer;
+    if (prim == nullptr) {
+      buffer << "The attribute[" << arg_name << "] must be ";
+    } else {
+      auto prim_name = prim->name();
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must be ";
+    }
+    auto iter_to_string = kCompareRangeToString.find(compare_operator);
+    if (iter_to_string == kCompareRangeToString.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+                                   << " cannot find in the compare string map";
+    }
+    auto range_strng = iter_to_string->second;
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << ", but got " << arg_value
+           << ".";
+    return buffer.str();
+  }
+
   template <typename T>
   static std::vector<T> CheckPositiveVectorExcludeZero(const std::string &arg_name, const std::vector<T> &arg_value,
                                                        const std::string &prim_name) {
@@ -288,6 +346,57 @@ class MS_CORE_API CheckAndConvertUtils {
     return arg;
   }
 
+  static inline bool IsScalar(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeNumber; }
+  static inline bool IsTuple(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeTuple; }
+  static inline bool IsList(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeList; }
+  static inline bool IsTensor(const AbstractBasePtr &abs) {
+    return abs->GetType()->object_type() == kObjectTypeTensorType;
+  }
+  static inline bool IsSequence(const AbstractBasePtr &abs) {
+    return abs->GetType()->object_type() == kObjectTypeTuple || abs->GetType()->object_type() == kObjectTypeList;
+  }
+  static inline bool IsDynamicSequence(const AbstractBasePtr &abs) {
+    return abs->GetShape()->isa<abstract::DynamicSequenceShape>();
+  }
+  static inline TypePtrList GetSequenceElementTypes(const AbstractBasePtr &abs) {
+    if (IsDynamicSequence(abs)) {
+      MS_EXCEPTION(TypeError) << "The input must not be a dynamic sequence.";
+    }
+    auto const &input_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(input_type);
+    TypePtrList types_list{};
+    if (input_type->object_type() == kObjectTypeTuple) {
+      types_list = input_type->cast<TuplePtr>()->elements();
+    } else if (input_type->object_type() == kObjectTypeList) {
+      types_list = input_type->cast<ListPtr>()->elements();
+    } else {
+      MS_EXCEPTION(TypeError) << "The input must be a tuple or a list, but got " << input_type->ToString() << ".";
+    }
+    return types_list;
+  }
+  static inline abstract::BaseShapePtrList GetSequenceElementShapes(const AbstractBasePtr &abs) {
+    if (IsDynamicSequence(abs)) {
+      MS_EXCEPTION(TypeError) << "The input must not be a dynamic sequence.";
+    }
+    auto const &input_shape = abs->GetShape();
+    MS_EXCEPTION_IF_NULL(input_shape);
+    auto const &input_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(input_type);
+    abstract::BaseShapePtrList shapes_list{};
+    if (input_type->object_type() == kObjectTypeTuple) {
+      shapes_list = input_shape->cast<abstract::TupleShapePtr>()->shape();
+    } else if (input_type->object_type() == kObjectTypeList) {
+      shapes_list = input_shape->cast<abstract::ListShapePtr>()->shape();
+    } else {
+      MS_EXCEPTION(TypeError) << "The input must be a tuple or a list, but got " << input_type->ToString() << ".";
+    }
+    return shapes_list;
+  }
+  static AbstractBasePtr CheckArgsType(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index,
+                                       TypeId type_id);
+  static AbstractBasePtr CheckArgsSequenceType(const std::string &op, const AbstractBasePtrList &args_spec_list,
+                                               size_t index);
+
   static ShapeVector CheckTensorShapeSame(const std::map<std::string, BaseShapePtr> &shapes,
                                           const std::vector<int64_t> &check_shape, const std::string &prim_name);
   static TypePtr CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypePtr> &check_list,
@@ -295,8 +404,12 @@ class MS_CORE_API CheckAndConvertUtils {
   // Return Tensor type
   static TypePtr CheckMathBinaryOpTensorType(const std::map<std::string, TypePtr> &types,
                                              const std::set<TypePtr> &check_list, const std::string &prim_name);
-  static ShapeVector CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+  // ==========================old=========================
+  static ShapeVector CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
                                          const std::string &prim_name);
+  // ==========================new=========================
+  static ShapeVector CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
+                                         const std::string &prim_name, const TypePtr &type);
   static TypePtr CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                       const std::set<TypePtr> &check_list, const std::string &prim_name);
   static TypePtr CheckSparseTensorTypeValid(const std::string &type_name, const TypePtr &type,
@@ -330,7 +443,11 @@ class MS_CORE_API CheckAndConvertUtils {
                                                    const std::string &prim_name);
   static std::vector<double> CheckListOrTupleFloat(const std::string &arg_name, const ValuePtr &attr,
                                                    const std::string &prim_name);
+  // ==========================old=========================
   static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                 const std::string &prim_name);
+  // ==========================new=========================
+  static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                  const std::string &prim_name);
   static std::vector<int64_t> CheckTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                             const std::string &prim_name);

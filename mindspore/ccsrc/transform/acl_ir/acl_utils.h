@@ -90,6 +90,7 @@ class AclAttrMaker {
   static void SetAttr(const string &attr_name, const std::vector<std::string> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const std::vector<std::vector<int64_t>> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const ::ge::DataType value, aclopAttr *attr);
+  static void SetAttr(const string &attr_name, const std::vector<::ge::DataType> value, aclopAttr *attr);
 };  // class AclAttrMaker
 
 class AclTensorDescMaker {
@@ -193,6 +194,8 @@ class AclRunner {
   void SetDynamicMode();
 
   void SetPrecisionMode(const AclPrecisionMode mode);
+
+  void SetOpPrecisionMode();
 
   void ResizeOpInputs(size_t size) {
     (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), [](const aclTensorDesc *desc) {

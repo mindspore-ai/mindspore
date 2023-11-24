@@ -30,6 +30,7 @@
 #include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/value.h"
+#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/primitive_c.h"
@@ -50,12 +51,12 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
   for (size_t i = 0; i < input_args.size(); ++i) {
     auto element = input_args[i];
     MS_EXCEPTION_IF_NULL(element);
-    auto element_type = element->BuildType();
+    auto element_type = element->GetType();
     if (element_type->type_id() != kInt64->type_id() && element_type->type_id() != kInt32->type_id()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
     }
-    if (!has_variable && element->BuildValue() == kValueAny) {
+    if (!has_variable && element->GetValue()->ContainsValueAny()) {
       has_variable = true;
     }
   }
@@ -76,9 +77,7 @@ abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, con
   AbstractBasePtrList args;
   if (start <= stop) {
     if (step <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', when the argument 'start' " << start
-                        << " is less than or equal to the argument 'stop' " << stop << ", "
-                        << "the argument 'step' must be greater than 0, but the argument 'step' is " << step << ".";
+      return std::make_shared<abstract::AbstractTuple>(args);
     }
 
     for (int64_t i = start; i < stop; i += step) {
@@ -90,10 +89,7 @@ abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, con
     }
   } else {
     if (step >= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', while the argument 'start' " << start
-                        << " is greater than the argument "
-                        << "'stop' " << stop << ", the argument 'step' must be less than 0, "
-                        << "but the argument 'step' is " << step << ".";
+      return std::make_shared<abstract::AbstractTuple>(args);
     }
 
     for (int64_t i = start; i > stop; i += step) {
@@ -111,7 +107,7 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   bool has_variable = CheckMakeRangeInput(args_spec_list, prim_name);
-  auto type = args_spec_list[0]->BuildType();
+  auto type = args_spec_list[0]->GetType();
   if (has_variable) {
     // If the input to make_range has variable input, the output abs should be dynamic length sequence.
     auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, type);
@@ -122,12 +118,16 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   std::vector<int64_t> values;
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
     auto element = args_spec_list[i];
-    auto element_val = element->BuildValue();
-    if (!element_val->isa<Int64Imm>() && !element_val->isa<Int32Imm>()) {
+    auto element_type = element->GetType();
+    auto element_val = element->GetValue();
+    if (element_type->type_id() == kNumberTypeInt64) {
+      values.push_back(GetScalarValue<int64_t>(element_val).value());
+    } else if (element_type->type_id() == kNumberTypeInt32) {
+      values.push_back(GetScalarValue<int>(element_val).value());
+    } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
     }
-    values.push_back(element_val->cast<Int64ImmPtr>()->value());
   }
   return CalcSlidePara(values, prim_name, type);
 }
@@ -140,11 +140,11 @@ class MIND_API AGMakeRangeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferImplMakeRange(primitive, input_args)->BuildShape();
+    return InferImplMakeRange(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferImplMakeRange(primitive, input_args)->BuildType();
+    return InferImplMakeRange(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

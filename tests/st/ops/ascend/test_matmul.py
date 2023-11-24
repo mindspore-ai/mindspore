@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,6 +47,18 @@ def test_net():
     print(output.asnumpy())
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_net_bf16():
+    x = Tensor(np.arange(1 * 3).reshape(1, 3), mstype.bfloat16)
+    y = Tensor(np.arange(3 * 4).reshape(3, 4), mstype.bfloat16)
+    matmul = Net()
+    output = matmul(x, y)
+    except_out = np.array([20., 23., 26., 29.], np.float32)
+    assert np.allclose(output.float().asnumpy(), except_out, 0.004, 0.004)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -72,8 +84,6 @@ def test_matmul_tensor_api_modes(mode):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_matmul_dtypes():
     """

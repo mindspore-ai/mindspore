@@ -33,51 +33,46 @@ void UnsortedSegmentMaxGpuKernelMod::ResetResource() {
   input_dim1_ = 1;
   output_dim0_ = 1;
   output_dim1_ = 1;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void UnsortedSegmentMaxGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(batch_size_ * input_dim0_ * input_dim1_ * data_unit_size_);
-  input_size_list_.push_back(batch_size_ * input_dim0_ * ids_unit_size_);
   output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
 }
 
-bool UnsortedSegmentMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
+bool UnsortedSegmentMaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  }
 
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
+  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int UnsortedSegmentMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UnsortedSegmentMaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
   ResetResource();
 
-  auto input_shapes = inputs[kIndex0]->GetDeviceShapeAdaptively();
-  auto ids_shapes = inputs[kIndex1]->GetDeviceShapeAdaptively();
-  auto output_shapes = outputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto input_shapes = inputs[kIndex0]->GetDeviceShapeVector();
+  auto ids_shapes = inputs[kIndex1]->GetDeviceShapeVector();
+  auto output_shapes = outputs[kIndex0]->GetDeviceShapeVector();
 
   batch_size_ = 1;
   for (int64_t i = 0; i < batch_rank_; i++) {
@@ -115,9 +110,9 @@ int UnsortedSegmentMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool UnsortedSegmentMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool UnsortedSegmentMaxGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *ids_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);

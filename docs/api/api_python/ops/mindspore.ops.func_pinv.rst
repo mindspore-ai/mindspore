@@ -19,13 +19,13 @@ mindspore.ops.pinv
 
     .. note::
         该函数在内部使用 `svd <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.svd.html>`_
-        （或 `eigh <https://www.mindspore.cn/docs/zh-CN/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,hermitian=True），
+        （或 `eigh <https://www.mindspore.cn/docs/zh-CN/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ , `hermitian=True` ），
         所以和这些函数具有相同问题，详细信息请参阅svd()和eigh()中的警告。
 
     参数：
         - **x** (Tensor) - 要计算的矩阵。支持数据类型为float32或float64。shape为 :math:`(*, M, N)` ，其中*为零或多个批量维度。
 
-          - hermitian为True时，暂不支持多个批量维度。
+          - `hermitian` 为 ``True`` 时，暂不支持多个批量维度。
 
     关键字参数：
         - **atol** (float, Tensor) - 绝对公差值。默认值： ``None`` 。

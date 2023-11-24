@@ -31,6 +31,7 @@
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/dump/data_dumper.h"
 #endif
+#include "acl/acl_rt.h"
 
 using std::unordered_map;
 using std::vector;
@@ -79,10 +80,13 @@ class AscendKernelRuntime : public KernelRuntime {
   void SetReuseCommunicationAddress(const session::KernelGraph &graph);
   void SetRtDevice(uint32_t device_id);
   virtual void UnloadModelCore(uint32_t graph_id = UINT32_MAX) {}
-  virtual void RegTaskFailCallback(const bool &is_release = false) {}
+  void RegTaskFailCallback(bool is_release = false);
   virtual bool CheckAndUnloadModelInAdvance(uint32_t model_id) { return true; }
+  virtual void KernelLaunchProfilingCore(const std::string &kernel_name) {}
+  virtual aclrtExceptionInfoCallback GetCallBackFunc() { return nullptr; }
 
  protected:
+  static void TaskExceptionCallback(aclrtExceptionInfo *task_fail_info);
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) const override;
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
@@ -102,7 +106,6 @@ class AscendKernelRuntime : public KernelRuntime {
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
-  std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   std::set<uint32_t> initialized_device_set_{};
   AscendKernelRuntime *runtime_core_{nullptr};
 };

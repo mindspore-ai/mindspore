@@ -25,18 +25,11 @@ namespace kernel {
 constexpr int DimSize4 = 4;
 void CombinedNonMaxSuppressionGpuKernelMod::ResetResource() noexcept {
   cuda_stream_ = nullptr;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void CombinedNonMaxSuppressionGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(batch_size_ * num_boxes_ * q_ * DimSize4 * sizeof(T));
-  input_size_list_.push_back(batch_size_ * num_boxes_ * num_classes_ * sizeof(T));
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(T));
-  input_size_list_.push_back(sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * DimSize4 * sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * sizeof(T));
@@ -49,13 +42,11 @@ void CombinedNonMaxSuppressionGpuKernelMod::InitSizeLists() {
   workspace_size_list_.push_back(batch_size_ * num_classes_ * num_boxes_ * num_boxes_ * sizeof(bool));
 }
 
-bool CombinedNonMaxSuppressionGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CombinedNonMaxSuppression>(base_operator);
-  pad_per_class_ = kernel_ptr->get_pad_per_class();
-  clip_boxes_ = kernel_ptr->get_clip_boxes();
-  kernel_name_ = kernel_ptr->name();
+bool CombinedNonMaxSuppressionGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  pad_per_class_ = GetValue<bool>(primitive_->GetAttr("pad_per_class"));
+  clip_boxes_ = GetValue<bool>(primitive_->GetAttr("clip_boxes"));
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -67,21 +58,19 @@ bool CombinedNonMaxSuppressionGpuKernelMod::Init(const BaseOperatorPtr &base_ope
   return true;
 }
 
-int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CombinedNonMaxSuppressionGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   ResetResource();
-  std::vector<size_t> input0_shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                         inputs[kIndex0]->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> input1_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
-                                                         inputs[kIndex1]->GetDeviceShapeAdaptively().end());
-  std::vector<size_t> output0_shape = std::vector<size_t>(outputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
-                                                          outputs[kIndex0]->GetDeviceShapeAdaptively().end());
+  std::vector<size_t> input0_shape =
+    std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(), inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<size_t> input1_shape =
+    std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(), inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<size_t> output0_shape = std::vector<size_t>(outputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                          outputs[kIndex0]->GetDeviceShapeVector().end());
   batch_size_ = static_cast<int>(input0_shape[kIndex0]);
   num_boxes_ = static_cast<int>(input0_shape[kIndex1]);
   q_ = static_cast<int>(input0_shape[kIndex2]);
@@ -93,9 +82,9 @@ int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_op
 }
 
 template <typename T>
-bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &workspace,
-                                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &workspace,
+                                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   T *boxes = GetDeviceAddress<T>(inputs, kIndex0);
   T *scores = GetDeviceAddress<T>(inputs, kIndex1);
@@ -126,16 +115,22 @@ bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<Addre
   return true;
 }
 
-void CombinedNonMaxSuppressionGpuKernelMod::SyncOutputShape() {
+void CombinedNonMaxSuppressionGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cudaStreamSynchronized failed");
   std::vector<int64_t> shape0 = {batch_size_, per_detections_, DimSize4};
   std::vector<int64_t> shape1 = {batch_size_, per_detections_};
   std::vector<int64_t> shape2 = {batch_size_, per_detections_};
   std::vector<int64_t> shape3 = {batch_size_};
-  outputs_[kIndex0]->SetShapeVector(shape0);
-  outputs_[kIndex1]->SetShapeVector(shape1);
-  outputs_[kIndex2]->SetShapeVector(shape2);
-  outputs_[kIndex3]->SetShapeVector(shape3);
+  outputs[kIndex0]->SetShapeVector(shape0);
+  outputs[kIndex1]->SetShapeVector(shape1);
+  outputs[kIndex2]->SetShapeVector(shape2);
+  outputs[kIndex3]->SetShapeVector(shape3);
+  outputs[kIndex0]->set_size(LongToSize(batch_size_ * per_detections_ * DimSize4) *
+                             UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(batch_size_ * per_detections_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(batch_size_ * per_detections_) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+  outputs[kIndex3]->set_size(LongToSize(batch_size_) * UnitSizeInBytes(outputs[kIndex3]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, CombinedNonMaxSuppressionGpuKernelMod::CombinedNonMaxSuppressionLaunchFunc>>

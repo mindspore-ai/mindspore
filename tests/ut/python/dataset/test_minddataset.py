@@ -1376,25 +1376,6 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         writer.write_raw_data(data)
         writer.commit()
 
-        # change data value to list
-        data_value_to_list = []
-        for item in data:
-            new_data = {}
-            new_data['file_name'] = np.asarray(item["file_name"], dtype=np.str_)
-            new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
-            new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
-            new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
-            new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
-            new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
-            new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
-            new_data['source_sos_ids'] = item["source_sos_ids"]
-            new_data['source_sos_mask'] = item["source_sos_mask"]
-            new_data['target_sos_ids'] = item["target_sos_ids"]
-            new_data['target_sos_mask'] = item["target_sos_mask"]
-            new_data['target_eos_ids'] = item["target_eos_ids"]
-            new_data['target_eos_mask'] = item["target_eos_mask"]
-            data_value_to_list.append(new_data)
-
         num_readers = 2
         data_set = ds.MindDataset(dataset_files=mindrecord_file_name,
                                   num_parallel_workers=num_readers,
@@ -1404,11 +1385,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 13
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1423,10 +1400,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] == data[num_iter][field]).all()
-                else:
-                    assert item[field] == data[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1440,11 +1414,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 4
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1459,11 +1429,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1478,11 +1444,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1497,11 +1459,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1517,11 +1475,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 11
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
     except Exception as error:
@@ -1590,19 +1544,6 @@ def test_write_with_multi_bytes_and_MindDataset():
         writer.write_raw_data(data)
         writer.commit()
 
-        # change data value to list
-        data_value_to_list = []
-        for item in data:
-            new_data = {}
-            new_data['file_name'] = np.asarray(item["file_name"], dtype=np.str_)
-            new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
-            new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
-            new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
-            new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
-            new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
-            new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
-            data_value_to_list.append(new_data)
-
         num_readers = 2
         data_set = ds.MindDataset(dataset_files=mindrecord_file_name,
                                   num_parallel_workers=num_readers,
@@ -1612,11 +1553,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 7
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
 
@@ -1630,11 +1567,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
 
@@ -1648,11 +1581,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
 
@@ -1666,11 +1595,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 2
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
 
@@ -1684,11 +1609,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
 
@@ -1703,11 +1624,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 5
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 6
     except Exception as error:
@@ -1789,20 +1706,6 @@ def test_write_with_multi_array_and_MindDataset():
         writer.write_raw_data(data)
         writer.commit()
 
-        # change data value to list - do none
-        data_value_to_list = []
-        for item in data:
-            new_data = {}
-            new_data['source_sos_ids'] = item["source_sos_ids"]
-            new_data['source_sos_mask'] = item["source_sos_mask"]
-            new_data['source_eos_ids'] = item["source_eos_ids"]
-            new_data['source_eos_mask'] = item["source_eos_mask"]
-            new_data['target_sos_ids'] = item["target_sos_ids"]
-            new_data['target_sos_mask'] = item["target_sos_mask"]
-            new_data['target_eos_ids'] = item["target_eos_ids"]
-            new_data['target_eos_mask'] = item["target_eos_mask"]
-            data_value_to_list.append(new_data)
-
         num_readers = 2
         data_set = ds.MindDataset(dataset_files=mindrecord_file_name,
                                   num_parallel_workers=num_readers,
@@ -1812,11 +1715,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 8
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1832,11 +1731,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 6
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1852,11 +1747,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1872,11 +1763,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 3
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1890,11 +1777,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 1
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
 
@@ -1911,11 +1794,7 @@ def test_write_with_multi_array_and_MindDataset():
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             assert len(item) == 8
             for field in item:
-                if isinstance(item[field], np.ndarray):
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
-                else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                assert (item[field] == data[num_iter][field]).all()
             num_iter += 1
         assert num_iter == 6
     except Exception as error:
@@ -2047,20 +1926,6 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
         writer.write_raw_data(data)
         writer.commit()
 
-        # change data value to list - do none
-        data_value_to_list = []
-        for item in data:
-            new_data = {}
-            new_data['float32_array'] = item["float32_array"]
-            new_data['float64_array'] = item["float64_array"]
-            new_data['float32'] = item["float32"]
-            new_data['float64'] = item["float64"]
-            new_data['int32_array'] = item["int32_array"]
-            new_data['int64_array'] = item["int64_array"]
-            new_data['int32'] = item["int32"]
-            new_data['int64'] = item["int64"]
-            data_value_to_list.append(new_data)
-
         num_readers = 2
         data_set = ds.MindDataset(dataset_files=mindrecord_file_name,
                                   num_parallel_workers=num_readers,
@@ -2072,13 +1937,11 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
             for field in item:
                 if isinstance(item[field], np.ndarray):
                     if item[field].dtype == np.float32:
-                        assert (item[field] ==
-                                np.array(data_value_to_list[num_iter][field], np.float32)).all()
+                        assert (item[field] == np.array(data[num_iter][field], np.float32)).all()
                     else:
-                        assert (item[field] ==
-                                data_value_to_list[num_iter][field]).all()
+                        assert (item[field] == data[num_iter][field]).all()
                 else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                    assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 5
 
@@ -2094,13 +1957,11 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
             for field in item:
                 if isinstance(item[field], np.ndarray):
                     if item[field].dtype == np.float32:
-                        assert (item[field] ==
-                                np.array(data_value_to_list[num_iter][field], np.float32)).all()
+                        assert (item[field] == np.array(data[num_iter][field], np.float32)).all()
                     else:
-                        assert (item[field] ==
-                                data_value_to_list[num_iter][field]).all()
+                        assert (item[field] == data[num_iter][field]).all()
                 else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                    assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 5
 
@@ -2116,17 +1977,13 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
             for field in item:
                 if isinstance(item[field], np.ndarray):
                     if item[field].dtype == np.float32:
-                        assert (item[field] ==
-                                np.array(data_value_to_list[num_iter][field], np.float32)).all()
+                        assert (item[field] == np.array(data[num_iter][field], np.float32)).all()
                     elif item[field].dtype == np.float64:
-                        assert math.isclose(item[field],
-                                            np.array(data_value_to_list[num_iter][field], np.float64),
-                                            rel_tol=1e-14)
+                        assert math.isclose(item[field], np.array(data[num_iter][field], np.float64), rel_tol=1e-14)
                     else:
-                        assert (item[field] ==
-                                data_value_to_list[num_iter][field]).all()
+                        assert (item[field] == data[num_iter][field]).all()
                 else:
-                    assert item[field] == data_value_to_list[num_iter][field]
+                    assert item[field] == data[num_iter][field]
             num_iter += 1
         assert num_iter == 5
     except Exception as error:

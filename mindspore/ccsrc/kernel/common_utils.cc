@@ -26,10 +26,12 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/graph_utils.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/format_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "nlohmann/json.hpp"
 #include "ops/array_op_name.h"
@@ -38,6 +40,7 @@
 #include "ops/math_op_name.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -388,12 +391,19 @@ bool HasOutputElementsKernelObjectType(const std::vector<KernelObjectType> &outp
 void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<KernelObjectType> input_kernel_object_types;
-  if (selected_kernel_attr.GetRealTuple()) {
+  if (common::AnfAlgo::HasNodeAttr(kInputRealTuple, kernel_node)) {
     input_kernel_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
   } else {
     input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
   }
-  auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
+
+  std::vector<KernelObjectType> output_kernel_object_types;
+  if (common::AnfAlgo::HasNodeAttr(kOutputRealTuple, kernel_node)) {
+    output_kernel_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
+  } else {
+    output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  }
+
   std::vector<KernelObjectType> output_element_object_types;
   if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
     output_element_object_types = CalOutputElementObjectTypes(kernel_node, selected_kernel_attr);
@@ -422,12 +432,17 @@ KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &
   return *this;
 }
 
-KernelAttr &KernelAttr::AddAllSameAttr(const bool &all_same) {
+KernelAttr &KernelAttr::AddAllSameAttr(bool all_same, size_t all_same_input_num, bool group_allsame) {
   all_same_ = all_same;
+  is_group_allsame_ = group_allsame;
+  if (all_same_input_num < 1) {
+    MS_LOG(EXCEPTION) << "Allsame attr must >= 1, but get " << all_same_input_num;
+  }
+  all_same_input_num_ = all_same_input_num;
   return *this;
 }
 
-KernelAttr &KernelAttr::AddSkipCheckAttr(const bool &skip_check) {
+KernelAttr &KernelAttr::AddSkipCheckAttr(bool skip_check) {
   skip_check_ = skip_check;
   return *this;
 }
@@ -442,7 +457,7 @@ KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
   return *this;
 }
 
-KernelAttr &KernelAttr::AddAllOutInRef(const bool &all_out_in_ref) {
+KernelAttr &KernelAttr::AddAllOutInRef(bool all_out_in_ref) {
   all_out_in_ref_ = all_out_in_ref;
   return *this;
 }
@@ -474,9 +489,6 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   ss << "[Kernel Attr] all same: " << kernel_attr.GetAllSame();
   if (kernel_attr.GetSkipCheck()) {
     ss << ", skip check: true";
-  }
-  if (kernel_attr.GetRealTuple()) {
-    ss << ", keep tuple target: inputs";
   }
   size_t input_num = kernel_attr.GetInputSize();
   if (input_num > 0) {
@@ -554,6 +566,48 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
   return std::make_pair(false, 0);
 }
 
+bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
+                              const KernelAttr &cur_kernel_attr) {
+  auto cur_input_num = cur_kernel_attr.GetInputSize();
+  bool is_group_allsame = cur_kernel_attr.GetGroupAllSame();
+  size_t cur_all_same_input_num = cur_kernel_attr.GetAllSameInputNum();  // default 0; else >=1 when allsame=true
+  size_t cur_standalone_input_num = cur_input_num - cur_all_same_input_num;
+  size_t each_attr_input_num =
+    (input_num - cur_standalone_input_num) / (cur_all_same_input_num == 0 ? 1 : cur_all_same_input_num);
+  // deal with allsame inputs
+  if (is_group_allsame) {
+    for (size_t i = 0; i < each_attr_input_num; ++i) {
+      for (size_t j = 0; j < cur_all_same_input_num; ++j) {
+        auto dtype = cur_kernel_attr.GetInputAttr(j).dtype;
+        auto start = j + i * cur_all_same_input_num;
+        if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+          return true;
+        }
+      }
+    }
+  } else {
+    for (size_t i = 0; i < cur_all_same_input_num; ++i) {
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+        auto start = j + i * each_attr_input_num;
+        if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // deal with the rest except allsame inputs
+  for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
+    auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+    auto start = each_attr_input_num * cur_all_same_input_num + i;
+    if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
                                         const std::vector<KernelAttr> &kernel_attr_list) {
   // kernel_attr should not be all same. If so, then return false.
@@ -570,15 +624,12 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
     if (!cur_kernel_attr.GetAllSame() && (input_num != cur_input_num || output_num != cur_output_num)) {
       continue;
     }
+    std::vector<mindspore::TypeId> input_types;
+    (void)std::transform(kernel_attr.input_type().begin(), kernel_attr.input_type().end(),
+                         std::back_inserter(input_types), [](const DataType &Dtype) { return Dtype.dtype; });
 
-    bool mis_match = false;
-    for (size_t i = 0; i < input_num; ++i) {
-      auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).dtype;
-      if (kernel_attr.GetInputAttr(i).dtype != dtype && kernel_attr.GetInputAttr(i).dtype != kTypeUnknown) {
-        mis_match = true;
-        break;
-      }
-    }
+    bool mis_match = CheckAttrForAllSameInput(input_num, input_types, cur_kernel_attr);
+
     if (mis_match) {
       continue;
     }
@@ -692,46 +743,7 @@ KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
   return GetKernelAttrFromBuildInfo(build_info);
 }
 
-const std::map<std::string, Format> format_relation_map = {{"DefaultFormat", Format::DEFAULT_FORMAT},
-                                                           {"NCHW", Format::NCHW},
-                                                           {"NHWC", Format::NHWC},
-                                                           {"NHWC4", Format::NHWC4},
-                                                           {"HWKC", Format::HWKC},
-                                                           {"HWCK", Format::HWCK},
-                                                           {"KCHW", Format::KCHW},
-                                                           {"CKHW", Format::CKHW},
-                                                           {"KHWC", Format::KHWC},
-                                                           {"CHWK", Format::CHWK},
-                                                           {"HW", Format::HW},
-                                                           {"HW4", Format::HW4},
-                                                           {"NC", Format::NC},
-                                                           {"NC4", Format::NC4},
-                                                           {"NC4HW4", Format::NC4HW4},
-                                                           {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
-                                                           {"NCDHW", Format::NCDHW},
-                                                           {"NWC", Format::NWC},
-                                                           {"NCW", Format::NCW},
-                                                           {"NDHWC", Format::NDHWC}};
-
-Format GetFormatFromStrToEnum(const std::string &format_str) {
-  auto iter = format_relation_map.find(format_str);
-  if (iter != format_relation_map.end()) {
-    return iter->second;
-  }
-  MS_LOG(DEBUG) << "The data format " << format_str << " can not be converted to enum.";
-  return Format::DEFAULT_FORMAT;
-}
-
-std::string GetFormatFromEnumToStr(Format format) {
-  std::string format_str = kOpFormat_DEFAULT;
-  auto iter = std::find_if(format_relation_map.begin(), format_relation_map.end(),
-                           [format](auto item) { return item.second == format; });
-  if (iter != format_relation_map.end()) {
-    return iter->first;
-  }
-  return format_str;
-}
-
+// Delete after KernelMod rectified.
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs) {
   KernelAttr kernel_attr;
@@ -740,6 +752,18 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   }
   for (auto tensor : outputs) {
     (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
+  }
+  return kernel_attr;
+}
+
+KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  KernelAttr kernel_attr;
+  for (auto tensor : inputs) {
+    (void)kernel_attr.AddInputAttr(tensor->dtype_id(), GetFormatFromEnumToStr(tensor->format()));
+  }
+  for (auto tensor : outputs) {
+    (void)kernel_attr.AddOutputAttr(tensor->dtype_id(), GetFormatFromEnumToStr(tensor->format()));
   }
   return kernel_attr;
 }

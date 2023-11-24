@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2020. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Description: api of types
  */
 
@@ -42,6 +42,7 @@ enum DataType {
   DT_RESOURCE = 23,        // resource type
   DT_STRING_REF = 24,      // string ref type
   DT_DUAL = 25,            // dual output type
+  DT_BFLOAT16 = 27,        // bf16 type
   DT_UNDEFINED             // Used to indicate a DataType field has not been set.
 };
 
@@ -51,7 +52,8 @@ AICPU_VISIBILITY inline int GetSizeByDataType(DataType dataType) {
     {DT_UINT8, 1},     {DT_INT32, 4},       {DT_INT64, 8},     {DT_UINT32, 4},        {DT_UINT64, 8},
     {DT_BOOL, 1},      {DT_DOUBLE, 8},      {DT_STRING, -1},   {DT_DUAL_SUB_INT8, 1}, {DT_DUAL_SUB_UINT8, 1},
     {DT_COMPLEX64, 8}, {DT_COMPLEX128, 16}, {DT_QINT8, 1},     {DT_QINT16, 2},        {DT_QINT32, 4},
-    {DT_QUINT8, 1},    {DT_QUINT16, 2},     {DT_RESOURCE, -1}, {DT_STRING_REF, -1},   {DT_DUAL, 5}};
+    {DT_QUINT8, 1},    {DT_QUINT16, 2},     {DT_RESOURCE, -1}, {DT_STRING_REF, -1},   {DT_DUAL, 5},
+    {DT_BFLOAT16, 2}};
   auto iter = sizeMap.find(dataType);
   if (iter == sizeMap.end()) {
     return -1;

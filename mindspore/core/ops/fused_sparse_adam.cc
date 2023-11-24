@@ -42,26 +42,24 @@ constexpr size_t kGradIndex = 9;
 constexpr size_t kIndicesIndex = 10;
 constexpr size_t kFusedSparseAdamInputsNum = 11;
 
-abstract::TupleShapePtr FusedSparseAdamInferShape(const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
-  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+abstract::TupleShapePtr FusedSparseAdamInferShapeCommon(const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args,
+                                                        const abstract::BaseShapePtr &var_shape_r,
+                                                        const abstract::BaseShapePtr &m_shape_r,
+                                                        const abstract::BaseShapePtr &v_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->BuildShape();
-  auto m_shape_r = input_args[kMIndex]->Broaden()->BuildShape();
-  auto v_shape_r = input_args[kVIndex]->Broaden()->BuildShape();
   auto outputs =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({var_shape_r, m_shape_r, v_shape_r}));
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return outputs;
     }
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->BuildShape())[kShape];
-  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMIndex]->BuildShape())[kShape];
-  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVIndex]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->GetShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMIndex]->GetShape())[kShape];
+  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVIndex]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "m_shape", m_shape, prim_name);
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "v_shape", v_shape, prim_name);
@@ -82,29 +80,51 @@ abstract::TupleShapePtr FusedSparseAdamInferShape(const PrimitivePtr &primitive,
   return outputs;
 }
 
+abstract::TupleShapePtr FusedSparseAdamInferShapeIner(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto m_shape_r = input_args[kMIndex]->Broaden()->GetShape();
+  auto v_shape_r = input_args[kVIndex]->Broaden()->GetShape();
+  return FusedSparseAdamInferShapeCommon(primitive, input_args, var_shape_r, m_shape_r, v_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseAdamInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto m_shape_r = input_args[kMIndex]->GetShape();
+  auto v_shape_r = input_args[kVIndex]->GetShape();
+  return FusedSparseAdamInferShapeCommon(primitive, input_args, var_shape_r, m_shape_r, v_shape_r);
+}
+
 TypePtr FusedSparseAdamInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"m", input_args[kMIndex]->BuildType()},
-                                          {"v", input_args[kVIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"m", input_args[kMIndex]->GetType()},
+                                          {"v", input_args[kVIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim_name);
 
   types = {
-    {"beta1_power", input_args[kBeta1PowerIndex]->BuildType()},
-    {"beta2_power", input_args[kBeta2Powerndex]->BuildType()},
-    {"lr", input_args[kLrIndex]->BuildType()},
-    {"beta1", input_args[kBeta1Index]->BuildType()},
-    {"beta2", input_args[kBeta2Index]->BuildType()},
-    {"epsilon", input_args[kEpsilonIndex]->BuildType()},
+    {"beta1_power", input_args[kBeta1PowerIndex]->GetType()},
+    {"beta2_power", input_args[kBeta2Powerndex]->GetType()},
+    {"lr", input_args[kLrIndex]->GetType()},
+    {"beta1", input_args[kBeta1Index]->GetType()},
+    {"beta2", input_args[kBeta2Index]->GetType()},
+    {"epsilon", input_args[kEpsilonIndex]->GetType()},
   };
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, {kFloat16, kFloat32}, prim_name);
 
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, {kInt32}, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 }  // namespace fused_sparse_adam
@@ -142,7 +162,7 @@ AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                            SizeToLong(fused_sparse_adam::kFusedSparseAdamInputsNum), op_name);
   auto types = fused_sparse_adam::FusedSparseAdamInferType(primitive, input_args);
-  auto shapes = fused_sparse_adam::FusedSparseAdamInferShape(primitive, input_args);
+  auto shapes = fused_sparse_adam::FusedSparseAdamInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

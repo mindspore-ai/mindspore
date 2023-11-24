@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+#include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
-#include "runtime/graph_scheduler/any_type_graph_scheduler.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 
@@ -375,6 +375,8 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
       MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                     << " for value node:" << node->DebugString();
       return;
+    } else if (value->isa<ValueSequence>()) {
+      tensor = SequenceToTensor(value->cast<ValueSequencePtr>());
     } else {
       MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
     }

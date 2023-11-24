@@ -484,7 +484,6 @@ def test_pynative_resnet50_with_env(queue, device_id, device_num):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_pynative_resnet50_8p():
     device_num = 8

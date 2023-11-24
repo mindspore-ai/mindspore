@@ -413,7 +413,7 @@ const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
 const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
-const int kValueNodeTensorMask = 2;
+const int kValueNodeMask = 2;
 constexpr auto kNCHWShapeSize = 4;
 
 // define special index in special node
@@ -443,9 +443,9 @@ constexpr auto kSwitchFalseBranchIndex = 3;
 constexpr auto kSwitchBranchesNum = 2;
 
 // index define of GridSampler & GridSamplerGrad
-constexpr int kGridSamplerInputNum = 2;
+constexpr int kGridSamplerInputNum = 5;
 constexpr int kGridSamplerOutputNum = 1;
-constexpr int kGridSamplerGradInputNum = 3;
+constexpr int kGridSamplerGradInputNum = 6;
 constexpr int kGridSamplerGradOutputNum = 2;
 
 // index define of switch_layer
@@ -521,6 +521,9 @@ constexpr auto kOpFormat_ND_RNN_BIAS = "ND_RNN_BIAS";
 constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
+
+// graph parse
+constexpr auto kClassTensorType = "class_tensor_type";
 
 // graph type
 constexpr auto kFuncGraphTypeName = "FuncGraph";

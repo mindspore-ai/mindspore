@@ -29,26 +29,17 @@ constexpr size_t kGradIndex = 2;
 constexpr size_t kIndicesIndex = 3;
 }  // namespace
 
-bool SparseApplyAdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdagradV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseApplyAdagradV2->name()) {
     MS_LOG(ERROR) << "For 'SparseApplyAdagradV2', the kernel name must be 'SparseApplyAdagradV2', but got "
                   << kernel_name_;
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyAdagradV2>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "SparseApplyAdagradV2 ops failed!";
-    return false;
-  }
-  lr_ = kernel_ptr->get_lr();
-  epsilon_ = kernel_ptr->get_epsilon();
-  update_slots_ = kernel_ptr->get_update_slots();
+  lr_ = GetValue<float>(primitive_->GetAttr("lr"));
+  epsilon_ = GetValue<float>(primitive_->GetAttr("epsilon"));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr("update_slots"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -65,17 +56,15 @@ bool SparseApplyAdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int SparseApplyAdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseApplyAdagradV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
 
-  if (input_size_list_.size() != kSparseApplyAdagradV2InputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 4 but got " << input_size_list_.size();
+  if (inputs.size() != kSparseApplyAdagradV2InputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 4 but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
@@ -122,22 +111,22 @@ int SparseApplyAdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 
 template <typename T, typename S>
-bool SparseApplyAdagradV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
+bool SparseApplyAdagradV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradV2OutputsNum, kernel_name_);
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto accum_out = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto accum = reinterpret_cast<T *>(inputs[kAccIndex]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  auto var_out = reinterpret_cast<T *>(outputs[kVarIndex]->device_ptr());
+  auto accum_out = reinterpret_cast<T *>(outputs[kAccIndex]->device_ptr());
 
   auto status =
     CalSparseApplyAdagradV2(input_elements_, sizeof(S) / sizeof(int), lr_, epsilon_, update_slots_, grad, indices, var,

@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 #include "common/fetch_content.h"
-#include "ops/less_equal.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "op/cmp_operator.h"
 
 namespace mindspore {

@@ -26,32 +26,20 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedAdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class FusedAdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
  public:
   FusedAdamWeightDecayGpuKernelMod() : element_nums_(0), weight_decay_(false), is_null_input_(false) {}
   ~FusedAdamWeightDecayGpuKernelMod() override = default;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    if (node_name == "FusedAdamWeightDecay") {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (kernel_name_ == "FusedAdamWeightDecay") {
       weight_decay_ = true;
     }
-
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, node_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    element_nums_ = SizeOf(shape);
-
-    InitSizeLists();
     return true;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -72,21 +60,18 @@ class FusedAdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
- protected:
-  void InitResource() override{};
-  void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(element_nums_ * sizeof(T));
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(element_nums_ * sizeof(T));
-    if (weight_decay_) {
-      input_size_list_.push_back(sizeof(float));
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto shape = inputs[kIndex7]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+    if (is_null_input_) {
+      output_size_list_.push_back(element_nums_ * sizeof(T));
+      return KRET_UNKNOWN_SHAPE;
     }
+    element_nums_ = SizeOf(shape);
     output_size_list_.push_back(element_nums_ * sizeof(T));
+    return KRET_OK;
   }
 
  private:

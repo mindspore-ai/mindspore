@@ -68,6 +68,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kDefault, "Default"},
   {ProfilerEvent::kKernelInfer, "KernelInfer"},
   {ProfilerEvent::kKernelResize, "KernelResize"},
+  {ProfilerEvent::kKernelInferAndResize, "KernelInferAndResize"},
   {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
   {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
   {ProfilerEvent::kGraphLaunch, "GraphLaunch"},

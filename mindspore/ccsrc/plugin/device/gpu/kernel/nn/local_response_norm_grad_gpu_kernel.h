@@ -40,8 +40,8 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
   LocalResponseNormGradGpuKernelMod() { ResetResource(); }
   ~LocalResponseNormGradGpuKernelMod() override { DestroyResource(); }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -94,11 +94,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::LRNGrad>(base_operator);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    kernel_name_ = kernel_ptr->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     size_t input_num = inputs.size();
     if (input_num != k3DSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
@@ -107,10 +103,10 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
-    depth_radius_ = kernel_ptr->get_depth_radius();
-    bias_ = kernel_ptr->get_bias();
-    alpha_ = kernel_ptr->get_alpha();
-    beta_ = kernel_ptr->get_beta();
+    depth_radius_ = GetValue<int64_t>(primitive_->GetAttr("depth_radius"));
+    bias_ = GetValue<float>(primitive_->GetAttr("bias"));
+    alpha_ = GetValue<float>(primitive_->GetAttr("alpha"));
+    beta_ = GetValue<float>(primitive_->GetAttr("beta"));
     use_native_ = false;
     int lrnN = kCoef * depth_radius_ + 1;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
@@ -120,10 +116,8 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -149,7 +143,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       transpose_shape_.push_back(input_shape_[1]);
     } else {
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
       SetCUDNNDescriptors(input_shape_, lrnN, lrnAlpha);
     }
 

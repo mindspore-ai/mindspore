@@ -20,6 +20,7 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 from mindspore.ops._utils import get_broadcast_shape
+from ..auto_generate import RandpermV2
 
 
 class NonDeterministicInts(Primitive):
@@ -210,7 +211,8 @@ class StandardLaplace(Primitive):
             random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
-        - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed
+        - **shape** (Union[tuple[int], Tensor[int]]) - The shape of random tensor to be generated.
+          Only constant value is allowed
           when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
 
     Outputs:
@@ -1238,53 +1240,4 @@ class Uniform(Primitive):
         Validator.check('minval', minval, 'maxval', maxval, Validator.LE, self.name)
         Validator.check_non_negative_float(minval, "minval", self.name)
         Validator.check_non_negative_float(maxval, "maxval", self.name)
-        self.add_prim_attr("side_effect_hidden", True)
-
-
-class RandpermV2(Primitive):
-    r"""
-    Generates random permutation of integers from 0 to n-1 without repeating.
-
-    Refer to :func:`mindspore.ops.randperm` for more details.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        dtype (mindspore.dtype, optional): The type of output.
-            Its value must be one of the following types: int32, int16, int8,
-            uint8, int64, float64, float32, float16. Default: mstype.int64.
-
-    Inputs:
-        - **n** (Union[Tensor, int]) - The input n Tensor with shape :math:`()` or :math:`(1,)`
-          and with data type of int64.
-        - **seed** (int, optional) - Random seed. Default: ``0`` . When `seed` is ``-1`` (only negative value),
-          `offset` is ``0``, it's determined by time.
-        - **offset** (int, optional) - Offset to generate random numbers. Priority is higher than random seed.
-          Default: ``0`` . It must be non-negative.
-
-    Outputs:
-        Tensor. Its shape is specified by the required args `n`. Its type is specified by `dtype`.
-        Otherwise is default.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> n = Tensor([4], mstype.int64)
-        >>> seed = 0
-        >>> offset = 0
-        >>> randperm = ops.RandpermV2(dtype=mstype.int64)
-        >>> output = randperm(n, seed, offset)
-        >>> print(output)
-        [1 0 2 3]
-    """
-
-    @prim_attr_register
-    def __init__(self, dtype=mstype.int64):
-        """Initialize RandpermV2"""
-        self.dtype = dtype
-        valid_values = (mstype.int32, mstype.int64, mstype.int16, mstype.int8, mstype.uint8, mstype.float64
-                        , mstype.float32, mstype.float16)
-        Validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.add_prim_attr("side_effect_hidden", True)

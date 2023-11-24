@@ -22,15 +22,8 @@
 namespace mindspore::ops {
 constexpr size_t kTransposeCalcInputsNum = 2;
 
-TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
-      !inputs[1]->isa<ValueSequence>()) {
-    return {};
-  }
-
-  auto tensor = inputs[0]->cast<tensor::TensorPtr>();
+TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std::vector<int64_t> &input_perm) {
   MS_EXCEPTION_IF_NULL(tensor);
-
   const auto &x_shape = tensor->shape();
   (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, "Transpose");
   if (x_shape[0] == 0) {
@@ -42,7 +35,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
 
-  auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
+  auto &dims = input_perm;
   const auto ndim = old_shape.size();
   if (ndim != dims.size()) {
     return {};
@@ -67,6 +60,16 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
     std::make_shared<TensorStorageInfo>(new_shape, new_strides, old_storage_offset, old_tensor_info->ori_shape,
                                         old_tensor_info->ori_strides, is_contiguouts);
   return {new_storage_info};
+}
+
+TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
+      !inputs[1]->isa<ValueSequence>()) {
+    return {};
+  }
+  auto tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
+  return StridesCalc(tensor, dims);
 }
 
 REG_VIEW_STRIDES_CALC_FUN(Transpose, TransposeCalc);

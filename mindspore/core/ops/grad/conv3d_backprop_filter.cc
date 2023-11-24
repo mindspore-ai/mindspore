@@ -198,9 +198,9 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
     Conv3dBackpropFilterInferCheck(primitive, input_args, true);
     auto filter_size_v = GetShapeValue(primitive, input_args[kConv3DBackpropFilterFilterSizeIndex]);
     auto dout_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropFilterDoutIndex]->BuildShape())[kShape];
-    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kConv3DBackpropFilterInputIndex]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropFilterDoutIndex]->GetShape())[kShape];
+    auto input_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropFilterInputIndex]->GetShape())[kShape];
     if (IsDynamicRank(filter_size_v) || IsDynamicRank(input_shape) || IsDynamicRank(dout_shape)) {
       std::vector<int64_t> out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
@@ -213,8 +213,8 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     // check
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kConv3DBackpropFilterInputIndex]->BuildType());
-    (void)types.emplace("doutput", input_args[kConv3DBackpropFilterDoutIndex]->BuildType());
+    (void)types.emplace("x", input_args[kConv3DBackpropFilterInputIndex]->GetType());
+    (void)types.emplace("doutput", input_args[kConv3DBackpropFilterDoutIndex]->GetType());
     std::set<TypePtr> valid_x_type = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
     return kFloat32;

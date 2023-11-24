@@ -86,7 +86,9 @@ class IrBuilder {
     return e->Emit(MetaOp::Cast, {node, dst_type});
   }
   inline NodePtr Concat(const NodePtrList &inputs, const NodePtr &axis) const {
-    return e->Emit(MetaOp::Concat, inputs, {{"axis", axis}});
+    NodePtrList new_inputs(inputs.cbegin(), inputs.cend());
+    new_inputs.push_back(axis);
+    return e->Emit(MetaOp::Concat, new_inputs);
   }
   inline NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return e->Emit(MetaOp::Div, {lhs, rhs}); }
   inline NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return e->Emit(MetaOp::Equal, {lhs, rhs}); }

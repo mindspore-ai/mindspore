@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,9 +44,9 @@ def test_minimum_two_tensors_tensor_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = TwoTensorsMinimum()
     input_x_dyn = Tensor(shape=[None, 10], dtype=ms.int32)
-    input_x_dyn = Tensor(shape=[None, 10], dtype=ms.int32)
+    input_y_dyn = Tensor(shape=[None, 10], dtype=ms.int32)
 
-    net.set_inputs(input_x_dyn, input_x_dyn)
+    net.set_inputs(input_x_dyn, input_y_dyn)
 
     prop = 100 if np.random.random() > 0.5 else 50
     x = np.random.randn(3, 10).astype(np.int32) * prop
@@ -55,3 +55,23 @@ def test_minimum_two_tensors_tensor_dynamic():
 
     output = net(Tensor(x), Tensor(y))
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_min_tensor_with_bfloat16():
+    """
+    Feature: test minimum on Ascend
+    Description: used two Tensor with type bfloat16.
+    Expectation: result match to numpy result.
+    """
+    x_np = np.random.randn(3, 10).astype(np.float32)
+    y_np = np.random.randn(3, 10).astype(np.float32)
+    input_x_ms = Tensor(x_np, ms.bfloat16)
+    input_y_ms = Tensor(y_np, ms.bfloat16)
+    net = TwoTensorsMinimum()
+    output = net(input_x_ms, input_y_ms)
+    print(output.float().asnumpy())
+    output_np = np.minimum(input_x_ms.float().asnumpy(), input_y_ms.float().asnumpy())
+    assert np.allclose(output.float().asnumpy(), output_np, rtol=0.004, atol=0.004)

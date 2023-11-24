@@ -1405,51 +1405,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     if ndim < 2:
         const_utils.raise_value_error(
             'diagonal requires an array of at least two dimensions')
-    dtype = x.dtype
-
-    axes = check_axis_valid((axis1, axis2), ndim)
-    perm = ()
-    for i in range(ndim):
-        if i not in axes:
-            perm += (i,)
-    perm += axes
-    x = x.transpose(perm)
-
-    shape = x.shape
-    n, m = shape[-2:]
-
-    e = F.eye(n, m, dtype)
-    if offset >= m or offset <= -n:
-        zero_shape = shape[:-2] + (0,)
-        return F.zeros(zero_shape, dtype)
-    if offset != 0:
-        e = e.astype(mstype.float32)
-        if offset > 0:
-            e_left = F.fill(dtype, (n, offset), 0)
-            e_right = e[..., 0:m - offset:1]
-            e = P.Concat(1)((e_left, e_right)).astype(dtype)
-        elif offset < 0:
-            e_upper = F.fill(dtype, (-offset, m), 0)
-            e_lower = e[0:n + offset:1, ...]
-            e = P.Concat(0)((e_upper, e_lower)).astype(dtype)
-    e = F.broadcast_to(e, shape)
-
-    prod_val = F.tensor_mul(x, e)
-    res = F.reduce_sum(prod_val.astype(mstype.float32), -1)
-
-    begin = ()
-    for _ in range(ndim - 2):
-        begin += (0,)
-    last_dim_begin = max_(0, -offset)
-    begin += (last_dim_begin,)
-    size = res.shape[:-1]
-    last_dim_end = min_(
-        shape[-2], max_(0, shape[-1] - offset)) - last_dim_begin
-    if last_dim_end <= 0:
-        return empty_compile(dtype, (0,))
-    size += (last_dim_end,)
-    res = F.tensor_slice(res, begin, size)
-    return res.astype(dtype)
+    return F.diagonal(x, offset, axis1, axis2)
 
 
 def diagonal_scatter(input, src, offset, dim1=0, dim2=1):
@@ -2349,12 +2305,12 @@ def ms_iter(xs):
 
 def ms_next(it):
     """Implementation of `next`."""
-    return it.__ms_next__()
+    return it.__ms_next__
 
 
 def hasnext(it):
     """Implementation of `hasnext`."""
-    return it.__ms_hasnext__()
+    return it.__ms_hasnext__
 
 
 @constexpr
@@ -2533,8 +2489,7 @@ def get_max_min_data_len(*data):
     if isinstance(data, (dict, list, tuple)):
         len_data = len(data)
     else:
-        const_utils.raise_type_error(
-            "max() or min() does not support the data type.")
+        raise TypeError("max() or min() does not support the data type.")
     return len_data
 
 
@@ -2546,8 +2501,7 @@ def get_tensor_num(data):
             tensor_shape = F.shape(input_data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len != 0 and not (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                const_utils.raise_value_error(
-                    "The truth value of an array with more than one element is ambiguous.")
+                raise ValueError("The truth value of an array with more than one element is ambiguous.")
             tensor_num = tensor_num + 1
     return tensor_num
 
@@ -2567,9 +2521,9 @@ def check_sequence_all_variable_scalar(x, str_info):
     """Check whether x can be used in SequenceMax and SequenceMin"""
     if F.is_sequence_shape_unknown(x):
         if F.is_dynamic_sequence_element_unknown(x):
-            const_utils.raise_value_error(str_info + "() arg is an empty sequence.")
+            raise ValueError(str_info + "() arg is an empty sequence.")
         if not isinstance(x[0], (int, float)):
-            const_utils.raise_value_error(
+            raise ValueError(
                 "When the input to " + str_info + "() is dynamic length sequence, only support scalar type input")
         return True
     contain_variable_scalar = False
@@ -2581,56 +2535,39 @@ def check_sequence_all_variable_scalar(x, str_info):
     return contain_variable_scalar
 
 
-def get_data_type_str(input_data):
-    """Get the type of input."""
-    if isinstance(input_data, (int, float, bool)):
-        return "variable " + str(F.typeof(input_data))
-    return str(F.typeof(input_data))
-
-
-def check_isconstant(input_data, func_name):
-    """Check the input data of func is constant."""
-    if not F.isconstant(input_data):
-        const_utils.raise_type_error("The input of " + func_name + " only support Tensor, List, Tuple, constant Scalar,"
-                                                                   " but got " + get_data_type_str(input_data))
-
-
 def ms_max_one_element(x):
     """Implementation of `max` which inputs has only one element."""
     if isinstance(x, Tensor):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
         return x.max()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
         if check_sequence_all_variable_scalar(x, "max"):
             return SequenceMax()(x)
         if len(x) == 0:
-            const_utils.raise_value_error("max() arg is an empty sequence.")
+            raise ValueError("max() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
         if tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "max() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("max(x)", {}, {"x": x})
         if exist_tensor(x):
-            const_utils.raise_type_error(
-                "max() cannot support tensor in list or tuple nested now.")
-    check_isconstant(x, "max()")
-    return max_(x)
+            raise TypeError("max() cannot support tensor in list or tuple nested now.")
+    if not isinstance(x, (int, float, bool)):
+        return F._py_interpret("max(x)", {}, {"x": x})
+    raise TypeError("The object is not iterable.")
 
 
 def ms_max(*data):
     """Implementation of `max`."""
     len_data = get_max_min_data_len(data)
-    if len_data <= 0:
-        const_utils.raise_type_error("max() requires 1 argument at least.")
+    if len_data <= 0: # pylint: disable=no-else-raise
+        raise TypeError("max() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         return ms_max_one_element(x)
@@ -2640,15 +2577,11 @@ def ms_max(*data):
         if tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "max() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("max(data)", {}, {"data": data})
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
-    for input_data in data:
-        check_isconstant(input_data, "max()")
-    return max_(*data)
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
+    return F._py_interpret("max(data)", {}, {"data": data})
 
 
 def min_tensor(*data):
@@ -2684,36 +2617,33 @@ def ms_min_one_element(x):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
         return x.min()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
         if check_sequence_all_variable_scalar(x, "min"):
             return SequenceMin()(x)
         if len(x) == 0:
-            const_utils.raise_value_error("min() arg is an empty sequence.")
+            raise ValueError("min() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
         if tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "min() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("min(x)", {}, {"x": x})
         if exist_tensor(x):
-            const_utils.raise_type_error(
-                "min() cannot support tensor in list or tuple nested now.")
-    check_isconstant(x, "min()")
-    return min_(x)
+            raise TypeError("min() cannot support tensor in list or tuple nested now.")
+    if not isinstance(x, (int, float, bool)):
+        return F._py_interpret("min(x)", {}, {"x": x})
+    raise TypeError("The object is not iterable.")
 
 
 def ms_min(*data):
     """Implementation of `min`."""
     len_data = get_max_min_data_len(data)
-    if len_data <= 0:
-        const_utils.raise_type_error("min() requires 1 argument at least.")
+    if len_data <= 0: # pylint: disable=no-else-raise
+        raise TypeError("min() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         return ms_min_one_element(x)
@@ -2723,32 +2653,26 @@ def ms_min(*data):
         if tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "min() cannot contain both tensor and non-tensor type.")
+            return F._py_interpret("min(data)", {}, {"data": data})
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
-    for input_data in data:
-        check_isconstant(input_data, "min()")
-    return min_(*data)
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
+    return F._py_interpret("min(data)", {}, {"data": data})
 
 
 def ms_sum(*data):
     """Implementation of `sum`."""
     len_data = len(data)
     if len_data <= 0 or len_data > 2:
-        const_utils.raise_type_error("sum() requires 1 or 2 arguments.")
+        raise TypeError("sum() requires 1 or 2 arguments.")
     x = data[0]
-    if not isinstance(x, Tensor) and not hasattr(x, "__ms_iter__"):
+    if isinstance(x, (int, float, bool)):
         data_type = F.typeof(x)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
+        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(x, Tensor):
         tensor_shape = F.shape(x)
         if len(tensor_shape) == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
     if isinstance(x, dict):
         x = x.keys()
     result = 0
@@ -2819,6 +2743,8 @@ def enumerate_(x, start=0):
     x_type = F.typeof(x)
     ret = ()
     op_name = "enumerate"
+    if isinstance(x, (int, float, bool)):
+        raise TypeError(f"For 'enumerate', the 'first input' should be tuple or list or tensor, but got {type(x)}.")
     if check_is_const_int(start, op_name, "start"):
         if check_is_tensor(x_type):
             for i in range(x.shape[0]):
@@ -3254,15 +3180,6 @@ def check_is_tensor(x):
     return False
 
 
-@constexpr
-def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
-    """check whether x is list or tuple or tensor."""
-    if isinstance(x, (mstype.List, mstype.Tuple, mstype.TensorType)):
-        return True
-    raise TypeError(
-        f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
-
-
 def check_is_const_int(x, op_name, arg_name):
     """check whether x is const int."""
     if x is None:
@@ -3564,6 +3481,16 @@ def array_next(xs):
 
 def array_hasnext(xs):
     """Whether the array is empty or not."""
+    return len(xs) > 0
+
+
+def str_next(xs):
+    """Next string."""
+    return xs[0], xs[1:]
+
+
+def str_hasnext(xs):
+    """Whether the string is empty or not."""
     return len(xs) > 0
 
 

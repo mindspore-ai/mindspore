@@ -31,19 +31,19 @@ namespace {
 abstract::ShapePtr ScatterNonAliasingAddInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  auto updates_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto updates_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(updates_shape_ptr);
   if (input_x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]->BuildShape());
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]->GetShape());
   auto last_dim = indices_shape.back();
   indices_shape.pop_back();
   if (last_dim < SizeToLong(input_x_shape.size())) {
@@ -56,17 +56,17 @@ abstract::ShapePtr ScatterNonAliasingAddInferShape(const PrimitivePtr &primitive
                              << ", updates_shape: " << updates_shape_ptr->ToString() << ".";
   }
 
-  return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
 }
 
 TypePtr ScatterNonAliasingAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
   std::set<TypePtr> type_set = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace

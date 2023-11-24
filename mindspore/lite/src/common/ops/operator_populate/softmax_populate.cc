@@ -15,7 +15,7 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/softmax_parameter.h"
-#include "ops/softmax.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 using mindspore::ops::kAxis;
 using mindspore::ops::kNameSoftmax;
 using mindspore::schema::PrimitiveType_Softmax;

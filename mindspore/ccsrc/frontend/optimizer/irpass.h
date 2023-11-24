@@ -142,6 +142,9 @@ class OptimizeIRPassLib {
   // tuple parameter graph transform
   SubstitutionPtr call_graph_tuple_transform_;
 
+  // Eliminate the unused input of partial
+  SubstitutionPtr partial_unused_args_eliminate_;
+
   // RowTensor Eliminate
   SubstitutionPtr row_tensor_eliminate_;
 

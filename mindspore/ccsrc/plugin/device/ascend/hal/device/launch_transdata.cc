@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/ascend/hal/device/launch_transdata.h"
+
 #include <algorithm>
+
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -95,24 +97,22 @@ uint8_t *LaunchTransData::AllocDeviceMem(size_t size) {
   return static_cast<uint8_t *>(device_memory);
 }
 
-std::vector<kernel::AddressPtr> LaunchTransData::CreateOutputAddr(const std::vector<size_t> &outputs_list) {
+void LaunchTransData::CreateOutputAddr(const std::vector<size_t> &outputs_list,
+                                       std::vector<kernel::KernelTensorPtr> *kernel_tensors) {
+  MS_EXCEPTION_IF_NULL(kernel_tensors);
   // init output_addr_
   outputs_addr_ = std::vector<uint8_t *>(outputs_list.size(), nullptr);
-  std::vector<kernel::AddressPtr> output_address;
   if (outputs_addr_.size() < outputs_list.size()) {
     MS_LOG_EXCEPTION << "Error addr size!";
   }
+  kernel_tensors->clear();
   for (size_t i = 0; i < outputs_list.size(); ++i) {
     auto size = MemoryManager::GetCommonAlignSize(outputs_list[i]);
     outputs_addr_[i] = AllocDeviceMem(size);
-    auto address = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(address);
-    address->addr = outputs_addr_[i];
-    MS_EXCEPTION_IF_NULL(address->addr);
-    address->size = size;
-    output_address.push_back(address);
+    auto kernel_tensor =
+      std::make_shared<kernel::KernelTensor>(outputs_addr_[i], size, dst_format_, dtype_, shape_, kAscendDevice, 0);
+    kernel_tensors->emplace_back(kernel_tensor);
   }
-  return output_address;
 }
 
 void LaunchTransData::AclKernelBuild() {
@@ -129,18 +129,23 @@ void LaunchTransData::LaunchOpKernel() {
   }
   SetKernelBuildInfo();
   AclKernelBuild();
+
   // inputs
-  std::vector<kernel::AddressPtr> kernel_inputs;
-  auto input = std::make_shared<kernel::Address>();
-  MS_EXCEPTION_IF_NULL(input);
-  input->addr = input_addr_;
-  MS_EXCEPTION_IF_NULL(input->addr);
-  input->size = total_size_;
-  kernel_inputs.push_back(input);
+  std::vector<kernel::KernelTensor *> kernel_inputs;
+  auto input =
+    std::make_shared<kernel::KernelTensor>(input_addr_, total_size_, src_format_, dtype_, shape_, kAscendDevice, 0);
+  kernel_inputs.push_back(input.get());
+
   // outputs
-  auto kernel_outputs = CreateOutputAddr(kernel_mod_->GetOutputSizeList());
+  std::vector<kernel::KernelTensor *> kernel_outputs;
+  std::vector<kernel::KernelTensorPtr> output_tensors;
+  CreateOutputAddr(kernel_mod_->GetOutputSizeList(), &output_tensors);
+  (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(kernel_outputs),
+                       [](kernel::KernelTensorPtr &tensor) { return tensor.get(); });
+
   // workspaces
-  std::vector<kernel::AddressPtr> kernel_workspace;
+  std::vector<kernel::KernelTensor *> kernel_workspace;
+
   // launch
   auto ret_status = kernel_mod_->Launch(kernel_inputs, kernel_workspace, kernel_outputs, stream_);
   if (!ret_status) {

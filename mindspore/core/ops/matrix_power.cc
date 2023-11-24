@@ -46,7 +46,7 @@ constexpr int64_t kLastSecond = -2;
 TypePtr MatrixPowerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   auto n_value = GetValue<int64_t>(prim->GetAttr(kExponent));
   auto elem_type = TypeIdToType(x_type->cast<TensorTypePtr>()->element()->type_id());
@@ -59,7 +59,7 @@ TypePtr MatrixPowerInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }

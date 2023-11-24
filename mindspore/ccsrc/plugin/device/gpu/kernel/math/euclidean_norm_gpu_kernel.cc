@@ -46,10 +46,8 @@ void EuclideanNormGpuKernelMod::InitWorkSpaceSizeList() {
   }
 }
 
-bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool EuclideanNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -64,24 +62,17 @@ bool EuclideanNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int EuclideanNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-
-  auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  keep_dims_ = kernel_ptr->get_keep_dims();
-  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &axes_)) {
-    MS_LOG(EXCEPTION) << "For" << kernel_name_ << ", can't get axis value from input!";
-  }
-
+  keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+  axes_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  data_type_ = inputs.at(kIndex0)->GetDtype();
+  data_type_ = inputs.at(kIndex0)->dtype_id();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
@@ -125,21 +116,21 @@ int EuclideanNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
-bool EuclideanNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool EuclideanNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   size_t *device_input_shape = nullptr;
   size_t *device_axes_output = nullptr;
   size_t *device_output_stride = nullptr;
-  if (workspace[kIndex0]->size != 0) {
+  if (workspace[kIndex0]->size() != 0) {
     device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
   }
-  if (workspace[kIndex1]->size != 0) {
+  if (workspace[kIndex1]->size() != 0) {
     device_axes_output = GetDeviceAddress<size_t>(workspace, kIndex1);
   }
-  if (workspace[kIndex2]->size != 0) {
+  if (workspace[kIndex2]->size() != 0) {
     device_output_stride = GetDeviceAddress<size_t>(workspace, kIndex2);
   }
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

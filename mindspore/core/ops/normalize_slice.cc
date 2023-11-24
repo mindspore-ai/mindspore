@@ -48,8 +48,8 @@ AbstractBasePtr NormalizeSliceInfo(const std::vector<int64_t> &init_by_none, con
   }
 
   std::shared_ptr<IndexSlice> slice_ptr = std::make_shared<IndexSlice>(
-    GetValue<int64_t>(start_abs->BuildValue()), GetValue<int64_t>(stop_abs->BuildValue()),
-    GetValue<int64_t>(step_abs->BuildValue()), data_shape[new_dim_index], init_by_none, false);
+    GetValue<int64_t>(start_abs->GetValue()), GetValue<int64_t>(stop_abs->GetValue()),
+    GetValue<int64_t>(step_abs->GetValue()), data_shape[new_dim_index], init_by_none, false);
   if (slice_ptr->is_empty_slice()) {
     auto stub_slice = std::make_shared<abstract::AbstractTuple>(
       abstract::AbstractBasePtrList{std::make_shared<abstract::AbstractScalar>(static_cast<int64_t>(1))});
@@ -78,10 +78,9 @@ AbstractBasePtr NormalizeSliceInferInner(const PrimitivePtr &primitive,
   const size_t inputs_size = 4;
   CheckArgsSize(op_name, input_args, inputs_size);
 
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (!IsDynamic(data_shape) && std::all_of(input_args.begin() + 1, input_args.end(), [](const AbstractBasePtr &abs) {
-        return IsValueKnown(abs->BuildValue());
-      })) {
+  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  if (!IsDynamic(data_shape) && std::all_of(input_args.begin() + 1, input_args.end(),
+                                            [](const AbstractBasePtr &abs) { return IsValueKnown(abs->GetValue()); })) {
     size_t dim_index = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrTupleIndexAxis)));
     auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
     size_t expand_dims_mask = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsMask)));
@@ -109,7 +108,7 @@ class NormalizeSliceInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeSliceInferInner(prim, input_args)->BuildType();
+    return NormalizeSliceInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

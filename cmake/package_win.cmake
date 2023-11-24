@@ -247,12 +247,14 @@ install(
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops
+  ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops_generate
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/communication
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/profiler
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/rewrite
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
   ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+  ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
   DESTINATION ${INSTALL_PY_DIR}
   COMPONENT mindspore
 )

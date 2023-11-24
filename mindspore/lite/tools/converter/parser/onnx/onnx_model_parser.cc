@@ -26,7 +26,7 @@
 #include "ir/func_graph.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "nnacl/op_base.h"
-#include "ops/concat.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "ops/tensor_list_stack.h"

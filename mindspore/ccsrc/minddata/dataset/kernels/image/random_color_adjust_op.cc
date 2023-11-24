@@ -34,10 +34,7 @@ RandomColorAdjustOp::RandomColorAdjustOp(float s_bright_factor, float e_bright_f
       saturation_factor_start_(s_saturation_factor),
       saturation_factor_end_(e_saturation_factor),
       hue_factor_start_(s_hue_factor),
-      hue_factor_end_(e_hue_factor) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+      hue_factor_end_(e_hue_factor) {}
 
 Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -46,7 +43,7 @@ Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::s
   // randomly select an augmentation to apply to the input image until all the transformations run
   std::vector<std::string> params_vector = {"brightness", "contrast", "saturation", "hue"};
 
-  std::shuffle(params_vector.begin(), params_vector.end(), rnd_);
+  std::shuffle(params_vector.begin(), params_vector.end(), random_generator_);
 
   *output = std::static_pointer_cast<Tensor>(input);
   // determine if certain augmentation needs to be executed:
@@ -57,14 +54,16 @@ Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::s
         MS_LOG(DEBUG) << "Not running brightness.";
       } else {
         // adjust the brightness of an image
-        float random_factor = std::uniform_real_distribution<float>(bright_factor_start_, bright_factor_end_)(rnd_);
+        float random_factor =
+          std::uniform_real_distribution<float>(bright_factor_start_, bright_factor_end_)(random_generator_);
         RETURN_IF_NOT_OK(AdjustBrightness(*output, output, random_factor));
       }
     } else if (param == "contrast") {
       if (CmpFloat(contrast_factor_start_, contrast_factor_end_) && CmpFloat(contrast_factor_start_, 1.0f)) {
         MS_LOG(DEBUG) << "Not running contrast.";
       } else {
-        float random_factor = std::uniform_real_distribution<float>(contrast_factor_start_, contrast_factor_end_)(rnd_);
+        float random_factor =
+          std::uniform_real_distribution<float>(contrast_factor_start_, contrast_factor_end_)(random_generator_);
         RETURN_IF_NOT_OK(AdjustContrast(*output, output, random_factor));
       }
     } else if (param == "saturation") {
@@ -73,7 +72,7 @@ Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::s
         MS_LOG(DEBUG) << "Not running saturation.";
       } else {
         float random_factor =
-          std::uniform_real_distribution<float>(saturation_factor_start_, saturation_factor_end_)(rnd_);
+          std::uniform_real_distribution<float>(saturation_factor_start_, saturation_factor_end_)(random_generator_);
         RETURN_IF_NOT_OK(AdjustSaturation(*output, output, random_factor));
       }
     } else if (param == "hue") {
@@ -81,7 +80,8 @@ Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::s
         MS_LOG(DEBUG) << "Not running hue.";
       } else {
         // adjust the Hue of an image
-        float random_factor = std::uniform_real_distribution<float>(hue_factor_start_, hue_factor_end_)(rnd_);
+        float random_factor =
+          std::uniform_real_distribution<float>(hue_factor_start_, hue_factor_end_)(random_generator_);
         RETURN_IF_NOT_OK(AdjustHue(*output, output, random_factor));
       }
     }

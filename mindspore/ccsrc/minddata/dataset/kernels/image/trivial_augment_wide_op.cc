@@ -24,9 +24,7 @@ namespace mindspore {
 namespace dataset {
 TrivialAugmentWideOp::TrivialAugmentWideOp(int32_t num_magnitude_bins, InterpolationMode interpolation,
                                            const std::vector<uint8_t> &fill_value)
-    : num_magnitude_bins_(num_magnitude_bins), interpolation_(interpolation), fill_value_(fill_value) {
-  rnd_.seed(GetSeed());
-}
+    : num_magnitude_bins_(num_magnitude_bins), interpolation_(interpolation), fill_value_(fill_value) {}
 
 Status TrivialAugmentWideOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -86,7 +84,7 @@ Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) {
 
 int32_t TrivialAugmentWideOp::RandInt(int32_t low, int32_t high) {
   std::uniform_int_distribution<int32_t> dis(low, high);
-  return dis(rnd_) % (high - low) + low;
+  return dis(random_generator_) % (high - low) + low;
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -40,17 +40,17 @@ constexpr size_t kGradIndex = 8;
 constexpr size_t kGlobalNormIndex = 9;
 }  // namespace
 
-void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs,
-                                                                   const std::vector<AddressPtr> &) const {
-  auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
-  auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[kScalarIndex];
-  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[kScalarIndex];
-  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->addr)[kScalarIndex];
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr)[kScalarIndex];
-  auto decay = reinterpret_cast<float *>(inputs[kDecayIndex]->addr)[kScalarIndex];
-  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
-  auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->addr)[kScalarIndex];
+void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::vector<KernelTensor *> &inputs,
+                                                                   const std::vector<KernelTensor *> &) const {
+  auto m = reinterpret_cast<float *>(inputs[kMIndex]->device_ptr());
+  auto v = reinterpret_cast<float *>(inputs[kVIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr())[kScalarIndex];
+  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->device_ptr())[kScalarIndex];
+  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->device_ptr())[kScalarIndex];
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->device_ptr())[kScalarIndex];
+  auto decay = reinterpret_cast<float *>(inputs[kDecayIndex]->device_ptr())[kScalarIndex];
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->device_ptr());
+  auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->device_ptr())[kScalarIndex];
   if (global_norm < kMinGlobalNorm) {
     global_norm = 1.0f;
   }
@@ -59,11 +59,11 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::ve
   const auto beta2_minus = 1 - beta2;
 
   // multithreading
-  size_t lens = inputs[kVarIndex]->size > 0 ? static_cast<size_t>(inputs[kVarIndex]->size / kSizeFloat32) : 1;
+  size_t lens = inputs[kVarIndex]->size() > 0 ? static_cast<size_t>(inputs[kVarIndex]->size() / kSizeFloat32) : 1;
   std::function<void(size_t, size_t)> task;
 
   if (gradient_dtype_ == kNumberTypeFloat16) {
-    float16 *gradient16 = reinterpret_cast<float16 *>(inputs[kGradIndex]->addr);
+    float16 *gradient16 = reinterpret_cast<float16 *>(inputs[kGradIndex]->device_ptr());
     task = [&](size_t start, size_t end) {
       size_t i = FusedCastAdamFp32Fp16(var, reinterpret_cast<int16_t *>(gradient16), m, v, lr, beta1, beta2, epsilon,
                                        decay, global_norm_reciprocal, start, end);
@@ -77,7 +77,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::ve
       }
     };
   } else {
-    float *gradient32 = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+    float *gradient32 = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
     task = [&](size_t start, size_t end) {
       size_t i = FusedCastAdamFp32Fp32(var, gradient32, m, v, lr, beta1, beta2, epsilon, decay, global_norm_reciprocal,
                                        start, end);
@@ -95,17 +95,17 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::ve
   CPUKernelUtils::ParallelFor(task, lens, kBatchSize);
 }
 
-void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs,
-                                                                   const std::vector<AddressPtr> &) const {
-  auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
-  auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[kScalarIndex];
-  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[kScalarIndex];
-  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->addr)[kScalarIndex];
-  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr)[kScalarIndex];
-  auto decay = reinterpret_cast<float *>(inputs[kDecayIndex]->addr)[kScalarIndex];
-  auto var16 = reinterpret_cast<float16 *>(inputs[kVarIndex]->addr);
-  auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->addr)[kScalarIndex];
+void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::vector<KernelTensor *> &inputs,
+                                                                   const std::vector<KernelTensor *> &) const {
+  auto m = reinterpret_cast<float *>(inputs[kMIndex]->device_ptr());
+  auto v = reinterpret_cast<float *>(inputs[kVIndex]->device_ptr());
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->device_ptr())[kScalarIndex];
+  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->device_ptr())[kScalarIndex];
+  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->device_ptr())[kScalarIndex];
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->device_ptr())[kScalarIndex];
+  auto decay = reinterpret_cast<float *>(inputs[kDecayIndex]->device_ptr())[kScalarIndex];
+  auto var16 = reinterpret_cast<float16 *>(inputs[kVarIndex]->device_ptr());
+  auto global_norm = reinterpret_cast<float *>(inputs[kGlobalNormIndex]->device_ptr())[kScalarIndex];
   if (global_norm < kMinGlobalNorm) {
     global_norm = 1.0f;
   }
@@ -115,11 +115,11 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
   const auto beta2_minus = 1 - beta2;
 
   // multithreading
-  size_t lens = inputs[kVarIndex]->size > 0 ? static_cast<size_t>(inputs[kVarIndex]->size / kSizeFloat16) : 1;
+  size_t lens = inputs[kVarIndex]->size() > 0 ? static_cast<size_t>(inputs[kVarIndex]->size() / kSizeFloat16) : 1;
   std::function<void(size_t, size_t)> task;
 
   if (gradient_dtype_ == kNumberTypeFloat16) {
-    float16 *gradient16 = reinterpret_cast<float16 *>(inputs[kGradIndex]->addr);
+    float16 *gradient16 = reinterpret_cast<float16 *>(inputs[kGradIndex]->device_ptr());
     task = [&](size_t start, size_t end) {
       size_t i = FusedCastAdamFp16Fp16(reinterpret_cast<int16_t *>(var16), reinterpret_cast<int16_t *>(gradient16), m,
                                        v, lr, beta1, beta2, epsilon, decay, global_norm_reciprocal, start, end);
@@ -135,7 +135,7 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
       }
     };
   } else {
-    float *gradient32 = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+    float *gradient32 = reinterpret_cast<float *>(inputs[kGradIndex]->device_ptr());
     task = [&](size_t start, size_t end) {
       size_t i = FusedCastAdamFp16Fp32(reinterpret_cast<int16_t *>(var16), gradient32, m, v, lr, beta1, beta2, epsilon,
                                        decay, global_norm_reciprocal, start, end);
@@ -155,21 +155,20 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
   CPUKernelUtils::ParallelFor(task, lens, kBatchSize);
 }
 
-void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVarIndex);
-  if (AnfAlgo::IsShapesDynamic({var_shape})) {
-    return;
+int FusedCastAdamWeightDecayCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  var_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kVarIndex);
-  gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kGradIndex);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  const auto &var_shape = inputs[kVarIndex]->GetShapeVector();
+  var_dtype_ = inputs[kVarIndex]->dtype_id();
+  gradient_dtype_ = inputs[kGradIndex]->dtype_id();
+  size_t input_num = inputs.size();
   if (input_num != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = outputs.size();
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;
@@ -190,10 +189,11 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be float16 or float32, but got "
                       << TypeIdToType(var_dtype_)->ToString();
   }
+  return KRET_OK;
 }
 
-void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &outputs) const {
+void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::KernelTensor *> &inputs,
+                                                      const std::vector<kernel::KernelTensor *> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << inputs.size();
@@ -206,47 +206,47 @@ void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::
   size_t elem_size_fp16 = elem_num_ * kSizeFloat16;
   size_t var_size = var_dtype_ == kNumberTypeFloat16 ? elem_size_fp16 : elem_size_fp32;
   size_t grad_size = gradient_dtype_ == kNumberTypeFloat16 ? elem_size_fp16 : elem_size_fp32;
-  if (inputs[kVarIndex]->size != var_size) {
+  if (inputs[kVarIndex]->size() != var_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'var' must be " << var_size << ", but got "
-                      << inputs[kVarIndex]->size;
+                      << inputs[kVarIndex]->size();
   }
-  if (inputs[kMIndex]->size != elem_size_fp32) {
+  if (inputs[kMIndex]->size() != elem_size_fp32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'm' must be " << elem_size_fp32
-                      << ", but got " << inputs[kMIndex]->size;
+                      << ", but got " << inputs[kMIndex]->size();
   }
-  if (inputs[kVIndex]->size != elem_size_fp32) {
+  if (inputs[kVIndex]->size() != elem_size_fp32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'v' must be " << elem_size_fp32
-                      << ", but got " << inputs[kVIndex]->size;
+                      << ", but got " << inputs[kVIndex]->size();
   }
-  if (inputs[kGradIndex]->size != grad_size) {
+  if (inputs[kGradIndex]->size() != grad_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' must be " << grad_size
-                      << ", but got " << inputs[kGradIndex]->size;
+                      << ", but got " << inputs[kGradIndex]->size();
   }
-  if (inputs[kLRIndex]->size != kSizeFloat32) {
+  if (inputs[kLRIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'lr' must be float32, but got 'lr': " << inputs[kLRIndex];
   }
-  if (inputs[kBeta1Index]->size != kSizeFloat32) {
+  if (inputs[kBeta1Index]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'beta1' must be float32, but got 'beta1': " << inputs[kBeta1Index];
   }
-  if (inputs[kBeta2Index]->size != kSizeFloat32) {
+  if (inputs[kBeta2Index]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'beta2' must be float32, but got 'beta2': " << inputs[kBeta2Index];
   }
-  if (inputs[kEpsIndex]->size != kSizeFloat32) {
+  if (inputs[kEpsIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'epsilon' must be float32, but got 'epsilon': " << inputs[kEpsIndex];
   }
-  if (inputs[kDecayIndex]->size != kSizeFloat32) {
+  if (inputs[kDecayIndex]->size() != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'decay' must be float32, but got 'decay': " << inputs[kDecayIndex];
   }
 }
 
-bool FusedCastAdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool FusedCastAdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                                  const std::vector<kernel::KernelTensor *> &,
+                                                  const std::vector<kernel::KernelTensor *> &outputs) {
   CheckParam(inputs, outputs);
   if (var_dtype_ == kNumberTypeFloat16) {
     LaunchFusedCastAdamFp16(inputs, outputs);

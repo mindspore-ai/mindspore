@@ -178,8 +178,6 @@ class TestEnvEnableProfiler:
         assert status == 0
 
     @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_ascend_profiler(self):
@@ -192,8 +190,6 @@ class TestEnvEnableProfiler:
         assert status == 0
 
     @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_host_profiler_none(self):
@@ -206,8 +202,6 @@ class TestEnvEnableProfiler:
         assert status == 0
 
     @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_host_profiler_time(self):
@@ -220,8 +214,6 @@ class TestEnvEnableProfiler:
         assert status == 0
 
     @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_host_profiler_memory(self):

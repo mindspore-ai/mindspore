@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_range_parser.h"
 #include <memory>
-#include "ops/range.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -24,7 +24,7 @@ namespace lite {
 PrimitiveCPtr OnnxRangeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Range>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  prim->set_d_type(0);
+  (void)prim->AddAttr("d_type", api::MakeValue(0));
 
   return prim->GetPrim();
 }

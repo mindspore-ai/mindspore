@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
 
+#include <algorithm>
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "plugin/device/cpu/kernel/custom/julia_api.h"
@@ -23,12 +24,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  const auto &exec_info = GetValue<std::string>(kernel_ptr->GetAttr("func_name"));
+bool CustomJULIACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
   auto pos1 = exec_info.find(":");
   auto pos2 = exec_info.rfind(":");
   if (pos1 == std::string::npos || pos2 == std::string::npos || pos1 == pos2) {
@@ -44,7 +42,7 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   func_name_ = exec_info.substr(pos2 + 1);
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    auto dtype = inputs[i]->GetDtype();
+    auto dtype = inputs[i]->dtype_id();
     auto in_shape = inputs[i]->GetShapeVector();
     ndims_.push_back(in_shape.size());
     shape_list_.push_back(in_shape);
@@ -52,7 +50,7 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    auto dtype = outputs[i]->GetDtype();
+    auto dtype = outputs[i]->dtype_id();
     auto out_shape = outputs[i]->GetShapeVector();
     ndims_.push_back(out_shape.size());
     shape_list_.push_back(out_shape);
@@ -66,14 +64,14 @@ bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool CustomJULIACpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs) {
   std::vector<void *> params;
   for (size_t i = 0; i < inputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
+    params.push_back(reinterpret_cast<void *>(inputs[i]->device_ptr()));
   }
   for (size_t i = 0; i < outputs.size(); i++) {
-    params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
+    params.push_back(reinterpret_cast<void *>(outputs[i]->device_ptr()));
   }
   size_t nparam = params.size();
   JuliaAPI *julia = JuliaAPI::GetInstance();

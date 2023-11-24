@@ -1,0 +1,8 @@
+#operator asin
+asin:
+    args:
+        x: 
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor

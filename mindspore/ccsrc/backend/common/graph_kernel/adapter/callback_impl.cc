@@ -27,11 +27,51 @@
 #include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "kernel/graph_kernel_info.h"
+#include "backend/common/pass/insert_type_transform_op.h"
 
 namespace mindspore::graphkernel {
 namespace {
 constexpr auto kPatternOpaque = "Opaque";
+
+TypeId GetTypeIdForValueSequence(const ValueSequencePtr &value_sequence) {
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  const auto &element_values = value_sequence->value();
+  if (element_values.empty()) {
+    return kNumberTypeInt64;
+  }
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "The value of " << value_sequence->ToString() << " is not a scalar.";
+  }
+  auto data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  return data_type->type_id();
 }
+
+void GetTypeAndFormats(const device::KernelWithIndex &kernel_with_index, std::vector<TypeId> *input_types,
+                       std::vector<std::string> *input_formats) {
+  auto value_node = kernel_with_index.first->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    (void)input_types->emplace_back(tensor->data_type());
+  } else if (value->isa<ValueSequence>()) {
+    (void)input_types->emplace_back(GetTypeIdForValueSequence(value->cast<ValueSequencePtr>()));
+  } else if (value->isa<Scalar>()) {
+    auto scalar = value->cast<ScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    auto data_type = scalar->type();
+    MS_EXCEPTION_IF_NULL(data_type);
+    (void)input_types->emplace_back(data_type->type_id());
+  } else {
+    MS_LOG(EXCEPTION) << "value " << value_node->ToString() << " is unexpected Type.";
+  }
+  (void)input_formats->emplace_back(kOpFormat_DEFAULT);
+}
+}  // namespace
 
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) {
@@ -86,21 +126,11 @@ void CallbackImpl::CollectInputTypesAndFormats(const AnfNodePtr &node, std::vect
                                                std::vector<std::string> *input_formats, bool is_basic_node) {
   auto kernel_with_index = AnfUtils::VisitKernel(node, 0);
   if (kernel_with_index.first->isa<ValueNode>()) {
-    auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
-    MS_EXCEPTION_IF_NULL(tensor);
+    GetTypeAndFormats(kernel_with_index, input_types, input_formats);
+  } else if (kernel_with_index.first->isa<Parameter>() && is_basic_node == false) {
     (void)input_formats->emplace_back(kOpFormat_DEFAULT);
-    (void)input_types->emplace_back(tensor->data_type());
-  } else if (kernel_with_index.first->isa<Parameter>()) {
-    if (is_basic_node == false) {
-      (void)input_formats->emplace_back(kOpFormat_DEFAULT);
-      auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
-      (void)input_types->emplace_back(input_type);
-    } else {
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      (void)input_formats->emplace_back(std::move(input_format));
-      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-      (void)input_types->emplace_back(input_type);
-    }
+    auto input_type = GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
+    (void)input_types->emplace_back(input_type);
   } else {
     auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     (void)input_formats->emplace_back(std::move(input_format));
@@ -202,6 +232,29 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   info_builder.SetFusionType(kPatternOpaque);
   auto selected_info = info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
+}
+
+void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  std::vector<kernel::KernelObjectType> input_obj_type;
+  std::vector<kernel::KernelObjectType> output_obj_type;
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode != nullptr) {
+    auto &inputs = cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
+    }
+    opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(build_info);
+  build_info->SetInputsFormat(input_formats);
+  build_info->SetInputsDeviceType(input_types);
+  build_info->SetInputsKernelObjectType(input_obj_type);
 }
 
 void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {

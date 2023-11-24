@@ -19,7 +19,6 @@
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
-#include "ir/anf.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
@@ -88,14 +87,14 @@ class ActivationInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1,
                                              primitive->name());
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildShape();
+    return input_args[0]->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildType();
+    return input_args[0]->GetType();
   }
 };
 

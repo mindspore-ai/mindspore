@@ -17,6 +17,7 @@
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops import auto_generate
 
 # logical_not is a metagraph object which will generate function according to input type
 # using ".register" decorator
@@ -34,7 +35,7 @@ def _logical_not_scala(x):
     Returns:
        bool, Return logical not operation result of x.
    """
-    return F.bool_not(x.__bool__())
+    return auto_generate.bool_not(x.__bool__())
 
 
 @logical_not.register("String")
@@ -75,7 +76,7 @@ def _logical_not_tensor(x):
        Tensor, Return logical not operation result of x.
    """
     if F.isconstant(x):
-        return F.bool_not(x.__bool__())
+        return auto_generate.bool_not(x.__bool__())
     return F.logical_not(x.__bool__())
 
 
@@ -105,3 +106,11 @@ def _logical_not_list(x):
        bool, Return logical not operation result of x.
    """
     return x.__len__() == 0
+
+
+@logical_not.register_default()
+def default_logical_not(x):
+    """
+    Default function for logical not.
+   """
+    return not x

@@ -20,6 +20,7 @@
 #include "common/common_test.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/ops_info/reduce_method_info.h"
+#include "frontend/parallel/ops_info/reduce_base_method_info.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel.h"

@@ -26,17 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool RemoveExpandedDimsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RemoveExpandedDims>(base_operator);
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  has_true_ = GetValue<bool>(kernel_ptr->GetAttr(kAttrHasTrue));
-  has_sequence_ = GetValue<bool>(kernel_ptr->GetAttr(kAttrHasSequence));
-  rem_ndim_ = GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsCnt));
-  empty_indices_out = GetValue<bool>(kernel_ptr->GetAttr(kAttrEmptyIndicesOut));
+bool RemoveExpandedDimsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  has_true_ = GetValue<bool>(primitive_->GetAttr(kAttrHasTrue));
+  has_sequence_ = GetValue<bool>(primitive_->GetAttr(kAttrHasSequence));
+  rem_ndim_ = GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsCnt));
+  empty_indices_out = GetValue<bool>(primitive_->GetAttr(kAttrEmptyIndicesOut));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -60,11 +56,9 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int RemoveExpandedDimsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int RemoveExpandedDimsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
@@ -72,12 +66,12 @@ int RemoveExpandedDimsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
-  const auto has_false_val_addr = reinterpret_cast<size_t *>(inputs[kIndex2]->addr);
-  const auto broadcast_shape_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
-  const auto idx_advanced_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
+bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &workspace,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  const auto has_false_val_addr = reinterpret_cast<size_t *>(inputs[kIndex2]->device_ptr());
+  const auto broadcast_shape_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  const auto idx_advanced_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->device_ptr());
 
   bool has_false = has_false_val_addr[0] > 0;
   ShapeVector broadcast_shape;
@@ -88,9 +82,9 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 
   int64_t idx_advanced = idx_advanced_val_addr[0];
-  auto indices_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto new_value_shape_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto new_idx_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto indices_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto new_value_shape_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex1]->device_ptr());
+  auto new_idx_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   ShapeVector value_shape = data_shapes_[1];
   size_t valid_tensor_nums = 0;
@@ -118,9 +112,9 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   return true;
 }
 
-bool RemoveExpandedDimsCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool RemoveExpandedDimsCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

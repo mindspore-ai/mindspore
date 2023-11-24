@@ -149,6 +149,7 @@ class GradExecutor {
   void DispatchAssistQueueTask(std::function<void(void)> task) const;
 
   inline bool is_high_order_top_cell() const { return top_cell_ != nullptr && top_cell_->is_high_order_top_cell(); }
+  void ChildAfterFork();
 
  private:
   ForwardExecutorPtr forward() const;

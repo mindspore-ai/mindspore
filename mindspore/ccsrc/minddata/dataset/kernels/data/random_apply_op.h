@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomApplyOp : public TensorOp {
+class RandomApplyOp : public RandomTensorOp {
  public:
   /// constructor
   /// \param[in] ops the list of TensorOps to apply with prob likelihood
@@ -70,7 +70,6 @@ class RandomApplyOp : public TensorOp {
  private:
   double prob_;
   std::shared_ptr<TensorOp> compose_;
-  std::mt19937 gen_;  // mersenne_twister_engine
   std::uniform_real_distribution<double> rand_double_;
 };
 }  // namespace dataset

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,11 +105,10 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   ~ArithmeticCpuTypeFunc() override = default;
   ArithmeticCpuTypeFunc() = default;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
-    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
-    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    input_shape1_ = inputs[kIndex0]->GetShapeVector();
+    input_shape2_ = inputs[kIndex1]->GetShapeVector();
+    output_shape_ = outputs[kIndex0]->GetShapeVector();
     if (output_shape_.empty()) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
     }
@@ -138,9 +137,9 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     return KRET_OK;
   }
 
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override {
+    kernel_name_ = primitive->name();
     InitComputeFunc();
   }
 
@@ -166,11 +165,11 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void DivComplex(const T *input1, const T *input2, T *out);
   void PowComplex(const T *input1, const T *input2, T *out);
 
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-               const std::vector<AddressPtr> &outputs) override {
-    auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-    auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+               const std::vector<KernelTensor *> &outputs) override {
+    auto *input1 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+    const auto *input2 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+    auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
     if (output_size_ == 0) {
       MS_LOG(WARNING) << kernel_name_ << " output shape contain 0, output_shape: " << output_shape_;
       return true;
@@ -1245,9 +1244,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<complex128>}}}};
 }  // namespace
 
-bool ArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ArithmeticCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_list.find(kernel_name_);
   if (iter == kernel_attr_list.end()) {
     MS_LOG(ERROR) << "For 'Arithmetic', the kernel name must be in "
@@ -1263,17 +1261,16 @@ bool ArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   func_obj_ = kernel_attr_list[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  return func_obj_->Resize(base_operator, inputs, outputs);
+  return func_obj_->Resize(inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticCpuKernelMod::GetOpSupport() {

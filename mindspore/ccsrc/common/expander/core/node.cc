@@ -30,7 +30,7 @@ AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared
 
 bool Node::HasAbstractValue() {
   ValuePtr value = abstract()->BuildValue();
-  return (value != nullptr && value != kValueAny);
+  return (value != nullptr && !value->ContainsValueAny());
 }
 
 ValuePtr Node::BuildValue() {

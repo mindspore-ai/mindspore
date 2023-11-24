@@ -778,6 +778,13 @@ void TrainSession::CompileOptimizedKernels() {
 }
 
 int TrainSession::FindConstFoldedKernels() {
+  float obf_ratio = ModelRecoverObfuscate(false);
+  if (!FloatCompare(obf_ratio, 1.0)) {
+    MS_LOG(INFO) << "obfuscated model do not need const folding.";
+    const_fold_kernels_ = this->inference_kernels_;
+    const_output_tensors_ = {};
+    return RET_OK;
+  }
   const_fold_kernels_.clear();
   const_output_tensors_.clear();
   for (auto kernel : this->inference_kernels_) {
@@ -1180,7 +1187,7 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
           status = Train();
           TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Train failed.");
         }
-        if (obf_ratio != 1.0) {
+        if (!FloatCompare(obf_ratio, 1.0)) {
           ModelDeObfuscate(obf_ratio);
         }
         return status;
@@ -1204,10 +1211,17 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
   }
   if constexpr (std::is_same_v<DestType, const std::string &>) {
     status = texport.SaveToFile();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "failed to save to " << destination;
+      if (!FloatCompare(obf_ratio, 1.0)) {
+        ModelDeObfuscate(obf_ratio);
+      }
+      return status;
+    }
   } else {
     status = texport.SaveToBuffer();
   }
-  if (obf_ratio != 1.0) {
+  if (!FloatCompare(obf_ratio, 1.0)) {
     ModelDeObfuscate(obf_ratio);
   }
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "failed to save to file or model buffer.");
@@ -1421,12 +1435,15 @@ int TrainSession::ChangeObfWeight(std::string tensor_name, float obf_ratio) {
   return RET_OK;
 }
 
-float TrainSession::ModelRecoverObfuscate() {
+float TrainSession::ModelRecoverObfuscate(bool change_weight) {
   float true_obf_ratio = 1.0;
   auto tensor = FindObfTensor();
   if (tensor != nullptr) {
     std::string tensor_name = tensor->tensor_name();
     true_obf_ratio = *(reinterpret_cast<float *>(tensor->data()));
+    if (!change_weight) {
+      return true_obf_ratio;
+    }
     float init_obf_ratio = 1.0;
     ChangeObfWeight(tensor_name, init_obf_ratio);
   }
@@ -1434,7 +1451,7 @@ float TrainSession::ModelRecoverObfuscate() {
 }
 
 int TrainSession::ModelDeObfuscate(float obf_ratio) {
-  if (obf_ratio != 0.0) {
+  if (!FloatCompare(obf_ratio, 0.0)) {
     auto *tensor = FindObfTensor();
     if (tensor != nullptr) {
       std::string tensor_name = tensor->tensor_name();

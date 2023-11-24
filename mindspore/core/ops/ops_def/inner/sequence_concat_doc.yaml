@@ -1,0 +1,21 @@
+sequence_concat:
+    description: |
+        Support sequence Concat operation.
+
+        .. note::
+            This is only for internal used.
+
+        Args:
+            axis (Int): The axis to be concat.
+
+        Inputs:
+            - **sequence** (Union[List, Tuple]) - A sequence of Tensor objects with same shape and type..
+
+        Outputs:
+            The concat of all input.
+
+        Raises:
+            TypeError: The 'sequence' is not list or tuple.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``

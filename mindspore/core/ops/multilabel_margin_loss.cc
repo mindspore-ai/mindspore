@@ -46,8 +46,8 @@ namespace {
 abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   const size_t xsizemin = 1;
   const size_t xsizemax = 2;
   if ((x.size() != xsizemin && x.size() != xsizemax) || (target.size() != xsizemin && target.size() != xsizemax)) {
@@ -64,7 +64,7 @@ abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primi
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
-  if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
+  if (reduction_ == mindspore::REDUCTION_SUM || reduction_ == mindspore::MEAN) {
     out_shape0.resize(0);
   }
   if (x.size() == xsizemin) {
@@ -79,12 +79,12 @@ TuplePtr MultilabelMarginLossInferType(const PrimitivePtr &primitive, const std:
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types1 = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types2 = {kInt32};
-  auto x = input_args[kInputIndex0]->BuildType();
-  auto target = input_args[kInputIndex1]->BuildType();
+  auto x = input_args[kInputIndex0]->GetType();
+  auto target = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x, valid_types1, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("target", target, valid_types2, op_name);
   return std::make_shared<Tuple>(
-    std::vector<TypePtr>{input_args[kInputIndex0]->BuildType(), input_args[kInputIndex1]->BuildType()});
+    std::vector<TypePtr>{input_args[kInputIndex0]->GetType(), input_args[kInputIndex1]->GetType()});
 }
 }  // namespace
 

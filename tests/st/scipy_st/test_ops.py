@@ -22,6 +22,7 @@ from scipy.linalg import solve_triangular, eig, eigvals
 
 from mindspore import Tensor, context, nn
 from mindspore.common import dtype as mstype
+from mindspore.common.api import _pynative_executor
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
 from mindspore.scipy.ops import Eig, SolveTriangular
@@ -393,17 +394,20 @@ def test_solve_triangular_error_dims():
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # matrix a is not square matrix
     a = create_random_rank_matrix((4, 5), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 5, 4, 5), dtype=np.float32)
     b = create_random_rank_matrix((3, 5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -421,25 +425,30 @@ def test_solve_triangular_error_dims_mismatched():
     b = create_random_rank_matrix((5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # last two dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4, 1), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     # batch dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5, 1), dtype=np.float32)
     with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
+        _pynative_executor.sync()

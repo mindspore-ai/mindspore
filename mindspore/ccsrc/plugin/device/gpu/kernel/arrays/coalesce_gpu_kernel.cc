@@ -54,8 +54,9 @@ const std::vector<std::pair<KernelAttr, CoalescePtrCreatorFunc>> kernel_attr = {
                                                                                  CreateCoalesceKernelPtr<double>}};
 }  // namespace
 
-bool CoalesceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool CoalesceGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -76,8 +77,7 @@ bool CoalesceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   return true;
 }
 
-bool CoalesceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool CoalesceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -88,9 +88,8 @@ bool CoalesceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CoalesceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -111,20 +110,22 @@ int CoalesceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;
 }
 
-void CoalesceGpuKernelMod::SyncOutputShape() {
+void CoalesceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
+    std::vector<int64_t> shape = outputs[i]->GetShapeVector();
     std::replace(std::begin(shape), std::end(shape), -1, dyn_out.shapes[0][0]);
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
+                                                    std::multiplies<int64_t>())));
   }
 }
 

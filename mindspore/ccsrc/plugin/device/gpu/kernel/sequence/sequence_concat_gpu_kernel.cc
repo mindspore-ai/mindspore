@@ -19,35 +19,28 @@
 #include <complex>
 #include <functional>
 #include "plugin/device/gpu/kernel/sequence/sequence_concat_gpu_kernel.h"
-#include "mindspore/core/ops/sequence_concat.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concat_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kInputsNum = 1;
+constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
 
-bool SequenceConcatGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceConcatGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceConcat>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  ori_axis_ = kernel_ptr->get_axis();
-
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  if (ret != 0) {
+int SequenceConcatGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+
   tuple_shape_ = inputs[0]->GetShapeVector();
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
@@ -57,7 +50,7 @@ int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
 
   input_num_ = tuple_shape_[0];
-  axis_ = ori_axis_;
+  axis_ = LongToInt(inputs[kIndex1]->GetValueWithCheck<int64_t>());
   inputs_shape_.clear();
   len_axis_.clear();
   for (int i = 0; i < input_num_; ++i) {
@@ -77,7 +70,7 @@ int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   workspace_size_list_.push_back(sizeof(int) * input_num_);
   inputs_host_.resize(input_num_);
 
-  auto output_shape = outputs[0]->GetDeviceShapeAdaptively();
+  auto output_shape = outputs[0]->GetDeviceShapeVector();
   all_size_before_axis_ = 1;
   all_size_axis_ = 1;
   for (int i = 0; i < SizeToInt(output_shape.size()); i++) {
@@ -94,9 +87,9 @@ int SequenceConcatGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   if (input_num_ == 0) {
     return true;
   }
@@ -104,7 +97,7 @@ bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *output = GetDeviceAddress<T>(outputs, 0);
   T **inputs_device = GetDeviceAddress<T *>(workspace, 0);
   int *len_axis_device = GetDeviceAddress<int>(workspace, 1);
-  size_t element_num = outputs[0]->size / sizeof(T) / input_num_;
+  size_t element_num = outputs[0]->size() / sizeof(T) / input_num_;
   for (int i = 0; i < input_num_; i++) {
     T *tmp_addr = input_addr + i * element_num;
     inputs_host_[i] = tmp_addr;
@@ -125,10 +118,13 @@ bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-#define SEQUENCE_CONCAT_KERNEL_REG(ms_type, builtin_type)                        \
-  {                                                                              \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type), \
-      &SequenceConcatGpuKernelMod::LaunchKernel<builtin_type>                    \
+#define SEQUENCE_CONCAT_KERNEL_REG(ms_type, builtin_type)     \
+  {                                                           \
+    KernelAttr()                                              \
+      .AddInputAttr(kObjectTypeTuple, ms_type)                \
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)      \
+      .AddOutputAttr(ms_type),                                \
+      &SequenceConcatGpuKernelMod::LaunchKernel<builtin_type> \
   }
 
 const SequenceConcatGpuKernelMod::FuncList &SequenceConcatGpuKernelMod::GetFuncList() const {

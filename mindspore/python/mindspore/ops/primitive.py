@@ -22,10 +22,9 @@ from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
-from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore._c_expression import Primitive_, prim_type, typing
+from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
 
@@ -82,6 +81,17 @@ class Primitive(Primitive_):
         self.__dict__[name] = value
         self.attrs[name] = value
         self.add_attr(name, value)
+        return self
+
+    def _set_prim_arg(self, name, value):
+        """
+        Set primitive initialization arguments.
+
+        Different from add_prim_attr, it is used internally to store Primitive
+        initialization arguments in Python.
+        """
+        self.__dict__[name] = value
+        self.attrs[name] = value
         return self
 
     def set_device(self, device_target):
@@ -469,6 +479,9 @@ class PrimitiveWithCheck(Primitive):
     If __check__() is not defined, check_shape() and check_dtype() can be defined to describe the check logic of
     the shape and type. Method infer_value() can also be defined (such as PrimitiveWithInfer) for constant propagation.
 
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
+
     Args:
         name (str): Name of the current Primitive.
 
@@ -560,6 +573,9 @@ class PrimitiveWithInfer(Primitive):
     to be called. If __infer__() is not defined, infer_shape() and infer_dtype() can be defined to describe the infer
     logic of the shape and type. The infer_value() is used for constant propagation.
 
+    More on how to customize a Op, please refer to `Custom Operators
+    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
+
     Args:
         name (str): Name of the current Primitive.
 
@@ -646,43 +662,6 @@ class PrimitiveWithInfer(Primitive):
             # fn may return None
             out[track] = fn(*(x[track] for x in args))
 
-        # output does not contain dynamic shape, no need to calculate min/max shape
-
-        def has_dynamic_shape(shp):
-            if isinstance(shp, int):
-                return shp < 0
-            if isinstance(shp, (list, tuple)):
-                return any(has_dynamic_shape(e) for e in shp)
-            return False
-
-        # calculate min/max value for output
-        def get_specified_value(elems, attr):
-            has_specified_value = False
-            ret_vals = []
-            for elem in elems:
-                if attr in elem:
-                    has_specified_value = True
-                    ret_vals.append(elem[attr])
-                else:
-                    ret_vals.append(elem['value'])
-            return has_specified_value, tuple(ret_vals)
-
-        has_min_value, min_values = get_specified_value(args, 'min_value')
-        has_max_value, max_values = get_specified_value(args, 'max_value')
-        if has_min_value and has_max_value:
-            if hasattr(self, '_infer_min_value'):
-                fn_infer_min_value = getattr(self, '_infer_min_value')
-                out['min_value'] = fn_infer_min_value(*min_values)
-            if hasattr(self, '_infer_max_value'):
-                fn_infer_max_value = getattr(self, '_infer_max_value')
-                out['max_value'] = fn_infer_max_value(*max_values)
-        has_shape_value, shape_values = get_specified_value(args, 'shape_value')
-        if has_shape_value and hasattr(self, '_infer_shape_value') and not None in shape_values:
-            fn_infer_shape_value = getattr(self, '_infer_shape_value')
-            out['shape_value'] = fn_infer_shape_value(*shape_values)
-        if not has_dynamic_shape(out['shape']):
-            return out
-
         return out
 
 
@@ -721,7 +700,7 @@ def prim_attr_register(fn):
         elif isinstance(self, PrimitiveWithCheck):
             PrimitiveWithCheck.__init__(self, class_name)
         else:
-            Primitive.__init__(self, self.__class__.__name__)
+            Primitive.__init__(self, class_name)
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
         bound_args.apply_defaults()
         arguments = bound_args.arguments
@@ -730,6 +709,57 @@ def prim_attr_register(fn):
         for name in arguments:
             value = arguments[name]
             self.add_prim_attr(name, value)
+            self.init_attrs[name] = value
+        fn(self, *args, **kwargs)
+
+    deco.decorated_func = fn
+    return deco
+
+
+def prim_arg_register(fn):
+    """
+    Primitive attributes register.
+
+    Register the decorator of the built-in operator primitive '__init__'.
+    The function will add all the parameters of '__init__' as operator attributes ,
+    and init primitive name.
+
+    Args:
+        fn (function): __init__ function of primitive.
+
+    Returns:
+        function, original function.
+
+    Examples:
+        >>> from mindspore.ops import prim_arg_register, PrimitiveWithCheck
+        >>> class MatMul(PrimitiveWithCheck):
+        ...     @prim_arg_register
+        ...     def __init__(self, transpose_a=False, transpose_b=False):
+        ...         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
+        ...
+        >>> # init a Primitive obj
+        >>> matmul = MatMul()
+    """
+
+    @functools.wraps(fn)
+    def deco(self, *args, **kwargs):
+        class_name = self.__class__.__name__
+        if hasattr(self.__class__, "substitute_name"):
+            class_name = self.__class__.substitute_name
+        if isinstance(self, PrimitiveWithInfer):
+            PrimitiveWithInfer.__init__(self, class_name)
+        elif isinstance(self, PrimitiveWithCheck):
+            PrimitiveWithCheck.__init__(self, class_name)
+        else:
+            Primitive.__init__(self, self.__class__.__name__)
+        bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+        arguments = bound_args.arguments
+        del arguments['self']
+        del self.init_attrs['name']
+        for name in arguments:
+            value = arguments[name]
+            self._set_prim_arg(name, value)
             self.init_attrs[name] = value
         fn(self, *args, **kwargs)
 
@@ -907,9 +937,6 @@ class _RunOpHook:
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if not _RunOpHook.current:
-        for arg in args:
-            if isinstance(arg, Parameter) and arg.has_init:
-                arg.init_data()
         stub = _pynative_executor.run_op_async(obj, op_name, args)
         return _convert_stub(stub)
     return _RunOpHook.current.hook(obj, args)
@@ -931,3 +958,7 @@ class _PrimitiveC(Primitive):
 
 def _get_primitivec(name, attrs):
     return _PrimitiveC(name, attrs)
+
+
+def _create_primitive_function_obj():
+    return PrimitiveFunction_()

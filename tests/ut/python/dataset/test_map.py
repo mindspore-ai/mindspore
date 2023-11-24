@@ -304,6 +304,7 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
     Description: Test repeatability of Map op with Python multiprocessing with num_parallel_workers > 1
     Expectation: The set of seeds of each process would be the same as expected
     """
+
     # Generate md int numpy array from [[0, 1], [2, 3]] to [[63, 64], [65, 66]]
     def generator_md():
         for i in range(64):
@@ -391,6 +392,7 @@ def test_map_just_exchange_columns():
 
     def exchange_columns(col1, col2):
         return col2, col1
+
     dataset = dataset.map(operations=exchange_columns, input_columns=["data", "label"],
                           output_columns=["label", "data"])
 
@@ -411,6 +413,7 @@ def test_map_just_exchange_columns():
 
     def exchange_columns_three(col1, col2, col3):
         return col2, col3, col1
+
     dataset2 = dataset2.map(operations=exchange_columns_three, input_columns=["data", "data2", "label"],
                             output_columns=["data2", "label", "data"])
 
@@ -480,6 +483,7 @@ def test_map_multiprocessing_with_fixed_handle():
     """
 
     dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
     def long_running_op(col1, col2):
         data1 = np.ones([3, 65, 65], dtype=np.float64)
         data2 = np.ones([3, 60, 60], dtype=np.float64)
@@ -521,6 +525,7 @@ def test_map_multiprocessing_with_in_out_rowsize_exception():
     """
 
     dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
     def long_running_op(col1, col2):
         data1 = np.ones([3, 65, 65], dtype=np.float64)
         data2 = np.ones([3, 60, 60], dtype=np.float64)
@@ -565,6 +570,7 @@ def test_map_multiprocessing_with_in_out_rowsize():
     """
 
     dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
     def long_running_op(col1, col2):
         data1 = np.ones([3, 65, 65], dtype=np.float64)
         data2 = np.ones([3, 60, 60], dtype=np.float64)
@@ -689,6 +695,114 @@ def test_generator_or_map_with_pyfunc_use_global_executor():
     generator_with_multi_transforms(False)
 
 
+def create_dataset_with_two_workers_randomly_process_identical_images(fix_randomness, transform_type, multiprocessing):
+    """Create a dataset that use two workers to randomly process two identical images to test randomness."""
+    if fix_randomness:
+        ds.config.set_seed(0)
+
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    # create a dataset with two identical images
+    dataset = ds.NumpySlicesDataset([img, img], column_names=["image"], num_parallel_workers=2)
+
+    def random_add(image):
+        """
+        Randomly add some values to the image.
+
+        This function is used to test the recovery of randomness of the random
+        and numpy libraries in pyfunc.
+        """
+        image = np.array(image)
+        image += random.randint(1, 10)
+        image += np.random.randint(1, 10)
+        return image
+
+    # if to_pil is False, will use c++ implemented Decode and RandomCrop,
+    # otherwise will use python implemented ones
+    to_pil = (transform_type == "python")
+    transform = [vision.Decode(to_pil=to_pil),
+                 vision.RandomCrop((28, 28))]
+
+    # we must add a pyfunc when testing c++ transforms with multiprocessing,
+    # because multiprocessing cannot be enabled when only c++ transforms are included
+    if transform_type == "python" or multiprocessing:
+        transform.append(random_add)
+
+    # create two workers to process these two identical images
+    dataset = dataset.map(transform, input_columns=["image"], num_parallel_workers=2,
+                          python_multiprocessing=multiprocessing)
+    return dataset
+
+
+@pytest.mark.parametrize("fix_randomness", (False, True))
+@pytest.mark.parametrize("transform_type", ("cpp", "python"))
+@pytest.mark.parametrize("multiprocessing", (False, True))
+def test_randomness_across_workers(fix_randomness, transform_type, multiprocessing):
+    """
+    Feature: Map
+    Description: Test when map concurrent processing is turned on, each worker holds
+        its own independent random generator, so the random results are different
+    Expectation: Random results are different for each worker
+    """
+    original_seed = ds.config.get_seed()
+    dataset = create_dataset_with_two_workers_randomly_process_identical_images(fix_randomness, transform_type,
+                                                                                multiprocessing)
+    res = []
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(data["image"])
+    ds.config.set_seed(original_seed)
+
+    # each worker owns independent generator so the results should be different
+    assert not np.array_equal(res[0], res[1])
+
+
+@pytest.mark.parametrize("fix_randomness", (False, True))
+@pytest.mark.parametrize("transform_type", ("cpp", "python"))
+@pytest.mark.parametrize("multiprocessing", (False, True))
+def test_reproducibility_of_random_transforms(fix_randomness, transform_type, multiprocessing):
+    """
+    Feature: Map
+    Description: Test when map concurrent processing is turned on, each worker holds
+        its own independent random generator, so the random results are different
+    Expectation: Random results are different for each worker
+    """
+    original_seed = ds.config.get_seed()
+    dataset = create_dataset_with_two_workers_randomly_process_identical_images(fix_randomness, transform_type,
+                                                                                multiprocessing)
+    # run the pipeline twice, when the random seed is set, the results should be consistent
+    # between the two times, ohtherwise they should be different
+    res_first_time = []
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res_first_time.append(data["image"])
+    res_second_time = []
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res_second_time.append(data["image"])
+    ds.config.set_seed(original_seed)
+
+    # currently, the results of random pyfunc with multi-threads cannot be fixed
+    if not multiprocessing and transform_type == "python":
+        expect_equal = False
+    else:
+        expect_equal = fix_randomness
+    for (data_first_time, data_second_time) in zip(res_first_time, res_second_time):
+        assert np.array_equal(data_first_time, data_second_time) == expect_equal
+
+
+def test_map_pullmode_exception():
+    """
+    Feature: Test map in pull mode
+    Description: Test map in pull mode and raise exception as expected
+    Expectation: Success
+    """
+    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
+
+    # define map operations
+    data_set = data_set.map(lambda x: (x + x), input_columns=["image"], output_columns=["image1", "image2"])
+
+    with pytest.raises(RuntimeError) as e:
+        data_set.output_shapes()
+    assert "number of columns returned in 'map' operations should match the number of 'output_columns'" in str(e.value)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -706,3 +820,6 @@ if __name__ == '__main__':
     test_map_multiprocessing_with_in_out_rowsize_exception()
     test_map_and_generatordataset_with_multiprocessing()
     test_generator_or_map_with_pyfunc_use_global_executor()
+    test_randomness_across_workers(fix_randomness=True, transform_type="cpp", multiprocessing=False)
+    test_reproducibility_of_random_transforms(fix_randomness=False, transform_type="python", multiprocessing=True)
+    test_map_pullmode_exception()

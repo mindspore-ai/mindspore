@@ -54,12 +54,12 @@ class TensorNumpyImpl : public MutableTensorImpl {
   }
   const std::vector<int64_t> &Shape() const override { return ms_shape_; }
   void SetShape(const std::vector<int64_t> &shape) override {
-    MS_LOG(ERROR) << "Cannot call SetShape for numpy tensor";
+    MS_LOG(WARNING) << "Cannot call SetShape for numpy tensor";
   }
 
   enum DataType DataType() const override { return GetDataType(buffer_); }
   void SetDataType(mindspore::DataType data_type) override {
-    MS_LOG(ERROR) << "Cannot call SetDataType for numpy tensor";
+    MS_LOG(WARNING) << "Cannot call SetDataType for numpy tensor";
   }
 
   void SetName(const std::string &name) override { name_ = name; }

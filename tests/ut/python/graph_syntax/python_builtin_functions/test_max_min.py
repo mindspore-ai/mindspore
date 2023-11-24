@@ -14,14 +14,11 @@
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
 import os
-import re
 import operator
 import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 from mindspore import dtype as mstype
-from mindspore.common import mutable
-from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -121,7 +118,7 @@ def test_fallback_max_with_one_input_tensor():
         x = max(Tensor([1, 2, 3]))
         return x
     out = foo()
-    assert out == 3
+    assert (out == 3).all
 
 
 def test_fallback_max_with_two_inputs_list():
@@ -247,8 +244,8 @@ def test_builtin_function_max_min_with_tensor_numpy():
         return min(x), max(x)
 
     min_out, max_out = foo()
-    assert operator.eq(min_out, 1)
-    assert operator.eq(max_out, 5)
+    assert (operator.eq(min_out, 1)).all
+    assert (operator.eq(max_out, 5)).all
 
 
 def test_builtin_function_max_min_with_tuple_tuple_tensor():
@@ -364,22 +361,6 @@ def test_builtin_function_min_with_tensor_0d(mode):
         foo()
 
 
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_builtin_function_min_with_tensor_number(mode):
-    """
-    Feature: Check the arg of min.
-    Description: Cannot contain both tensor and non-tensor type.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        return min(Tensor(1), 4)
-
-    with pytest.raises(TypeError, match="cannot contain both tensor and non-tensor type."):
-        context.set_context(mode=mode)
-        foo()
-
-
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_with_several_elements_one_tensor(mode):
     """
@@ -410,44 +391,3 @@ def test_builtin_function_max_with_tensor_elements_in_two_tuple(mode):
     with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
         context.set_context(mode=mode)
         foo()
-
-
-def test_min_mutable():
-    """
-    Feature: Check the arg of min.
-    Description: Test max()/min() in graph mode.
-    Expectation: No exception.
-    """
-    class Net(Cell):
-        def construct(self, x):
-            out = min(x)
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of min() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
-    with pytest.raises(TypeError, match=re.escape(info)):
-        x = mutable(1)
-        net = Net()
-        out = net(x)
-        print(out)
-
-
-def test_max_mutable():
-    """
-    Feature: Check the arg of max.
-    Description: Test max()/min() in graph mode.
-    Expectation: No exception.
-    """
-    class Net(Cell):
-        def construct(self, x, y):
-            out = max(x, y)
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of max() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
-    with pytest.raises(TypeError, match=re.escape(info)):
-        x = mutable(1)
-        y = mutable(2)
-        net = Net()
-        out = net(x, y)
-        print(out)

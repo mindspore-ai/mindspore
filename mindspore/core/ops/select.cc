@@ -80,11 +80,11 @@ void SelectInferShapeCheck(const std::vector<int64_t> &x_shape, const std::vecto
 }
 
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape())[kShape];
+  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->GetShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->GetShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->GetShape())[kShape];
   if (IsDynamicRank(cond_shape) || IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
   auto cond_shape_size = cond_shape.size();
   auto x_shape_size = x_shape.size();
@@ -95,7 +95,7 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
       << cond_shape << ", 'x' shape: " << x_shape << ", 'y' shape: " << y_shape << ".";
   }
   SelectInferShapeCheck(x_shape, y_shape, cond_shape, x_shape_size);
-  return input_args[kSelectCondIndex]->BuildShape();
+  return input_args[kSelectCondIndex]->GetShape()->Clone();
 }
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -103,9 +103,9 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_type = input_args[kSelectXIndex]->BuildType();
-  auto y_type = input_args[kSelectYIndex]->BuildType();
-  auto cond_type = input_args[kSelectCondIndex]->BuildType();
+  auto x_type = input_args[kSelectXIndex]->GetType();
+  auto y_type = input_args[kSelectYIndex]->GetType();
+  auto cond_type = input_args[kSelectCondIndex]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
 
@@ -119,7 +119,7 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
                             << "', the x_type and y_type must be the same, but got x_type: " << x_type->ToString()
                             << " and y_type: " << y_type->ToString() << ".";
   }
-  return x_type;
+  return x_type->Clone();
 }
 
 AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -218,9 +218,9 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   auto select_shape = SelectInferShape(prim, input_args);
   MS_EXCEPTION_IF_NULL(select_shape);
   auto result_shape = select_shape->cast<abstract::ShapePtr>();
-  auto cond_value = input_args[kSelectCondIndex]->BuildValue();
-  auto x = input_args[kSelectXIndex]->BuildValue();
-  auto y = input_args[kSelectYIndex]->BuildValue();
+  auto cond_value = input_args[kSelectCondIndex]->GetValue();
+  auto x = input_args[kSelectXIndex]->GetValue();
+  auto y = input_args[kSelectYIndex]->GetValue();
   MS_EXCEPTION_IF_NULL(result_shape);
   if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
     return nullptr;

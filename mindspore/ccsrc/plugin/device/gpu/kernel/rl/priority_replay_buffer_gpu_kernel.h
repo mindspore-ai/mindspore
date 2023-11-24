@@ -32,11 +32,10 @@ class PriorityReplayBufferCreateGpuKernel : public NativeGpuKernelMod {
   PriorityReplayBufferCreateGpuKernel() = default;
   ~PriorityReplayBufferCreateGpuKernel() override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -51,11 +50,10 @@ class PriorityReplayBufferPushGpuKernel : public NativeGpuKernelMod {
   PriorityReplayBufferPushGpuKernel() = default;
   ~PriorityReplayBufferPushGpuKernel() override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -74,11 +72,10 @@ class PriorityReplayBufferSampleGpuKernel : public NativeGpuKernelMod {
   PriorityReplayBufferSampleGpuKernel() = default;
   ~PriorityReplayBufferSampleGpuKernel() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -95,12 +92,11 @@ class PriorityReplayBufferUpdateGpuKernel : public NativeGpuKernelMod {
   ~PriorityReplayBufferUpdateGpuKernel() override;
 
   // Init kernel from CNode.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -117,12 +113,11 @@ class PriorityReplayBufferDestroyGpuKernel : public NativeGpuKernelMod {
   ~PriorityReplayBufferDestroyGpuKernel() override = default;
 
   // Init kernel from CNode.
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 

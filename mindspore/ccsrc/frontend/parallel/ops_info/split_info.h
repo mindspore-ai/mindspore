@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,8 @@ class SplitInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
-  virtual std::string GetSplitAxisAttrName() const { return AXIS; }
+  Status InferMirrorOps() override;
 
- private:
   size_t axis_ = 0;
 };
 
@@ -60,7 +59,8 @@ class SplitVInfo : public SplitInfo {
   ~SplitVInfo() override = default;
 
  protected:
-  std::string GetSplitAxisAttrName() const override { return SPLIT_DIM; };
+  Status GetAttrs() override;
+  Status InferMirrorOps() override { return OperatorInfo::InferMirrorOps(); }
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -39,8 +39,8 @@ TypePtr FmaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   const int64_t kInputNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  auto x_type = input_args[0]->BuildType();
-  auto y_type = input_args[1]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto y_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x_type, valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", y_type, valid_types, op_name);
   return x_type;

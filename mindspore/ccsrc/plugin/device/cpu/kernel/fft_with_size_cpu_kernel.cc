@@ -15,7 +15,8 @@
  */
 #include "plugin/device/cpu/kernel/fft_with_size_cpu_kernel.h"
 #include <algorithm>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
+#include "kernel/kernel.h"
 
 #define FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, real, inverse)                                                    \
   if (signal_ndim_ == 1) {                                                                                         \
@@ -71,22 +72,8 @@ void change_axes(Eigen::array<unsigned int, size> *axes) {
 }
 }  // namespace
 
-bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
-  signal_ndim_ = GetValue<int64_t>(prim->GetAttr("signal_ndim"));
-  inverse_ = GetValue<bool>(prim->GetAttr("inverse"));
-  onesided_ = GetValue<bool>(prim->GetAttr("onesided"));
-  normalized_ = GetValue<string>(prim->GetAttr("norm"));
-  real_ = GetValue<bool>(prim->GetAttr("real"));
-  raw_checked_signal_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr("signal_sizes"));
-
+bool FFTWithSizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -96,17 +83,23 @@ bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int FFTWithSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int FFTWithSizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_shape_ = inputs[0]->GetShapeVector();
+
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  signal_ndim_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  inverse_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  real_ = inputs[kIndex3]->GetValueWithCheck<bool>();
+  normalized_ = inputs[kIndex4]->GetValueWithCheck<int64_t>();
+  onesided_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+  raw_checked_signal_size_ = inputs[kIndex6]->GetValueWithCheck<std::vector<int64_t>>();
+
   return KRET_OK;
 }
+
 double Getnormalized(int64_t element_num, const std::string &normalized, bool is_reverse) {
   double result = 1.0;
   if (!is_reverse) {
@@ -254,16 +247,12 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
 }
 
 template <typename T1, typename T2>
-bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
+bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   std::vector<int64_t> checked_signal_size(raw_checked_signal_size_.begin(), raw_checked_signal_size_.end());
   const int64_t choose = FFTWithSize_choose(real_, inverse_);
-  auto p_x = GetDeviceAddress<T1>(inputs, kIndex0);
-  auto p_y = GetDeviceAddress<T2>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(p_x);
-  MS_EXCEPTION_IF_NULL(p_y);
+  auto p_x = reinterpret_cast<T1 *>(inputs[kIndex0]->device_ptr());
+  auto p_y = reinterpret_cast<T2 *>(outputs[kIndex0]->device_ptr());
   if constexpr (std::is_same<T1, T2>::value) {  // fft and ifft
     if (choose == kDimNum_FFT) {
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, false, false);
@@ -281,31 +270,31 @@ bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return true;
 }
 
+#define FFT_CPU_REG(MS_I, MS_O, I, O)                                     \
+  KernelAttr()                                                            \
+    .AddInputAttr(MS_I)                                /* x */            \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* signal_ndim */  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* inverse */      \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* real */         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* norm */         \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* onesided */     \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  /* signal_sizes */ \
+    .AddOutputAttr(MS_O),                                                 \
+    &FFTWithSizeCpuKernelMod::LaunchKernel<I, O>
+
 std::vector<std::pair<KernelAttr, FFTWithSizeCpuKernelMod::FFTWithSizeFunc>> FFTWithSizeCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<float>, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<double>, std::complex<double>>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<float, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<float>, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<double, std::complex<double>>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<double>, double>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<uint8_t, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<int8_t, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<int16_t, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<int32_t, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<int64_t, std::complex<float>>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<bool, std::complex<float>>}};
+  {FFT_CPU_REG(kNumberTypeComplex64, kNumberTypeComplex64, std::complex<float>, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeComplex128, kNumberTypeComplex128, std::complex<double>, std::complex<double>)},
+  {FFT_CPU_REG(kNumberTypeFloat32, kNumberTypeComplex64, float, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeComplex64, kNumberTypeFloat32, std::complex<float>, float)},
+  {FFT_CPU_REG(kNumberTypeFloat64, kNumberTypeComplex128, double, std::complex<double>)},
+  {FFT_CPU_REG(kNumberTypeComplex128, kNumberTypeFloat64, std::complex<double>, double)},
+  {FFT_CPU_REG(kNumberTypeUInt8, kNumberTypeComplex64, uint8_t, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeInt8, kNumberTypeComplex64, int8_t, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeInt16, kNumberTypeComplex64, int16_t, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, int32_t, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, int64_t, std::complex<float>)},
+  {FFT_CPU_REG(kNumberTypeBool, kNumberTypeComplex64, bool, std::complex<float>)}};
 
 std::vector<KernelAttr> FFTWithSizeCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

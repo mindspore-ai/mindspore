@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_UNSORTED_SEGMENT_ARITHMETIC_H_
 
 #include <vector>
+#include <string>
 #include "ops/base_operator.h"
 
 namespace mindspore {

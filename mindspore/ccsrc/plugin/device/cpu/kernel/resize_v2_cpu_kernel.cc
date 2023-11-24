@@ -174,14 +174,9 @@ static inline T ComputeLerpByBiCubic(T *data, float x_lerp, float y_lerp, float 
   return static_cast<T>(result);
 }
 
-bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeV2>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
+bool ResizeV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  std::string coordinate_transformation_mode =
+    GetValue<std::string>(primitive_->GetAttr("coordinate_transformation_mode"));
   if (coordinate_transformation_mode == "align_corners") {
     align_corners_ = true;
   } else if (coordinate_transformation_mode == "pytorch_half_pixel") {
@@ -192,7 +187,7 @@ bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  std::string mode = kernel_ptr->get_mode();
+  std::string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "nearest") {
     mode_ = "nearest";
     align_corners_ = false;
@@ -205,26 +200,25 @@ bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  TypeId input_dtype = inputs[0]->GetDtype();
+  TypeId input_dtype = inputs[0]->dtype_id();
   if (mode_ != "nearest") {
     if (input_dtype != kNumberTypeFloat16 && input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' linear and cubic mode only support float16, float32, float64.";
       return false;
     }
   }
-  sizes_dtype_ = inputs[kIndex3]->GetDtype();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  sizes_dtype_ = inputs[kIndex3]->dtype_id();
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int ResizeV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> shape = inputs[kIndex0]->GetShapeVector();
@@ -237,22 +231,23 @@ int ResizeV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   MS_ERROR_IF_NULL_W_RET_VAL(input_addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_addr, false);
 
   auto sizes = inputs[kIndex3];
   if (sizes_dtype_ == kNumberTypeInt64) {
-    int64_t *sizes_data = static_cast<int64_t *>(sizes->addr);
+    int64_t *sizes_data = static_cast<int64_t *>(sizes->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     out_height_ = LongToSize(sizes_data[kIndex2]);
     out_width_ = LongToSize(sizes_data[kIndex3]);
   } else {
-    int32_t *sizes_data = static_cast<int32_t *>(sizes->addr);
+    int32_t *sizes_data = static_cast<int32_t *>(sizes->device_ptr());
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     std::vector<int64_t> sizes_v;
     sizes_v.push_back(static_cast<int64_t>(sizes_data[kIndex2]));
@@ -293,10 +288,10 @@ bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -330,10 +325,10 @@ bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::Addre
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::KernelTensor *> &inputs,
+                                                const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -370,10 +365,10 @@ bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::Addres
 }
 
 template <typename T>
-bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
+bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::KernelTensor *> &inputs,
+                                               const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->device_ptr());
 
   std::vector<CachedInterpolationCubic> ys(out_height_ + 1);
   std::vector<CachedInterpolationCubic> xs(out_width_ + 1);

@@ -47,13 +47,6 @@ from mindspore._c_expression import PackExpander
 from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision, PackFunc
 
 
-def _check_args(args):
-    """Check the input args's type"""
-    for item in args:
-        if isinstance(item, Tensor) and item.has_init:
-            item.init_data()
-
-
 class Cell(Cell_):
     """
     The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
@@ -161,12 +154,14 @@ class Cell(Cell_):
         self._has_config_recompute = False
         self._user_parameters = []
         self._dynamic_shape_inputs = None
+        self._compile_args = None
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
         self.grad_ops_label = False
         self.ge_sync_data = False
         self._is_check_and_refresh = False
         self._amp_level = ""
+        self._init_flag = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -654,6 +649,14 @@ class Cell(Cell_):
 
         return cast_inputs
 
+    def _init_check(self):
+        if self._init_flag:
+            return
+        for param in self.get_parameters(expand=False):
+            if param.has_init:
+                param.init_data()
+        self._init_flag = True
+
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             raise AttributeError("For 'Cell', the method 'construct' is not defined.")
@@ -687,7 +690,7 @@ class Cell(Cell_):
             # There many Casts in parameter_broadcast. Enable build faster.
             self._do_parameter_broadcast()
 
-        _check_args(args)
+        self._init_check()
         self._check_cell_flags_in_pynative()
 
         if self.requires_grad and _pynative_executor.enable_grad():
@@ -981,6 +984,20 @@ class Cell(Cell_):
 
         return self._dynamic_shape_inputs
 
+    def _get_compile_args(self, args):
+        """Get compile arguments."""
+        # this is used only for test
+        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
+            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
+
+        if self._dynamic_shape_inputs is not None:
+            logger.debug("Compiled Graph with dynamic shape")
+            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
+            self.saved_dynamic_shape = self._dynamic_shape_inputs
+            return self._dynamic_shape_inputs
+        return args
+
+
     def compile(self, *args, **kwargs):
         """
         Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
@@ -989,19 +1006,9 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
-        # this is used only for test
-        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
-            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
-
-        if self._dynamic_shape_inputs is None:
-            _cell_graph_executor.compile(self, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, *args, **kwargs)
-        else:
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
-            self.saved_dynamic_shape = self._dynamic_shape_inputs
-            _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         jit_config_dict=self._jit_config_dict, **kwargs)
-            logger.debug("Compiled Graph with dynamic shape")
+        self._compile_args = self._get_compile_args(args)
+        _cell_graph_executor.compile(self, *self._compile_args, phase=self.phase,
+                                     jit_config_dict=self._jit_config_dict, **kwargs)
 
     def compile_and_run(self, *args, **kwargs):
         """
@@ -1019,7 +1026,7 @@ class Cell(Cell_):
         """
         self.compile(*args, **kwargs)
         self.add_flags(ge_sync_data=False)
-        new_args = _get_args_for_run(self, args, kwargs)
+        new_args = _get_args_for_run(self, args, kwargs, self._compile_args)
         return _cell_graph_executor(self, *new_args, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
@@ -1070,19 +1077,19 @@ class Cell(Cell_):
             Parameter(name=bias, shape=(3,), dtype=Int64, requires_grad=True)
         """
         if not param_name:
-            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not be None.")
+            raise KeyError("For `insert_param_to_cell`, the argument `param_name` should not be None.")
         if check_name_contain_dot and '.' in param_name:
-            raise KeyError("For 'insert_param_to_cell', the argument 'param_name' should not contain \".\"")
+            raise KeyError("For `insert_param_to_cell`, the argument `param_name` should not contain.")
         if '_params' not in self.__dict__:
-            raise AttributeError("For 'insert_param_to_cell', please call Cell.__init__() firstly.")
+            raise AttributeError("For `insert_param_to_cell`, please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
-            raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
+            raise KeyError("For `insert_param_to_cell`, the {} parameter already exists in the network. Cannot "
                            "insert another parameter with the same name.".format(param_name))
         if not isinstance(param, Parameter) and param is not None:
-            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must be 'Parameter' if not None, "
+            raise TypeError(f"For `insert_param_to_cell`, the argument `param` must be `Parameter` if not None, "
                             f"but got {type(param)}.")
         if param is None:
-            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must not be None, "
+            raise TypeError(f"For `insert_param_to_cell`, the argument `param` can not be None, "
                             f"but got None.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
@@ -1139,16 +1146,16 @@ class Cell(Cell_):
               >
         """
         if not isinstance(child_name, str):
-            raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
+            raise TypeError(f"For `insert_child_to_cell`, the type of parameter `child_name` must be str, "
                             f"but got {type(child_name)}.")
         if not child_name or '.' in child_name:
-            raise KeyError("For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
-                           "can not contain '.'")
+            raise KeyError("For `insert_child_to_cell`, the parameter `child_name` can not be None and "
+                           "can not contain.")
         if hasattr(self, child_name) and child_name not in self._cells:
-            raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
+            raise KeyError("For `insert_child_to_cell`, the {} child cell already exists in the network. Cannot "
                            "insert another child cell with the same name.".format(child_name))
         if not isinstance(child_cell, Cell) and child_cell is not None:
-            raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' must be 'Cell' if not None, "
+            raise TypeError(f"For `insert_child_to_cell`, the argument `child_cell` must be `Cell` if not None, "
                             f"but got type {type(child_cell)}.")
         self._cells[child_name] = child_cell
 

@@ -1,0 +1,18 @@
+#operator cumsum
+cum_sum:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+    exclusive:
+      dtype: bool
+      default: False
+      prim_init: True
+    reverse:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor

@@ -36,13 +36,13 @@ class TagEnvironment : public Environment {
   ~TagEnvironment();
 
   // Init environment. Parse environment setting, create device memory for environment setting and agent state etc.
-  bool Init(const CNodePtr &cnode, void *stream_ptr) override;
+  bool Init(const mindspore::PrimitivePtr &prim, void *stream_ptr) override;
   // Reset environment state include agent location and time step.
-  bool Reset(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-             const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Reset(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+             const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   // Execute time step.
-  bool Step(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-            const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Step(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+            const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   size_t ActionSizeInBytes() override;
   size_t StateSizeInBytes() override;
   size_t RewardSizeInBytes() override;
@@ -51,7 +51,7 @@ class TagEnvironment : public Environment {
 
  private:
   // The GameSetting and AgentState are used in C-like compiling environment, use C style resource managerment.
-  bool InitGameSetting(const CNodePtr &cnode, GameSetting *setting_host);
+  bool InitGameSetting(const mindspore::PrimitivePtr &prim, GameSetting *setting_host);
   bool InitAgentState(AgentState *agent_state);
   bool FinalizeAgentState(const AgentState &agent_state);
 

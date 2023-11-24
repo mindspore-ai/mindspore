@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
-#define MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
+#ifndef MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_
+#define MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_
 #include <map>
 #include <vector>
 #include <memory>
@@ -46,4 +46,4 @@ using FlashAttentionScoreGradPtr = std::shared_ptr<FlashAttentionScoreGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
+#endif  // MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_GRAD_H_

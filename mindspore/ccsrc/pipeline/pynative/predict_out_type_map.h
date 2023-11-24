@@ -160,6 +160,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LambNextMVWithDecay", kTupleTensor4},
                                                        {"LambNextRight", kTupleTensor2},
                                                        {"LayerNorm", kTupleTensor3},
+                                                       {"LayerNormExt", kTupleTensor3},
                                                        {"LayerNormBetaGammaBackprop", kTupleTensor2},
                                                        {"LayerNormBetaGammaBackpropV2", kTupleTensor2},
                                                        {"LayerNormGrad", kTupleTensor3},
@@ -207,7 +208,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ScalarAdd", kTypeNone},
                                                        {"ScalarBool", kTypeNone},
                                                        {"ScalarDiv", kTypeNone},
-                                                       {"ScalarFloordiv", kTypeNone},
+                                                       {"ScalarFloorDiv", kTypeNone},
                                                        {"ScalarMod", kTypeNone},
                                                        {"ScalarMul", kTypeNone},
                                                        {"ScalarSub", kTypeNone},
@@ -278,15 +279,17 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"bit_and", kTypeNone},
                                                        {"bit_or", kTypeNone},
                                                        {"make_range", kTypeNone},
-                                                       {"scalar_eq", kTypeNone},
-                                                       {"scalar_ge", kTypeNone},
-                                                       {"scalar_gt", kTypeNone},
-                                                       {"scalar_le", kTypeNone},
-                                                       {"scalar_lt", kTypeNone},
+                                                       {"ScalarEq", kTypeNone},
+                                                       {"ScalarGe", kTypeNone},
+                                                       {"ScalarGt", kTypeNone},
+                                                       {"ScalarLe", kTypeNone},
+                                                       {"ScalarLt", kTypeNone},
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
                                                        {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3}};
+                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"SplitTensor", kTypeAny},
+                                                       {"SplitWithSize", kTypeAny}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);
 

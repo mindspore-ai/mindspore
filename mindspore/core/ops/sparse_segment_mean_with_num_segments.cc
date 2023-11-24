@@ -31,6 +31,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,15 +43,15 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
   constexpr size_t kRankOne = 1;
   constexpr size_t kDimOne = 1;
   constexpr size_t kShapeZero = 0;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto num_segments_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (!IsDynamicRank(indices_shape) && !IsDynamicRank(segment_ids_shape) && !IsDynamicRank(num_segments_shape)) {
     if (indices_shape.size() != kRankOne) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
@@ -74,14 +75,12 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
       }
     }
   }
-  if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>()) {
-    auto num_segments = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments);
-    auto num_segments_value = num_segments->BuildValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex3]) && IsValueKnown(input_args[kInputIndex3]->GetValue())) {
+    auto num_segments_value = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(num_segments_value);
+    auto num_segments_type = input_args[kInputIndex3]->GetType();
     auto num_segments_value_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name, num_segments_type);
     size_t dim_zero = LongToSize(num_segments_value_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
@@ -103,10 +102,10 @@ TypePtr SparseSegmentMeanWithNumSegmentsInferType(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  auto num_segments_type = input_args[kInputIndex3]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
+  auto num_segments_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> types;
@@ -115,7 +114,7 @@ TypePtr SparseSegmentMeanWithNumSegmentsInferType(const PrimitivePtr &prim,
   (void)types.emplace("num_segments", num_segments_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

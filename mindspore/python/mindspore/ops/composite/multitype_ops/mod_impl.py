@@ -78,3 +78,11 @@ def _tensor_mod_list(x, y):
     """Returns x % y where x is a tensor and y is a list. """
     y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_mod(x, y)
+
+
+@mod.register_default()
+def default_mod(x, y):
+    """
+    Default function for mod.
+   """
+    return x % y

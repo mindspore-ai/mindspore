@@ -69,6 +69,7 @@ void AscendDmaHandle::InitRuntimeInstance() {
 
 void AscendDmaHandle::InitDmaMem() {
 #if defined(RT_MEMORY_P2PDMA)
+  uint16_t app_module_id = static_cast<uint16_t>(APP);
   auto ret = aclrtSetDevice(device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetDevice failed:" << ret;
@@ -79,7 +80,7 @@ void AscendDmaHandle::InitDmaMem() {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMemGetInfo failed:" << ret;
   }
-  ret = rtMalloc(&dargs_, hbm_alloc_size_, RT_MEMORY_P2PDMA, 0);
+  ret = rtMalloc(&dargs_, hbm_alloc_size_, RT_MEMORY_P2PDMA, app_module_id);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMalloc failed:" << ret;
   }

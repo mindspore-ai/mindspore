@@ -29,24 +29,20 @@ constexpr size_t kMaxPoolGradGradWithArgmaxOutputsNum = 1;
 constexpr size_t kArgmaxIndex = 2;
 }  // namespace
 
-bool MaxPoolGradGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradGradWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradGradWithArgmaxInputsNum || outputs.size() != kMaxPoolGradGradWithArgmaxOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaxPoolGradGradWithArgmaxInputsNum
                   << " and " << kMaxPoolGradGradWithArgmaxOutputsNum << ", but get " << inputs.size() << " and "
                   << outputs.size();
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MaxPoolGradGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int MaxPoolGradGradWithArgmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -60,15 +56,15 @@ int MaxPoolGradGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_op
 }
 
 template <typename T, typename I>
-bool MaxPoolGradGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxPoolGradGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &,
+                                                         const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradGradWithArgmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradGradWithArgmaxOutputsNum, kernel_name_);
 
-  T *grad = reinterpret_cast<T *>(inputs[1]->addr);
-  I *argmax = reinterpret_cast<I *>(inputs[kArgmaxIndex]->addr);
-  T *out = reinterpret_cast<T *>(outputs[0]->addr);
+  T *grad = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  I *argmax = reinterpret_cast<I *>(inputs[kArgmaxIndex]->device_ptr());
+  T *out = reinterpret_cast<T *>(outputs[0]->device_ptr());
 
   auto task = [this, grad, argmax, out](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {

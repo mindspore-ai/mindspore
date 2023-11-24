@@ -44,20 +44,16 @@ class ArgMinHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~ArgMinHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
+
     input_shape_ = input_shapes[0];
     int out_flag =
       CalShapesSizeInBytes<S>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 
@@ -102,11 +98,6 @@ class ArgMinHelperGpuKernel : public GpuKernelHelperBase {
   int CheckKernelParam() override {
     axis_ = attr_ptr_->axis;
     int64_t dims = static_cast<int64_t>(input_shape_.size());
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
-                    << "), but got " << axis_;
-      return -1;
-    }
     if (axis_ < 0) {
       axis_ += dims;
     }

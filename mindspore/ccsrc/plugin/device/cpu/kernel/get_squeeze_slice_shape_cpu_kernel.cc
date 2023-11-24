@@ -26,13 +26,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool GetSqueezeSliceShapeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GetSqueezeSliceShape>(base_operator);
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
+bool GetSqueezeSliceShapeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -40,7 +36,6 @@ bool GetSqueezeSliceShapeCpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  outputs_ = outputs;
   return true;
 }
 
@@ -51,21 +46,19 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int GetSqueezeSliceShapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int GetSqueezeSliceShapeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   data_shapes_ = GetShapes(inputs);
   return KRET_OK;
 }
 
-bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &workspace,
+                                                    const std::vector<KernelTensor *> &outputs) {
+  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->device_ptr());
 
   ShapeVector data_shape = data_shapes_[0];
   std::vector<size_t> ini_index;
@@ -100,9 +93,9 @@ bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   return true;
 }
 
-bool GetSqueezeSliceShapeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs) {
+bool GetSqueezeSliceShapeCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &workspace,
+                                              const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
@@ -115,11 +108,11 @@ std::vector<KernelAttr> GetSqueezeSliceShapeCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
-                 [](TypeId data_type_id) -> std::pair<KernelAttr, GetSqueezeSliceShapeFunc> {
-                   return {KernelAttr().AddInputAttr(data_type_id).AddOutputAttr(kNumberTypeInt64),
-                           &GetSqueezeSliceShapeCpuKernelMod::LaunchKernel};
-                 });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, GetSqueezeSliceShapeFunc> {
+                         return {KernelAttr().AddInputAttr(data_type_id).AddOutputAttr(kNumberTypeInt64),
+                                 &GetSqueezeSliceShapeCpuKernelMod::LaunchKernel};
+                       });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, GetSqueezeSliceShapeFunc> &item) { return item.first; });
   return support_list;

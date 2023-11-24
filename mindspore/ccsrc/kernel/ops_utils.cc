@@ -37,14 +37,13 @@ std::vector<bool> Dec2Bin(const int64_t &mask) {
   return result;
 }
 
-void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void FillEmptyDims(const std::string &kernel_name, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                    std::vector<int64_t> *stride, ShapeVector *input_shape, bool is_gpu_strided) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   auto &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
-    auto kernel_name = base_operator->name();
     MS_LOG(EXCEPTION) << "For '" << kernel_name
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
                          "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
@@ -84,11 +83,12 @@ void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *b
   }
 }
 
-void ComputeBeginMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
-                      const std::vector<int64_t> &stride, const ShapeVector &input_shape) {
+void ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
+                      const PrimitivePtr &op_prim) {
   std::vector<int64_t> &_begin = *begin;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-  auto begin_mask_int = kernel_ptr->get_begin_mask();
+  auto begin_mask_value = op_prim->GetAttr("begin_mask");
+  MS_EXCEPTION_IF_NULL(begin_mask_value);
+  auto begin_mask_int = GetValue<int64_t>(begin_mask_value);
   auto begin_mask = Dec2Bin(begin_mask_int);
   for (size_t i = 0; i < begin_mask.size(); i++) {
     if (i < kStridedSliceMaxDims && begin_mask[i]) {
@@ -97,11 +97,12 @@ void ComputeBeginMask(const BaseOperatorPtr &base_operator, std::vector<int64_t>
   }
 }
 
-void ComputeEndMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *end, const std::vector<int64_t> &stride,
-                    const ShapeVector &input_shape) {
+void ComputeEndMask(std::vector<int64_t> *end, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
+                    const PrimitivePtr &op_prim) {
   std::vector<int64_t> &_end = *end;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-  auto end_mask_int = kernel_ptr->get_end_mask();
+  auto end_mask_value = op_prim->GetAttr("end_mask");
+  MS_EXCEPTION_IF_NULL(end_mask_value);
+  auto end_mask_int = GetValue<int64_t>(end_mask_value);
   auto end_mask = Dec2Bin(end_mask_int);
   for (size_t j = 0; j < end_mask.size(); j++) {
     if (j < kStridedSliceMaxDims && end_mask[j]) {
@@ -110,13 +111,14 @@ void ComputeEndMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *
   }
 }
 
-void ComputeEllipsisMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                         std::vector<int64_t> *stride, const ShapeVector &input_shape) {
+void ComputeEllipsisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                         const ShapeVector &input_shape, const PrimitivePtr &op_prim) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-  auto ellipsis_mask_int = kernel_ptr->get_ellipsis_mask();
+  auto ellipsis_mask_value = op_prim->GetAttr("ellipsis_mask");
+  MS_EXCEPTION_IF_NULL(ellipsis_mask_value);
+  auto ellipsis_mask_int = GetValue<int64_t>(ellipsis_mask_value);
   auto ellipsis_mask = Dec2Bin(ellipsis_mask_int);
   for (size_t k = 0; k < ellipsis_mask.size(); k++) {
     if (k < kStridedSliceMaxDims && ellipsis_mask[k]) {
@@ -127,13 +129,14 @@ void ComputeEllipsisMask(const BaseOperatorPtr &base_operator, std::vector<int64
   }
 }
 
-void ComputNewAxisMask(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                       std::vector<int64_t> *stride, const ShapeVector &input_shape) {
+void ComputNewAxisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                       const ShapeVector &input_shape, const PrimitivePtr &op_prim) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-  auto new_axis_mask_int = kernel_ptr->get_new_axis_mask();
+  auto new_axis_mask_value = op_prim->GetAttr("new_axis_mask");
+  MS_EXCEPTION_IF_NULL(new_axis_mask_value);
+  auto new_axis_mask_int = GetValue<int64_t>(new_axis_mask_value);
   auto new_axis_mask = Dec2Bin(new_axis_mask_int);
   for (size_t l = 0; l < new_axis_mask.size(); l++) {
     if (l < kStridedSliceMaxDims && new_axis_mask[l]) {
@@ -144,12 +147,13 @@ void ComputNewAxisMask(const BaseOperatorPtr &base_operator, std::vector<int64_t
   }
 }
 
-void ComputeShrinkAxisMask(const BaseOperatorPtr &base_operator, const std::vector<int64_t> &begin,
-                           std::vector<int64_t> *end, std::vector<int64_t> *stride) {
+void ComputeShrinkAxisMask(const std::vector<int64_t> &begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                           const PrimitivePtr &op_prim) {
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::StridedSlice>(base_operator);
-  auto shrink_axis_mask_int = kernel_ptr->get_shrink_axis_mask();
+  auto shrink_axis_mask_value = op_prim->GetAttr("shrink_axis_mask");
+  MS_EXCEPTION_IF_NULL(shrink_axis_mask_value);
+  auto shrink_axis_mask_int = GetValue<int64_t>(shrink_axis_mask_value);
   auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_int);
   for (size_t m = 0; m < shrink_axis_mask.size(); m++) {
     if (m < kStridedSliceMaxDims && shrink_axis_mask[m]) {
@@ -159,13 +163,60 @@ void ComputeShrinkAxisMask(const BaseOperatorPtr &base_operator, const std::vect
   }
 }
 
-void ParseStrideSliceMasks(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+void ParseStrideSliceMasks(const PrimitivePtr &op_prim, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                            std::vector<int64_t> *stride, const ShapeVector &input_shape) {
-  ComputeBeginMask(base_operator, begin, *stride, input_shape);
-  ComputeEndMask(base_operator, end, *stride, input_shape);
-  ComputeEllipsisMask(base_operator, begin, end, stride, input_shape);
-  ComputNewAxisMask(base_operator, begin, end, stride, input_shape);
-  ComputeShrinkAxisMask(base_operator, *begin, end, stride);
+  ComputeBeginMask(begin, *stride, input_shape, op_prim);
+  ComputeEndMask(end, *stride, input_shape, op_prim);
+  ComputeEllipsisMask(begin, end, stride, input_shape, op_prim);
+  ComputNewAxisMask(begin, end, stride, input_shape, op_prim);
+  ComputeShrinkAxisMask(*begin, end, stride, op_prim);
+}
+
+// ===========================Old interface==========================================================
+void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                   std::vector<int64_t> *stride, ShapeVector *input_shape, bool is_gpu_strided) {
+  std::vector<int64_t> &_begin = *begin;
+  std::vector<int64_t> &_end = *end;
+  std::vector<int64_t> &_stride = *stride;
+  auto &_input_shape = *input_shape;
+  if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << base_operator->name()
+                      << "', the length of 'begin', 'stride' and 'end' should be equal "
+                         "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
+                      << _begin.size() << ", the length of 'stride': " << _stride.size()
+                      << ", the length of 'end': " << _end.size()
+                      << ", the dimension of 'input_x': " << _input_shape.size();
+  }
+
+  for (size_t i = 0; i < kStridedSliceMaxDims; i++) {
+    if (i >= _input_shape.size()) {
+      _input_shape.push_back(1);
+    }
+
+    if (i < _begin.size()) {
+      int64_t dim = _input_shape[i];
+      if (is_gpu_strided) {
+        // GPU kernel is flattened using offset to get stride slice
+        _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim - 1);
+      } else {
+        // CPU using for begin is larger than end the circle will be break
+        _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim);
+      }
+    } else {
+      _begin.push_back(0);
+    }
+
+    if (i < _end.size()) {
+      int64_t dim = _input_shape[i];
+      _end[i] = std::max(_end[i] < 0 ? _end[i] + dim : std::min(_end[i], dim), static_cast<int64_t>(-1));
+    } else {
+      _end.push_back(i < _input_shape.size() ? _input_shape[i] : 1);
+    }
+
+    if (i >= _stride.size()) {
+      _stride.push_back(1);
+    }
+  }
 }
 
 float Scaling(size_t in_size, size_t out_size, bool align_corners) {

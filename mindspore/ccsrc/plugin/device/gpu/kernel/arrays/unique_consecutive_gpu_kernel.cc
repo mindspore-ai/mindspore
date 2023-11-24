@@ -61,9 +61,9 @@ const std::vector<std::pair<KernelAttr, UniqueConsecutivePtrCreatorFunc>> kernel
    CreateUniqueConsecutiveKernelPtr<int64_t, int64_t>}};
 }  // namespace
 
-bool UniqueConsecutiveGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool UniqueConsecutiveGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -78,19 +78,19 @@ bool UniqueConsecutiveGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
 }
 
 ValuePtr GetBaseOperatorAttr(const BaseOperatorPtr &op, const std::string &key) {
-  ValuePtr attr = op->GetPrim()->GetAttr(key);
+  ValuePtr attr = op->GetPrim()->GetAttr("key");
   if (attr == nullptr) {
     MS_LOG(EXCEPTION) << "The attr(" << key << ") of operator(" << op->name() << ") not exist";
   }
   return attr;
 }
 
-void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const BaseOperatorPtr &base_operator,
-                                                               const std::vector<KernelTensorPtr> &inputs) {
+void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const std::vector<KernelTensor *> &inputs) {
   // Get attrs from primitive.
-  auto attr_idx = GetBaseOperatorAttr(base_operator, "return_idx");
-  auto attr_counts = GetBaseOperatorAttr(base_operator, "return_counts");
-  auto attr_axis = GetBaseOperatorAttr(base_operator, "axis");
+  auto attr_idx = primitive_->GetAttr("return_idx");
+  auto attr_counts = primitive_->GetAttr("return_counts");
+  auto attr_axis = primitive_->GetAttr("axis");
+
   return_idx_ = GetValue<bool>(attr_idx);
   return_counts_ = GetValue<bool>(attr_counts);
   constexpr int64_t kAxisIsNone = 1000;
@@ -102,10 +102,9 @@ void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const BaseOperato
   }
 }
 
-bool UniqueConsecutiveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  InitUniqueConsecutiveAttrs(base_operator, inputs);
+bool UniqueConsecutiveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  InitUniqueConsecutiveAttrs(inputs);
   // Initialize.
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
@@ -120,10 +119,8 @@ bool UniqueConsecutiveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int UniqueConsecutiveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just
     // return do nothing.
@@ -136,7 +133,7 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   DestroyResource();
   ResetResource();
 
-  auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
+  auto input_shape = inputs[0]->GetDeviceShapeVector();
   int64_t dims = SizeToLong(input_shape.size());
   if (dims <= 1) {
     dims = 1;
@@ -144,8 +141,8 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   if (!is_flattend_) {
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << base_operator->name() << "', the 'axis' must be in the range [-" << dims << ","
-                        << dims << "), but got " << axis_ << ".";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
+                        << "), but got " << axis_ << ".";
     }
     axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
   }
@@ -155,14 +152,14 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   // Check if shape contains 0.
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
 
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeVector());
   helper_ptr_->set_return_idx(return_idx_);
   helper_ptr_->set_return_counts(return_counts_);
   helper_ptr_->set_is_flattend(is_flattend_);
@@ -172,13 +169,17 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return 0;
 }
 
-void UniqueConsecutiveGpuKernelMod::SyncOutputShape() {
+void UniqueConsecutiveGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   for (size_t i = 0; i < output_num; ++i) {
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end()));
+    outputs[i]->set_size(
+      LongToSize(std::accumulate(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end(),
+                                 UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
   }
 }
 

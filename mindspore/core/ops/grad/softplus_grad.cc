@@ -48,9 +48,9 @@ abstract::ShapePtr SoftplusGradInfershape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = input_args[0]->BuildShape();
+  auto x_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
-  auto output_shape = input_args[1]->BuildShape();
+  auto output_shape = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(output_shape);
   auto x_shape_ptr = x_shape->cast<abstract::ShapePtr>();
   auto output_shape_ptr = output_shape->cast<abstract::ShapePtr>();
@@ -74,10 +74,10 @@ TypePtr SoftplusGradInfertype(const PrimitivePtr &prim, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto output = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto output = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x, output);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());

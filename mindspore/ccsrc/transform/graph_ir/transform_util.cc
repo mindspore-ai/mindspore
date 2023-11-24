@@ -23,6 +23,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
+#include "transform/graph_ir/op_adapter_util.h"
 
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
@@ -188,8 +189,12 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
     return nullptr;
   }
   // set ori shape and format.
-  desc->SetOriginShape(ori_ge_shape);
-  desc->SetOriginFormat(ori_ge_format);
+  // note: if ori_shape and ori_format have been set. the set_shape and set_format will run as device info, otherwise
+  // the set_shape and set_format will run as host info.
+  if (!std::any_of(ori_shape.cbegin(), ori_shape.cend(), [](const auto &dim) { return dim < 0; })) {
+    desc->SetOriginShape(ori_ge_shape);
+    desc->SetOriginFormat(ori_ge_format);
+  }
   desc->SetDataType(data_type);
 
   // set device shape and format, if value is empty, use ori shape and format replace.
@@ -357,6 +362,11 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
   }
   MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
   return tensor_ptr;
+}
+
+GeTensorPtr TransformUtil::ConvertScalar(const ValuePtr &val) {
+  auto ge_tensor = ConvertAnyUtil(val, AnyTraits<ValueAny>());
+  return make_shared<GeTensor>(ge_tensor);
 }
 
 std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,

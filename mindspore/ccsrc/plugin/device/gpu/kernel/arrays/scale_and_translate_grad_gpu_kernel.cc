@@ -38,9 +38,9 @@ const std::vector<std::pair<KernelAttr, ScaleAndTranslateGradPtrCreatorFunc>> ke
    CreateScaleAndTranslateGradKernelPtr<float>}};
 }  // namespace
 
-bool ScaleAndTranslateGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool ScaleAndTranslateGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -50,27 +50,22 @@ bool ScaleAndTranslateGradGpuKernelMod::Launch(const std::vector<AddressPtr> &in
   return true;
 }
 
-bool ScaleAndTranslateGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleAndTranslateGrad>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool ScaleAndTranslateGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->kernel_type = kernel_ptr->get_kernel_type();
-  attr_ptr_->antialias = kernel_ptr->get_antialias();
+  attr_ptr_->kernel_type = GetValue<std::string>(primitive_->GetAttr("kernel_type"));
+  attr_ptr_->antialias = GetValue<bool>(primitive_->GetAttr("antialias"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
 }
 
-int ScaleAndTranslateGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ScaleAndTranslateGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape_grads = inputs[0]->GetShapeVector();
@@ -92,7 +87,6 @@ int ScaleAndTranslateGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

@@ -17,6 +17,7 @@
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/tensor_c_utils.h"
+#include "nnacl/nnacl_common.h"
 
 int kMinCostPerThread = 16384;
 
@@ -24,32 +25,33 @@ int ParallelReshape(void *param, int task_id, float l, float r) {
   NNACL_CHECK_NULL_RETURN_ERR(param);
   ReshapeStruct *reshape = (ReshapeStruct *)param;
 
-  uint8_t *in_start = (uint8_t *)(reshape->base_.in_[0]->data_) + task_id * reshape->block_size_;
-  uint8_t *out_start = (uint8_t *)(reshape->base_.out_[0]->data_) + task_id * reshape->block_size_;
-  int copy_size = reshape->block_size_;
+  int data_size = (int)DataTypeCSize(reshape->base_.in_[0]->data_type_);
+  uint8_t *in_start = (uint8_t *)(reshape->base_.in_[0]->data_) + task_id * reshape->block_num_ * data_size;
+  uint8_t *out_start = (uint8_t *)(reshape->base_.out_[0]->data_) + task_id * reshape->block_num_ * data_size;
+  int copy_num = reshape->block_num_;
   if (task_id == (reshape->base_.thread_nr_ - 1)) {
-    copy_size = reshape->total_size_ - task_id * reshape->block_size_;
+    copy_num = reshape->total_num_ - task_id * reshape->block_num_;
   }
-  (void)memcpy(out_start, in_start, copy_size);
+  (void)memcpy(out_start, in_start, copy_num * data_size);
   return NNACL_OK;
 }
 
 int ReshapeResize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReshapeStruct *reshape = (ReshapeStruct *)self;
-  reshape->total_size_ = GetSize(self->in_[0]);
-  if (reshape->total_size_ == 0) {
+  reshape->total_num_ = GetElementNum(self->in_[0]);
+  if (reshape->total_num_ == 0) {
     return NNACL_OK;
   }
 
-  self->thread_nr_ = MSMIN(self->thread_nr_, UP_DIV(reshape->total_size_, kMinCostPerThread));
+  self->thread_nr_ = MSMIN(self->thread_nr_, UP_DIV(reshape->total_num_, kMinCostPerThread));
   if (self->thread_nr_ < 1) {
     self->thread_nr_ = 1;
   }
   NNACL_CHECK_ZERO_RETURN_ERR(self->thread_nr_);
-  reshape->block_size_ = UP_DIV(reshape->total_size_, self->thread_nr_);
-  NNACL_CHECK_ZERO_RETURN_ERR(reshape->block_size_);
-  self->thread_nr_ = UP_DIV(reshape->total_size_, reshape->block_size_);
+  reshape->block_num_ = UP_DIV(reshape->total_num_, self->thread_nr_);
+  NNACL_CHECK_ZERO_RETURN_ERR(reshape->block_num_);
+  self->thread_nr_ = UP_DIV(reshape->total_num_, reshape->block_num_);
 
   return NNACL_OK;
 }

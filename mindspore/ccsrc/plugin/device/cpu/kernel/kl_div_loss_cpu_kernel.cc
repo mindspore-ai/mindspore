@@ -30,14 +30,9 @@ namespace kernel {
 const size_t kMyAddInputsNum = 2;
 const size_t kMyAddOutputsNum = 1;
 
-bool KLDivLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::KLDivLoss>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast KLDivLoss ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  reductionMode_ = kernel_ptr->get_reduction();
+bool KLDivLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  reductionMode_ = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMyAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMyAddOutputsNum, kernel_name_);
@@ -52,17 +47,17 @@ bool KLDivLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool KLDivLossCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
+bool KLDivLossCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(kernel_func_);
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &onHost) {
+int KLDivLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, onHost);
+  ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
@@ -78,7 +73,7 @@ int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   output_before_reduction_shape_size_ = std::accumulate(
     output_before_reduction_shape_.begin(), output_before_reduction_shape_.end(), 1, std::multiplies<int64_t>());
 
-  size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
+  size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
   if (reductionMode_ != ops::kNone) {
     workspace_size_list_.push_back(output_before_reduction_shape_size_ * type_size);
   }
@@ -102,19 +97,19 @@ std::vector<KernelAttr> KLDivLossCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs) {
+bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &workspace,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMyAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMyAddOutputsNum, kernel_name_);
 
-  T *input_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *input_target = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  T *input_x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  T *input_target = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
   T *y = nullptr;
   if (reductionMode_ == ops::kNone) {
-    y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+    y = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   } else {
-    y = reinterpret_cast<T *>(workspace[kIndex0]->addr);
+    y = reinterpret_cast<T *>(workspace[kIndex0]->device_ptr());
   }
 
   double total_sum = 0;
@@ -134,7 +129,7 @@ bool KLDivLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     return true;
   }
 
-  T *y_ret = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *y_ret = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   if (reductionMode_ == ops::kSum) {
     y_ret[kIndex0] = static_cast<T>(total_sum);
     return true;

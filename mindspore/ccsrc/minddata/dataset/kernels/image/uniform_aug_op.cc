@@ -22,12 +22,8 @@
 
 namespace mindspore {
 namespace dataset {
-const int UniformAugOp::kDefNumOps = 2;
-
 UniformAugOp::UniformAugOp(std::vector<std::shared_ptr<TensorOp>> op_list, int32_t num_ops)
-    : tensor_op_list_(std::move(op_list)), num_ops_(num_ops) {
-  rnd_.seed(GetSeed());
-}
+    : tensor_op_list_(std::move(op_list)), num_ops_(num_ops) {}
 
 // compute method to apply uniformly random selected augmentations from a list
 Status UniformAugOp::Compute(const TensorRow &input, TensorRow *output) {
@@ -35,12 +31,13 @@ Status UniformAugOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // randomly select ops to be applied
   std::vector<std::shared_ptr<TensorOp>> selected_tensor_ops;
-  std::sample(tensor_op_list_.begin(), tensor_op_list_.end(), std::back_inserter(selected_tensor_ops), num_ops_, rnd_);
+  std::sample(tensor_op_list_.begin(), tensor_op_list_.end(), std::back_inserter(selected_tensor_ops), num_ops_,
+              random_generator_);
 
   bool first = true;
   for (const auto &tensor_op : selected_tensor_ops) {
     // Do NOT apply the op, if second random generator returned zero
-    if (std::uniform_int_distribution<int>(0, 1)(rnd_)) {
+    if (std::uniform_int_distribution<int>(0, 1)(random_generator_)) {
       continue;
     }
     // apply C++ ops (note: python OPs are not accepted)

@@ -20,12 +20,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
-bool TriuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Triu>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr_);
-  kernel_name_ = kernel_ptr_->name();
+bool TriuGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -38,15 +33,13 @@ bool TriuGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  diagonal_ = kernel_ptr_->get_diagonal();
+  diagonal_ = GetValue<int64_t>(primitive_->GetAttr("diagonal"));
   auto attr_dtype = kernel_attr.GetInputAttr(kIndex0);
   unit_size_ = abstract::TypeIdSize(attr_dtype.dtype);
   return true;
 }
 
-int TriuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int TriuGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   for (const auto &input : inputs) {
@@ -69,8 +62,8 @@ int TriuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t input_dims = input_shape.size();
   if (input_dims <= 1) {
@@ -81,14 +74,14 @@ int TriuGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   matrix_row_ = input_shape[input_dims - kRowindex];
   matrix_col_ = input_shape[input_dims - kColindex];
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   return KRET_OK;
 }
 
 template <typename T>
-bool TriuGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool TriuGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   MS_EXCEPTION_IF_NULL(input);

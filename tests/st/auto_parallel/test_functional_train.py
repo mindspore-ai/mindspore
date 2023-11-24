@@ -63,9 +63,6 @@ def test_graph_functional_sink_train():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_pynative_func_sink():
     '''
@@ -78,9 +75,6 @@ def test_pynative_func_sink():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_shard_func():
     '''

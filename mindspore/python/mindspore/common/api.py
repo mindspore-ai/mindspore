@@ -260,7 +260,7 @@ def _get_parameter_layout():
     return layout
 
 
-def _handle_arg(obj, arg):
+def _handle_arg(obj, arg, compile_arg):
     """Handle arg for runtime .If need handle the arg, return True"""
     if isinstance(arg, PythonTensor):
         if arg.has_init:
@@ -269,7 +269,7 @@ def _handle_arg(obj, arg):
             return arg
     elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
         return arg
-    elif hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__"):
+    elif compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and getattr(compile_arg, "__ms_mutable__"):
         # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
         if isinstance(arg, list) and not arg:
             return None
@@ -282,16 +282,16 @@ def _handle_arg(obj, arg):
     return None
 
 
-def _get_args_for_run(obj, args, kwargs):
+def _get_args_for_run(obj, args, kwargs, compile_args):
     """Get the actual input args and kwargs for runtime."""
     new_args = []
-    for arg in args:
-        new_arg = _handle_arg(obj, arg)
+    for arg, compile_arg in zip(args, compile_args):
+        new_arg = _handle_arg(obj, arg, compile_arg)
         if new_arg is not None:
             new_args.append(new_arg)
 
     for _, value in kwargs.items():
-        new_value = _handle_arg(obj, value)
+        new_value = _handle_arg(obj, value, None)
         if new_value is not None:
             new_args.append(new_value)
 
@@ -329,6 +329,7 @@ class _MindsporeFunctionExecutor:
         self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
+        self._compile_args = None
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
 
 
@@ -376,6 +377,7 @@ class _MindsporeFunctionExecutor:
 
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
+        self._compile_args = compile_args
         generate_name, echo_function_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
@@ -570,7 +572,7 @@ class _MindsporeFunctionExecutor:
         Returns:
             new_inputs, new input args, which are required for running.
         """
-        return _get_args_for_run(self, args_list, kwargs)
+        return _get_args_for_run(self, args_list, kwargs, self._compile_args)
 
 
 # The attributes used to identify a given object.

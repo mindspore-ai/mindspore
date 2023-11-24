@@ -22,21 +22,6 @@
 
 namespace mindspore {
 namespace kernel {
-using std::fstream;
-using std::string;
-using std::vector;
-
-const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
-const int REGISTER_UNIT_IN_WARP = 256;
-const int WARP_SIZE = 32;
-const int WARP_ALLOC_GRAN = 4;
-const int AKG_KERNEL_MOD_BX_IDX = 0;
-const int AKG_KERNEL_MOD_BY_IDX = 1;
-const int AKG_KERNEL_MOD_BZ_IDX = 2;
-const int AKG_KERNEL_MOD_TX_IDX = 3;
-const int AKG_KERNEL_MOD_TY_IDX = 4;
-const int AKG_KERNEL_MOD_TZ_IDX = 5;
-
 AkgGpuKernelManagerPtr AkgGpuKernelMod::kernel_manager_ = std::make_shared<AkgGpuKernelManager>();
 AkgGpuKernelManager::AkgGpuKernelManager() {}
 
@@ -106,8 +91,8 @@ AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack
   }
 }
 
-bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
@@ -129,17 +114,21 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
+                       [](const KernelTensor *input) { return reinterpret_cast<void *>(input->device_ptr()); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
+                       [](const KernelTensor *output) { return reinterpret_cast<void *>(output->device_ptr()); });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
+                         [](const KernelTensor *addr) { return reinterpret_cast<void *>(addr->device_ptr()); });
+  }
+  std::vector<void *> runtimeargs_addr;
+  for (size_t i = 0; i < runtimeargs.size(); i++) {
+    runtimeargs_addr.emplace_back(reinterpret_cast<void *>(reinterpret_cast<void **>(runtimeargs.data()) + i));
   }
   result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
                           thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],
                           thread_info_[AKG_KERNEL_MOD_TY_IDX], thread_info_[AKG_KERNEL_MOD_TZ_IDX], 0,
-                          reinterpret_cast<CUstream>(stream_ptr), reinterpret_cast<void **>(&runtimeargs[0]), 0);
+                          reinterpret_cast<CUstream>(stream_ptr), reinterpret_cast<void **>(&runtimeargs_addr[0]), 0);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);

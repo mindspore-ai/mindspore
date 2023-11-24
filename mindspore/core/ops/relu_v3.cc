@@ -29,14 +29,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ReLUV3InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto shape_element = input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+abstract::BaseShapePtr ReLUV3InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+  auto shape_element = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  return shape_element->Clone();
 }
 TypePtr ReLUV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
   return x_type;
 }

@@ -21,6 +21,7 @@
 #include "acl/acl_op_compiler.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -32,9 +33,6 @@
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/optimizer/helper.h"
-#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
-#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
@@ -51,9 +49,6 @@
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "utils/anf_utils.h"
-
-using mindspore::device::ascend::ProfilingManager;
-using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
 namespace mindspore::device::ascend {
@@ -123,7 +118,7 @@ void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType 
         ss << TypeIdToString(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i)) << std::endl;
       }
       for (size_t i = 0; i < output_num; ++i) {
-        ss << "InputDesc [" << i << "] is ";
+        ss << "OutputDesc [" << i << "] is ";
         ss << TypeIdToString(common::AnfAlgo::GetOutputInferDataType(node, i)) << std::endl;
       }
       break;
@@ -142,11 +137,10 @@ void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType 
 
 std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
-  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
-  // Todo: add datatype and format filter
-  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel::IsRegisteredAclnnOp(node)) {
+  if (kernel::IsRegisteredAclnnOp(node)) {
     return {KernelType::OPAPI_KERNEL, {}};
   }
+  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
   if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel_type != KernelType::HCCL_KERNEL) {
     return {kernel_type, {}};
   }
@@ -516,8 +510,8 @@ bool GeKernelExecutor::PySyncRuning() const {
   return true;
 }
 
-bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs,
-                                       const vector<AddressPtr> &outputs) const {
+bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
+                                       const vector<KernelTensor *> &outputs) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
@@ -527,25 +521,20 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Addres
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   MS_EXCEPTION_IF_NULL(stream);
-  aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
+  aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                     inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size
-                  << " count:" << inputs[0]->size;
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size()
+                  << " count:" << inputs[0]->size();
     return false;
   }
   return true;
 }
 
-bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                    const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
+bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
+                                    const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto graph_id = AnfAlgo::GetGraphId(kernel.get());
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(res_manager_);
   (void)res_manager_->BindDeviceToCurrentThread(false);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -569,12 +558,11 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
   }
 #endif
   // launch kernel
-  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
+  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end() || is_dynamic_shape_skip_execute) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
       return false;
     }
-    kernel_type = RT_KERNEL;
   } else {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
@@ -585,19 +573,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
       return false;
     }
   }
-#ifdef ENABLE_DEBUGGER
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-    kernel_dumper->OpLoadDumpInfo(kernel);
-  }
-#endif
-#ifndef ENABLE_SECURITY
-  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_instance);
-  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
-    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type, kernel_mod->task_id());
-  }
-#endif
   // for PyNative Sync Run mode
   return PySyncRuning();
 }

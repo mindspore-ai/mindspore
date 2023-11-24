@@ -34,8 +34,8 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
   SquareSumAllFwdGpuKernelMod() = default;
   ~SquareSumAllFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -55,16 +55,13 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    dtype_ = inputs.at(kIndex0)->GetDtype();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    dtype_ = inputs.at(kIndex0)->dtype_id();
     dtype_size_ = abstract::TypeIdSize(dtype_);
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto input_shape = inputs[0]->GetShapeVector();
     auto output_shape = outputs[0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
@@ -87,11 +84,8 @@ class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_ * dtype_size_);
-    input_size_list_.push_back(input_size_ * dtype_size_);
     output_size_list_.push_back(dtype_size_);
     output_size_list_.push_back(dtype_size_);
     workspace_size_list_.push_back(output_size_ * dtype_size_);

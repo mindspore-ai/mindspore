@@ -41,3 +41,66 @@ def test_generate_mutable_sequence_with_dynamic_length_with_jit():
     assert ret[0] == [1, 2, 3, 4]
     assert ret[1] == [Tensor([1]), Tensor([2]), Tensor([3])]
     assert ret[2] == [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_mutable_dynamic_len_with_any():
+    """
+    Feature: Mutable with dynamic length.
+    Description: Generate mutable sequence of dynamic length with in jit.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    @jit
+    def foo(inputs):
+        x = [mutable(inputs), inputs]
+        x = mutable(x, True)
+        return x
+
+    ret = foo([(1, 2), 2, '2'])
+    assert ret == [[(1, 2), 2, '2'], [(1, 2), 2, '2']]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_mutable_dynamic_len_with_any_2():
+    """
+    Feature: Mutable with dynamic length.
+    Description: Generate mutable sequence of dynamic length with in jit.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    @jit
+    def foo(inputs):
+        x = [inputs, mutable(inputs)]
+        x = mutable(x, True)
+        return x
+
+    ret = foo([(1, 2), 2, '2'])
+    assert ret == [[(1, 2), 2, '2'], [(1, 2), 2, '2']]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_mutable_dynamic_len_with_any_3():
+    """
+    Feature: Mutable with dynamic length.
+    Description: Generate mutable sequence of dynamic length with in jit.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    @jit
+    def foo(inputs, index):
+        x = mutable(inputs[mutable(index)], True)
+        y = x[1]
+        return y
+
+    ret = foo([[1, 2], [4, 5], [2, 2]], 1)
+    assert ret == 5

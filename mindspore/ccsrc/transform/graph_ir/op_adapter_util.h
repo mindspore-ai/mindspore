@@ -23,6 +23,7 @@
 
 #include "transform/graph_ir/op_adapter_base.h"
 #include "ir/scalar.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 class GeDataTypeImm final : public IntegerImm {
@@ -62,6 +63,53 @@ inline ValuePtr GetRealValue<GeTensor>(const GeTensor &) {
   return nullptr;
 }
 
+// Get integral value from ValuePtr and cast to integral type T
+template <typename T, typename std::enable_if<std::is_integral_v<std::decay_t<T>>>::type * = nullptr>
+T GetCastIntegralValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  TypeId type_id = value->type()->type_id();
+
+  switch (type_id) {
+    case kNumberTypeBool:
+      return static_cast<T>(ops::GetValueWithCheck<bool>(value));
+    case kNumberTypeInt8:
+      return static_cast<T>(ops::GetValueWithCheck<int8_t>(value));
+    case kNumberTypeInt16:
+      return static_cast<T>(ops::GetValueWithCheck<int16_t>(value));
+    case kNumberTypeInt32:
+      return static_cast<T>(ops::GetValueWithCheck<int32_t>(value));
+    case kNumberTypeInt64:
+      return static_cast<T>(ops::GetValueWithCheck<int64_t>(value));
+    case kNumberTypeUInt8:
+      return static_cast<T>(ops::GetValueWithCheck<uint8_t>(value));
+    case kNumberTypeUInt16:
+      return static_cast<T>(ops::GetValueWithCheck<uint16_t>(value));
+    case kNumberTypeUInt32:
+      return static_cast<T>(ops::GetValueWithCheck<uint32_t>(value));
+    case kNumberTypeUInt64:
+      return static_cast<T>(ops::GetValueWithCheck<uint64_t>(value));
+    default:
+      MS_LOG(EXCEPTION) << "Get and cast value of type " << value->type()->ToString() << " to integral type fail.";
+  }
+}
+
+// Get floating point value from ValuePtr and cast to floating point type T
+template <typename T, typename std::enable_if<std::is_floating_point_v<std::decay_t<T>>>::type * = nullptr>
+T GetCastFloatValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  TypeId type_id = value->type()->type_id();
+
+  switch (type_id) {
+    case kNumberTypeFloat32:
+      return static_cast<T>(ops::GetValueWithCheck<float>(value));
+    case kNumberTypeFloat64:
+      return static_cast<T>(ops::GetValueWithCheck<double>(value));
+    default:
+      MS_LOG(EXCEPTION) << "Get and cast value of type " << value->type()->ToString()
+                        << " to floating point type fail.";
+  }
+}
+
 template <typename P, typename Q>
 static Q ConvertAnyUtil(const ValuePtr &value, const AnyTraits<P> &, const AnyTraits<Q> &) {
   return static_cast<Q>(GetValue<P>(value));
@@ -82,6 +130,14 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &fo
 GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>);
 
 std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<GEType>>);
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>);
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>);
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>);
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>, const std::vector<std::string> &);
 
 template <typename P, typename Q>
 std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTraits<std::vector<Q>>) {

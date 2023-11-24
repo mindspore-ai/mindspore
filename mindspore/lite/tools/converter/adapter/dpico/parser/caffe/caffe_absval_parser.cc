@@ -17,7 +17,7 @@
 #include "parser/caffe/caffe_absval_parser.h"
 #include <memory>
 #include <vector>
-#include "ops/abs.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

@@ -16,7 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_gridsample_parser.h"
 #include <memory>
-#include "ops/grid_sampler_2d.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -26,9 +26,9 @@ PrimitiveCPtr OnnxGridSampleParser::Parse(const onnx::GraphProto &onnx_graph, co
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "mode") {
-      prim->set_interpolation_mode(onnx_node_attr.s());
+      prim->set_interpolation_mode(onnx_node_attr.i());
     } else if (onnx_node_attr.name() == "padding_mode") {
-      prim->set_padding_mode(onnx_node_attr.s());
+      prim->set_padding_mode(onnx_node_attr.i());
     } else if (onnx_node_attr.name() == "align_corners") {
       prim->set_align_corners(static_cast<bool>(onnx_node_attr.i()));
     }

@@ -24,6 +24,8 @@
 #include "utils/check_convert_utils.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "transform/graph_ir/io_format_map.h"
+#include "ir/kernel_tensor_value.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 GeDataTypeImm::GeDataTypeImm() : IntegerImm(kInt32), v_(::ge::DataType::DT_FLOAT) {}
@@ -67,9 +69,9 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
     list[0] = 1;
     list[1] = 1;
     (void)std::transform(vec->value().begin(), vec->value().end(), list.begin() + 2,
-                         [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int64_t>(val)); });
+                         [](const ValuePtr &val) { return ops::GetValueWithCheck<int64_t>(val); });
   } else {
-    int64_t data = GetValue<int64_t>(value);
+    int64_t data = ops::GetValueWithCheck<int64_t>(value);
     int size = 2;  // 2 int in list
     list = TransformUtil::ConvertIntToList(data, size);
   }
@@ -89,7 +91,7 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<in
     if (i != 0) {
       buffer << ",";
     }
-    buffer << GetValue<int64_t>(it);
+    buffer << ops::GetValueWithCheck<int64_t>(it);
     i++;
   }
   return buffer.str();
@@ -104,7 +106,7 @@ std::vector<float> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::ve
   std::vector<float> list;
   list.resize(vec->value().size());
   (void)std::transform(vec->value().begin(), vec->value().end(), list.begin(),
-                       [](const ValuePtr &val) { return static_cast<float>(GetValue<float>(val)); });
+                       [](const ValuePtr &val) { return ops::GetValueWithCheck<float>(val); });
   return list;
 }
 
@@ -118,7 +120,7 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &fo
   std::vector<int64_t> list;
   list.resize(vec->value().size());
   (void)std::transform(vec->value().begin(), vec->value().end(), list.begin(),
-                       [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int64_t>(val)); });
+                       [](const ValuePtr &val) { return ops::GetValueWithCheck<int64_t>(val); });
   if (format == kOpFormat_NHWC) {
     if (list.size() < 4) {
       MS_LOG(EXCEPTION) << "The size of list is less than 4";
@@ -148,6 +150,13 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>) {
   } else if (value->isa<UInt64Imm>()) {
     // type id
     me_type = static_cast<TypeId>(GetValue<uint64_t>(value));
+  } else if (value->isa<Int64Imm>()) {
+    // type id
+    me_type = static_cast<TypeId>(GetValue<int64_t>(value));
+  } else if (value->isa<KernelTensorValue>()) {
+    // type id
+    auto value_opt = ops::GetScalarValue<int64_t>(value);
+    me_type = static_cast<TypeId>(value_opt.value());
   } else {
     MS_LOG(EXCEPTION) << "error convert Value to TypePtr for value: " << value->ToString()
                       << ", type: " << value->type_name() << ", value should be a Typeptr or TypeId";
@@ -170,6 +179,48 @@ std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<st
   return data;
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t format_id = GetCastIntegralValue<int64_t>(value);
+  return GEDataFormat::ConvertEnumToString(format_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t pad_id = GetCastIntegralValue<int64_t>(value);
+  return GEPadMod::ConvertEnumToString(pad_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t reduction_id = GetCastIntegralValue<int64_t>(value);
+  return GEReduction::ConvertEnumToString(reduction_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>,
+                           const std::vector<std::string> &enum_string) {
+  MS_EXCEPTION_IF_NULL(value);
+
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t id = GetCastIntegralValue<int64_t>(value);
+  if (id < 0 || id >= static_cast<int64_t>(enum_string.size())) {
+    MS_LOG(EXCEPTION) << "Invalid enum id " << id;
+    return "";
+  }
+  return enum_string[id];
+}
+
 template <typename T1, typename T2>
 GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
   const auto &vec_item =
@@ -178,7 +229,7 @@ GeTensor NestedVectorToTensorImpl(const ValuePtrList &vec, const TypeId &type) {
   size_t attr_size2 = vec_item.size();
   std::vector<T1> attr_list;
   for (const auto &item : vec) {
-    auto value_list = GetValue<std::vector<T1>>(item);
+    auto value_list = ops::GetValueWithCheck<std::vector<T1>>(item);
     (void)std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
   }
   auto attr_value = MakeValue(attr_list);
@@ -397,7 +448,7 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
     return ret;
   }
   if (prim->HasAttr("io_format")) {
-    return GetValue<std::string>(prim->GetAttr("io_format"));
+    return ops::GetValueWithCheck<std::string>(prim->GetAttr("io_format"));
   }
   auto io_format_map = IOFormatMap::get();
   auto iter = io_format_map.find(prim->name());
@@ -410,10 +461,10 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
     if (format->isa<Int64Imm>()) {
       bool converted = CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &format);
       if (converted) {
-        return GetValue<std::string>(format);
+        return ops::GetValueWithCheck<std::string>(format);
       }
     } else {
-      return GetValue<std::string>(format);
+      return ops::GetValueWithCheck<std::string>(format);
     }
   }
   return iter->second;

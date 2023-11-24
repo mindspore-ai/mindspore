@@ -286,3 +286,11 @@ def _tensor_mul_cootensor(x, y):
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
     other_values = F.gather_nd(x, y.indices)
     return COOTensor(y.indices, y.values * other_values, y.shape)
+
+
+@mul.register_default()
+def default_mul(x, y):
+    """
+    Default function for mul.
+   """
+    return x * y

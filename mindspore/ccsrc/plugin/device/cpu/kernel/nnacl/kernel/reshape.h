@@ -23,8 +23,8 @@
 
 typedef struct ReshapeStruct {
   KernelBase base_;
-  int block_size_;
-  int total_size_;
+  int block_num_;
+  int total_num_;
 } ReshapeStruct;
 
 int ParallelReshape(void *param, int task_id, float l, float r);

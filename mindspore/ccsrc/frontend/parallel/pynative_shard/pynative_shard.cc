@@ -155,7 +155,7 @@ bool IsSettingStrategyByInsertIdentity(const FuncGraphPtr &func_graph, const CNo
   auto node_users = manager->node_users()[cnode];
   for (const auto &user : node_users) {
     auto user_node = user.first;
-    if (IsPrimitiveCNode(user_node, prim::kPrimIdentity)) {
+    if (IsPrimitiveCNode(user_node, prim::kPrimidentity)) {
       auto attrs = GetCNodePrimitive(user_node)->attrs();
       if (StrategyFound(attrs)) {
         auto origin_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
@@ -246,7 +246,7 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strateg
 
       // Setting strategy by insert identity.
       // e.g TupleGetItem(parameter, index) -> identity{in_strategy=[input_strategy[index]}
-      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimIdentity), tuple_get_item_cnode});
+      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimidentity), tuple_get_item_cnode});
       auto tuple_get_item_cnode_abstract = tuple_get_item_cnode->abstract();
       MS_EXCEPTION_IF_NULL(tuple_get_item_cnode_abstract);
       identity_cnode->set_abstract(tuple_get_item_cnode_abstract->Clone());
@@ -286,7 +286,7 @@ void SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph
       }
 
       // Setting param_layout by insert identity. e.g Load(param) -> identity{in_strategy=[param_layout]}
-      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimIdentity), load_cnode});
+      auto identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimidentity), load_cnode});
       auto load_cnode_abstract = load_cnode->abstract();
       MS_EXCEPTION_IF_NULL(load_cnode_abstract);
       identity_cnode->set_abstract(load_cnode_abstract->Clone());

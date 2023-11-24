@@ -62,6 +62,7 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastGradientArgs,
          std::make_shared<Primitive>(kDynamicBroadcastGradientArgsOpName));
 GVAR_DEF(PrimitivePtr, kPrimConvertToAdapterTensor, std::make_shared<Primitive>("ConvertToAdapterTensor"));
 GVAR_DEF(PrimitivePtr, kPrimConvertToMsTensor, std::make_shared<Primitive>("ConvertToMsTensor"));
+GVAR_DEF(PrimitivePtr, kPrimDtypeToEnum, std::make_shared<Primitive>("DtypeToEnum"));
 
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
@@ -127,6 +128,21 @@ class DoSignaturePrimitive : public Primitive {
   ValuePtr function_;
 };
 using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
+
+class DoTransPrimitiveFunction : public Primitive {
+ public:
+  explicit DoTransPrimitiveFunction(const PrimitivePtr &prim) : Primitive("T-PrimFunc-" + prim->name()), prim_(prim) {}
+
+  ~DoTransPrimitiveFunction() override = default;
+
+  MS_DECLARE_PARENT(DoTransPrimitiveFunction, Primitive)
+
+  const PrimitivePtr function() const { return prim_; }
+
+ private:
+  PrimitivePtr prim_;
+};
+using DoTransPrimitiveFunctionPtr = std::shared_ptr<DoTransPrimitiveFunction>;
 }  // namespace prim
 }  // namespace mindspore
 

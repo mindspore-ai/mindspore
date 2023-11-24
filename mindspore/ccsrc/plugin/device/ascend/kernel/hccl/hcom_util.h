@@ -26,8 +26,12 @@
 #include "include/common/utils/contract.h"
 #include "hccl/hccl_types.h"
 #include "utils/shape_utils.h"
+#include "kernel/kernel.h"
+#include "ops/framework_op_name.h"
+#include "ops/ascend_op_name.h"
 
 namespace mindspore {
+using kernel::KernelTensor;
 using std::map;
 using std::string;
 using std::vector;
@@ -49,22 +53,49 @@ static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
 
 class HcomUtil {
  public:
-  static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_intput_shape_list);
-  static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
-  static bool GetKernelInputInferShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_input_infer_shape_list);
-  static bool GetKernelOutputInferShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_output_infer_shape_list);
   static ::HcclDataType ConvertHcclType(TypeId type_id);
-  static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);
+  static bool GetHcomDataType(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                              const std::vector<KernelTensor *> &outputs, vector<HcclDataType> *data_type_list);
   static bool GetHcclOpSize(const HcclDataType &data_type, const ShapeVector &shape, size_t *size);
   static bool GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size);
-  static bool GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataType> &data_type_list,
-                           const vector<ShapeVector> &shape_list, uint64_t *total_count);
-  static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
-  static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
-  static bool GetHcomSrcRank(const AnfNodePtr &anf_node, uint32_t *src_rank);
-  static bool GetHcomDestRank(const AnfNodePtr &anf_node, uint32_t *dest_rank);
+  static bool GetHcomCount(const PrimitivePtr &primitive, const vector<HcclDataType> &data_type_list,
+                           const vector<ShapeVector> &shape_list, const size_t input_tensor_num, uint64_t *total_count);
+  static bool GetHcomOperationType(const PrimitivePtr &primitive, HcclReduceOp *op_type);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
   static bool GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_type);
+
+  static inline bool IsReceiveOp(const std::string &kernel_name) {
+    return kernel_name == mindspore::kReceiveOpName || kernel_name == mindspore::kMuxReceiveOpName;
+  }
+
+  template <typename T>
+  static inline bool GetHcomAttr(const PrimitivePtr &prim, const std::string &attr_name, T *value_ptr) {
+    MS_EXCEPTION_IF_NULL(prim);
+    MS_EXCEPTION_IF_NULL(value_ptr);
+
+    ValuePtr attr_value = prim->GetAttr(attr_name);
+    if (attr_value == nullptr) {
+      MS_LOG(DEBUG) << "Get attribute '" << attr_name << "' of kernel " << prim->name() << " failed.";
+      return false;
+    }
+
+    *value_ptr = GetValue<T>(attr_value);
+    return true;
+  }
+
+  template <typename DstType, typename SrcType>
+  static inline bool GetHcomAttr(const PrimitivePtr &prim, const std::string &attr_name, DstType *value_ptr) {
+    MS_EXCEPTION_IF_NULL(prim);
+    MS_EXCEPTION_IF_NULL(value_ptr);
+
+    SrcType value;
+    if (!GetHcomAttr<SrcType>(prim, attr_name, &value)) {
+      return false;
+    }
+
+    *value_ptr = static_cast<DstType>(value);
+    return true;
+  }
 };
 }  // namespace mindspore
 

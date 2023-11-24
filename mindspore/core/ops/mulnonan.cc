@@ -44,10 +44,10 @@ TypePtr MulNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                            op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  auto type_x = input_args[0]->BuildType();
-  auto type_y = input_args[1]->BuildType();
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("y", input_args[1]->GetType());
+  auto type_x = input_args[0]->GetType();
+  auto type_y = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(type_x);
   MS_EXCEPTION_IF_NULL(type_y);
   if (type_x->isa<Complex>() || type_y->isa<Complex>()) {
@@ -72,7 +72,7 @@ TypePtr MulNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
     }
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 

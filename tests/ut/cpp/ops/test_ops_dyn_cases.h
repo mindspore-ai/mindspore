@@ -18,17 +18,26 @@
 
 #include "common/common_test.h"
 #include "gtest/internal/gtest-param-util.h"
+#include "ops/test_ops.h"
 
 namespace mindspore::ops {
 extern testing::internal::ValueArray<
   EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams,
   EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams, EltwiseOpShapeParams>
   EltwiseDynShapeTestCases;
+
+extern testing::internal::ValueArray<EltwiseGradOpShapeParams, EltwiseGradOpShapeParams, EltwiseGradOpShapeParams,
+                                     EltwiseGradOpShapeParams, EltwiseGradOpShapeParams, EltwiseGradOpShapeParams,
+                                     EltwiseGradOpShapeParams, EltwiseGradOpShapeParams, EltwiseGradOpShapeParams,
+                                     EltwiseGradOpShapeParams>
+  EltwiseGradDynShapeTestCases;
+
 extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
                                      BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
                                      BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
                                      BroadcastOpShapeParams>
   BroadcastOpShapeScalarTensorCases;
+
 extern testing::internal::ValueArray<BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
                                      BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,
                                      BroadcastOpShapeParams, BroadcastOpShapeParams, BroadcastOpShapeParams,

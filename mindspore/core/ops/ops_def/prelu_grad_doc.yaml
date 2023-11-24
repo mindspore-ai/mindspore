@@ -1,0 +1,18 @@
+prelu_grad:
+    description: |
+        Gradients of PReLU operation.
+
+        Note:
+            1-dimensional input_x is not supported.
+
+        Inputs:
+            - **dy** (Tensor) - Representing the backprop of the next layer.
+            - **x** (Tensor) - Must be the input `x` of forward operator PRelu.
+            - **weight** (Tensor) - Float Tensor, w > 0, must be the input `weight` of forward operator PRelu.
+
+        Outputs:
+            - **dx** (Tensor), with the same type as `x`.
+            - **dw** (Tensor), with the same type as `weight`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``

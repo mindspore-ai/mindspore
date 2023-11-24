@@ -1,0 +1,24 @@
+sigmoid:
+    description: |
+        Sigmoid activation function.
+
+        Refer to :func:`mindspore.ops.sigmoid` for more details.
+
+        Inputs:
+            - **input_x** (Tensor) - Tensor of any dimension.
+
+        Outputs:
+            Tensor, with the same type and shape as the input_x.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> sigmoid = ops.Sigmoid()
+            >>> output = sigmoid(input_x)
+            >>> print(output)
+            [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]

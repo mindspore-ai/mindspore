@@ -29,13 +29,12 @@
 #include "ops/math_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/nn_optimizer_ops.h"
-#include "ops/elu.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
+#include "ops/op_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -50,7 +49,6 @@ constexpr size_t kOutputsNum = 1;
 constexpr auto kSquare = "Square";
 constexpr auto kNeg = "Neg";
 constexpr auto kSign = "Sign";
-constexpr auto kFloor = "Floor";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kReciprocal = "Reciprocal";
@@ -75,11 +73,8 @@ constexpr auto kAtanh = "Atanh";
 constexpr auto kAbs = "Abs";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kRsqrt = "Rsqrt";
-constexpr auto kErf = "Erf";
-constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
 constexpr auto kReLU = "ReLU";
-constexpr auto kElu = "Elu";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kSoftplus = "Softplus";
 constexpr auto kMish = "Mish";
@@ -89,21 +84,19 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
-  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
-
-  BaseOperatorPtr base_op{nullptr};
+  void InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                const std::vector<KernelTensor *> &outputs) override;
+  bool RunFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+               const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalEqual(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchLogicalEqual(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchLogicalNot(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   template <typename T>
-  void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void LaunchKernelFloat16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelComplex(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::string kernel_name_{kUnknown};
   TypeId dtype_{kTypeUnknown};
 };
@@ -300,17 +293,12 @@ void ComplexAtan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size
 
 template <typename T>
 void Sin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  if constexpr (std::is_same_v<T, float>) {
-    auto task = [&in, &out](size_t start, size_t end) { (void)ElementSin(in, out, end - start); };
-    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-  } else {
-    auto task = [&in, &out](size_t start, size_t end) {
-      for (size_t i = start; i < end; i++) {
-        out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
-      }
-    };
-    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-  }
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
 template <typename T>
@@ -699,23 +687,6 @@ void Mish(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 }
 
 template <typename T>
-void Elu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Elu>(content->base_op);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  float alpha = kernel_ptr->get_alpha();
-  auto task = [in, out, alpha](size_t start, size_t end) {
-    if constexpr (std::is_same_v<T, float>) {
-      (void)::Elu(in + start, SizeToInt(end - start), out + start, alpha);
-      return;
-    }
-    for (size_t i = start; i < end; i++) {
-      out[i] = in[i] > 0 ? in[i] : (std::expm1(in[i]) * alpha);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-}
-
-template <typename T>
 void Sigmoid(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
@@ -741,10 +712,11 @@ void Identity(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-bool IdentityCpuFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+bool IdentityCpuFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                     const std::vector<kernel::KernelTensor *> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  T *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   Identity<T>(input, output, lens);
   return true;
 }
@@ -765,19 +737,15 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
 
-void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &) {
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs.at(kIndex0)->GetDtype();
-  base_op = base_operator;
+void ArithmeticSelfCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &) {
+  kernel_name_ = primitive->name();
+  dtype_ = inputs[kIndex0]->dtype_id();
 }
 
-bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -819,28 +787,28 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
   return true;
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
+void ArithmeticSelfCpuKernelFunc::LaunchLogicalEqual(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() / sizeof(bool);
   LogicalEqual(this, input, output, lens);
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size / sizeof(bool);
+void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  auto *input = reinterpret_cast<bool *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<bool *>(outputs[0]->device_ptr());
+  size_t lens = outputs[0]->size() / sizeof(bool);
   LogicalNot(this, input, output, lens);
 }
 
 template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
+void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
@@ -874,7 +842,6 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimSoftsign->name(), Softsign<T>},
                           {prim::kPrimReLU->name(), Relu<T>},
                           {prim::kPrimReLU6->name(), Relu6<T>},
-                          {prim::kPrimElu->name(), Elu<T>},
                           {prim::kPrimSoftplus->name(), Softplus<T>},
                           {prim::kPrimMish->name(), Mish<T>},
                           {prim::kPrimSigmoid->name(), Sigmoid<T>},
@@ -892,11 +859,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
 }
 
 template <typename T>
-void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(T);
+void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
@@ -929,11 +896,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
   func_pair->second(this, input, output, lens);
 }
 
-void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs) {
-  const auto *input = static_cast<float16 *>(inputs[0]->addr);
-  auto *output = static_cast<float16 *>(outputs[0]->addr);
-  const size_t lens = outputs[0]->size / sizeof(float16);
+void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input = static_cast<float16 *>(inputs[0]->device_ptr());
+  auto *output = static_cast<float16 *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(float16);
   static const std::unordered_map<
     std::string, std::function<void(ArithmeticSelfCpuKernelFunc *, const float16 *, float16 *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimNeg->name(), Neg<float16>},     {prim::kPrimAcosh->name(), Acosh<float16>},
@@ -995,7 +962,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
-  {kFloor,
+  {ops::kNameFloor,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kRint,
@@ -1128,11 +1095,11 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kErf,
+  {ops::kNameErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
-  {kErfc,
+  {ops::kNameErfc,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
@@ -1148,7 +1115,6 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
   {kReLU6, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
-  {kElu, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kSoftplus, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kMish, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kSigmoid,
@@ -1163,10 +1129,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
 }  // namespace
 
-bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ArithmeticSelfCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
     MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in "
@@ -1182,21 +1146,20 @@ bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   func_obj_ = arith_kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(base_operator, inputs, outputs);
+  func_obj_->InitFunc(primitive_, inputs, outputs);
   return true;
 }
 
-int ArithmeticSelfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArithmeticSelfCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Note: This is to call the Resize of SqrtMKLKernelFunc.
-  if (int ret = func_obj_->Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = func_obj_->Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -1219,10 +1182,7 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool IdentityCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != mindspore::kIdentityOpName) {
     MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;
     return false;
@@ -1237,13 +1197,12 @@ bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int IdentityCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int IdentityCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -1261,80 +1220,46 @@ std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
   return kernel_attr_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rsqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRsqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Square,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSquare); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Neg,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kNeg); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Floor,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kFloor); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rint,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRint); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Round,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRound); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Reciprocal,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReciprocal); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Inv,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Invert,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInvert); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLogicalNot); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ACos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kACos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sin,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cos,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCos); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tan,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTan); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kExp); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asinh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAsinh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Acosh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAcosh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atanh,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtanh); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLog); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU6); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kElu); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftplus); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kMish); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSigmoid); });
+#define ARITHMETIC_SELF_CPU_REGISTER(FUNC, OP_NAME)          \
+  MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FUNC, \
+                                   []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(OP_NAME); });
+
+ARITHMETIC_SELF_CPU_REGISTER(Rsqrt, kRsqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Square, kSquare);
+ARITHMETIC_SELF_CPU_REGISTER(Neg, kNeg);
+ARITHMETIC_SELF_CPU_REGISTER(Sign, kSign);
+ARITHMETIC_SELF_CPU_REGISTER(Floor, ops::kNameFloor);
+ARITHMETIC_SELF_CPU_REGISTER(Rint, kRint);
+ARITHMETIC_SELF_CPU_REGISTER(Round, kRound);
+ARITHMETIC_SELF_CPU_REGISTER(Reciprocal, kReciprocal);
+ARITHMETIC_SELF_CPU_REGISTER(Inv, kInv);
+ARITHMETIC_SELF_CPU_REGISTER(Invert, kInvert);
+ARITHMETIC_SELF_CPU_REGISTER(GeLU, kGeLU);
+ARITHMETIC_SELF_CPU_REGISTER(LogicalNot, kLogicalNot);
+ARITHMETIC_SELF_CPU_REGISTER(Asin, kAsin);
+ARITHMETIC_SELF_CPU_REGISTER(ACos, kACos);
+ARITHMETIC_SELF_CPU_REGISTER(Atan, kAtan);
+ARITHMETIC_SELF_CPU_REGISTER(Sin, kSin);
+ARITHMETIC_SELF_CPU_REGISTER(Cos, kCos);
+ARITHMETIC_SELF_CPU_REGISTER(Tan, kTan);
+ARITHMETIC_SELF_CPU_REGISTER(Exp, kExp);
+ARITHMETIC_SELF_CPU_REGISTER(Sinh, kSinh);
+ARITHMETIC_SELF_CPU_REGISTER(Cosh, kCosh);
+ARITHMETIC_SELF_CPU_REGISTER(Tanh, kTanh);
+ARITHMETIC_SELF_CPU_REGISTER(Asinh, kAsinh);
+ARITHMETIC_SELF_CPU_REGISTER(Acosh, kAcosh);
+ARITHMETIC_SELF_CPU_REGISTER(Atanh, kAtanh);
+ARITHMETIC_SELF_CPU_REGISTER(Abs, kAbs);
+ARITHMETIC_SELF_CPU_REGISTER(Sqrt, kSqrt);
+ARITHMETIC_SELF_CPU_REGISTER(Log, kLog);
+ARITHMETIC_SELF_CPU_REGISTER(Erf, ops::kNameErf);
+ARITHMETIC_SELF_CPU_REGISTER(Erfc, ops::kNameErfc);
+ARITHMETIC_SELF_CPU_REGISTER(Softsign, kSoftsign);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU, kReLU);
+ARITHMETIC_SELF_CPU_REGISTER(ReLU6, kReLU6);
+ARITHMETIC_SELF_CPU_REGISTER(Softplus, kSoftplus);
+ARITHMETIC_SELF_CPU_REGISTER(Mish, kMish);
+ARITHMETIC_SELF_CPU_REGISTER(Sigmoid, kSigmoid);
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel

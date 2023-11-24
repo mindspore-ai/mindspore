@@ -50,27 +50,25 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kInputNum = 8;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto var_shape = input_args[kInputIndex0]->BuildShape();
-    auto accum_shape = input_args[kInputIndex1]->BuildShape();
-    auto linear_shape = input_args[kInputIndex2]->BuildShape();
-    auto grad_shape = input_args[kInputIndex3]->BuildShape();
-    auto lr_shape = input_args[kInputIndex4]->BuildShape();
-    auto l1_shape = input_args[kInputIndex5]->BuildShape();
-    auto l2_shape = input_args[kInputIndex6]->BuildShape();
-    auto lr_power_shape = input_args[kInputIndex7]->BuildShape();
-    auto var_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto var_shape = input_args[kInputIndex0]->GetShape();
+    auto accum_shape = input_args[kInputIndex1]->GetShape();
+    auto linear_shape = input_args[kInputIndex2]->GetShape();
+    auto grad_shape = input_args[kInputIndex3]->GetShape();
+    auto lr_shape = input_args[kInputIndex4]->GetShape();
+    auto l1_shape = input_args[kInputIndex5]->GetShape();
+    auto l2_shape = input_args[kInputIndex6]->GetShape();
+    auto lr_power_shape = input_args[kInputIndex7]->GetShape();
+    auto var_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     auto accum_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto linear_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-    auto grad_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-    auto lr_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-    auto l1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-    auto l2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+    auto grad_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+    auto lr_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+    auto l1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+    auto l2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
     auto lr_power_shape_map =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
     int64_t batch_rank = 0;
     if (IsDynamicRank(var_shape_map) || IsDynamicRank(accum_shape_map) || IsDynamicRank(grad_shape_map) ||
         IsDynamicRank(linear_shape_map)) {
@@ -113,10 +111,10 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     const int64_t kInputNum = 8;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto var_type = input_args[kInputIndex0]->BuildType();
-    auto accum_type = input_args[kInputIndex1]->BuildType();
-    auto linear_type = input_args[kInputIndex2]->BuildType();
-    auto grad_type = input_args[kInputIndex3]->BuildType();
+    auto var_type = input_args[kInputIndex0]->GetType();
+    auto accum_type = input_args[kInputIndex1]->GetType();
+    auto linear_type = input_args[kInputIndex2]->GetType();
+    auto grad_type = input_args[kInputIndex3]->GetType();
     const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> args;
@@ -127,10 +125,10 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     // var accum linear grad must have same dtypes
     (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
-    auto lr_type = input_args[kInputIndex4]->BuildType();
-    auto l1_type = input_args[kInputIndex5]->BuildType();
-    auto l2_type = input_args[kInputIndex6]->BuildType();
-    auto lr_power_type = input_args[kInputIndex7]->BuildType();
+    auto lr_type = input_args[kInputIndex4]->GetType();
+    auto l1_type = input_args[kInputIndex5]->GetType();
+    auto l2_type = input_args[kInputIndex6]->GetType();
+    auto lr_power_type = input_args[kInputIndex7]->GetType();
     std::map<std::string, TypePtr> args_lr;
     std::map<std::string, TypePtr> args_l1;
     std::map<std::string, TypePtr> args_l2;

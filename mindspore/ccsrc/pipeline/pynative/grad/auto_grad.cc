@@ -44,6 +44,7 @@
 #include "pipeline/pynative/grad/bprop_pass.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "utils/info.h"
+#include "utils/anf_utils.h"
 #include "utils/profile.h"
 
 namespace mindspore {
@@ -921,6 +922,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString() << ", " << cnode->fullname_with_scope();
+    prim->AddAttr(kSkipCheckInputNum, MakeValue(true));
     AnfNodePtrList cnode_inputs{std::make_shared<ValueNode>(prim)};
     auto input_value = GetInputArgs(cnode, &cnode_inputs);
     bprop_pass::ProcessAttrNode(ad_param()->tape_, cnode, &input_value, &cnode_inputs);
@@ -1097,7 +1099,7 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
       (void)input_value.emplace_back(v);
     } else {
       // Make Fake value
-      auto v = MakeValue(0);
+      auto v = MakeValue<int64_t>(0);
       (void)cnode_inputs->emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(v, input_node->abstract()));
       (void)input_value.emplace_back(v);
       MS_LOG(DEBUG) << "Get input node " << input_node->DebugString();
@@ -1431,7 +1433,6 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
 #ifndef ENABLE_TEST
     // VM no need run pass
     din = bprop_pass::ConvertConstInputToAttr(din, device_target_, false, grad_by_value);
-    bprop_pass::ConvertValueNodeValueToTensor(din);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
   }

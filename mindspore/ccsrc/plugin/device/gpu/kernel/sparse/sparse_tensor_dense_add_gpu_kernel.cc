@@ -188,9 +188,9 @@ std::vector<std::pair<KernelAttr, SparseTensorDenseAddGpuKernelMod::SparseTensor
 };
 
 template <typename T, typename I>
-bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &workspace,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseAddOutputsNum, kernel_name_);
   I *x1_indices_addr = GetDeviceAddress<I>(inputs, 0);
@@ -204,9 +204,9 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
                                                      reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                      "For 'SparseTensorDenseAdd', cudaMemcpyAsync x2_shape failed");
   constexpr int X1_SHAPE_INDICES = 2;
-  std::vector<I> x1_shape(inputs[X1_SHAPE_INDICES]->size / sizeof(I));
+  std::vector<I> x1_shape(inputs[X1_SHAPE_INDICES]->size() / sizeof(I));
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(x1_shape.data(), x1_shape_addr, inputs[X1_SHAPE_INDICES]->size, cudaMemcpyDeviceToHost,
+    cudaMemcpyAsync(x1_shape.data(), x1_shape_addr, inputs[X1_SHAPE_INDICES]->size(), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'SparseTensorDenseAdd', cudaMemcpyAsync x1_shape failed");
   if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
@@ -214,9 +214,9 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
                                        "For 'SparseTensorDenseAdd', cuda Stream Sync Failed.");
   }
 
-  std::vector<I> x1_indices_host(inputs[0]->size / sizeof(I));
+  std::vector<I> x1_indices_host(inputs[0]->size() / sizeof(I));
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(x1_indices_host.data(), x1_indices_addr, inputs[0]->size, cudaMemcpyDeviceToHost,
+    cudaMemcpyAsync(x1_indices_host.data(), x1_indices_addr, inputs[0]->size(), cudaMemcpyDeviceToHost,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'SparseTensorDenseAdd', cudaMemcpyAsync x1_indices failed");
   if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(cuda_stream_)) != cudaSuccess) {
@@ -253,9 +253,8 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   return true;
 }
 
-bool SparseTensorDenseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+bool SparseTensorDenseAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSparseTensorDenseAddInputsNum || outputs.size() != kSparseTensorDenseAddOutputsNum) {
     MS_LOG(ERROR) << "For 'SparseTensorDenseAdd', input and output size must be " << kSparseTensorDenseAddInputsNum
                   << " and " << kSparseTensorDenseAddOutputsNum << ", but got " << inputs.size() << " and "
@@ -275,12 +274,10 @@ bool SparseTensorDenseAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int SparseTensorDenseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseTensorDenseAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }

@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ACL_ALLOCATOR_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ACL_ALLOCATOR_H_
 #include <mutex>
+#include <map>
+#include <unordered_map>
 #include "acl/acl_base.h"
 #include "acl/acl_rt.h"
 #include "include/api/status.h"
@@ -27,7 +29,7 @@ namespace acl {
 class AclAllocator : public AscendAllocatorPluginImpl {
  public:
   AclAllocator() = default;
-  ~AclAllocator() = default;
+  ~AclAllocator();
 
   int GetCurrentDeviceId() override;
   void *Malloc(size_t size, int device_id = -1) override;
@@ -40,10 +42,18 @@ class AclAllocator : public AscendAllocatorPluginImpl {
                                 int src_device_id, int dst_device_id) override;
 
  private:
+  // 64 byte aligned.
+  struct alignas(64) MemBuf {
+    size_t size = 0;
+    void *buf = nullptr;
+  };
+
   uint32_t GetDeviceCount();
   void ResetDeviceId(int device_id);
   uint32_t device_count_ = 0;
   std::mutex acl_allocator_mutex_;
+  std::unordered_map<void *, MemBuf *> allocated_host_data_;
+  std::multimap<size_t, MemBuf *> free_host_data_;
 };
 
 extern "C" MS_API AclAllocator *CreateAclAllocator();

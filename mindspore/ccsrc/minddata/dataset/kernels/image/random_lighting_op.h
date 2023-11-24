@@ -29,15 +29,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomLightingOp : public TensorOp {
+class RandomLightingOp : public RandomTensorOp {
  public:
-  // Default values
-  static const float kAlpha;
-
-  explicit RandomLightingOp(float alpha = kAlpha) : dist_(0, alpha) {
-    rnd_rgb_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  explicit RandomLightingOp(float alpha) : dist_(0, alpha) {}
 
   ~RandomLightingOp() override = default;
 
@@ -46,7 +40,6 @@ class RandomLightingOp : public TensorOp {
   std::string Name() const override { return kRandomLightingOp; }
 
  private:
-  std::mt19937 rnd_rgb_;
   std::normal_distribution<float> dist_;
 };
 }  // namespace dataset

@@ -23,6 +23,7 @@ class Hccl():
     _instance = None
     _rank_id = 0
     _rank_size = 1
+    _local_rank_id = 0
 
     def __init__(self):
         pass
@@ -36,6 +37,14 @@ class Hccl():
                     Hccl._instance = object.__new__(cls)
                     Hccl._instance.__init__()
         return Hccl._instance
+
+    @property
+    def local_rank_id(self):
+        return self._local_rank_id
+
+    @local_rank_id.setter
+    def local_rank_id(self, local_rank):
+        self._local_rank_id = local_rank
 
     @property
     def rank_id(self):
@@ -74,6 +83,12 @@ def get_rank_size(group=None):
     if isinstance(group, str):
         return int(group.split("-")[0])
     raise ValueError
+
+
+# pylint: disable=unused-argument
+def get_local_rank_id(group=None):
+    hccl = Hccl()
+    return hccl.local_rank_id
 
 
 # pylint: disable=unused-argument

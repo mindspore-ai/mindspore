@@ -31,15 +31,7 @@ namespace {
 inline bool IsComplex(cudaDataType_t type) { return type == CUDA_C_32F || type == CUDA_C_64F; }
 }  // namespace
 
-bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast" << kernel_name_ << " failed!";
-    return false;
-  }
-
+bool MatMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'MatMul', the kernel name must be in "
@@ -57,9 +49,9 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
-  dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->GetDtype()));
-  dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->GetDtype()));
+  dtype_a_ = GetCudaDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
+  dtype_b_ = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
+  dtype_c_ = GetCudaDataType(TypeIdLabel(outputs[kIndex0]->dtype_id()));
 
   if (dtype_a_ != dtype_b_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the types of inputs are not the same.";
@@ -69,8 +61,8 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
 
-  transpose_x1_ = kernel_ptr->get_transpose_a() ? CUBLAS_OP_T : CUBLAS_OP_N;
-  transpose_x2_ = kernel_ptr->get_transpose_b() ? CUBLAS_OP_T : CUBLAS_OP_N;
+  transpose_x1_ = GetValue<bool>(primitive_->GetAttr("transpose_a")) ? CUBLAS_OP_T : CUBLAS_OP_N;
+  transpose_x2_ = GetValue<bool>(primitive_->GetAttr("transpose_b")) ? CUBLAS_OP_T : CUBLAS_OP_N;
   if (transpose_x1_ != CUBLAS_OP_N && IsComplex(dtype_a_)) {
     if (kernel_name_ == kBatchMatMulOpName) {
       transpose_x1_ = CUBLAS_OP_C;
@@ -91,10 +83,8 @@ bool MatMulGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MatMulGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -131,8 +121,9 @@ int MatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 }
 
 template <typename T, typename S>
-bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MatMulGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   auto input1_addr = GetDeviceAddress<T>(inputs, 0);
   auto input2_addr = GetDeviceAddress<T>(inputs, 1);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);

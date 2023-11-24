@@ -177,8 +177,6 @@ class TestProfiler:
         self._check_host_profiling_file()
 
     @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_ascend_profiler(self):

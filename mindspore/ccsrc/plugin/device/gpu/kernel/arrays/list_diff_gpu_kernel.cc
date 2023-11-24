@@ -144,8 +144,7 @@ const std::vector<std::pair<KernelAttr, ListDiffPtrCreatorFunc>> kernel_attr = {
    CreateListDiffKernelPtr<int64_t, int32_t>}};
 }  // namespace
 
-bool ListDiffGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool ListDiffGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -159,9 +158,8 @@ bool ListDiffGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int ListDiffGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ListDiffGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -170,24 +168,27 @@ int ListDiffGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  input_shapes.emplace_back(inputs[kIndex0]->GetDeviceShapeAdaptively());
-  input_shapes.emplace_back(inputs[kIndex1]->GetDeviceShapeAdaptively());
+  input_shapes.emplace_back(inputs[kIndex0]->GetDeviceShapeVector());
+  input_shapes.emplace_back(inputs[kIndex1]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   ResetResource();
   InitSizeLists();
   return KRET_OK;
 }
 
-void ListDiffGpuKernelMod::SyncOutputShape() {
+void ListDiffGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   auto num_out = dyn_out.shapes[kIndex0][kIndex0];
-  std::vector<int64_t> shape = outputs_[kIndex0]->GetShapeVector();
+  std::vector<int64_t> shape = outputs[kIndex0]->GetShapeVector();
   shape[kIndex0] = num_out;
   for (size_t i = 0; i < output_num; ++i) {
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
+                                                    std::multiplies<int64_t>())));
   }
 }
 

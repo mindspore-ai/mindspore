@@ -32,16 +32,12 @@ class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
   explicit ConvGradInputCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ConvGradInputCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -53,7 +49,7 @@ class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
   const size_t input_size_index_{2};
   std::string kernel_type_;
   std::string format_;
-  std::string pad_mode_;
+  mindspore::PadMode pad_mode_;
   int64_t group_;
   std::vector<int64_t> strides_include_nc_;
   std::vector<int64_t> dilation_include_nc_;

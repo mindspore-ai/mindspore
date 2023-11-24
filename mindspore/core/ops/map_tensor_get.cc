@@ -43,12 +43,10 @@ abstract::ShapePtr MapTensorGetInferShape(const PrimitivePtr &prim, const std::v
                             << " but got " << key_tensor_shape->ToString() << ".";
   }
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGet, input_args, kInputIndex0);
-  auto value_shape = abs_map_tensor->value_shape();
-  // Concate key shape and value shape as the result shape.
-  ShapeVector shape_vec = key_tensor_shape->shape();
-  const auto &value_shape_vec = value_shape->shape();
-  (void)shape_vec.insert(shape_vec.end(), value_shape_vec.begin(), value_shape_vec.end());
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGet, input_args, kInputIndex0, kObjectTypeMapTensorType);
+  const auto &key_value_shape = abs_map_tensor->GetShape()->GetShapeVector();
+  auto shape_vec = key_tensor_shape->shape();
+  (void)shape_vec.insert(shape_vec.end(), key_value_shape.begin() + 1, key_value_shape.end());
   auto infer_shape = std::make_shared<abstract::Shape>(shape_vec);
   return infer_shape;
 }
@@ -60,10 +58,10 @@ TypePtr MapTensorGetInferType(const PrimitivePtr &prim, const std::vector<Abstra
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorGet);
   // Check argument abstracts.
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGet, input_args, kInputIndex0);
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorGet, input_args, kInputIndex0, kObjectTypeMapTensorType);
 
-  // Get key dtype, value dtype and value shape of the map tensor.
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+  // Get value dtype of the map tensor.
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
   auto value_dtype = map_tensor_type->value_dtype();
   return value_dtype;

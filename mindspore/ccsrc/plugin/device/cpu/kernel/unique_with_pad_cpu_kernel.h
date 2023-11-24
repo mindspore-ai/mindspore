@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/unique_cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,11 +38,9 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
   UniqueWithPadCpuKernelMod() = default;
   ~UniqueWithPadCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    dtype_ = inputs[0]->GetDtype();
-    auto batch_rank = base_operator->get_batch_rank();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    dtype_ = inputs[0]->dtype_id();
+    auto batch_rank = ops::get_batch_rank(primitive_);
     if (batch_rank < 0) {
       return false;
     }
@@ -49,12 +48,10 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
@@ -77,8 +74,11 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
 
  private:
   template <typename T>
-  void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
+  void PadOutput(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                  const std::vector<size_t> &start);
+  // Disable update output shape because parent class 'UniqueCpuKernelMod'(for Unique op) need update output shape, but
+  // UniqueWithPad doesn't need.
+  bool IsNeedUpdateOutputShapeAndSize() override { return false; }
 };
 }  // namespace kernel
 }  // namespace mindspore

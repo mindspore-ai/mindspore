@@ -31,10 +31,12 @@ void RegFuncGraph(const py::module *m);
 void RegUpdateFuncGraphHyperParams(py::module *m);
 void RegParamInfo(const py::module *m);
 void RegPrimitive(const py::module *m);
+void RegPrimitiveFunction(const py::module *m);
 void RegSignatureEnumRW(const py::module *m);
 void RegValues(const py::module *m);
 void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
+void RegForkUtils(py::module *m);
 
 namespace initializer {
 void RegRandomNormal(py::module *m);
@@ -42,7 +44,8 @@ void RegRandomNormal(py::module *m);
 
 namespace pynative {
 void RegPyNativeExecutor(const py::module *m);
-}
+void RegisterPyBoostFunction(py::module *m);
+}  // namespace pynative
 
 namespace tensor {
 void RegMetaTensor(const py::module *m);

@@ -45,99 +45,97 @@ constexpr int64_t kDim1Num = 2;
   }
 }  // namespace
 
-bool SparseSliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool SparseSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
-    const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
-    const auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
-    const auto input_start_shape = inputs[kIndex3]->GetShapeVector();
-    const auto input_size_shape = inputs[kIndex4]->GetShapeVector();
-
-    if (input_indices_shape.size() != kDim1Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_indices_shape' must be 2D Tensor "
-                        << ", but got " << input_indices_shape.size() << "-D";
-    }
-    if (input_values_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_values_shape' must be 1D Tensor "
-                        << ", but got " << input_values_shape.size() << "-D";
-    }
-    if (input_shape_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_shape_shape' must be 1D Tensor "
-                        << ", but got " << input_shape_shape.size() << "-D";
-    }
-    if (input_start_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_start_shape' must be 1D Tensor "
-                        << ", but got " << input_start_shape.size() << "-D";
-    }
-    if (input_size_shape.size() != kDim0Num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_size_shape' must be 1D Tensor "
-                        << ", but got " << input_size_shape.size() << "-D";
-    }
-    if (input_indices_shape[0] != input_values_shape[0]) {
-      MS_LOG(ERROR)
-        << "For '" << kernel_name_
-        << "', the dim of 'input_indices' must be the same as 'input_values', but got the dim of 'input_indices': "
-        << input_indices_shape[0] << " and the dim of 'input_values': " << input_values_shape[0];
-    }
-    if (!IsSameShape(input_shape_shape, input_start_shape)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape of 'input_shape' must be the same as the shape of 'input_start', but got the "
-                       "shape of 'input_shape': "
-                    << input_shape_shape << " and the shape of 'input_start': " << input_start_shape;
-      return KRET_RESIZE_FAILED;
-    }
-    if (!IsSameShape(input_shape_shape, input_size_shape)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape of 'input_shape' must be the same as the shape of 'input_size', but got the shape "
-                       "of 'input_shape': "
-                    << input_shape_shape << " and the shape of 'input_size': " << input_size_shape;
-      return KRET_RESIZE_FAILED;
-    }
-    nnz_ = input_indices_shape[0];
-    rank_ = input_indices_shape[1];
-
-    output_size_list_.clear();
-    (void)output_size_list_.emplace_back(nnz_ * rank_ * GetTypeByte(TypeIdToType(inputs[0]->GetDtype())));
-    (void)output_size_list_.emplace_back(nnz_ * GetTypeByte(TypeIdToType(inputs[1]->GetDtype())));
-    (void)output_size_list_.emplace_back(rank_ * GetTypeByte(TypeIdToType(inputs[kIndex2]->GetDtype())));
+int SparseSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  return ret;
+
+  const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
+  const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
+  const auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
+  const auto input_start_shape = inputs[kIndex3]->GetShapeVector();
+  const auto input_size_shape = inputs[kIndex4]->GetShapeVector();
+
+  if (input_indices_shape.size() != kDim1Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_indices_shape' must be 2D Tensor "
+                      << ", but got " << input_indices_shape.size() << "-D";
+  }
+  if (input_values_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_values_shape' must be 1D Tensor "
+                      << ", but got " << input_values_shape.size() << "-D";
+  }
+  if (input_shape_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_shape_shape' must be 1D Tensor "
+                      << ", but got " << input_shape_shape.size() << "-D";
+  }
+  if (input_start_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_start_shape' must be 1D Tensor "
+                      << ", but got " << input_start_shape.size() << "-D";
+  }
+  if (input_size_shape.size() != kDim0Num) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'input_size_shape' must be 1D Tensor "
+                      << ", but got " << input_size_shape.size() << "-D";
+  }
+  if (input_indices_shape[0] != input_values_shape[0]) {
+    MS_LOG(ERROR)
+      << "For '" << kernel_name_
+      << "', the dim of 'input_indices' must be the same as 'input_values', but got the dim of 'input_indices': "
+      << input_indices_shape[0] << " and the dim of 'input_values': " << input_values_shape[0];
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input_shape_shape, input_start_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'input_shape' must be the same as the shape of 'input_start', but got the "
+                     "shape of 'input_shape': "
+                  << input_shape_shape << " and the shape of 'input_start': " << input_start_shape;
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(input_shape_shape, input_size_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'input_shape' must be the same as the shape of 'input_size', but got the shape "
+                     "of 'input_shape': "
+                  << input_shape_shape << " and the shape of 'input_size': " << input_size_shape;
+    return KRET_RESIZE_FAILED;
+  }
+  nnz_ = input_indices_shape[0];
+  rank_ = input_indices_shape[1];
+
+  return KRET_OK;
 }
 
-void SparseSliceCpuKernelMod::SyncOutputShape() {
-  outputs_[0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
-  outputs_[1]->SetShapeVector(ShapeVector({slice_nnz_}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+void SparseSliceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({slice_nnz_}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+  outputs[kIndex0]->set_size(LongToSize(slice_nnz_ * rank_) * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(slice_nnz_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(rank_) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
-
 template <typename T>
-bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &workspace,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSliceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSliceOutputsNum, kernel_name_);
-  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto input_values = static_cast<T *>(inputs[kIndex1]->addr);
-  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->addr);
-  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->addr);
-  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_values = static_cast<T *>(outputs[kIndex1]->addr);
-  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto input_indices = static_cast<int64_t *>(inputs[kIndex0]->device_ptr());
+  auto input_values = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto input_shape = static_cast<int64_t *>(inputs[kIndex2]->device_ptr());
+  auto input_start = static_cast<int64_t *>(inputs[kIndex3]->device_ptr());
+  auto input_size = static_cast<int64_t *>(inputs[kIndex4]->device_ptr());
+  auto output_indices = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
+  auto output_values = static_cast<T *>(outputs[kIndex1]->device_ptr());
+  auto output_shape = static_cast<int64_t *>(outputs[kIndex2]->device_ptr());
 
   SliceCompute<T>(input_indices, input_values, input_shape, input_start, input_size, output_indices, output_values,
                   output_shape);

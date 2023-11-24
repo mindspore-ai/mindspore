@@ -36,11 +36,11 @@ class TupleSetItemInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferSequenceSetItem<abstract::AbstractTuple>(primitive, input_args)->BuildShape();
+    return input_args[kIndex0]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferSequenceSetItem<abstract::AbstractTuple>(primitive, input_args)->BuildType();
+    return input_args[kIndex0]->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

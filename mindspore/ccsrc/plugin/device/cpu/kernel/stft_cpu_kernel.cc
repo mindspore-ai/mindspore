@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/stft.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -82,23 +83,15 @@ struct Trans2R {
 };
 }  // namespace
 
-bool STFTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  if (!base_operator) {
-    MS_LOG(ERROR) << "For " << kernel_type_ << ", cast " << kernel_type_ << " ops failed!";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::STFT>(base_operator);
-  n_fft_ = kernel_ptr->get_n_fft();
-  hop_length_ = kernel_ptr->get_hop_length();
+bool STFTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  n_fft_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNFft));
+  hop_length_ = GetValue<int64_t>(primitive_->GetAttr(ops::kHopLength));
   if (hop_length_ <= 0) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ", expected hop_length > 0, but got hop_length=" << hop_length_ << ".";
     return false;
   }
-  win_length_ = kernel_ptr->get_win_length();
+  win_length_ = GetValue<int64_t>(primitive_->GetAttr(ops::kWinLength));
   if (win_length_ <= 0 || win_length_ > n_fft_) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ", expected 0 < win_length <= n_fft_, but got win_length=" << win_length_
                   << ".";
@@ -107,19 +100,19 @@ bool STFTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   if (win_length_ < n_fft_) {
     pad_window_ = true;
   }
-  normalized_ = kernel_ptr->get_normalized();
+  normalized_ = GetValue<bool>(primitive_->GetAttr(ops::kNormalized));
   if (normalized_) {
     norm_coe_.real(static_cast<double>(1.0 / std::sqrt(n_fft_)));
   } else {
     norm_coe_.real(1.0);
   }
-  onesided_ = kernel_ptr->get_onesided();
+  onesided_ = GetValue<bool>(primitive_->GetAttr(ops::kOnesided));
   if (onesided_) {
     fft_length_ = n_fft_ / kSTFTNum2 + kSTFTNum1;
   } else {
     fft_length_ = n_fft_;
   }
-  return_complex_ = kernel_ptr->get_return_complex();
+  return_complex_ = GetValue<bool>(primitive_->GetAttr(ops::kReturnComplex));
 
   if (inputs.size() != kSTFTInputsNum || outputs.size() != kSTFTOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kSTFTInputsNum << " and "
@@ -129,21 +122,19 @@ bool STFTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  input_type_1_ = inputs[kIndex0]->GetDtype();
-  input_type_2_ = inputs[kIndex1]->GetDtype();
-  output_type_ = outputs[kIndex0]->GetDtype();
+  input_type_1_ = inputs[kIndex0]->dtype_id();
+  input_type_2_ = inputs[kIndex1]->dtype_id();
+  output_type_ = outputs[kIndex0]->dtype_id();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int STFTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != 0) {
+int STFTCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     return ret;
   }
 
@@ -232,15 +223,15 @@ int STFTCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 }
 
 template <typename T, typename S, typename R, typename DataFT, typename DataFS, typename DataFR>
-bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSTFTInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSTFTOutputsNum, kernel_name_);
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *window = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto *window_paded = reinterpret_cast<S *>(workspace[kIndex0]->addr);
-  auto *output = reinterpret_cast<R *>(outputs[kIndex0]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *window = reinterpret_cast<S *>(inputs[kIndex1]->device_ptr());
+  auto *window_paded = reinterpret_cast<S *>(workspace[kIndex0]->device_ptr());
+  auto *output = reinterpret_cast<R *>(outputs[kIndex0]->device_ptr());
 
   for (int64_t vmap_b = 0; vmap_b < vmap_batches_; vmap_b++) {
     // padding

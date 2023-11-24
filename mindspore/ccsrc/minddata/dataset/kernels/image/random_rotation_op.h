@@ -28,16 +28,8 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomRotationOp : public TensorOp {
+class RandomRotationOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const std::vector<float> kDefCenter;
-  static const InterpolationMode kDefInterpolation;
-  static const bool kDefExpand;
-  static const uint8_t kDefFillR;
-  static const uint8_t kDefFillG;
-  static const uint8_t kDefFillB;
-
   // Constructor for RandomRotationOp
   // @param startDegree starting range for random degree
   // @param endDegree ending range for random degree
@@ -50,9 +42,8 @@ class RandomRotationOp : public TensorOp {
   // @details the randomly chosen degree is uniformly distributed
   // @details the output shape, if changed, will contain the entire rotated image
   // @note maybe using unsigned long int isn't the best here according to our coding rules
-  RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample = kDefInterpolation,
-                   bool expand = kDefExpand, std::vector<float> center = kDefCenter, uint8_t fill_r = kDefFillR,
-                   uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+  RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample, bool expand,
+                   std::vector<float> center, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b);
 
   ~RandomRotationOp() override = default;
 
@@ -76,7 +67,6 @@ class RandomRotationOp : public TensorOp {
   uint8_t fill_g_;
   uint8_t fill_b_;
   std::uniform_real_distribution<float> distribution_{-1.0, 1.0};
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

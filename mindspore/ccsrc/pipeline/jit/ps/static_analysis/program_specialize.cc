@@ -142,9 +142,9 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       constexpr int recursive_level = 2;
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
       // Change the node.
-      auto zero_value = NewValueNode(MakeValue(0));
+      auto zero_value = NewValueNode(MakeValue<int64_t>(0));
       zero_value->set_abstract(
-        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0), std::make_shared<Problem>()));
+        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0), std::make_shared<Problem>()));
       cnode->set_input(pos + 1, zero_value);
 
       // Change the abstract.
@@ -171,7 +171,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
 
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << node->DebugString();
       // Change the node.
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       auto value_list = const_cast<ValuePtrList &>(sequence_value->value());
       value_list[pos] = zero;
 
@@ -361,8 +361,10 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
     auto new_abs_fn = GetSpecializedAbstract(old_abs_fn);
     if (new_abs_fn != nullptr && new_abs_fn->isa<AbstractFuncAtom>()) {
       auto new_abs_fn_atom = new_abs_fn->cast<AbstractFuncAtomPtr>();
-      new_abs =
+      auto new_partial_abs =
         std::make_shared<PartialAbstractClosure>(new_abs_fn_atom, old_partial_abs->args(), old_partial_abs->node());
+      new_partial_abs->set_need_append_to_end(old_partial_abs->need_append_to_end());
+      new_abs = new_partial_abs;
       MS_LOG(DEBUG) << "Find specialized abstract, old_abstract: " << old_abs_func->ToString()
                     << ", specialized_abstract: " << new_abs->ToString();
     } else {
@@ -781,7 +783,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -862,7 +864,7 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -873,16 +875,16 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
     }
   }
 
-  const auto &name = sequence_value->name();
+  const auto &sub_class_name = sequence_value->sub_class_name();
   const auto &keys = sequence_value->key();
   abstract::AbstractBasePtrList key_abs;
   (void)std::transform(keys.begin(), keys.end(), std::back_inserter(key_abs), [](const ValuePtr &key) {
     MS_EXCEPTION_IF_NULL(key);
     return key->ToAbstract();
   });
-  auto new_sequence_value = std::make_shared<ValueNamedTuple>(name, keys, elements);
+  auto new_sequence_value = std::make_shared<ValueNamedTuple>(sub_class_name, keys, elements);
   auto new_input = NewValueNode(new_sequence_value);
-  auto new_sequence_abs = std::make_shared<AbstractNamedTuple>(name, key_abs, elements_abs);
+  auto new_sequence_abs = std::make_shared<AbstractNamedTuple>(sub_class_name, key_abs, elements_abs);
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
   new_sequence_abs->set_sequence_nodes(sequence_nodes);
@@ -942,8 +944,8 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
         if (!(*flags)[i]) {
-          auto zero_value = NewValueNode(MakeValue(0));
-          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+          auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
           (void)inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
@@ -1928,7 +1930,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     return BuildValueNodeForAbstractFunction(origin_node, ival, attrs, cnode, abs);
   } else {
     ValuePtr val = ival->BuildValue();
-    if (val->isa<ValueAny>()) {
+    if (val->ContainsValueAny()) {
       return nullptr;
     }
     // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.

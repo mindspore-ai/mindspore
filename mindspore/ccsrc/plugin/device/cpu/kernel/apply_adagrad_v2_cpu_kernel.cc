@@ -22,6 +22,7 @@
 #include <utility>
 #include <thread>
 #include <vector>
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,18 +37,11 @@ constexpr size_t kLRIndex = 2;
 constexpr size_t kGradIndex = 3;
 }  // namespace
 
-bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast ApplyAdagradV2 ops failed!";
-    return false;
-  }
-  epsilon_ = kernel_ptr->get_epsilon();
-  update_slots_ = kernel_ptr->get_update_slots();
+bool ApplyAdagradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -59,15 +53,15 @@ bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) const {
+int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) const {
   // inputs: var, accum, lr, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradV2OutputsNum, kernel_name_);
   auto var_shape = inputs[kVarIndex]->GetShapeVector();
   auto accum_shape = inputs[kAccumIndex]->GetShapeVector();
   auto grad_shape = inputs[kGradIndex]->GetShapeVector();
-  auto lr_dtype = inputs[kLRIndex]->GetDtype();
+  auto lr_dtype = inputs[kLRIndex]->dtype_id();
   if (var_shape != accum_shape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'accum' and 'var' should be the same, "
@@ -91,10 +85,9 @@ int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &i
   return KRET_OK;
 }
 
-int ApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdagradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -116,17 +109,17 @@ int ApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradV2InputsNum, kernel_name_);
-  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->addr);
-  const auto *gradient = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->device_ptr());
+  const auto *lr = reinterpret_cast<T *>(inputs[kLRIndex]->device_ptr());
+  const auto *gradient = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
 
   // multithreading
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  size_t length = inputs[0]->size / sizeof(T);
+  size_t length = inputs[0]->size() / sizeof(T);
   const float &epsilon = this->epsilon_;
   const bool &update_slots = this->update_slots_;
   auto task = [this, var, accum, lr, gradient, &epsilon, &update_slots](size_t start, size_t end) {

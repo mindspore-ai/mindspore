@@ -280,7 +280,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassObject() {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var, ast->obj());
   constexpr auto self_name = "self";
   SymbolPtr symbol = std::make_shared<Symbol>(self_name);  // Must be 'self'.
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
@@ -292,7 +292,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr_or_self
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
-  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var, ast->obj());
   SymbolPtr symbol = std::make_shared<Symbol>(attr_or_self);
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   return MakeResolve(name_space, symbol);
@@ -340,15 +340,19 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
 
   // Handle global namespace info.
   auto syntax_support = info[flag_index].cast<int32_t>();
+  py::object py_obj = info[value_index];
   if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
+      bool is_class_tensor_type = py::cast<bool>(ast->CallParserObjMethod(PYTHON_PARSE_IS_CLASS_TENSOR_TYPE, py_obj));
+      if (is_class_tensor_type) {
+        resolved_node->set_user_data<bool>(kClassTensorType, std::make_shared<bool>(true));
+      }
     }
   }
 
   auto symbol_name = info[symbol_index].cast<std::string>();
-  py::object py_obj = info[value_index];
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";

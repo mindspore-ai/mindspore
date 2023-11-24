@@ -43,16 +43,12 @@ class TripletMarginLossCPUKernelMod : public NativeCpuKernelMod {
   TripletMarginLossCPUKernelMod() = default;
   ~TripletMarginLossCPUKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -133,60 +129,66 @@ class TripletMarginLossCPUKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void TripletMarginLossCompute_realtype(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void TripletMarginLossCompute_realtype(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void TripletMarginLossCompute_complextype(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs);
+  void TripletMarginLossCompute_complextype(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
   void realtype_broadcast_task(size_t start, size_t end, float *output_reduction_none_data,
-                               const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &outputs);
+                               const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void realtype_nobroadcast_task(size_t start, size_t end, float *output_reduction_none_data,
-                                 const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> &outputs);
+                                 const std::vector<kernel::KernelTensor *> &inputs,
+                                 const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void complextype_broadcast_task(size_t start, size_t end, float *output_reduction_none_data,
-                                  const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs);
+                                  const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void complextype_nobroadcast_task(size_t start, size_t end, float *output_reduction_none_data,
-                                    const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &outputs);
+                                    const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
-  void realtype_nobroadcast_compute(float *output_reduction_none_data, const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &outputs);
+  void realtype_nobroadcast_compute(float *output_reduction_none_data,
+                                    const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
-  void realtype_broadcast_compute(float *output_reduction_none_data, const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs);
+  void realtype_broadcast_compute(float *output_reduction_none_data, const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
-  void complextype_nobroadcast_compute(float *output_reduction_none_data, const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs);
+  void complextype_nobroadcast_compute(float *output_reduction_none_data,
+                                       const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
-  void complextype_broadcast_compute(float *output_reduction_none_data, const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs);
+  void complextype_broadcast_compute(float *output_reduction_none_data,
+                                     const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void realtype_swap(size_t start, std::vector<T> &positive_broadcast, std::vector<T> &negative_broadcast,
                      std::vector<float> &calculate_swap, size_t j, size_t k, float &calc_swap_sum,
-                     const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+                     const std::vector<kernel::KernelTensor *> &inputs,
+                     const std::vector<kernel::KernelTensor *> &outputs);
 
   template <typename T>
   void complextype_swap(size_t start, std::vector<T> &positive_broadcast, std::vector<T> &negative_broadcast,
                         std::vector<T> &calculate_swap, size_t j, size_t k, float &calc_swap_sum,
-                        const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+                        const std::vector<kernel::KernelTensor *> &inputs,
+                        const std::vector<kernel::KernelTensor *> &outputs);
 
   int64_t p_{kPInit};
   bool swap_{false};

@@ -42,9 +42,9 @@ abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = x_shape_map[kShape];
-  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto mask_shape = mask_shape_map[kShape];
   if (!IsDynamicRank(x_shape) && !IsDynamicRank(mask_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dim of input_x", SizeToLong(x_shape.size()), kGreaterEqual,
@@ -57,13 +57,13 @@ abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
 TypePtr MaskedScatterInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->GetType(), {kBool}, op_name);
   std::set<TypePtr> valid_types;
   valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64, kBool};
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto updates_type = input_args[kInputIndex2]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto updates_type = input_args[kInputIndex2]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", x_type);
   (void)types.emplace("updates", updates_type);

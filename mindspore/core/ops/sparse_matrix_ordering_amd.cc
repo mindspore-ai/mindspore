@@ -34,11 +34,11 @@ abstract::ShapePtr SparseMatrixOrderingAMDInferShape(const PrimitivePtr &primiti
   constexpr int inputs_num = 5;
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, prim_name);
-  auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto c_ind_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto c_ind_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   const int64_t kZero = 0, kOne = 1, kDefalutRank = 2, kBatchRank = 3;
   const int64_t rank = d_shape_shape[kZero];
   const int64_t num_batch = b_ptrs_shape[kZero] - 1;
@@ -77,11 +77,11 @@ TypePtr SparseMatrixOrderingAMDInferType(const PrimitivePtr &prim, const std::ve
   const std::set<TypePtr> dense_shape_valid_types = {kInt64};
   const std::set<TypePtr> indices_pointer_valid_types = {kInt32};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_type = input_args[kInputIndex1]->BuildType();
-  auto row_type = input_args[kInputIndex2]->BuildType();
-  auto col_type = input_args[kInputIndex3]->BuildType();
-  auto value_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_type = input_args[kInputIndex1]->GetType();
+  auto row_type = input_args[kInputIndex2]->GetType();
+  auto col_type = input_args[kInputIndex3]->GetType();
+  auto value_type = input_args[kInputIndex4]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", dense_shape_type, dense_shape_valid_types,
                                                    prim->name());

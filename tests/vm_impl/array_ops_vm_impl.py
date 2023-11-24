@@ -156,12 +156,28 @@ def vm_impl_fill(self):
     return vm_impl
 
 
+dtype_to_nptype_map = {
+    30: np.bool_,
+    32: np.int8,
+    33: np.int16,
+    34: np.int32,
+    35: np.int64,
+    37: np.uint8,
+    38: np.uint16,
+    39: np.uint32,
+    40: np.uint64,
+    42: np.float16,
+    43: np.float32,
+    44: np.float64
+}
+
+
 @vm_impl_getters.register(P.Eye)
 def vm_impl_eye(self):
     """Generate vm_impl function for Eye"""
 
     def vm_impl(n, m, t):
-        np_type = mstype.dtype_to_nptype(t)
+        np_type = dtype_to_nptype_map[t]
         ret = np.eye(n, m, dtype=np_type)
         return Tensor(ret)
 
@@ -206,9 +222,9 @@ def vm_impl_tile(self):
 def vm_impl_all(self):
     """Generate vm_impl function for All"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
-        out = vm.all(x, axis, self.keep_dims)
+        out = vm.all(x, axis, keep_dims)
         return Tensor(out)
 
     return vm_impl
@@ -218,9 +234,9 @@ def vm_impl_all(self):
 def vm_impl_any(self):
     """Generate vm_impl function for Any"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
-        out = vm.any(x, axis, self.keep_dims)
+        out = vm.any(x, axis, keep_dims)
         return Tensor(out)
 
     return vm_impl
@@ -230,9 +246,9 @@ def vm_impl_any(self):
 def vm_impl_concatV2(self):
     """Generate vm_impl function for Concat"""
 
-    def vm_impl(x):
+    def vm_impl(x, axis):
         x = x.asnumpy()
-        out = vm.Concat(x, self.axis)
+        out = vm.Concat(x, axis)
         return Tensor(out)
 
     return vm_impl
@@ -267,7 +283,7 @@ def vm_impl_concatOffset(self):
 def vm_impl_sum(self):
     """Generate vm_impl function for Sum"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims, skip_mode):
         x = x.asnumpy()
         if axis == ():
             out = np.sum(x)

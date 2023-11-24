@@ -31,8 +31,88 @@
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
+namespace {
+std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_node) {
+  if (!IsValueNode<Primitive>(prim_node)) {
+    return {false, nullptr};
+  }
+  auto prim = GetValueNode<PrimitivePtr>(prim_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->IsPythonPrim() || prim->HasAttr(kSkipCheckInputNum)) {
+    return {false, nullptr};
+  }
+  if (prim->GetAttr("primitive_function") == nullptr) {
+    return {false, nullptr};
+  }
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def == nullptr) {
+    return {false, nullptr};
+  }
+
+  return {true, prim};
+}
+
+void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
+  if (!IS_OUTPUT_ON(mindspore::kDebug) || inputs.empty()) {
+    return;
+  }
+
+  auto [need_check, prim] = IsNeedCheckPrimitiveNode(inputs[0]);
+  if (!need_check) {
+    return;
+  }
+
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  bool input_num_err = false;
+  constexpr size_t prim_num = 1;
+  size_t input_tensor_num = inputs.size() - prim_num;
+  if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
+    size_t monad_num = std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodePtr &input) {
+      if (HasAbstractMonad(input)) {
+        return true;
+      }
+      return IsPrimitiveCNode(input, prim::kPrimUpdateState) || IsValueNode<UMonad>(input) ||
+             IsValueNode<IOMonad>(input);
+    });
+
+    // If monad input is parameter_monad, monad num is 0, actual monad num should be 1. And monad num is 0 if monad
+    // pass has not been executed.
+    if (monad_num == 0) {
+      auto monad_pass_not_executed_check_failed = op_def->args_.size() != input_tensor_num;
+      constexpr auto parameter_monad_num = 1;
+      auto exist_parameter_monad_check_failed = op_def->args_.size() != input_tensor_num - parameter_monad_num;
+      if (monad_pass_not_executed_check_failed && exist_parameter_monad_check_failed) {
+        input_num_err = true;
+      }
+    } else if (monad_num == 1) {
+      if (op_def->args_.size() != input_tensor_num - monad_num) {
+        input_num_err = true;
+      }
+    } else {
+      MS_LOG(INTERNAL_EXCEPTION) << "Get unexpected monad num: " << monad_num;
+    }
+  } else {
+    if (op_def->args_.size() != input_tensor_num) {
+      input_num_err = true;
+    }
+  }
+
+  if (input_num_err) {
+    std::stringstream ss;
+    size_t i = 0;
+    ss << "Inputs are as follows: \n";
+    for (const auto &input : inputs) {
+      ss << "Input[" << i++ << "]: " << input->DebugString() << "\n";
+    }
+    MS_LOG(DEBUG) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
+                  << " is not equal to expect input num: " << op_def->args_.size() << "\n"
+                  << ss.str();
+  }
+}
+}  // namespace
 AnfNode::AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
     : func_graph_(FuncGraphWeakPtr(func_graph)),
       abstract_(nullptr),
@@ -126,19 +206,25 @@ CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_gra
     : AnfNode(func_graph),
       inputs_(inputs),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  CheckCNodeInputsNum(inputs_);
+}
 
 CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph),
       inputs_(std::move(inputs)),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  CheckCNodeInputsNum(inputs_);
+}
 
 CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
     : AnfNode(func_graph, std::move(debug_info)),
       inputs_(std::move(inputs)),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  CheckCNodeInputsNum(inputs_);
+}
 
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
     : AnfNode(nullptr), inputs_(inputs) {
@@ -176,6 +262,7 @@ void CNode::set_input(size_t i, const AnfNodePtr &new_input) {
 void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
   inputs_ = inputs;
   input_tensor_num_ = -1;
+  CheckCNodeInputsNum(inputs);
 }
 
 const AnfNodePtr &CNode::input(size_t i) const {
@@ -461,16 +548,33 @@ Value &Value::operator=(const Value &other) {
   return *this;
 }
 
-ValueNode::ValueNode(const ValuePtr &value) : value_(value) {}
+bool Value::ContainsValueAny() const { return false; }
+
+ValueNode::ValueNode(const ValuePtr &value) : value_(value) {
+  if (value->ContainsValueAny()) {
+    MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+}
 
 ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
-    : ANode(nullptr, std::move(debug_info)), value_(value) {}
+    : ANode(nullptr, std::move(debug_info)), value_(value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->ContainsValueAny()) {
+    MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+}
 
 void ValueNode::set_func_graph(const FuncGraphPtr &) {
   MS_INTERNAL_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
 }
 
-void ValueNode::set_value(const ValuePtr &value) { value_ = value; }
+void ValueNode::set_value(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->ContainsValueAny()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
+  }
+  value_ = value;
+}
 
 const ValuePtr &ValueNode::value() const { return value_; }
 
@@ -520,7 +624,8 @@ std::string ValueNode::fullname_with_scope() {
   }
 
   MS_EXCEPTION_IF_NULL(scope());
-  fullname_with_scope_ = scope()->name() + "/" + "data-" + id_generator::get_id(shared_from_base<ValueNode>());
+  fullname_with_scope_ = scope()->name() + "/" + "data-";
+  fullname_with_scope_ += id_generator::get_id(fullname_with_scope_);
   return fullname_with_scope_;
 }
 
@@ -744,14 +849,13 @@ SeenNum NewSeenGeneration() {
 namespace id_generator {
 static mindspore::HashMap<std::string, int> node_ids;
 static int offset = 0;
-std::string get_id(const AnfNodePtr &node) {
-  auto type_name = node->type_name();
-  if (node_ids.find(type_name) == node_ids.end()) {
-    node_ids[type_name] = 0;
+std::string get_id(const string &scope_front_info) {
+  if (node_ids.find(scope_front_info) == node_ids.end()) {
+    node_ids[scope_front_info] = 0;
   } else {
-    node_ids[type_name]++;
+    node_ids[scope_front_info]++;
   }
-  std::string base_id = std::to_string(node_ids[type_name]);
+  std::string base_id = std::to_string(node_ids[scope_front_info]);
   // The id with offset means the user called reset_id_with_offset() and expect the operated id generated from 0 with an
   // identified offset.
   if (offset != 0) {

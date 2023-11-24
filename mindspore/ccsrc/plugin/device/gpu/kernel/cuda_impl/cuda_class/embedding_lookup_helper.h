@@ -76,9 +76,6 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
     dims_[kIndex1] = dim_of_indices;
     dims_[kIndex2] = dim_after_indices;
     input_dim1_ = input_params_shape_[0];
-    input_size_list_.push_back(GetSize<T>(input_params_shape_));
-    input_size_list_.push_back(GetSize<S>(input_indices_shape_));
-    input_size_list_.push_back(sizeof(G));
 
     output_size_list_.push_back(GetSize<T>(output_shape_));
     return 0;
@@ -128,7 +125,6 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
     input_offset_shape_.clear();
     output_shape_.clear();
     std::fill(dims_, dims_ + kIndex3, 0);
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
     offset_ = 0;

@@ -50,36 +50,28 @@ struct BitwiseXorFunc {
 };
 }  // namespace
 
-bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  if (!base_operator) {
-    MS_LOG(ERROR) << "For " << kernel_type_ << ", cast " << kernel_type_ << " ops failed!";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
+bool BitwiseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kBitwiseInputsNum || outputs.size() != kBitwiseOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kBitwiseInputsNum << " and "
                   << kBitwiseOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  input_type_1_ = inputs[0]->GetDtype();
-  input_type_2_ = inputs[1]->GetDtype();
+  input_type_1_ = inputs[0]->dtype_id();
+  input_type_2_ = inputs[1]->dtype_id();
   if (input_type_1_ != input_type_2_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input1 and input2 must have the same type. But got input1 type "
                   << input_type_1_ << ", input2 type " << input_type_2_;
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
+int BitwiseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     return ret;
   }
   input_shape_1_ = inputs[kIndex0]->GetShapeVector();
@@ -190,11 +182,11 @@ void BitwiseCpuKernelMod::BitwiseParallelMaxThread(const CTask &task) {
 }
 
 template <typename T, typename BitwiseFunT>
-bool BitwiseCpuKernelMod::LaunchBroadcast(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool BitwiseCpuKernelMod::LaunchBroadcast(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   BitwiseFunT bitwise_func;
   BroadcastIterator base_iter(input_shape_1_, input_shape_2_, output_shape_);
@@ -211,11 +203,11 @@ bool BitwiseCpuKernelMod::LaunchBroadcast(const std::vector<kernel::AddressPtr> 
 }
 
 template <typename T, typename BitwiseFunT>
-bool BitwiseCpuKernelMod::LaunchNoBroadcast(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+bool BitwiseCpuKernelMod::LaunchNoBroadcast(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
 
   BitwiseFunT bitwise_func;
   auto task = [&input1, &input2, &output, bitwise_func](size_t start, size_t end) {
@@ -228,9 +220,9 @@ bool BitwiseCpuKernelMod::LaunchNoBroadcast(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-bool BitwiseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool BitwiseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBitwiseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBitwiseOutputsNum, kernel_name_);
   return bitwise_launch_func_(this, inputs, outputs);

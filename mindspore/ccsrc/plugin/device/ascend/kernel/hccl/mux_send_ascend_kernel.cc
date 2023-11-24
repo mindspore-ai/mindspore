@@ -34,8 +34,8 @@ MuxSendAscendKernel::~MuxSendAscendKernel() {
     tcp_client_.reset();
   }
 }
-bool MuxSendAscendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MuxSendAscendKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                 const std::vector<KernelTensor *> &, void *stream_ptr) {
   // Refresh the current destination rank id.
   int dest_rank = -1;
   // If the dest_rank attribute is set to a valid value, then the destination rank is fixed and immutable.
@@ -55,9 +55,10 @@ bool MuxSendAscendKernel::Launch(const std::vector<AddressPtr> &inputs, const st
     return false;
   }
   // Do the message sending by calling the hcclsend API.
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                                               dest_rank, stream_ptr, comm_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->device_ptr(), hccl_count_,
+                                                               hccl_data_type_list_[0], dest_rank, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomSend failed, ret:" << hccl_result;
     return false;
@@ -67,51 +68,21 @@ bool MuxSendAscendKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   return true;
 }
 
-bool MuxSendAscendKernel::Init(const AnfNodePtr &anf_node) {
+bool MuxSendAscendKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
     distributed::cluster::ClusterContext::instance()->node_base());
   MS_EXCEPTION_IF_NULL(cgn_);
-  MS_EXCEPTION_IF_NULL(anf_node);
-  bool ret = HcclKernel::Init(anf_node);
-  if (!ret) {
-    return ret;
+  if (!HcclKernel::Init(inputs, outputs)) {
+    return false;
   }
-  auto kernel_node = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
 
   src_rank_ = UintToInt(cgn_->rank_id());
-  dest_rank_ = GetValue<int64_t>(prim->GetAttr("dest_rank"));
 
-  hccl_kernel_input_shape_list_.clear();
-  hccl_kernel_output_shape_list_.clear();
-  hccl_data_type_list_.clear();
-  if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
-    MS_LOG(ERROR) << "GetKernelInputShape fail!";
-    return false;
-  }
-  if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
-    MS_LOG(ERROR) << "GetKernelOutputShape fail!";
-    return false;
-  }
-  if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
-    MS_LOG(ERROR) << "GetHcomDataType fail!";
-    return false;
-  }
-  if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_input_shape_list_, &hccl_count_)) {
-    MS_LOG(ERROR) << "GetHcomCount fail!";
-    return false;
-  }
-  HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
-  // pynative with ranktable also need hccl_comm
-  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
   if (common::UseHostCollective()) {
     MS_EXCEPTION_IF_NULL(comm_);
-    common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)), anf_node);
+    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
   }
-  anf_node_ = anf_node;
-  loop_size_ = hccl_kernel_output_shape_list_.size();
+
   return true;
 }
 

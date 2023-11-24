@@ -56,31 +56,24 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-bool AdaptiveAvgPool2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AdaptiveAvgPool2DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int AdaptiveAvgPool2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int AdaptiveAvgPool2DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   input_dim_sizes_ = inputs[kIndex0]->GetShapeVector();
   size_t input_dims = input_dim_sizes_.size();
   if (input_dims != k3D && input_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimensions of input should be 3 or 4, but got "
                       << input_dims;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool2D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  output_size_data_ = kernel_ptr->get_output_size();
+  output_size_data_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kOutputSize));
   return KRET_OK;
 }
 
@@ -121,9 +114,9 @@ CTask AdaptiveAvgPool2DOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   return shard_frame;
 }
 
-bool AdaptiveAvgPool2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -141,8 +134,8 @@ bool AdaptiveAvgPool2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename SCALAR_T>
-bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &outputs) {
   auto input_size_iter = input_dim_sizes_.rbegin();
   auto output_size_iter = output_size_data_.rbegin();
   for (; output_size_iter != output_size_data_.rend(); (void)output_size_iter++, (void)input_size_iter++) {
@@ -153,10 +146,10 @@ bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   }
 
   size_t input_dims = input_dim_sizes_.size();
-  auto input_x = static_cast<SCALAR_T *>(inputs[0]->addr);
+  auto input_x = static_cast<SCALAR_T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(input_x);
 
-  auto output_y = static_cast<SCALAR_T *>(outputs[0]->addr);
+  auto output_y = static_cast<SCALAR_T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
 
   AdaptiveCalcArgs<SCALAR_T> args;

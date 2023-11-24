@@ -40,6 +40,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/random_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -58,34 +59,27 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For RandomGamma, input[0] only support tensor!";
   }
   const uint32_t kShapeDims = 1;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   ShapeVector shape_shape = shape_map[kShape];
   if (shape_shape.size() != kShapeDims) {
     MS_EXCEPTION(ValueError) << "For RandomGamma, the input tensor must be a 1-D tensor.";
   }
 
-  auto input_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto shape_value_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  //  MS_EXCEPTION_IF_NULL(shape_value_tensor); Dealing with dynamic shapes
-  if ((shape_value_tensor) == nullptr) {
-    ShapeVector out_shape = {-2};
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  auto shape_type_element = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
+  auto shape_type_element = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(shape_type_element);
-
   ShapeVector shape_vec;
 
   if (shape_type_element->type_id() == kNumberTypeInt32) {
-    auto input_shape_ptr = reinterpret_cast<int32_t *>(shape_value_tensor->data_c());
+    auto shape_value_opt = GetArrayValue<int32_t>(input_args[kInputIndex0]);
+    if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
+      ShapeVector out_shape = {-2};
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    auto input_shape_ptr = shape_value_opt.value();
     for (auto i = 0; i < shape_shape[0]; ++i) {
       if (input_shape_ptr[i] > 0) {
         shape_vec.push_back(input_shape_ptr[i]);
@@ -94,7 +88,12 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
       }
     }
   } else if (shape_type_element->type_id() == kNumberTypeInt64) {
-    auto input_shape_ptr = reinterpret_cast<int64_t *>(shape_value_tensor->data_c());
+    auto shape_value_opt = GetArrayValue<int64_t>(input_args[kInputIndex0]);
+    if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
+      ShapeVector out_shape = {-2};
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    auto input_shape_ptr = shape_value_opt.value();
     for (auto i = 0; i < shape_shape[0]; ++i) {
       if (input_shape_ptr[i] > 0) {
         shape_vec.push_back(input_shape_ptr[i]);
@@ -104,7 +103,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     }
   }
   ShapeVector alpha_beta_shape;
-  auto alpha_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto alpha_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   alpha_beta_shape = alpha_shape_map[kShape];
 
   auto alpha_rank = SizeToLong(alpha_beta_shape.size());
@@ -124,11 +123,11 @@ TypePtr GammaInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
   const std::set<TypePtr> shape_valid_types = {kInt32, kInt64};
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->BuildType(), shape_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->GetType(), shape_valid_types, prim_name);
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto alpha_type = input_args[1]->BuildType();
+  auto alpha_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("alpha", alpha_type, valid_types, prim_name);
   return alpha_type;
 }

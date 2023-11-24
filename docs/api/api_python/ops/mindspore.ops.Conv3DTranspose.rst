@@ -57,5 +57,5 @@ mindspore.ops.Conv3DTranspose
         - **ValueError** - `pad` 为长度不等于6的Tuple。
         - **ValueError** - `pad_mode` 未设定为"pad"且 `pad` 不等于(0, 0, 0, 0, 0, 0)。
         - **ValueError** - `data_format` 取值非"NCDHW"。
-        - **TypeError** - `dout` 或 `weight` 的数据类型不是float16。
+        - **TypeError** - `dout` 或 `weight` 的数据类型不是float16也不是float32。
         - **ValueError** - `bias` 不为None。 `dout` 或 `weight` 的秩不为5。

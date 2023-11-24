@@ -26,14 +26,14 @@ abstract::ShapePtr ElewiseGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto x_shape_ptr = x->shape();
-  auto dout_shape_ptr = dout->shape();
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  auto x_shape_ptr = x->GetShape();
+  auto dout_shape_ptr = dout->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   MS_EXCEPTION_IF_NULL(dout_shape_ptr);
-  auto x_shape = x_shape_ptr->shape();
-  auto dout_shape = dout_shape_ptr->shape();
+  auto x_shape = x_shape_ptr->GetShapeVector();
+  auto dout_shape = dout_shape_ptr->GetShapeVector();
   if (IsDynamicRank(x_shape) || IsDynamicRank(dout_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }

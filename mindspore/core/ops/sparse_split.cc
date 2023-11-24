@@ -39,58 +39,75 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr SparseSplitInferShape(const PrimitivePtr &prim,
-                                              const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 4L, prim_name);
-  auto split_dim_shape_vec =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape_vec =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto values_shape_vec =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto shape_shape_vec =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+void SparseSplitShapeCheck(const PrimitivePtr &prim, const ShapeVector &split_dim_shape_vec,
+                           const ShapeVector &indices_shape_vec, const ShapeVector &values_shape_vec,
+                           const ShapeVector &shape_shape_vec) {
   (void)CheckAndConvertUtils::CheckInteger("split_dim's rank'", (SizeToLong)(split_dim_shape_vec.size()), kLessEqual, 1,
-                                           prim->name());
-  if (split_dim_shape_vec.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("split_dim's size", split_dim_shape_vec[0], kEqual, 1, prim->name());
-  }
-  const int64_t rank = 2;
-  (void)CheckAndConvertUtils::CheckInteger("indices' rank'", (SizeToLong)(indices_shape_vec.size()), kEqual, rank,
                                            prim->name());
   (void)CheckAndConvertUtils::CheckInteger("values' rank'", (SizeToLong)(values_shape_vec.size()), kEqual, 1,
                                            prim->name());
   (void)CheckAndConvertUtils::CheckInteger("shape' rank'", (SizeToLong)(shape_shape_vec.size()), kEqual, 1,
                                            prim->name());
+  if (!IsDynamic(split_dim_shape_vec) && split_dim_shape_vec.size() == 1) {
+    (void)CheckAndConvertUtils::CheckInteger("split_dim's size", split_dim_shape_vec[0], kEqual, 1, prim->name());
+  }
+  if (!IsDynamicRank(indices_shape_vec)) {
+    const int64_t rank = 2;
+    (void)CheckAndConvertUtils::CheckInteger("indices' rank'", (SizeToLong)(indices_shape_vec.size()), kEqual, rank,
+                                             prim->name());
+  }
+}
 
-  ShapeVector output_indices_vec = {-1, shape_shape_vec[0]};
-  ShapeVector output_values_vec = {-1};
-
-  auto num_splits = GetValue<int64_t>(prim->GetAttr("num_split"));
-
+std::vector<abstract::BaseShapePtr> GetOutputShapes(const ShapeVector &output_indices_vec,
+                                                    const ShapeVector &output_values_vec,
+                                                    const ShapeVector &shape_shape_vec, const int64_t num_splits) {
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (auto i = 0; i < num_splits; i++) {
-    abstract::ShapePtr output_indices_shape = std::make_shared<abstract::Shape>(output_indices_vec);
+    abstract::BaseShapePtr output_indices_shape = std::make_shared<abstract::TensorShape>(output_indices_vec);
     shape_tuple.push_back(output_indices_shape);
   }
   for (auto i = 0; i < num_splits; i++) {
-    abstract::ShapePtr output_values_shape = std::make_shared<abstract::Shape>(output_values_vec);
+    abstract::BaseShapePtr output_values_shape = std::make_shared<abstract::TensorShape>(output_values_vec);
     shape_tuple.push_back(output_values_shape);
   }
   for (auto i = 0; i < num_splits; i++) {
-    abstract::ShapePtr output_shape_shape = std::make_shared<abstract::Shape>(shape_shape_vec);
+    abstract::BaseShapePtr output_shape_shape = std::make_shared<abstract::TensorShape>(shape_shape_vec);
     shape_tuple.push_back(output_shape_shape);
   }
-  return std::make_shared<abstract::TupleShape>(shape_tuple);
+  return shape_tuple;
+}
+
+abstract::TupleShapePtr SparseSplitInferShape(const PrimitivePtr &prim,
+                                              const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = prim->name();
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 4L, prim_name);
+
+  const auto &split_dim_shape_vec = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  const auto &indices_shape_vec = input_args[kInputIndex1]->GetShape()->GetShapeVector();
+  const auto &values_shape_vec = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+  const auto &shape_shape_vec = input_args[kInputIndex3]->GetShape()->GetShapeVector();
+
+  // check shapes
+  SparseSplitShapeCheck(prim, split_dim_shape_vec, indices_shape_vec, values_shape_vec, shape_shape_vec);
+
+  // get out shapes
+  ShapeVector output_indices_vec = {abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny};
+  ShapeVector output_values_vec = {abstract::TensorShape::kShapeDimAny};
+  if (!IsDynamicRank(shape_shape_vec)) {
+    output_indices_vec[kInputIndex1] = shape_shape_vec[kInputIndex0];
+  }
+  auto num_splits = GetValue<int64_t>(prim->GetAttr("num_split"));
+  auto shape_tuple = GetOutputShapes(output_indices_vec, output_values_vec, shape_shape_vec, num_splits);
+
+  return std::make_shared<abstract::TupleShape>(std::move(shape_tuple));
 }
 
 TuplePtr SparseSplitInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto num_split = GetValue<int64_t>(prim->GetAttr("num_split"));
-  auto split_dim_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto values_type = input_args[kInputIndex2]->BuildType();
-  auto shape_type = input_args[kInputIndex3]->BuildType();
+  auto split_dim_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto values_type = input_args[kInputIndex2]->GetType();
+  auto shape_type = input_args[kInputIndex3]->GetType();
   MS_EXCEPTION_IF_NULL(split_dim_type);
   MS_EXCEPTION_IF_NULL(indices_type);
   MS_EXCEPTION_IF_NULL(values_type);
@@ -130,12 +147,26 @@ class MIND_API AGSparseSplitInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SparseSplitInferShape(primitive, input_args);
+    auto value_shape = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+    auto shape_shape = input_args[kInputIndex3]->GetShape()->GetShapeVector();
+
+    MS_CHECK_VALUE(value_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                              "rank of values", SizeToLong(value_shape.size()), kEqual, 1, primitive));
+    MS_CHECK_VALUE(shape_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                              "rank of shape", SizeToLong(shape_shape.size()), kEqual, 1, primitive));
+    ShapeVector output_indices_vec = {value_shape[0], shape_shape[0]};
+    ShapeVector output_values_vec = {value_shape[0]};
+
+    auto num_splits = GetValue<int64_t>(primitive->GetAttr("num_split"));
+    auto shape_tuple = GetOutputShapes(output_indices_vec, output_values_vec, shape_shape, num_splits);
+
+    return std::make_shared<abstract::TupleShape>(std::move(shape_tuple));
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return SparseSplitInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SparseSplitInfer(engine, primitive, input_args);

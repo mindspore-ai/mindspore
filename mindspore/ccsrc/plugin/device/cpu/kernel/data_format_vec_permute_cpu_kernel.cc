@@ -27,10 +27,8 @@ constexpr size_t kDataFormatVecPermuteInputsNum = 1;
 constexpr size_t kDataFormatVecPermuteOutputsNum = 1;
 }  // namespace
 
-bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool DataFormatVecPermuteCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,36 +36,33 @@ bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   }
   kernel_func_ = func_list_[index].second;
 
-  auto kernel_ptr = std::make_shared<ops::DataFormatVecPermute>(base_operator->GetPrim());
-  src_format_ = kernel_ptr->get_src_format();
-  dst_format_ = kernel_ptr->get_dst_format();
-  input_type_ = inputs[0]->GetDtype();
-  output_type_ = outputs[0]->GetDtype();
+  src_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kSrcFormat));
+  dst_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kDstFormat));
+  input_type_ = inputs[0]->dtype_id();
+  output_type_ = outputs[0]->dtype_id();
   return true;
 }
 
-int DataFormatVecPermuteCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DataFormatVecPermuteCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
-  output_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  input_shape_ = inputs[0]->GetDeviceShapeVector();
+  output_shape_ = outputs[0]->GetDeviceShapeVector();
   dim_ = input_shape_.size();
   return KRET_OK;
 }
 
 template <typename T>
-bool DataFormatVecPermuteCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool DataFormatVecPermuteCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDataFormatVecPermuteInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDataFormatVecPermuteOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   size_t dim1 = 1;
   size_t dim2 = 2;
   if (dim_ == dim1) {

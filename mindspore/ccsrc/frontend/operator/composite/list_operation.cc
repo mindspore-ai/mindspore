@@ -16,7 +16,6 @@
 
 #include "frontend/operator/composite/list_operation.h"
 
-#include <memory>
 #include <string>
 
 #include "abstract/param_validator.h"

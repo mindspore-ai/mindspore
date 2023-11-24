@@ -15,7 +15,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Implementation for internal polymorphism `ones_like_leaf` operations."""
+"""Implementation for internal polymorphism `ones_like` operations."""
 
 from __future__ import absolute_import
 from mindspore.ops.composite import base
@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
-ones_like_leaf = base.MultitypeFuncGraph('ones_like_leaf', True)
+ones_like_leaf = base.MultitypeFuncGraph('ones_like', True)
 """
 `ones_like_leaf` is a metafuncgraph object which will generate a tensor filled with one according to its input type
 using ".register" decorator.

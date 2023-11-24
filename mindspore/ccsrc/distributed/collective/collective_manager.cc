@@ -391,6 +391,8 @@ void CollectiveManager::set_global_rank_id(uint32_t global_rank_id) { global_ran
 
 void CollectiveManager::set_global_rank_size(uint32_t global_rank_size) { global_rank_size_ = global_rank_size; }
 
+uint32_t CollectiveManager::global_rank_id() const { return global_rank_id_; }
+
 uint32_t CollectiveManager::local_rank_id() const { return local_rank_id_; }
 
 bool CollectiveManager::InitHostCommlib() {

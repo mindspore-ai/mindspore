@@ -1,0 +1,14 @@
+#operator scalar_le
+scalar_le:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true

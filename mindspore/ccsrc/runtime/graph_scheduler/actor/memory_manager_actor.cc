@@ -125,8 +125,11 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
           MS_LOG(EXCEPTION) << "Device size of old device address is larger than new device address, " << old_size
                             << " vs " << size_list[index];
         }
-        auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
-          dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape());
+
+        auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+          dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape(),
+          device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+        auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create device tensor:" << new_dev_addr << " type:" << new_dev_addr->type_id();
         (void)new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
         device_context->device_res_manager_->FreeMemory(old_dev_addr.get());
@@ -328,11 +331,7 @@ void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const A
 // Only one of the static and dynamic reference counts will take effect.
 void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                                               const std::string &op_name) {
-  // May be the ignored input address that is not used in the kernel launch.
-  if (device_tensor == nullptr) {
-    return;
-  }
-
+  MS_EXCEPTION_IF_NULL(device_tensor);
   std::lock_guard<std::mutex> locker(mem_free_mutex_);
   if (device_tensor->original_ref_count() != SIZE_MAX) {
     // The static reference count is decremented to zero to free memory, and reset to the original count.

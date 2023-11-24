@@ -30,8 +30,6 @@ class ResizeAreaAttr : public GpuKernelAttrBase {
   ~ResizeAreaAttr() override = default;
   bool align_corners;
 };
-constexpr size_t INPUT_NUM_T = 1;
-constexpr size_t INPUT_NUM_SIZE = 1;
 constexpr size_t OUTPUT_NUM = 1;
 constexpr size_t WORK_NUM = 2;
 constexpr size_t SHAPE_SIZE = 4;
@@ -52,30 +50,18 @@ class ResizeAreaHelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
-    std::vector<std::vector<int64_t>> input_shapes_T, input_shapes_size;
-    input_shapes_T.emplace_back(input_shapes[kzero]);
-    input_shapes_size.emplace_back(input_shapes[kone]);
-    int in_flag1 =
-      CalShapesSizeInBytes<T>(input_shapes_T, INPUT_NUM_T, kernel_name_, "input_shapes_images", &input_size_list_);
-    if (in_flag1 != 0) {
-      return in_flag1;
-    }
-    int in_flag2 = CalShapesSizeInBytes<int32_t>(input_shapes_size, INPUT_NUM_SIZE, kernel_name_, "input_shapes_size",
-                                                 &input_size_list_);
-    if (in_flag2 != 0) {
-      return in_flag2;
-    }
+
     int out_flag =
       CalShapesSizeInBytes<float>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag != 0) {
       return out_flag;
     }
-    is_null_input_ = (in_flag1 == 1 || in_flag2 == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
 
-    batch_size_ = input_shapes_T[kzero][kzero];
-    in_height_ = input_shapes_T[kzero][kone];
-    in_width_ = input_shapes_T[kzero][ktwo];
-    channels_ = input_shapes_T[kzero][kthree];
+    batch_size_ = input_shapes[kzero][kzero];
+    in_height_ = input_shapes[kzero][kone];
+    in_width_ = input_shapes[kzero][ktwo];
+    channels_ = input_shapes[kzero][kthree];
     out_height_ = output_shapes[kzero][kone];
     out_width_ = output_shapes[kzero][ktwo];
     size_t workspace_x_size = out_width_ * sizeof(ResizeAreaCachedInterpolation);

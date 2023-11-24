@@ -46,19 +46,19 @@ namespace mindspore {
 namespace ops {
 namespace {
 void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
-  auto x1_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto x1_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto x1_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
-  auto x2_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
-  auto x2_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 4);
-  auto x2_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 5);
+  auto x1_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex0, kObjectTypeTensorType);
+  auto x1_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex1, kObjectTypeTensorType);
+  auto x1_shape = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex2, kObjectTypeTensorType);
+  auto x2_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex3, kObjectTypeTensorType);
+  auto x2_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex4, kObjectTypeTensorType);
+  auto x2_shape = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex5, kObjectTypeTensorType);
 
-  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_indices->BuildShape())[kShape];
-  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_values->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape->BuildShape())[kShape];
-  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices->BuildShape())[kShape];
-  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values->BuildShape())[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_indices->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_values->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape->GetShape())[kShape];
+  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices->GetShape())[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values->GetShape())[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {x1_indices_shape, x1_values_shape, x1_shape_shape,
                                          x2_indices_shape, x2_values_shape, x2_shape_shape};
@@ -119,8 +119,8 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
                                                          const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckSparseSparseArithmeticInputs(input_args, op_name);
-  auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   ShapeVector out_indice_shape = {-1, -1};
   ShapeVector out_value_shape = {-1};
   ShapeVector max_out_indice_shape = {};
@@ -145,16 +145,14 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
 TuplePtr SparseSparseArithmeticInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", input_args[kInputIndex0]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", input_args[kInputIndex0]->GetType(), {kInt64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", input_args[kInputIndex2]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", input_args[kInputIndex3]->GetType(), {kInt64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", input_args[kInputIndex3]->BuildType(), {kInt64},
-                                                   op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", input_args[kInputIndex5]->BuildType(), {kInt64},
-                                                   op_name);
-  auto x1_values_type = input_args[kInputIndex1]->BuildType();
-  auto x2_values_type = input_args[kInputIndex4]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", input_args[kInputIndex5]->GetType(), {kInt64}, op_name);
+  auto x1_values_type = input_args[kInputIndex1]->GetType();
+  auto x2_values_type = input_args[kInputIndex4]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeSame({{"x1_values", x1_values_type}, {"x2_values", x2_values_type}},
                                                   common_valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, x1_values_type});

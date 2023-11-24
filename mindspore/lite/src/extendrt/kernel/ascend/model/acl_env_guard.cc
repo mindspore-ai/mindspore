@@ -15,12 +15,14 @@
  */
 
 #include "extendrt/kernel/ascend/model/acl_env_guard.h"
+#include "extendrt/kernel/ascend/model/model_infer.h"
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 
 namespace mindspore::kernel {
 namespace acl {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
+std::vector<std::shared_ptr<ModelInfer>> AclEnvGuard::model_infers_ = {};
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
 AclInitAdapter &AclInitAdapter::GetInstance() {
@@ -128,6 +130,29 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
     MS_LOG(INFO) << "Execute aclInit success.";
   }
   return acl_env;
+}
+
+void AclEnvGuard::AddModel(const std::shared_ptr<ModelInfer> &model_infer) {
+  std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
+  model_infers_.push_back(model_infer);
+}
+
+bool AclEnvGuard::Finalize() {
+  std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
+  bool model_finalized =
+    std::all_of(model_infers_.begin(), model_infers_.end(),
+                [](const std::shared_ptr<ModelInfer> &model_infer) { return model_infer->Finalize(); });
+  if (!model_finalized || global_acl_env_.use_count() > 1) {
+    MS_LOG(ERROR) << "There is model has not been unloaded, and will not finalize acl.";
+    return false;
+  }
+  auto ret = AclInitAdapter::GetInstance().AclFinalize();
+  if (ret != ACL_ERROR_NONE && ret != ACL_ERROR_REPEAT_FINALIZE) {
+    MS_LOG(ERROR) << "Execute acl env finalize failed.";
+    return false;
+  }
+  MS_LOG(INFO) << "Execute acl env finalize success.";
+  return true;
 }
 }  // namespace acl
 }  // namespace mindspore::kernel

@@ -16,16 +16,16 @@
 
 #include "ops/op_def.h"
 namespace mindspore::ops {
-#ifdef ENABLE_GEN_CODE
 extern std::unordered_map<std::string, OpDefPtr> gOpDefTable;  // defined in gen_ops_def.cc
-#endif
 OpDefPtr GetOpDef(const std::string &op_name) {
-#ifdef ENABLE_GEN_CODE
   auto it = gOpDefTable.find(op_name);
   if (it != gOpDefTable.end()) {
     return it->second;
   }
-#endif
   return nullptr;
 }
+
+void AddOpDef(const std::string &op_name, const OpDefPtr op_def) { (void)gOpDefTable.emplace(op_name, op_def); }
+
+bool IsPrimitiveFunction(const std::string &op_name) { return GetOpDef(op_name) != nullptr; }
 }  // namespace mindspore::ops

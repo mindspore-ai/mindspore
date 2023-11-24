@@ -63,8 +63,9 @@ const std::vector<std::pair<KernelAttr, SparseAddGradPtrCreatorFunc>> kernel_att
 };
 }  // namespace
 
-bool SparseAddGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SparseAddGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
@@ -82,12 +83,8 @@ std::vector<KernelAttr> SparseAddGradGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool SparseAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAddGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool SparseAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSparseAddGradInputsNum || outputs.size() != kSparseAddGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSparseAddGradInputsNum
                   << " and " << kSparseAddGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -105,20 +102,18 @@ bool SparseAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SparseAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
-                       [](KernelTensorPtr x) { return x->GetShapeVector(); });
+                       [](KernelTensor *x) { return x->GetShapeVector(); });
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_shapes),
-                       [](KernelTensorPtr x) { return x->GetShapeVector(); });
+                       [](KernelTensor *x) { return x->GetShapeVector(); });
 
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) != KRET_OK) {
     return KRET_UNKNOWN_SHAPE;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   dx1_size_ = input_shapes.at(kSparseAddGradIndex1).at(kSparseAddGradIndex0);
@@ -126,14 +121,20 @@ int SparseAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-void SparseAddGradGpuKernelMod::SyncOutputShape() {
+void SparseAddGradGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseAddGrad, cudaStreamSynchronized failed");
   std::vector<int64_t> dx1_shape = {dx1_size_};
   std::vector<int64_t> dx2_shape = {dx2_size_};
 
-  outputs_[kSparseAddGradIndex0]->SetShapeVector(dx1_shape);
-  outputs_[kSparseAddGradIndex1]->SetShapeVector(dx2_shape);
+  outputs[kSparseAddGradIndex0]->SetShapeVector(dx1_shape);
+  outputs[kSparseAddGradIndex1]->SetShapeVector(dx2_shape);
+
+  outputs[kSparseAddGradIndex0]->set_size(LongToSize(dx1_size_) *
+                                          UnitSizeInBytes(outputs[kSparseAddGradIndex0]->dtype_id()));
+  outputs[kSparseAddGradIndex1]->set_size(LongToSize(dx1_size_) *
+                                          UnitSizeInBytes(outputs[kSparseAddGradIndex1]->dtype_id()));
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, SparseAddGrad,

@@ -50,14 +50,14 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual,
                                              SizeToLong(kInputNum), prim_name);
-    auto uint_crd_f_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto uint_crd_f_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto uint_crd_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(uint_crd_f_shape_ptr)[kShape];
     if (!IsDynamic(uint_crd_f_shape)) {
       (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape", SizeToLong(uint_crd_f_shape.size()), kEqual, kTwo,
                                                prim_name);
       (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape[1]", uint_crd_f_shape[1], kEqual, kThree, prim_name);
     }
-    auto scaler_f_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto scaler_f_shape_ptr = input_args[kInputIndex1]->GetShape();
     auto scaler_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scaler_f_shape_ptr)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("scaler_f_shape", SizeToLong(scaler_f_shape.size()), kEqual, 1, prim_name);
     if (!IsDynamic(scaler_f_shape)) {
@@ -65,7 +65,7 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
     }
     auto angle_numbers = GetValue<int64_t>(primitive->GetAttr("angle_numbers"));
     for (size_t input_index = 2; input_index < kInputNum; ++input_index) {
-      auto cur_input_shape_ptr = input_args[input_index]->BuildShape();
+      auto cur_input_shape_ptr = input_args[input_index]->GetShape();
       auto cur_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(cur_input_shape_ptr)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("input_dim", SizeToLong(cur_input_shape.size()), kEqual, 1, prim_name);
       if (!IsDynamic(cur_input_shape)) {
@@ -79,21 +79,21 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto prim_name = primitive->name();
     std::set<TypePtr> uint32_type = {kUInt32};
-    auto uint_crd_f_dtype = input_args[kInputIndex0]->BuildType();
+    auto uint_crd_f_dtype = input_args[kInputIndex0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("uint_crd_f", uint_crd_f_dtype, uint32_type, prim_name);
     std::set<TypePtr> float32_type = {kFloat32};
-    auto scaler_f_type = input_args[kInputIndex1]->BuildType();
+    auto scaler_f_type = input_args[kInputIndex1]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("scaler_f", scaler_f_type, float32_type, prim_name);
     std::set<TypePtr> int32_type = {kInt32};
-    auto atom_a_type = input_args[kInputIndex2]->BuildType();
+    auto atom_a_type = input_args[kInputIndex2]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("atom_a", atom_a_type, int32_type, prim_name);
-    auto atom_b_type = input_args[kInputIndex3]->BuildType();
+    auto atom_b_type = input_args[kInputIndex3]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("atom_b", atom_b_type, int32_type, prim_name);
-    auto atom_c_type = input_args[kInputIndex4]->BuildType();
+    auto atom_c_type = input_args[kInputIndex4]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("atom_c", atom_c_type, int32_type, prim_name);
-    auto angle_k_type = input_args[kInputIndex5]->BuildType();
+    auto angle_k_type = input_args[kInputIndex5]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("angle_k", angle_k_type, float32_type, prim_name);
-    auto angle_theta0_type = input_args[kInputIndex6]->BuildType();
+    auto angle_theta0_type = input_args[kInputIndex6]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("angle_theta0", angle_theta0_type, float32_type, prim_name);
     return angle_k_type;
   }

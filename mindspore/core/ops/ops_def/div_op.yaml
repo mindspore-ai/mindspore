@@ -1,0 +1,20 @@
+#operator div
+div:
+    args:
+        x:
+            dtype: tensor
+            #type_cast: number
+        y:
+            dtype: tensor
+            #type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: div_
+    dispatch:
+        enable: False
+
+

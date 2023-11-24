@@ -43,7 +43,7 @@ abstract::ShapePtr LcmInferShape(const PrimitivePtr &primitive, const std::vecto
 
 TypePtr LcmInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> lcm_valid_types = {kInt32, kInt64};
-  TypePtr x1_type = input_args[0]->BuildType();
+  TypePtr x1_type = input_args[0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, lcm_valid_types, prim->name());
   return inferred_type;
 }

@@ -42,7 +42,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr AdjustHueInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_shape_images = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_shape_images = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // support dynamic rank and dynamic shape.
   if (IsDynamic(input_shape_images)) {
     return std::make_shared<abstract::Shape>(input_shape_images);
@@ -53,7 +53,7 @@ abstract::ShapePtr AdjustHueInferShape(const PrimitivePtr &primitive, const std:
                                            min_dim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("last dimension of image", input_shape_images[input_shape_images.size() - 1],
                                            kEqual, min_dim, prim_name);
-  auto input_shape_delta = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_shape_delta = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   const int64_t delta_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("dimension of delta", SizeToLong(input_shape_delta.size()), kEqual,
                                            delta_dim, prim_name);
@@ -62,11 +62,11 @@ abstract::ShapePtr AdjustHueInferShape(const PrimitivePtr &primitive, const std:
 
 TypePtr AdjustHueInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_type_images = input_args[0]->BuildType();
+  auto input_type_images = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type_images);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_type_images, valid_types, prim_name);
-  auto input_type_delta = input_args[1]->BuildType();
+  auto input_type_delta = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(input_type_delta);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("delta", input_type_delta, {kFloat32}, prim_name);
   return input_type_images;

@@ -52,7 +52,7 @@ Worker::~Worker() {
 
 void Worker::CreateThread() { thread_ = std::make_unique<std::thread>(&Worker::Run, this); }
 
-void Worker::ReinitAfterFork() {
+void Worker::ChildAfterFork() {
   THREAD_INFO("worker %ld recreate thread after fork in child process", worker_id_);
   if (cond_var_ != nullptr) {
     (void)cond_var_.release();
@@ -246,14 +246,6 @@ void Worker::Active() {
 bool Worker::available() {
   int expected = kThreadIdle;
   return status_.compare_exchange_strong(expected, kThreadHeld);
-}
-
-ThreadPool::ThreadPool() {
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (ThreadPool::*)()>(nullptr),
-                                             static_cast<void (ThreadPool::*)()>(nullptr),
-                                             &ThreadPool::ReinitAfterFork);
-#endif
 }
 
 ThreadPool::~ThreadPool() {
@@ -560,10 +552,10 @@ void ThreadPool::SetWorkerIdMap() {
   return;
 }
 
-void ThreadPool::ReinitAfterFork() {
-  THREAD_INFO("fork event detected in child process, workers' threads will be recreated.");
+void ThreadPool::ChildAfterFork() {
+  THREAD_INFO("ThreadPool reinitialize workers after fork");
   for (auto &worker : workers_) {
-    worker->ReinitAfterFork();
+    worker->ChildAfterFork();
   }
 }
 }  // namespace mindspore

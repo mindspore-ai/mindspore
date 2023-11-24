@@ -8,7 +8,7 @@ mindspore.train.Perplexity
     .. math::
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
-    其中 :math:`w` 代表语料库中的单词.
+    其中 :math:`w` 代表语料库中的单词。根号内是句子概率的倒数，句子越好（概率大），困惑度越小。
 
     参数：
         - **ignore_label** (Union[int, None]) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值： ``None`` 。

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,19 @@ def test_less_equal_functional_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
+def test_less_equal_functional_api_bfloat16():
+    """
+    Feature: test less_equal functional API for dtype bfloat16.
+    Description: test less_equal functional API for dtype bfloat16.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([1.2, 2.5, 3.8]), mstype.bfloat16)
+    other = Tensor(np.array([1.2, 1.8, 4.0]), mstype.bfloat16)
+    output = F.less_equal(x, other)
+    expected = np.array([True, False, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
 def test_less_equal_tensor_api():
     """
     Feature: test less_equal tensor API.
@@ -62,3 +75,18 @@ def test_less_equal_functional_tensor_modes():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     test_less_equal_functional_api()
     test_less_equal_tensor_api()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_less_equal_functional_tensor_modes_910b():
+    """
+    Feature: test less_equal functional API in PyNative and Graph modes on 910B.
+    Description: test case for less_equal functional API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    test_less_equal_functional_api_bfloat16()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    test_less_equal_functional_api_bfloat16()

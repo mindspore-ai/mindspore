@@ -26,18 +26,18 @@ constexpr const size_t kReluGradV2InputsNum = 2;
 constexpr const size_t kReluGradV2OutputsNum = 1;
 
 template <typename T>
-bool ReluGradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool ReluGradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReluGradV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReluGradV2OutputsNum, kernel_name_);
-  auto *dy = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto *dy = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  auto *mask = reinterpret_cast<uint8_t *>(inputs[kIndex1]->addr);
+  auto *mask = reinterpret_cast<uint8_t *>(inputs[kIndex1]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(mask, false);
-  auto *dx = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *dx = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
   auto task = [dy, mask, dx](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       dx[i] = (mask[i] == 1) ? dy[i] : static_cast<T>(0);
@@ -74,12 +74,8 @@ std::vector<KernelAttr> ReluGradV2CpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool ReluGradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReluGradV2>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool ReluGradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kReluGradV2InputsNum || outputs.size() != kReluGradV2OutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kReluGradV2InputsNum << " and "
                   << kReluGradV2OutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -97,11 +93,10 @@ bool ReluGradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int ReluGradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ReluGradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();

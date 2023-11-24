@@ -33,15 +33,15 @@ class AssertGpuKernelMod : public NativeGpuKernelMod {
  public:
   AssertGpuKernelMod() {}
   ~AssertGpuKernelMod() override = default;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     auto input_data_num = inputs.size() - 1;
     void **inputs_device = GetDeviceAddress<void *>(workspaces, 0);
     int *summarizes_device = GetDeviceAddress<int>(workspaces, 1);
     int *types_device = GetDeviceAddress<int>(workspaces, 2);
     bool *cond_device = GetDeviceAddress<bool>(inputs, 0);
     for (size_t i = 0; i < input_data_num; i++) {
-      input_addrs_[i] = inputs[i + 1]->addr;
+      input_addrs_[i] = inputs[i + 1]->device_ptr();
     }
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -72,11 +72,9 @@ class AssertGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   std::vector<void *> input_addrs_;

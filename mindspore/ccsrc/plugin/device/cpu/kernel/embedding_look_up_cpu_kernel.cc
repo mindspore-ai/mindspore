@@ -113,30 +113,21 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &EmbeddingLookUpCpuKerne
   return func_list;
 }
 
-bool EmbeddingLookUpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EmbeddingLookup>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For primitive[EmbeddingLookup], cast op from BaseOperator to EmbeddingLookup failed.";
-    return false;
+bool EmbeddingLookUpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(primitive_->GetAttr(kAttrEnableEmbeddingStorage));
   }
-  kernel_name_ = kernel_ptr->name();
-
-  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
-    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
-  }
-  if (base_operator->HasAttr(kAttrParameterKey)) {
-    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  if (primitive_->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(primitive_->GetAttr(kAttrParameterKey));
   }
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EmbeddingLookUpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -155,21 +146,22 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = 1; i < input_params_shape.size(); ++i) {
     outer_dim_size_ *= LongToSize(input_params_shape[i]);
   }
-  input_params_dtype_ = inputs[kIndex0]->GetDtype();
+  input_params_dtype_ = inputs[kIndex0]->dtype_id();
 
   std::vector<int64_t> input_indices_shape = inputs[kIndex1]->GetShapeVector();
   input_indices_lens_ = SizeOf(input_indices_shape);
-  input_indices_dtype_ = inputs[kIndex1]->GetDtype();
+  input_indices_dtype_ = inputs[kIndex1]->dtype_id();
   return KRET_OK;
 }
 
 template <typename T, typename S, typename G>
-bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &outputs) {
+bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &,
+                                               const std::vector<KernelTensor *> &outputs) {
   T *input_params_addr = GetDeviceAddress<T>(inputs, 0);
   S *input_indices_addr = GetDeviceAddress<S>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  G offset = static_cast<G *>(inputs[kOffsetIndex]->addr)[0];
+  G offset = static_cast<G *>(inputs[kOffsetIndex]->device_ptr())[0];
   offset_ = static_cast<int64_t>(offset);
 
   if (enable_embedding_storage_) {
@@ -184,7 +176,7 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
 
     auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
     MS_ERROR_IF_NULL(embedding_storage);
-    if (!embedding_storage->Get({input_indices_addr, inputs[1]->size}, {output_addr, outputs[0]->size})) {
+    if (!embedding_storage->Get({input_indices_addr, inputs[1]->size()}, {output_addr, outputs[0]->size()})) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', lookup embedding from embedding storage failed, parameter key: " << parameter_key_;
       return false;

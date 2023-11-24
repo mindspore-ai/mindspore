@@ -17,28 +17,21 @@
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_v2_grad_cpu_kernel.h"
 #include <string>
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/grad/resize_nearest_neighbor_v2_grad.h"
+#include "mindspore/core/ops/ops_func_impl/resize_nearest_neighbor_v2_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeNearestNeighborV2GradInputsNum = 2;
+constexpr size_t kResizeNearestNeighborV2GradInputsNum = 4;
 constexpr size_t kResizeNearestNeighborV2GradOutputNum = 1;
 }  // namespace
 
-bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborV2GradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborV2GradOutputNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborV2Grad>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  align_corners_ = op_prim->get_align_corners();
-  half_pixel_centers_ = op_prim->get_half_pixel_centers();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -47,22 +40,22 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_o
   }
   kernel_func_ = func_list_[index].second;
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  y_type_ = outputs[kIndex0]->GetDtype();
+  y_type_ = outputs[kIndex0]->dtype_id();
   return true;
 }
 
-int ResizeNearestNeighborV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs,
-                                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int ResizeNearestNeighborV2GradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborV2GradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborV2GradOutputNum, kernel_name_);
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  y_shape_ = outputs[kIndex0]->GetDeviceShapeAdaptively();
-  grads_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  y_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
+  grads_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   y_size_ = SizeOf(y_shape_);
   if (y_type_ == kNumberTypeFloat16) {
     workspace_size_list_.push_back(y_size_ * sizeof(float));
@@ -107,9 +100,9 @@ void ResizeNearestNeighborV2GradCpuKernelMod::RealCompute(T *const input, S *con
 }
 
 template <typename T>
-bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                           const std::vector<AddressPtr> &workspace,
-                                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &workspace,
+                                                           const std::vector<kernel::KernelTensor *> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   MS_EXCEPTION_IF_NULL(input);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
@@ -130,18 +123,20 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<ker
   return true;
 }
 
-#define RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(MS_T, MS_S, T)            \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), \
+#define RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(MS_T, T) \
+  KernelAttr()                                           \
+    .AddInputAttr(MS_T)                                  \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
+    .AddOutputAttr(MS_T),                                \
     &ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ResizeNearestNeighborV2GradCpuKernelMod::ResizeNearestNeighborV2GradLaunchFunc>>
   ResizeNearestNeighborV2GradCpuKernelMod::func_list_ = {
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16)},
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16)},
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)}};
+    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat16, float16)},
+    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat32, float)},
+    {RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(kNumberTypeFloat64, double)}};
 
 std::vector<KernelAttr> ResizeNearestNeighborV2GradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

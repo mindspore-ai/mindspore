@@ -17,12 +17,14 @@
 #include <map>
 #include "mindspore/core/ops/grad/binary_cross_entropy_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
+#include "ops/binary_cross_entropy.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
-bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
-                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &workspace,
+                                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<half>(inputs, outputs, stream_ptr);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -35,8 +37,8 @@ bool BinaryCrossEntropyGradGpuKernelMod::Launch(const std::vector<AddressPtr> &i
 }
 
 template <typename T>
-void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *dloss = GetDeviceAddress<T>(inputs, kIndex2);
@@ -52,24 +54,16 @@ void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<AddressP
   }
 }
 
-bool BinaryCrossEntropyGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropyGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast BinaryCrossEntropyGrad ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
+bool BinaryCrossEntropyGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
-  const auto reduction = kernel_ptr->get_reduction();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = ReductionMode::kNone;
   } else if (reduction == Reduction::MEAN) {
@@ -80,11 +74,9 @@ bool BinaryCrossEntropyGradGpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int BinaryCrossEntropyGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

@@ -36,7 +36,7 @@ def get_load_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Identity)
+@vmap_rules_getters.register("Identity")
 def get_identity_vmap_rule(prim, axis_size):
     """VmapRule for `Identity` operation."""
     if isinstance(prim, str):

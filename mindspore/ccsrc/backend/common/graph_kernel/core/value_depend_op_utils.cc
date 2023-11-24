@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/op_def.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
@@ -72,6 +73,9 @@ bool ValueDependOpUtils::IsConstInput(const AnfNodePtr &node) {
           if (value == nullptr) {
             return false;
           }
+          if (value->isa<ValueAny>()) {
+            return false;
+          }
           auto tensor = value->cast<tensor::TensorPtr>();
           if (tensor != nullptr && tensor->data().const_data() == nullptr) {
             return false;
@@ -88,34 +92,20 @@ bool ValueDependOpUtils::AddConstInputToAttr(const CNodePtr &cnode, const HashSe
   MS_EXCEPTION_IF_NULL(primitive);
   primitive = primitive->Clone();
   MS_EXCEPTION_IF_NULL(primitive);
-  auto input_names = primitive->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    const auto &op_index_info = GetOpIndexInfo();
-    if (op_index_info.find(primitive->name()) == op_index_info.end()) {
-      MS_LOG(INFO) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
-      return false;
-    }
-    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-    auto const iter = op_primc_fns.find(primitive->name());
-    if (iter == op_primc_fns.end()) {
-      MS_LOG(INFO) << "Can't find " << primitive->name() << " op's primitive in primitiveC!";
-      return false;
-    }
-    auto prim = iter->second();
-    if (prim != nullptr) {
-      input_names = prim->GetAttr(kAttrInputNames);
-      (void)primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
-      (void)primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
-    }
+
+  const auto &op_name = primitive->name();
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(WARNING) << op_name << " not found in op def.";
   }
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  const auto &input_vec = op_def->args_;
   auto inputs = cnode->inputs();
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_idx.count(i) != 0) {
-      if (i >= input_names_vec.size()) {
-        MS_LOG(INFO) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+      if (i >= input_vec.size()) {
+        MS_LOG(INFO) << "Index " << i << " is larger than input names size [" << input_vec.size() << "]";
         return false;
       }
       ValuePtr value = nullptr;
@@ -127,24 +117,24 @@ bool ValueDependOpUtils::AddConstInputToAttr(const CNodePtr &cnode, const HashSe
         value = parameter_node->abstract()->BuildValue();
       }
       if (value == nullptr) {
-        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is null.";
+        MS_LOG(DEBUG) << input_vec[i].arg_name_ << "'s Value is null.";
         return false;
       }
       if (value->isa<ValueAny>()) {
-        MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is ValueAny.";
+        MS_LOG(DEBUG) << input_vec[i].arg_name_ << "'s Value is ValueAny.";
         return false;
       }
       if (!value->isa<tensor::Tensor>()) {
-        primitive->set_attr(input_names_vec[i], value);
+        primitive->set_attr(input_vec[i].arg_name_, value);
         continue;
       }
-      auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_names_vec[i], value, primitive->name());
+      auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_vec[i].arg_name_, value, primitive->name());
       auto tensor = value->cast<tensor::TensorPtr>();
       auto tensor_shape = tensor->shape_c();
       if (tensor_shape.empty()) {
-        primitive->set_attr(input_names_vec[i], MakeValue(value_vector[0]));
+        primitive->set_attr(input_vec[i].arg_name_, MakeValue(value_vector[0]));
       } else {
-        primitive->set_attr(input_names_vec[i], MakeValue(value_vector));
+        primitive->set_attr(input_vec[i].arg_name_, MakeValue(value_vector));
       }
     }
   }

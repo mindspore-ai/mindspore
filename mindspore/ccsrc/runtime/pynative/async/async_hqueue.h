@@ -41,7 +41,7 @@ constexpr int kThreadIdle = 1;  // idle, the thread is waiting
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncHqueue {
  public:
-  explicit AsyncHqueue(std::string name);
+  explicit AsyncHqueue(std::string name) : name_(std::move(name)) {}
   virtual ~AsyncHqueue();
 
   // Init resource
@@ -66,7 +66,7 @@ class BACKEND_EXPORT AsyncHqueue {
   void WorkerJoin();
 
   // Reinit resources after fork occurs.
-  void ReinitAfterFork();
+  void ChildAfterFork();
 
   // Check grad queue exception.
   void CheckException();

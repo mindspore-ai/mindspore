@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "base/base.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -926,9 +927,6 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreateOpInstance(attrs, SEND, SEND);
-  auto send_node = NewValueNode(send_op);
-  auto prim = GetValueNode<PrimitivePtr>(send_node);
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(parameter, parameter, &care_node, &is_param);
@@ -937,11 +935,12 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   auto op_info = op_info_pair.first;
   auto slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(parameter, slice_shape, 0);
+  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
+  CNodePtr send = CreateCNodeByInputsAndAttr(graph, SEND, SEND, AnfNodePtrList{parameter}, attrs);
+  auto prim = GetCNodePrimitive(send);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
-  std::vector<AnfNodePtr> send_input = {send_node, parameter};
-  auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
-  CNodePtr send = graph->NewCNode(send_input);
+
   if (!is_param) {
     send->AddPrimalAttr(PIPELINE_END, value);
   } else {
@@ -954,9 +953,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   send->AddPrimalAttr(MICRO, value);
   send->AddPrimalAttr(DEST_RANK, MakeValue(user_node_stage));
   OperatorAttrs depend_attrs;
-  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
-  CNodePtr depend = graph->NewCNode(depend_input);
+  CNodePtr depend = CreateCNodeByInputsAndAttr(graph, DEPEND, DEPEND, AnfNodePtrList{parameter, send}, depend_attrs);
   auto abstract = parameter->abstract();
   if (care_node) {
     abstract = care_node->abstract();
@@ -992,14 +989,13 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
-  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
   std::vector<AnfNodePtr> recv_input;
   if (node->isa<Parameter>()) {
-    recv_input = {NewValueNode(recv_op), node};
+    recv_input = {node};
   } else {
-    recv_input = {NewValueNode(recv_op), virtual_param_};
+    recv_input = {virtual_param_};
   }
-  auto recv = graph->NewCNode(recv_input);
+  auto recv = CreateCNodeByInputsAndAttr(graph, RECEIVE, RECEIVE, recv_input, attrs);
   if (is_param) {
     recv->set_user_data<AnfNode>(PIPELINE_PARAM, node);
     recv->AddPrimalAttr(PIPELINE_PARAM, value);
@@ -1313,10 +1309,8 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
-  auto send_op = CreateOpInstance(attrs, SEND, SEND);
-  AnfNodePtr send_node = NewValueNode(send_op);
-  std::vector<AnfNodePtr> send_input{send_node, input};
-  auto send = main_graph_->NewCNode(send_input);
+  std::vector<AnfNodePtr> send_input{input};
+  auto send = CreateCNodeByInputsAndAttr(main_graph_, SEND, SEND, send_input, attrs);
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(input, input, &care_node, &is_param);
@@ -1325,7 +1319,7 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   auto index = op_info_pair.second;
   auto slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(input, slice_shape, 0);
-  auto prim = GetValueNode<PrimitivePtr>(send_node);
+  auto prim = GetCNodePrimitive(send);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
   if (!is_param) {
@@ -1344,9 +1338,8 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   send->AddPrimalAttr(MICRO, value);
 
   OperatorAttrs depend_attrs;
-  auto depend_op = CreateOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), send_input[INDEX_ONE], send};
-  auto depend = main_graph_->NewCNode(depend_input);
+  std::vector<AnfNodePtr> depend_input = {send_input[INDEX_ZERO], send};
+  auto depend = CreateCNodeByInputsAndAttr(main_graph_, DEPEND, DEPEND, depend_input, depend_attrs);
   auto abstract = input->abstract();
   if (care_node) {
     abstract = care_node->abstract();
@@ -1453,17 +1446,16 @@ AnfNodePtr PipelineTransformer::GenNewRecvFromOld(const AnfNodePtr &node, const 
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
 
-  auto recv_op = CreateOpInstance(attrs, RECEIVE, RECEIVE);
-  std::vector<AnfNodePtr> recv_input = {NewValueNode(recv_op), input};
-  auto recv = main_graph_->NewCNode(recv_input);
+  std::vector<AnfNodePtr> recv_input = {input};
+  auto recv = CreateCNodeByInputsAndAttr(main_graph_, RECEIVE, RECEIVE, recv_input, attrs);
   auto tensor_layout = node->user_data<TensorLayout>();
   if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
     auto abstract_clone = node->abstract()->Clone();
     MS_EXCEPTION_IF_NULL(abstract_clone);
-    recv->set_user_data<AnfNode>(PIPELINE_PARAM, recv_input[INDEX_ONE]);
+    recv->set_user_data<AnfNode>(PIPELINE_PARAM, recv_input[INDEX_ZERO]);
     recv->AddPrimalAttr(PIPELINE_PARAM, value);
-    recv_input[INDEX_ONE]->set_abstract(abstract_clone);
-    recv_input[INDEX_ONE]->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(*tensor_layout));
+    recv_input[INDEX_ZERO]->set_abstract(abstract_clone);
+    recv_input[INDEX_ZERO]->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(*tensor_layout));
   } else {
     recv->AddPrimalAttr(PIPELINE_BEGIN, value);
   }

@@ -53,11 +53,11 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   const int64_t kDefaultRank = 2;
   const int64_t kBatchRank = 3;
   CheckInputShapeEmpty(primitive->name(), input_args);
-  auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto c_ind_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto c_ind_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   const int64_t rank = d_shape_shape[kZero];
   std::vector<uint64_t> tensor_ranks{d_shape_shape.size(), c_ind_shape.size(), values_shape.size(), r_ptrs_shape.size(),
                                      b_ptrs_shape.size()};
@@ -82,8 +82,8 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   }
 
   bool shape_valid =
-    input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-    (input_args[kInputIndex0]->BuildValue()->isa<ValueAny>() || input_args[kInputIndex0]->BuildValue()->isa<None>());
+    CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) &&
+    (input_args[kInputIndex0]->GetValue()->isa<ValueAny>() || input_args[kInputIndex0]->GetValue()->isa<None>());
   if (shape_valid) {
     ShapeVector dense_shape;
     auto shape_size = d_shape_shape[kZero];
@@ -99,12 +99,10 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   auto shape_abs_ptr = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_abs_ptr);
   ShapeVector y_shape;
-  auto d_shape_value = shape_abs_ptr->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(d_shape_value);
-  auto d_shape_value_ptr = d_shape_value->BuildValue();
+  auto d_shape_value_ptr = shape_abs_ptr->GetValue();
   MS_EXCEPTION_IF_NULL(d_shape_value_ptr);
-  auto d_shape_value_ptr_tensor =
-    CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", d_shape_value_ptr, primitive->name());
+  auto d_shape_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+    "x_dense_shape", d_shape_value_ptr, primitive->name(), shape_abs_ptr->GetType());
   for (int64_t i = kZero; i < rank; i++) {
     if (static_cast<int64_t>(d_shape_value_ptr_tensor[static_cast<size_t>(i)]) <= kZero) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
@@ -134,12 +132,12 @@ TypePtr CSRSparseMatrixToDenseInferType(const PrimitivePtr &prim, const std::vec
   const std::set<TypePtr> valid_values_types = {kFloat64, kFloat32, kComplex128, kComplex64};
   const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> indices_args;
-  (void)indices_args.emplace("x_dense_shape", input_args[kInputIndex0]->BuildType());
-  (void)indices_args.emplace("x_batch_pointers", input_args[kInputIndex1]->BuildType());
-  (void)indices_args.emplace("x_row_pointers", input_args[kInputIndex2]->BuildType());
-  (void)indices_args.emplace("x_col_indices", input_args[kInputIndex3]->BuildType());
+  (void)indices_args.emplace("x_dense_shape", input_args[kInputIndex0]->GetType());
+  (void)indices_args.emplace("x_batch_pointers", input_args[kInputIndex1]->GetType());
+  (void)indices_args.emplace("x_row_pointers", input_args[kInputIndex2]->GetType());
+  (void)indices_args.emplace("x_col_indices", input_args[kInputIndex3]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(indices_args, valid_indices_types, op_name);
-  auto values_type = input_args[kInputIndex4]->BuildType();
+  auto values_type = input_args[kInputIndex4]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x_values", values_type, valid_values_types, op_name);
 }
 }  // namespace

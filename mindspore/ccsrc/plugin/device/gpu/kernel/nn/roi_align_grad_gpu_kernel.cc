@@ -20,43 +20,36 @@
 
 namespace mindspore {
 namespace kernel {
-bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+bool ROIAlignGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   // Check input and output numbers
   constexpr size_t kInputNum = 3;
   constexpr size_t kOutputNum = 1;
-  kernel_name_ = base_operator->name();
+
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << ".";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlignGrad>(base_operator);
-  pooled_height_ = op->get_pooled_height();
-  pooled_width_ = op->get_pooled_width();
-  spatial_scale_ = op->get_spatial_scale();
-  sample_num_ = op->get_sample_num();
-
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledHeight)));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledWidth)));
+  spatial_scale_ = GetValue<float>(primitive_->GetAttr(ops::kSpatialScale));
+  sample_num_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kSampleNum)));
   return true;
 }
 
-int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ROIAlignGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   std::vector<int64_t> xdiff_shape;
-  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape, true)) {
-    MS_LOG(ERROR) << "For " << kernel_name_ << " can't get filter_sizes input!";
-    return KRET_RESIZE_FAILED;
-  }
-
+  xdiff_shape = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
   // Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();
@@ -78,12 +71,12 @@ int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
   // Calculate the sizes of inputs and output
-  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  auto dy_type_size = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   dy_size_ = dy_shape[kIndex0] * dy_shape[kIndex1] * dy_shape[kIndex2] * dy_shape[kIndex3] * dy_type_size;
 
   roi_rows_ = rois_shape[kIndex0];
   roi_cols_ = rois_shape[kIndex1];
-  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->GetDtype());
+  auto rois_type_size = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   rois_size_ = roi_rows_ * roi_cols_ * rois_type_size;
 
   batch_ = xdiff_shape[kIndex0];
@@ -120,9 +113,9 @@ const ROIAlignGradGpuKernelMod::FuncList &ROIAlignGradGpuKernelMod::GetFuncList(
 }
 
 template <typename T>
-bool ROIAlignGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool ROIAlignGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &workspace,
+                                            const std::vector<KernelTensor *> &outputs) {
   const T *dy = GetDeviceAddress<T>(inputs, 0);
   const T *rois = GetDeviceAddress<T>(inputs, 1);
   T *dx = GetDeviceAddress<T>(outputs, 0);

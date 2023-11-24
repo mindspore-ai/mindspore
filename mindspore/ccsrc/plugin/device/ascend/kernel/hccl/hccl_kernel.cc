@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
+#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
@@ -80,287 +81,127 @@ HcclKernel::HcclKernel()
       src_rank_(0),
       dest_rank_(0),
       comm_(nullptr) {}
-HcclKernel::HcclKernel(const AnfNodePtr &anf_node)
-    : AscendKernelMod(),
-      hccl_count_(0),
-      op_type_(::HcclReduceOp::HCCL_REDUCE_SUM),
-      root_id_(0),
-      src_rank_(0),
-      dest_rank_(0),
-      comm_(nullptr) {}
-HcclKernel::~HcclKernel() {
-  hccl_kernel_input_shape_list_.clear();
-  hccl_kernel_output_shape_list_.clear();
-  hccl_data_type_list_.clear();
-  hccl_count_ = 0;
-  op_type_ = ::HcclReduceOp::HCCL_REDUCE_SUM;
-  root_id_ = 0;
-  mutable_input_size_list_.clear();
-  mutable_output_size_list_.clear();
-  mutable_workspace_size_list_.clear();
-}
 
-bool HcclKernel::Init(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  op_name_ = common::AnfAlgo::GetCNodeName(anf_node);
-  if (op_name_ == kSendOpName) {
-    if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
+bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  // set source/destination rank
+  if (kernel_name_ == kSendOpName || kernel_name_ == kReduceOpName || kernel_name_ == kMuxSendOpName) {
+    if (!HcomUtil::GetHcomAttr<uint32_t, int64_t>(primitive_, kAttrDestRank, &dest_rank_)) {
       MS_LOG(ERROR) << "GetHcomDestRank fail!";
       return false;
     }
-  }
-  if (op_name_ == kReceiveOpName) {
-    if (!HcomUtil::GetHcomSrcRank(anf_node, &src_rank_)) {
+  } else if (kernel_name_ == kReceiveOpName) {
+    if (!HcomUtil::GetHcomAttr<uint32_t, int64_t>(primitive_, kAttrSrcRank, &src_rank_)) {
       MS_LOG(ERROR) << "GetHcomSrcRank fail!";
       return false;
     }
   }
-  if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
-    MS_LOG(ERROR) << "GetKernelInputShape fail!";
+
+  if (!CalcTypeShapeAndCount(inputs, outputs)) {
     return false;
   }
-  if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
-    MS_LOG(ERROR) << "GetKernelOutputShape fail!";
-    return false;
-  }
-  if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
-    MS_LOG(ERROR) << "GetHcomDataType fail!";
-    return false;
-  }
-  if (op_name_ == kReceiveOpName) {
-    if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_output_shape_list_, &hccl_count_)) {
-      MS_LOG(ERROR) << "GetHcomCount fail!";
-      return false;
-    }
-  } else {
-    if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_input_shape_list_, &hccl_count_)) {
-      MS_LOG(ERROR) << "GetHcomCount fail!";
-      return false;
-    }
-  }
-  if (op_name_ == kAllReduceOpName || op_name_ == kReduceScatterOpName || op_name_ == kReduceOpName) {
-    if (!HcomUtil::GetHcomOperationType(anf_node, &op_type_)) {
+
+  if (kernel_name_ == kAllReduceOpName || kernel_name_ == kReduceScatterOpName || kernel_name_ == kReduceOpName) {
+    if (!HcomUtil::GetHcomOperationType(primitive_, &op_type_)) {
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
     }
-  }
-  if (op_name_ == kBroadcastOpName) {
-    if (!HcomUtil::GetHcomRootId(anf_node, &root_id_)) {
+  } else if (kernel_name_ == kBroadcastOpName) {
+    if (!HcomUtil::GetHcomAttr<uint32_t, int64_t>(primitive_, kAttrRootRank, &root_id_)) {
       MS_LOG(ERROR) << "GetHcomRootId fail!";
       return false;
     }
   }
-  HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
+
+  if (!HcomUtil::GetHcomAttr<std::string>(primitive_, kAttrGroup, &group_)) {
+    return false;
+  }
   // pynative with ranktable also need hccl_comm
   comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
   if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
     MS_EXCEPTION_IF_NULL(comm_);
-    common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)), anf_node);
+    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
   }
-  anf_node_ = anf_node;
   CalLoopSize();
+
   return true;
 }
 
-void HcclKernel::SetInputSizeList(const std::vector<size_t> &size_list) { mutable_input_size_list_ = size_list; }
-void HcclKernel::SetOutputSizeList(const std::vector<size_t> &size_list) { mutable_output_size_list_ = size_list; }
-void HcclKernel::SetWorkspaceSizeList(const std::vector<size_t> &size_list) {
-  mutable_workspace_size_list_ = size_list;
-}
-
-const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
-  size_t size = 0;
-  if (!mutable_input_size_list_.empty()) {
-    return mutable_input_size_list_;
+HcclDataType HcclKernel::GetHcclDataType() const {
+  if (hccl_data_type_list_.empty()) {
+    MS_LOG(EXCEPTION) << "list hccl_data_type_list_ is empty.";
   }
-  if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
-                      << hccl_kernel_input_shape_list_.size();
-  }
-  for (ulong i = 0; i < hccl_data_type_list_.size(); ++i) {
-    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[i], hccl_kernel_input_shape_list_[i], &size)) {
-      MS_LOG(ERROR) << "GetHcclOpInputSize failed";
-    }
-    mutable_input_size_list_.push_back(size);
-  }
-  return mutable_input_size_list_;
+  return hccl_data_type_list_[0];
 }
 
 void HcclKernel::CalLoopSize() {
-  auto anf_node = anf_node_.lock();
-  if (!anf_node) {
-    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
-  }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   int64_t rank_size = 1;
-  if (common::AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
-    rank_size = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
-  }
-
   int64_t fusion = 0;
-  if (common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode)) {
-    fusion = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
-  }
+
+  (void)HcomUtil::GetHcomAttr<int64_t>(primitive_, kAttrRankSize, &rank_size);
+  (void)HcomUtil::GetHcomAttr<int64_t>(primitive_, kAttrFusion, &fusion);
+
   if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
     MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
                       << hccl_kernel_input_shape_list_.size();
   }
   loop_size_ = hccl_data_type_list_.size();
-  if (common::AnfAlgo::GetInputTensorNum(anf_node) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
+  if (hccl_kernel_input_shape_list_.size() > 1 && kernel_name_ == kAllGatherOpName && fusion >= 1) {
     loop_size_ *= static_cast<ulong>(rank_size);
   }
-  if (op_name == kReduceScatterOpName && fusion >= 1) {
-    loop_size_ = AnfAlgo::GetOutputTensorNum(anf_node);
+  if (kernel_name_ == kReduceScatterOpName && fusion >= 1) {
+    loop_size_ = hccl_kernel_output_shape_list_.size();
   }
 }
 
-const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
-  size_t size = 0;
-  if (!mutable_output_size_list_.empty()) {
-    return mutable_output_size_list_;
-  }
-
-  for (ulong i = 0; i < loop_size_; ++i) {
-    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
-      MS_LOG(ERROR) << "GetHcclOpOutputSize failed";
-    }
-    mutable_output_size_list_.push_back(size);
-  }
-  return mutable_output_size_list_;
-}
-
-const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
+void HcclKernel::CalcWorkspaceSize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto hccl_node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(hccl_node);
-  auto func_graph = hccl_node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto graph_run_mode = kernel_graph->is_graph_run_mode();
 
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   // Not task sink mode.
-  if (!mutable_workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
-      (mode == kPynativeMode && !graph_run_mode)) {
-    return mutable_workspace_size_list_;
+  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
+      (mode == kPynativeMode && !is_graph_mode_)) {
+    return;
   }
+
   // Task sink mode.
-  mutable_workspace_size_list_.emplace_back(
-    hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
-  return mutable_workspace_size_list_;
+  workspace_size_list_.emplace_back(
+    hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(primitive_, inputs, outputs, hccl_data_type_list_[0]));
+  return;
 }
 
-std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
-  auto anf_node = anf_node_.lock();
-  if (!anf_node) {
-    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
+bool HcclKernel::CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  hccl_kernel_input_shape_list_.clear();
+  hccl_kernel_output_shape_list_.clear();
+
+  // set hccl kernel input/output shape
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(hccl_kernel_input_shape_list_),
+                 [](KernelTensor *kernel_tensor) { return kernel_tensor->GetShapeVector(); });
+  std::transform(outputs.cbegin(), outputs.cend(), std::back_inserter(hccl_kernel_output_shape_list_),
+                 [](KernelTensor *kernel_tensor) { return kernel_tensor->GetShapeVector(); });
+
+  // set hccl data_type and count
+  if (!HcomUtil::GetHcomDataType(kernel_name_, inputs, outputs, &hccl_data_type_list_)) {
+    MS_LOG(ERROR) << "GetHcomDataType fail!";
+    return false;
   }
-  std::string hccl_type = common::AnfAlgo::GetCNodeName(anf_node);
-  if (hccl_type == kReceiveOpName || hccl_type == kMuxReceiveOpName) {
-    if (outputs.empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Outputs is empty";
-    }
-  } else if (inputs.empty() || outputs.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Inputs or outputs is empty";
-  }
-  stream_id_ = stream_id;
-  void *input_data_addr = nullptr;
-  if (hccl_type != kReceiveOpName && hccl_type != kMuxReceiveOpName) {
-    MS_EXCEPTION_IF_NULL(inputs.at(0));
-    input_data_addr = inputs.at(0)->addr;
-  }
-  MS_EXCEPTION_IF_NULL(outputs.at(0));
-  auto output_data_addr = outputs.at(0)->addr;
-  std::vector<uint8_t> private_def;
-  if (hccl_data_type_list_.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Hccl data type list is empty";
-  }
-  HcclDataType data_type = hccl_data_type_list_[0];
-  std::vector<hccl::HcclTaskInfo> task_info;
-  bool ret = hccl::HcclAdapter::GetInstance().GenTask(anf_node, data_type, &task_info);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Gen Task for " << anf_node->DebugString() << " failed.";
+  if (!HcomUtil::GetHcomCount(
+        primitive_, hccl_data_type_list_,
+        HcomUtil::IsReceiveOp(kernel_name_) ? hccl_kernel_output_shape_list_ : hccl_kernel_input_shape_list_,
+        inputs.size(), &hccl_count_)) {
+    MS_LOG(ERROR) << "GetHcomCount fail!";
+    return false;
   }
 
-  std::vector<TaskInfoPtr> results;
-  for (auto &task : task_info) {
-    MS_LOG(INFO) << "HCCL Task : stream_id=" << stream_id << ", count=" << hccl_count_ << ", root_id=" << root_id_
-                 << ", op_type=" << static_cast<int>(op_type_) << ", data_type=" << static_cast<int>(data_type)
-                 << ", workspace_size=" << task.workspace_size << ", stream_num=" << task.stream_num
-                 << ", private_def_size=" << task.private_def.size();
-
-    private_def.resize(task.private_def.size());
-    auto sec_ret = memcpy_s(private_def.data(), private_def.size(), task.private_def.data(), task.private_def.size());
-    if (sec_ret != 0) {
-      MS_LOG(EXCEPTION) << "Set data memcpy_s failed, ret = " << sec_ret;
-    }
-
-    void *workspace_addr = nullptr;
-    if (task.workspace_size != 0) {
-      if (workspace.empty()) {
-        MS_LOG(EXCEPTION) << "Workspace size list of " << anf_node->DebugString() << " is empty";
-      }
-      MS_EXCEPTION_IF_NULL(workspace.at(0));
-      workspace_addr = workspace.at(0)->addr;
-    }
-
-    std::vector<void *> global_workspace_addr;
-    auto overflow_memory_ptr =
-      device::ascend::AscendMemoryManager().MallocOverflowMemFromMemFromMemPool(kOverflowAddrSize, false);
-    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    global_workspace_addr.push_back(overflow_memory_ptr);
-    MS_LOG(DEBUG) << "Assign overflow memory for node " << anf_node->fullname_with_scope() << ", addr is "
-                  << overflow_memory_ptr;
-
-    HcclTaskInfoPtr hcclTaskInfo =
-      std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
-                                     output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
-                                     private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
-                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump());
-    hcclTaskInfo->SetGlobalWorkspaceAddr(global_workspace_addr);
-    hcclTaskInfo->set_output_num(outputs.size());
-    hcclTaskInfo->set_hccl_kernel_output_shape_list(hccl_kernel_output_shape_list_);
-    auto cnode = anf_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    hcclTaskInfo->set_graph_id(AnfAlgo::GetGraphId(cnode.get()));
-    FuncGraphPtr f_graph = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(f_graph);
-    auto kernel_graph = f_graph->cast<KernelGraphPtr>();
-    auto input_ctrl_tensors = kernel_graph->device_loop_control_tensors();
-    hcclTaskInfo->set_device_loop_ctrl_tensors(input_ctrl_tensors);
-    std::vector<std::vector<int64_t>> hccl_output_infer_shape_list;
-    if (!HcomUtil::GetKernelOutputInferShape(anf_node, &hccl_output_infer_shape_list)) {
-      MS_LOG(ERROR) << "GetKernelOutputInferShape fail!";
-    }
-    hcclTaskInfo->set_hccl_host_output_shape_list(hccl_output_infer_shape_list);
-    for (size_t j = 0; j < outputs.size(); j++) {
-      auto address = AnfAlgo::GetOutputAddr(cnode, j);
-      hcclTaskInfo->add_output_addr(address->GetPtr());
-      hcclTaskInfo->add_output_size_list(address->GetSize());
-      hcclTaskInfo->add_data_format(AnfAlgo::GetOutputFormat(anf_node, j));
-    }
-    (void)results.emplace_back(hcclTaskInfo);
-  }
-
-  return results;
+  return true;
 }
 
-bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The anfnode is not a cnode.";
-  }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
+bool HcclKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
 
   if (inputs.empty() && outputs.empty()) {
     MS_LOG(ERROR) << "Hccl kernel input or output is empty.";
@@ -371,16 +212,14 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
     return false;
   }
 
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  MS_LOG(INFO) << "Start Execute: " << cnode->DebugString();
-  std::string hccl_type = MsOpNameToHcomOpType(common::AnfAlgo::GetCNodeName(anf_node_.lock()));
+  MS_LOG(INFO) << "Start Execute: " << kernel_name_;
+  std::string hccl_type = MsOpNameToHcomOpType(kernel_name_);
   HcclDataType data_type = hccl_data_type_list_[0];
 
   ::HcomOperation op_info;
   op_info.hcclType = hccl_type;
-  op_info.inputPtr = inputs[0]->addr;
-  op_info.outputPtr = outputs[0]->addr;
+  op_info.inputPtr = inputs[0]->device_ptr();
+  op_info.outputPtr = outputs[0]->device_ptr();
   op_info.dataType = static_cast<HcclDataType>(data_type);
   op_info.opType = static_cast<HcclReduceOp>(op_type_);
   op_info.root = root_id_;
@@ -397,66 +236,33 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
 
   auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
   if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << kernel_name_;
   }
 
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
   cond_.wait(ulock);
-  MS_LOG(INFO) << "Execute " << cnode->DebugString() << " success.";
+  MS_LOG(INFO) << "Execute " << kernel_name_ << " success.";
   return true;
 }
 
-void HcclKernel::UpdateOutputSizeList() {
-  auto anf_node = anf_node_.lock();
-  if (!anf_node) {
-    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
-  }
-  size_t size = 0;
-  hccl_kernel_output_shape_list_.clear();
-  mutable_output_size_list_.clear();
-  if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "GetKernelOutputShape fail!";
+int HcclKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!CalcTypeShapeAndCount(inputs, outputs)) {
+    return KRET_RESIZE_FAILED;
   }
 
+  // update output_size_list_
+  output_size_list_.clear();
   for (ulong i = 0; i < loop_size_; ++i) {
-    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
+    size_t size = 0;
+    if (!HcomUtil::GetHcclOpSize(GetHcclDataType(), hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(INTERNAL_EXCEPTION) << "GetHcclOpOutputSize failed";
     }
-    mutable_output_size_list_.push_back(size);
-  }
-}
-
-int HcclKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                       const std::vector<KernelTensorPtr> &outputs,
-                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
-    MS_LOG(DEBUG) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-    return 0;
+    output_size_list_.push_back(size);
   }
 
-  MS_LOG(INFO) << "Start to InitOp. Node info: " << cnode->DebugString();
-  UpdateOutputSizeList();
-  std::vector<ShapeVector> hccl_kernel_input_shape_list;
-  if (!HcomUtil::GetKernelInputShape(cnode, &hccl_kernel_input_shape_list)) {
-    MS_LOG(EXCEPTION) << "GetKernelInputShape fail! Node info: " << cnode->DebugString();
-  }
+  CalcWorkspaceSize(inputs, outputs);
 
-  std::vector<HcclDataType> hccl_data_type_list;
-  if (!HcomUtil::GetHcomDataType(cnode, &hccl_data_type_list)) {
-    MS_LOG(EXCEPTION) << "GetHcomDataType fail! Node info: " << cnode->DebugString();
-  }
-
-  // Update Hccl count
-  if (!HcomUtil::GetHcomCount(cnode, hccl_data_type_list, hccl_kernel_input_shape_list, &hccl_count_)) {
-    MS_LOG(EXCEPTION) << "GetHcomCount fail! Node info: " << cnode->DebugString();
-  }
-  MS_LOG(INFO) << "Update Hccl count:" << hccl_count_;
-  return 0;
+  return KRET_OK;
 }
 }  // namespace kernel
 }  // namespace mindspore

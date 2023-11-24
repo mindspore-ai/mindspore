@@ -55,10 +55,10 @@ TypePtr ClipByNormNoDivSumInferType(const PrimitivePtr &prim, const std::vector<
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_x", input_args[kIndex0]->BuildType());
-  (void)types.emplace("input_1", input_args[kIndex1]->BuildType());
-  (void)types.emplace("input_2", input_args[kIndex2]->BuildType());
-  (void)types.emplace("input_3", input_args[kIndex2]->BuildType());
+  (void)types.emplace("input_x", input_args[kIndex0]->GetType());
+  (void)types.emplace("input_1", input_args[kIndex1]->GetType());
+  (void)types.emplace("input_2", input_args[kIndex2]->GetType());
+  (void)types.emplace("input_3", input_args[kIndex2]->GetType());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }

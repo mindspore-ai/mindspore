@@ -56,13 +56,12 @@ GVAR_DEF(PrimitivePtr, kPrimIdentityMath, std::make_shared<Primitive>("Identity"
 // Shape
 GVAR_DEF(PrimitivePtr, kPrimShapeMul, std::make_shared<Primitive>("shape_mul"));
 GVAR_DEF(PrimitivePtr, kPrimShapeMulGrad, std::make_shared<Primitive>("ShapeMulGrad"));
-GVAR_DEF(PrimitivePtr, kPrimShape, std::make_shared<Primitive>("Shape"));
 GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 
 // SideEffectPropagate
 GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDependOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimidentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));

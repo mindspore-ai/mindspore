@@ -33,33 +33,34 @@ abstract::ShapePtr ResizeV2GradInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   int64_t grads_shape_0 = SizeToLong(grad_shape[LongToSize(0)]);
   int64_t grads_shape_1 = SizeToLong(grad_shape[LongToSize(1)]);
   const int64_t kDimSize = 4;
   (void)CheckAndConvertUtils::CheckInteger("dim of grads", SizeToLong(grad_shape.size()), kEqual, kDimSize, prim_name);
 
-  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   const int64_t kRoiDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of roi", SizeToLong(roi_shape.size()), kEqual, kRoiDimSize, prim_name);
 
-  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   const int64_t kScalesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of scales", SizeToLong(scales_shape.size()), kEqual, kScalesDimSize,
                                            prim_name);
 
-  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   const int64_t kSizesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of original_size", SizeToLong(sizes_shape.size()), kEqual,
                                            kSizesDimSize, prim_name);
 
-  auto sizes_input = input_args[kInputIndex3]->BuildValue();
+  auto sizes_input = input_args[kInputIndex3]->GetValue();
   auto mode_ptr = primitive->GetAttr("mode");
   std::string mode_str = GetValue<std::string>(mode_ptr);
 
   if (!sizes_input->isa<ValueAny>() && !sizes_input->isa<None>()) {
     MS_EXCEPTION_IF_NULL(sizes_input);
-    auto sizes = CheckAndConvertUtils::CheckTensorIntValue("original_size", sizes_input, prim_name);
+    auto sizes = CheckAndConvertUtils::CheckTensorIntValue("original_size", sizes_input, prim_name,
+                                                           input_args[kInputIndex3]->GetType());
     const size_t kSizesSize = 4;
     if (sizes.size() != kSizesSize) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the length of 'original_size' must be 4.";
@@ -91,10 +92,10 @@ TypePtr ResizeV2GradInferType(const PrimitivePtr &primitive, const std::vector<A
   const std::set<TypePtr> roi_valid_types = {kFloat32};
   const std::set<TypePtr> scales_valid_types = {kFloat32};
   const std::set<TypePtr> sizes_valid_types = {kInt64, kInt32};
-  TypePtr x_type = input_args[kInputIndex0]->BuildType();
-  TypePtr roi_type = input_args[kInputIndex1]->BuildType();
-  TypePtr scales_type = input_args[kInputIndex2]->BuildType();
-  TypePtr sizes_type = input_args[kInputIndex3]->BuildType();
+  TypePtr x_type = input_args[kInputIndex0]->GetType();
+  TypePtr roi_type = input_args[kInputIndex1]->GetType();
+  TypePtr scales_type = input_args[kInputIndex2]->GetType();
+  TypePtr sizes_type = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTypeValid("roi", roi_type, roi_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("scales", scales_type, scales_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("original_size", sizes_type, sizes_valid_types, primitive->name());

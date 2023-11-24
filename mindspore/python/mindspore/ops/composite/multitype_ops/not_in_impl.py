@@ -27,7 +27,6 @@ not_in_ = base.MultitypeFuncGraph("not_in", True)
 "not_in_" is a multi type func graph object which will determine if a not in b.
 using ".register" decorator
 """
-not_in_.set_need_raise()
 
 
 @not_in_.register("Number", "Tuple")
@@ -189,3 +188,11 @@ def _mstype_not_in_tuple(x, y):
        bool, if x not in y return true, x in y return false.
    """
     return not const_utils.check_in_sequence(x, y)
+
+
+@not_in_.register_default()
+def default_not_in(x, y):
+    """
+    Default function for not in.
+   """
+    return x not in y

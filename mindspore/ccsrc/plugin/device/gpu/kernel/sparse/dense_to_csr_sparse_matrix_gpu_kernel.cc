@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/sparse/dense_to_csr_sparse_matrix_gpu_kernel.h"
-#include <algorithm>
-#include <map>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
@@ -160,9 +158,9 @@ std::vector<KernelAttr> DenseToCSRSparseMatrixKernelMod::GetOpSupport() {
 }
 
 template <typename T, typename S>
-bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   S *dev_row_indices_ = GetDeviceAddress<S>(workspace, kIndex0);
@@ -203,7 +201,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
   size_t num_batches = (is_batch_csr_) ? input_shapes_[kIndex0] : 1;
   // row pointers need to be set to zero to avoid any blank rows.
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(row_pointers_addr, 0, outputs[kIndex2]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(row_pointers_addr, 0, outputs[kIndex2]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
   cudaError_t status = cudaErrorNotReady;
@@ -225,7 +223,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
   } else {
     S *dev_batch_indices_ = GetDeviceAddress<S>(workspace, kIndex1);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(batch_pointers_addr, 0, outputs[kIndex1]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      cudaMemsetAsync(batch_pointers_addr, 0, outputs[kIndex1]->size(), reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemset failed in DenseToCSRSparseMatrixKernelMod::Launch.");
 
     status = GatherNd(input_addr, indices_addr, values_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], info,
@@ -257,22 +255,20 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-int DenseToCSRSparseMatrixKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseToCSRSparseMatrixKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
 
-  input_shapes_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetDeviceShapeAdaptively());
-  indices_shapes_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetDeviceShapeAdaptively());
-  dense_shape_shapes_ = Convert2SizeTClipNeg(outputs[kIndex0]->GetDeviceShapeAdaptively());
-  batch_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex1]->GetDeviceShapeAdaptively());
-  row_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex2]->GetDeviceShapeAdaptively());
-  col_indices_shapes_ = Convert2SizeTClipNeg(outputs[kIndex3]->GetDeviceShapeAdaptively());
-  value_shapes_ = Convert2SizeTClipNeg(outputs[kIndex4]->GetDeviceShapeAdaptively());
+  input_shapes_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetDeviceShapeVector());
+  indices_shapes_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetDeviceShapeVector());
+  dense_shape_shapes_ = Convert2SizeTClipNeg(outputs[kIndex0]->GetDeviceShapeVector());
+  batch_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex1]->GetDeviceShapeVector());
+  row_pointers_shapes_ = Convert2SizeTClipNeg(outputs[kIndex2]->GetDeviceShapeVector());
+  col_indices_shapes_ = Convert2SizeTClipNeg(outputs[kIndex3]->GetDeviceShapeVector());
+  value_shapes_ = Convert2SizeTClipNeg(outputs[kIndex4]->GetDeviceShapeVector());
 
   nnz_ = value_shapes_[kIndex0];
   m_ = input_shapes_[kIndex0];

@@ -22,8 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-const int32_t RandomResizeOp::kDefTargetWidth = 0;
-
 Status RandomResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   const auto output_count = input.size();

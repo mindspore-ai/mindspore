@@ -75,8 +75,6 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_getnext_dynamic_pipeline_ascend():
     """
@@ -125,8 +123,6 @@ def test_getnext_sink_size_dynamic_pipeline():
             assert output.shape == last_input.shape
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_getnext_sink_size_dynamic_pipeline_ascend():
     """

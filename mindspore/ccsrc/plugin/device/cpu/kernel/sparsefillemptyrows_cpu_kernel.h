@@ -22,27 +22,39 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseFillEmptyRowsCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SparseFillEmptyRowsCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseFillEmptyRowsCpuKernelMod() = default;
   ~SparseFillEmptyRowsCpuKernelMod() override = default;
-
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
-  CNodePtr node_ptr;
   TypeId output_indices_type_;
   TypeId output_values_type_;
   TypeId output_empty_row_indicator_type_;
   TypeId output_reverse_index_type_;
+  ShapeVector out_indice_shape_dense_rows_zero_;
+  ShapeVector out_values_shape_dense_rows_zero_;
+  ShapeVector out_indice_shape_;
+  ShapeVector out_values_shape_;
+  ShapeVector out_empty_row_indicator_shape_;
+  ShapeVector out_reverse_index_shape_;
+  bool dense_rows_zero{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

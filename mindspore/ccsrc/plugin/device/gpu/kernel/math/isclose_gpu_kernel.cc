@@ -48,8 +48,9 @@ const std::vector<std::pair<KernelAttr, IsClosePtrCreatorFunc>> kernel_attr = {
    CreateIsCloseKernelPtr<uint8_t>}};
 }  // namespace
 
-bool IsCloseGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool IsCloseGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &workspace,
+                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<void *> input_ptrs = ConvertPtrs(inputs);
   std::vector<void *> work_ptrs = ConvertPtrs(workspace);
   std::vector<void *> output_ptrs = ConvertPtrs(outputs);
@@ -59,16 +60,15 @@ bool IsCloseGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   return true;
 }
 
-bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
+bool IsCloseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
   }
 
-  attr_ptr_->atol = GetValue<float>(base_operator->GetAttr("atol"));
-  attr_ptr_->rtol = GetValue<float>(base_operator->GetAttr("rtol"));
-  attr_ptr_->equal_nan = GetValue<bool>(base_operator->GetAttr("equal_nan"));
+  attr_ptr_->atol = GetValue<float>(primitive_->GetAttr("atol"));
+  attr_ptr_->rtol = GetValue<float>(primitive_->GetAttr("rtol"));
+  attr_ptr_->equal_nan = GetValue<bool>(primitive_->GetAttr("equal_nan"));
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
@@ -86,10 +86,10 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+    std::vector<size_t>(inputs[0]->GetDeviceShapeVector().begin(), inputs[0]->GetDeviceShapeVector().end());
 
   for (size_t i = 0; i < outputs.size(); i++) {
-    std::vector<int64_t> out_shape = outputs[i]->GetDeviceShapeAdaptively();
+    std::vector<int64_t> out_shape = outputs[i]->GetDeviceShapeVector();
     output_shapes.emplace_back(out_shape);
   }
 
@@ -98,14 +98,14 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     InitSizeLists();
     return true;
   }
-  for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeAdaptively());
+  for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   // is_need_retrieve_output_shape_ = true;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (size_t i = 0; i < inputs.size(); i++) {
-      auto input_shape = inputs[i]->GetDeviceShapeAdaptively();
+      auto input_shape = inputs[i]->GetDeviceShapeVector();
       if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
         is_input_dynamic_shape = true;
         break;
@@ -117,9 +117,7 @@ bool IsCloseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int IsCloseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int IsCloseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
@@ -137,7 +135,6 @@ int IsCloseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

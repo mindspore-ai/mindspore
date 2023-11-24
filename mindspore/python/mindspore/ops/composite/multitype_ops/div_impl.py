@@ -179,3 +179,13 @@ def _tensor_div_list(x, y):
     """
     y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_div(x, y)
+
+
+@div.register_default()
+def default_div(x, y):
+    """
+    Default function for div.
+   """
+    if y != 0:
+        return x / y
+    raise ValueError("division by zero")

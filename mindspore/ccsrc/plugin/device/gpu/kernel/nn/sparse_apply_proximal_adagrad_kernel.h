@@ -37,8 +37,8 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
   SparseApplyProximalAdagradKernelMod() = default;
   ~SparseApplyProximalAdagradKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *learning_rate = GetDeviceAddress<T>(inputs, 2);
@@ -50,16 +50,13 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
     T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
 
     auto status = CalSparseApplyProximalAdagrad(
-      inputs[0]->size / sizeof(T), indices_size_, learning_rate, l1_regularization, l2_regularization, gradient,
+      inputs[0]->size() / sizeof(T), indices_size_, learning_rate, l1_regularization, l2_regularization, gradient,
       indices, variable, accumulation, variable_out, accumulation_out, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     if (inputs.empty() || outputs.empty()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
       return false;
@@ -71,13 +68,11 @@ class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    auto indices_shape = inputs.at(kIndex6)->GetShapeVector();
+    auto indices_shape = inputs[kIndex6]->GetShapeVector();
     indices_size_ = SizeOf(indices_shape);
     return KRET_OK;
   }

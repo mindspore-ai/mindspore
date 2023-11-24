@@ -17,44 +17,16 @@
 #include "tools/converter/parser/onnx/onnx_arithmetic_operation_parser.h"
 #include <memory>
 #include <string>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/div_fusion.h"
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/exp_fusion.h"
-#include "ops/real_div.h"
-#include "ops/equal.h"
-#include "ops/less.h"
-#include "ops/greater.h"
-#include "ops/floor.h"
-#include "ops/abs.h"
-#include "ops/sin.h"
-#include "ops/sinh.h"
-#include "ops/asin.h"
-#include "ops/asinh.h"
-#include "ops/cos.h"
-#include "ops/cosh.h"
-#include "ops/acos.h"
-#include "ops/acosh.h"
 #include "ops/tan.h"
-#include "ops/atan.h"
-#include "ops/atanh.h"
-#include "ops/ceil.h"
-#include "ops/log.h"
-#include "ops/logical_and.h"
-#include "ops/logical_not.h"
-#include "ops/logical_or.h"
-#include "ops/logical_xor.h"
-#include "ops/neg.h"
-#include "ops/round.h"
-#include "ops/sqrt.h"
 #include "ops/fusion/pow_fusion.h"
-#include "ops/minimum.h"
-#include "ops/maximum.h"
 #include "ops/eltwise.h"
-#include "ops/reciprocal.h"
 #include "ops/mod.h"
-#include "ops/greater_equal.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -161,7 +133,7 @@ PrimitiveCPtr OnnxCoshParser::Parse(const onnx::GraphProto &onnx_graph, const on
   return prim->GetPrim();
 }
 
-PrimitiveCPtr OnnxAcosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxACosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::ACos>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim->GetPrim();
@@ -321,7 +293,7 @@ OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxAsinhParser("Asinh", new OnnxAsinhParser());
 OnnxNodeRegistrar g_onnxCosParser("Cos", new OnnxCosParser());
 OnnxNodeRegistrar g_onnxCoshParser("Cosh", new OnnxCoshParser());
-OnnxNodeRegistrar g_onnxAcosParser("Acos", new OnnxAcosParser());
+OnnxNodeRegistrar g_onnxACosParser("Acos", new OnnxACosParser());
 OnnxNodeRegistrar g_onnxAcoshParser("Acosh", new OnnxAcoshParser());
 OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
 OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());

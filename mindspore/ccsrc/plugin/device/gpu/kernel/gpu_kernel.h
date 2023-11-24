@@ -167,6 +167,34 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   template <typename T>
+  inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
+    if (index >= addr_list.size()) {
+      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    }
+
+    if (addr_list[index] == nullptr) {
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
+      MS_LOG(EXCEPTION) << "The device address is nullptr, address index: " << index << ", op name is: " << prim_name;
+    }
+
+    if (addr_list[index]->device_ptr() == nullptr) {
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
+      MS_LOG(EXCEPTION) << "The memory of device address is nullptr, address index: " << index
+                        << ", op name is: " << prim_name;
+    }
+
+    if (addr_list[index]->size() == 0) {
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
+      MS_LOG(EXCEPTION) << "The size of device address is zero, address index: " << index
+                        << ", op name is: " << prim_name;
+    }
+
+    return reinterpret_cast<T *>(addr_list[index]->device_ptr());
+  }
+  template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
       MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
@@ -195,14 +223,28 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
 
-  std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
+  std::vector<void *> ConvertPtrs(const std::vector<KernelTensor *> &input_ptrs) {
     std::vector<void *> out_ptrs;
     for (auto &cur_addr : input_ptrs) {
-      out_ptrs.emplace_back(cur_addr->addr);
+      out_ptrs.emplace_back(cur_addr->device_ptr());
     }
     return out_ptrs;
   }
 
+  template <typename T>
+  inline T *GetPossiblyNullDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
+    if (index >= addr_list.size()) {
+      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    }
+    // Kernels may run normally without workspace, the addr_list[index] maybe nullptr.
+    if ((addr_list[index] == nullptr) || (addr_list[index]->size() == 0)) {
+      return nullptr;
+    }
+    if (addr_list[index]->device_ptr() == nullptr) {
+      MS_LOG(EXCEPTION) << "The device address is empty, address index:" << index;
+    }
+    return reinterpret_cast<T *>(addr_list[index]->device_ptr());
+  }
   template <typename T>
   inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
@@ -217,7 +259,6 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     }
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
-
   template <typename T>
   inline T GetAttr(const CNodePtr &kernel_node, const std::string &key) const {
     const PrimitivePtr &prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
@@ -357,11 +398,27 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 };
 
-std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs);
+std::vector<void *> ConvertPtrs(const std::vector<KernelTensor *> &input_ptrs);
 
 // expand Nd Shape to 4d (N in [0,4])
 bool ShapeNdTo4d(const ShapeVector &src, ShapeVector *dst);
 
+template <typename T>
+inline T *GetPossiblyNullDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
+  if (index >= addr_list.size()) {
+    MS_LOG(ERROR) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    return nullptr;
+  }
+  // Kernels may run normally without workspace, the addr_list[index] maybe nullptr.
+  if ((addr_list[index] == nullptr) || (addr_list[index]->size() == 0)) {
+    return nullptr;
+  }
+  if (addr_list[index]->device_ptr() == nullptr) {
+    MS_LOG(ERROR) << "The device address is empty, address index:" << index;
+    return nullptr;
+  }
+  return reinterpret_cast<T *>(addr_list[index]->device_ptr());
+}
 template <typename T>
 inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
   if (index >= addr_list.size()) {
@@ -387,6 +444,7 @@ void ShapeNCHW2NHWC(ShapeVector *shape);
 // transpose shape: NCDHW To NDHWC
 void ShapeNCDHW2NDHWC(ShapeVector *shape);
 
+//////////////// old: format string /////////////
 void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const std::string &format);
 
 void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const std::string &format);
@@ -394,6 +452,16 @@ void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const std::s
 void SetNCHW(const ShapeVector &shape, int *n, int *c, int *h, int *w, const std::string &format);
 
 void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format);
+////////////////////////////////////////////////
+//////////////// new: format enum///////////////
+void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const mindspore::Format &format);
+
+void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const mindspore::Format &format);
+
+void SetNCHW(const ShapeVector &shape, int *n, int *c, int *h, int *w, const mindspore::Format &format);
+
+void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, const mindspore::Format &format);
+////////////////////////////////////////////////
 
 bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B, const std::vector<int> &Out);
 
@@ -412,11 +480,11 @@ bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type);
 bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2);
 
 template <typename T>
-T GetDimValue(const std::vector<AddressPtr> &inputs, const int index, const string kernel_name,
+T GetDimValue(const std::vector<KernelTensor *> &inputs, const int index, const string kernel_name,
               const TypeId &dim_type) {
   size_t size = abstract::TypeIdSize(dim_type);
   auto dim_gpu_addr =
-    std::make_shared<device::gpu::GPUDeviceAddress>(inputs[index]->addr, size, kOpFormat_DEFAULT, dim_type);
+    std::make_shared<device::gpu::GPUDeviceAddress>(inputs[index]->device_ptr(), size, kOpFormat_DEFAULT, dim_type);
   int res = 0;
   if (dim_type == kNumberTypeInt32) {
     int32_t host_dim = 0;

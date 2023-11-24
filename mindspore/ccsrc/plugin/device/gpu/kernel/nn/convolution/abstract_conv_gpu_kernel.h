@@ -63,7 +63,7 @@ class AbstractConvolutionGpuKernel {
   }
   template <typename T>
   bool LaunchKernel(const ConvolutionArgs &conv_args, const T *input0_addr, const T *input1_addr, T *output_addr,
-                    const std::vector<AddressPtr> &workspace, void *stream_ptr) {
+                    const std::vector<KernelTensor *> &workspace, void *stream_ptr) {
     switch (conv_type_) {
       case ConvType::kForward:
         return LaunchForward(conv_args, input0_addr, input1_addr, output_addr, workspace, stream_ptr);
@@ -94,11 +94,11 @@ class AbstractConvolutionGpuKernel {
                                 std::vector<size_t> *workspace_size_list) = 0;
 
   virtual bool LaunchForward(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                             void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                             void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   virtual bool LaunchInputGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                               void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                               void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   virtual bool LaunchFilterGrad(const ConvolutionArgs &conv_args, const void *input0_addr, const void *input1_addr,
-                                void *output_addr, const std::vector<AddressPtr> &workspace, void *stream_ptr) = 0;
+                                void *output_addr, const std::vector<KernelTensor *> &workspace, void *stream_ptr) = 0;
   ConvType conv_type_;
   std::string kernel_name_;
 };
@@ -132,18 +132,17 @@ static void PrintConvolutionArgs(const ConvolutionArgs &conv_args) {
                 << "beta: " << conv_args.beta;
 }
 
-static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr &base_operator,
-                              const std::vector<KernelTensorPtr> &inputs) {
-  auto prim = base_operator->GetPrim();
+static bool InitialAttributes(const PrimitivePtr &prim, ConvolutionArgs *conv_args,
+                              const std::vector<KernelTensor *> &inputs) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto kernel_name = base_operator->name();
+  auto kernel_name_ = prim->name();
   auto out_channel = static_cast<int>(GetValue<int64_t>(prim->GetAttr("out_channel")));
   auto group = static_cast<int>(GetValue<int64_t>(prim->GetAttr("group")));
   auto pad_mode = GetValue<std::string>(prim->GetAttr("pad_mode"));
 
-  auto data_type = inputs[0]->GetDtype();
+  auto data_type = inputs[0]->dtype_id();
   auto data_format_attr = GetValue<std::string>(prim->GetAttr("format"));
-  auto data_format = mindspore::FormatEnumToString(inputs[0]->GetFormat());
+  auto data_format = mindspore::FormatEnumToString(inputs[0]->format());
   if (data_format == kOpFormat_DEFAULT) {
     data_format = kOpFormat_NCHW;
   }
@@ -152,21 +151,22 @@ static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr 
   }
   auto stride_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("stride"));
   if (stride_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'stride' must be 4, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' must be 4, but got "
                       << stride_attr.size();
   }
 
   auto dilation_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
   if (dilation_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'dilation' must be 4, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 4, but got "
                       << dilation_attr.size();
   }
   auto pad_list_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("pad_list"));
   if (pad_list_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'pad' must be 4, but got " << pad_list_attr.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got "
+                      << pad_list_attr.size();
   }
 
-  conv_args->kernel_name = kernel_name;
+  conv_args->kernel_name = kernel_name_;
   conv_args->out_channel = out_channel;
   conv_args->group = group;
   conv_args->pad_mode = pad_mode;

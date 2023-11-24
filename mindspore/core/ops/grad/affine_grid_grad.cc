@@ -42,6 +42,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,21 +53,22 @@ constexpr int kLenImageSize3D = 5;
 abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
 
   auto y_grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
   if (y_grad_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   auto x_size_arg = input_args[kInputIndex1];
-  auto x_size_value_ptr = x_size_arg->BuildValue();
-  if ((x_size_arg->isa<abstract::AbstractTuple>() && x_size_value_ptr->isa<ValueTuple>()) ||
-      (x_size_arg->isa<abstract::AbstractTensor>() && x_size_value_ptr->isa<tensor::Tensor>())) {
+  auto x_size_value_ptr = x_size_arg->GetValue();
+  if (IsValueKnown(x_size_value_ptr)) {
     ShapeVector x_size_val;
-    if (x_size_value_ptr->isa<ValueTuple>()) {
+    auto x_size_obj_type = x_size_arg->GetType()->object_type();
+    if (x_size_obj_type == kObjectTypeTuple) {
       x_size_val = CheckAndConvertUtils::CheckTupleInt("input[x_size]", x_size_value_ptr, prim_name);
-    } else if (x_size_value_ptr->isa<tensor::Tensor>()) {  // 2-rd infer will be a tensor
-      x_size_val = CheckAndConvertUtils::CheckTensorIntValue("x_size", x_size_value_ptr, prim_name);
+    } else if (x_size_obj_type == kObjectTypeTensorType) {  // 2-rd infer will be a tensor
+      x_size_val =
+        CheckAndConvertUtils::CheckTensorIntValue("x_size", x_size_value_ptr, prim_name, x_size_arg->GetType());
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
                               << "the input[x_size] must be a tuple of int.";
@@ -130,12 +132,12 @@ abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
 
 TypePtr AffineGridGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
-  auto y_grad_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto y_grad_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(y_grad_type);
   const std::set<TypePtr> y_grad_valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y_grad", y_grad_type, y_grad_valid_types, op_name);
-  auto x_size_type = input_args[kInputIndex1]->BuildType();
+  auto x_size_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(x_size_type);
   const std::set<TypePtr> x_size_valid_types = {kTensorType, kTuple};  // 2-rd infer will be a tensor.
   (void)CheckAndConvertUtils::CheckTypeValid("x_size", x_size_type, x_size_valid_types, op_name);

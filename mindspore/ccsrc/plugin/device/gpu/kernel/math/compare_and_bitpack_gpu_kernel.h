@@ -30,8 +30,8 @@ class CompareAndBitpackGpuKernelMod : public NativeGpuKernelMod {
   CompareAndBitpackGpuKernelMod() { ResetResource(); }
   ~CompareAndBitpackGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
@@ -39,11 +39,9 @@ class CompareAndBitpackGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -53,11 +51,11 @@ class CompareAndBitpackGpuKernelMod : public NativeGpuKernelMod {
   void CheckCompareAndBitpackShape();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs);
   using CompareAndBitpackFunc =
-    std::function<bool(CompareAndBitpackGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(CompareAndBitpackGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
   size_t x_unit_size_{1};
@@ -66,7 +64,7 @@ class CompareAndBitpackGpuKernelMod : public NativeGpuKernelMod {
   size_t x_count_{};
   size_t y_count_{};
   void *cuda_stream_{nullptr};
-  BaseOperatorPtr kernel_ptr_{nullptr};
+
   cudnnHandle_t cudnn_handle_{};
   curandGenerator_t curand_generator_{nullptr};
   CompareAndBitpackFunc kernel_func_{};

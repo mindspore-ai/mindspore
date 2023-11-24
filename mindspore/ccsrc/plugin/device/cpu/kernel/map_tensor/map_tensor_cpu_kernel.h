@@ -27,22 +27,11 @@ class MapTensorCpuKernelMod : public NativeCpuKernelMod {
   MapTensorCpuKernelMod() = default;
   ~MapTensorCpuKernelMod() override = default;
 
-  void set_input_user_data(UserData *const user_data, size_t input_index) override {
-    input_user_data_[input_index] = user_data;
-  }
-  void set_output_user_data(UserData *const user_data, size_t output_index) override {
-    output_user_data_[output_index] = user_data;
-  }
-
  protected:
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-
-  std::map<size_t, UserData *> input_user_data_;
-  std::map<size_t, UserData *> output_user_data_;
 };
 }  // namespace kernel
 }  // namespace mindspore

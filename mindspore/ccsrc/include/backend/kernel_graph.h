@@ -157,6 +157,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const;
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
+  ValueNodePtr NewValueNode(const ValuePtr &input_value);
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
@@ -190,9 +191,11 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // add value node tensor relation map
   void TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node);
   // get all value nodes of graph
-  const mindspore::HashSet<ValueNodePtr> &graph_value_nodes() const { return graph_value_nodes_; }
+  mindspore::HashSet<ValueNodePtr> graph_value_nodes() const;
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
+  // remove value node form graph
+  bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
   void ClearAllValueNode() { graph_value_nodes_.clear(); }
   // ref output is in map
   bool IsInRefOutputMap(const AnfWithOutIndex &pair) const;
@@ -518,8 +521,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
 
  private:
-  // remove value node form graph
-  bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
 
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value);
@@ -545,8 +546,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<AnfNodePtr, AnfWithOutIndex> tuple_backend_front_anf_index_map_;
   // there may be a tensor from ME backend ,a value ndoe will be create according the tensor,map record
   mindspore::HashMap<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
-  // include all value nodes
-  mindspore::HashSet<ValueNodePtr> graph_value_nodes_;
+  // include all value nodes, this second size_t represents the number of times value_node is used in the graph.
+  mindspore::HashMap<ValueNodePtr, size_t> graph_value_nodes_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;

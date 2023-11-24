@@ -57,8 +57,6 @@ class BatchToSpaceNDDynamicShapeNetMS(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_batch_to_space_nd_dynamic():
     """

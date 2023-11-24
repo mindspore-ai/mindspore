@@ -23,15 +23,13 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomHorizontalFlipWithBBoxOp::kDefProbability = 0.5;
-
 Status RandomHorizontalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
   RETURN_IF_NOT_OK(ValidateImageDtype("RandomHorizontalFlipWithBBox", input[0]->type()));
   RETURN_IF_NOT_OK(ValidateImageRank("RandomHorizontalFlipWithBBox", input[0]->Rank()));
 
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     // To test bounding boxes algorithm, create random bboxes from image dims
     size_t num_of_boxes = input[1]->shape()[0];                         // set to give number of bboxes
     float img_center = static_cast<float>(input[0]->shape()[1]) / 2.F;  // get the center of the image

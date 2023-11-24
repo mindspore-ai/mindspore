@@ -27,9 +27,9 @@ constexpr size_t kOutputNum = 2;
 constexpr size_t kWorkSpaceIndex = 2;
 }  // namespace
 
-bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool UniqueCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                const std::vector<kernel::KernelTensor *> &workspace,
+                                const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t, int64_t>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeInt8) {
@@ -57,8 +57,9 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename DataType, typename IndexType>
-void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+void UniqueCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (input_size_ == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the input size is 0.";
     return;
@@ -76,12 +77,12 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                       << ", but got: " << outputs.size();
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
-  params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);
-  params->input_idx_ = reinterpret_cast<IndexType *>(workspace[0]->addr);
-  params->workspace_ = reinterpret_cast<DataType *>(workspace[1]->addr);
-  params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[kWorkSpaceIndex]->addr);
-  params->output_ = reinterpret_cast<DataType *>(outputs[0]->addr);
-  params->inverse_idx_ = reinterpret_cast<IndexType *>(outputs[1]->addr);
+  params->input_ = reinterpret_cast<DataType *>(inputs[0]->device_ptr());
+  params->input_idx_ = reinterpret_cast<IndexType *>(workspace[0]->device_ptr());
+  params->workspace_ = reinterpret_cast<DataType *>(workspace[1]->device_ptr());
+  params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[kWorkSpaceIndex]->device_ptr());
+  params->output_ = reinterpret_cast<DataType *>(outputs[0]->device_ptr());
+  params->inverse_idx_ = reinterpret_cast<IndexType *>(outputs[1]->device_ptr());
   params->input_size_ = input_size_;
   params->output_size_ = 0;
 

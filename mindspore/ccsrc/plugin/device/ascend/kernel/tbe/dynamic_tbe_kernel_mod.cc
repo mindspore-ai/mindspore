@@ -16,9 +16,6 @@
 
 #include "plugin/device/ascend/kernel/tbe/dynamic_tbe_kernel_mod.h"
 
-#include <algorithm>
-#include <stack>
-#include <utility>
 #include "ops/nn_op_name.h"
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"

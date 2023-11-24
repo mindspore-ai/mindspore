@@ -33,11 +33,8 @@ constexpr size_t kIndicesIndex = 5;
 constexpr size_t kOutputIndex = 0;
 }  // namespace
 
-bool SparseApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool SparseApplyProximalGradientDescentGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -45,27 +42,25 @@ bool SparseApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+  unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  unit_var_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
-  unit_indices_size_ = GetTypeByte(TypeIdToType(inputs[kIndicesIndex]->GetDtype()));
+  unit_var_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
+  unit_indices_size_ = GetTypeByte(TypeIdToType(inputs[kIndicesIndex]->dtype_id()));
 
   return true;
 }
 
-int SparseApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs,
-                                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseApplyProximalGradientDescentGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kSparseApplyProximalGradientDescentInputsNum) {
+  if (inputs.size() != kSparseApplyProximalGradientDescentInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6.";
     return KRET_RESIZE_FAILED;
   }
@@ -139,22 +134,22 @@ int SparseApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr
 }
 
 template <typename T, typename S>
-bool SparseApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &workspace,
-                                                                  const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
-  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->addr);
-  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
-  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
-  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto var_out = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+bool SparseApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &workspace,
+                                                                  const std::vector<KernelTensor *> &outputs) {
+  auto var = reinterpret_cast<T *>(inputs[kVarIndex]->device_ptr());
+  auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->device_ptr());
+  auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->device_ptr());
+  auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->device_ptr());
+  auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->device_ptr());
+  auto indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->device_ptr());
+  auto var_out = reinterpret_cast<T *>(outputs[kOutputIndex]->device_ptr());
 
-  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->addr);
-  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->addr);
-  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->addr);
-  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->addr);
-  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->addr);
+  auto *indices_sort = reinterpret_cast<S *>(workspace[kIndex0]->device_ptr());
+  auto *rows_index = reinterpret_cast<int32_t *>(workspace[kIndex1]->device_ptr());
+  auto *thready_pos = reinterpret_cast<int32_t *>(workspace[kIndex2]->device_ptr());
+  auto *thready_pos_shrink = reinterpret_cast<int32_t *>(workspace[kIndex3]->device_ptr());
+  auto *shrink_num = reinterpret_cast<int32_t *>(workspace[kIndex4]->device_ptr());
 
   std::vector<S> indices_host(global_indices_shape_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

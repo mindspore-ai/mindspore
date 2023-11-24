@@ -55,7 +55,7 @@ TypePtr DigammaInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input = input_args[0]->BuildType();
+  auto input = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input, valid_types, prim_name);
   return input;
 }

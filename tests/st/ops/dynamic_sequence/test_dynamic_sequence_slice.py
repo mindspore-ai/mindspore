@@ -108,25 +108,53 @@ def test_seq_slice_mutable():
     assert np.allclose(out, ex)
 
 
+sequence_data_ = [
+    mutable([Tensor([1, 2, 3]), Tensor([4, 5, 6]), Tensor([7, 8, 9]),
+             Tensor([7, 8, 9]), Tensor([7, 8, 9])], dynamic_len=True),
+    mutable([Tensor([1]), Tensor([2]), Tensor([3]), Tensor([5]), Tensor([79])], dynamic_len=True),
+    mutable((1, 2, 3, 5, 6, -45, -12, 4), dynamic_len=True),
+    mutable([Tensor(1), Tensor(-1), Tensor(45), Tensor(-9878), Tensor(1121), Tensor(1)], dynamic_len=True),
+    mutable((mutable(1), mutable(2), mutable(-10), mutable(1), mutable(1), 45, mutable(1)), dynamic_len=True),
+    mutable([Tensor([[1, 2, 3], [4, 5, 6]]), Tensor([[1, 2, 3], [4, 5, 6]]), Tensor([[1, 2, 3], [4, 5, 6]]),
+             Tensor([[1, 2, 3], [4, 5, 6]]), Tensor([[1, 2, 3], [4, 5, 6]])], dynamic_len=True),
+    mutable([Tensor([[1, 2, 3], [4, -5, 6]]), Tensor([[1, 2, 3], [4, -5, 6]]), Tensor([[111, 2, 3], [4, -125, -126]]),
+             Tensor([[1, 2, 3], [4, 5, 6]]), Tensor([[1, 2, 3], [4, 5, 6]])], dynamic_len=True)
+]
+start_stop_step_ = [
+    (mutable(-100), mutable(5), mutable(2)),
+    (-100, 5, 1),
+    (-1, -5, -2),
+    (-1, -4, -1),
+    (5, mutable(2), -2),
+    (8, 1, -2),
+    (mutable(3), 5, 1),
+]
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_seq_slice_mutable_typeerror():
+@pytest.mark.parametrize("sequence_data", sequence_data_)
+@pytest.mark.parametrize("start_stop_step", start_stop_step_)
+def test_seq_slice_mutable_and_tensor(sequence_data, start_stop_step):
     """
     Feature: test sequence_slice mutable
     Description: slice operation on tuple type which will cause type error
     Expectation: the behavior is matched to python style
     """
     class Net(nn.Cell):
-        def construct(self, x, a, b):
-            out = x[a:b]
+        def construct(self, x, a, b, c):
+            out = x[a:b:c]
             return out
 
-    x = mutable([Tensor([1, 1]), Tensor([1, 1])], dynamic_len=True)
-    a, b = 1, 2
+    x = sequence_data
+    a, b, c = start_stop_step
     net = Net()
-    with pytest.raises(TypeError):
-        net(x, a, b)
+    ex = x[a:b:c]
+    out = net(x, a, b, c)
+    if isinstance(out[0], (float, int)):
+        np.allclose(out, ex)
+    else:
+        for out_item, ex_item in zip(out, ex):
+            assert np.allclose(out_item.asnumpy(), ex_item.asnumpy())
 
 
 @pytest.mark.level1

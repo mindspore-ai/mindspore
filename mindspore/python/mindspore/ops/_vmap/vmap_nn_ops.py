@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+# pylint: disable=unused-variable
 """nn_ops vmap impl."""
 from __future__ import absolute_import
 
@@ -28,6 +29,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
+from mindspore.ops.auto_generate.gen_enum_def import PyFormat
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -366,20 +368,17 @@ def get_bce_with_logits_loss_vamp_rule(prim, axis_size):
 @vmap_rules_getters.register(P.BiasAdd)
 def get_bias_add_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAdd` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        data_format = "NCHW"
-    else:
-        data_format = prim.data_format
     add_op = P.Add()
 
     @constexpr
-    def get_channal_pos_in_x(d_format):
-        return d_format.find('C') + 1
+    def get_channal_pos_in_x(d_format, n_dims):
+        if d_format == PyFormat.NHWC:
+            return n_dims
+        return 2
 
     @_primexpr
     def get_bias_dst_shape(x_shape, n_dims, d_format, has_b_dim: bool):
-        pos = get_channal_pos_in_x(d_format)
+        pos = get_channal_pos_in_x(d_format, n_dims)
 
         bias_shape = []
         for i in range(n_dims):
@@ -393,13 +392,14 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
         return tuple(bias_shape)
 
-    def vmap_rule(x_bdim, bias_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, bias_bdim)
+    def vmap_rule(x_bdim, bias_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, bias_bdim, data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         b, b_dim = bias_bdim
+        data_format_data, _ = data_format_bdim
 
         x = _bdim_at_front(x, x_dim, axis_size)
         has_b_dim = False
@@ -409,7 +409,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
         x_shape = x.shape
         n_dims = len(x_shape)
-        b_shape = get_bias_dst_shape(x_shape, n_dims, data_format, has_b_dim)
+        b_shape = get_bias_dst_shape(x_shape, n_dims, data_format_data, has_b_dim)
 
         b = b.reshape(b_shape)
         result = add_op(x, b)
@@ -422,19 +422,15 @@ def get_bias_add_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.BiasAddGrad)
 def get_bias_add_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAddGrad` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        data_format = "NCHW"
-    else:
-        data_format = prim.data_format
-
     @constexpr
-    def get_channal_pos(d_format):
-        return d_format.find('C') + 1
+    def get_channal_pos(d_format, x_rank):
+        if d_format == PyFormat.NHWC:
+            return x_rank
+        return 2
 
     @_primexpr
     def get_axis_for_reduce(x_shape_rank, data_format):
-        channal_pos = get_channal_pos(data_format)
+        channal_pos = get_channal_pos(data_format, x_shape_rank)
         axis_list = ()
         for i in range(1, x_shape_rank):
             if channal_pos == i:
@@ -443,16 +439,17 @@ def get_bias_add_grad_vmap_rule(prim, axis_size):
 
         return axis_list
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        data_format_data, _ = data_format_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape_rank = len(x.shape)
 
-        axis_for_reduce = get_axis_for_reduce(x_shape_rank, data_format)
+        axis_for_reduce = get_axis_for_reduce(x_shape_rank, data_format_data)
 
         result = x.sum(axis=axis_for_reduce)
         return (result, 0)
@@ -517,16 +514,11 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.FastGeLUGrad)
-@vmap_rules_getters.register(G.HShrinkGrad)
 @vmap_rules_getters.register(G.HSwishGrad)
 @vmap_rules_getters.register(G.SoftShrinkGrad)
 def get_common_activation_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
-    if isinstance(prim, str):
-        prim_name = prim
-        prim = Primitive(prim)
-    else:
-        prim_name = prim.name
+    prim_name = prim.name
 
     def vmap_rule(x_bdim, dy_bdim):
         x, x_dim = x_bdim
@@ -548,6 +540,49 @@ def get_common_activation_grad_vmap_rule(prim, axis_size):
                                "after batch transforming, but got x_shape {}, dy_shape {}"
                                .format(prim_name, x_shape, dy_shape))
         out = prim(x, dy)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register("HShrink")
+def get_hshrink_vmap_rule(prim, axis_size):
+    """VmapRule for `HShrink`."""
+    def vmap_rule(x_bdim, lambd_bdim):
+        var, dim = x_bdim
+        lambd, _ = lambd_bdim
+        out = prim(var, lambd)
+        return out, dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register("HShrinkGrad")
+def get_hshrink_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `HShrinkGrad`."""
+    prim_name = prim.name
+
+    def vmap_rule(dy_bdim, x_bdim, lambd_bdim):
+        x, x_dim = x_bdim
+        lambd, _ = lambd_bdim
+        dy, dy_dim = dy_bdim
+        x_shape = F.shape(x)
+        dy_shape = F.shape(dy)
+        if x_dim == dy_dim and x_shape == dy_shape:
+            out = prim(dy, x, lambd)
+            return out, x_dim
+
+        if F.rank(x):
+            x = _bdim_at_front(x, x_dim, 1)
+        if F.rank(dy):
+            dy = _bdim_at_front(dy, dy_dim, 1)
+        x_shape = F.shape(x)
+        dy_shape = F.shape(dy)
+        if x_shape != dy_shape:
+            raise RuntimeError("For {} vmap, input x shape is supposed to be the same as input dy shape "
+                               "after batch transforming, but got x_shape {}, dy_shape {}"
+                               .format(prim_name, x_shape, dy_shape))
+        out = prim(dy, x, lambd)
         return out, 0
 
     return vmap_rule
@@ -636,21 +671,21 @@ def get_matmul_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Softmax)
+@vmap_rules_getters.register("Softmax")
 def get_softmax_vmap_rule(prim, axis_size):
     """VmapRule for `Softmax`"""
-    axis = prim.axis[0]
-    if isinstance(axis, tuple):
-        axis = axis[0]
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
         x_ndim = F.rank(x)
+        if not F.isconstant(axis) or not F.isconstant(x_ndim):
+            raise ValueError
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        out = P.Softmax(batch_axis)(x)
+        out = prim(x, batch_axis)
         return out, x_dim
 
     return vmap_rule
@@ -710,22 +745,27 @@ def get_adaptive_avgpool3d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.AvgPool)
+@vmap_rules_getters.register("AvgPool")
 def get_avgpool_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPool`."""
     chw_reverse_index = -3
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, kernel_size_bdim, strides_bdim, pad_mode_bdim, data_format_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, kernel_size_bdim, strides_bdim, pad_mode_bdim,
+                                                      data_format_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
+        kernel_size, _ = kernel_size_bdim
+        strides, _ = strides_bdim
+        pad_mode, _ = pad_mode_bdim
+        data_format, _ = data_format_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape = F.shape(x)
         input_shape = (-1,) + x_shape[chw_reverse_index:]
         x = F.reshape(x, input_shape)
-        out = prim(x)
+        out = prim(x, kernel_size, strides, pad_mode, data_format)
         out_shape = F.shape(out)
         real_out_shape = x_shape[:chw_reverse_index] + out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)
@@ -982,18 +1022,14 @@ def get_smooth_l1_loss_grad_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.nn_ops.LogSoftmax)
-def get_log_softmax_vmap_rule(prim, axis_size):
+def get_log_softmax_vmap_rule(prim_func, axis_size):
     """VmapRule for 'LogSoftmax' operation."""
-    if isinstance(prim, str):
-        axis = -1
-    else:
-        axis = prim.axis
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim_func, x_bdim, axis_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
+        axis, _ = axis_bdim
         x_ndim = F.rank(x) - 1
 
         batch_axis = axis + x_ndim if axis < 0 else axis
@@ -1212,35 +1248,33 @@ def get_batchnorm_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNorm` operation."""
     bn_min_dim = 3
     bn_max_dim = 5
-    is_training = prim.is_training
-    prim_name = prim.name
-    data_format = prim.data_format
+    prim_name = "BatchNorm"
+    NCHW = PyFormat.NCHW.value
 
     def vmap_rule(*inputs):
-        x_bdim = inputs[0]
-        scale_bdim = inputs[1]
-        offset_bdim = inputs[2]
-        mean_bdim = inputs[3]
-        var_bdim = inputs[4]
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, scale_bdim, offset_bdim, mean_bdim, var_bdim)
+        is_all_none, result = vmap_general_preprocess(prim, *inputs)
         if is_all_none:
             return result
+        input_x, input_x_dim = inputs[0]
+        scale, scale_dim = inputs[1]
+        offset, offset_dim = inputs[2]
+        mean, mean_dim = inputs[3]
+        var, var_dim = inputs[4]
+        is_training, _ = inputs[5]
+        epsilon, _ = inputs[6]
+        momentum, _ = inputs[7]
+        data_format, _ = inputs[8]
         if is_training:
             raise ValueError("Operator {} does not support Vmap during training, since the input `scale, offset, mean, "
                              "var of BatchNorm are parameters when is_training = true. If multiple batches of input "
                              "data share the same parameters, please stack batches to the N dimension manually."
                              .format(prim_name))
-        input_x, input_x_dim = x_bdim
-        scale, scale_dim = scale_bdim
-        offset, offset_dim = offset_bdim
-        mean, mean_dim = mean_bdim
-        var, var_dim = var_bdim
         x_ndim = F.rank(input_x)
         if x_ndim < bn_min_dim or x_ndim > bn_max_dim:
             raise ValueError("The dim of `input_x` in `{}` must be larger than {} and less than {}, "
                              "but got {}.".format(prim_name, bn_min_dim - 1, bn_max_dim + 1, x_ndim))
         # Move input_x axis to the dim front of C
-        out_axis = 1 if data_format == "NCHW" else x_ndim - 2
+        out_axis = 1 if data_format == NCHW else x_ndim - 2
         input_x = _bdim_at_any(input_x, input_x_dim, out_axis, axis_size)
         scale = _bdim_at_front(scale, scale_dim, axis_size)
         offset = _bdim_at_front(offset, offset_dim, axis_size)
@@ -1248,13 +1282,14 @@ def get_batchnorm_vmap_rule(prim, axis_size):
         var = _bdim_at_front(var, var_dim, axis_size)
         x_shape = input_x.shape
         other_shape = scale.shape
-        vmap_shape = (x_shape[0], -1,) + x_shape[3:] if data_format == "NCHW" else x_shape[:-2] + (-1,)
+        vmap_shape = (x_shape[0], -1,) + x_shape[3:] if data_format == NCHW else x_shape[:-2] + (-1,)
         input_x = F.reshape(input_x, vmap_shape)
         scale = scale.flatten()
         offset = offset.flatten()
         mean = mean.flatten()
         var = var.flatten()
-        out, batch_mean, batch_var, rsv_1, rsv_2 = prim(input_x, scale, offset, mean, var)
+        out, batch_mean, batch_var, rsv_1, rsv_2 =\
+            prim(input_x, scale, offset, mean, var, is_training, epsilon, momentum, data_format)
         out = F.reshape(out, x_shape)
         batch_mean = F.reshape(batch_mean, other_shape)
         batch_var = F.reshape(batch_var, other_shape)
@@ -1803,37 +1838,39 @@ def get_max_pool_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.LayerNorm)
+@vmap_rules_getters.register("LayerNorm")
 def get_layernorm_vmap_rule(prim, axis_size):
     """VmapRule for `LayerNorm` operation."""
 
-    @constexpr
     def process_attr_axis(prim_attr_axis):
         if prim_attr_axis < 0:
             return prim_attr_axis
         return prim_attr_axis + 1
 
-    norm_axis = process_attr_axis(prim.begin_norm_axis)
-    params_axis = process_attr_axis(prim.begin_params_axis)
-    batch_prim = P.LayerNorm(norm_axis, params_axis, prim.epsilon)
-
     @_primexpr
     def get_logical_shape(var_shape):
         return var_shape[1:]
 
-    def vmap_rule(x_bdim, gamma_bdim, beta_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, gamma_bdim, beta_bdim)
+    def vmap_rule(x_bdim, gamma_bdim, beta_bdim, begin_norm_axis_bdim, begin_params_axis_bdim, epsilon_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, gamma_bdim, beta_bdim, begin_norm_axis_bdim,
+                                                      begin_params_axis_bdim, epsilon_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         g, g_dim = gamma_bdim
         b, b_dim = beta_bdim
+        begin_norm_axis, _ = begin_norm_axis_bdim
+        begin_params_axis, _ = begin_params_axis_bdim
+        epsilon, _ = epsilon_bdim
+
+        begin_norm_axis = process_attr_axis(begin_norm_axis)
+        begin_params_axis = process_attr_axis(begin_params_axis)
 
         x = _bdim_at_front(x, x_dim, axis_size)
 
         if g_dim is None and b_dim is None:
-            output, mean, var = batch_prim(x, g, b)
+            output, mean, var = prim(x, g, b, begin_norm_axis, begin_params_axis, epsilon)
             return (output, 0), (mean, 0), (var, 0)
 
         g = _bdim_at_front(g, g_dim, axis_size)
@@ -1843,7 +1880,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
 
         ones_like_g = F.ones(g_logical_shape, F.dtype(g))
         zeros_like_b = F.zeros(b_logical_shape, F.dtype(b))
-        output_tmp, mean, var = batch_prim(x, ones_like_g, zeros_like_b)
+        output_tmp, mean, var = prim(x, ones_like_g, zeros_like_b, begin_norm_axis, begin_params_axis, epsilon)
 
         x_shape = F.shape(x)
         g_shape = F.shape(g)
@@ -1864,16 +1901,23 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
     prim_name = prim.name
     if prim_name == "GridSampler2D":
         non_batch_dim_index = -3
-    else:
+    elif prim_name == "GridSampler3D":
         non_batch_dim_index = -4
+    else:
+        _raise_value_error(
+            "The prim name must be `GridSampler2D` or `GridSampler3D`, but got {}.".format(prim_name))
 
-    def vmap_rule(input_x_bdim, grid_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, input_x_bdim, grid_bdim)
+    def vmap_rule(input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim)
         if is_all_none:
             return result
 
         input_x, input_x_dim = input_x_bdim
         grid, grid_dim = grid_bdim
+        interpolation_mode, _ = interpolation_mode_bdim
+        padding_mode, _ = padding_mode_bdim
+        align_corners, _ = align_corners_bdim
 
         input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
         input_x_shape = F.shape(input_x)
@@ -1883,7 +1927,7 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
         grid_shape = F.shape(grid)
         grid = F.reshape(grid, (-1,) + grid_shape[non_batch_dim_index:])
 
-        out = prim(input_x, grid)
+        out = prim(input_x, grid, interpolation_mode, padding_mode, align_corners)
         out_shape = F.shape(out)
         return_shape = input_x_shape[:non_batch_dim_index] + out_shape[non_batch_dim_index:]
         out = F.reshape(out, return_shape)
@@ -2054,17 +2098,46 @@ def get_dense_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.CeLU)
+def get_logit_vmap_rule(prim, axis_size):
+    """VmapRule for `CeLU` operation"""
+
+    def vmap_rule(x_bdim, alpha_bdim):
+        x_data, x_dim = x_bdim
+        alpha_data, alpha_dim = alpha_bdim
+        out = F.celu(x_data, alpha_data)
+        return out, x_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Elu)
+def get_elu_vmap_rule(prim, axis_size):
+    """VmapRule for Elu operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, alpha_bdim):
+        var, dim = x_bdim
+        alpha, alpha_dim = alpha_bdim
+
+        if alpha_dim is not None:
+            _raise_value_error("The source alpha of `alpha` in ELu must be None, but got {}.".format(alpha_dim))
+
+        out = prim(var, alpha)
+        return out, dim
+
+    return vmap_rule
+
+
 # Unary vmap
-get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.CeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSigmoid)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Softplus)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Softsign)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SoftShrink)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.HShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.GeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.FastGeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSwish)(get_unop_vmap_rule)
@@ -2073,3 +2146,5 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Tanh)(get_unop_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.TanhGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.SoftplusGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register('ReluGrad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('ReLU6Grad')(get_unary_grad_vmap_rule)
+get_unary_grad_vmap_rule = vmap_rules_getters.register('RsqrtGrad')(get_unary_grad_vmap_rule)

@@ -126,8 +126,6 @@ def test_np_print_2():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_tensor_print_1():
     """
     Feature: JIT Fallback
@@ -154,8 +152,6 @@ def test_tensor_print_1():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_print_cnode_1():
     """
     Feature: JIT Fallback
@@ -184,8 +180,6 @@ def test_print_cnode_1():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_print_cnode_2():
     """
     Feature: JIT Fallback
@@ -411,8 +405,6 @@ def test_print_string_add_string():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_print_list():
     """
     Feature: JIT Fallback
@@ -439,8 +431,6 @@ def test_print_list():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_print_tuple():
     """
     Feature: JIT Fallback
@@ -523,7 +513,7 @@ def test_print_exception():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -548,15 +538,14 @@ def test_print_joinedstr():
         sys.stdout.flush()
         time.sleep(0.1)
 
-    patterns = {"Tensor(x): [1 2 3 4 5], dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
+    patterns = {"Tensor(x): Tensor(shape=[5], dtype=Int64, value=[1 2 3 4 5]),"
+                " dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
     check_output(cap.output, patterns)
 
 
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 def test_print_param_value():
     """
     Feature: graph print parameter value.
@@ -608,8 +597,6 @@ def judge_tuple_index_dim_lambda(data, tuple_index):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_in_lambda_func_graph_with_isolate_node():
     """

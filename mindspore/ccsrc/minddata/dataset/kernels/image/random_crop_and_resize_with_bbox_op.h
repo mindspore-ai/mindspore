@@ -25,10 +25,8 @@ namespace dataset {
 class RandomCropAndResizeWithBBoxOp : public RandomCropAndResizeOp {
  public:
   //  Constructor for RandomCropAndResizeWithBBoxOp, with default value and passing to base class constructor
-  RandomCropAndResizeWithBBoxOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
-                                float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb,
-                                float aspect_ub = kDefAspectUb, InterpolationMode interpolation = kDefInterpolation,
-                                int32_t max_attempts = kDefMaxIter)
+  RandomCropAndResizeWithBBoxOp(int32_t target_height, int32_t target_width, float scale_lb, float scale_ub,
+                                float aspect_lb, float aspect_ub, InterpolationMode interpolation, int32_t max_attempts)
       : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation,
                               max_attempts) {}
 

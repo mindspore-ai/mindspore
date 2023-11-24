@@ -33,14 +33,9 @@ constexpr size_t kInputIndex3 = 3;
 constexpr size_t kInputIndex4 = 4;
 }  // namespace
 
-bool MaxUnpool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool3D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  data_format_ = kernel_ptr->get_format();
+bool MaxUnpool3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -55,19 +50,18 @@ bool MaxUnpool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MaxUnpool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaxUnpool3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   constexpr size_t output_index = 0;
   constexpr size_t input_index = 0;
   constexpr size_t indices_index = 1;
-  output_shape_ = outputs[output_index]->GetDeviceShapeAdaptively();
-  input_shape_ = inputs[input_index]->GetDeviceShapeAdaptively();
-  indices_shape_ = inputs[indices_index]->GetDeviceShapeAdaptively();
+  output_shape_ = outputs[output_index]->GetDeviceShapeVector();
+  input_shape_ = inputs[input_index]->GetDeviceShapeVector();
+  indices_shape_ = inputs[indices_index]->GetDeviceShapeVector();
   return KRET_OK;
 }
 
@@ -79,17 +73,17 @@ void MaxUnpool3DCpuKernelMod::OutPutInitKernel(DATA_T *raw_output, size_t length
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxUnpool3DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxUnpool3DCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxUnpool3DInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxUnpool3DOutputsNum, kernel_name_);
-  if (outputs[kInputIndex0]->size == 0) {
+  if (outputs[kInputIndex0]->size() == 0) {
     MS_LOG(WARNING) << "MaxUnpool3D output memory size should be greater than 0, but got 0.";
     return false;
   }
-  auto *raw_input = static_cast<DATA_T *>(inputs[kInputIndex0]->addr);
-  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex1]->addr);
-  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
+  auto *raw_input = static_cast<DATA_T *>(inputs[kInputIndex0]->device_ptr());
+  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex1]->device_ptr());
+  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->device_ptr());
   size_t num_batch = static_cast<size_t>(input_shape_[kInputIndex0]);
   if (data_format_ == "NDHWC") {
     size_t input_depth = LongToSize(input_shape_[kInputIndex1]);

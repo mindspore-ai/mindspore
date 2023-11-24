@@ -32,6 +32,7 @@ class SingleOpInferSession : public InferSession {
   ~SingleOpInferSession() override = default;
   Status Init(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {}) override;
   Status AscendInit(const std::shared_ptr<Context> &context);
+  static void AscendFinalize();
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
                       uint32_t *graph_id = nullptr) override;
   Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,

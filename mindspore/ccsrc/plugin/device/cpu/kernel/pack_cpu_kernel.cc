@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ namespace {
 constexpr size_t kPackOutputsNum = 1;
 }  // namespace
 
-bool PackFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool PackFwdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input_num_ = inputs.size();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -41,15 +39,13 @@ bool PackFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int PackFwdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-  axis_ = kernel_ptr->get_axis();
+
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   if (axis_ < 0) {
     auto input_shape = inputs.at(kIndex0)->GetShapeVector();
     axis_ += (SizeToInt(input_shape.size()) + 1);
@@ -72,14 +68,14 @@ int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return KRET_OK;
 }
 template <typename T>
-bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
-  auto *output = reinterpret_cast<char *>(outputs[0]->addr);
+  auto *output = reinterpret_cast<char *>(outputs[0]->device_ptr());
   std::vector<char *> inputs_host;
   for (size_t i = 0; i < inputs.size(); i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[i]->addr));
+    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[i]->device_ptr()));
   }
 
   // multi-threading

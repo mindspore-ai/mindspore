@@ -40,7 +40,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr TruncInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[0]->BuildShape();
+  auto x_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   auto output_shape = x_shape->cast<abstract::ShapePtr>();
   return output_shape;
@@ -50,7 +50,7 @@ TypePtr TruncInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(prim);
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
   std::set<TypePtr> check_list = {kFloat16, kFloat32, kInt8, kInt32, kUInt8, kFloat64};
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());
   return input_type;
 }

@@ -69,19 +69,16 @@ void LeImpl(const T *in_x, const S *in_y, bool *out, const size_t in_x_size, con
   *out = LessImpl(in_x, in_y, in_x_size, in_y_size, true);
 }
 
-bool SequenceLessCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SequenceLessCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SequenceLessCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -97,8 +94,9 @@ int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T, typename S>
-bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                            const std::vector<AddressPtr> &outputs) {
+bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &,
+                                            const std::vector<KernelTensor *> &outputs) {
   using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const size_t, const size_t)>;
   std::unordered_map<std::string, InequalityImplFunc> func_map = {
     {kTupleLt, LtImpl<T, S>}, {kTupleLe, LeImpl<T, S>}, {kListLt, LtImpl<T, S>}, {kListLe, LeImpl<T, S>}};

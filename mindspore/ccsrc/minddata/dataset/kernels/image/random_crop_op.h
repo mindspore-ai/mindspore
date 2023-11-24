@@ -28,23 +28,11 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomCropOp : public TensorOp {
+class RandomCropOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const int32_t kDefPadTop;
-  static const int32_t kDefPadBottom;
-  static const int32_t kDefPadLeft;
-  static const int32_t kDefPadRight;
-  static const BorderType kDefBorderType;
-  static const bool kDefPadIfNeeded;
-  static const uint8_t kDefFillR;
-  static const uint8_t kDefFillG;
-  static const uint8_t kDefFillB;
-
-  RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_top = kDefPadTop,
-               int32_t pad_bottom = kDefPadBottom, int32_t pad_left = kDefPadLeft, int32_t pad_right = kDefPadRight,
-               bool pad_if_needed = kDefPadIfNeeded, BorderType padding_mode = kDefBorderType,
-               uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+  RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_top, int32_t pad_bottom, int32_t pad_left,
+               int32_t pad_right, bool pad_if_needed, BorderType padding_mode, uint8_t fill_r, uint8_t fill_g,
+               uint8_t fill_b);
 
   RandomCropOp(const RandomCropOp &rhs) = default;
 
@@ -102,7 +90,6 @@ class RandomCropOp : public TensorOp {
   uint8_t fill_r_ = 0;
   uint8_t fill_g_ = 0;
   uint8_t fill_b_ = 0;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

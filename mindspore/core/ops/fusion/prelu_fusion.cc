@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(PReLUFusion, PReLU);
+MIND_API_OPERATOR_IMPL(PReLUFusion, BaseOperator);
 void PReLUFusion::Init(const bool channel_shared, const std::vector<float> &slope) {
   this->set_channel_shared(channel_shared);
   this->set_slope(slope);

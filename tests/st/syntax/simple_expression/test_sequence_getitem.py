@@ -91,8 +91,6 @@ def test_tuple_getitem_with_variable_bool_index():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tuple_getitem_with_variable_bool_index_2():
     """
@@ -112,8 +110,6 @@ def test_tuple_getitem_with_variable_bool_index_2():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tuple_getitem_with_variable_bool_index_3():
     """
@@ -200,8 +196,6 @@ def test_list_getitem_with_variable_bool_index():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_list_getitem_with_variable_bool_index_2():
     """

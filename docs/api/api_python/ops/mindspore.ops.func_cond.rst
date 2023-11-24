@@ -27,7 +27,7 @@ mindspore.ops.cond
         当前暂不支持复数。
 
     参数：
-        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
+        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中 :math:`*` 是零个或多个batch维度。
         - **p** (Union[int, float, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``None`` 。
 
     返回：

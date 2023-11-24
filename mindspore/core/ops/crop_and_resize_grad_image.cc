@@ -85,22 +85,20 @@ void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, 
   }
 }
 
-abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size, int64_t max_len,
+abstract::ShapePtr GetReturnShape(const PrimitivePtr &primitive, const AbstractBasePtr &output_size, int64_t max_len,
                                   int64_t image_k_dep) {
   // Infer max shape of output
-  if (output_size->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(output_size)) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->BuildType(),
-                                                     output_size_valid_types, prim_name);
-    auto output_size_value = output_size->BuildValue();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->GetType(),
+                                                     output_size_valid_types, primitive->name());
+    auto output_size_value = output_size->GetValue();
     MS_EXCEPTION_IF_NULL(output_size_value);
     if (IsValueKnown(output_size_value)) {
-      auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
-      const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
+      const std::vector<int64_t> const_output_size_shape = output_size->GetShape()->GetShapeVector();
       std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
-        auto value = static_cast<int *>(output_size_tensor->data_c());
-        MS_EXCEPTION_IF_NULL(value);
+        auto value = GetShapeValue(primitive, output_size);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] <= 0) {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
@@ -129,14 +127,13 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
-  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
+  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
-  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
+  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
-  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
+  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
-  auto input_shape3 =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
+  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->GetShape())[kShape];
   if (IsDynamicRank(input_shape0) || IsDynamicRank(input_shape1) || IsDynamicRank(input_shape2) ||
       IsDynamicRank(input_shape3)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
@@ -161,7 +158,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto output_size = input_args[ImagekImagesSize];
   MS_EXCEPTION_IF_NULL(output_size);
 
-  return GetReturnShape(prim_name, output_size, max_len, input_shape0[ImagekDepth]);
+  return GetReturnShape(primitive, output_size, max_len, input_shape0[ImagekDepth]);
 }
 
 TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -174,13 +171,13 @@ TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, ImagekInputNums, prim_name);
   const std::set<TypePtr> inputs_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[ImagekGrads]->BuildType(), inputs_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[ImagekGrads]->GetType(), inputs_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[ImagekBoxes]->BuildType(), inputs_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[ImagekBoxes]->GetType(), inputs_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[ImagekBoxIndex]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[ImagekBoxIndex]->GetType(), {kInt32},
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", input_args[ImagekImagesSize]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", input_args[ImagekImagesSize]->GetType(), {kInt32},
                                                    prim_name);
   auto out_T = prim->GetAttr("T")->cast<TypePtr>();
   (void)CheckAndConvertUtils::CheckSubClass("T", out_T, valid_types, prim_name);

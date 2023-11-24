@@ -714,7 +714,7 @@ Status PhaseVocoder(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \param rnd: Number generator.
 /// \return Status code.
 Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
-                           float mask_value, int axis, std::mt19937 rnd);
+                           float mask_value, int axis, std::mt19937 *rnd);
 
 /// \brief Apply a mask along axis. All examples will have the same mask interval.
 /// \param input: Tensor of shape <..., freq, time>.
@@ -814,7 +814,7 @@ Status SGD(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
                        int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                        float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
-                       MelType mel_type, std::mt19937 rnd);
+                       MelType mel_type, std::mt19937 *rnd);
 
 /// \brief Create InverseSpectrogram for a raw audio signal.
 /// \param[in] input Input tensor.
@@ -1825,7 +1825,7 @@ Status Dither(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 /// \return Status code.
 Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t n_iter,
                   int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
-                  int32_t length, bool rand_init, std::mt19937 rnd);
+                  int32_t length, bool rand_init, std::mt19937 *rnd);
 
 /// \brief Calculate measure for VAD.
 template <typename T>

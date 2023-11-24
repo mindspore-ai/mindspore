@@ -36,6 +36,20 @@ REG_FALLBACK_BUILDER("SiLUGrad").SetBody(BODYFUNC(ib) {
   return {ib->Add(dx, bc_dy)};
 });
 
+REG_FALLBACK_BUILDER("Baddbmm").SetBody(BODYFUNC(ib) {
+  // baddbmm equation: output = beta * input + alpha * matmul(batch1, batch2)
+  auto input = ib->GetInput(kIndex0);
+  auto batch1 = ib->GetInput(kIndex1);
+  auto batch2 = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto alpha = ib->GetInput(kIndex4);
+
+  auto mm_output = ib->BatchMatMul(batch1, batch2);
+  auto alpha_output = ib->Mul(mm_output, alpha);
+  auto beta_output = ib->Mul(input, beta);
+  return {ib->Add(beta_output, alpha_output)};
+});
+
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto &x_shape = inputs.at(kIndex0);
@@ -87,8 +101,8 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   bool need_reshape = (is_dynamic_rank || x_shape.size() != kRank2 || w_shape.size() != kRank2);
   if (need_reshape) {
     reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x, w});
-    x = ib->Reshape(x, reshape_shapes[kIndex0]);
-    w = ib->Reshape(w, reshape_shapes[kIndex1]);
+    x = ib->Reshape(x, ib->TensorToTuple(reshape_shapes[kIndex0]));
+    w = ib->Reshape(w, ib->TensorToTuple(reshape_shapes[kIndex1]));
   }
   auto ret = ib->MatMul(x, w, false, true);
   if (has_bias) {
@@ -96,7 +110,7 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
     ret = ib->Add(ret, b);
   }
   if (need_reshape) {
-    ret = ib->Reshape(ret, reshape_shapes[kIndex2]);
+    ret = ib->Reshape(ret, ib->TensorToTuple(reshape_shapes[kIndex2]));
   }
   return {ret};
 });

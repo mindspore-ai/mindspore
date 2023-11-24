@@ -19,14 +19,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs) {
+bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,16 +37,16 @@ bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::Init(const BaseOperatorPtr &
 }
 
 template <typename T, typename S>
-bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                                 const std::vector<AddressPtr> &workspace,
-                                                                 const std::vector<AddressPtr> &outputs,
+bool SigmoidCrossEntropyWithLogitsGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                                 const std::vector<KernelTensor *> &workspace,
+                                                                 const std::vector<KernelTensor *> &outputs,
                                                                  void *stream_ptr) {
   T *logits_addr = GetDeviceAddress<T>(inputs, 0);
   S *labels_addr = GetDeviceAddress<S>(inputs, 1);
   T *dout_addr = GetDeviceAddress<T>(inputs, 2);
   T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
 
-  auto status = SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr,
+  auto status = SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size() / sizeof(T), logits_addr, labels_addr, dout_addr,
                                                   outputs_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

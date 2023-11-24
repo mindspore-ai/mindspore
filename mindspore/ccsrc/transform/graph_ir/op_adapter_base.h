@@ -209,6 +209,43 @@ enum AttrType {
 struct GeEnum {};
 struct TFType {};
 struct GEType {};
+struct GEEnumToStr {};
+
+class GEDataFormat {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> data_formats = {"NCHW", "NHWC"};
+    if (id < 0 || id >= static_cast<int64_t>(data_formats.size())) {
+      MS_LOG(EXCEPTION) << "Invalid data format " << id;
+      return "";
+    }
+    return data_formats[id];
+  }
+};
+
+class GEPadMod {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> pad_mods = {"PAD", "SAME", "VALID"};
+    if (id < 0 || id >= static_cast<int64_t>(pad_mods.size())) {
+      MS_LOG(EXCEPTION) << "Invalid pad mod " << id;
+      return "";
+    }
+    return pad_mods[id];
+  }
+};
+
+class GEReduction {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> reductions = {"none", "mean", "sum", "add"};
+    if (id < 0 || id >= static_cast<int64_t>(reductions.size())) {
+      MS_LOG(EXCEPTION) << "Invalid reduction " << id;
+      return "";
+    }
+    return reductions[id];
+  }
+};
 
 // declare Any type
 template <typename T>

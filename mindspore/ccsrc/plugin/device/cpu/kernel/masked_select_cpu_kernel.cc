@@ -28,10 +28,8 @@ constexpr size_t kMaskedSelectInputsNum = 2;
 constexpr size_t kMaskedSelectOutputsNum = 1;
 }  // namespace
 
-bool MaskedSelectCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool MaskedSelectCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -54,11 +52,10 @@ void MaskedSelectCpuKernelMod::ResetResource() noexcept {
   output_shape_.clear();
 }
 
-int MaskedSelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &others) {
+int MaskedSelectCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, others);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
@@ -70,13 +67,13 @@ int MaskedSelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectOutputsNum, kernel_name_);
-  auto x = GetDeviceAddress<T>(inputs, kIndex0);
-  auto mask = GetDeviceAddress<bool>(inputs, kIndex1);
-  auto y = GetDeviceAddress<T>(outputs, kIndex0);
+  auto x = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto mask = reinterpret_cast<bool *>(inputs[1]->device_ptr());
+  auto y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(mask);
   MS_EXCEPTION_IF_NULL(y);
@@ -102,9 +99,11 @@ bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-void MaskedSelectCpuKernelMod::SyncOutputShape() {
+void MaskedSelectCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_)};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, MaskedSelectCpuKernelMod::MaskedSelectFunc>> MaskedSelectCpuKernelMod::func_list_ = {

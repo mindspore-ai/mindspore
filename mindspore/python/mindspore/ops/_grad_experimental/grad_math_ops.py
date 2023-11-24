@@ -21,6 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore.ops.operations.math_ops import Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import Polar
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
@@ -31,9 +32,8 @@ from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import TridiagonalSolve
-from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import EuclideanNorm
-from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
+from mindspore.ops.operations.array_ops import Transpose
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import _primexpr
@@ -372,6 +372,27 @@ def get_bprop_nan_to_num(self):
     return bprop
 
 
+@bprop_getters.register(Angle)
+def get_bprop_angle(self):
+    """Grad definition for `Angle` operation."""
+    real_op = P.Real()
+    imag_op = Imag()
+    reciprocal_op = P.Reciprocal()
+    complex_op = Complex()
+    neg_op = P.Neg()
+
+    def bprop(x, out, dout):
+        re = real_op(x)
+        im = imag_op(x)
+        re = complex_op(im, re)
+        z = reciprocal_op(re)
+        zero = zeros_like(dout)
+        complex_dout = complex_op(dout, zero)
+        return (neg_op(complex_dout * z),)
+
+    return bprop
+
+
 @bprop_getters.register(Polar)
 def get_bprop_polar(self):
     """Grad definition for `Polar` operation."""
@@ -463,55 +484,6 @@ def get_bprop_cholesky_solve(self):
     return bprop
 
 
-@bprop_getters.register(Diagonal)
-def get_bprop_diagonal(self):
-    """Grad definition for 'Diagonal' operation"""
-    offset = self.offset
-    dim1 = self.dim1
-    dim2 = self.dim2
-    zeros_op = P.FillV2()
-    size_op = P.Size()
-    transpose_op = Transpose()
-    matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
-
-    def bprop(x, out, dout):
-        x_shape = x.shape
-        x_dtype = x.dtype
-        x_dim = len(x_shape)
-        if dim1 < 0:
-            dim1_ = dim1 + x_dim
-        else:
-            dim1_ = dim1
-        if dim2 < 0:
-            dim2_ = dim2 + x_dim
-        else:
-            dim2_ = dim2
-        if size_op(out):
-            batch_dim = out.shape[:-1]
-            diag_plane = (x_shape[dim1_], x_shape[dim2_])
-            dx_trans_shape = batch_dim + diag_plane
-            value = Tensor(0, x_dtype)
-            dx = zeros_op(dx_trans_shape, value)
-            k = F.cast(offset, mstype.int32)
-            dx = matrix_set_diag_op(dx, dout, k)
-            dim = 0
-            perm = ()
-            for i in range(x_dim):
-                if i == dim1_:
-                    perm = perm + (x_dim - 2,)
-                elif i == dim2_:
-                    perm = perm + (x_dim - 1,)
-                else:
-                    perm = perm + (dim,)
-                    dim = dim + 1
-            dx = transpose_op(dx, perm)
-        else:
-            dx = zeros_like(x)
-        return (dx,)
-
-    return bprop
-
-
 @_primexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
@@ -522,8 +494,22 @@ def _fft_rank_offset(norm_shape, rank):
 
 
 @_primexpr
+def _norm_enum_to_string(norm_mode):
+    """convert norm_mode enum to string ."""
+    norm_mode_str = ""
+    if norm_mode == 0:
+        norm_mode_str = "BACKWARD"
+    elif  norm_mode == 1:
+        norm_mode_str = "FORWARD"
+    elif norm_mode == 2:
+        norm_mode_str = "ORTHO"
+    return norm_mode_str
+
+
+@_primexpr
 def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     """generate reverse term for fft_with_size"""
+    norm_ = 1
     if inverse is False:
         if norm == "forward":
             norm_ = 1 / _fft_rank_offset(norm_shape, rank)
@@ -611,30 +597,6 @@ def _batch_matmul_shape_decrease(matrix_shape):
 @bprop_getters.register(FFTWithSize)
 def get_bprop_fft_with_size(self):
     """Grad definition for `FFTWithSize` operation."""
-    signal_ndim = self.signal_ndim
-    inverse = self.inverse
-    real = self.real
-    norm = self.norm
-    onesided = self.onesided
-    fft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                         inverse=False,
-                         real=False,
-                         norm=norm)
-    ifft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=True,
-                          real=False,
-                          norm=norm)
-    rfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=False,
-                          real=True,
-                          norm=norm,
-                          onesided=onesided)
-    irfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                           inverse=True,
-                           real=True,
-                           norm=norm,
-                           onesided=onesided)
-
     complex_op = P.Complex()
     to_tensor_op = P.ScalarToTensor()
     type_op = P.DType()
@@ -652,7 +614,12 @@ def get_bprop_fft_with_size(self):
     conj_op = P.Conj()
     batch_matmul_op = P.BatchMatMul()
 
-    def bprop(x, out, dout):
+    def bprop(x, signal_ndim, inverse, real, norm_enum, onesided, signal_sizes, out, dout):
+        norm = _norm_enum_to_string(norm_enum)
+        fft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=False, norm=norm)
+        ifft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=False, norm=norm)
+        rfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=True, norm=norm, onesided=onesided)
+        irfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=True, norm=norm, onesided=onesided)
         dx = 0
         input_type = type_op(x)
         output_type = type_op(out)

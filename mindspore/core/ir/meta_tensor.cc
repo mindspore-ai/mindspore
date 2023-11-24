@@ -16,7 +16,6 @@
 
 #include "ir/meta_tensor.h"
 #include <numeric>
-#include <functional>
 
 namespace mindspore {
 namespace tensor {

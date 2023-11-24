@@ -43,8 +43,8 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
   // setting seed here
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
-  auto op = std::make_unique<RandomCropWithBBoxOp>(
-    crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant);
+  auto op =
+    std::make_unique<RandomCropWithBBoxOp>(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant, 0, 0, 0);
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
     size_t actual = 0;
@@ -81,8 +81,8 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
 
-  auto op = std::make_unique<RandomCropWithBBoxOp>(
-    crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant);
+  auto op = std::make_unique<RandomCropWithBBoxOp>(crop_height, crop_width, 513, 513, 513, 513, false,
+                                                   BorderType::kConstant, 0, 0, 0);
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
@@ -111,9 +111,9 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
 
-  auto op = std::make_unique<RandomCropWithBBoxOp>(crop_height, crop_width, crop_height * 3 + 1,
-                                                                    crop_height * 3 + 1, crop_width * 3 + 1,
-                                                                    crop_width * 3 + 1, false, BorderType::kConstant);
+  auto op = std::make_unique<RandomCropWithBBoxOp>(crop_height, crop_width, crop_height * 3 + 1, crop_height * 3 + 1,
+                                                   crop_width * 3 + 1, crop_width * 3 + 1, false, BorderType::kConstant,
+                                                   0, 0, 0);
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);

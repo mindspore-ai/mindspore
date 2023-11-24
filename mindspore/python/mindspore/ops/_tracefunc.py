@@ -74,6 +74,9 @@ class PackFunc(Primitive):
         self.kwargs = {}
         self.add_prim_attr("unique_key", unique_key)
         self.add_prim_attr("is_pynative_mode", is_pynative_mode)
+        sig = inspect.signature(fun)
+        arg_num = len(sig.parameters) - 1
+        self.add_prim_attr("arg_num", arg_num)
 
     def __call__(self, *args, **kwargs):
         if PackFunc.is_tracing():

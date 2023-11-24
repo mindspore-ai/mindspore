@@ -1,0 +1,10 @@
+#operator cos
+cos:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: False

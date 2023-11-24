@@ -35,10 +35,9 @@ abstract::ShapePtr MaxUnpool2DGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
-  auto argmax_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
 
   if (IsDynamic(in_shape)) {
     return std::make_shared<abstract::Shape>(in_shape);
@@ -50,7 +49,7 @@ abstract::ShapePtr MaxUnpool2DGradInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, SizeToLong(kDim4),
                                            op_name);
   CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
-  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(x1_shape);
 }
 
@@ -59,9 +58,9 @@ TypePtr MaxUnpool2DGradInferType(const PrimitivePtr &primitive, const std::vecto
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto grads_type = input_args[kInputIndex1]->BuildType();
-  auto argmax_type = input_args[kInputIndex2]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto grads_type = input_args[kInputIndex1]->GetType();
+  auto argmax_type = input_args[kInputIndex2]->GetType();
   auto output_type =
     CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", grads_type, common_valid_types, primitive->name());

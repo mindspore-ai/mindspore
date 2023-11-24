@@ -1,0 +1,29 @@
+erfc:
+  description: |
+    Computes the complementary error function of `input` element-wise.
+
+    .. math::
+
+    erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
+
+    Args:
+      input (Tensor): The input tensor with a dtype of float16, float32 or float64.
+
+    Returns:
+      Tensor, has the same shape and dtype as `input`.
+
+    Raises:
+      TypeError: If `input` is not a Tensor.
+      TypeError: If dtype of `input` is not float16, float32 or float64.
+
+    Supported Platforms:
+      ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+      >>> import mindspore
+      >>> import numpy as np
+      >>> from mindspore import Tensor, ops
+      >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+      >>> output = ops.erfc(x)
+      >>> print(output)
+      [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]

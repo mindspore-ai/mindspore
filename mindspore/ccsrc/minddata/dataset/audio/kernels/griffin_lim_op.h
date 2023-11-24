@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-class GriffinLimOp : public TensorOp {
+class GriffinLimOp : public RandomTensorOp {
  public:
   GriffinLimOp(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type,
                float power, float momentum, int32_t length, bool rand_init)
@@ -39,9 +39,7 @@ class GriffinLimOp : public TensorOp {
         power_(power),
         momentum_(momentum),
         length_(length),
-        rand_init_(rand_init) {
-    rnd_.seed(GetSeed());
-  }
+        rand_init_(rand_init) {}
 
   ~GriffinLimOp() override = default;
 
@@ -61,7 +59,6 @@ class GriffinLimOp : public TensorOp {
   float momentum_;
   int32_t length_;
   bool rand_init_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

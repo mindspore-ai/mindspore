@@ -26,10 +26,8 @@ using Complex = mindspore::utils::Complex<T>;
 constexpr size_t kMaxDims = 8;
 constexpr size_t kXMinShapeSize = 2;
 
-bool MatrixBandPartGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixBandPartGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -82,10 +80,9 @@ void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<int64_t> &x_sh
   broadcast_upper_shape_[output_shape.size() - 1] = expanded_upper_shape[expanded_upper_shape.size() - 1];
 }
 
-int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MatrixBandPartGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -180,13 +177,13 @@ bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
 }
 
 template <typename T, typename LU>
-bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  const auto x_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  const auto x_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->device_ptr());
   // Both the lower and upper have done the type check in C++ primitive.
-  const auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->addr);
-  const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  const auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->device_ptr());
+  const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->device_ptr());
+  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   if (need_broadcast_) {
     auto status = MatrixBandPartBroadcast(
       output_element_num_, broadcast_x_shape_, broadcast_lower_shape_, broadcast_upper_shape_, broadcast_output_shape_,

@@ -1243,6 +1243,55 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   return Status::OK();
 }
 
+Status AdjustSharpness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat input_img = input_cv->mat();
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Sharpness: load image failed.");
+    }
+
+    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+      RETURN_STATUS_UNEXPECTED("Sharpness: shape of input is not <H,W,C> or <H,W>, but got rank: " +
+                               std::to_string(input_cv->Rank()));
+    }
+
+    /// creating a smoothing filter. 1, 1, 1,
+    ///                              1, 5, 1,
+    ///                              1, 1, 1
+
+    const float filterMid = 5.0;
+    const float filterSum = 13.0;
+    cv::Mat filter = cv::Mat(3, 3, CV_32F, cv::Scalar::all(1.0 / filterSum));
+    filter.at<float>(1, 1) = filterMid / filterSum;
+
+    /// applying filter on channels
+    cv::Mat result = cv::Mat();
+    cv::filter2D(input_img, result, -1, filter);
+
+    auto height = static_cast<int>(input_cv->shape()[0]);
+    auto width = static_cast<int>(input_cv->shape()[1]);
+
+    /// restoring the edges
+    input_img.row(0).copyTo(result.row(0));
+    input_img.row(height - 1).copyTo(result.row(height - 1));
+    input_img.col(0).copyTo(result.col(0));
+    input_img.col(width - 1).copyTo(result.col(width - 1));
+
+    /// blend based on alpha : (alpha_ *input_img) +  ((1.0-alpha_) * result);
+    cv::addWeighted(input_img, alpha, result, 1.0 - alpha, 0.0, result);
+
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
+    RETURN_UNEXPECTED_IF_NULL(output_cv);
+
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Sharpness: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
 Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float cutoff,
                     const std::vector<uint32_t> &ignore) {
   try {
@@ -1420,6 +1469,56 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Equalize: " + std::string(e.what()));
   }
+  return Status::OK();
+}
+
+Status Invert(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat input_img = input_cv->mat();
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Invert: load image failed.");
+    }
+
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+    RETURN_UNEXPECTED_IF_NULL(output_cv);
+
+    constexpr auto kMaxPixel = 255.0;
+    output_cv->mat() = cv::Scalar::all(kMaxPixel) - input_img;
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
+Status Posterize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, uint8_t bits) {
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  if (!input_cv->mat().data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Posterize: load image failed.");
+  }
+  if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
+    RETURN_STATUS_UNEXPECTED("Posterize: input image is not in shape of <H,W,C> or <H,W>, but got rank: " +
+                             std::to_string(input_cv->Rank()));
+  }
+  uint8_t mask_value = ~((uint8_t)(1 << (8 - bits)) - 1);
+  std::vector<uint8_t> lut_vector;
+  for (std::size_t i = 0; i < 256; i++) {
+    lut_vector.push_back(i & mask_value);
+  }
+  cv::Mat in_image = input_cv->mat();
+
+  cv::Mat output_img;
+  CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
+                               "Posterize: data type of input image should be int8 or uint8, "
+                               "but got " +
+                                 input_cv->type().ToString());
+  cv::LUT(in_image, lut_vector, output_img);
+  std::shared_ptr<CVTensor> result_tensor;
+
+  RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, input_cv->Rank(), &result_tensor));
+  *output = std::static_pointer_cast<Tensor>(result_tensor);
   return Status::OK();
 }
 

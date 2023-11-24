@@ -41,21 +41,21 @@ abstract::TupleShapePtr SparseApplyFtrlInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->BuildShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->BuildShape();
-  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->BuildShape();
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->GetShape();
   auto outputs = std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r, linear_shape_r}));
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return outputs;
     }
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->BuildShape())[kShape];
-  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->BuildShape())[kShape];
-  auto linear_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLinearIndex]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->GetShape())[kShape];
+  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->GetShape())[kShape];
+  auto linear_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLinearIndex]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
 
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
@@ -81,16 +81,16 @@ abstract::TupleShapePtr SparseApplyFtrlInferShape(const PrimitivePtr &primitive,
 
 TypePtr SparseApplyFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"accum", input_args[kAccumIndex]->BuildType()},
-                                          {"linear", input_args[kLinearIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"accum", input_args[kAccumIndex]->GetType()},
+                                          {"linear", input_args[kLinearIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, prim_name);
 
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, {kInt32, kInt64}, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 }  // namespace sparse_apply_ftrl

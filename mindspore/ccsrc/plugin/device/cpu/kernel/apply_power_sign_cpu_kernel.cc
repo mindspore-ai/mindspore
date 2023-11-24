@@ -21,6 +21,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,15 +49,15 @@ int Sgn(const T &x) {
 }  // namespace
 
 template <typename T>
-void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
-  T *logbase = reinterpret_cast<T *>(inputs[kIndexLogBase]->addr);
-  T *sign_decay = reinterpret_cast<T *>(inputs[kIndexSignDecay]->addr);
-  T *beta = reinterpret_cast<T *>(inputs[kIndexBeta]->addr);
-  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::KernelTensor *> &inputs,
+                                                 const std::vector<kernel::KernelTensor *> &) {
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->device_ptr());
+  T *m = reinterpret_cast<T *>(inputs[kIndexM]->device_ptr());
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->device_ptr());
+  T *logbase = reinterpret_cast<T *>(inputs[kIndexLogBase]->device_ptr());
+  T *sign_decay = reinterpret_cast<T *>(inputs[kIndexSignDecay]->device_ptr());
+  T *beta = reinterpret_cast<T *>(inputs[kIndexBeta]->device_ptr());
+  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->device_ptr());
 
   for (int64_t b = 0; b < batch_size_; b++) {
     // multithreading
@@ -80,18 +81,16 @@ void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::Addre
   }
 }
 
-bool ApplyPowerSignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyPowerSignCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  dtype_ = inputs[0]->dtype_id();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   return true;
 }
 
-bool ApplyPowerSignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool ApplyPowerSignCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPowerSignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPowerSignOutputsNum, kernel_name_);
 
@@ -106,17 +105,11 @@ bool ApplyPowerSignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-int ApplyPowerSignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyPowerSignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-
-  if (input_size_list_.size() != kPowerSignInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 7.";
-    return KRET_RESIZE_FAILED;
   }
 
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();

@@ -4,6 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gencode.cmake)
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)
     string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -98,14 +99,13 @@ if(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
     add_library(core_proto_obj OBJECT ${PROTO_SRCS})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_proto_obj>)
 endif()
-
 src_separate_compile(
     OBJECT_NAME core_obj
     OBJECT_SIZE CORE_OBJECT_COUNT
     SRC_LIST ${CORE_SRC_LIST})
 foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
-    if(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
+    if(NOT TARGET_AOS_ARM)
         add_dependencies(core_obj_${number} core_proto_obj)
     endif()
 endforeach()
@@ -118,9 +118,8 @@ set(CORE_SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/abstract/utils.cc
         )
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
-if(ENABLE_GEN_CODE)
-    add_dependencies(mindspore_core generated_code)
-endif()
+add_dependencies(mindspore_core generated_code)
+
 if(ENABLE_NATIVE_PROTOBUF)
     target_link_libraries(mindspore_core PRIVATE ${PROTOBUF_LIB})
 elseif(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)

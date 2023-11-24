@@ -28,21 +28,14 @@ constexpr int64_t kIndexHeight = 2;
 constexpr int64_t kIndexWidth = 3;
 }  // namespace
 
-bool MaxPoolWithArgmaxV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  x_dtype_ = inputs[kIndex0]->GetDtype();
-  argmax_dtype_ = outputs[kIndex1]->GetDtype();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmaxV2>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  ksize_list_ = kernel_ptr->get_kernel_size();
-  strides_list_ = kernel_ptr->get_strides();
-  pads_list_ = kernel_ptr->get_pads();
-  dilation_list_ = kernel_ptr->get_dilation();
+bool MaxPoolWithArgmaxV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  x_dtype_ = inputs[kIndex0]->dtype_id();
+  argmax_dtype_ = outputs[kIndex1]->dtype_id();
+  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  pads_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
+  dilation_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -54,11 +47,9 @@ bool MaxPoolWithArgmaxV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MaxPoolWithArgmaxV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolWithArgmaxV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -83,14 +74,14 @@ std::vector<int64_t> MaxPoolWithArgmaxV2CpuKernelMod::GetValidAttr(const std::ve
 }
 
 template <typename DATA_T, typename INDICES_T>
-bool MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
-                                                   const std::vector<AddressPtr> &outputs) {
+bool MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &,
+                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolWithArgmaxV2InputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolWithArgmaxV2OutputsNum, kernel_name_);
-  auto input_x = static_cast<DATA_T *>(inputs[kIndex0]->addr);
-  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->addr);
-  auto output_argmax = static_cast<INDICES_T *>(outputs[kIndex1]->addr);
+  auto input_x = static_cast<DATA_T *>(inputs[kIndex0]->device_ptr());
+  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->device_ptr());
+  auto output_argmax = static_cast<INDICES_T *>(outputs[kIndex1]->device_ptr());
   const int64_t in_width = x_shape_[kIndexWidth];
   const int64_t in_height = x_shape_[kIndexHeight];
   const int64_t in_channel = x_shape_[kIndexChannel];

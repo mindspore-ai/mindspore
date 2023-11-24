@@ -41,6 +41,7 @@ struct SubGraphIRInfo {
   int32_t local_var;
   std::ostringstream buffer;
   OrderedMap<AnfNodePtr, int32_t> local_var_map;
+  int32_t format_level;
 };
 COMMON_EXPORT void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph,
                              const OrderedMap<AnfNodePtr, int32_t> &para_map,

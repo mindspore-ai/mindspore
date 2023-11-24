@@ -24,9 +24,9 @@ mindspore.ops.UniformInt
 
     输入：
         - **shape** (Union[tuple, Tensor]) - 目标Tensor的shape。只允许常量值。
-        - **minval** (Tensor) - 分布参数， :math:`a` 。
+        - **minval** (Tensor) - 分布参数 :math:`a` 。
           决定可能生成的最小值，数据类型为int32。需为标量。
-        - **maxval** (Tensor) - 分布参数， :math:`b` 。
+        - **maxval** (Tensor) - 分布参数 :math:`b` 。
           决定生成随机数的上限，数据类型为int32。需为标量。
 
     输出：    

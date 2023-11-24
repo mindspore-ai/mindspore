@@ -15,22 +15,30 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/sequence_ops.h"
-#include "ops/nn_ops.h"
-#include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
-#include "include/common/utils/utils.h"
-#include "utils/ms_context.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "mindapi/base/format.h"
+#include "ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/sequence_ops.h"
+#include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
+#include "plugin/device/ascend/optimizer/get_value_helper.h"
+#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kIdxIsTrain = 7;
+constexpr size_t kIdxEpsilon = 8;
+constexpr size_t kIdxFormat = 9;
+}  // namespace
 void BnGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
                                             std::vector<AnfNodePtr> *bn_update_grad_outputs, bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
@@ -49,12 +57,13 @@ void BnGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNo
                 common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
   auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 1), AnfAlgo::GetOutputDetailShape(bn_grad_node, 2)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_update_grad.get());
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
-  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_update_grad);
-  }
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad_inputs[kIdxEpsilon]);
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue(epsilon), bn_update_grad);
+
+  auto format = GetNodeFormatValue(bn_grad_inputs[kIdxFormat]);
+  common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(format), bn_update_grad);
+
   if (is_dynamic) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_update_grad);
   }
@@ -90,12 +99,13 @@ void BnGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNo
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
   auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 0)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_reduce_grad.get());
-  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
-  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_reduce_grad);
-  }
+
+  auto epsilon = GetNodeScalarValue<float>(bn_grad_inputs[kIdxEpsilon]);
+  common::AnfAlgo::SetNodeAttr(kAttrEpsilon, MakeValue(epsilon), bn_reduce_grad);
+
+  auto format = GetNodeFormatValue(bn_grad_inputs[kIdxFormat]);
+  common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(format), bn_reduce_grad);
+
   if (is_dynamic) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_reduce_grad);
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_reduce_grad);
@@ -190,7 +200,11 @@ const BaseRef BnGradSplit::DefinePattern() const {
 const AnfNodePtr BnGradSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
-  if (!GetBoolAttr(cnode, kAttrIsTraining)) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto is_train_input = cnode->input(kIdxIsTrain);
+  MS_EXCEPTION_IF_NULL(is_train_input);
+  auto is_training = GetNodeScalarValue<bool>(is_train_input);
+  if (!is_training) {
     MS_LOG(INFO) << "Attr is_training should be true if do fusion";
     return nullptr;
   }

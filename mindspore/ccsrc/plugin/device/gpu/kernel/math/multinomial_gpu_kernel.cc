@@ -23,17 +23,13 @@ namespace {
 static constexpr size_t input_num_ = 2;
 static constexpr size_t output_num_ = 1;
 }  // namespace
-bool MultinomialGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MultinomialGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Multinomial>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -45,11 +41,10 @@ bool MultinomialGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+int MultinomialGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   workspace_size_list_.clear();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -69,9 +64,9 @@ int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return ret;
 }
 
-bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &,
+                                     const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
 
@@ -80,8 +75,8 @@ bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T, typename S>
-void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                           const std::vector<kernel::KernelTensor *> &outputs, void *stream_ptr) {
   T *probs_addr = GetDeviceAddress<T>(inputs, 0);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);
   int64_t *num_sample_addr = GetDeviceAddress<int64_t>(inputs, 1);

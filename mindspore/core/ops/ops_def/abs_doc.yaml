@@ -1,0 +1,29 @@
+abs:
+    description: |
+        Returns absolute value of a tensor element-wise.
+
+        .. math::
+
+            out_i = |input_i|
+
+        Args:
+            input (Tensor): The input tensor. The shape of tensor is
+                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+        Returns:
+            Tensor, has the same shape as the `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
+            >>> output = ops.abs(input)
+            >>> print(output)
+            [1. 1. 0.]

@@ -34,7 +34,7 @@ class TestPrimFunc : public UT::Common {
 };
 
 TEST_F(TestPrimFunc, ScalarAddTest) {
-  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim = std::make_shared<Primitive>("ScalarAdd");
   FunctionPtr func = nullptr;
   PrimToFunction::GetInstance().GetFunction(prim, &func);
 

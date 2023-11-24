@@ -32,6 +32,7 @@ namespace device {
 namespace gpu {
 class GPUDeviceAddress : public LoadableDeviceAddress {
  public:
+  explicit GPUDeviceAddress(const KernelTensorPtr &kernel_tensor) : LoadableDeviceAddress(kernel_tensor) {}
   GPUDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) {}
   GPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : LoadableDeviceAddress(ptr, size, format, type_id) {}

@@ -184,11 +184,6 @@ PrimitivePy::~PrimitivePy() {
   backward_hook_fn_.clear();
 }
 
-void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
-  signatures_ = signatures;
-  set_has_signature(!signatures.empty());
-}
-
 py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
@@ -807,6 +802,14 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
   return primitive_data->obj;
 }
 
+void PrimitiveFunctionAdapter::set_label(const std::string &label, const py::object &value) {
+  ValuePtr converted_value = nullptr;
+  if (!parse::ConvertData(value, &converted_value)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For '" << PrimitiveFunctionAdapter::name() << "', Convert data failed.";
+  }
+  attached_primitive_function_.lock()->AddAttr(label, converted_value);
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
@@ -831,5 +834,15 @@ void RegPrimitive(const py::module *m) {
     .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.")
     .def("set_user_data", &PrimitivePyAdapter::SetUserData, "Set primitive user data.")
     .def("get_user_data", &PrimitivePyAdapter::GetUserData, "Get primitive user data.");
+}
+
+void RegPrimitiveFunction(const py::module *m) {
+  (void)py::class_<PrimitiveFunctionAdapter, std::shared_ptr<PrimitiveFunctionAdapter>>(*m, "PrimitiveFunction_")
+    .def_readonly(PYTHON_PRIMITIVE_FUNCTION_FLAG, &PrimitiveFunctionAdapter::parse_info_)
+    .def(py::init<>())
+    .def_property_readonly("name", &PrimitiveFunctionAdapter::name, "Get function name.")
+    .def("has_label", &PrimitiveFunctionAdapter::has_label, "Has function attr.")
+    .def("set_label", &PrimitiveFunctionAdapter::set_label, "Set function attr.")
+    .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.");
 }
 }  // namespace mindspore

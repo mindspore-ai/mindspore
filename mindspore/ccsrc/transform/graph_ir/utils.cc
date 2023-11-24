@@ -322,8 +322,8 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud) {
+  return DfGraphManager::GetInstance().AddGraph(name, graph, options, is_cloud);
 }
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
@@ -462,8 +462,27 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
   auto input_attr_map = adpt->getInputAttrMap();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = cnode->size();
   for (auto &it : input_attr_map) {
+    if (it.first >= input_size) {
+      continue;
+    }
     if (!cnode->input(it.first)->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is not a ValueNode";
+      return false;
+    }
+  }
+  auto input_map = adpt->getInputMap();
+  for (auto &it : input_map) {
+    if (static_cast<size_t>(it.first) >= input_size) {
+      continue;
+    }
+    auto abs = cnode->input(it.first)->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractAny>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is a AbstractAny";
       return false;
     }
   }

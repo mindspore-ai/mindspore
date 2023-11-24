@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/coalesce_cpu_kernel.h"
+
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -25,9 +27,9 @@ constexpr size_t kCoalesceOutputsNum = 3;
 constexpr char kKernelName[] = "Coalesce";
 }  // namespace
 
-bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                                  const std::vector<kernel::KernelTensor *> &,
+                                  const std::vector<kernel::KernelTensor *> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -39,32 +41,37 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void CoalesceCpuKernelMod::SyncOutputShape() {
+void CoalesceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   ShapeVector dims;
   (void)dims.emplace_back(SizeToLong(shape_size_));
   (void)dims.emplace_back(SizeToLong(jump) + 1);
   ShapeVector dim;
   (void)dim.emplace_back(SizeToLong(jump) + 1);
-  outputs_[kIndex0]->SetShapeVector(dims);
-  outputs_[kIndex1]->SetShapeVector(dim);
-  outputs_[kIndex2]->SetShapeVector(y_shape_shape_);
+  size_t dims_ele = LongToSize(std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int64_t>()));
+  size_t dim_ele = LongToSize(std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int64_t>()));
+  size_t y_ele =
+    LongToSize(std::accumulate(y_shape_shape_.begin(), y_shape_shape_.end(), 1, std::multiplies<int64_t>()));
+
+  outputs[kIndex0]->SetShapeVector(dims);
+  outputs[kIndex1]->SetShapeVector(dim);
+  outputs[kIndex2]->SetShapeVector(y_shape_shape_);
+
+  outputs[kIndex0]->set_size(dims_ele * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(dim_ele * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(y_ele * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
-bool CoalesceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CoalesceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCoalesceInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCoalesceOutputsNum, kKernelName);
-  dtype_ = inputs.at(kIndex1)->GetDtype();
-  is_need_retrieve_output_shape_ = true;
+  dtype_ = inputs.at(kIndex1)->dtype_id();
   return true;
 }
 
-int CoalesceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+int CoalesceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
   auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -76,9 +83,9 @@ int CoalesceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) const {
-  auto x_indices_addr = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  auto x_shape_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
+void CoalesceCpuKernelMod::Check(const std::vector<kernel::KernelTensor *> &inputs) const {
+  auto x_indices_addr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
+  auto x_shape_addr = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
   for (size_t i = 0; i < values_size_; i++) {
     for (size_t j = 0; j < shape_size_; j++) {
       if (x_indices_addr[j * values_size_ + i] < 0) {
@@ -97,14 +104,14 @@ void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) 
 }
 
 template <typename T>
-void CoalesceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_indices_addr = reinterpret_cast<int64_t *>(inputs[0]->addr);
-  auto x_values_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto x_shape_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  auto y_indices_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  auto y_values_addr = reinterpret_cast<T *>(outputs[1]->addr);
-  auto y_shape_addr = reinterpret_cast<int64_t *>(outputs[2]->addr);
+void CoalesceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  auto x_indices_addr = reinterpret_cast<int64_t *>(inputs[0]->device_ptr());
+  auto x_values_addr = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto x_shape_addr = reinterpret_cast<int64_t *>(inputs[2]->device_ptr());
+  auto y_indices_addr = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
+  auto y_values_addr = reinterpret_cast<T *>(outputs[1]->device_ptr());
+  auto y_shape_addr = reinterpret_cast<int64_t *>(outputs[2]->device_ptr());
   Check(inputs);
 
   std::vector<size_t> reorder(values_size_);

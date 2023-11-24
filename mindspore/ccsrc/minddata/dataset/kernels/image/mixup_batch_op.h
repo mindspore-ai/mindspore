@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-class MixUpBatchOp : public TensorOp {
+class MixUpBatchOp : public RandomTensorOp {
  public:
   explicit MixUpBatchOp(float alpha);
 
@@ -46,7 +46,6 @@ class MixUpBatchOp : public TensorOp {
                        size_t images_size);
 
   float alpha_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

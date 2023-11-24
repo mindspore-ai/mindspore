@@ -213,8 +213,6 @@ def test_dict_inplace_with_attribute_2():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dict_inplace_setitem():
     """
@@ -237,8 +235,6 @@ def test_dict_inplace_setitem():
 @pytest.mark.skip(reason="Dictionary with no return will be convert to tuple")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dict_inplace_setitem_2():
     """
@@ -383,8 +379,6 @@ def test_dict_inplace_setitem_with_attribute_3():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dict_getitem_after_setitem():
     """
@@ -413,8 +407,6 @@ global_dict_for_update = {'Name': 'a', 'Age': 7}
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dict_getitem_after_setitem_2():
     """
@@ -445,8 +437,6 @@ def test_dict_getitem_after_setitem_2():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dict_inplace_setitem_with_dict_getitem():
     """

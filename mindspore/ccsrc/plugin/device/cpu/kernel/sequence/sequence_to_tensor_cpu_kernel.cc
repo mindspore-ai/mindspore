@@ -28,8 +28,6 @@ namespace kernel {
 namespace {
 constexpr auto kTupleToTensor = "TupleToTensor";
 constexpr auto kScalarToTensor = "ScalarToTensor";
-constexpr size_t kInputNum = 1;
-constexpr size_t kOutputNum = 1;
 }  // namespace
 
 template <typename T, typename S>
@@ -39,15 +37,8 @@ void Cast(const T *in, S *out, size_t length) {
   }
 }
 
-bool SeqToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+bool SeqToTensorCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -62,10 +53,9 @@ bool SeqToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int SeqToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SeqToTensorCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -77,12 +67,13 @@ int SeqToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T, typename S>
-bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto output_addr = GetDeviceAddress<S>(outputs, 0);
-  auto input_size = inputs[0]->size / sizeof(T);
-  auto output_size = outputs[0]->size / sizeof(S);
+  auto input_size = inputs[0]->size() / sizeof(T);
+  auto output_size = outputs[0]->size() / sizeof(S);
   if (input_size != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << input_size
                       << "} is not equal to the size of output: {" << output_size << "}";

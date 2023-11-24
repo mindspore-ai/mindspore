@@ -102,8 +102,9 @@ CUST_OUTPUT_MAP(LuSolve) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(LuSolve, prim::kPrimLuSolve->name(), CUST_ADPT_DESC(LuSolve));
 
 // Qr
-INPUT_MAP(Qr) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Qr) = {{"full_matrices", ATTR_DESC(full_matrices, AnyTraits<bool>())}};
-OUTPUT_MAP(Qr) = {{0, OUTPUT_DESC(q)}, {1, OUTPUT_DESC(r)}};
+INPUT_MAP(Qr) = {{kIndex1, INPUT_DESC(x)}};
+ATTR_MAP(Qr) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Qr) = {{kIndex2, ATTR_DESC(full_matrices, AnyTraits<bool>())}};
+OUTPUT_MAP(Qr) = {{kIndex0, OUTPUT_DESC(q)}, {kIndex1, OUTPUT_DESC(r)}};
 REG_ADPT_DESC(Qr, prim::kPrimQr->name(), ADPT_DESC(Qr));
 }  // namespace mindspore::transform

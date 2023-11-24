@@ -1,0 +1,10 @@
+#operator log_matrix_determinant
+log_matrix_determinant:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        sign:
+            dtype: tensor
+        output:
+            dtype: tensor

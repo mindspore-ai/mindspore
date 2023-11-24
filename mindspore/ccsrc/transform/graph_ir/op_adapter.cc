@@ -24,6 +24,7 @@
 #include "graph/operator_factory_impl.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/anf_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace transform {
@@ -130,6 +131,20 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   } else {
     (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeAicpuOpInferFunc);
   }
+}
+
+size_t GetDynInputNum(const CNodePtr &cnode) {
+  std::vector<int64_t> dyn_input_sizes;
+  // onlt support 1 dyn_input
+  size_t dyn_input_num = 0;
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
+      auto v = val == -1 ? 0 : val;
+      dyn_input_num += LongToSize(v);
+    });
+  }
+  return dyn_input_num;
 }
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
@@ -852,18 +867,12 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetOpAttrList(const OperatorPtr &
 std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const OperatorPtr &op,
                                                                    const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return {};
   }
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return {};
-  }
   auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    return {};
-  }
-  if (!IsValueNode<Primitive>(inputs[0])) {
+  if (inputs.empty() || !IsValueNode<Primitive>(inputs[0])) {
     return {};
   }
 
@@ -882,13 +891,15 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
     }
   }
 
+  size_t dyn_input_num = GetDynInputNum(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
+    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
-    auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(DEBUG) << "Get input attr: input_" << it.first << "(" << it.second.name
+    auto const_value = GetValueNode(inputs[cur_idx]);
+    MS_LOG(DEBUG) << "Get input attr: input_" << cur_idx << "(" << it.second.name
                   << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
@@ -962,15 +973,11 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
 int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
   // no attribute for lonely node
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<CNode>() || node->cast<CNodePtr>() == nullptr) {
     return 0;
   }
 
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return 0;
-  }
-
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
     return 0;
@@ -1001,14 +1008,16 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
   }
 
+  size_t dyn_input_num = GetDynInputNum(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
+    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
 
-    auto const_value = GetValueNode(inputs[it.first]);
-    MS_LOG(INFO) << "Set attr: input_" << it.first << "(" << it.second.name << "), value: " << const_value->ToString();
+    auto const_value = GetValueNode(inputs[cur_idx]);
+    MS_LOG(INFO) << "Set attr: input_" << cur_idx << "(" << it.second.name << "), value: " << const_value->ToString();
     if (const_value->isa<None>()) {
       continue;
     }

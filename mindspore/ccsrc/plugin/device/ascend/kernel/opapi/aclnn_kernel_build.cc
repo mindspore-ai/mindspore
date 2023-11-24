@@ -21,11 +21,13 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "aclnn op [" << opname << "]";
   auto kernel_ptr = Factory<AclnnKernelMod>::Instance().Create(opname);
@@ -33,27 +35,26 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "aclnn can't find Kernel[" << opname << "]";
     return nullptr;
   }
-  if (!kernel_ptr->Init(anf_node)) {
-    MS_LOG(ERROR) << "Kernel initialize failed!";
-    return nullptr;
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
+
+  if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
+         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
+                      << anf_node->fullname_with_scope() << "] failed.";
   }
 
-  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
-  MS_EXCEPTION_IF_NULL(build_info);
-  auto input_types = build_info->GetAllInputDeviceTypes();
-  auto output_types = build_info->GetAllOutputDeviceTypes();
-  ShapeArray input_shapes;
-  ShapeArray output_shapes;
-  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(anf_node); ++i) {
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, i);
-    input_shapes.push_back(std::move(shape));
+  kernel_ptr->SetDTypes(opname);
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (CheckResizeCondition(cnode)) {
+    if (kernel_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
+                        << "] Resize failed.";
+    }
   }
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf_node); ++i) {
-    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
-    output_shapes.push_back(shape);
-  }
-  kernel_ptr->SetInputsInfo(input_types, input_shapes);
-  kernel_ptr->SetOutputsInfo(output_types, output_shapes);
+
   return kernel_ptr;
 }
 

@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/expm1_cpu_kernel.h"
 #include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/expm1.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,12 +25,8 @@ constexpr size_t kExpm1InputsNum = 1;
 constexpr size_t kExpm1OutputsNum = 1;
 }  // namespace
 
-bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Expm1>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-  input_dtype_ = inputs[0]->GetDtype();
+bool Expm1CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  input_dtype_ = inputs[0]->dtype_id();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -42,8 +37,9 @@ bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool Expm1CpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
+                               const std::vector<kernel::KernelTensor *> &,
+                               const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kExpm1InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kExpm1OutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
@@ -65,11 +61,11 @@ bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 template <typename T>
-void Expm1CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) const {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(T);
+void Expm1CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<kernel::KernelTensor *> &outputs) const {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  size_t elem_num = inputs[0]->size() / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
     output[i] = exp(input[i]) - T(1);
   }

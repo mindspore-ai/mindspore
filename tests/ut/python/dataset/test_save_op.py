@@ -22,6 +22,8 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+from mindspore import dtype as mstype
+import mindspore.dataset.transforms as transforms
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 
@@ -45,19 +47,19 @@ def test_case_00():
     Expectation: Generated mindrecord file
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    data = [{"image1": bytes("image1 bytes abc", encoding='UTF-8'),
+    data = [{"image1": bytes("image1 bytes abcddddd", encoding='UTF-8'),
              "image2": bytes("image1 bytes def", encoding='UTF-8'),
-             "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
-             "image4": bytes("image1 bytes jkl", encoding='UTF-8'),
+             "image3": bytes("image1 bytes ghixxxxxxxxxx", encoding='UTF-8'),
+             "image4": bytes("image1 bytes jklzz", encoding='UTF-8'),
              "image5": bytes("image1 bytes mno", encoding='UTF-8')},
-            {"image1": bytes("image2 bytes abc", encoding='UTF-8'),
-             "image2": bytes("image2 bytes def", encoding='UTF-8'),
-             "image3": bytes("image2 bytes ghi", encoding='UTF-8'),
-             "image4": bytes("image2 bytes jkl", encoding='UTF-8'),
-             "image5": bytes("image2 bytes mno", encoding='UTF-8')},
-            {"image1": bytes("image3 bytes abc", encoding='UTF-8'),
+            {"image1": bytes("image2 bytes abca", encoding='UTF-8'),
+             "image2": bytes("image2 bytes defbb", encoding='UTF-8'),
+             "image3": bytes("image2 bytes ghiccc", encoding='UTF-8'),
+             "image4": bytes("image2 bytes jkldddd", encoding='UTF-8'),
+             "image5": bytes("image2 bytes mnoeeeeeee", encoding='UTF-8')},
+            {"image1": bytes("image3 bytes abciiiiiiiiiiii", encoding='UTF-8'),
              "image2": bytes("image3 bytes def", encoding='UTF-8'),
-             "image3": bytes("image3 bytes ghi", encoding='UTF-8'),
+             "image3": bytes("image3 bytes ghiooooo", encoding='UTF-8'),
              "image4": bytes("image3 bytes jkl", encoding='UTF-8'),
              "image5": bytes("image3 bytes mno", encoding='UTF-8')},
             {"image1": bytes("image5 bytes abc", encoding='UTF-8'),
@@ -86,15 +88,6 @@ def test_case_00():
     file_name_auto += '_auto'
     d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
     d1.save(file_name_auto, FILES_NUM)
-    data_value_to_list = []
-
-    for item in data:
-        new_data = {'image1': np.asarray(list(item["image1"]), dtype=np.uint8),
-                    'image2': np.asarray(list(item["image2"]), dtype=np.uint8),
-                    'image3': np.asarray(list(item["image3"]), dtype=np.uint8),
-                    'image4': np.asarray(list(item["image4"]), dtype=np.uint8),
-                    'image5': np.asarray(list(item["image5"]), dtype=np.uint8)}
-        data_value_to_list.append(new_data)
 
     d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
@@ -104,11 +97,7 @@ def test_case_00():
     for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert len(item) == 5
         for field in item:
-            if isinstance(item[field], np.ndarray):
-                assert (item[field] ==
-                        data_value_to_list[num_iter][field]).all()
-            else:
-                assert item[field] == data_value_to_list[num_iter][field]
+            assert (item[field] == data[num_iter][field]).all()
         num_iter += 1
     assert num_iter == 5
     remove_file(file_name)
@@ -137,12 +126,6 @@ def test_case_00():
     d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
     d1.save(file_name_auto, FILES_NUM)
 
-    data_value_to_list = []
-    for item in data:
-        new_data = {'file_name': np.asarray(item["file_name"], dtype=np.str_),
-                    'label': np.asarray(list([item["label"]]), dtype=np.int32)}
-        data_value_to_list.append(new_data)
-
     d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
@@ -152,11 +135,7 @@ def test_case_00():
         logger.info(item)
         assert len(item) == 2
         for field in item:
-            if isinstance(item[field], np.ndarray):
-                assert (item[field] ==
-                        data_value_to_list[num_iter][field]).all()
-            else:
-                assert item[field] == data_value_to_list[num_iter][field]
+            assert (item[field] == data[num_iter][field]).all()
         num_iter += 1
     assert num_iter == 6
     remove_file(file_name)
@@ -272,23 +251,6 @@ def test_case_02():  # muti-bytes
     file_name_auto += '_auto'
     d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
     d1.save(file_name_auto, FILES_NUM)
-    data_value_to_list = []
-
-    for item in data:
-        new_data = {'file_name': np.asarray(item["file_name"], dtype=np.str_),
-                    'float32_array': item["float32_array"],
-                    'float64_array': item["float64_array"],
-                    'float32': item["float32"],
-                    'float64': item["float64"],
-                    'source_sos_ids': item["source_sos_ids"],
-                    'source_sos_mask': item["source_sos_mask"],
-                    'label': np.asarray(list([item["label"]]), dtype=np.int32),
-                    'image1': np.asarray(list(item["image1"]), dtype=np.uint8),
-                    'image2': np.asarray(list(item["image2"]), dtype=np.uint8),
-                    'image3': np.asarray(list(item["image3"]), dtype=np.uint8),
-                    'image4': np.asarray(list(item["image4"]), dtype=np.uint8),
-                    'image5': np.asarray(list(item["image5"]), dtype=np.uint8)}
-        data_value_to_list.append(new_data)
 
     d2 = ds.MindDataset(dataset_files=file_name_auto,
                         num_parallel_workers=num_readers,
@@ -300,13 +262,11 @@ def test_case_02():  # muti-bytes
         for field in item:
             if isinstance(item[field], np.ndarray):
                 if item[field].dtype == np.float32:
-                    assert (item[field] ==
-                            np.array(data_value_to_list[num_iter][field], np.float32)).all()
+                    assert (item[field] == np.array(data[num_iter][field], np.float32)).all()
                 else:
-                    assert (item[field] ==
-                            data_value_to_list[num_iter][field]).all()
+                    assert (item[field] == data[num_iter][field]).all()
             else:
-                assert item[field] == data_value_to_list[num_iter][field]
+                assert item[field] == data[num_iter][field]
         num_iter += 1
     assert num_iter == 6
     remove_file(file_name)
@@ -566,3 +526,123 @@ def test_case_10():
                              "You can reshape the Tensor to a fixed shape before saving."):
         d1.save(file_name_auto)
     remove_file(file_name_auto)
+
+
+def test_case_all_types():
+    """
+    Feature: Save op
+    Description: Test converting datasets of various data types to MindRecord
+    Expectation: Data read from the saved MindRecord is still of the original data type
+    """
+
+    dumpy_data = [{"bool": True, "int8": 4, "uint8": 255, "int16": 1000, "uint16": 9999, "int32": 12345,
+                   "uint32": 123450, "int64": 6434567890, "uint64": 116434567890, "float16": 12.123,
+                   "float32": 1.6875923, "float64": 123456.98765, "string": "it's so cool.",
+                   "bytes": bytes("image1 bytes abc", encoding='UTF-8'),
+                   "int8_array": np.array([1, 2, 3], dtype=np.int8),
+                   "uint8_array": np.array([255, 255, 255], dtype=np.uint8),
+                   "int16_array": np.array([1000, 1000, 1000], dtype=np.int16),
+                   "uint16_array": np.array([9999, 9999, 9999], dtype=np.uint16),
+                   "int32_array": np.array([1000, 12345, 1000], dtype=np.int32),
+                   "uint32_array": np.array([123450, 1000, 1000], dtype=np.uint32),
+                   "int64_array": np.array([6434567890, 12345, 1000], dtype=np.int64),
+                   "uint64_array": np.array([1000, 12345, 116434567890], dtype=np.uint64),
+                   "float16_array": np.array([12.123, 123.79, 10.0], dtype=np.float16),
+                   "float32_array": np.array([1.6875923, 1245.361, 1000.9821], dtype=np.float32),
+                   "float64_array": np.array([123456.98765, 12345.0, 1000.123456], dtype=np.float64)},
+                  {"bool": False, "int8": 0, "uint8": 128, "int16": 999, "uint16": 9669, "int32": 312345,
+                   "uint32": 9123450, "int64": 3434567890, "uint64": 316434567890, "float16": 12.223,
+                   "float32": 1.9875923, "float64": 223456.98765, "string": "it's so cool2.",
+                   "bytes": bytes("image2 bytes abczzzzz", encoding='UTF-8'),
+                   "int8_array": np.array([3, 2, 3], dtype=np.int8),
+                   "uint8_array": np.array([255, 1, 255], dtype=np.uint8),
+                   "int16_array": np.array([1000, 100, 1000], dtype=np.int16),
+                   "uint16_array": np.array([9999, 999, 9999], dtype=np.uint16),
+                   "int32_array": np.array([100, 12345, 1000], dtype=np.int32),
+                   "uint32_array": np.array([123450, 1000, 100], dtype=np.uint32),
+                   "int64_array": np.array([6434567890, 2345, 1000], dtype=np.int64),
+                   "uint64_array": np.array([1000, 12345, 316434567890], dtype=np.uint64),
+                   "float16_array": np.array([12.923, 123.79, 10.0], dtype=np.float16),
+                   "float32_array": np.array([1.6875923, 1245.961, 1000.9821], dtype=np.float32),
+                   "float64_array": np.array([123456.98765, 12345.0, 1000.93456], dtype=np.float64)}]
+
+    class Iterable:
+        def __init__(self, data):
+            self._datas = data
+
+        def __getitem__(self, index):
+            return self._datas[index]["bool"], self._datas[index]["int8"], self._datas[index]["uint8"], \
+                self._datas[index]["int16"], self._datas[index]["uint16"], self._datas[index]["int32"], \
+                self._datas[index]["uint32"], self._datas[index]["int64"], self._datas[index]["uint64"], \
+                self._datas[index]["float16"], self._datas[index]["float32"], self._datas[index]["float64"], \
+                self._datas[index]["string"], self._datas[index]["bytes"], self._datas[index]["int8_array"], \
+                self._datas[index]["uint8_array"], self._datas[index]["int16_array"], \
+                self._datas[index]["uint16_array"], self._datas[index]["int32_array"], \
+                self._datas[index]["uint32_array"], self._datas[index]["int64_array"], \
+                self._datas[index]["uint64_array"], self._datas[index]["float16_array"], \
+                self._datas[index]["float32_array"], self._datas[index]["float64_array"]
+
+        def __len__(self):
+            return len(self._datas)
+
+    data_source = Iterable(dumpy_data)
+    dataset = ds.GeneratorDataset(source=data_source, column_names=["bool", "int8", "uint8", "int16", "uint16",
+                                                                    "int32", "uint32", "int64", "uint64",
+                                                                    "float16", "float32", "float64", "string",
+                                                                    "bytes", "int8_array", "uint8_array",
+                                                                    "int16_array", "uint16_array", "int32_array",
+                                                                    "uint32_array", "int64_array", "uint64_array",
+                                                                    "float16_array", "float32_array", "float64_array"],
+                                  shuffle=False)
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.bool_), input_columns="bool")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.int8), input_columns="int8")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.uint8), input_columns="uint8")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.int16), input_columns="int16")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.uint16), input_columns="uint16")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.int32), input_columns="int32")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.uint32), input_columns="uint32")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.int64), input_columns="int64")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.uint64), input_columns="uint64")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.float16), input_columns="float16")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.float32), input_columns="float32")
+    dataset = dataset.map(operations=transforms.TypeCast(mstype.float64), input_columns="float64")
+
+    mindrecord_filename = "test_all_types.mindrecord"
+    remove_file(mindrecord_filename)
+    dataset.save(mindrecord_filename)
+
+    data_set = ds.MindDataset(dataset_files=mindrecord_filename, shuffle=False)
+    count = 0
+    for item in data_set.create_dict_iterator(output_numpy=True, num_epochs=1):
+        bool_value = 0
+        if dumpy_data[count]["bool"]:
+            bool_value = 1
+        assert bool_value == item["bool"]
+        assert dumpy_data[count]["int8"] == item["int8"]
+        assert dumpy_data[count]["uint8"] == item["uint8"]
+        assert dumpy_data[count]["int16"] == item["int16"]
+        assert dumpy_data[count]["uint16"] == item["uint16"]
+        assert dumpy_data[count]["int32"] == item["int32"]
+        assert dumpy_data[count]["uint32"] == item["uint32"]
+        assert dumpy_data[count]["int64"] == item["int64"]
+        assert dumpy_data[count]["uint64"] == item["uint64"]
+        assert np.allclose(np.array(dumpy_data[count]["float16"], dtype=np.float32), item["float16"], 0.001, 0.001)
+        assert np.allclose(np.array(dumpy_data[count]["float32"], dtype=np.float32), item["float32"], 0.0001, 0.0001)
+        assert np.allclose(np.array(dumpy_data[count]["float64"], dtype=np.float32), item["float64"], 0.0001, 0.0001)
+        assert dumpy_data[count]["string"] == item["string"]
+        assert dumpy_data[count]["bytes"] == item["bytes"]
+        assert (dumpy_data[count]["int8_array"] == item["int8_array"]).all()
+        assert (dumpy_data[count]["uint8_array"] == item["uint8_array"]).all()
+        assert (dumpy_data[count]["int16_array"] == item["int16_array"]).all()
+        assert (dumpy_data[count]["uint16_array"] == item["uint16_array"]).all()
+        assert (dumpy_data[count]["int32_array"] == item["int32_array"]).all()
+        assert (dumpy_data[count]["uint32_array"] == item["uint32_array"]).all()
+        assert (dumpy_data[count]["int64_array"] == item["int64_array"]).all()
+        assert (dumpy_data[count]["uint64_array"] == item["uint64_array"]).all()
+        assert np.allclose(dumpy_data[count]["float16_array"], item["float16_array"], 0.001, 0.001)
+        assert np.allclose(dumpy_data[count]["float32_array"], item["float32_array"], 0.0001, 0.0001)
+        assert np.allclose(dumpy_data[count]["float64_array"], item["float64_array"], 0.0001, 0.0001)
+        count += 1
+    assert count == 2
+
+    remove_file(mindrecord_filename)

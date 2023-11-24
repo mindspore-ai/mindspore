@@ -104,6 +104,8 @@ mindspore::HashMap<std::string, size_t> call_subgraphs_repeat_times = {};
 // {node name | {{input_index, dst_type}...}}
 const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
+  {kResizeNearestNeighborOpName, {{2, kNumberTypeInt32}}},
+  {kResizeBicubicOpName, {{2, kNumberTypeInt32}}},
   {kConv2DBackpropFilterOpName, {{3, kNumberTypeInt32}}},
   {kConv2DBackpropInputOpName, {{3, kNumberTypeInt32}}},
   {kOneHotOpName, {{2, kNumberTypeInt32}}},
@@ -112,7 +114,6 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
 
 // {node name | {{attr_name, dst_type}...}}
 const std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
-  {kResizeNearestNeighborOpName, {{"size", kNumberTypeInt32}}},
   {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}},
   {kSpaceToBatchNDOpName, {{"block_shape", kNumberTypeInt32}}},
   {kBatchToSpaceNDOpName, {{"block_shape", kNumberTypeInt32}}}};
@@ -363,16 +364,39 @@ void GetUnfoldInput(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_node
 
 bool IsNestedTuple(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  for (size_t idx = 1; idx < inputs.size(); ++idx) {
-    auto input = inputs[idx];
-    if (IsTupleInput(input)) {
-      return true;
-    }
+
+  auto abs = node->abstract();
+  if (abs != nullptr && abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    const auto &elements = abs_seq->elements();
+    bool is_nested = std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &item) {
+      return item != nullptr && item->isa<abstract::AbstractSequence>();
+    });
+
+    MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " is nested tuple: " << is_nested
+                  << ", debug name: " << node->DebugString() << ".";
+
+    return is_nested;
   }
+
   return false;
+}
+
+std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_to_ms_input,
+                                   const std::vector<int64_t> &dyn_input_sizes, const int &ge_input_size,
+                                   std::vector<int64_t> *new_dyn_input_sizes) {
+  std::vector<int> ge_tensor_orders(ge_input_size, -1);
+  for (int ge_idx = 0; ge_idx < ge_input_size; ++ge_idx) {
+    int ms_idx = ge_input_to_ms_input.at(ge_idx);
+    new_dyn_input_sizes->at(ge_idx) = dyn_input_sizes[ms_idx];
+    int begin_idx = 0;
+    for (int i = 0; i < ms_idx; ++i) {
+      begin_idx += dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i];
+    }
+    ge_tensor_orders[ge_idx] = begin_idx;
+  }
+  return ge_tensor_orders;
 }
 }  // namespace
 
@@ -945,7 +969,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
-        MS_LOG(WARNING) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
+        MS_LOG(INFO) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
         nodes.push_back(p);
       }
     }
@@ -2440,7 +2464,7 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
       input_handle.node = real_node;
       return std::vector<OutHandler>{input_handle};
     } else if (tuplegetitem_idx >= handles.size()) {
-      MS_LOG(EXCEPTION) << "Node output index " << tuplegetitem_idx << "is out of range [0," << handles.size()
+      MS_LOG(EXCEPTION) << "Node output index " << tuplegetitem_idx << " is out of range [0," << handles.size()
                         << "), node: " << node->fullname_with_scope()
                         << ", input node: " << input->fullname_with_scope();
     } else {
@@ -2600,16 +2624,8 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
     }
   }
   std::vector<int64_t> new_dyn_input_sizes(ge_input_size, -1);
-  std::vector<int> ge_tensor_orders(ge_input_size, -1);
-  for (int ge_idx = 0; ge_idx < ge_input_size; ++ge_idx) {
-    int ms_idx = ge_input_to_ms_input.at(ge_idx);
-    new_dyn_input_sizes[ge_idx] = dyn_input_sizes->at(ms_idx);
-    int begin_idx = 0;
-    for (int i = 0; i < ms_idx; ++i) {
-      begin_idx += dyn_input_sizes->at(i) == -1 ? 1 : dyn_input_sizes->at(i);
-    }
-    ge_tensor_orders[ge_idx] = begin_idx;
-  }
+  std::vector<int> ge_tensor_orders =
+    GetGeTensorOrders(ge_input_to_ms_input, *dyn_input_sizes, ge_input_size, &new_dyn_input_sizes);
 
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (HasAbstractMonad(inputs[i])) {
@@ -2657,6 +2673,11 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
       ret = adpt->setInput(src, SizeToInt(ms_input_idx), std::make_shared<std::vector<OutHandler>>(handles), true,
                            dyn_input_begin_idx);
     } else {
+      if (handles.size() != 1 && pred->isa<ValueNode>()) {
+        handles.clear();
+        auto handle = GetNormalOpInput(node, pred);
+        handles.push_back(handle);
+      }
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
                           << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
@@ -2747,6 +2768,11 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
       ret = adpt->setInput(src, SizeToInt(real_input_idx), std::make_shared<std::vector<OutHandler>>(handles));
       input_idx += LongToSize(dyn_input_num);
     } else {
+      if (handles.size() != 1 && pred->isa<ValueNode>()) {
+        handles.clear();
+        auto handle = GetNormalOpInput(node, pred);
+        handles.push_back(handle);
+      }
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
                           << node->fullname_with_scope() << ", input node: " << pred->fullname_with_scope()
@@ -3888,23 +3914,30 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
   std::shared_ptr<std::vector<OutHandler>> tuple_items = std::make_shared<std::vector<OutHandler>>();
   for (size_t i = 0; i < vec.size(); i++) {
     MS_EXCEPTION_IF_NULL(vec[i]);
+    GeTensorPtr ge_tensor = nullptr;
     if (vec[i]->isa<MeTensor>()) {
-      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
+      ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
       MS_EXCEPTION_IF_NULL(ge_tensor);
-      auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
-      AddGraphConstInput(const_op);
-      (void)const_op->set_attr_value(*ge_tensor);
-      (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
-      (void)tuple_items->emplace_back(OutHandler(const_op, ""));
     } else {
-      return FAILED;
+      ge_tensor = transform::TransformUtil::ConvertScalar(vec[i]);
+      if (ge_tensor == nullptr) {
+        return FAILED;
+      }
     }
+    auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
+    AddGraphConstInput(const_op);
+    (void)const_op->set_attr_value(*ge_tensor);
+    (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
+    (void)tuple_items->emplace_back(OutHandler(const_op, ""));
   }
   if (tuple_items->empty()) {
     return FAILED;
   }
 
   tuple_out_handle_cache_[node.get()] = tuple_items;
+  if (!vec[0]->isa<MeTensor>()) {
+    return FAILED;
+  }
   return SUCCESS;
 }
 

@@ -43,9 +43,9 @@ namespace {
 abstract::ShapePtr GluGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto grad = input_args[0]->BuildShape();
+  auto grad = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(grad);
-  auto x = input_args[1]->BuildShape();
+  auto x = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto x_shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape_element);
@@ -86,10 +86,10 @@ TypePtr GluGradInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto dy = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto dy = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, y, dy);
-  auto x_type = input_args[1]->BuildType();
+  auto x_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> input_types = {kFloat64, kFloat32, kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, input_types, primitive->name());

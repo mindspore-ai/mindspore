@@ -31,17 +31,13 @@
 namespace mindspore {
 namespace parallel {
 Status OneHotInfo::GetAttrs() {
-  auto iter = attrs_.find(AXIS);
-  if (iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int64Imm>()) {
-      axis_value_ptr_ = iter->second;
-      axis_ = iter->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t.";
-      return FAILED;
-    }
+  auto axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t.";
+    return FAILED;
   }
+  axis_ = axis_opt.value();
+  axis_value_ptr_ = MakeValue(static_cast<int64_t>(axis_));
 
   if ((axis_ > 1) || (axis_ < -1)) {
     MS_LOG(ERROR) << name_ << ": Axis " << axis_ << " is out of range[-1, 1].";
@@ -152,10 +148,11 @@ Status OneHotInfo::ExtractInputInfo() {
                   << cnode_->inputs().size();
     return FAILED;
   }
-  if (input_value_.size() != 4) {
-    MS_LOG(ERROR) << "Failure:There is 5 inputs for the CNode corresponding to OneHot Primitive, and input value size "
-                     "must be 4, real size is "
-                  << input_value_.size();
+  if (input_value_.size() != ONE_HOT_CNODE_INPUT_SIZE - 1) {
+    MS_LOG(ERROR) << "Failure:There is " << ONE_HOT_CNODE_INPUT_SIZE
+                  << " inputs for the CNode corresponding to OneHot Primitive, and input value size "
+                     "must be "
+                  << ONE_HOT_CNODE_INPUT_SIZE - 1 << ", real size is " << input_value_.size();
     return FAILED;
   }
   auto value_ptr = input_value_.at(1);

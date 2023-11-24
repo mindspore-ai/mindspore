@@ -20,17 +20,18 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "ops/layer_norm.h"
+#include "ops/base_operator.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
 /// \brief LayerNormFusion defined LayerNorm operator prototype of lite.
-class MIND_API LayerNormFusion : public LayerNorm {
+class MIND_API LayerNormFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LayerNormFusion);
   /// \brief Constructor.
-  LayerNormFusion() : LayerNorm(kNameLayerNormFusion) {}
+  LayerNormFusion() : BaseOperator(kNameLayerNormFusion) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -40,6 +41,25 @@ class MIND_API LayerNormFusion : public LayerNorm {
   /// \param[in] elementwise_affine Define a boolean value to indicate that the operation is element-wise or not.
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1, const float epsilon = 1e-7,
             const bool elementwise_affine = false);
+
+  /// \brief Set begin_norm_axis.
+  void set_begin_norm_axis(const int64_t begin_norm_axis);
+  /// \brief Set begin_params_axis.
+  void set_begin_params_axis(const int64_t begin_params_axis);
+  /// \brief Set epsilon.
+  void set_epsilon(const float epsilon);
+  /// \brief Get begin_norm_axis.
+  ///
+  /// \return begin_norm_axis.
+  int64_t get_begin_norm_axis() const;
+  /// \brief Get begin_params_axis.
+  ///
+  /// \return begin_params_axis.
+  int64_t get_begin_params_axis() const;
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
+  float get_epsilon() const;
 
   /// \brief Method to set elementwise_affine attribute.
   ///

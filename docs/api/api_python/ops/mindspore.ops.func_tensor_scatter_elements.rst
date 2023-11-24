@@ -21,12 +21,10 @@
         - 如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
         - 在Ascend平台上，目前仅支持 `reduction` 设置为 ``"none"`` 的实现。
         - 在Ascend平台上，`input_x` 仅支持float16和float32两种数据类型。
+        - 这是一个实验性API，后续可能修改或删除。
 
     .. note::
         如果 `indices` 的值超出 `input_x` 索引上下界，则相应的 `updates` 不会更新到 `input_x` ，也不会抛出索引错误。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input_x** (Tensor) - 输入Tensor。rank必须大于等于1。

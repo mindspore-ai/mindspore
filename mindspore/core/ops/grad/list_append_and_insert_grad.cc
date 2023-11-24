@@ -29,12 +29,26 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
+int64_t GetIndexArgValue(const ValuePtr &index_value, size_t elements_len, const std::string &prim_name) {
+  auto index_opt = GetScalarValue<int64_t>(index_value);
+  if (!index_opt.has_value()) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the index value should not be none.";
+  }
+  auto index = index_opt.value();
+  if (index < -SizeToLong(elements_len) || index >= SizeToLong(elements_len)) {
+    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "], pop index[" << index << "] out of range.";
+  }
+  index = index < 0 ? index + SizeToLong(elements_len) : index;
+  return index;
+}
+
 AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -64,22 +78,13 @@ AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
   for (size_t i = 0; i < data_abs->size(); ++i) {
     abs.push_back(data_abs->elements()[i]);
   }
-  ValuePtr index_value = index_abs->BuildValue();
+  ValuePtr index_value = index_abs->GetValue();
   if (index_value == kValueAny) {
     abs.pop_back();
     return CheckAndConvertUtils::BroadenAllSequenceElements(std::make_shared<abstract::AbstractList>(abs));
   }
 
-  int64_t index = 0;
-  if (index_value->isa<Int64Imm>()) {
-    index = GetValue<int64_t>(index_value);
-  } else {
-    index = IntToLong(GetValue<int32_t>(index_value));
-  }
-  if (index < -SizeToLong(elements.size()) || index >= SizeToLong(elements.size())) {
-    MS_EXCEPTION(ValueError) << "The prim '" << prim_name << "', pop index[" << index << "] out of range.";
-  }
-  index = index < 0 ? index + SizeToLong(elements.size()) : index;
+  int64_t index = GetIndexArgValue(index_value, elements.size(), prim_name);
   (void)abs.erase(abs.begin() + index);
   return std::make_shared<abstract::AbstractList>(abs);
 }
@@ -88,11 +93,21 @@ class ListAppendAndInsertGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->BuildShape();
+    auto input_shape = input_args[kIndex0]->GetShape();
+    auto index_value = input_args[kIndex1]->GetValue();
+    auto list_shape = input_shape->cast<abstract::SequenceShapePtr>()->shape();
+    auto index = GetIndexArgValue(index_value, list_shape.size(), primitive->name());
+    list_shape.erase(list_shape.begin() + index);
+    return std::make_shared<abstract::ListShape>(list_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListAppendAndInsertGradInnerInfer(primitive, input_args)->BuildType();
+    auto input_type = input_args[kIndex0]->GetType();
+    auto index_value = input_args[kIndex1]->GetValue();
+    auto list_type = input_type->cast<ListPtr>()->elements();
+    auto index = GetIndexArgValue(index_value, list_type.size(), primitive->name());
+    list_type.erase(list_type.begin() + index);
+    return std::make_shared<List>(list_type);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

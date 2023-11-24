@@ -217,7 +217,7 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            TypeError: if `node` is not a `Node`.
+            TypeError: if `node` is not a Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
@@ -246,7 +246,7 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            TypeError: If `node` is not a `Node`.
+            TypeError: If `node` is not a Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree
@@ -309,7 +309,7 @@ class SymbolTree:
             An instance of `Node` being erased if node is in `SymbolTree` else None.
 
         Raises:
-            TypeError: The type of `node` is not Node.
+            TypeError: The type of `node` is not Node or str.
 
         Examples:
             >>> from mindspore.rewrite import SymbolTree

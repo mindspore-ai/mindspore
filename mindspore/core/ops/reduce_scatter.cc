@@ -79,7 +79,7 @@ class ReduceScatterInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'rank_size' can not be zero, but got "
                                << rank_size;
     }
-    auto abstract_shape = input_args[kIndex0]->BuildShape();
+    auto abstract_shape = input_args[kIndex0]->GetShape();
     MS_ERROR_IF_NULL_W_RET_VAL(abstract_shape, std::make_shared<abstract::Shape>());
     if (abstract_shape->IsDynamic()) {
       return abstract_shape;
@@ -96,7 +96,7 @@ class ReduceScatterInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto dtype = input_args[kIndex0]->BuildType();
+    auto dtype = input_args[kIndex0]->GetType();
     const std::set<TypePtr> default_valid_types = {kInt8, kInt32, kFloat16, kFloat32};
     const std::set<TypePtr> gpu_valid_types = {kBool,   kInt8,    kInt32,   kUInt32, kInt64,
                                                kUInt64, kFloat16, kFloat32, kFloat64};

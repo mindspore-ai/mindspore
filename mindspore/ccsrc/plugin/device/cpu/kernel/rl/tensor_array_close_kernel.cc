@@ -25,14 +25,18 @@ using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
 TensorArrayCloseCpuKernelMod::TensorArrayCloseCpuKernelMod() {}
 
-void TensorArrayCloseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_size_list_.push_back(sizeof(int64_t));
+int TensorArrayCloseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
+  return KRET_OK;
 }
 
-bool TensorArrayCloseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &) {
+bool TensorArrayCloseCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   CPUTensorArrayPtr tensors_ =

@@ -25,10 +25,8 @@ constexpr auto kIsNan = "IsNan";
 constexpr auto kIsFinite = "IsFinite";
 }  // namespace
 
-bool FloatStatusGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool FloatStatusGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR)
@@ -59,14 +57,13 @@ bool FloatStatusGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   auto type_iter = kOpTypeMap.find(kernel_name_);
   kernel_type_ = type_iter->second;
 
-  type_id_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  type_id_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
   return true;
 }
 
-int FloatStatusGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int FloatStatusGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
@@ -80,15 +77,15 @@ int FloatStatusGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-bool FloatStatusGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FloatStatusGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs);
 }
 
 template <typename T>
-bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
+bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (is_null_input_) {
     return true;
   }
@@ -99,7 +96,7 @@ bool FloatStatusGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     case OP_STATUS: {
       float *output = GetDeviceAddress<float>(outputs, 0);
       status =
-        FillDeviceArray(outputs[0]->size / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
+        FillDeviceArray(outputs[0]->size() / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(cuda_stream_));
       CHECK_CUDA_STATUS(status, kernel_name_);
       status = CalFloatStatus(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
       break;

@@ -65,27 +65,23 @@ int64_t IndexPutCpuKernelMod::Multiplicative(const std::vector<int64_t> &tensors
   return result;
 }
 
-bool IndexPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexPut>(base_operator);
-  kernel_name_ = kernel_ptr->name();
-  auto type_id = inputs[0]->GetDtype();
+bool IndexPutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto type_id = inputs[0]->dtype_id();
   input_info_.push_back(type_id);
-  type_id = inputs[1]->GetDtype();
+  type_id = inputs[1]->dtype_id();
   input_info_.push_back(type_id);
   for (size_t i = 2; i < inputs.size(); i++) {
-    type_id = inputs[i]->GetDtype();
+    type_id = inputs[i]->dtype_id();
     input_info_.push_back(type_id);
   }
   inputs_nums = inputs.size();
-  accumulate = GetValue<int64_t>(base_operator->GetAttr("accumulate"));
+  accumulate = GetValue<int64_t>(primitive_->GetAttr("accumulate"));
   return true;
 }
 
-int IndexPutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IndexPutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -195,11 +191,11 @@ void IndexPutCpuKernelMod::ComputeSpecial(T *x2, size_t x2_nums, std::vector<std
 }
 
 template <typename T, typename T0>
-bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto *x1 = static_cast<T *>(inputs[0]->addr);
-  auto *x2 = static_cast<T *>(inputs[1]->addr);
-  auto *y = static_cast<T *>(outputs[0]->addr);
+bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                        const std::vector<kernel::KernelTensor *> &outputs) {
+  auto *x1 = static_cast<T *>(inputs[0]->device_ptr());
+  auto *x2 = static_cast<T *>(inputs[1]->device_ptr());
+  auto *y = static_cast<T *>(outputs[0]->device_ptr());
   size_t x1_nums =
     std::accumulate(x1_shape_.begin(), x1_shape_.end(), static_cast<size_t>(1), std::multiplies<size_t>());
   size_t x2_nums =
@@ -207,7 +203,7 @@ bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   constexpr size_t indices_start_pos = 2;
   std::vector<std::vector<int64_t>> indices_value;
   for (size_t i = indices_start_pos; i < inputs.size(); i++) {
-    auto *linetensor = static_cast<T0 *>(inputs[i]->addr);
+    auto *linetensor = static_cast<T0 *>(inputs[i]->device_ptr());
     std::vector<int64_t> iline;
     for (size_t j = 0; static_cast<int64_t>(j) < indices_shape_[i - indices_start_pos][0]; j++) {
       linetensor[j] = (linetensor[j] < 0) ? linetensor[j] + x1_shape_[i - indices_start_pos] : linetensor[j];
@@ -254,8 +250,8 @@ bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-bool IndexPutCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &outputs) {
+bool IndexPutCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                  const std::vector<KernelTensor *> &outputs) {
   constexpr int indices_start_pos = 2;
   CheckParams();
   TypeId input_type = input_info_[0];

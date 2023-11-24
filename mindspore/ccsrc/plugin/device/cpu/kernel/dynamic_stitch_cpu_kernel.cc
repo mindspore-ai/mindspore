@@ -22,56 +22,50 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kDynamicStitchOutputNum = 1;
-}  // namespace
 int64_t GetShapeSize(const ShapeVector &shape) {
   return std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
 }
 
 template <typename T>
-bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicStitchOutputNum, kernel_name_);
-  auto node_ = cnode_ptr_.lock();
+bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                             const std::vector<kernel::KernelTensor *> &outputs) {
   int first_dim_size = 0;
-  size_t input_count = common::AnfAlgo::GetInputTensorNum(node_);
+  size_t input_count = inputs.size();
   input_tuple_num_ = input_count / 2;
   int max_index = -1;
   for (size_t i = 0; i < input_tuple_num_; ++i) {
-    auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
-    auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
+    auto indice = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
+    auto shape_size = GetShapeSize(inputs[i]->GetShapeVector());
     for (auto j = 0; j < shape_size; ++j) {
       max_index = std::max(indice[j], max_index);
     }
   }
   first_dim_size = max_index + 1;
 
-  std::vector<TypeId> dtypes{AnfAlgo::GetOutputDeviceDataType(node_, 0)};
-  ShapeVector result_shape{first_dim_size};
-  auto data0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, input_tuple_num_);
-  auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0).size();
+  std::vector<TypeId> dtypes{outputs[kIndex0]->dtype_id()};
+  result_shape_.push_back(first_dim_size);
+  const auto &data0_shape = inputs[input_tuple_num_]->GetShapeVector();
+  auto indice_dims = inputs[kIndex0]->GetShapeVector().size();
   for (size_t d = indice_dims; d < data0_shape.size(); ++d) {
-    result_shape.emplace_back(data0_shape[d]);
+    result_shape_.emplace_back(data0_shape[d]);
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {result_shape}, node_.get());
 
   size_t num_out_dims = 2;
   ShapeVector out_dims(num_out_dims, 0);
   for (size_t out_dim = 0; out_dim <= num_out_dims - 1; ++out_dim) {
-    out_dims[out_dim] = out_dim >= result_shape.size() ? 1 : result_shape[out_dim];
+    out_dims[out_dim] = out_dim >= result_shape_.size() ? 1 : result_shape_[out_dim];
   }
-  for (size_t in_dim = num_out_dims; in_dim < result_shape.size(); ++in_dim) {
-    out_dims[num_out_dims - 1] *= result_shape[in_dim];
+  for (size_t in_dim = num_out_dims; in_dim < result_shape_.size(); ++in_dim) {
+    out_dims[num_out_dims - 1] *= result_shape_[in_dim];
   }
 
-  auto merged = reinterpret_cast<T *>(outputs[0]->addr);
+  auto merged = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   size_t slice_size = LongToSize(out_dims[1]);
   size_t slice_bytes = slice_size * sizeof(T);
   for (size_t i = 0; i < input_tuple_num_; i++) {
-    auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
-    auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->addr);
-    auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
+    auto indice = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
+    auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->device_ptr());
+    auto shape_size = GetShapeSize(inputs[i]->GetShapeVector());
     for (auto j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);
       if (ret != EOK) {
@@ -80,6 +74,15 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     }
   }
   return true;
+}
+
+void DynamicStitchCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(result_shape_);
+  auto data_dtype = inputs[kIndex1]->dtype_id();
+  auto data_dtype_size = GetTypeByte(TypeIdToType(data_dtype));
+  size_t batch_size = std::accumulate(result_shape_.cbegin(), result_shape_.cend(), 1, std::multiplies<size_t>());
+  outputs[kIndex0]->set_size(batch_size * data_dtype_size);
 }
 
 std::vector<std::pair<KernelAttr, DynamicStitchCpuKernelMod::DynamicStitchFunc>> DynamicStitchCpuKernelMod::func_list_ =
@@ -144,13 +147,16 @@ std::vector<std::pair<KernelAttr, DynamicStitchCpuKernelMod::DynamicStitchFunc>>
       .AddOutputAttr(kNumberTypeBool),
     &DynamicStitchCpuKernelMod::LaunchKernel<bool>}};
 
-void DynamicStitchCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  cnode_ptr_ = kernel_node;
+int DynamicStitchCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
 
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, DynamicStitchFunc> &pair) { return pair.first; });
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "DynamicStitch does not support this kernel data type: " << kernel_attr;
@@ -158,6 +164,7 @@ void DynamicStitchCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;
+  return KRET_OK;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DynamicStitch, DynamicStitchCpuKernelMod);

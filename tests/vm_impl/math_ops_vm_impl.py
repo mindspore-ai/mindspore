@@ -241,7 +241,7 @@ def vm_impl_div(self):
 def vm_impl_reduce_mean(self):
     """Generate vm_impl function for ReduceMean."""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
         out = vm.mean(x, axis)
         return Tensor(out)

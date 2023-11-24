@@ -29,32 +29,32 @@ BufferGetKernelMod::BufferGetKernelMod() : element_nums_(0), capacity_(0) {}
 
 BufferGetKernelMod::~BufferGetKernelMod() {}
 
-bool BufferGetKernelMod::Init(const CNodePtr &kernel_node) {
-  kernel_node_ = kernel_node;
-  auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-  auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-  capacity_ = GetAttr<int64_t>(kernel_node, "capacity");
+int BufferGetKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  workspace_size_list_.clear();
+  output_size_list_.clear();
+  auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
+  auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));
+  capacity_ = GetValue<int64_t>(primitive_->GetAttr("capacity"));
   element_nums_ = shapes.size();
   for (size_t i = 0; i < element_nums_; i++) {
     exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
   }
   // buffer size
   for (auto i : exp_element_list) {
-    input_size_list_.push_back(i * capacity_);
     output_size_list_.push_back(i);
   }
-  // count, head, index
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
   workspace_size_list_.push_back(sizeof(int));
-  return true;
+  return KRET_OK;
 }
 
-void BufferGetKernelMod::InitSizeLists() { return; }
-
-bool BufferGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, void *stream) {
+bool BufferGetKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                                const std::vector<KernelTensor *> &outputs, void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   int *origin_index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
@@ -71,5 +71,12 @@ bool BufferGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   }
   return true;
 }
+std::vector<KernelAttr> BufferGetKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BufferGetItem, BufferGetKernelMod);
+
 }  // namespace kernel
 }  // namespace mindspore

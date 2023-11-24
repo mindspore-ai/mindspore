@@ -1,0 +1,8 @@
+#operator trace
+trace:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor

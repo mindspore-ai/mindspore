@@ -19,8 +19,9 @@
 
 #include <utility>
 #include <vector>
-#include "ir/dtype/type.h"
 #include "abstract/abstract_value.h"
+#include "ir/dtype/type.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,6 +49,8 @@ ValuePtr CreateScalar(T v) {
   return std::make_shared<NumberContainer>(v)->value_;
 }
 
+static inline ValuePtr CreatePyInt(int v) { return std::make_shared<Int64Imm>(v); }
+
 static inline ValuePtr CreateTuple(const std::vector<NumberContainer> &values) {
   std::vector<ValuePtr> value_vec;
   value_vec.reserve(values.size());
@@ -64,6 +67,22 @@ static inline ValuePtr CreateList(const std::vector<NumberContainer> &values) {
     value_vec.push_back(v.value_);
   }
   return std::make_shared<ValueList>(value_vec);
+}
+
+ValuePtr CreatePyIntList(const std::vector<NumberContainer> &values);
+
+ValuePtr CreatePyIntTuple(const std::vector<NumberContainer> &values);
+
+static inline Format FormatStringToEnum(const std::string &format) {
+  std::unordered_map<std::string, mindspore::Format> kStringToEnumMap = {{kOpFormat_NHWC, Format::NHWC},
+                                                                         {kOpFormat_NCHW, Format::NCHW},
+                                                                         {kOpFormat_NCDHW, Format::NCDHW}};
+  auto iter = kStringToEnumMap.find(format);
+  if (iter == kStringToEnumMap.end()) {
+    MS_LOG(WARNING) << "Unsupported format [" << format << "].";
+    return mindspore::DEFAULT_FORMAT;
+  }
+  return iter->second;
 }
 }  // namespace ops
 }  // namespace mindspore

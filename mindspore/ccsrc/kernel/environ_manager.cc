@@ -65,7 +65,6 @@ void EnvironMgr::Clear() {
 
 bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  // Check the value type attr.
   auto value_type_attr = TypeId(common::AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
   if ((value_type_attr != kObjectTypeTensorType) && (value_type_attr != kObjectTypeEnvType)) {
     MS_LOG(ERROR) << "The value type is not supported: " << value_type_attr
@@ -94,6 +93,42 @@ bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   auto value_shapes = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
   if ((value_type_attr == kObjectTypeEnvType) && (!IsScalarTensor(value_type, value_shapes))) {
     MS_LOG(ERROR) << "The input value checks invalid, kernel: " << kernel_node->fullname_with_scope();
+    return false;
+  }
+
+  return true;
+}
+
+bool EnvironMgr::CheckEnvInput(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                               const std::vector<KernelTensor *> &outputs) const {
+  // Check the value type attr.
+  auto value_type_attr = TypeId(GetValue<int>(primitive->GetAttr(kEnvValueTypeAttr)));
+  if ((value_type_attr != kObjectTypeTensorType) && (value_type_attr != kObjectTypeEnvType)) {
+    MS_LOG(ERROR) << "The value type is not supported: " << value_type_attr << ", kernel: " << primitive->name();
+    return false;
+  }
+
+  // Check the input handle.
+  auto handle_type = inputs[kIndex0]->dtype_id();
+  const auto &handle_shapes = inputs[kIndex0]->GetShapeVector();
+  if (!IsScalarTensor(handle_type, handle_shapes)) {
+    MS_LOG(ERROR) << "The input handle checks invalid, kernel: " << primitive->name();
+    return false;
+  }
+
+  // Check the input key.
+  auto key_type = inputs[kIndex1]->dtype_id();
+  const auto &key_shapes = inputs[kIndex1]->GetShapeVector();
+  if (!IsScalarTensor(key_type, key_shapes)) {
+    MS_LOG(ERROR) << "The input key checks invalid, kernel: " << primitive->name();
+    return false;
+  }
+
+  // Check the input value.
+  auto value_type = inputs[kIndex2]->dtype_id();
+  const auto &value_shapes = inputs[kIndex2]->GetShapeVector();
+  if ((value_type_attr == kObjectTypeEnvType) && (!IsScalarTensor(value_type, value_shapes))) {
+    MS_LOG(ERROR) << "The input value checks invalid, kernel: " << primitive->name();
     return false;
   }
 

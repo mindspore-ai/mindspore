@@ -46,6 +46,8 @@ using DeviceAddressPtr = device::DeviceAddressPtr;
 using Address = kernel::Address;
 using AddressPtr = kernel::AddressPtr;
 using kernel::KernelObjectType;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 
 class BACKEND_EXPORT AnfRuntimeAlgorithm {
  public:
@@ -122,6 +124,40 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
                                                     bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
+
+  // Get shape, devie type and value information.
+  static std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> GetAbstractInfo(const AnfNodePtr &node,
+                                                                               size_t output_idx);
+
+  static bool ExistOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+
+  // Get output kernel tensor if exists, otherwise throw a exception.
+  static const KernelTensorPtr &GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+  // Get output kernel tensor if exists, otherwise create a new one and set into node.
+  static const KernelTensorPtr &GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+
+  // Get input kernel tensor if exists, otherwise throw a exception.
+  static const KernelTensorPtr &GetPrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx);
+  // Get input kernel tensor if exists, otherwise create a new one and set into node.
+  static const KernelTensorPtr &GetOrCreatePrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx);
+
+  // Get all input kernel tensor if exists, otherwise create new KernelTensor and set into input node.
+  static std::vector<KernelTensor *> GetOrCreateAllInputKernelTensors(const AnfNodePtr &node);
+  // Get all output kernel tensor if exists, otherwise create new KernelTensor and set into node.
+  static std::vector<KernelTensor *> GetOrCreateAllOutputKernelTensors(const AnfNodePtr &node);
+
+  // Create output kernel tensor for node using node's shape, type and value,
+  // and set device information to kernel tensor.
+  static KernelTensorPtr CreateOutputKernelTensorWithDeviceInfo(const AnfWithOutIndex &node_with_index,
+                                                                void *const device_ptr, size_t size,
+                                                                const string &format, TypeId dtype_id,
+                                                                const ShapeVector &host_shape,
+                                                                const std::string &device_name, uint32_t device_id,
+                                                                const UserDataPtr &user_data = nullptr);
+
+  // Get all input memory size list for node.
+  static std::vector<size_t> GetNodeInputSizeList(const AnfNodePtr &node);
+
   static size_t GetOutputAddressNum(const AnfNodePtr &node);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);
@@ -182,9 +218,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static KernelGraphPtr GetValueNodeKernelGraph(const AnfNodePtr &node);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
-  static ShapeVector GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
-  static ShapeVector GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
-  static ShapeVector GetDeviceShapeAdaptively(const ShapeVector &shape);
   static KernelGraphPtr FetchKernelGraph(const AnfNode *node);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
@@ -201,9 +234,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
   // 'Unique' will change after Launch, the output address size should update.
   static void UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel);
-  // Update the shape of internal parameter in the sub graph.
-  static void UpdateInternalParameterShape(
-    const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters);
   static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
 
   static void AddOutInRefToGraph(const KernelGraphPtr &graph);
@@ -250,7 +280,10 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   // Check whether the input scalar need converted to tensor.
   static bool IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node);
+  static tensor::TensorPtr CreateMapTensor(const DeviceAddressPtr &output_device_address);
   static tensor::TensorPtr CreateMapTensor(const AnfNodePtr &output_node, size_t output_index);
+  // Check all elements of a ndoe's output(tuple/list type) are scalar.
+  static bool IsSequenceOutputOfScalar(const AnfNodePtr &node);
 
   // Used to check whether an AnfNode is a Summary Node.
   static bool IsSummaryNode(const AnfNodePtr &node);
@@ -258,6 +291,16 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void UpdateValueNodeShape(const AnfNodePtr &node);
   static bool HasSelectKernelBuildInfo(const AnfNodePtr &node);
   static bool NeedEraseCache(const PrimitivePtr &prim);
+
+  static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+
+  static inline ValueNodePtr ConvertValueToNode(const KernelGraphPtr &kernel_graph, const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    MS_EXCEPTION_IF_NULL(value);
+    auto value_node = kernel_graph->NewValueNode(value->ToAbstract(), value);
+    kernel_graph->AddValueNodeToGraph(value_node);
+    return value_node;
+  }
 };
 }  // namespace session
 

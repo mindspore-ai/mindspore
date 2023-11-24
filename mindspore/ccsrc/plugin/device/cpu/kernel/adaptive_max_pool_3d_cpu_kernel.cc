@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/adaptive_max_pool_3d_cpu_kernel.h"
 
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace {
@@ -30,11 +31,8 @@ namespace kernel {
 constexpr size_t kInputNumDims5 = 5;
 constexpr size_t kInputShapeDims4 = 4;
 
-bool AdaptiveMaxPool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool AdaptiveMaxPool3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,20 +41,17 @@ bool AdaptiveMaxPool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int AdaptiveMaxPool3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
-  input_shape_ = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  dtype_ = inputs[kIndex0]->dtype_id();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   input_num_dims_ = input_shape_.size();
   if (!(input_num_dims_ == kInputNumDims5 || input_num_dims_ == kInputShapeDims4)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input data dimensions should be equal to 4 or 5, but got "
@@ -78,9 +73,14 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-void AdaptiveMaxPool3DCpuKernelMod::SyncOutputShape() {
-  outputs_[kIndex0]->SetShapeVector(output_shape_);
-  outputs_[kIndex1]->SetShapeVector(output_shape_);
+void AdaptiveMaxPool3DCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(output_shape_);
+  outputs[kIndex1]->SetShapeVector(output_shape_);
+  size_t out_ele =
+    LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kIndex0]->set_size(out_ele * UnitSizeInBytes(dtype_));
+  outputs[kIndex0]->set_size(out_ele * sizeof(int));
 }
 
 std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {
@@ -142,15 +142,15 @@ std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   // Set Shape
   output_shape_ = {input_shape_[0]};
   if (input_num_dims_ == kInputNumDims5) {
     output_shape_.push_back(input_shape_[1]);
   }
-  auto output_size_ptr = static_cast<int32_t *>(inputs[1]->addr);
+  auto output_size_ptr = static_cast<int32_t *>(inputs[1]->device_ptr());
   const size_t kOutputSizeDims = 3;
   for (size_t i = 0; i < kOutputSizeDims; ++i) {
     const int32_t elem = output_size_ptr[i];
@@ -255,11 +255,11 @@ void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data,
 }
 
 template <typename T>
-void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<AddressPtr> &outputs) {
-  auto input_data = static_cast<T *>(inputs[0]->addr);
-  auto output_data = static_cast<T *>(outputs[0]->addr);
-  auto indices_data = static_cast<int32_t *>(outputs[1]->addr);
+void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  auto input_data = static_cast<T *>(inputs[0]->device_ptr());
+  auto output_data = static_cast<T *>(outputs[0]->device_ptr());
+  auto indices_data = static_cast<int32_t *>(outputs[1]->device_ptr());
   if (input_shape_.size() == kInputShapeDims4) {
     (void)input_shape_.insert(input_shape_.begin(), 1);
   }

@@ -54,8 +54,6 @@ def lamb_apply_weight_assign():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_lamb_apply_weight_assign_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

@@ -24,7 +24,6 @@ namespace dataset {
 AutoAugmentOp::AutoAugmentOp(AutoAugmentPolicy policy, InterpolationMode interpolation,
                              const std::vector<uint8_t> &fill_value)
     : policy_(policy), interpolation_(interpolation), fill_value_(fill_value) {
-  rnd_.seed(GetSeed());
   transforms_ = GetTransforms(policy);
 }
 
@@ -120,16 +119,16 @@ Status AutoAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
 void AutoAugmentOp::GetParams(int transform_num, int *transform_id, const std::shared_ptr<std::vector<float>> &probs,
                               const std::shared_ptr<std::vector<int32_t>> &signs) {
   std::uniform_int_distribution<int32_t> id_dist(0, transform_num - 1);
-  *transform_id = id_dist(rnd_);
+  *transform_id = id_dist(random_generator_);
   std::uniform_real_distribution<float> prob_dist(0.0, 1.0);
 
-  (*probs)[0] = prob_dist(rnd_);
-  (*probs)[1] = prob_dist(rnd_);
+  (*probs)[0] = prob_dist(random_generator_);
+  (*probs)[1] = prob_dist(random_generator_);
 
   std::uniform_int_distribution<int32_t> sign_dist(0, 1);
 
-  (*signs)[0] = sign_dist(rnd_);
-  (*signs)[1] = sign_dist(rnd_);
+  (*signs)[0] = sign_dist(random_generator_);
+  (*signs)[1] = sign_dist(random_generator_);
 }
 
 Space AutoAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size) {

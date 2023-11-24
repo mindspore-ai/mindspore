@@ -47,8 +47,8 @@ class ScopedValue:
 
     Args:
         arg_type (ValueType): A `ValueType` represents type of current value.
-        scope (str): A string represents scope of current value. Take "self.var1" as an example, `scope` of this
-            var1 is "self". Default: ``""`` .
+        scope (str, optional): A string represents scope of current value. Take "self.var1" as an example,
+            `scope` of this var1 is "self". Default: ``""`` .
         value: A handler represents value of current value. The type of value is corresponding to `arg_type`.
             Default: ``None`` .
     """
@@ -100,8 +100,8 @@ class ScopedValue:
         Create a naming `ScopedValue`. A `NamingValue` represents a reference to another variable.
 
         Args:
-            name: (str): A string represents the identifier of another variable.
-            scope: (str): A string represents the scope of another variable. Default: ``""`` .
+            name (str): A string represents the identifier of another variable.
+            scope (str, optional): A string represents the scope of another variable. Default: ``""`` .
 
         Returns:
             An instance of `ScopedValue`.
@@ -128,8 +128,8 @@ class ScopedValue:
 
         Args:
             names (List[str] or Tuple[str]): List or tuple of `str` represents names of referenced variables.
-            scopes (List[str] or Tuple[str]): List or tuple of `str` represents scopes of referenced variables.
-                Default: ``None`` .
+            scopes (List[str] or Tuple[str], optional): List or tuple of `str` represents scopes of
+                referenced variables. Default: ``None`` .
 
         Returns:
             An list of instance of `ScopedValue`.

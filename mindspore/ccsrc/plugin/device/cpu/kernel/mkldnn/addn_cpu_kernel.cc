@@ -54,10 +54,7 @@ void AddT(const T *in0, const T *in1, T *out, int start, int end) {
 }
 }  // namespace
 
-bool AddNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool AddNCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input_num_ = inputs.size();
   if (input_num_ < kAddNInputsMinNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input numbers can not less " << kAddNInputsMinNum << ", but got "
@@ -76,9 +73,9 @@ bool AddNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &,
+                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
   std::function<void(const T *, const T *, T *, int, int)> comput_func;
@@ -90,14 +87,14 @@ bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     comput_func = AddT<T>;
   }
 
-  size_t elements_num = outputs[0]->size / sizeof(T);
-  const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto input_1 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t elements_num = outputs[0]->size() / sizeof(T);
+  const auto input_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  const auto input_1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
+  auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto task_0 = std::bind(comput_func, input_0, input_1, output, std::placeholders::_1, std::placeholders::_2);
   ParallelLaunchAutoSearch(task_0, elements_num, this, &parallel_search_info_);
   for (size_t index = 2; index < input_num_; ++index) {
-    const auto input = reinterpret_cast<T *>(inputs[index]->addr);
+    const auto input = reinterpret_cast<T *>(inputs[index]->device_ptr());
     auto task = std::bind(comput_func, input, output, output, std::placeholders::_1, std::placeholders::_2);
     ParallelLaunchAutoSearch(task, elements_num, this, &parallel_search_info_);
   }
