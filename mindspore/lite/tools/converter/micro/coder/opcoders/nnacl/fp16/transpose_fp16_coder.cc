@@ -40,7 +40,7 @@ int TransposeFp16Coder::ResetStatus() {
     MS_LOG(ERROR) << "input shape out of range.";
     return RET_ERROR;
   }
-  int trans_nd[MAX_TRANSPOSE_DIM_SIZE] = {0, 2, 1};
+  int trans_nd[C3NUM] = {0, 2, 1};
   int *perm_data{nullptr};
   if (in_shape.size() != static_cast<size_t>(param_->num_axes_)) {
     perm_data = trans_nd;

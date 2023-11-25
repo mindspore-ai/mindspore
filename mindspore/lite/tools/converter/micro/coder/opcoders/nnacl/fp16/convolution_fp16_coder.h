@@ -36,7 +36,7 @@ class ConvolutionFP16Coder final : public ConvolutionFP32Coder {
 
   ~ConvolutionFP16Coder() override = default;
 
- private:
+ protected:
   void CollectFilesForFunc(CoderContext *const context) override;
   int InitWeightBias(CoderContext *const context) override;
   int InitTmpBuffer() override;

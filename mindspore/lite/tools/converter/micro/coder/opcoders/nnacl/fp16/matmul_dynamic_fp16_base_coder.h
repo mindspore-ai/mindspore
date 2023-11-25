@@ -42,13 +42,11 @@ class MatMulDynamicFP16BaseCoder : public OperatorCoder {
   int InitBiasData(CoderContext *const context);
   int InitMatrixB(CoderContext *const context);
   int ComputeMatrixAWorkspace();
-  int CollectFilesForTarget(CoderContext *const context);
+  void CollectFilesForTarget(CoderContext *const context);
 
  protected:
   virtual int InitAShape() = 0;
   virtual int InitBShape() = 0;
-
- protected:
   Tensor *filter_tensor_{nullptr};
   Tensor *bias_tensor_{nullptr};
   MicroMatmulParameter params_;

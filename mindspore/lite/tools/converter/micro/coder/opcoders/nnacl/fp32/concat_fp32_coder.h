@@ -31,10 +31,9 @@ class ConcatFP32Coder : public OperatorCoder {
 
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;
+  virtual int ReSize();
 
- private:
-  int ReSize();
-
+ protected:
   int axis_{0};
   ConcatParameter *concat_param_{nullptr};
 };

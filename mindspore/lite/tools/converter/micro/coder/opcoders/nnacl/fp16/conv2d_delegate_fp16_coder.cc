@@ -164,9 +164,7 @@ std::unique_ptr<OperatorCoder> CPUConvDwFp16CoderCreator(const std::vector<Tenso
                                                          const LiteGraph::Node *node, size_t node_index, Target target,
                                                          int schema_version) {
   const void *primitive = node->primitive_;
-  if (primitive == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_PTR_RET_NULL(primitive);
   ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
     GetPrimitiveType(node->primitive_, schema_version), schema_version);
   MS_CHECK_PTR_RET_NULL(paramGen);
@@ -184,11 +182,14 @@ std::unique_ptr<OperatorCoder> CPUConvDwFp16CoderCreator(const std::vector<Tenso
   if (target == kARM64 || target == kARM32) {
     std::vector<TensorC *> in_tensor_c;
     std::vector<TensorC *> out_tensor_c;
-    GenerateInTensorC(in_tensors, &in_tensor_c, NULL);
-    GenerateOutTensorC(reinterpret_cast<const OpParameter *const>(conv_param), out_tensors, &out_tensor_c);
-    Conv2dInferShape(reinterpret_cast<const TensorC *const *>(in_tensor_c.data()), in_tensor_c.size(),
-                     reinterpret_cast<TensorC **>(out_tensor_c.data()), out_tensor_c.size(),
-                     reinterpret_cast<OpParameter *>(conv_param));
+    auto ret = GenerateInTensorC(in_tensors, &in_tensor_c, NULL);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, nullptr, "GenerateInTensorC failed.");
+    ret = GenerateOutTensorC(reinterpret_cast<const OpParameter *const>(conv_param), out_tensors, &out_tensor_c);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, nullptr, "GenerateOutTensorC failed.");
+    ret = Conv2dInferShape(reinterpret_cast<const TensorC *const *>(in_tensor_c.data()), in_tensor_c.size(),
+                           reinterpret_cast<TensorC **>(out_tensor_c.data()), out_tensor_c.size(),
+                           reinterpret_cast<OpParameter *>(conv_param));
+    MS_CHECK_TRUE_MSG(ret == RET_OK, nullptr, "Conv2dInferShape failed.");
     bool use_winograd =
       (conv_param->kernel_h_ == C3NUM && conv_param->kernel_w_ == C3NUM && conv_param->stride_w_ == C1NUM &&
        conv_param->stride_h_ == C1NUM && conv_param->dilation_h_ == C1NUM && conv_param->dilation_w_ == C1NUM &&

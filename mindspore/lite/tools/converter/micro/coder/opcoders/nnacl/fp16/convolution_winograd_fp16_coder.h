@@ -46,15 +46,17 @@ class ConvolutionWinogradFP16Coder : public ConvolutionWinogradFP32Coder {
 
   ~ConvolutionWinogradFP16Coder() override = default;
 
- private:
+ protected:
   void InitCodeOnline(CoderContext *const context) override;
   int ConfigInputOutput() override;
   std::string GetInputTransFunc(int input_unit) override;
-  std::string GetInputTransStepFunc(int input_unit);
-  std::string GetInputTransPackFunc(int input_unit);
   std::string GetOutputTransFunc(int input_unit, int output_unit, ActType act_type) override;
   void CollectFilesForFunc(CoderContext *const context) override;
   int InitTmpBuffer() override;
+
+ private:
+  std::string GetInputTransStepFunc(int input_unit);
+  std::string GetInputTransPackFunc(int input_unit);
   TransFuncFp16Str trans_func_str_;
 };
 }  // namespace mindspore::lite::micro::nnacl
