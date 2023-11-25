@@ -116,7 +116,6 @@ cust_op_lists = [
     "mulnonan",
     "multimarginloss",
     "multimarginlossgrad",
-    "multinomial",
     "mvlgamma",
     "mvlgammagrad",
     "nextafter",
