@@ -1706,15 +1706,48 @@ bool GraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNo
   return true;
 }
 
-static bool UnpackDynamicLengthTupleByBytecode() {
+AbstractNodeList GraphBuilder::UnpackDynamicLengthTupleByBytecode(std::vector<ValueNode *> *params,
+                                                                  AbstractNodeList tuple_unpack, ValueNode *args_node,
+                                                                  CallNode *call_node) {
   // user-defined sequence, dynamic length tuple unpack
-  return false;
+  auto items = static_cast<AbstractTuple *>(args_node->GetVobj())->items();
+  for (uint i = 0; i < items.size(); i++) {
+    ValueNode *idx_node = this->NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
+    auto value = this->NewValueNode(items[i], BINARY_SUBSCR, 0, {args_node, idx_node});
+    params->insert(params->begin() + i, value);
+
+    call_node->AddParam(value);
+  }
+
+  for (uint i = 0; i < items.size(); i++) {
+    ValueNode *idx_node = this->NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
+    tuple_unpack.push_back(this->NewInstrNode(DUP_TOP, 0));
+    tuple_unpack.push_back(idx_node);
+    tuple_unpack.push_back(this->NewValueNode(items[i], BINARY_SUBSCR, 0, {args_node, idx_node}));
+    tuple_unpack.push_back(this->NewInstrNode(ROT_TWO, 0));
+  }
+  tuple_unpack.push_back(this->NewInstrNode(POP_TOP, 0));
+
+  return tuple_unpack;
+}
+
+bool GraphBuilder::UnpackExtraOper(AbstractNodeList tuple_unpack, int extra_local, AbstractNodeList *extra_oper,
+                                   AbstractNodeList dict_unpack, bool has_dict) {
+  if (has_dict) {
+    extra_oper->push_back(this->NewInstrNode(STORE_FAST, extra_local));
+    extra_oper->insert(nullptr, &tuple_unpack);
+    extra_oper->push_back(this->NewInstrNode(LOAD_FAST, extra_local));
+    extra_oper->insert(nullptr, &dict_unpack);
+  } else {
+    extra_oper->insert(nullptr, &tuple_unpack);
+  }
+  return true;
 }
 
 // unpack CALL_FUNCTION_EX parameters
 // should do this when bytecode analyze ? replace origin opcode
 bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper,
-                                      bool *has_kw) {
+                                      bool *has_kw, CallNode *call_node) {
   bool has_dict = params->size() > 1;
   ValueNode *args_node = params->operator[](0);
   AbstractNodeList tuple_unpack;
@@ -1723,9 +1756,15 @@ bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extr
     return false;
   }
   *has_kw = params->size();
+
   if (args_node->GetOpcode() != BUILD_TUPLE) {
-    return UnpackDynamicLengthTupleByBytecode();
+    if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
+      return false;
+    }
+    tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
+    return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
   }
+
   params->insert(params->begin(), args_node->getInputs().begin(), args_node->getInputs().end());
 
   // extra operations of unpack-call tuple args for graph break
@@ -1737,15 +1776,8 @@ bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extr
     tuple_unpack.push_back(this->NewInstrNode(ROT_TWO, 0));
   }
   tuple_unpack.push_back(this->NewInstrNode(POP_TOP, 0));
-  if (has_dict) {
-    extra_oper->push_back(this->NewInstrNode(STORE_FAST, extra_local));
-    extra_oper->insert(nullptr, &tuple_unpack);
-    extra_oper->push_back(this->NewInstrNode(LOAD_FAST, extra_local));
-    extra_oper->insert(nullptr, &dict_unpack);
-  } else {
-    extra_oper->insert(nullptr, &tuple_unpack);
-  }
-  return true;
+
+  return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
 }
 
 bool GraphBuilder::PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
@@ -2005,7 +2037,7 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
   std::vector<ValueNode *> params(call_node->getInputs().begin() + 1, call_node->getInputs().end());
   int op = call_node->GetOpcode();
   bool has_kw = (op == CALL_FUNCTION_KW);
-  if (op == CALL_FUNCTION_EX && !UnpackCallExParams(&params, co->co_nlocals, &extra_oper, &has_kw)) {
+  if (op == CALL_FUNCTION_EX && !UnpackCallExParams(&params, co->co_nlocals, &extra_oper, &has_kw, call_node)) {
     return false;  // ex_dict infer failed or user-defined sequence and map arguments
   }
   if (has_kw && !HandleKWParams(func_info, &params, frame, &extra_oper)) {

@@ -105,6 +105,11 @@ class GraphBuilder {
    */
   bool HandleCallParameters(const py::object &func_info, CallNode *call_node, FrameStates *frame);
 
+  AbstractNodeList UnpackDynamicLengthTupleByBytecode(std::vector<ValueNode *> *params, AbstractNodeList tuple_unpack,
+                                                      ValueNode *args_node, CallNode *call_node);
+
+  bool UnpackExtraOper(AbstractNodeList tuple_unpack, int extra_local, AbstractNodeList *etra_oper,
+                       AbstractNodeList dict_unpack, bool has_dict);
   /**
    * Unpack CALL_FUNCTION_EX parameters to stack
    * \param[in] params the call stack
@@ -113,8 +118,8 @@ class GraphBuilder {
    * \param[out] has_kw this call has key-word arguments
    * \return false if can't generate unpack operations
    */
-  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper,
-                          bool *has_kw);
+  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper, bool *has_kw,
+                          CallNode *call_node);
 
   bool UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper);
 
