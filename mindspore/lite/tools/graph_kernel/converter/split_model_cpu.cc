@@ -47,8 +47,6 @@ class FuseConv : public FusePattern {
     }
     return !fused_areas_.empty();
   }
-
-  FuseType fuse_type_;
 };
 
 void SplitModelCpu::InitFusePatterns() {

@@ -34,36 +34,36 @@ bool DynamicAkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &bui
   KernelPool kp;
   auto ret = kp.Init(build_args);
   if (ret != 0) {
-    MS_LOG(ERROR) << "KernelPool init failed.";
+    MS_LOG(ERROR) << "KernelPool for AKG V2 init failed.";
     return false;
   }
 
   std::set<size_t> fetched_ids;
   ret = kp.FetchKernels(&fetched_ids);
   if (ret != 0) {
-    MS_LOG(ERROR) << "KernelPool FetchKernels failed.";
+    MS_LOG(ERROR) << "KernelPool for AKG V2 FetchKernels failed.";
     return false;
   }
 
   if (!fetched_ids.empty()) {
     auto jsons = GetKernelJsonsByHashId(build_args, fetched_ids);
 
-    auto client = GetClient();
-    MS_EXCEPTION_IF_NULL(client);
-    if (!client->CompilerStart(PROCESS_NUM, TIME_OUT)) {
+    auto dyn_akg_client = GetClient();
+    MS_EXCEPTION_IF_NULL(dyn_akg_client);
+    if (!dyn_akg_client->CompilerStart(PROCESS_NUM, TIME_OUT)) {
       MS_LOG(ERROR) << "AKG V2 start failed.";
       return false;
     }
     auto attrs = CollectBuildAttrs();
-    if (!attrs.empty() && !client->CompilerSendAttr(attrs)) {
+    if (!attrs.empty() && !dyn_akg_client->CompilerSendAttr(attrs)) {
       MS_LOG(ERROR) << "AKG V2 send attr failed.";
       return false;
     }
-    if (!client->CompilerSendData(jsons)) {
+    if (!dyn_akg_client->CompilerSendData(jsons)) {
       MS_LOG(ERROR) << "AKG V2 send data failed.";
       return false;
     }
-    if (!client->CompilerWait()) {
+    if (!dyn_akg_client->CompilerWait()) {
       MS_LOG(ERROR) << "AKG V2 compile failed.";
       return false;
     }
@@ -71,12 +71,12 @@ bool DynamicAkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &bui
 
   ret = kp.UpdateAndWait(fetched_ids);
   if (ret != 0) {
-    MS_LOG(ERROR) << "KernelPool UpdateAndWait failed.";
+    MS_LOG(ERROR) << "KernelPool for AKG V2 UpdateAndWait failed.";
     return false;
   }
 
   if (kp.Release() != 0) {
-    MS_LOG(ERROR) << "KernelPool release failed.";
+    MS_LOG(ERROR) << "KernelPool for AKG V2 release failed.";
     return false;
   }
 
