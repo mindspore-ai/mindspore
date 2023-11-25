@@ -703,16 +703,23 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
-  MS_EXCEPTION_IF_NULL(compile_cache_consistent);
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
-  }
-  compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
-  *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
+  static const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  if (force_use_compile_cache) {
+    MS_LOG(WARNING)
+      << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
+         "checking whether the network has been changed. Please note the correctness.";
+  } else {
+    MS_EXCEPTION_IF_NULL(compile_cache_consistent);
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
+    compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
+    *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
   }
   func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
   layout_map_ = compile_cache_manager_->layout_map();
