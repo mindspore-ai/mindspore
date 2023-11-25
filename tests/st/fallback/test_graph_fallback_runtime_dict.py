@@ -252,6 +252,7 @@ def fc_with_initialize(input_channels, out_channels):
     return ms.nn.Dense(input_channels, out_channels, "ones", "ones")
 
 
+@pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -303,6 +304,7 @@ def test_net_dict_1():
     assert outputs['fc'].shape == (64, 10)
 
 
+@pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

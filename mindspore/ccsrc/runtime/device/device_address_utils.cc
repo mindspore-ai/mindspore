@@ -26,6 +26,7 @@
 #include "ir/tensor.h"
 #include "include/backend/device_address.h"
 #include "include/backend/kernel_info.h"
+#include "include/backend/py_execute_utils.h"
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -378,6 +379,8 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       MS_EXCEPTION_IF_NULL(kernel_info);
       if (kernel_info->kernel_mod() != nullptr && kernel_info->kernel_mod()->need_user_data()) {
         user_data = std::make_shared<UserData>();
+        user_data->set(kSyncUserDataHandler,
+                       std::make_shared<device::DeviceAddress::SyncUserDataHandler>(pyexecute::UserDataToRawMemory));
       }
       const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
         {kernel, i}, nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i),

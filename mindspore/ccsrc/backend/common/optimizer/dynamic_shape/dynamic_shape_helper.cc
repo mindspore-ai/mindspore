@@ -509,7 +509,7 @@ void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive
       cnode->set_abstract(abs);
       return;
     }
-    const auto &abs = cpp_infer_py_handler_(cnode, primitive, args_spec_list);
+    const auto &abs = cpp_infer_py_handler_(primitive, args_spec_list);
     cnode->set_abstract(abs);
     const auto &kernel_info_device = cnode->kernel_info();
     if (kernel_info_device != nullptr) {

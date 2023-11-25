@@ -660,7 +660,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "'>=' not supported between instances of 'list' and 'tuple'." in str(err.value)
+    assert "'>=' not supported between instances of 'list' and 'tuple'" in str(err.value)
 
 
 @pytest.mark.level1

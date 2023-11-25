@@ -304,6 +304,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     }
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
+    new_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
     new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());
     // The device address which is created by actor uses the dynamic ref count.

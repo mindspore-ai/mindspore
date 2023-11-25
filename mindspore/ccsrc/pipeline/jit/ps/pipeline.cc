@@ -301,44 +301,21 @@ std::string ToOrdinal(const size_t &i) {
   return std::to_string(i) + suffix;
 }
 
-AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
-  constexpr size_t real_node_index = 1;
-  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
-    const auto cnode = dyn_cast<CNode>(node);
-    MS_EXCEPTION_IF_NULL(cnode);
-    return GetRealOutput(cnode->input(real_node_index));
-  }
-  return node;
-}
-
-kernel::PyExecuteOutputUserDataPtr GetUserDataFromNode(const AnfNodePtr &output) {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  if (allow_fallback_runtime) {
-    const auto &real_output = GetRealOutput(output);
-    MS_LOG(DEBUG) << "Real output: " << real_output << ", " << real_output->DebugString()
-                  << ", has \'PyExecuteOutputUserData\': "
-                  << real_output->has_user_data<kernel::PyExecuteOutputUserData>();
-    if (real_output->has_user_data<kernel::PyExecuteOutputUserData>()) {
-      py::gil_scoped_acquire gil_acquire;
-      const auto &output_data = real_output->user_data<kernel::PyExecuteOutputUserData>();
-      // Need support real none.
-      return output_data;
-    }
-  }
-  return nullptr;
-}
-
 kernel::PyExecuteOutputUserDataPtr GetUserDataFromAddress(const py::object &res) {
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  if (!allow_fallback_runtime) {
+    return nullptr;
+  }
+
   if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
     auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(res_tensor);
     if (res_tensor->device_address() != nullptr) {
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
       MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
-      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
-      if (real_node != nullptr) {
-        MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
-        return GetUserDataFromNode(real_node);
+      MS_EXCEPTION_IF_NULL(tensor_address);
+      if (tensor_address->user_data() != nullptr) {
+        return tensor_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
       }
     }
   }
@@ -399,6 +376,8 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
     const auto user_data = GetUserDataFromAddress(res);
     if (user_data != nullptr) {
       return user_data->obj;
+    } else {
+      MS_LOG(INFO) << "user data is empty";
     }
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);

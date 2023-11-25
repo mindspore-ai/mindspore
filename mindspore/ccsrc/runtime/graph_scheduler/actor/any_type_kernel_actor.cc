@@ -113,7 +113,6 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     input_device_tensors_[index] = input_data->data_;
-    input_device_tensors_[index]->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
     if (input_data->data_->ref_count() != SIZE_MAX) {
       (void)memory_free_list.emplace_back(input_data->data_);
     }
@@ -641,8 +640,7 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
         FreeMemory(graph_ouput_device_tensors_[index]);
       }
       graph_ouput_device_tensors_[index]->set_ptr(graph_output_data->data_->GetMutablePtr());
-      graph_ouput_device_tensors_[index]->set_sync_user_data_handler(
-        graph_output_data->data_->sync_user_data_handler());
+      graph_ouput_device_tensors_[index]->set_need_sync_user_data(graph_output_data->data_->need_sync_user_data());
       clear_device_tensors.emplace(graph_output_data->data_);
       graph_ouput_device_tensors_[index]->SetSize(graph_output_data->data_->GetSize());
 

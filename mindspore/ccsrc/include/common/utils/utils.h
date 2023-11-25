@@ -105,6 +105,7 @@ constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
 constexpr auto kAttrListStartIndex = "list_start_index";
+constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
 constexpr auto kAttrMultiples = "multiples";
@@ -614,6 +615,9 @@ constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 constexpr auto kRecomputeInsert = "recompute_insert";
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+
+// User data key for pyexecute.
+constexpr auto kSyncUserDataHandler = "sync_user_data_handler";
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);

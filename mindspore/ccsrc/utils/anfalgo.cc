@@ -2384,5 +2384,46 @@ bool AnfAlgo::IsNoOuputNode(const AnfNodePtr &node) {
   }
   return false;
 }
+
+ValuePtr AnfAlgo::ValueToScalar(const ValuePtr &value, TypeId type_id) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<KernelTensorValue>()) {
+    return nullptr;
+  }
+  const auto &kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+  MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+  MS_EXCEPTION_IF_NULL(kernel_tensor_value->GetDataPtr());
+  switch (type_id) {
+    case kNumberTypeBool:
+      return MakeValue(*reinterpret_cast<const bool *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt16:
+      return MakeValue(*reinterpret_cast<const int16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt8:
+      return MakeValue(*reinterpret_cast<const int8_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt8:
+      return MakeValue(*reinterpret_cast<const uint8_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt32:
+      return MakeValue(*reinterpret_cast<const int32_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt32:
+      return MakeValue(*reinterpret_cast<const uint32_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt64:
+      return MakeValue(*reinterpret_cast<const int64_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt64:
+      return MakeValue(*reinterpret_cast<const uint64_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat32:
+      return MakeValue(*reinterpret_cast<const float *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat64:
+      return MakeValue(*reinterpret_cast<const double *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeBFloat16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    default:
+      MS_LOG(DEBUG) << "Not support scalar type:" << type_id;
+  }
+  return nullptr;
+}
 }  // namespace common
 }  // namespace mindspore
