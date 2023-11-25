@@ -583,35 +583,35 @@ cudaError_t CalGeneralReduction(bool small, const half *input, const size_t boun
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int8_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         int8_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, int8_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int64_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         int64_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, int64_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint8_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         uint8_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, uint8_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint64_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         uint64_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, uint64_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int16_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         int16_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, int16_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int32_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         int32_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, int32_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint16_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         uint16_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, uint16_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint32_t *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         uint32_t *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, uint32_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const double *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         double *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, double *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const float *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         float *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, float *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const half *input, const size_t bound_,
-                                                         const size_t outerSize_, const size_t innerSize_, int *index,
-                                                         half *output, cudaStream_t cuda_stream);
+                                                         const size_t outerSize_, const size_t innerSize_,
+                                                         int64_t *index, half *output, cudaStream_t cuda_stream);

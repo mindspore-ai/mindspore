@@ -685,13 +685,14 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
   return shape_value_node;
 }
 
-CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node, const bool is_input) {
+CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node, const bool is_input,
+                     const size_t input_index) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
   BaseShapePtr shape;
   if (is_input) {
-    auto node_input = common::AnfAlgo::GetInputNode(node, 0);
+    auto node_input = common::AnfAlgo::GetInputNode(node, input_index);
     (void)new_cast_inputs.emplace_back(node_input);
     shape = AnfAlgo::GetOutputDetailShape(node_input, 0);
   } else {

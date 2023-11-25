@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ARGMIN_WITH_VALUE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ARGMIN_WITH_VALUE_H_
+
+#include "ops/ops_func_impl/argmax_with_value.h"
 
 namespace mindspore {
-namespace opt {
-const AnfNodePtr ArgMaxMinWithValueFusionProcess(const FuncGraphPtr &graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-
-  constexpr auto kAxis = "axis";
-  constexpr auto kDimension = "dimension";
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAxis);
-  common::AnfAlgo::SetNodeAttr(kDimension, MakeValue(axis), cnode);
-
-  return cnode;
-}
-}  // namespace opt
+namespace ops {
+class MIND_API ArgMinWithValueFuncImpl : public ArgMaxWithValueFuncImpl {};
+}  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ARGMIN_WITH_VALUE_H_

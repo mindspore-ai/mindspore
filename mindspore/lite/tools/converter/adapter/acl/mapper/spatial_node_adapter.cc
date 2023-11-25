@@ -23,7 +23,6 @@
 #include "base/base.h"
 #include "include/errorcode.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "ops/argmax_with_value.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/layer_norm_fusion.h"

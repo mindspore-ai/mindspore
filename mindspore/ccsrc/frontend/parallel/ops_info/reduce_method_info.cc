@@ -227,6 +227,33 @@ Status ReduceMethod::InferMirrorOps() {
   return SUCCESS;
 }
 
+Status ArgMaxWithValueInfo::GetAttrs() {
+  // get cross_batch and keep_dims
+  constexpr auto kNameKeepDims = "keep_dims";
+  auto keep_dims_opt = GetScalarValueFromInputs<bool>(input_value_, name_, kNameKeepDims);
+  if (!keep_dims_opt.has_value()) {
+    MS_LOG(EXCEPTION) << "For " << name_ << ", failed to get value for " << kNameKeepDims << ".";
+  }
+  keepdims_ = keep_dims_opt.value();
+
+  auto cross_batch_iter = attrs_.find(CROSS_BATCH);
+  if (cross_batch_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(cross_batch_iter->second);
+    if (!cross_batch_iter->second->isa<BoolImm>()) {
+      MS_LOG(ERROR) << name_ << ": cross_batch is not a bool.";
+      return FAILED;
+    }
+    cross_batch_ = cross_batch_iter->second->cast<BoolImmPtr>()->value();
+  }
+  auto reducemethodcost = std::dynamic_pointer_cast<ReduceMethodCost>(operator_cost());
+  if (reducemethodcost == nullptr) {
+    MS_LOG(ERROR) << "Cost cast to ReduceMethodCostPtr failed!";
+    return FAILED;
+  }
+  reducemethodcost->set_cross_batch(cross_batch_);
+  return SUCCESS;
+}
+
 Status ArgMaxWithValueInfo::InferMirrorOps() {
   mirror_ops_.clear();
   Shape input_tensor_map = inputs_tensor_map_.at(0);
@@ -243,6 +270,12 @@ Status ArgMaxWithValueInfo::InferMirrorOps() {
   } else {
     op_for_weight = CreateMirrorOps(input_group[0].name(), input_group[0].GetDevNum());
     mirror_ops_.push_back(op_for_weight);
+    OperatorVector op_helper;
+    auto prim_name = GetPrimNameFromInfoName(name_);
+    auto res_size = ops::GetOpInputsNum(prim_name) - mirror_ops_.size();
+    for (size_t i = 0; i < res_size; ++i) {
+      mirror_ops_.push_back(op_helper);
+    }
     MS_LOG(INFO) << name_ << ": Create the mirror ops for weight success.";
   }
 
@@ -285,32 +318,15 @@ std::vector<StrategyPtr> ReduceMethod::GenerateOpStrategies(int64_t stage_id) {
 
 std::vector<int64_t> ArgMaxWithValueInfo::reduce_dim() {
   std::vector<int64_t> dim_list;
-  auto iter = attrs_.find(AXIS);
-  if (iter == attrs_.end()) {
-    MS_LOG(EXCEPTION) << name_ << ": Don't have attr axis.";
+  auto axis_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(EXCEPTION) << "For " << name_ << ", does not have axis attr";
   }
 
   MS_ASSERT(inputs_shape_.size() == 1);
   auto input_dim = inputs_shape_.at(0).size();
-  MS_EXCEPTION_IF_NULL(iter->second);
-  if (iter->second->isa<ValueTuple>()) {
-    auto attr_axis = GetValue<std::vector<int64_t>>(iter->second);
-    if (attr_axis.empty()) {
-      for (size_t i = 0; i < input_dim; ++i) {
-        dim_list.push_back(SizeToLong(i));
-      }
-    } else {
-      for (auto &axis : attr_axis) {
-        axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-      }
-    }
-  } else if (iter->second->isa<Int64Imm>()) {
-    int64_t axis = GetValue<int64_t>(iter->second);
-    axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-  } else {
-    MS_LOG(EXCEPTION) << "Axis type is invalid.";
-  }
-
+  int64_t axis = axis_opt.value();
+  axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
   return dim_list;
 }
 

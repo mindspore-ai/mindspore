@@ -1,0 +1,25 @@
+#operator argmin_with_value
+argmin_with_value:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: 0
+      prim_init: True
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    index:
+      dtype: tensor
+    values:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ArgMinWithValue
+  dispatch:
+    enable: True
+    Ascend: ArgMinWithValueAscend

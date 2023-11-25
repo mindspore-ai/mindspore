@@ -195,7 +195,7 @@ BACKEND_EXPORT ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph,
                                                  bool to_tensor = false);
 
 BACKEND_EXPORT CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node,
-                                    const bool is_input);
+                                    const bool is_input, const size_t input_index = 0);
 
 BACKEND_EXPORT AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
                                          const AnfNodePtr &node);

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "ops/argmax_with_value.h"
 #include "plugin/device/cpu/kernel/argmax_with_value_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -35,8 +34,10 @@ template <typename T>
 bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
                       const std::vector<kernel::KernelTensor *> &inputs,
                       const std::vector<kernel::KernelTensor *> &outputs) {
-  if (inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of inputs must be 1, but got " << inputs.size();
+  constexpr size_t kInputNum = 3;
+  if (inputs.size() != kInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of inputs must be " << kInputNum << ", but got "
+                      << inputs.size();
   }
   if (outputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of outputs must be 2, but got " << outputs.size();
@@ -44,7 +45,7 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t data_size = sizeof(T);
   size_t input_size = get_element_num(shape) * data_size;
   size_t output_num = num_before_axis * num_after_axis;
-  size_t out0_size = output_num * sizeof(int);
+  size_t out0_size = output_num * sizeof(int64_t);
   size_t out1_size = output_num * data_size;
   if (inputs[0]->size() != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'x' must be " << input_size
@@ -69,7 +70,7 @@ bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
   (void)check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs);
 
   auto input = reinterpret_cast<T *>(inputs[0]->device_ptr());
-  auto output0 = reinterpret_cast<int32_t *>(outputs[0]->device_ptr());
+  auto output0 = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
   auto output1 = reinterpret_cast<T *>(outputs[1]->device_ptr());
 
   auto task = [&](size_t start, size_t end) {
@@ -147,7 +148,7 @@ int ArgMaxWithValueCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetDeviceShapeVector());
   size_t shape_len = shape_.size();
-  int64_t axis = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  int64_t axis = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   if (CheckNullInput(input_shape)) {
     MS_LOG(EXCEPTION) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
@@ -177,17 +178,72 @@ int ArgMaxWithValueCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
 
 std::vector<KernelAttr> ArgMaxWithValueCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> kernel_attr_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeInt64),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeInt32),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeInt16)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeInt16),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeInt8)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeInt8),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeUInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeUInt64),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeUInt32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeUInt32),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeUInt16)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeUInt16),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeUInt8)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeUInt8),
   };
   return kernel_attr_list;
 }
