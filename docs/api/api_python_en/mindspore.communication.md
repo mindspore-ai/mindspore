@@ -1,22 +1,22 @@
 # mindspore.multiprocessing
 
-## 介绍
+## Overview
 
-mindspore.multiprocessing提供了创建多进程的能力，其内部实现继承自Python原生的multiprocessing模块，并通过对部分接口进行重载，确保以fork方式创建多进程时MindSpore框架的正常使用。
+mindspore.multiprocessing provides the ability to create multiple processes. Its internal implementation inherits from Python native multiprocessing module and overloads some of the interfaces to ensure that the MindSpore framework works properly when creating multiple processes by fork.
 
-当使用mindspore.multiprocessing并以fork方式创建多进程时，框架内部会对线程、锁等资源进行清理和重置，以保障框架功能正常。
+When using mindspore.multiprocessing and creating multiprocesses by fork, the framework internally cleans up and resets threads, locks, and other resources to ensure that the framework functions properly.
 
-- 在fork发生时，父进程在fork前会先等待内部线程任务执行完毕，并在当前线程主动持有GIL锁，以避免fork后的子进程无法持有GIL锁。
-- 在fork发生后，父进程会释放主动持有的GIL锁。
-- 在fork发生后，子进程会释放主动持有的GIL锁，然后对框架内部的线程等资源进行恢复和清理，并将后端重置为 `CPU` 。
+- When fork occurs, the parent process waits for the internal thread task to finish executing before the fork, and actively holds the GIL lock in the current thread to avoid the child process after the fork from being unable to hold the GIL lock.
+- After fork occurs, the parent process releases the actively held GIL lock.
+- After fork occurs, the child process releases the actively held GIL lock, then restores and cleans up resources such as threads within the framework, and resets the backend to `CPU`.
 
-当不使用fork方式创建多进程时，上述流程不会被触发。此时使用mindspore.multiprocessing创建多进程的执行流程和使用Python原生的multiprocessing模块的流程完全一致。
+The above process is not triggered when creating a multiprocess without using fork. At this point, the process of creating a multiprocess using mindspore.multiprocessing is exactly the same as that of using Python native multiprocessing module.
 
-由于mindspore.multiprocessing继承自Python原生的multiprocessing模块，其接口用法和原生模块完全兼容，用户可以直接把 `import multiprocessing` 修改为 `import mindspore.multiprocessing` 。因此，此处不对原生接口进行重复描述。接口的详细介绍和使用方式请参考[multiprocessing](https://docs.python.org/3/library/multiprocessing.html)。
+Since mindspore.multiprocessing inherits from Python native multiprocessing module, its interface usage is fully compatible with the native module, so users can directly change `import multiprocessing` to `import mindspore. multiprocessing`. Therefore, the description of the native interfaces is not repeated here. For a detailed description and the usage description of the interface, please refer to [multiprocessing](https://docs.python.org/3/library/multiprocessing.html).
 
-## 使用说明
+## Usage Description
 
-一个使用mindspore.multiprocessing创建多进程的样例如下：
+A sample of creating multiple processes using mindspore.multiprocessing is shown below:
 
 ``` python
 from mindspore import Tensor, ops
@@ -32,13 +32,13 @@ if __name__ == '__main__':
     p.join()
 ```
 
-运行结果如下：
+The result is shown below:
 
 ``` log
 ops.log(Tensor(2.0))= 0.6931472
 ```
 
-一个使用mindspore.multiprocessing创建进程池的样例如下：
+A sample of creating a process pool using mindspore.multiprocessing is shown below:
 
 ``` python
 from mindspore import Tensor, ops
@@ -54,15 +54,15 @@ if __name__ == '__main__':
         print("ops.log(Tensor(2.0))=", outputs)
 ```
 
-运行结果如下：
+The result is shown below:
 
 ``` log
 ops.log(Tensor(2.0))= [Tensor(shape=[], dtype=Float32, value= 0.693147), Tensor(shape=[], dtype=Float32, value= 0.693147)]
 ```
 
-当用户在执行计算任务后，再使用fork方式创建多进程时，若使用的模块不是mindspore.multiprocessing，可能会出现框架线程丢失导致的子进程卡住的问题。改为使用mindspore.multiprocessing模块的fork方式创建多进程，可以解决该问题。
+When the user creates a multiprocess by fork after executing a computing task, if the module used is not mindspore.multiprocessing, there may be a problem that the child process is stuck due to the loss of the frame thread. Changing to use the fork of the mindspore.multiprocessing module to create multiprocesses can solve this problem.
 
-> 仅在POSIX系统下（如Linux和macOS）支持fork方式创建子进程，Windows下不支持该方式
+> The fork of creating child processes is only supported on POSIX systems (e.g. Linux and macOS), but not on Windows.
 
 ``` python
 from mindspore import Tensor, ops
@@ -84,14 +84,14 @@ if __name__ == '__main__':
     p.join()
 ```
 
-运行结果如下：
+The result is shown below:
 
 ``` log
 parent process:ops.log(Tensor(2.0))= 0.6931472
 child process:ops.log(Tensor(2.0))= 0.6931472
 ```
 
-当后端为 `Ascend` 时，进程会独占卡资源。若用户在执行计算任务后创建子进程，且子进程使用了父进程的资源执行另一个计算任务，可能会因资源无法访问而报错。修改子进程创建方式为fork后，框架会将子进程的后端重置为 `CPU` ，以避免资源冲突。
+When the backend is `Ascend`, the process has exclusive access to the card resources. If a user creates a child process after performing a computation task, and the child process uses the resources of the parent process to perform another computation task, it may report an error due to resource inaccessibility. After modifying the child process creation method to fork, the framework will reset the backend of the child process to `CPU` to avoid resource conflicts.
 
 ``` python
 from mindspore import Tensor, ops, context
@@ -114,14 +114,14 @@ if __name__ == '__main__':
     p.join()
 ```
 
-运行结果如下：
+The result is shown below:
 
 ``` log
 parent process:ops.log(Tensor(2.0))= 0.6931472
 child process:ops.log(Tensor(2.0))= 0.6931472
 ```
 
-也可以将创建多进程的动作放在执行任何计算任务的前面，并在子进程里手动修改后端。
+The action of creating a multiprocess can be placed in front of executing any computational tasks an the backend is modified manually in a child process.
 
 ``` python
 from mindspore import Tensor, ops, context
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
 ```
 
-运行结果如下：
+The result is shown below:
 
 ``` log
 child process:ops.log(Tensor(2.0))= 0.6931472
