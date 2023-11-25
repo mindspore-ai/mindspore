@@ -16,6 +16,8 @@
 
 #include "transform/acl_ir/acl_helper.h"
 #include <set>
+#include <map>
+#include <unordered_map>
 #include <string>
 #include "include/api/data_type.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -536,6 +538,28 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
 }
 
+void AclHelper::PaddingOriShape(const std::string &name, size_t idx, const std::string &format, ShapeVector *shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
+  auto op_type = info->op_type();
+  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    return;
+  }
+  auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
+  auto info_list = acl_info.inputs();
+  if (info_list.empty() || idx >= info_list.size()) {
+    return;
+  }
+  auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;
+  auto special_iter = info_list.find(ge_idx);
+  if (special_iter == info_list.end() || special_iter->second.ori_format.empty()) {
+    return;
+  }
+  if (!special_iter->second.ori_format.empty() && format == kOpFormat_NCHW && shape->size() < kDim4) {
+    *shape = trans::PaddingShape(*shape, kOpFormat_NCHW, special_iter->second.reshape_type);
+  }
+}
+
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
                                                    ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -557,7 +581,7 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
   }
   // case2: no special config
   auto info_list = acl_info.inputs();
-  if (info_list.empty()) {
+  if (info_list.empty() || idx >= info_list.size()) {
     return ret_format;
   }
   auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;
