@@ -126,8 +126,9 @@ mindspore/python/mindspore/ops_generate/ops.yaml
 mindspore/python/mindspore/ops_generate/ops_doc.yaml
 mindspore/python/mindspore/ops_generate/inner_ops.yaml
 mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml
-mindspore/python/mindspore/ops/auto_generate/gen_labels.py
+mindspore/python/mindspore/ops/auto_generate/cpp_create_prim_instance_helper.py
 mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py
+mindspore/python/mindspore/ops/auto_generate/gen_arg_dtype_cast.py
 mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py
