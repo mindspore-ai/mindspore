@@ -2507,8 +2507,7 @@ bool CheckNeedConvertList(const AbstractBasePtr &abs) {
 AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!CheckNeedConvertList(abs)) {
+  if (abs == nullptr || !CheckNeedConvertList(abs)) {
     return nullptr;
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
