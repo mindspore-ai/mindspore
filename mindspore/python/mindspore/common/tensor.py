@@ -1933,7 +1933,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.unflatten`.
         """
-        self._init_check()
         return tensor_operator_registry.get('unflatten')(self, axis=axis, unflattened_size=unflattened_size)
 
     def float_power(self, other):
