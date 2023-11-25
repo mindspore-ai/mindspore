@@ -49,7 +49,11 @@ class TensorNumpyImpl : public MutableTensorImpl {
     }
     if (device_data_ != nullptr) {
       MS_LOG(INFO) << "free device data in tensor numpy impl.";
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_, device_id_);
+      try {
+        kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_, device_id_);
+      } catch (...) {
+        MS_LOG(WARNING) << "free Ascend device data failed";
+      }
     }
   }
   const std::vector<int64_t> &Shape() const override { return ms_shape_; }

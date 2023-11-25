@@ -29,22 +29,22 @@ class ScalarOpPass : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  ValueNodePtr GenerateScalarValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, int input_index);
-  ValueNodePtr GenerateScalarValueTuple(const FuncGraphPtr &func_graph, int64_t value);
-  CNodePtr GenerateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, int input_index);
+  ValueNodePtr GenerateScalarValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
+                                         size_t input_index);
+  ValueNodePtr GenerateScalarValueTuple(const FuncGraphPtr &func_graph, size_t value);
+  CNodePtr GenerateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, size_t input_index);
   CNodePtr GenerateTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
                                   bool is_curr_node = false);
   CNodePtr GenerateTensorShape(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node);
   CNodePtr GenerateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &shape_node,
-                                const AnfNodePtr &tuple_get_node, const FuncGraphManagerPtr &manager);
+                                const AnfNodePtr &tuple_get_node);
   STATUS ReplaceScalarOp(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager,
                          const PrimitivePtr &replace_op_prim);
   STATUS ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
                           const FuncGraphManagerPtr &manager);
   STATUS ReplaceShapeTupleGet(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
                               const FuncGraphManagerPtr &manager);
-  STATUS RemoveTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
-                              const FuncGraphManagerPtr &manager);
+  STATUS RemoveTensorToScalar(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   size_t GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &user_node);
   STATUS RunScalarOpPass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS RunMakeTuplePass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
