@@ -91,6 +91,8 @@ def get_convert_type_str(dtype: str, optional):
         'float': 'ToFloatOptional',
         'number': 'ToScalarOptional',
         'tensor': 'ToTensorOptional',
+        'type': 'ToDtypeOptional',
+        'str': 'ToStringOptional',
         'tuple[int]': 'ToIntListOptional<py::tuple>',
         'tuple[float]': 'ToFloatListOptional<py::tuple>',
         'tuple[bool]': 'ToBoolListOptional<py::tuple>',
