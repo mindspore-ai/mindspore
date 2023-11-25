@@ -668,7 +668,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
-    auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
+    auto node_will_update = NodeInputKeepUpdate(manager, node);
     bool as_ref_data = false;
     bool as_constant = false;
     JudgeParamTransType(node_will_update, &as_ref_data, &as_constant);
