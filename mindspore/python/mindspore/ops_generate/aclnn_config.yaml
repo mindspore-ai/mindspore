@@ -1,0 +1,8 @@
+Bmm: 'aclnnBatchMatMul'
+SiLU: 'aclnnSilu'
+Pow: 'aclnnPowTensorTensor'
+MatMul: 'aclnnMatmul'
+MaskedFill: 'aclnnInplaceMaskedFillTensor'
+GreaterEqual: 'aclnnGeTensor'
+Less: 'aclnnLtTensor'
+Sum: 'aclnnReduceSum'

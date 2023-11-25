@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import pyboost_utils
 from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
     number_input_to_cpp_type, get_const_number_convert, get_tuple_input_convert, get_pyboost_name, is_cube, \
-    get_aclnn_interface, get_disable_flag, get_op_name, is_optional_param
+    AclnnUtils, get_disable_flag, get_op_name, is_optional_param
 import template
 from template import CppTemplate
 from op_proto import OpProto
@@ -173,7 +173,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                 get_cube_math_type = f'// cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION\n'
                 get_cube_math_type += "auto cube_math_type = GetCubeMathType();"
                 cube_math_type = ', cube_math_type'
-            aclnn_name = get_aclnn_interface(op_name_str)
+            aclnn_name = AclnnUtils.get_aclnn_interface(op_name_str)
             if converter.inplace_process != '':
                 real_output = ''
 
