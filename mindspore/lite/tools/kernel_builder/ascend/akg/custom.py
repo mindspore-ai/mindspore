@@ -61,9 +61,10 @@ def copy_shape(shape):
 class OpInfer:
     """Base infer class, used to provide supported formats and data type of each op and update each of"""
 
-    def __init__(self, op_desc):
+    def __init__(self, op_desc, precision_mode=""):
         self.name = op_desc[NAME]
         self.op_desc = op_desc
+        self.precision_mode = precision_mode
         self.input_desc = []
         self.output_desc = []
         self.attr = {}
@@ -114,6 +115,8 @@ class OpInfer:
             if item[DATA_TYPE] == FLOAT32 and value is not None and abs(value) > FP16_MAX:
                 keep_fp32 = True
                 break
+        if self.precision_mode == "fp32":
+            keep_fp32 = True
         io_type = ",".join([t[DATA_TYPE] for t in self.input_desc] + [t[DATA_TYPE] for t in self.output_desc])
         fp32_type = io_type.replace(FLOAT16, FLOAT32)
         fp16_type = io_type.replace(FLOAT32, FLOAT16)
@@ -382,11 +385,15 @@ class Reduce(OpInfer):
         return axis
 
     def supported_type(self):
+        fp16_types = "float16,int64,float16"
+        fp32_types = "float32,int64,float32"
         in_type = self.input_desc[0][DATA_TYPE]
         if in_type == FLOAT16:
-            return ["float16,int64,float16", "float32,int64,float32"]
+            if self.precision_mode == "fp32":
+                return [fp32_types]
+            return [fp16_types, fp32_types]
         if in_type == FLOAT32:
-            return ["float32,int64,float32"]
+            return [fp32_types]
         io_type = ",".join([in_type, "int64", in_type])
         return [io_type]
 
@@ -729,7 +736,8 @@ def search_supported_types_formats(info):
     class DfsSearcher:
         """Use DFS"""
 
-        def __init__(self, top_io_names, ops_desc):
+        def __init__(self, top_io_names, ops_desc, precision_mode=""):
+            self.precision_mode = precision_mode
             self.supported_types = []
             self.supported_formats = []
             self.top_io_names = top_io_names
@@ -764,7 +772,7 @@ def search_supported_types_formats(info):
             op_name = desc[NAME]
             if op_name not in prims:
                 raise KeyError("Not supported op: {}".format(op_name))
-            prim = prims.get(op_name)(desc)
+            prim = prims.get(op_name)(desc, self.precision_mode)
             io_formats = [f.split(",") for f in prim.supported_format()]
             io_types = [t.split(",") for t in prim.supported_type()]
             self.cache.append((io_formats, io_types, tuple(io_names)))
@@ -807,7 +815,7 @@ def search_supported_types_formats(info):
         return res
 
     top_io_names = [t[0][TENSOR_NAME] for t in info[INPUT_DESC]] + [t[TENSOR_NAME] for t in info[OUTPUT_DESC]]
-    handle = DfsSearcher(top_io_names, info[OP_DESC])
+    handle = DfsSearcher(top_io_names, info[OP_DESC], info.get("precision_mode", ""))
     handle.search_types(0)
     handle.search_formats(0)
     return remove_dup(handle.supported_types), remove_dup(handle.supported_formats)

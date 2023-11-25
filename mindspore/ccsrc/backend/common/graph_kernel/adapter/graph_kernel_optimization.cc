@@ -67,6 +67,8 @@
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
+#include "backend/common/graph_kernel/adapter/split_model_ascend.h"
+#include "backend/common/graph_kernel/adapter/split_model_cpu.h"
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
 using opt::GetitemTuple;
@@ -76,6 +78,13 @@ namespace {
 auto constexpr PARALLEL_OPS_LIMIT = 7;
 inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : OptLevel_MAX; }
 }  // namespace
+
+void GraphKernelOptimizer::Init() const {
+  // register split model here to ensure that the correct split model will be invoked
+  // when import mindspore and lite in the same process
+  SPLIT_MODEL_REGISTER(kAscendDevice, inner::SplitModelAscend);
+  SPLIT_MODEL_REGISTER(kCPUDevice, inner::SplitModelCpu);
+}
 
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
@@ -272,6 +281,8 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   if (parent_graph != nullptr && parent_graph->manager() != nullptr) {
     parent_manager = parent_graph->manager();
   }
+
+  Init();
 
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(PreProcess());

@@ -69,6 +69,16 @@ class PoolLayoutDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
+class LayerNormDeco : public ExpanderDecorator {
+ public:
+  explicit LayerNormDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~LayerNormDeco() = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<LayerNormDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
 class GraphKernelExpanderLite : public GraphKernelExpander {
  public:
   GraphKernelExpanderLite() : GraphKernelExpander() {}

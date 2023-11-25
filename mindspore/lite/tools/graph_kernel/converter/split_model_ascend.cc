@@ -18,8 +18,6 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER("Ascend", SplitModelAscend);
-
 constexpr size_t kReduceFusionDepth = 10;
 constexpr size_t kBroadcastFusionDepth = 6;
 
