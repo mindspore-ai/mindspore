@@ -146,6 +146,8 @@ class BACKEND_EXPORT DeviceResManager {
   // Relevant function to allocate and free device memory of raw ptr.
   virtual void *AllocateMemory(size_t size) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
+  virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                               const std::vector<size_t> &keep_addr_sizes) const = 0;
 
   virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";

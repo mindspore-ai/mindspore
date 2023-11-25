@@ -26,6 +26,7 @@
 #include <thread>
 #include <mutex>
 #include <string>
+#include <tuple>
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
 #ifdef __APPLE__
@@ -37,8 +38,8 @@ namespace device {
 // The status of memory buf.
 enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree };
 // Memory allocator type is used to record the memory classification statistics information.
-enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kOther };
-constexpr int kAllocatorTypeNum = 4;
+enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kOther };
+constexpr int kAllocatorTypeNum = 5;
 // Alloc memory aligned according to 512 bytes.
 constexpr size_t kDynamicMemAlignSize = 512;
 // The minimum unit size (1G) of memory block used for dynamic extend.
@@ -79,6 +80,9 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr &device_addr);
+  // The main program entry of part memorys free and part memorys keep.
+  void FreePartTensorMems(const std::vector<DeviceMemPtr> &free_addrs, const std::vector<DeviceMemPtr> &keep_addrs,
+                          const std::vector<size_t> &keep_addr_sizes);
 
   // Release the real device memory.
   void ReleaseDeviceRes();
@@ -135,6 +139,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   DeviceMemPtr FindMemBufByStatus(size_t size, bool from_persistent_mem, DynamicMemBufStatus target_status);
   // Find the target status memory buf from specific pool by aligned size when memory alloc.
   DeviceMemPtr FindMemBufInSpecifiedMng(size_t size, bool from_persistent_mem, DynamicMemBufStatus target_status);
+
   // Add memory block and memory.
   DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem, bool need_recycle);
   // Add memory block and memory buf with eager free api.
@@ -142,21 +147,34 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Add the memory block and memory buf when memory alloc not find the available memory buf.
   DeviceMemPtr CreateMemBlockAndMemBuf(size_t size, bool from_persistent_mem, DeviceMemPtr source_addr,
                                        size_t source_size, DynamicMemBufStatus mem_buf_status);
+
   // Judge whether need split the memory buf by alloc size and memory buf size.
   bool IsSplit(size_t tensor_size, size_t mem_buf_size) const;
   // Split the memory buf by alloc size.
   void SplitMemBuf(size_t size, const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng);
+
   // Find the memory block by device address.
   DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mgr) const;
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
+
+  // Free memory inner with no lock, the caller need lock.
+  void FreeTensorMemInner(const DeviceMemPtr &device_addr);
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
-  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
-                     const MemStatusManagerPtr &mem_mng, DynamicMemBufStatus origin_status,
+  void CombineMemBuf(const DeviceMemPtr &device_addr, DynamicMemBufStatus origin_status,
                      DynamicMemBufStatus target_status);
+  // Fetch the mem info by the strict addr.
+  std::tuple<DynamicMemBlockPtr, DeviceAddrMapMemBuf::iterator, MemStatusManagerPtr> FindByStrictAddr(
+    const DeviceMemPtr &device_addr) const;
   // Erase memory buf by size and device address when memory buf is combined.
   void EraseMemBufByStatus(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng,
                            DynamicMemBufStatus target_status) const;
+
+  // Keep the part memorys by addr.
+  void KeepTensorMemByAddr(const DeviceMemPtr &device_addr, size_t size);
+  std::tuple<DynamicMemBlockPtr, DynamicMemBufPtr, MemStatusManagerPtr> FindByKeepAddr(
+    const DeviceMemPtr &device_addr) const;
+  DynamicMemBufPtr FindMemBufByKeepAddr(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block) const;
 
 #ifdef __APPLE__
   // There are some problems with using mutex on Mac, use spinlocks instead.

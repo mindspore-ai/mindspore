@@ -126,7 +126,12 @@ void KernelActor::InitOutputInfo() {
                      << " somas aligned size:" << somas_outputs[i].second
                      << " is smaller than address size:" << output_address->GetSize();
       }
-      UpdateRefCount(output_address.get(), true);
+      // Used to keep graph output address when somas block memory free, and reused by the ref conut in other graphs.
+      if (somas_graph_output_indexes_.count(i) > 0) {
+        (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].second);
+      } else {
+        UpdateRefCount(output_address.get(), true);
+      }
       output_need_somas = true;
     } else {
       (void)memory_alloc_list_.emplace_back(output_address.get());
@@ -340,6 +345,11 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       }
       // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
       // In order to perform performance, the pointer validity is not checked here.
+      // Check the graph output address need free.
+      if (somas_graph_output_indexes_.count(i) && (output_device_tensors_[i]->GetPtr() != nullptr)) {
+        MS_LOG(ERROR) << GetAID().Name() << " does not free address for graph output index: " << i;
+        device_contexts_[0]->device_res_manager_->FreeMemory(output_device_tensors_[i]);
+      }
       output_device_tensors_[i]->set_ptr(device_ptr);
     }
   }

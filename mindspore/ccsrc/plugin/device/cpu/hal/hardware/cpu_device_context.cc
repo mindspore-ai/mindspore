@@ -152,6 +152,11 @@ void CPUDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+void CPUDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                                          const std::vector<size_t> &keep_addr_sizes) const {
+  CPUMemoryPool::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
+}
+
 std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);

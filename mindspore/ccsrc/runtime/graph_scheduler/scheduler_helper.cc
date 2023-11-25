@@ -790,6 +790,32 @@ void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
   kernel_actor->somas_info_ = somas_info;
 }
 
+void SchedulerHelper::AddSomasInfoForGraphOutput(AbstractActor *const output_actor, const AnfNodePtr &output_kernel,
+                                                 size_t output_index, size_t graph_id) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+    return;
+  }
+  if ((output_actor == nullptr) || (output_actor->type() != KernelTransformType::kKernelActor)) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(output_kernel);
+  auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &somas_outputs = kernel_info->somas_output_result();
+  auto is_somas = kernel_info->IsTensorEnableSomas(somas_outputs, output_index);
+  MS_LOG(INFO) << "The graph " << graph_id << " output node:" << output_kernel->fullname_with_scope()
+               << " with index: " << output_index << " somas enable or not: " << is_somas
+               << ", somas offset: " << kernel_info->GetTensorSomasOffset(somas_outputs, output_index)
+               << ", aligned size: " << kernel_info->GetTensorSomasAlignedSize(somas_outputs, output_index);
+  if (is_somas) {
+    auto kernel_actor = dynamic_cast<KernelActor *>(output_actor);
+    kernel_actor->somas_graph_output_indexes_.insert(output_index);
+  }
+}
+
 namespace {
 void CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
   for (const auto &kernel_actor : kernel_actors) {

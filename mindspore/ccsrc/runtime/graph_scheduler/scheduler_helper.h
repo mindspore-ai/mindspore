@@ -97,6 +97,8 @@ class SchedulerHelper {
   static void AddMemoryFreeSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                 const KernelGraphPtr &from_graph);
   static void AddSomasInfo(AbstractActor *const actor);
+  static void AddSomasInfoForGraphOutput(AbstractActor *const output_actor, const AnfNodePtr &output_kernel,
+                                         size_t output_index, size_t graph_id);
 
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);

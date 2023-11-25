@@ -96,6 +96,7 @@ class KernelActor : public DebugAwareActor {
   bool is_launch_skipped() const { return is_launch_skipped_; }
   bool inputs_continuous_memory() const { return inputs_continuous_memory_; }
   SomasInfo *somas_info() const { return somas_info_; }
+  const std::set<size_t> &somas_graph_output_indexes() const { return somas_graph_output_indexes_; }
 
  protected:
   void Init() override;
@@ -199,6 +200,8 @@ class KernelActor : public DebugAwareActor {
 
   // The information used for integration of dynamic and static memory.
   SomasInfo *somas_info_;
+  // The graph output node and index use somas info.
+  std::set<size_t> somas_graph_output_indexes_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;
