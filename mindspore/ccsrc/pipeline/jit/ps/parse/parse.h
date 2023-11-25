@@ -150,6 +150,8 @@ class Parser {
   FunctionBlockPtr ParseGlobal(const FunctionBlockPtr &block, const py::object &node);
   // Process assign statement.
   FunctionBlockPtr ParseAssign(const FunctionBlockPtr &block, const py::object &node);
+  // Process annassign statement.
+  FunctionBlockPtr ParseAnnAssign(const FunctionBlockPtr &block, const py::object &node);
   // Process break statement.
   FunctionBlockPtr ParseBreak(const FunctionBlockPtr &block, const py::object &node);
   // Process continue statement.
@@ -401,6 +403,9 @@ class Parser {
   py::object GetValuePythonObject(const py::object &value_node);
   CNodePtr MakeSetitemNode(const FunctionBlockPtr &block, const py::object &value_obj, const py::object &slice_obj,
                            const AnfNodePtr &assigned_node, const AnfNodePtr &value_node);
+
+  void ProcessPopOperation(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                           const py::object &target_object);
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
