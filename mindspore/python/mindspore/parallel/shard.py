@@ -36,13 +36,17 @@ class Shard(Shard_):
     def __call__(self, fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
         if ms.context.get_context("mode") != ms.context.PYNATIVE_MODE or \
                 ms.context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
-            raise AssertionError(f"Cell shard only supports auto parallel under PyNative mode.")
+            raise AssertionError(
+                f"Cell shard only supports auto parallel under PyNative mode.")
         if ms.context.get_context("device_target") not in ["Ascend", "GPU"]:
-            raise AssertionError(f"'Shard' now only supports 'Ascend' and 'GPU'")
+            raise AssertionError(
+                f"'Shard' now only supports 'Ascend' and 'GPU'")
         if ms.context.get_auto_parallel_context("search_mode") != "sharding_propagation":
-            raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
+            raise AssertionError(
+                f"'search_mode' must be 'sharding_propagation' for 'Shard'")
         if not isinstance(in_strategy, tuple):
-            raise TypeError(f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
+            raise TypeError(
+                f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
         if not isinstance(out_strategy, (type(None), tuple)):
             raise TypeError(f"For 'Shard', the 'out_strategy' should be None or tuple, "
                             f"but got {type(out_strategy).__name__}")
@@ -117,7 +121,8 @@ class Shard(Shard_):
             return
         if isinstance(parameter_plan, dict):
             if not isinstance(fn, ms.nn.Cell):
-                raise TypeError(f"If parameter_plan is set, type of fn must be mindspore.nn.Cell, but got {type(fn)}")
+                raise TypeError(
+                    f"If parameter_plan is set, type of fn must be mindspore.nn.Cell, but got {type(fn)}")
             for k in parameter_plan.keys():
                 v = parameter_plan[k]
                 if not isinstance(k, str) or not isinstance(v, tuple):
@@ -131,10 +136,12 @@ class Shard(Shard_):
             param_strategy = parameter_plan[param_name]
             param = self._search_parameter_by_name(param_name, fn)
             if param is None:
-                logger.warning(f"{param_name} is not exist, ignored its setting.")
+                logger.warning(
+                    f"{param_name} is not exist, ignored its setting.")
                 continue
 
-            self._check_layout_is_valid(param_name, param.shape, param_strategy)
+            self._check_layout_is_valid(
+                param_name, param.shape, param_strategy)
             if param.param_info.param_strategy:
                 logger.warning(f"The layout of parameter '{param_name}' "
                                f"has been set to {param.param_info.param_strategy}, "
@@ -143,7 +150,7 @@ class Shard(Shard_):
 
     def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, device, level):
         return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
-               self.out_strategy == out_strategy and self.device == device and self.level == level
+            self.out_strategy == out_strategy and self.device == device and self.level == level
 
 
 def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
@@ -216,8 +223,8 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         ...                           device_num=2)
         >>> def test_shard(x, y):
         ...     return x + y
-        >>> x = Tensor(np.ones(shape=(32, 10)))
-        >>> y = Tensor(np.ones(shape=(32, 10)))
+        >>> x = Tensor(np.ones(shape=(32, 10)), dtype=ms.float32)
+        >>> y = Tensor(np.ones(shape=(32, 10)), dtype=ms.float32)
         >>> output = ms.shard(test_shard, in_strategy=((2, 1), (2, 1)))(x, y)
         >>> print(output.shape)
         (32, 10)
