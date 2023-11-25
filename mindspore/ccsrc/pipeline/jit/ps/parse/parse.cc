@@ -90,6 +90,7 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["Expr"] = &Parser::ParseExpr;
   stmt_method_map_["If"] = &Parser::ParseIf;
   stmt_method_map_["Assign"] = &Parser::ParseAssign;
+  stmt_method_map_["AnnAssign"] = &Parser::ParseAnnAssign;
   stmt_method_map_["While"] = &Parser::ParseWhile;
   stmt_method_map_["For"] = &Parser::ParseFor;
   stmt_method_map_["FunctionDef"] = &Parser::ParseFunctionDef;
@@ -4108,6 +4109,20 @@ bool Parser::IsPopOperation(const AnfNodePtr &node) const {
   return false;
 }
 
+void Parser::ProcessPopOperation(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                                 const py::object &target_object) {
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto new_list =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
+  auto pop_node =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+  if (!(ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_))) {
+    WriteAssignVars(block, list_pop_target_obj_, new_list);
+  }
+  WriteAssignVars(block, target_object, pop_node);
+}
+
 // Process a assign statement, such as a = b,  a, b = tuple(xx, xx)
 FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast assign";
@@ -4123,20 +4138,8 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   // b = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {
-    auto func_graph = block->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto new_list =
-      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
-    auto pop_node =
-      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
-    if (!(ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_))) {
-      WriteAssignVars(block, list_pop_target_obj_, new_list);
-    }
-    if (count != 1) {
-      MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
-    }
     auto pop_obj = py::cast<py::list>(targets_object)[0];
-    WriteAssignVars(block, pop_obj, pop_node);
+    ProcessPopOperation(block, value_node, pop_obj);
     return block;
   }
   for (size_t i = 0; i < count; i++) {
@@ -4144,6 +4147,24 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
     WriteAssignVars(block, target_node, value_node);
   }
 
+  return block;
+}
+
+// Process a annassign statement, such as a:int = 1
+// target may be one of Name, Attribute, Subscript.
+FunctionBlockPtr Parser::ParseAnnAssign(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast annassign";
+  py::object value_object = python_adapter::GetPyObjAttr(node, "value");
+  py::object target_object = python_adapter::GetPyObjAttr(node, "target");
+  AnfNodePtr value_node = ParseExprNode(block, value_object);
+
+  // b: int = list_x.pop(a)
+  // -->  list_x, b = list_x.pop(a) need renew the list_x.
+  if (IsPopOperation(value_node)) {
+    ProcessPopOperation(block, value_node, target_object);
+    return block;
+  }
+  WriteAssignVars(block, target_object, value_node);
   return block;
 }
 
