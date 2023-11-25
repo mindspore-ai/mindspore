@@ -147,7 +147,8 @@ void FetchRealParameterByNode(const KernelWithIndex &node, std::set<KernelWithIn
     (void)invalid_call_nodes->emplace(node_with_index);
     const auto &iter = call_node_to_func_graphs.find(node_with_index.first);
     if (iter == call_node_to_func_graphs.end()) {
-      MS_LOG(EXCEPTION) << "Invalid call node:" << node_with_index.first->DebugString();
+      MS_LOG(WARNING) << "Invalid call node:" << node_with_index.first->DebugString();
+      return;
     }
     const auto &func_graphs = iter->second;
     for (const auto &func_graph : func_graphs) {
@@ -615,7 +616,8 @@ void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodeP
     std::set<KernelWithIndex> invalid_call_nodes;
     FetchRealParameterByNode({real_parameter, i}, &real_parameters, &invalid_call_nodes, call_node_to_func_graphs);
     if (real_parameters.empty()) {
-      MS_LOG(EXCEPTION) << "Failed to find real parameter for formal parameter:" << real_parameter->DebugString();
+      MS_LOG(WARNING) << "Failed to find real parameter for formal parameter:" << real_parameter->DebugString();
+      continue;
     }
 
     for (const auto &parameter : real_parameters) {
@@ -1786,7 +1788,9 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
         // If the output is a cnode, get the device context type by the kernel.
         const auto &iter = front_to_backend_kernels_.find(output_node);
         if (iter == front_to_backend_kernels_.end()) {
-          MS_LOG(EXCEPTION) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+          MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+          (void)return_device_contexts.emplace_back(default_context);
+          continue;
         }
         MS_EXCEPTION_IF_NULL(iter->second.second);
         (void)return_device_contexts.emplace_back(iter->second.second);

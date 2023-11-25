@@ -2030,9 +2030,14 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
     const bool enable_ge = context->backend_policy() == "ge";
-    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level = (enable_ge && !graph_op_run) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    if (force_no_inline) {
+      cell_reuse_level = CellReuseLevel::kNoInline;
+    }
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;

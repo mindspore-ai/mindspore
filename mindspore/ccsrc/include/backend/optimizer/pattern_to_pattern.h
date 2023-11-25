@@ -124,8 +124,8 @@ class BACKEND_EXPORT PatternNode {
 
 class BACKEND_EXPORT SrcPattern {
  public:
-  SrcPattern &AddVar(const std::string &name, const ConditionFunc &f = AlwaysReturnTrue);
-  SrcPattern &AddSeqVar(const std::string &name, const ConditionFunc &f = AlwaysReturnTrue);
+  SrcPattern &AddVar(const std::string &name, const PatternConditionFunc &f = AlwaysReturnTrue);
+  SrcPattern &AddSeqVar(const std::string &name, const PatternConditionFunc &f = AlwaysReturnTrue);
   const BaseRef &GetRef(const std::string &name) const;
   SrcPattern &AddCNode(const std::string &name, const std::initializer_list<PatternNode> &v);
   BaseRef GetRoot() const;
