@@ -232,6 +232,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &
     MS_LOG(INFO) << "copy device tensor to device tensor.";
     auto new_tensor =
       CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), nullptr, tensor.DataSize(), "ascend", device_id);
+    MS_CHECK_FALSE_MSG(new_tensor == nullptr, nullptr, "create new tensor returns nullptr");
     auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
       static_cast<MSTensor>(tensor).GetDeviceData(), new_tensor->GetDeviceData(), new_tensor->DataSize(),
       tensor.DataSize(), tensor.GetDeviceId(), new_tensor->GetDeviceId());

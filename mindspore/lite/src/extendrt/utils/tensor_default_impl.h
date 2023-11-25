@@ -46,7 +46,7 @@ class TensorDefaultImpl : public MutableTensorImpl {
       size_t data_type_size = lite::DataTypeSize(TypeId(type));
       size_t data_buf_size = data_type_size;
       for (auto s : shape) {
-        data_buf_size *= s;
+        data_buf_size = data_buf_size * static_cast<size_t>(s);
       }
       void *data_buf_ptr = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(data_buf_size);
       data_ = data_buf_ptr;
