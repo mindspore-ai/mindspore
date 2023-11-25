@@ -1,7 +1,7 @@
 mindspore.boost
 ==============================
 
-Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
+Boost能够自动加速网络，如减少BN/梯度冻结/累加梯度等。
 
 .. note::
     此特性为测试版本，我们仍在改进其功能。
@@ -260,7 +260,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     .. py:method:: gradient_accumulation_process(loss, grads, sens, *inputs)
 
-        使用梯度累积算法训练。
+        使用梯度累加算法训练。
 
         参数：
             - **loss** (Tensor) - 网络训练的loss值。shape为 :math:`()`。
@@ -371,17 +371,17 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **optimizer** (Cell) - 优化器。
         - **sens** (numbers.Number) - 损失缩放系数。
         - **grad** (tuple(Tensor)) - 网络梯度。
-        - **use_grad_accumulation** (bool) - 是否使用梯度累积。
+        - **use_grad_accumulation** (bool) - 是否使用梯度累加。
         - **mean** (bool) - 可选参数，梯度是否求平均，仅分布式训练时生效。默认值： ``None`` 。
         - **degree** (int) - 可选参数，device卡数，仅分布式训练时生效。默认值： ``None`` 。
-        - **max_accumulation_step** (int) - 可选参数，梯度累积步数。默认值： ``1`` 。
+        - **max_accumulation_step** (int) - 可选参数，梯度累加步数。默认值： ``1`` 。
 
 .. py:class:: mindspore.boost.GradientAccumulation(max_accumulation_step, optimizer)
 
-    梯度累积算法，在累积多个step的梯度之后，再用来更新网络权重，可以提高训练效率。
+    梯度累加算法，在累加多个step的梯度之后，再用来更新网络权重，可以提高训练效率。
 
     参数：
-        - **max_accumulation_step** (int) - 累积梯度的步数。
+        - **max_accumulation_step** (int) - 累加梯度的步数。
         - **optimizer** (Cell) - 网络训练使用的优化器。
 
 .. py:class:: mindspore.boost.AdaSum(rank, device_number, group_number, parameter_tuple)
