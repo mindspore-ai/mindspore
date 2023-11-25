@@ -17,6 +17,8 @@
 #include "pipeline/jit/pi/graph_compiler/parser/byte_code_parser.h"
 #include <memory>
 #include <string>
+#include <utility>
+#include "pipeline/jit/pi/graph_compiler/pi_ir/debug_info.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -53,6 +55,7 @@ ByteCodeParser::ByteCodeParser(const PyFunctionObject &func)
       clousre_(var_init<py::tuple>(func.func_closure)),
       kwdefaults_(var_init<py::dict>(func.func_kwdefaults)),
       defaults_(var_init<py::tuple>(func.func_defaults)) {
+  func_->AddFileName(py::cast<std::string>((reinterpret_cast<PyCodeObject *>(func.func_code))->co_filename));
   BuildMethodMap();
   Register(&func_->GetNodes());
 }
@@ -530,7 +533,7 @@ void ByteCodeParser::GenerateFunctionParameters() {
 void ByteCodeParser::ParsePopTop(const InstrPtr &instr) {
   MS_EXCEPTION_IF_CHECK_FAIL(!stack_.empty(), "There is no item arg to pop at the top of stack.");
   ir::NodePtr node = std::make_shared<ir::UnaryOperation>(instr->GetOpCode(), PopStack());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -570,7 +573,7 @@ void ByteCodeParser::ParseDupTwo(const InstrPtr &instr) {
 void ByteCodeParser::ParseUnaryOpertion(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::UnaryOperation>(instr->GetOpCode(), top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   if (instr->GetOpCode() == RERAISE) {
     SaveNode(node);
   } else {
@@ -582,7 +585,7 @@ void ByteCodeParser::ParseUnaryOpertion(const InstrPtr &instr) {
 void ByteCodeParser::ParseUnaryNegative(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::NegativeNode>(top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -590,7 +593,7 @@ void ByteCodeParser::ParseUnaryNegative(const InstrPtr &instr) {
 void ByteCodeParser::ParseUnaryNot(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::NotNode>(top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -598,7 +601,7 @@ void ByteCodeParser::ParseUnaryNot(const InstrPtr &instr) {
 void ByteCodeParser::ParseUnaryInvert(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::InvertNode>(top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -607,7 +610,7 @@ void ByteCodeParser::ParseBinaryOpertion(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::BinaryOperation>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -616,7 +619,7 @@ void ByteCodeParser::ParseBitwise(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::BitwiseNode>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -624,7 +627,7 @@ void ByteCodeParser::ParseAdd(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::AddNode>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -632,7 +635,7 @@ void ByteCodeParser::ParseSub(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::SubNode>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -640,7 +643,7 @@ void ByteCodeParser::ParseMul(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::MulNode>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -648,7 +651,7 @@ void ByteCodeParser::ParseDiv(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::DivNode>(instr->GetOpCode(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -657,7 +660,7 @@ void ByteCodeParser::ParseBinarySubscr(const InstrPtr &instr) {
   auto subscr = PopStack();
   auto base = PopStack();
   ir::NodePtr node = std::make_shared<ir::BinaryOperation>(instr->GetOpCode(), base, subscr);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -666,7 +669,7 @@ void ByteCodeParser::ParseCompareOp(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::CompareNode>(instr->GetArg(), left, right);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -680,7 +683,7 @@ void ByteCodeParser::ParseJump(const InstrPtr &instr) {
     condition = std::make_shared<ir::PairNode>(condition, PopStack());
   }
   ir::JumpNodePtr node = std::make_shared<ir::JumpNode>(op_code, condition, nullptr);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   int target_offset = instr->GetArg();
   if (op_code == JUMP_FORWARD || op_code == FOR_ITER) {
     target_offset += instr->GetOffset() + 2;
@@ -696,14 +699,14 @@ void ByteCodeParser::ParseJump(const InstrPtr &instr) {
 void ByteCodeParser::ParseListToTuple(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::CastNode>(top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
 void ByteCodeParser::ParseReturnValue(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::ReturnNode>(top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
   SaveNode(node);
 }
@@ -712,7 +715,7 @@ void ByteCodeParser::ParseLoadConst(const InstrPtr &instr) {
   py::object opnd = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_consts, instr->GetArg()));
   ir::ValuePtr arg = std::make_shared<ir::Value>(opnd, py::str(opnd), ir::kScopeConst);
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), arg);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -720,7 +723,7 @@ void ByteCodeParser::ParseLoadName(const InstrPtr &instr) {
   py::object name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_names, instr->GetArg()));
   ir::ValuePtr arg = std::make_shared<ir::Value>(name, name.cast<std::string>(), ir::kScopeName);
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), arg);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -747,7 +750,7 @@ void ByteCodeParser::ParseMakeFunction(const InstrPtr &instr) {
   }
   std::reverse(args.begin(), args.end());
   ir::NodePtr node = std::make_shared<ir::NaryWithFlagNode>(MAKE_FUNCTION, args, flag);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -773,7 +776,7 @@ void ByteCodeParser::ParseBuild(const InstrPtr &instr) {
     }
   }
   ir::NodePtr node = std::make_shared<ir::BuildNode>(instr->GetOpCode(), opnds);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -786,7 +789,7 @@ void ByteCodeParser::ParseLoadAttr(const InstrPtr &instr) {
     opnds.push_back(PopStack());
   }
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnds);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -797,7 +800,7 @@ void ByteCodeParser::ParseLoadGlobal(const InstrPtr &instr) {
   ir::Scope scope = is_global ? ir::kScopeGlobal : ir::kScopeBuiltIn;
   ir::ValuePtr value = std::make_shared<ir::Value>(global, name.cast<std::string>(), scope);
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), value);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -805,7 +808,7 @@ void ByteCodeParser::ParseIsOp(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::IsNodePtr node = std::make_shared<ir::IsNode>(left, right, instr->GetArg());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -813,7 +816,7 @@ void ByteCodeParser::ParseContainsOp(const InstrPtr &instr) {
   auto right = PopStack();
   auto left = PopStack();
   ir::ContainsNodePtr node = std::make_shared<ir::ContainsNode>(left, right, instr->GetArg());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -821,7 +824,7 @@ void ByteCodeParser::ParseLoadFast(const InstrPtr &instr) {
   auto name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_varnames, instr->GetArg()));
   ir::ValuePtr value = std::make_shared<ir::Value>(name, name.cast<std::string>(), ir::kScopeLocal);
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), value);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -839,7 +842,7 @@ void ByteCodeParser::ParseStoreName(const InstrPtr &instr) {
   ir::ValuePtr value = std::make_shared<ir::Value>(name, scope);
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::StoreNode>(op_code, top, value);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -849,7 +852,7 @@ void ByteCodeParser::ParseStoreSubscr(const InstrPtr &instr) {
   ir::NodePtr target = std::make_shared<ir::SubscrNode>(base, subscr);
   auto source = PopStack();
   ir::NodePtr node = std::make_shared<ir::StoreNode>(instr->GetOpCode(), source, target);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -859,7 +862,7 @@ void ByteCodeParser::ParseStoreAttr(const InstrPtr &instr) {
   target = std::make_shared<ir::AttrNode>(PopStack(), target);
   auto source = PopStack();
   ir::NodePtr node = std::make_shared<ir::StoreNode>(instr->GetOpCode(), source, target);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -887,7 +890,7 @@ void ByteCodeParser::ParseCallFunction(const InstrPtr &instr) {
   }
   std::reverse(args.begin(), args.end());
   ir::NodePtr node = std::make_shared<ir::CallNode>(instr->GetOpCode(), args);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -906,7 +909,7 @@ void ByteCodeParser::ParseLoadClosure(const InstrPtr &instr) {
     opnd = std::make_shared<ir::Value>(clousre_[index], name, ir::kScopeClousre);
   }
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnd);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -920,7 +923,7 @@ void ByteCodeParser::ParseSetupWith(const InstrPtr &instr) {
   auto node = std::make_shared<ir::JumpNode>(instr->GetOpCode(), PopStack(), nullptr);
   int target_offset = instr->GetArg() + instr->GetOffset() + 2;
   jump_nodes_map_[target_offset].push_back(node);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
   ir::NodePtr ph = std::make_shared<ir::PlaceHolder>("SETUP_WITH EXIT");
   PushStack(ph);
@@ -937,7 +940,7 @@ void ByteCodeParser::ParseFormatValue(const InstrPtr &instr) {
     opnds.push_back(PopStack());
   }
   ir::NodePtr node = std::make_shared<ir::FormatNode>(opnds, instr->GetArg());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -947,7 +950,7 @@ void ByteCodeParser::ParseLoadMethod(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtrList opnds = {top, method};
   ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnds);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -956,13 +959,13 @@ void ByteCodeParser::ParseContainerUpdate(const InstrPtr &instr) {
   MS_EXCEPTION_IF_CHECK_FAIL((instr->GetArg() == 1), "Not Excepted Update.");
   auto left = PopStack();
   ir::NodePtr node = std::make_shared<ir::UpdateNode>(instr->GetOpCode(), left, right, instr->GetArg());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
 void ByteCodeParser::ParseNoArgOperation(const InstrPtr &instr) {
   ir::NodePtr node = std::make_shared<ir::NaryOperation>(instr->GetOpCode());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -975,20 +978,20 @@ void ByteCodeParser::ParseWithExceptStart(const InstrPtr &instr) {
     PushStack(node);
   }
   ir::NodePtr node = std::make_shared<ir::NaryOperation>(instr->GetOpCode());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
 void ByteCodeParser::ParseGet(const InstrPtr &instr) {
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::GetNode>(instr->GetOpCode(), top);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
 void ByteCodeParser::ParseLoadAssertError(const InstrPtr &instr) {
   ir::NodePtr node = std::make_shared<ir::NaryOperation>(instr->GetOpCode());
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
 
@@ -997,7 +1000,7 @@ void ByteCodeParser::ParseDeleteSubscr(const InstrPtr &instr) {
   auto base = PopStack();
   ir::NodePtr opnd = std::make_shared<ir::SubscrNode>(base, subscr);
   ir::NodePtr node = std::make_shared<ir::DeleteNode>(instr->GetOpCode(), opnd);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -1011,7 +1014,7 @@ void ByteCodeParser::ParseDeleteName(const InstrPtr &instr) {
                  : (instr->GetOpCode() == DELETE_DEREF) ? ir::kScopeCellVar : ir::kScopeName;
   ir::NodePtr opnd = std::make_shared<ir::Value>(name, scope);
   ir::NodePtr node = std::make_shared<ir::DeleteNode>(instr->GetOpCode(), opnd);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -1020,7 +1023,7 @@ void ByteCodeParser::ParseDeleteAttr(const InstrPtr &instr) {
   ir::NodePtr opnd = std::make_shared<ir::Value>(name, ir::kScopeName);
   opnd = std::make_shared<ir::AttrNode>(PopStack(), opnd);
   ir::NodePtr node = std::make_shared<ir::DeleteNode>(instr->GetOpCode(), opnd);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
 }
 
@@ -1034,7 +1037,7 @@ void ByteCodeParser::ParseUnpack(const InstrPtr &instr) {
     args.push_back(top);
   }
   ir::NodePtr unpack = std::make_shared<ir::NaryWithFlagNode>(instr->GetOpCode(), args, instr->GetArg());
-  unpack->SetLineNo(instr->GetStartsLine());
+  unpack->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(unpack);
 }
 
@@ -1048,8 +1051,12 @@ void ByteCodeParser::ParseRaiseVarargs(const InstrPtr &instr) {
     args.push_back(PopStack());
   }
   ir::NodePtr node = std::make_shared<ir::NaryWithFlagNode>(RAISE_VARARGS, args, flag);
-  node->SetLineNo(instr->GetStartsLine());
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
   SaveNode(node);
+}
+
+ir::DebugInfoPtr ByteCodeParser::GetNodeDebugInfo(const InstrPtr &instr) {
+  return std::move(std::make_shared<ir::DebugInfo>(instr->GetArgRepr(), func_->GetFileName(), instr->GetStartsLine()));
 }
 }  // namespace graph
 }  // namespace jit

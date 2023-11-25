@@ -79,6 +79,7 @@ FuncGraphPtr FuncGraphBuilder::BuildFuncGraph(const ir::FunctionNodePtr &func, c
   ir::NodePtr FuncGraphBuilder::Mutate_(const OP &node) {                    \
     auto op = GraphUtils::GetPrimOrMetaFuncGraph(node->GetOpCode());         \
     auto n = func_graph_->NewCNodeInOrder({op, GetAnfNode(node->GetArg())}); \
+    UpdateLocation(n, node);                                                 \
     return std::make_shared<MindNode>(n);                                    \
   }
 
@@ -91,6 +92,7 @@ DEFINE_UN_NODE_MUTATE_(ir::NotNodePtr)
     auto left = GetAnfNode(node->GetLeftArg());                      \
     auto right = GetAnfNode(node->GetRightArg());                    \
     CNodePtr n = func_graph_->NewCNodeInOrder({op, left, right});    \
+    UpdateLocation(n, node);                                         \
     return std::make_shared<MindNode>(n);                            \
   }
 
@@ -120,6 +122,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
   param->set_name(name);
   MS_EXCEPTION_IF_NULL(param->debug_info());
   param->debug_info()->set_name(name);
+  UpdateLocation(param, node);
   auto category = node->GetCategory();
   // kwargs
   if (category == ir::Parameter::KEYWORD) {
@@ -134,7 +137,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
     func_graph_->set_param_default_value(name, value_node);
   }
   assigned_vars_[name] = param;
-  if (!func_->IsMethod() || node->GetIndex() != 0) {
+  if (!param->abstract()->isa<abstract::AbstractFunction>()) {
     func_graph_->add_parameter(param);
   }
   return std::make_shared<MindNode>(param);
@@ -180,6 +183,25 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::FunctionNodePtr &node) {
   return std::make_shared<MindNode>(NewValueNode(func_graph_));
 }
 
+void FuncGraphBuilder::UpdateLocation(const AnfNodePtr &anf_node, const ir::NodePtr &node) {
+  // Refer to Location::Location() for each node: line, column, line_end, column_end, expr_src.
+  auto debug_info = node->GetDebugInfo();
+  auto line_no = debug_info->GetLineNo();
+  line_no = (line_no == 0) ? last_line_no_ : line_no;
+  last_line_no_ = line_no;
+  auto loc = anf_node->debug_info()->location();
+  if (loc == nullptr) {
+    std::vector<std::string> comments;
+    anf_node->debug_info()->set_location(std::make_shared<Location>(debug_info->GetFileName(), line_no, 0, line_no, 0,
+                                                                    debug_info->GetDesc(), std::move(comments)));
+  } else {
+    loc->set_file_name(debug_info->GetFileName());
+    loc->set_line(line_no);
+    loc->set_line_end(line_no);
+    loc->set_expr_src(debug_info->GetDesc());
+  }
+}
+
 AnfNodePtr FuncGraphBuilder::ConvertListOrTupleToCNode(const py::object &obj) {
   MS_EXCEPTION_IF_CHECK_FAIL((py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)),
                              "Should be a list or tuple.");
@@ -209,6 +231,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ValuePtr &node) {
   }
   bool is_list_or_tuple = (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj));
   auto value = is_list_or_tuple ? ConvertListOrTupleToCNode(obj) : GraphUtils::ConvertPythonObjectToAnfNode(obj);
+  UpdateLocation(value, node);
   return std::make_shared<MindNode>(value);
 }
 
@@ -312,6 +335,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::CastNodePtr &node) {
                    [](const ValuePtr &arg) { return NewValueNode(arg); });
     arg = func_graph_->NewCNodeInOrder(values);
   }
+  UpdateLocation(arg, node);
   return std::make_shared<MindNode>(arg);
 }
 
@@ -348,6 +372,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::FormatNodePtr &node) {
   }
   py::str obj = py::cast<py::str>(PyObject_Format(top.ptr(), format.ptr()));
   AnfNodePtr value = GraphUtils::ConvertPythonObjectToAnfNode(obj);
+  UpdateLocation(value, node);
   return std::make_shared<MindNode>(value);
 }
 
@@ -356,6 +381,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::IsNodePtr &node) {
   auto right = GetAnfNode(node->GetRightArg());
   PrimitivePtr prim = node->IsInvert() ? prim::kPrimIsNot : prim::kPrimIs_;
   AnfNodePtr n = func_graph_->NewCNodeInOrder(prim, {left, right});
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -364,6 +390,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ContainsNodePtr &node) {
   auto right = GetAnfNode(node->GetRightArg());
   auto name = node->IsInvert() ? "not_in_" : "in_";
   CNodePtr n = func_graph_->NewCNodeInOrder({GraphUtils::GetMetaFuncGraph(name), left, right});
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -401,6 +428,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::CompareNodePtr &node) {
   }
 #endif  // #if (PY_MAJOR_VERSION == 3 && (PY_MINOR_VERSION == 7 || PY_MINOR_VERSION == 8))
   CNodePtr n = func_graph_->NewCNodeInOrder({GraphUtils::GetMetaFuncGraph(op), left, right});
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -418,6 +446,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::UpdateNodePtr &node) {
   } else {
     n = MergeDict(left, right);
   }
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -449,6 +478,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadNodePtr &node) {
     MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(attr), "Excepted attr/name.");
     n = func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {base, attr});
   }
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -495,6 +525,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::BuildNodePtr &node) {
     array.push_back(cnode_values);
   }
   CNodePtr n = func_graph_->NewCNodeInOrder(prim, array);
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -523,13 +554,16 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::CallNodePtr &node) {
     CNodePtr kwargs_node = func_graph_->NewCNodeInOrder(prim::kPrimMakeDict, {keys_cnode, values_cnode});
     nodes.push_back(kwargs_node);
   }
-  return std::make_shared<MindNode>(func_graph_->NewCNodeInOrder(std::move(nodes)));
+  auto n = func_graph_->NewCNodeInOrder(std::move(nodes));
+  UpdateLocation(n, node);
+  return std::make_shared<MindNode>(n);
 }
 
 ir::NodePtr FuncGraphBuilder::Mutate_(const ir::SubscrNodePtr &node) {
   auto object = GetAnfNode(node->GetObject());
   auto subscr = GetAnfNode(node->GetSubscr());
   CNodePtr n = func_graph_->NewCNodeInOrder({GraphUtils::GetMetaFuncGraph(BINARY_SUBSCR), object, subscr});
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 
@@ -537,6 +571,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::AttrNodePtr &node) {
   auto object = GetAnfNode(node->GetObject());
   auto attr = GetAnfNode(node->GetAttr());
   CNodePtr n = func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {object, attr});
+  UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
 }
 

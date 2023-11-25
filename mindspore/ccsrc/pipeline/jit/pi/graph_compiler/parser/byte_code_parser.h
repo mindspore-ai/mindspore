@@ -24,6 +24,7 @@
 #include <vector>
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
+#include "pipeline/jit/pi/graph_compiler/pi_ir/debug_info.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
 
 namespace mindspore {
@@ -157,6 +158,7 @@ class ByteCodeParser {
   void ParseDeleteAttr(const InstrPtr &instr);
   void ParseUnpack(const InstrPtr &instr);
   void ParseRaiseVarargs(const InstrPtr &instr);
+  ir::DebugInfoPtr GetNodeDebugInfo(const InstrPtr &instr);
 
   ir::FunctionNodePtr func_;
   const PyCodeObject &code_;
