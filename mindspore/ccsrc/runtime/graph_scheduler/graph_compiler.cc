@@ -586,11 +586,6 @@ GraphId GraphCompiler::CompileDynamicGraph(const KernelGraphPtr &kernel_graph, c
   MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
   kernel_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
-  auto kernel_executor = device_context->GetKernelExecutor(true);
-  if (kernel_executor != nullptr) {
-    kernel_executor->AddMindIRPass(kernel_graph);
-  }
-
   kernel_graph->UpdateGraphAquireGilAttr();
   kernel_graph->SetInputNodes();
   auto manager = Manage(kernel_graph);
@@ -608,11 +603,6 @@ GraphId GraphCompiler::CompileDynamicGraph(const KernelGraphPtr &kernel_graph, c
   GraphId graph_id = kernel_graph->graph_id();
   kernel_graph->set_root_graph_id(graph_id);
   session_->DumpGraphs({kernel_graph});
-
-  auto &exec_nodes = kernel_graph->execution_order();
-  (void)std::for_each(exec_nodes.begin(), exec_nodes.end(), [](const CNodePtr &node) {
-    common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
-  });
 
   MS_LOG(INFO) << "Status record: end compile kernel_graph. kernel_graph id: " << graph_id;
   return graph_id;

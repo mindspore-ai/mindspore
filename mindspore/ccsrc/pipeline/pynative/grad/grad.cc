@@ -414,6 +414,48 @@ void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, con
   grad_param->graph_cache_key = std::to_string(graph_grad_info->graph_id);
   auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
+
+void CheckBpropCutNode(const TopCellInfoPtr &top_cell, PrimitivePtr op_prim) {
+  if (op_prim->name() == kHookBackwardName || op_prim->name() == kCellBackwardHookName) {
+    top_cell->set_has_bprop_cut_op(true);
+  }
+}
+
+void CloneParameter(const AnfNodePtr &node, const KernelGraphPtr &new_graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_graph);
+  auto old_param = node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(old_param);
+  auto new_param = new_graph->add_parameter();
+  new_param->set_name(old_param->name());
+  if (auto t = PyNativeAlgo::Common::GetTensorFromParam(old_param); t != nullptr) {
+    const auto &param_info = t->param_info();
+    if (param_info != nullptr) {
+      const auto &param_name = param_info->name();
+      new_param->set_name(param_name);
+      new_param->debug_info()->set_name(param_name);
+    }
+    new_param->set_default_param(t);
+  }
+  new_param->set_abstract(old_param->abstract());
+  new_param->set_scope(old_param->scope());
+}
+
+KernelGraphPtr CloneKernelGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "Begin clone kernel graph";
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto new_graph = std::make_shared<session::KernelGraph>();
+  const auto &params = kernel_graph->parameters();
+  for (auto &param : params) {
+    CloneParameter(param, new_graph);
+  }
+  auto out = InlineClone(kernel_graph, new_graph, new_graph->parameters());
+  new_graph->set_output(out);
+  PyNativeAlgo::Common::FreeFuncGraphForwardNodes(func_graph);
+  return new_graph;
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -1136,7 +1178,12 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   }
   if (top_input_args_info_->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Get high grad";
-    top_cell()->resource()->set_optimize_graph(BasicClone(bprop_graph));
+    top_cell()->resource()->set_optimize_graph(bprop_graph);
+    if (bprop_graph->isa<session::KernelGraph>()) {
+      bprop_graph = CloneKernelGraph(bprop_graph);
+    } else {
+      bprop_graph = BasicClone(bprop_graph);
+    }
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(bprop_graph);
   } else {
     top_cell()->resource()->set_optimize_graph(bprop_graph);
@@ -1146,9 +1193,19 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   }
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
-  if (!bprop_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
-    bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, top_cell()->use_dynamic_shape_process());
-  }
+  bprop_graph->set_flag(kFlagPyNativeBpropGraphIsDynamic, top_cell()->use_dynamic_shape_process());
+
+  // Update bprop cut flag. Has two scenario:
+  // 1. kHookBackwardName or kCellBackwardHookName
+  // 2. Custom op bprop(set in auto_grad.cc by kFlagPyNativeBpropGraphWithBpropCut)
+  bprop_graph->set_flag(kFlagPyNativeBpropGraphWithBpropCut,
+                        bprop_graph->has_flag(kFlagPyNativeBpropGraphWithBpropCut) || top_cell()->has_bprop_cut_op());
+
+  // Update run graph by single op flag. Has two scenario:
+  // 1. Dynamic shape(or structure) or Dynamic structure
+  // 2. Has bprop cut op
+  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, bprop_graph->has_flag(kFlagPyNativeBpropGraphIsDynamic) ||
+                                                         bprop_graph->has_flag(kFlagPyNativeBpropGraphWithBpropCut));
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
@@ -1160,7 +1217,6 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
     MS_EXCEPTION_IF_NULL(kernel_graph);
     kernel_graph->set_graph_id(kernel_graph_id_for_control_flow());
   }
-  bprop_graph->set_attr(kAttrFuncGraphCellId, MakeValue(top_input_args_info_->obj_id));
   return bprop_graph;
 }
 
@@ -1672,6 +1728,7 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
+  CheckBpropCutNode(top_cell(), op_run_info->op_grad_info->op_prim);
   dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
 }
 

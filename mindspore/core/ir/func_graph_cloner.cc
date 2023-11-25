@@ -135,6 +135,10 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
     node_debug_info->set_node(new_node);
   }
   new_node->CloneCNodeInfo(old_node);
+  // Copy to target graph
+  if (new_node->forward().first != nullptr) {
+    target->set_used_forward_nodes({new_node});
+  }
   ScopePtr scope;
   if (this->update_info() != nullptr && this->update_info()->scope_ != nullptr) {
     scope = this->update_info()->scope_;

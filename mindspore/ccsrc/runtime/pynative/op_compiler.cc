@@ -523,7 +523,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
         graph_info += p_address->padding_type();
       }
 
-      if (depend_list.find(index) != depend_list.end()) {
+      if (op_info.input_masks[index] == kValueNodeMask || depend_list.find(index) != depend_list.end()) {
         graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
       }
     } else {
