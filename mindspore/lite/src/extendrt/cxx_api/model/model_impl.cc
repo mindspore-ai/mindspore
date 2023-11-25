@@ -278,8 +278,8 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
   {
     std::unique_lock<std::mutex> l(g_load_mindir_lock);
     MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-    func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
-    if (func_graph == nullptr) {
+    auto ret = mindir_loader.LoadMindIR(model_buff, model_size, weight_path, &func_graph, &model_info_);
+    if (!ret || func_graph == nullptr) {
       MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
       return nullptr;
     }
