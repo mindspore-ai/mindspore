@@ -3,7 +3,7 @@ mindspore.nn.HSwish
 
 .. py:class:: mindspore.nn.HSwish
 
-    对输入的每个元素计算Hard Swish。input是具有任何有效形状的张量。
+    逐元素计算Hard Swish。
 
     Hard Swish定义如下：
 

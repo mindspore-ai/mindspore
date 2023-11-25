@@ -3,9 +3,7 @@ mindspore.nn.PReLU
 
 .. py:class:: mindspore.nn.PReLU(channel=1, w=0.25)
 
-    PReLU激活层（PReLU Activation Operator）。
-
-    逐元素应用PReLU function。
+    逐元素计算PReLU（PReLU Activation Operator）激活函数。
 
     公式定义为：
 

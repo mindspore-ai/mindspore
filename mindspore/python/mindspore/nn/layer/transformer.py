@@ -540,8 +540,8 @@ class TransformerDecoderLayer(Cell):
 
 class TransformerEncoder(Cell):
     r"""
-    Transformer Encoder module with multi-layer stacked of `TransformerEncoderLayer`, including multihead
-    attention and feedforward layer. Users can build the
+    Transformer Encoder module with multi-layer stacked of :class:`mindspore.nn.TransformerEncoderLayer`,
+    including multihead attention and feedforward layer. Users can build the
     BERT(https://arxiv.org/abs/1810.04805) model with corresponding parameters.
 
     Args:
@@ -611,8 +611,8 @@ class TransformerEncoder(Cell):
 
 class TransformerDecoder(Cell):
     r"""
-    Transformer Decoder module with multi-layer stacked of `TransformerDecoderLayer`, including multihead self
-    attention, cross attention and feedforward layer.
+    Transformer Decoder module with multi-layer stacked of :class:`mindspore.nn.TransformerDecoderLayer`,
+    including multihead self attention, cross attention and feedforward layer.
 
     Args:
         decoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerDecoderLayer` class.

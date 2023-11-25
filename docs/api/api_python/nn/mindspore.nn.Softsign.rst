@@ -3,7 +3,7 @@ mindspore.nn.Softsign
 
 .. py:class:: mindspore.nn.Softsign
 
-    Softsign激活函数。
+    逐元素计算Softsign激活函数。
 
     Softsign函数图：
 

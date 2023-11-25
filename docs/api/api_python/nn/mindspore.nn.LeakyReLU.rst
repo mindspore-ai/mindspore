@@ -3,7 +3,7 @@ mindspore.nn.LeakyReLU
 
 .. py:class:: mindspore.nn.LeakyReLU(alpha=0.2)
 
-    Leaky ReLU激活函数。
+    逐元素计算Leaky ReLU激活函数。
 
     该激活函数定义如下：
 
@@ -21,7 +21,7 @@ mindspore.nn.LeakyReLU
         :align: center
 
     参数：
-        - **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值： ``0.2`` 。
+        - **alpha** (`Union[int, float]`) - `x` 小于0时激活函数的斜率，默认值： ``0.2`` 。
 
     输入：
         - **x** （Tensor） - 计算LeakyReLU的任意维度的Tensor。

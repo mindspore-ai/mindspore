@@ -3,7 +3,7 @@ mindspore.nn.TransformerDecoder
 
 .. py:class:: mindspore.nn.TransformerDecoder(decoder_layer, num_layers, norm=None)
 
-    Transformer的解码器。多层 `TransformerDecoderLayer` 的堆叠，包括Self Attention层、MultiheadAttention层和FeedForward层。
+    Transformer的解码器模块，多层 :class:`mindspore.nn.TransformerDecoderLayer` 的堆叠，包括Self Attention层、MultiheadAttention层和FeedForward层。
 
     参数：
         - **decoder_layer** (Cell) - :class:`mindspore.nn.TransformerDecoderLayer` 的实例。
