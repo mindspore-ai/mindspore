@@ -378,17 +378,24 @@ void GraphKernelJsonGenerator::SaveShape(const AnfNodePtr &node, nlohmann::json 
     (*kernel_json)[kJsonKeyShape] = shape;
     return;
   }
-  auto symbol_shape = symbol_engine_->QuerySymbolicShapeStr(node);
-  if (shape.size() != symbol_shape.size()) {
-    MS_LOG(EXCEPTION) << "The length of tensor shape and symbol shape should be equal but got " << shape.size()
-                      << " and " << symbol_shape.size() << ".";
-  }
+  std::vector<std::string> symbol_shape;
   auto new_shape = shape;
-  for (size_t i = 0; i < new_shape.size(); i++) {
-    auto symbol = symbol_shape[i];
-    if (new_shape[i] == abstract::Shape::kShapeDimAny &&
-        std::all_of(symbol.begin(), symbol.end(), [](char c) { return std::isdigit(c); })) {
-      new_shape[i] = std::stoi(symbol);
+  if (!IsDynamic(shape)) {
+    symbol_shape.resize(shape.size());
+    (void)std::transform(shape.begin(), shape.end(), symbol_shape.begin(), [](int64_t v) { return std::to_string(v); });
+  } else {
+    symbol_shape = symbol_engine_->QuerySymbolicShapeStr(node);
+    if (shape.size() != symbol_shape.size()) {
+      MS_LOG(EXCEPTION) << "The length of tensor shape and symbol shape should be equal but got " << shape.size()
+                        << " and " << symbol_shape.size() << ". node: " << node->DebugString() << ", shape: " << shape
+                        << ", symbol_shape: " << symbol_shape;
+    }
+    for (size_t i = 0; i < new_shape.size(); i++) {
+      auto symbol = symbol_shape[i];
+      if (new_shape[i] == abstract::Shape::kShapeDimAny &&
+          std::all_of(symbol.begin(), symbol.end(), [](char c) { return std::isdigit(c); })) {
+        new_shape[i] = std::stoi(symbol);
+      }
     }
   }
   (*kernel_json)[kJsonKeyShape] = new_shape;

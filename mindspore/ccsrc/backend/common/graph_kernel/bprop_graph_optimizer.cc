@@ -103,7 +103,7 @@ class ElimShapecalcReduceReshape : public opt::PatternProcessPass {
         shapecalc_node->size() != shapecalc_size) {
       return nullptr;
     }
-    auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcFunctorPtr>(shapecalc_node, kAttrFunctor);
+    auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcBaseFunctorPtr>(shapecalc_node, kAttrFunctor);
     MS_EXCEPTION_IF_NULL(functor);
     if (functor->name() != "ShapeCalc_BroadcastGradientArgs") {
       // only support the broadcast gradient condition

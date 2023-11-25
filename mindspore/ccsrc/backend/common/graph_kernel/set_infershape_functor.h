@@ -28,7 +28,7 @@ class SymbolEngineInfer : public InferShapeFunctor {
   explicit SymbolEngineInfer(const std::string &name) : InferShapeFunctor(name) {}
   ~SymbolEngineInfer() override = default;
   MS_DECLARE_PARENT(SymbolEngineInfer, InferShapeFunctor)
-  bool InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) override;
+  BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) override;
 };
 
 class SetInferShapeFunctor : public opt::Pass {

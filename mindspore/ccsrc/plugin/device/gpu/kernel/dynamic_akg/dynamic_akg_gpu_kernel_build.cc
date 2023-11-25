@@ -22,7 +22,6 @@
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_mod.h"
 
@@ -31,9 +30,7 @@ namespace kernel {
 void DynamicAkgGpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,
                                               const GraphKernelJsonGenerator &json_generator,
                                               const AnfNodePtr &anf_node) {
-  const auto &flags = graphkernel::GraphKernelFlags::GetInstance();
-  auto kernel_mod_ptr = flags.enable_debug_mode ? std::make_shared<DynamicAkgGpuKernelModDebug>(kernel_pack)
-                                                : std::make_shared<DynamicAkgGpuKernelMod>(kernel_pack);
+  auto kernel_mod_ptr = std::make_shared<DynamicAkgGpuKernelMod>(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());

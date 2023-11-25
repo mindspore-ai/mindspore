@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/functor.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
@@ -753,7 +754,13 @@ void KernelActor::InferShapeAndResize() {
     output_device_tensors_[0]->kernel_tensor()->SetShape(kernel_->abstract()->BuildShape());
 
   } else {
-    auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+    BaseShapePtr base_shape;
+    if (common::AnfAlgo::HasNodeAttr("infer_shape_functor", kernel_)) {
+      auto functor = common::AnfAlgo::GetNodeAttr<InferShapeFunctorPtr>(kernel_, "infer_shape_functor");
+      base_shape = functor->InferShape(kernel_, input_kernel_tensors_for_infer_);
+    } else {
+      base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+    }
     MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
                   << ", shape: " << base_shape->ToString();
     MS_EXCEPTION_IF_NULL(base_shape);

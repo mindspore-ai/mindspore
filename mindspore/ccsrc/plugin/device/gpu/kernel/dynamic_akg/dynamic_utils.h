@@ -181,7 +181,7 @@ class AkgKernelImplInfo {
   std::vector<uint32_t> thread_info_;
   std::unordered_map<size_t, LocVector> unknown_map_loc_;
   std::unordered_set<size_t> solved_map_loc_;
-  std::vector<int> arg_size_vec_;
+  std::vector<int64_t> arg_size_vec_;
   MappingInfo curr_mapping_info_;
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<std::vector<int64_t>> device_shape_list_;

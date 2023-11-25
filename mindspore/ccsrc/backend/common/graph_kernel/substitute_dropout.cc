@@ -66,15 +66,7 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   SetNodeAttrSafely("seed", MakeValue(seed), uniform_real_node);
   common::AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);
   uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape));
-  // Set kernel_info for uniform_real node
-  auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  uniform_real_kernel_info_builder->SetInputsFormat({kOpFormat_DEFAULT});
-  uniform_real_kernel_info_builder->SetInputsDeviceType({kNumberTypeInt32});
-  uniform_real_kernel_info_builder->SetOutputsFormat({kOpFormat_DEFAULT});
-  uniform_real_kernel_info_builder->SetOutputsDeviceType({kNumberTypeFloat32});
-  uniform_real_kernel_info_builder->SetKernelType(KernelType::UNKNOWN_KERNEL_TYPE);
-  uniform_real_kernel_info_builder->SetProcessor(kernel::Processor::CUDA);
-  AnfAlgo::SetSelectKernelBuildInfo(uniform_real_kernel_info_builder->Build(), uniform_real_node.get());
+  Callback::Instance()->ResetKernelInfo(uniform_real_node);
 
   // Create a GKDropout node with uniform_real as its second input.
   AnfNodePtrList gkdropout_inputs = {NewValueNode(std::make_shared<Primitive>("GkDropout")), cnode->input(1),

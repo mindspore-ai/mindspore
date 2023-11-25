@@ -329,13 +329,19 @@ SymbolPtr StridedSliceValue(OperationBuilder *b) {
 }
 
 SymbolPtr ShapeCalcValue(OperationBuilder *b) {
-  auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcFunctorPtr>(b->cnode(), kAttrFunctor);
+  auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcBaseFunctorPtr>(b->cnode(), kAttrFunctor);
   if (functor->name() == "ShapeCalc_reduce_shape_shapecalc") {
     auto input = b->GetInputShape(kIndex1);
     auto axis = b->GetInputValue(kIndex2);
     auto keep_dims = BoolSymbol::Make(true);
     auto skip_mode = BoolSymbol::Make(false);
     return b->Emit(std::make_shared<infershape::Reduce>(input, axis, keep_dims, skip_mode));
+  }
+  if (functor->name() == "ShapeCalc_BroadcastGradientArgs") {
+    auto inp1 = b->GetInputShape(kIndex1);
+    auto inp2 = b->GetInputShape(kIndex2);
+    auto shift = IntSymbol::Make(SizeToLong(GetValue<size_t>(functor->ToValue())));
+    return b->Emit(std::make_shared<infervalue::ShapeCalcBroadcastGradientArgs>(inp1, inp2, shift));
   }
   return nullptr;
 }
@@ -468,7 +474,8 @@ REG_OP_SYMBOL_BUILDER("FillV2").SetShapeDepend({DependOn::kValue, DependOn::kNon
 // virtual nodes
 REG_OP_SYMBOL_BUILDER("MakeTuple").SetShapeFunc(MakeTuple);
 REG_OP_SYMBOL_BUILDER("RealMakeTuple").SetShapeFunc(MakeTuple).SetValueFunc(MakeTuple);
-REG_OP_SYMBOL_BUILDER("TupleToTensor").SetValueFunc(TupleToTensor);
+REG_OP_SYMBOL_BUILDER("TupleToTensor").SetValueDepend({DependOn::kValue, DependOn::kNone}).SetValueFunc(TupleToTensor);
+REG_OP_SYMBOL_BUILDER("TensorToTuple").SetValueFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("ScalarToTensor").SetValueFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("TupleGetItem").SetShapeFunc(TupleGetItem).SetValueFunc(TupleGetItem);
 REG_OP_SYMBOL_BUILDER("RealTupleGetItem").SetShapeFunc(TupleGetItem).SetValueFunc(TupleGetItem);

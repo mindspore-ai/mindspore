@@ -35,25 +35,11 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-const int AKG_KERNEL_MOD_BX_IDX = 0;
-const int AKG_KERNEL_MOD_BY_IDX = 1;
-const int AKG_KERNEL_MOD_BZ_IDX = 2;
-const int AKG_KERNEL_MOD_TX_IDX = 3;
-const int AKG_KERNEL_MOD_TY_IDX = 4;
-const int AKG_KERNEL_MOD_TZ_IDX = 5;
-
-constexpr auto kBlockIdxX = "blockIdx.x";
-constexpr auto kBlockIdxY = "blockIdx.y";
-constexpr auto kBlockIdxZ = "blockIdx.z";
-constexpr auto kThreadIdxX = "threadIdx.x";
-constexpr auto kThreadIdxY = "threadIdx.y";
-constexpr auto kThreadIdxZ = "threadIdx.z";
-
 constexpr auto kStaticTileImpl = "StaticTileImpl";
 constexpr auto kSupportInfo = "SupportInfo";
 
-constexpr auto kRemove = -100000;
-constexpr auto kKeep = -99999;
+constexpr int64_t kRemove = -100000;
+constexpr int64_t kKeep = -99999;
 
 DynamicAkgGpuKernelManagerPtr DynamicAkgGpuKernelMod::kernel_manager_ = std::make_shared<DynamicAkgGpuKernelManager>();
 DynamicAkgGpuKernelManager::DynamicAkgGpuKernelManager() {}
@@ -213,7 +199,7 @@ AkgKernelImplInfoPtr DynamicAkgGpuKernelMod::SelectKernelImpl() {
 }
 
 int DynamicAkgGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
-                                   const std::vector<KernelTensor *> &outputs, ) {
+                                   const std::vector<KernelTensor *> &outputs) {
   int ret = KernelMod::Resize(inputs, outputs);
   UpdateShapeList(inputs, outputs);
   kernel_impl_ = SelectKernelImpl();
@@ -222,8 +208,9 @@ int DynamicAkgGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return ret;
 }
 
-bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vector<AddressPtr> &workspace,
-                                    const vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicAkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (kernel_impl_ != nullptr) {
     kernel_name_ = kernel_impl_->kernel_name_;
     thread_info_ = kernel_impl_->thread_info_;
@@ -251,35 +238,47 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
   }
 
   vector<void *> runtimeargs;
+  vector<void *> dev_addrs;
+  vector<size_t> shp;
+  CUdeviceptr dev_ptr_fake;
   if (is_dynamic_) {
+    runtimeargs.reserve(arg_size_vec_.size());
+    dev_addrs.reserve(arg_size_vec_.size());
+    shp.reserve(arg_size_vec_.size());
     size_t inum = 0;
     size_t onum = 0;
-    CUdeviceptr dev_ptr_fake;
     for (size_t idx = 0; idx < arg_size_vec_.size(); idx++) {
       if (arg_size_vec_[idx] == kRemove) {
         runtimeargs.push_back(reinterpret_cast<void *>(&dev_ptr_fake));
       } else if (arg_size_vec_[idx] == kKeep) {
         if (inum < inputs.size()) {
-          runtimeargs.push_back(reinterpret_cast<void *>(&(inputs[inum]->addr)));
+          runtimeargs.push_back(reinterpret_cast<void *>(&dev_addrs.emplace_back(inputs[inum]->device_ptr())));
           inum++;
         } else if (onum < outputs.size()) {
-          runtimeargs.push_back(reinterpret_cast<void *>(&(outputs[onum]->addr)));
+          runtimeargs.push_back(reinterpret_cast<void *>(&dev_addrs.emplace_back(outputs[onum]->device_ptr())));
           onum++;
         }
       } else {
-        size_t *value_ptr = new size_t(arg_size_vec_[idx]);
-        runtimeargs.push_back(value_ptr);
+        size_t arg_size = static_cast<size_t>(arg_size_vec_[idx]);
+        runtimeargs.push_back(reinterpret_cast<void *>(&shp.emplace_back(arg_size)));
       }
     }
   } else {
     runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
+    dev_addrs.reserve(inputs.size() + outputs.size() + workspace.size());
     (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
+                         [&dev_addrs](const KernelTensor *input) {
+                           return reinterpret_cast<void *>(&dev_addrs.emplace_back(input->device_ptr()));
+                         });
     (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
+                         [&dev_addrs](const KernelTensor *output) {
+                           return reinterpret_cast<void *>(&dev_addrs.emplace_back(output->device_ptr()));
+                         });
     if (!workspace.empty()) {
       (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                           [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
+                           [&dev_addrs](const KernelTensor *ws) {
+                             return reinterpret_cast<void *>(&dev_addrs.emplace_back(ws->device_ptr()));
+                           });
     }
   }
 

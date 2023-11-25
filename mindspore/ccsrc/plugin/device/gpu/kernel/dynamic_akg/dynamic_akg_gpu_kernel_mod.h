@@ -74,20 +74,15 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   void Initialize();
   void CheckJsonParsed();
-  void InitJsonShapeInformation();
   bool CheckJsonValueFormat(const std::string key) {
     auto value = parsed_js_[key];
     return (value.is_array() && value.size() == 2 && value[0].is_string() && value[1].is_number());
   }
-  void InitJsonMappingInformation();
-  void InitBeforeMapping();
-  void UpdateDynamicShapeTilingInfo();
-  void UpdateDynamicShapeMappingInfo();
   void InitAkgKernelImpls();
   void UpdateStaticShapeMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
@@ -106,36 +101,12 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   bool is_dynamic_{false};
   std::vector<std::vector<int64_t>> shape_list_;
   nlohmann::json parsed_js_;
-  std::vector<int> arg_size_vec_;
+  std::vector<int64_t> arg_size_vec_;
 
   AkgKernelImplInfoPtr kernel_impl_;
   std::unordered_map<std::string, AkgKernelImplInfoPtr> kernel_map_;
   AkgKernelImplInfoPtr SelectKernelImpl();
 };
-
-class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
- public:
-  explicit DynamicAkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : DynamicAkgGpuKernelMod(kernel_pack) {}
-  virtual ~DynamicAkgGpuKernelModDebug() {}
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    auto ptr = reinterpret_cast<CUstream>(stream_ptr);
-    CUresult before_launch = cuStreamSynchronize(ptr);
-    const char *msg = nullptr;
-    if (before_launch != CUDA_SUCCESS) {
-      cuGetErrorName(before_launch, &msg);
-      MS_LOG(ERROR) << "before_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
-    }
-    auto result = DynamicAkgGpuKernelMod::Launch(inputs, workspace, outputs, stream_ptr);
-    CUresult after_launch = cuStreamSynchronize(ptr);
-    if (after_launch != CUDA_SUCCESS) {
-      cuGetErrorName(after_launch, &msg);
-      MS_LOG(ERROR) << "after_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
-    }
-    return result;
-  }
-};
-using DynamicAkgGpuKernelModPtr = std::shared_ptr<DynamicAkgGpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -23,7 +23,7 @@
 #include "ir/anf.h"
 
 namespace mindspore::graphkernel {
-bool SymbolEngineInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) {
+BaseShapePtr SymbolEngineInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "Infer shape using symbol engine for cnode: " << cnode->fullname_with_scope();
   auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
@@ -31,26 +31,18 @@ bool SymbolEngineInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrL
   auto output = func_graph->output();
   auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine));
   MS_EXCEPTION_IF_NULL(symbol_engine);
-  if (!symbol_engine->Infer(args_spec_list)) {
+  if (!symbol_engine->Infer(args)) {
     MS_LOG(WARNING) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
-    return false;
+    return nullptr;
   }
   auto out_shapes = symbol_engine->QueryShape(output);
-  abstract::AbstractBasePtr out_abs = cnode->abstract();
-  if (out_abs->isa<abstract::AbstractTuple>()) {
-    auto &elements = out_abs->cast<abstract::AbstractTuplePtr>()->elements();
-    MS_EXCEPTION_IF_CHECK_FAIL(
-      elements.size() == out_shapes.size(),
-      "The number of elements in output tuple and the number of elements in infershape result are not equal");
-    for (size_t i = 0; i < elements.size(); ++i) {
-      auto shape = elements[i]->GetShapeTrack()->cast<abstract::ShapePtr>();
-      shape->set_shape(out_shapes[i]);
-    }
-  } else {
-    auto shape = out_abs->GetShapeTrack()->cast<abstract::ShapePtr>();
-    shape->set_shape(out_shapes.front());
+  if (cnode->abstract()->isa<abstract::AbstractTuple>()) {
+    abstract::BaseShapePtrList shapes(out_shapes.size());
+    (void)std::transform(out_shapes.begin(), out_shapes.end(), shapes.begin(),
+                         [](const ShapeVector &s) { return std::make_shared<abstract::TensorShape>(s); });
+    return std::make_shared<abstract::TupleShape>(shapes);
   }
-  return true;
+  return std::make_shared<abstract::TensorShape>(out_shapes.front());
 }
 
 bool SetInferShapeFunctor::Run(const FuncGraphPtr &func_graph) {

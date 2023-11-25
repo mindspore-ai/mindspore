@@ -52,6 +52,17 @@ class NormalizeSlice : public InferValueOp {
  protected:
   SymbolPtr Eval() override;
 };
+
+class ShapeCalcBroadcastGradientArgs : public InferValueOp {
+ public:
+  ShapeCalcBroadcastGradientArgs(const SymbolPtr &inp1, const SymbolPtr &inp2, const SymbolPtr &shift)
+      : InferValueOp({inp1, inp2, shift}) {}
+  ~ShapeCalcBroadcastGradientArgs() override = default;
+  MS_DECLARE_PARENT(ShapeCalcBroadcastGradientArgs, InferValueOp)
+ protected:
+  SymbolPtr Eval() override;
+  bool NeedReduceAxis(const IntSymbolPtr xi, const IntSymbolPtr yi, bool *is_dyn) const;
+};
 }  // namespace ops::infervalue
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_OPERATIONS_INFERVALUE_OP_H_

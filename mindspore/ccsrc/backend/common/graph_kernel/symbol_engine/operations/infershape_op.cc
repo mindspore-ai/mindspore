@@ -133,7 +133,7 @@ SymbolPtr RealShape::ParseBaseShape(const BaseShapePtr &base_shape_ptr) {
 }
 
 SymbolPtr RealShape::Eval() {
-  auto base_shape_ptr = input_as<InputSymbol>(0)->abstract()->BuildShape();
+  auto base_shape_ptr = input_as<InputSymbol>(0)->abstract()->GetShape();
   if (!base_shape_ptr->isa<abstract::TensorShape>()) {
     // parameter with tuple output does not support hint.
     shape_hint_ = nullptr;
@@ -245,6 +245,10 @@ SymbolPtr Reduce::Eval() {
       if (!keep_dims) {
         return GenList({});
       }
+    }
+    if (keep_dims && data->HasData()) {
+      // axis has no data
+      return GenVIntList(data->size());
     }
     return GenVList();
   }

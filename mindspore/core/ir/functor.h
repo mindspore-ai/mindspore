@@ -168,7 +168,7 @@ class MS_CORE_API InferShapeFunctor : public Functor {
   /// \param[in] cnode The cnode whose output shape needs to be inferred.
   /// \param[in] args_spec_list AbstractBasePtrList of the cnode inputs.
   /// \return Result ture if inference success, return false otherwise.
-  virtual bool InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) { return false; }
+  virtual BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) { return nullptr; }
 
   /// \brief Pack functor name to a Value
   /// \return The name of this infershape functor.

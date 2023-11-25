@@ -395,48 +395,6 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   return new_abs;
 }
 
-void InferShapeForGraph(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto func_graph = GetCNodeFuncGraph(cnode);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(DEBUG) << "InferShape by primitive for funcgraph " << func_graph->ToString();
-  if (args_spec_list.size() != func_graph->parameters().size()) {
-    MS_LOG(EXCEPTION)
-      << "The args_spec_list size should be the same as that of func_graph parameters, but get args_spec_list: "
-      << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
-  }
-  for (size_t i = 0; i < args_spec_list.size(); i++) {
-    func_graph->parameters()[i]->set_abstract(args_spec_list[i]->Clone());
-  }
-  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
-  for (auto &node : nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>() || !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
-      continue;
-    }
-    if (!IsPrimitiveCNode(node, prim::kPrimReturn)) {
-      auto cnode_primitive = GetCNodePrimitive(node);
-      MS_EXCEPTION_IF_NULL(cnode_primitive);
-      auto prim_cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(prim_cnode);
-
-      AbstractBasePtrList cnode_args_spec_list;
-
-      for (size_t i = 1; i < prim_cnode->size(); i++) {
-        auto input_node = prim_cnode->input(i);
-        MS_EXCEPTION_IF_NULL(input_node);
-        (void)cnode_args_spec_list.emplace_back(input_node->abstract()->Clone());
-      }
-      opt::CppInferShape(cnode_primitive, cnode_args_spec_list, prim_cnode);
-    } else {
-      auto return_cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(return_cnode);
-      cnode->set_abstract(return_cnode->input(1)->abstract()->Clone());
-    }
-  }
-  return;
-}
-
 TypeId GetTypeIDByAbstract(const AbstractBasePtr &abstract) {
   if (abstract == nullptr) {
     return TypeId::kTypeUnknown;
@@ -567,14 +525,6 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     MS_EXCEPTION_IF_NULL(primitive);
     (void)primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
     InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
-  } else if (auto func = common::AnfAlgo::GetNodeAttr<InferShapeFunctorPtr>(cnode, "infer_shape_functor")) {
-    bool status = func->InferShape(cnode, args_spec_list);
-    if (!status) {
-      MS_LOG(WARNING) << "InferShape for cnode: " << cnode->fullname_with_scope()
-                      << " by graph kernel infershape functor failed, kernel-by-kernel inference will be "
-                         "applied.";
-      InferShapeForGraph(cnode, args_spec_list);
-    }
   } else {
     MS_LOG(EXCEPTION) << "The first input of the cnode should be either a primitive or a function graph, but get: "
                       << inputs[0]->fullname_with_scope();

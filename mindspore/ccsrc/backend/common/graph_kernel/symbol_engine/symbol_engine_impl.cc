@@ -165,16 +165,11 @@ void SymbolEngineImpl::DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool 
   // visit nodes in main graph according to subgraph's parameters
   size_t input_index = 1;
   for (auto &param : sub_fg->parameters()) {
-    auto &sub_depend_status_map = sub_engine->depend_status_map_;
-    auto iter = sub_depend_status_map.find(param);
-    if (iter == sub_depend_status_map.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The depend status of " << param->ToString() << " in funcgraph "
-                                 << sub_fg->ToString() << " is not found.";
-    }
-    if (iter->second.shape) {
+    auto depend_on = sub_engine->depend_status_map_[param];
+    if (depend_on.shape) {
       DfsQueryDependStatus(cnode->input(input_index), false);
     }
-    if (iter->second.value) {
+    if (depend_on.value) {
       DfsQueryDependStatus(cnode->input(input_index), true);
     }
     input_index++;
@@ -350,7 +345,7 @@ void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value)
     cache_.SetValue(cnode, v);
   } else {
     MS_LOG(DEBUG) << "Build shape for node " << cnode->fullname_with_scope() << ".   " << cnode->DebugString();
-    if (!cnode->abstract()->BuildShape()->IsDynamic()) {
+    if (!cnode->abstract()->GetShape()->IsDynamic()) {
       auto static_shape = emitter_->RealShape(InputSymbol::Make(cnode->abstract()));
       MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " is static shape: " << static_shape->ToString();
       cache_.SetShape(cnode, static_shape);

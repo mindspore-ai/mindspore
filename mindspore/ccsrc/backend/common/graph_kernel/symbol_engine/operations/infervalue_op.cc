@@ -56,7 +56,7 @@ SymbolPtr RealValue::GenListVariables(const ListSymbol &list) {
 }
 
 SymbolPtr RealValue::Eval() {
-  auto v = input_as<InputSymbol>(0)->abstract()->BuildValue();
+  auto v = input_as<InputSymbol>(0)->abstract()->GetValue();
   if (is_building() && v->isa<ValueAny>()) {
     OperationEmitter e;
     auto list = e.RealShape(input(0))->as_sptr<ListSymbol>();
@@ -135,6 +135,56 @@ SymbolPtr NormalizeSlice::Eval() {
     DoNotEvalOnRun();
   }
   return ListSymbol::Make({GenList({start}), GenList({stop}), GenList({step})});
+}
+
+bool ShapeCalcBroadcastGradientArgs::NeedReduceAxis(const IntSymbolPtr xi, const IntSymbolPtr yi, bool *is_dyn) const {
+  // in BroadcastGradientArgs, the condition to reduce i of x is "x.shape[i] == 1",
+  // when y.shape[i] == 1, reduce the x[i] is unnecessary but not wrong.
+  if (xi->HasData()) {
+    return xi->value() == 1;
+  }
+  if (xi->is_greater_than(1)) {
+    return false;
+  }
+  if (yi->HasData() && yi->value() == 1) {
+    return false;
+  }
+  *is_dyn = true;
+  return false;
+}
+
+SymbolPtr ShapeCalcBroadcastGradientArgs::Eval() {
+  auto x = input_as<IListSymbol>(kIndex0);
+  auto y = input_as<IListSymbol>(kIndex1);
+  size_t shift = LongToSize(input_as<IntSymbol>(kIndex2)->value());
+  if (!x->HasData() || !y->HasData()) {
+    return ListSymbol::Make({GenVList(), GenVList()}, shared_from_this());
+  }
+
+  SymbolPtrList axis_x;
+  SymbolPtrList axis_y;
+  bool dyn_axis_x = false;
+  bool dyn_axis_y = false;
+  auto const1 = IntSymbol::Make(1);
+  auto maxlen = std::max(x->size(), y->size());
+  for (size_t i = maxlen; i > shift; i--) {
+    auto x_i = (i > x->size() ? const1 : x->symbols()[x->size() - i]->as_sptr<IntSymbol>());
+    auto y_i = (i > y->size() ? const1 : y->symbols()[y->size() - i]->as_sptr<IntSymbol>());
+    MS_EXCEPTION_IF_NULL(x_i);
+    MS_EXCEPTION_IF_NULL(y_i);
+    if (x_i->EqualsTo(y_i)) {
+      continue;
+    }
+    if (!dyn_axis_x && NeedReduceAxis(x_i, y_i, &dyn_axis_x)) {
+      axis_x.push_back(GenInt(SizeToLong(maxlen - i)));
+    }
+    if (!dyn_axis_y && NeedReduceAxis(y_i, x_i, &dyn_axis_y)) {
+      axis_y.push_back(GenInt(SizeToLong(maxlen - i)));
+    }
+  }
+  auto grad_axis_x = dyn_axis_x ? GenVList() : GenList(std::move(axis_x));
+  auto grad_axis_y = dyn_axis_y ? GenVList() : GenList(std::move(axis_y));
+  return ListSymbol::Make({grad_axis_x, grad_axis_y}, shared_from_this());
 }
 }  // namespace ops::infervalue
 }  // namespace mindspore::graphkernel::symbol
