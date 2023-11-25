@@ -52,7 +52,7 @@ def test_adaptive_max_pool2d():
     assert (output1.asnumpy() == output2.asnumpy()).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

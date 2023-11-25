@@ -68,7 +68,7 @@ def space_to_batch_nd_all_dtype():
     space_to_batch_nd_test_case(np.uint64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_space_to_batch_nd_graph():
@@ -94,7 +94,7 @@ def test_space_to_batch_nd_pynative():
     space_to_batch_nd_all_dtype()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_space_to_batch_nd_function():
@@ -131,7 +131,7 @@ class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
         return self.space_to_batch_nd(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_space_to_batch_nd_dynamic():
@@ -205,7 +205,7 @@ def vmap_case():
         assert np.allclose(output_v[:, i, :, :, :], net(Tensor(data_np[i, :, :, :, :])).asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_space_to_batch_nd_vmap_cpu():

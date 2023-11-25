@@ -165,7 +165,7 @@ def vmap_nested_case():
     np.testing.assert_allclose(output.asnumpy(), fornet_output.asnumpy(), rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_cpu():
@@ -178,7 +178,7 @@ def test_vmap_cpu():
     vmap_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_cpu_nested():

@@ -290,7 +290,7 @@ def test_return_local_list_4():
     assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -316,7 +316,7 @@ def test_return_local_list_5():
 
 
 @pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

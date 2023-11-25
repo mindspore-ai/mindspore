@@ -34,7 +34,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out1_axis0():
@@ -49,7 +49,7 @@ def test_out1_axis0():
     assert np.allclose(outputs[0].asnumpy()[0, 0, :], [0, 1, 2, 3, 4, 5])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out2_axis2():
@@ -66,7 +66,7 @@ def test_out2_axis2():
     assert np.allclose(outputs[1].asnumpy()[0, 0, :], [3, 4, 5])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out2_axis1neg():
@@ -103,7 +103,7 @@ def test_out_float32():
     assert np.allclose(outputs[2].asnumpy()[0, 0, 0, 0, 0, :], [4., 5.])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out_float64():
@@ -125,7 +125,7 @@ def test_out_float64():
     assert np.allclose(outputs[2].asnumpy()[0, 0, 0, 0, 0, :], [4., 5.])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out_float16():
@@ -149,7 +149,7 @@ def test_out_float16():
     assert np.allclose(outputs[4].asnumpy()[0, 0, 0, 0, 0, :], [8., 9.])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out_int32():
@@ -239,7 +239,7 @@ def test_out_uint32():
     assert np.allclose(outputs[0].asnumpy(), [0])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_split_dynamic_shape():

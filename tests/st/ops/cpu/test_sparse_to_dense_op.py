@@ -142,7 +142,7 @@ def test_sparse_to_dense_dyn():
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_to_dense_int():
@@ -153,7 +153,7 @@ def test_sparse_to_dense_int():
             sparse_to_dense_int(i_type, v_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_to_dense_float():

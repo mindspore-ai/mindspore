@@ -31,7 +31,7 @@ class SqueezeNet(Cell):
         return self.squeeze(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type",
@@ -52,7 +52,7 @@ def test_squeeze(data_type):
     assert np.all(output.asnumpy() == x.squeeze())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_func():
@@ -72,7 +72,7 @@ def test_func():
     assert np.all(output.asnumpy() == x.squeeze(0))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor():
@@ -92,7 +92,7 @@ def test_tensor():
     assert np.all(output.asnumpy() == x.squeeze(0))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_squeeze_vmap():

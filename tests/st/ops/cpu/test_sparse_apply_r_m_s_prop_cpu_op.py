@@ -38,7 +38,7 @@ class SparseApplyRMSPropNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_apply_rms_prop():
@@ -67,7 +67,7 @@ def test_sparse_apply_rms_prop():
     assert (abs(output_mom.asnumpy() - expect_mom) <= tol).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_apply_rms_prop_fp32():
@@ -199,7 +199,7 @@ def test_sparse_apply_rms_prop_fp32():
     assert (abs(net.mom.asnumpy() - expect_mom) <= tol).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_apply_rms_prop_update_fp16():
@@ -240,7 +240,7 @@ def test_sparse_apply_rms_prop_update_fp16():
     assert (abs(net.mom.asnumpy() - expect_mom) <= tol).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_apply_rms_prop_grad0():

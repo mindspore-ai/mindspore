@@ -48,7 +48,7 @@ def test_notequal_int():
     assert np.allclose(outputs.asnumpy(), (True, False, True))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_notequal_float():

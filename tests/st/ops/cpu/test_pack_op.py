@@ -35,7 +35,7 @@ class PackNet(nn.Cell):
         return self.stack((x1, x2))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.int32, np.int16, np.uint8, np.bool])
@@ -70,7 +70,7 @@ def test_pack_graph(dtype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pack_graph_float32_dynamic_shape():

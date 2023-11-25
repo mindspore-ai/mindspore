@@ -163,7 +163,7 @@ def test_sparse_add_dynamic_shape():
     assert sum_shape.asnumpy().shape == expect_sum_shape_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_float32():
@@ -185,7 +185,7 @@ def test_sparse_add_float32():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_float64():
@@ -207,7 +207,7 @@ def test_sparse_add_float64():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_int8():
@@ -229,7 +229,7 @@ def test_sparse_add_int8():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_int16():
@@ -251,7 +251,7 @@ def test_sparse_add_int16():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_int32():
@@ -273,7 +273,7 @@ def test_sparse_add_int32():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_add_int64():

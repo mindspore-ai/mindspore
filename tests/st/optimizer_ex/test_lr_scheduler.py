@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -68,7 +68,7 @@ def test_sequential_lr_scheduler(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -221,7 +221,7 @@ def test_polynomial_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -294,7 +294,7 @@ def test_multiplicative_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -356,7 +356,7 @@ def test_constant_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -388,7 +388,7 @@ def test_cyclic_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

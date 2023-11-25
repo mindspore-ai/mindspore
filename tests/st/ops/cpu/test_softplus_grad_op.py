@@ -45,7 +45,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_grad_1d_fp32():
@@ -64,7 +64,7 @@ def test_softplus_grad_1d_fp32():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_grad_3d_fp16():
@@ -78,7 +78,7 @@ def test_softplus_grad_3d_fp16():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_grad_7d_fp32():

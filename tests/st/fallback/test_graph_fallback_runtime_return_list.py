@@ -485,7 +485,7 @@ def test_return_list_from_third_party_3():
     assert res == [0, 2, 4, 6, 8]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

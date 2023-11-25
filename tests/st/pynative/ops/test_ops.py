@@ -44,7 +44,7 @@ def expand_tensor(a, b):
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -197,7 +197,7 @@ def test_primitive_avgpool():
     test_inner(net1, net2, input_1, kernel_size, strides, int_type, bool_type, none_type, output_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

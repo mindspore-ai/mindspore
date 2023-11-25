@@ -33,7 +33,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sign_float32():
@@ -47,7 +47,7 @@ def test_sign_float32():
     assert np.allclose(outputs.asnumpy(), [[1., 0., -1.]])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sign_int32():
@@ -61,7 +61,7 @@ def test_sign_int32():
     assert np.allclose(outputs.asnumpy(), [[1, 0, -1]])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sign_float64():

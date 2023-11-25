@@ -82,7 +82,7 @@ def test_net():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_pow_pynative():
@@ -103,7 +103,7 @@ def tensor_pow_func(x, y):
     return x.pow(y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_pow_graph():
@@ -118,7 +118,7 @@ def test_tensor_pow_graph():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pow_functional():
@@ -133,7 +133,7 @@ def test_pow_functional():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pow_vmap():
@@ -170,7 +170,7 @@ def test_pow_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pow_complex():

@@ -39,7 +39,7 @@ class NetSoftmax(nn.Cell):
         return self.softmax(self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softmax():
@@ -67,7 +67,7 @@ class NetSoftmax1(nn.Cell):
         return self.softmax(self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softmax1():

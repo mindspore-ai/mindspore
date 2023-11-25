@@ -86,7 +86,7 @@ def test_1d_forward():
     assert np.abs(out_ms - out_np).mean() < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -128,7 +128,7 @@ def test_3d_forward():
     assert np.abs(out_ms - out_np).mean() < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -278,7 +278,7 @@ def test_empty_tensor():
     assert np.abs(out_ms - b_np).mean() < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -318,7 +318,7 @@ def test_empty_tensor_dyn_shape():
     assert np.abs(out_ms - b_np).mean() < error
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

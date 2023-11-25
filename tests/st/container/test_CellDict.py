@@ -33,7 +33,7 @@ class TestGetitemMethodNet(nn.Cell):
         return self.cell_dict['conv']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -69,7 +69,7 @@ class TestSetitemMethodNet(nn.Cell):
         return self.cell_dict['conv']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -105,7 +105,7 @@ class TestSetitemMethodErrCaseNet(nn.Cell):
         return self.cell_dict[key]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -165,7 +165,7 @@ class TestDelitemMethodNet(nn.Cell):
         return len(self.cell_dict)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -199,7 +199,7 @@ class TestContainsMethodNet(nn.Cell):
         return ret1, ret2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -234,7 +234,7 @@ class TestClearMethodNet(nn.Cell):
         return len(self.cell_dict)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -268,7 +268,7 @@ class TestPopMethodNet(nn.Cell):
         return op, cell_dict_len
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -305,7 +305,7 @@ class TestKeysMethodNet(nn.Cell):
         return self.cell_dict.keys()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -338,7 +338,7 @@ class TestValuesMethodNet(nn.Cell):
         return self.cell_dict.values()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -380,7 +380,7 @@ class TestItemsMethodNet(nn.Cell):
         return self.cell_dict.items()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -457,7 +457,7 @@ class TestUpdateMethodNet(nn.Cell):
         return output1, output2, output3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -507,7 +507,7 @@ class TestUpdateMethodEmbeddedNet(nn.Cell):
     def construct(self, object_list):
         self.cell_dict.update(object_list)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -569,7 +569,7 @@ class DupParaNameNet2(nn.Cell):
         return a + b
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -29,7 +29,7 @@ class EyeNet(nn.Cell):
         return ops.eye(x.shape[1], 3, dtype=self.dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

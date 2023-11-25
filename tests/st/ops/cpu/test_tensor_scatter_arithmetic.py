@@ -122,7 +122,7 @@ def compare_with_numpy(func, input_x, indices, updates):
     np.testing.assert_array_almost_equal(pynative_output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -141,7 +141,7 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -166,7 +166,7 @@ def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -199,7 +199,7 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -224,7 +224,7 @@ def test_tensor_scatter_arithmetic_one_value(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -250,7 +250,7 @@ def test_tensor_scatter_arithmetic_dim_check(func, data_type, index_type):
         compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul', 'max', 'min'])
@@ -276,7 +276,7 @@ def test_tensor_scatter_arithmetic_type_check(func, data_type, index_type):
         compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub', 'max', 'min'])
@@ -296,7 +296,7 @@ def test_tensor_scatter_arithmetic_indices_check(func, data_type, index_type):
         compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['div'])
@@ -321,7 +321,7 @@ def test_tensor_scatter_arithmetic_tensor_func_check(func, data_type, index_type
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['div'])
@@ -344,7 +344,7 @@ def test_tensor_scatter_arithmetic_functional_func_check(func, data_type, index_
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("func_name", ["mul", "div"])
@@ -373,7 +373,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy(), atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("func_name", ["mul", "div"])
@@ -400,7 +400,7 @@ def test_tensor_scatter_mul_func_indices_vmap(func_name):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("func_name", ["mul", "div"])
@@ -427,7 +427,7 @@ def test_scatter_func_update_vmap(func_name):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("func_name", ["add", "max", "min", "sub"])

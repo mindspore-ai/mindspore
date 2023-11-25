@@ -127,7 +127,7 @@ def test_ps_roi_pooling_dynamic_shape():
     _ps_roi_pooling_case(np.float32, CTX_MODE, dynamic_shape=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_mind_ir():
@@ -177,7 +177,7 @@ def test_ps_roi_pooling_mind_ir():
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_graph_mode():
@@ -191,7 +191,7 @@ def test_ps_roi_pooling_graph_mode():
         mode=CTX_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_x_1_shape_wrong():
@@ -207,7 +207,7 @@ def test_ps_roi_pooling_x_1_shape_wrong():
     )
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_pynative_mode():
@@ -221,7 +221,7 @@ def test_ps_roi_pooling_pynative_mode():
         mode=ms.context.PYNATIVE_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
@@ -233,7 +233,7 @@ def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=object())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
@@ -245,7 +245,7 @@ def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=-0.15)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_group_size_attr_type_wrong():
@@ -269,7 +269,7 @@ def test_ps_roi_pooling_group_size_attr_range_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=-1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_output_dim_attr_type_wrong():
@@ -281,7 +281,7 @@ def test_ps_roi_pooling_output_dim_attr_type_wrong():
     _check_attr_validation(arg_name="output_dim", arg_value=7.1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_output_dim_attr_range_wrong():
@@ -312,7 +312,7 @@ def _check_attr_validation(arg_name, arg_value):
         assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_input_args_num():
@@ -392,7 +392,7 @@ def test_ps_roi_pooling_input_type_unsupported1():
         assert False, "Expected TypeError to occur, but it does not occur."
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_input_type_unsupported2():

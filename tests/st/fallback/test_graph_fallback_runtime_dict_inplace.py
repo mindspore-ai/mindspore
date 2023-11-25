@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 global_dict_1 = {"1": 1}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -95,7 +95,7 @@ def test_global_dict_used_in_graph_3():
 global_input_dict_1 = {"1": 1}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -211,7 +211,7 @@ def test_dict_inplace_with_attribute_2():
     assert id(x["2"]) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -235,7 +235,7 @@ def test_dict_inplace_setitem():
 
 
 @pytest.mark.skip(reason="Dictionary with no return will be convert to tuple")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -256,7 +256,7 @@ def test_dict_inplace_setitem_2():
     assert x == {"a": 3, "b": 2}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -281,7 +281,7 @@ def test_dict_inplace_setitem_3():
     assert id(y) == id(res["b"])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -311,7 +311,7 @@ def test_dict_inplace_setitem_with_attribute():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -347,7 +347,7 @@ def test_dict_inplace_setitem_with_attribute_2():
 
 
 @pytest.mark.skip(reason="setitem with abstract any do not convert to pyexecute yet")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -381,7 +381,7 @@ def test_dict_inplace_setitem_with_attribute_3():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -411,7 +411,7 @@ def test_dict_getitem_after_setitem():
 global_dict_for_update = {'Name': 'a', 'Age': 7}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -443,7 +443,7 @@ def test_dict_getitem_after_setitem_2():
     assert ret3 == {'Name': 'c', 'Age': 18, 'Grade': 'college'}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

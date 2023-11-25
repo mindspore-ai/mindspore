@@ -52,7 +52,7 @@ class RandomGammaDR(nn.Cell):
         return F.random_gamma(outshape, outalpha, seed), outshape, outalpha
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_dynamic_rank():
@@ -75,7 +75,7 @@ def test_dynamic_rank():
     assert (output.shape == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
@@ -110,7 +110,7 @@ def test_random_gamma_op(dtype):
     print(output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])

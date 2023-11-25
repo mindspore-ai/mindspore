@@ -45,7 +45,7 @@ def test_multihead_attention_cpu_gpu(dtype, mode):
     assert attn_output_weights.shape == (8, 10, 10)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

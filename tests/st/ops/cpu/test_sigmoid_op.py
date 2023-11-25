@@ -41,7 +41,7 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.ops(x)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
@@ -55,7 +55,7 @@ def test_net():
     assert out.shape == y_expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sigmoid_grad():

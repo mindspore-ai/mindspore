@@ -40,7 +40,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -61,7 +61,7 @@ def test_sqrt(dtype):
     assert out.shape == y_expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -89,7 +89,7 @@ def test_sqrt_grad(dtype):
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -115,7 +115,7 @@ def test_sqrt_dy_shape(dtype):
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])

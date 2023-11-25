@@ -106,7 +106,7 @@ def test_sparsecountsparseoutput_checkvalue_difftypes():
             sparse_count_sparse_output_valuecheck(v_type, w_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparsecountsparseoutput_checkvalue_maxvalue():
@@ -129,7 +129,7 @@ def test_sparsecountsparseoutput_checkvalue_maxvalue():
     compare_results(op_output, expected_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparsecountsparseoutput_value_type_error():

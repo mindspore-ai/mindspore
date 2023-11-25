@@ -288,7 +288,7 @@ def test_seq_tensor_unstack0():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack1():

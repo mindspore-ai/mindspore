@@ -262,7 +262,7 @@ def test_dynamic_getitem_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -384,7 +384,7 @@ def test_dynamic_rank_getitem_slice():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -426,7 +426,7 @@ def test_dynamic_rank_getitem_with_single_basic_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -465,7 +465,7 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -503,7 +503,7 @@ def test_dynamic_rank_getitem_with_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -542,7 +542,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -578,7 +578,7 @@ def test_dynamic_rank_getitem_with_list_index():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -734,7 +734,7 @@ def test_dynamic_getitem_int_001():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -926,7 +926,7 @@ def test_dynamic_getitem_tuple_002():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

@@ -116,7 +116,7 @@ def test_csr_to_dense_dshape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

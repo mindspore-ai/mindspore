@@ -50,7 +50,7 @@ def scatter_add_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_small_float32():
@@ -63,7 +63,7 @@ def test_scatter_add_small_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_input_updated():
@@ -78,7 +78,7 @@ def test_scatter_add_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_large_shape_float32():
@@ -113,7 +113,7 @@ def test_scatter_add_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_small_float32_use_locking_false():
@@ -158,7 +158,7 @@ def test_scatter_add_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_large_float16():
@@ -175,7 +175,7 @@ def test_scatter_add_large_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_disordered_float16():
@@ -209,7 +209,7 @@ def test_scatter_add_large_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_disordered_int32():
@@ -226,7 +226,7 @@ def test_scatter_add_disordered_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_function():
@@ -273,7 +273,7 @@ def scatter_sub_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_sub_input_updated():
@@ -288,7 +288,7 @@ def test_scatter_sub_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_sub_large_shape_float32():
@@ -324,7 +324,7 @@ def test_scatter_sub_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_sub_small_float32_use_locking_false():
@@ -362,7 +362,7 @@ def scatter_mul_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_mul_input_updated():
@@ -390,7 +390,7 @@ def test_scatter_mul_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_mul_small_float32_use_locking_false():
@@ -428,7 +428,7 @@ def scatter_div_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_input_updated():
@@ -443,7 +443,7 @@ def test_scatter_div_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_output_updated_float32():
@@ -456,7 +456,7 @@ def test_scatter_div_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_small_float32_use_locking_false():
@@ -469,7 +469,7 @@ def test_scatter_div_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_empty_input():
@@ -484,7 +484,7 @@ def test_scatter_div_empty_input():
     _ = P.ScatterDiv()(input_x, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_output_int16():
@@ -500,7 +500,7 @@ def test_scatter_div_output_int16():
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_div_output_float64():
@@ -556,7 +556,7 @@ def test_scatter_max_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_max_output_updated_float32():
@@ -569,7 +569,7 @@ def test_scatter_max_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_max_small_float32_use_locking_false():
@@ -607,7 +607,7 @@ def scatter_min_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_min_input_updated():
@@ -622,7 +622,7 @@ def test_scatter_min_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_min_output_updated_float32():
@@ -635,7 +635,7 @@ def test_scatter_min_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_min_small_float32_use_locking_false():
@@ -673,7 +673,7 @@ def scatter_update_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_update_input_updated():
@@ -688,7 +688,7 @@ def test_scatter_update_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_update_output_updated_float32():
@@ -701,7 +701,7 @@ def test_scatter_update_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_update_output_updated_huge_tensor_float32():
@@ -734,7 +734,7 @@ def test_scatter_update_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_update_empty_input():
@@ -759,7 +759,7 @@ class TestScatterAddNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_add_dynamic_shape():
@@ -790,7 +790,7 @@ class TestScatterSubNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_sub_dynamic_shape():
@@ -822,7 +822,7 @@ class TestScatterUpdateNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_update_dynamic_shape():

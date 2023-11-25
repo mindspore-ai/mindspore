@@ -36,7 +36,7 @@ class MaxPoolWithArgmaxOp(nn.Cell):
         return self.max_pool_op(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_valid():
@@ -63,7 +63,7 @@ def test_maxpool_with_argmax_valid():
     assert (argmax.asnumpy() == expect_argmax).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_same():
@@ -90,7 +90,7 @@ def test_maxpool_with_argmax_same():
     assert (argmax.asnumpy() == expect_argmax).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_tensorflow():
@@ -134,7 +134,7 @@ def test_maxpool_with_argmax_tensorflow():
     assert np.allclose(actual_output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_dynamic_shape():

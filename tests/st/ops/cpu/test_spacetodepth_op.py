@@ -60,7 +60,7 @@ def test_spacetodepth_graph_float32():
 def test_spacetodepth_graph_float16():
     SpaceToDepth(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int32():
@@ -78,31 +78,31 @@ def test_spacetodepth_graph_int64():
 def test_spacetodepth_graph_int8():
     SpaceToDepth(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int16():
     SpaceToDepth(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint8():
     SpaceToDepth(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint16():
     SpaceToDepth(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint32():
     SpaceToDepth(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint64():

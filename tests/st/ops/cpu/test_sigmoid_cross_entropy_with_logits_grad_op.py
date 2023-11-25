@@ -31,7 +31,7 @@ class NetSigmoidCrossEntropyWithLogits(nn.Cell):
         return self.sigmoid_cross_entropy_with_logits_grad(logits, labels, dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits():

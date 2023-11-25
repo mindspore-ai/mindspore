@@ -32,7 +32,7 @@ class NetSparseMatrixNNZ(nn.Cell):
                        values)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_enecard
 def test_sparse_matrix_nnz_dyn():
