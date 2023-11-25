@@ -278,8 +278,8 @@ NodePtrList FminFmaxGrad(BpropIRBuilder *ib, bool if_fmin) {
   return {brrx1, brrx2};
 }
 
-inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
-                                std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
+inline NodePtr GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
+                            std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
   auto [offset, dim1, dim2, x_dim] = int_tuple;
   auto value = ib->Tensor(0, x_dtype);
   auto dx = ib->Emit("FillV2", {dx_trans_shape, value});
@@ -300,7 +300,7 @@ inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr 
     }
   }
   dx = ib->Transpose(dx, perm);
-  return {dx};
+  return dx;
 }
 
 class DiagonalShapeCalc : public ShapeCalcFunctor {
@@ -2239,12 +2239,15 @@ REG_BPROP_BUILDER("Baddbmm").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto offset = GetValue<int64_t>(ib->GetAttr("offset"));
-  auto dim1 = GetValue<int64_t>(ib->GetAttr("dim1"));
-  auto dim2 = GetValue<int64_t>(ib->GetAttr("dim2"));
   auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto offset_node = ib->GetInput(kIndex1);
+  auto dim1_node = ib->GetInput(kIndex2);
+  auto dim2_node = ib->GetInput(kIndex3);
+  auto offset = GetValue<int64_t>(offset_node->BuildValue());
+  auto dim1 = GetValue<int64_t>(dim1_node->BuildValue());
+  auto dim2 = GetValue<int64_t>(dim2_node->BuildValue());
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shape = ib->GetShape(x);
   if (IsDynamicRank(x_shape)) {
     MS_LOG_EXCEPTION << "Diagonal doesn't support dynamic rank now, because it need rank of x to do transpose";
@@ -2257,16 +2260,20 @@ REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   if (dim2 < 0) {
     dim2 += x_dim;
   }
-  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, x_dim](Emitter *ib) -> NodePtrList {
+  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, &offset_node, &dim1_node, &dim2_node,
+                    x_dim](Emitter *ib) -> NodePtrList {
     auto dx_trans_shape = ib->ShapeCalc(std::make_shared<DiagonalShapeCalc>(dim1, dim2), {x, out})[0];
-    return GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+    auto grad_diagonal = GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+    return {grad_diagonal, ib->ZerosLike(offset_node), ib->ZerosLike(dim1_node), ib->ZerosLike(dim2_node)};
   };
-  auto false_case = [&x](Emitter *ib) -> NodePtrList { return {ib->ZerosLike(x)}; };
+  auto false_case = [&x, &x_dtype, &offset_node, &dim1_node, &dim2_node](Emitter *ib) -> NodePtrList {
+    return {ib->ZerosLike(x), ib->ZerosLike(offset_node), ib->ZerosLike(dim1_node), ib->ZerosLike(dim2_node)};
+  };
   if (IsDynamic(ib->GetShape(out))) {
     auto out_size = ib->Emit("Size", {out});
     auto cond = ib->Emit("scalar_eq", {out_size, ib->Value<int64_t>(0)});
     auto dx = ib->Conditional(cond, false_case, true_case);
-    return {dx};
+    return {dx, ib->OutZeros(offset_node), ib->OutZeros(dim1_node), ib->OutZeros(dim2_node)};
   }
   if (ib->GetSize(out) > 0) {
     return true_case(ib);

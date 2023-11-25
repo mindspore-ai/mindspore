@@ -141,7 +141,6 @@ from .array_func import (
     expand,
     fold,
     unfold,
-    diagonal,
     diagonal_scatter,
     lstsq,
     mvlgamma,
@@ -710,7 +709,7 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_,)
+from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_, diagonal,)
 
 __all__ = [
     'assign',
@@ -723,6 +722,7 @@ __all__ = [
     'sin',
     'sinc',
     'sinh',
+    'diagonal',
 ]
 __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)
