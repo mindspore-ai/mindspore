@@ -112,7 +112,6 @@ endif()
 if(NOT ENABLE_SECURITY)
     if(ENABLE_D)
         target_link_libraries(mindspore_ascend PRIVATE _mindspore_debug_obj)
-        target_link_libraries(mindspore_ascend PRIVATE -lstdc++fs)
     endif()
 endif()
 

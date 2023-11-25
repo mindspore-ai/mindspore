@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/tensordump_utils.h"
-#include <experimental/filesystem>
 #include <functional>
 #include <map>
 #include <memory>
@@ -24,8 +23,6 @@
 #include "debug/data_dump/npy_header.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
-
-namespace fs = std::experimental::filesystem;
 
 namespace mindspore::device::ascend {
 namespace {
@@ -47,7 +44,7 @@ void SaveTensor2NPY(std::string file_name, mindspore::tensor::TensorPtr tensor_p
     ChangeFileMode(file_name, S_IWUSR);
     std::fstream output{file_name, std::ios::out | std::ios::trunc | std::ios::binary};
     if (!output.is_open()) {
-      MS_LOG(ERROR) << "For 'TensorDump' ops, open " << file_name << " file failed.";
+      MS_LOG(ERROR) << "For 'TensorDump' ops, open " << file_name << " file failed, the args of 'file' is invalid.";
       return;
     }
     output << npy_header;
@@ -63,6 +60,10 @@ void SaveTensor2NPY(std::string file_name, mindspore::tensor::TensorPtr tensor_p
     MS_LOG(ERROR) << "For 'TensorDump' ops, the type of " << TypeIdToType(tensor_ptr->data_type())->ToString()
                   << " not support dump.";
   }
+}
+
+bool EndsWith(const std::string &s, const std::string &sub) {
+  return s.rfind(sub) == (s.length() - sub.length()) ? true : false;
 }
 
 }  // namespace
@@ -114,18 +115,21 @@ std::string TensorDumpUtils::TensorNameToArrayName(const std::string &tensor_pat
   static size_t name_id = 0;
   std::string npy_suffix{".npy"};
   std::string separator{"_"};
-  fs::path file_path(tensor_path);
-  fs::path parent_path = file_path.parent_path();
-  std::string file_name = file_path.filename().string();
-  std::string file_extension = file_path.extension().string();
-
-  std::string new_file_name = std::to_string(name_id++) + separator + file_name;
-  if (file_extension != npy_suffix) {
-    new_file_name += npy_suffix;
+  std::optional<std::string> parent_path;
+  std::optional<std::string> file_name;
+  FileUtils::SplitDirAndFileName(tensor_path, &parent_path, &file_name);
+  if (!parent_path.has_value()) {
+    parent_path = ".";
   }
-  fs::path new_file_path = parent_path / new_file_name;
-  MS_LOG(INFO) << "For 'TensorDump' ops, dump file path is " << new_file_path;
-  return new_file_path.string();
+  std::optional<std::string> realpath = FileUtils::CreateNotExistDirs(parent_path.value());
+  std::optional<std::string> new_file_name = std::to_string(name_id++) + separator + file_name.value();
+  if (!EndsWith(new_file_name.value(), npy_suffix)) {
+    new_file_name.value() += npy_suffix;
+  }
+  std::optional<std::string> new_file_path;
+  FileUtils::ConcatDirAndFileName(&realpath, &new_file_name, &new_file_path);
+  MS_LOG(INFO) << "For 'TensorDump' ops, dump file path is " << new_file_path.value();
+  return new_file_path.value();
 }
 
 TensorDumpUtils &TensorDumpUtils::GetInstance() {
@@ -135,7 +139,11 @@ TensorDumpUtils &TensorDumpUtils::GetInstance() {
 
 void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
   std::string tensor_name = std::string{acltdtGetDatasetName(acl_dataset)};
-  MS_LOG(INFO) << "acltdtReceiveTensor name: " << tensor_name;
+  MS_LOG(INFO) << "For 'TensorDump' ops, acltdt received Tensor name is " << tensor_name;
+  if (tensor_name.empty()) {
+    MS_LOG(ERROR) << "For 'TensorDump' ops, the of args of 'file' is empty, skip this data.";
+    return;
+  }
   size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
 
   for (size_t i = 0; i < acl_dataset_size; i++) {

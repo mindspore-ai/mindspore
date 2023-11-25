@@ -297,9 +297,15 @@ class TensorDump(Primitive):
         self.add_prim_attr("channel_name", "ms_tensor_dump")
 
     def __call__(self, file, input_x):
+        validator.check_value_type('file', file, [str], self.__class__.__name__)
+        if not file:
+            raise ValueError("For 'TensorDump', the input argument[file] cannot be an empty string.")
+        validator.check_value_type('input_x', input_x, [Tensor], self.__class__.__name__)
         global TENSORDUMP_ID
         npy_suffix = ".npy"
         directory, filename = os.path.split(file)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, mode=0o700, exist_ok=True)
         new_filename = f"{TENSORDUMP_ID}_{filename}"
         new_file = os.path.join(directory, new_filename)
         if not new_file.endswith(npy_suffix):
