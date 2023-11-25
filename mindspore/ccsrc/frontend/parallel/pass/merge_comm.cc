@@ -60,7 +60,7 @@ void MergeAllGather(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphMan
         auto ag1_prim = GetCNodePrimitive(allgather_cnode1);
         auto ag2_prim = GetCNodePrimitive(allgather_cnode2);
         auto group1 = ag1_prim->GetAttr(GROUP);
-        auto group2 = ag1_prim->GetAttr(GROUP);
+        auto group2 = ag2_prim->GetAttr(GROUP);
         if (!group1 || !group2 || group1 != group2) {
           return false;
         }
