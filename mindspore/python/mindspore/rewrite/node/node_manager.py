@@ -232,7 +232,7 @@ class NodeManager:
             from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
         except ImportError:
             return ""
-        dump_str = "=" * 40 + title + "=" * 40 + '\n'
+        dump_str = f"\n[{title}]\n"
         node_specs = [[
             n.get_node_type(),
             n.get_name(),
@@ -246,7 +246,7 @@ class NodeManager:
             ] for key, value in n.get_target_users().items()]
         ] for n in NodeManager.nodes(self)]
         dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
-        dump_str += '\n' + "=" * (82 + len(title)) + '\n'
+        dump_str += '\n'
         return dump_str
 
     def _add_node_to_nodes(self, node: Node):

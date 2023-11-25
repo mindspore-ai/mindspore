@@ -404,7 +404,8 @@ class SymbolTree:
             >>> stree.print_node_tabulate()
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "print_node_tabulate")
-        self._symbol_tree.print_node_tabulate(all_nodes)
+        dump_str = self._symbol_tree.get_node_tabulate(all_nodes)
+        print(dump_str)
 
     def get_code(self) -> str:
         """
