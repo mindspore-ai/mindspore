@@ -58,8 +58,11 @@ class Location {
   MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine, int start_line = 0) const;
   MS_CORE_API std::string DebugString() const;
   std::string file_name() const { return file_name_; }
+  void set_file_name(const std::string &file_name) { file_name_ = file_name; }
   int line() const { return line_; }
+  void set_line(int line) { line_ = line; }
   int line_end() const { return line_end_; }
+  void set_line_end(int line_end) { line_end_ = line_end; }
   int column() const { return column_; }
   int column_end() const { return column_end_; }
   const std::string &expr_src() const { return expr_src_; }

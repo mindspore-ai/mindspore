@@ -21,6 +21,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include "pipeline/jit/pi/graph_compiler/pi_ir/debug_info.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/type.h"
 #include "utils/hashing.h"
 
@@ -41,7 +42,11 @@ class Node : public std::enable_shared_from_this<Node> {
    *
    * \return The instance of Node.
    */
-  Node() : type_(kTypeUnknown), node_id_(0), offset_(std::numeric_limits<size_t>::max()), line_no_(0), file_index_(0) {}
+  Node()
+      : type_(kTypeUnknown),
+        node_id_(0),
+        offset_(std::numeric_limits<size_t>::max()),
+        debug_info_(std::make_shared<DebugInfo>("")) {}
 
   /// \brief Destructor.
   virtual ~Node() = default;
@@ -113,32 +118,18 @@ class Node : public std::enable_shared_from_this<Node> {
   }
 
   /**
-   * \brief Get the line number of this node.
+   * \brief Get the debug information of this node.
    *
-   * \return The line number of this node.
+   * \return The debug information of this node.
    */
-  int GetLineNo() const { return line_no_; }
+  const DebugInfoPtr &GetDebugInfo() const { return debug_info_; }
 
   /**
-   * \brief Set the line number of this node.
+   * \brief Set the debug information of this node.
    *
-   * \param[in] line_no The line number of this node.
+   * \param[in] debug_info The debug information of this node.
    */
-  void SetLineNo(int line_no) { line_no_ = line_no; }
-
-  /**
-   * \brief Get the file index of this node.
-   *
-   * \return The file index of this node.
-   */
-  int GetFileIndex() const { return file_index_; }
-
-  /**
-   * \brief Set the file index of this node.
-   *
-   * \param[in] index The file index of this node.
-   */
-  void SetFileIndex(int index) { file_index_ = index; }
+  void SetDebugInfo(const DebugInfoPtr &debug_info) { debug_info_ = debug_info; }
 
   /**
    * \brief Judge whether this class is derived from class with the given class id.
@@ -235,10 +226,8 @@ class Node : public std::enable_shared_from_this<Node> {
   size_t node_id_;
   /// \brief The offset of this node, only makes sense when the node is an operation.
   size_t offset_;
-  /// \brief The line number of the node, only makes sense when the node is an operation.
-  int line_no_;
-  /// \brief The index of file name, only makes sense when the node is an operation.
-  int file_index_;
+  /// \brief The debug information of this node.
+  DebugInfoPtr debug_info_;
 };
 
 using NodePtr = std::shared_ptr<Node>;

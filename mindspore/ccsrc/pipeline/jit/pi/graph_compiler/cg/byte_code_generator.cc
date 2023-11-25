@@ -293,7 +293,7 @@ void ByteCodeGenerator::GenerateInstr(ir::OpCode op, int arg) {
 // (9, 2) ----> 9 : the tenth bytecode, means The line number of the eighth and ninth bytecodes is 10
 //              1 : the line no. of tenth is bytecode (2 + 10) = 12
 void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
-  int new_line_no = node->GetLineNo();
+  int new_line_no = node->GetDebugInfo()->GetLineNo();
   if (new_line_no == 0) {
     return;
   }
@@ -304,7 +304,7 @@ void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
   } else {
     MS_EXCEPTION_IF_CHECK_FAIL(last_starts_instr_ != nullptr, "last_starts_instr_ should not be nullptr.");
     dis = sizeof(_Py_CODEUNIT) * (node->GetOffset() - last_starts_instr_->GetOffset());
-    inc -= last_starts_instr_->GetLineNo();
+    inc -= last_starts_instr_->GetDebugInfo()->GetLineNo();
   }
   last_starts_instr_ = node;
   co_lnotab_.push_back(dis);
