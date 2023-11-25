@@ -190,25 +190,31 @@ void DictUpdate::AddNodeToLists(const AbstractBasePtr &arg, const FuncGraphPtr &
 FuncGraphPtr DictFromKeys::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   constexpr size_t dict_fromkeys_args_size = 3;
   abstract::CheckArgsSize("DictFromKeys", args_list, dict_fromkeys_args_size);
-  const auto &values = ParseIterableObject(args_list[1]);
-  auto value_node = args_list[2]->BuildValue();
-  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &keys_abs = ParseIterableObject(args_list[1]);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("fromkeys");
   (void)ret->add_parameter();
   (void)ret->add_parameter();
-  (void)ret->add_parameter();
+  auto new_value_input = ret->add_parameter();
 
-  std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
-  for (auto &value : values) {
-    auto key_node = value->BuildValue();
-    MS_EXCEPTION_IF_NULL(key_node);
-    (void)key_values.emplace_back(std::make_pair(key_node, value_node));
+  AnfNodePtrList keys_tuple_input{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList values_tuple_input{NewValueNode(prim::kPrimMakeTuple)};
+  for (auto key_abs : keys_abs) {
+    auto key_abs_val = key_abs->BuildValue();
+    if (key_abs_val->ContainsValueAny()) {
+      MS_EXCEPTION(TypeError) << "dict.fromkeys can not has variable key input but got key abs: "
+                              << key_abs->ToString();
+    }
+    (void)keys_tuple_input.emplace_back(NewValueNode(key_abs_val));
+    (void)values_tuple_input.emplace_back(new_value_input);
   }
-
-  ret->set_output(NewValueNode(std::make_shared<ValueDictionary>(key_values)));
+  auto key_tuple_node = ret->NewCNode(keys_tuple_input);
+  auto value_tuple_node = ret->NewCNode(values_tuple_input);
+  AnfNodePtrList make_dicts_input{NewValueNode(prim::kPrimMakeDict), key_tuple_node, value_tuple_node};
+  auto make_dicts_node = ret->NewCNode(make_dicts_input);
+  ret->set_output(make_dicts_node);
   return ret;
 }
 

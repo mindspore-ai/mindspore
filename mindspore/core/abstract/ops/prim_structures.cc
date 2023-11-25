@@ -47,8 +47,8 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
   CheckArgsSize(op_name, args_abs_list, args_spec_size);
-  AbstractTuplePtr keys = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
-  AbstractTuplePtr values = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
+  AbstractSequencePtr keys = CheckArg<AbstractSequence>(op_name, args_abs_list, 0);
+  AbstractSequencePtr values = CheckArg<AbstractSequence>(op_name, args_abs_list, 1);
 
   size_t keys_size = keys->size();
   if (values->size() != keys_size) {

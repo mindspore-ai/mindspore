@@ -3465,8 +3465,7 @@ def dict_next(xs):
     for i in range(1, len(keys)):
         new_keys.append(keys[i])
         new_values.append(xs[keys[i]])
-    new_dict = {}
-    return keys[0], new_dict.fromkeys(new_keys, new_values)
+    return keys[0], F.make_dict(new_keys, new_values)
 
 
 def dict_hasnext(xs):
