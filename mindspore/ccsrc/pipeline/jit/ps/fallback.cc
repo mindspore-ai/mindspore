@@ -767,6 +767,35 @@ AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePt
   return ret;
 }
 
+py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::FuncGraphAbstractClosure>()) {
+    return py::none();
+  }
+  auto abs_func = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+  auto fg = abs_func->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto wrapper_obj = fg->python_obj();
+  if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+    auto obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
+    return obj;
+  }
+  // Handle lambda expression scene. Graph generated from lambda function does not have attached python object.
+  auto fg_debug_info = fg->debug_info();
+  MS_EXCEPTION_IF_NULL(fg_debug_info);
+  const auto &fg_name = fg_debug_info->name();
+  const std::string lambda_suffix = "_lambda_";
+  bool end_with_lambda_suffix =
+    (fg_name.size() >= lambda_suffix.size() && fg_name.substr(fg_name.size() - lambda_suffix.size()) == lambda_suffix);
+  if (end_with_lambda_suffix) {
+    auto location = fg_debug_info->location();
+    MS_EXCEPTION_IF_NULL(location);
+    const auto &lambda_script = location->expr_src();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    return python_adapter::CallPyModFn(mod, "generate_lambda_object", lambda_script);
+  }
+  return py::none();
+}
+
 AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
                                                     const py::object &meta_obj, const TypePtrList &types,
                                                     const std::string &name) {

@@ -277,7 +277,11 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
 }
 
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
+  FuncGraphPtr list_func_fg = nullptr;
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    list_func_fg = parse::ParsePythonCode(py_fn);
+  }
   if (list_func_fg != nullptr) {
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
