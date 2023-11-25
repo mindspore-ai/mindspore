@@ -34,90 +34,17 @@
 
 namespace mindspore {
 namespace kernel {
-void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  const auto &primitive = GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  primitive_ = primitive->Clone();
+bool PyExecuteCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(primitive_);
-  kernel_name_ = primitive_->name();
-  MS_LOG(DEBUG) << "kernel_node: " << kernel_node << ", " << kernel_node->DebugString();
-  py::gil_scoped_acquire gil_acquire;
-  inputs_info_.clear();
-  kernel_node_ = kernel_node;
-  if (kernel_node_->abstract() != nullptr && (!kernel_node_->abstract()->isa<abstract::AbstractAny>())) {
-    is_output_any_ = false;
-    MS_LOG(DEBUG) << "No any output for pyexecute kernel:" << kernel_node_->fullname_with_scope();
-  }
-  for (size_t i = 1; i < kernel_node->size(); ++i) {
-    const auto &input = kernel_node->inputs()[i];
-
-    // Check if PyExecuteOutputUserData exists.
-    py::object obj = py::none();
-    if (input->has_user_data<PyExecuteOutputUserData>()) {
-      const auto &output_data = input->user_data<PyExecuteOutputUserData>();
-      obj = output_data->obj;
-      MS_LOG(DEBUG) << "Has \'PyExecuteOutputUserData\', obj: " << obj;
-    }
-
-    // Record the inputs' information by their abstract types.
-    const auto &input_abstract = input->abstract();
-    MS_EXCEPTION_IF_NULL(input_abstract);
-    if (input_abstract->isa<abstract::AbstractMonad>()) {
-      continue;
-    }
-    if (input_abstract->isa<abstract::AbstractRefTensor>()) {
-      const auto &param = dyn_cast<Parameter>(input);
-      if (param != nullptr) {
-        MS_LOG(DEBUG) << "AbstractRefTensor, input[" << i << "]: " << param->default_param()->ToString();
-      }
-      (void)inputs_info_.emplace_back(PyExecuteInputInfo({obj, input_abstract, kTypeUnknown, {}}));
-    } else if (input_abstract->isa<abstract::AbstractTensor>()) {
-      const auto &tensor_abstract = dyn_cast<abstract::AbstractTensor>(input_abstract);
-      MS_EXCEPTION_IF_NULL(tensor_abstract);
-      MS_LOG(DEBUG) << "AbstractTensor, input[" << i << "]: " << tensor_abstract->BuildType()->ToString() << ", "
-                    << tensor_abstract->BuildShape()->ToString();
-      const auto &in_type = AnfAlgo::GetInputDeviceDataType(kernel_node, i - 1);
-      const auto &in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i - 1);
-      (void)inputs_info_.emplace_back(PyExecuteInputInfo({obj, input_abstract, in_type, in_shape}));
-    } else {
-      MS_LOG(DEBUG) << "Other, input[" << i << "]: " << input->DebugString() << ", " << input_abstract->ToString();
-      (void)inputs_info_.emplace_back(PyExecuteInputInfo({obj, input_abstract, kTypeUnknown, {}}));
-    }
-    MS_LOG(DEBUG) << "Kernel node's input[" << i << "]: " << input->DebugString() << ", " << input_abstract->ToString();
-  }
-}
-
-void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
-  const auto &py_output = std::make_shared<PyExecuteOutputUserData>();
-  constexpr auto kPyExecuteOutIndex = 0;
-  py_output->obj = py_res;
-  // Set Python data for kernel node.
-  auto out_user_data = output_user_data_.at(kPyExecuteOutIndex);
-  out_user_data->set(PyExecuteOutputUserData::key, py_output);
-  kernel_node_->set_user_data<PyExecuteOutputUserData>(py_output);
-
-  // Set Python data for front node.
-  const auto &kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(kernel_node_->func_graph());
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  const auto &graph_output_map = kernel_graph->graph_output_map();
-  session::AnfWithOutIndex anf_index = std::make_pair(kernel_node_, 0);
-  const auto &iter = graph_output_map.find(anf_index);
-  if (iter != graph_output_map.cend()) {
-    const auto &front_node = iter->second.first;
-    MS_LOG(INFO) << "Found front output for " << kernel_node_ << ", " << kernel_node_->DebugString();
-    front_node->set_user_data<PyExecuteOutputUserData>(py_output);
-  } else {
-    MS_LOG(DEBUG) << "Not found, kernel node is not output, " << kernel_node_ << ", " << kernel_node_->DebugString();
-    if (!IS_OUTPUT_ON(mindspore::kDebug)) {
-      return;
-    }
-    for (const auto &output_pair : graph_output_map) {
-      MS_EXCEPTION_IF_NULL(output_pair.first.first);
-      MS_EXCEPTION_IF_NULL(output_pair.second.first);
-      MS_LOG(DEBUG) << "backend node: " << output_pair.first.first << ", " << output_pair.first.first->DebugString()
-                    << ", front node: " << output_pair.second.first << ", " << output_pair.second.first->DebugString();
+  if (primitive_->HasAttr(kAttrPyExecuteNeedUpdateShape)) {
+    const auto &value = primitive_->GetAttr(kAttrPyExecuteNeedUpdateShape);
+    if (value != nullptr && GetValue<bool>(value)) {
+      MS_LOG(INFO) << "pyexecute primitive:" << reinterpret_cast<void *>(primitive_.get()) << " output is not any";
+      is_output_any_ = false;
     }
   }
+  return true;
 }
 
 bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
@@ -129,53 +56,64 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
   }
   MS_LOG(DEBUG) << "The output num is " << outputs.size();
   py::gil_scoped_acquire gil_acquire;
-  const auto &input0_info = inputs_info_[0];
-  const auto &input0_abstract = input0_info.abstract;
-  const auto &input0_abstract_scalar = dyn_cast<abstract::AbstractScalar>(input0_abstract);
-  MS_EXCEPTION_IF_NULL(input0_abstract_scalar);
-  if (!input0_abstract_scalar->BuildType()->isa<String>()) {
-    MS_LOG(EXCEPTION) << "Should be a string, but got " << input0_abstract_scalar->ToString();
+  if (outputs.empty() || outputs[0] == nullptr) {
+    MS_LOG(EXCEPTION) << "Invalid output";
   }
-  const auto &input0_value = input0_abstract_scalar->BuildValue();
-  MS_EXCEPTION_IF_NULL(input0_value);
-  const auto &input0_str = dyn_cast<StringImm>(input0_value);
-  MS_LOG(DEBUG) << "Script: " << input0_str->ToString();
   // Check if output exists created by 'CppInferShapeAndType'.
-  if (fallback::HasPyExecuteOutput()) {
-    const auto &output = fallback::PopPyExecuteOutput();
-    const auto &output_type = py::str(output.get_type());
-    MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    MS_EXCEPTION_IF_NULL(kernel_node_);
-    const auto &device_address = AnfAlgo::GetMutableOutputAddr(kernel_node_, 0);
-    MS_EXCEPTION_IF_NULL(device_address);
-    MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
-    device_address->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
-    AttachPyOutputData(output);
-    if (device_address != nullptr && (!is_output_any_)) {
-      if (device_address->kernel_tensor() == nullptr || device_address->user_data() == nullptr ||
-          device_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key) ==
-            nullptr) {
-        MS_LOG(WARNING) << "Invalid device tensor:" << device_address
-                        << " for kernel:" << kernel_node_->fullname_with_scope();
-      } else {
-        const auto &user_data_obj =
-          device_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
-        const auto &obj = user_data_obj->obj;
-        const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
-        if (abstract != nullptr) {
-          MS_LOG(DEBUG) << "Update output shape and type for kernel:" << kernel_node_->fullname_with_scope()
-                        << " by abstract:" << abstract->ToString() << " device address:" << device_address;
-          device_address->kernel_tensor()->SetType(abstract->BuildType());
-          device_address->kernel_tensor()->SetShape(abstract->BuildShape());
-          (void)device_address->GetValidPtr(0);
-        } else {
-          MS_LOG(WARNING) << "Failed to generate abstract for kernel:" << kernel_node_->fullname_with_scope();
-        }
-      }
-    }
+  if (!fallback::HasPyExecuteOutput()) {
+    MS_LOG(ERROR) << "Prebuilt output result not exists in pyexecute.";
+    return false;
+  }
+  const auto &output = fallback::PopPyExecuteOutput();
+  const auto &output_type = py::str(output.get_type());
+  MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
+  const auto &py_output = std::make_shared<PyExecuteOutputUserData>();
+  constexpr auto kPyExecuteOutIndex = 0;
+  py_output->obj = output;
+  // Set Python data for kernel node.
+  auto out_user_data = output_user_data_.at(kPyExecuteOutIndex);
+  out_user_data->set(PyExecuteOutputUserData::key, py_output);
+  if (is_output_any_) {
     return true;
   }
-  MS_LOG(EXCEPTION) << "Prebuilt output result not exists for " << input0_str->ToString();
+  MS_LOG(DEBUG) << "Pyexecute launch for primitive:" << reinterpret_cast<void *>(primitive_.get());
+  if (outputs[0]->user_data() == nullptr ||
+      outputs[0]->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key) == nullptr) {
+    MS_LOG(ERROR) << "Invalid output kernel tensor.";
+    return false;
+  }
+  const auto &user_data_obj =
+    outputs[0]->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
+  const auto &obj = user_data_obj->obj;
+  try {
+    const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
+    if (abstract == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to generate abstract for pyexecute";
+    }
+    MS_LOG(DEBUG) << "Update output shape and type for pyexecute by abstract:" << abstract->ToString();
+    if ((!abstract->isa<abstract::AbstractTensor>()) && (!abstract->isa<abstract::AbstractScalar>())) {
+      MS_LOG(EXCEPTION) << "Invalid python obj";
+    }
+    outputs[0]->SetType(abstract->BuildType());
+    outputs[0]->SetShape(abstract->BuildShape());
+    auto tensor = pyexecute::GetValueByPyObj(obj);
+    if (outputs[0]->size() != LongToSize(tensor->data().nbytes())) {
+      MS_LOG(EXCEPTION) << "Invalid output size:" << outputs[0]->size()
+                        << " and tensor size:" << tensor->data().nbytes();
+    }
+    const auto &res = memcpy_s(reinterpret_cast<char *>(outputs[0]->device_ptr()), outputs[0]->size(), tensor->data_c(),
+                               outputs[0]->size());
+    if (res != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", for tensor:" << tensor->ToString()
+                        << " size:" << outputs[0]->size();
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "PyExecute launch failed:" << e.what() << " is any type output:" << is_output_any_
+                  << " type:" << (outputs[0]->GetType() == nullptr ? "null" : outputs[0]->GetType()->ToString())
+                  << " shape:" << (outputs[0]->GetShape() == nullptr ? "null" : outputs[0]->GetShape()->ToString());
+    return false;
+  }
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PyExecute, PyExecuteCpuKernelMod);

@@ -309,7 +309,7 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_
     // supporting zero copy.
     node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
     MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
-                  << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
+                  << " sync user data handler:" << node_device_tensor->need_sync_user_data();
     node_device_tensor->set_from_mem_pool(false);
     // continue
     return true;
@@ -336,7 +336,7 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_
   auto copy_device_tensor = copy_input_device_tensors_[i];
   MS_EXCEPTION_IF_NULL(copy_device_tensor);
   copy_device_tensor->set_user_data(node_device_tensor->user_data());
-  copy_device_tensor->set_sync_user_data_handler(node_device_tensor->sync_user_data_handler());
+  copy_device_tensor->set_need_sync_user_data(node_device_tensor->need_sync_user_data());
   if ((copy_device_tensor->GetPtr() == nullptr) &&
       (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
     MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
@@ -377,7 +377,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       node_device_tensor->SetSize(input_device_tensor->GetSize());
     }
     node_device_tensor->set_user_data(input_device_tensor->user_data());
-    node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
+    node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     // Update Shape.
     const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
     const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
@@ -385,6 +385,9 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
     MS_EXCEPTION_IF_NULL(input_kernel_tensor);
     node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
+    if (type_ != KernelTransformType::kSuperKernelActor) {
+      node_device_kernel_tensor->set_value(input_kernel_tensor->GetValueTrack());
+    }
 
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;

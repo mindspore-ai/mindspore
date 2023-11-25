@@ -740,27 +740,13 @@ void KernelActor::InferShapeAndResize() {
   MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope()
                 << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape.
-  if (common::AnfAlgo::CheckPrimitiveType(kernel_, prim::kPrimPyExecute)) {
-    MS_LOG(DEBUG) << "Infer shape for pyexecute kernel:" << kernel_->DebugString();
-    opt::dynamic_shape::InferOp(kernel_, &input_device_tensors_);
-    MS_EXCEPTION_IF_NULL(kernel_->abstract());
-    if (output_device_tensors_.empty() || output_device_tensors_[0] == nullptr ||
-        output_device_tensors_[0]->kernel_tensor() == nullptr) {
-      MS_LOG(EXCEPTION) << "Invalid output device tensor for actor:" << GetAID()
-                        << " output size:" << output_device_tensors_.size();
-    }
-    output_device_tensors_[0]->kernel_tensor()->SetType(kernel_->abstract()->BuildType());
-    output_device_tensors_[0]->kernel_tensor()->SetShape(kernel_->abstract()->BuildShape());
+  auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
+                << ", shape: " << base_shape->ToString();
+  MS_EXCEPTION_IF_NULL(base_shape);
 
-  } else {
-    auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
-    MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
-                  << ", shape: " << base_shape->ToString();
-    MS_EXCEPTION_IF_NULL(base_shape);
-
-    // 2. Update shape of output kernel tensor.
-    opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
-  }
+  // 2. Update shape of output kernel tensor.
+  opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
 
   // 3. Resize kernel mod.
   MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
@@ -826,6 +812,11 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name(), false);
+  }
+
+  if (kernel_mod_->need_user_data()) {
+    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
+             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);

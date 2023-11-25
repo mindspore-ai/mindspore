@@ -123,18 +123,6 @@ tensor::TensorPtr SequenceToValue(const py::sequence &obj) {
   return AnfAlgo::SequenceToTensor(std::make_shared<ValueTuple>(values));
 }
 
-tensor::TensorPtr GetValueByPyObj(const py::object &obj) {
-  py::gil_scoped_acquire gil_acquire;
-  if (py::isinstance<tensor::Tensor>(obj)) {
-    return obj.cast<tensor::TensorPtr>();
-  } else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
-    return SequenceToValue(py::sequence(obj));
-  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
-    return ScalarToValue(obj);
-  }
-  MS_LOG(EXCEPTION) << "Invalid object.";
-}
-
 bool IsValidObj(const py::object &obj) {
   py::gil_scoped_acquire gil_acquire;
   return py::isinstance<tensor::Tensor>(obj) ||
@@ -238,13 +226,25 @@ size_t GetSizeForAbstract(const abstract::AbstractBasePtr &abstract) {
 }
 }  // namespace
 
+tensor::TensorPtr GetValueByPyObj(const py::object &obj) {
+  py::gil_scoped_acquire gil_acquire;
+  if (py::isinstance<tensor::Tensor>(obj)) {
+    return obj.cast<tensor::TensorPtr>();
+  } else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
+    return SequenceToValue(py::sequence(obj));
+  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
+    return ScalarToValue(obj);
+  }
+  MS_LOG(EXCEPTION) << "Invalid object:" << obj;
+}
+
 abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
   // This function will be moved to runtime compile pass later.
   py::gil_scoped_acquire gil_acquire;
   if (py::isinstance<tensor::Tensor>(obj) || IsStubTensor(obj)) {
     const auto &tensor = IsStubTensor(obj) ? ConvertStubTensor(obj) : obj.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    MS_LOG(DEBUG) << "tensor:" << tensor->ToString();
+    MS_LOG(DEBUG) << "tensor:" << tensor->ToString() << " is stub tensor:" << IsStubTensor(obj);
     return tensor->ToAbstract();
   }
 

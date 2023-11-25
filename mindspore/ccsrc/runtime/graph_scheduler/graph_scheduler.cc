@@ -2730,6 +2730,13 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    if (front_node->isa<ValueNode>()) {
+      const auto &value_node = front_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      if (value_node->value() != nullptr && value_node->value()) {
+        kernel_tensor->set_value(value_node->value());
+      }
+    }
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
     MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor

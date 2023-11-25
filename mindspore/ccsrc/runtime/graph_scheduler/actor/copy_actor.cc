@@ -102,7 +102,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
                   << " shape:" << input_device_tensor_[0]->kernel_tensor()->GetShape()->ToString()
                   << " from device tensor:" << input_device_tensor_[0]
                   << " to device address:" << output_device_tensor_[0];
-    output_device_tensor_[0]->set_sync_user_data_handler(input_device_tensor_[0]->sync_user_data_handler());
+    output_device_tensor_[0]->set_need_sync_user_data(input_device_tensor_[0]->need_sync_user_data());
   }
 
   PostRun(context);
