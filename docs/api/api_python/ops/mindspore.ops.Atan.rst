@@ -11,7 +11,7 @@ mindspore.ops.Atan
         - **x** (Tensor): 输入Tensor，支持数据类型：
 
           - Ascend: float16、float32。
-          - GPU/CPU: float16、float32、float64。
+          - GPU/CPU: float16、float32、float64、complex64或complex128。
 
     输出：
         Tensor，shape和dtype与输入 `x` 相同。
