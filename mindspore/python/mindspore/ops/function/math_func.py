@@ -470,7 +470,7 @@ def bincount(input, weights=None, minlength=0):
     if not (input >= 0).all():
         raise ValueError(f"For 'bincount', elements of 'input' should be non-negative.")
     if input.shape[0] == 0:
-        return Tensor([])
+        return Tensor_([])
     if minlength < 0:
         raise ValueError(f"For 'bincount', 'minlength' should be >= 0 but got {minlength}.")
     if max(input.astype(mstype.float32)) > minlength - 1:
@@ -7522,7 +7522,7 @@ def combinations(input, r=2, with_replacement=False):
         return None
 
     def _combinations_with_replacement(iterable, r):
-        lst = Tensor([])
+        lst = Tensor_([])
         pool = tuple(iterable)
         n = len(pool)
         if not n and r:

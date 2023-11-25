@@ -26,13 +26,6 @@ from mindspore.common.initializer import One
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_zero_dimension_list():
-    Tensor([])
-    with pytest.raises(ValueError) as ex:
-        Tensor([[]])
-    assert "input_data can not contain zero dimension." in str(ex.value)
-
-
 def test_zero_dimension_np_array():
     with pytest.raises(ValueError) as ex:
         Tensor(np.ones((1, 0, 3)))

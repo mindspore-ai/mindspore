@@ -3150,7 +3150,7 @@ def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
 @constexpr
 def empty_tensor(dtype):
     """Return empty tensor"""
-    return Tensor([], dtype)
+    return Tensor_([], dtype)
 
 
 @constexpr

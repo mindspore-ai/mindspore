@@ -36,6 +36,7 @@ from mindspore import ops
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as validator
 from mindspore.common._stub_tensor import _convert_stub
+from mindspore._c_expression import Tensor as Tensor_
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -990,7 +991,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
                 _tensor_getitem_by_tuple_parse_tensor_index(index, tuple_index_new,
                                                             tensor_indexes, tensor_positions_new)
             if tuple_index_new is None:
-                return Tensor([])
+                return Tensor_([])
         elif i in slice_positions:
             slice_ele_list_index = const_utils.transform_slice_to_ele_list(index, dim_size)
             slice_shapes += (len(slice_ele_list_index),)

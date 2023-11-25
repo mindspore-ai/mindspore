@@ -26,6 +26,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore import log as logger
 from mindspore import context
+from mindspore._c_expression import Tensor as Tensor_
 
 ALL_TENSOR = 0
 NO_TENSOR = 1
@@ -198,6 +199,8 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
         return P.ScalarToTensor()(a, dtype)
 
     if isinstance(a, (list, tuple)):
+        if not a:
+            return Tensor_(a, dtype)
         # Convert all tuple/nested tuples to lists
         a = _deep_list(a, dim_size)
         # Convert all tensor sub-elements to numpy arrays
