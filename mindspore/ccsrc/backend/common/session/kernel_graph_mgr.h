@@ -103,7 +103,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
-  ValueNodePtr GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph);
+  AnfNodePtr GetChildGraph(KernelGraph *graph, const AnfNodePtr &child_func_graph);
   void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
                             const FuncGraphManagerPtr &front_func_graph_manager,
                             const std::shared_ptr<KernelGraph> &backend_graph);

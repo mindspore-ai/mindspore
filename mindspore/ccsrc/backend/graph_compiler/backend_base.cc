@@ -693,14 +693,18 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   MS_EXCEPTION_IF_NULL(root_graph);
   auto manager = root_graph->manager();
   CompileGraph(root_graph, run_mode);
-
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(manager);
   const auto &sub_graphs = manager->func_graphs();
   std::vector<FuncGraphPtr> cand_graph(sub_graphs.begin(), sub_graphs.end());
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
   for (const auto &sub_graph : cand_graph) {
-    if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph)) {
+    bool skip_inline_graph =
+      sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline;
+    if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph) &&
+        !skip_inline_graph) {
       MS_LOG(INFO) << "Compile sub graph " << sub_graph->ToString();
       CompileGraph(sub_graph, run_mode);
     }

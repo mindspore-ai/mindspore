@@ -120,7 +120,7 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
 
 void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = aclrtCreateStream(stream);
+  auto ret = aclrtCreateStreamWithConfig(stream, IntToUint(priority), (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
@@ -137,7 +137,7 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
-  auto ret = aclrtCreateStream(&stream);
+  auto ret = aclrtCreateStreamWithConfig(&stream, IntToUint(priority), (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }

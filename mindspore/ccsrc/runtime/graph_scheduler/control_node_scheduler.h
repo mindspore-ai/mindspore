@@ -71,7 +71,7 @@ class ControlNodeScheduler {
                                   const GraphCompilerInfo &graph_compiler_info) const;
   void LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
                            const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
-                           const ControlNodeParserPtr &parser) const;
+                           const GraphCompilerInfo &graph_compiler_info) const;
   void LinkArrowByKernel(const AnfNodePtr &kernel, ControlActor *const to_actor,
                          const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
                          const GraphCompilerInfo &graph_compiler_info) const;

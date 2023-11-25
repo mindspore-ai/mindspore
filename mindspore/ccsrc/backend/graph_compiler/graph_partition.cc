@@ -242,6 +242,36 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   return result;
 }
 
+std::vector<AnfNodePtr> LazySort(const std::vector<AnfNodePtr> &nodes, const PrimitiveSet &primitive_set) {
+  std::vector<AnfNodePtr> result;
+  std::set<AnfNodePtr> visited;
+  std::vector<AnfNodePtr> lazy_sort_node;
+  for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsOneOfPrimitiveCNode(node, primitive_set)) {
+      lazy_sort_node.emplace_back(node);
+    } else if (!node->isa<CNode>()) {
+      result.emplace_back(node);
+      visited.insert(node);
+    } else {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto node_inputs = cnode->inputs();
+      bool all_visited = std::all_of(node_inputs.begin(), node_inputs.end(), [&visited](const AnfNodePtr &input) {
+        return visited.find(input) != visited.end();
+      });
+      if (all_visited) {
+        result.emplace_back(node);
+        visited.insert(node);
+      } else {
+        lazy_sort_node.emplace_back(node);
+      }
+    }
+  }
+  result.insert(result.end(), lazy_sort_node.begin(), lazy_sort_node.end());
+  return result;
+}
+
 struct GraphNodesDependencyInfo {
   std::stack<AnfNodePtr> independent_nodes_;
   std::map<AnfNodePtr, size_t> input_num_;
@@ -707,6 +737,43 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
 
   (*close_following)[cut_node] = follow_set;
 }
+
+bool IsNeedInline(const CNodePtr &cnode) {
+  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!graph_op_run || context->CellReuseLevel() != CellReuseLevel::kLazyInline) {
+    return false;
+  }
+  const auto &inputs = cnode->inputs();
+  AnfNodePtr fn = inputs[0];
+  FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(fn);
+  if (child_graph != nullptr && child_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+    // call
+    cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
+    cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
+    return true;
+  } else if (IsPrimitiveCNode(fn, prim::kPrimTupleGetItem)) {
+    // partial call
+    auto tuple_get_node = fn->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_get_node);
+    auto get_from_node = tuple_get_node->input(kIndexOne);
+    MS_EXCEPTION_IF_NULL(get_from_node);
+    if (!get_from_node->isa<CNode>()) {
+      return false;
+    }
+    auto get_from_code = get_from_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(get_from_code);
+    if (get_from_code->HasPrimalAttr(kAttrNeedInline)) {
+      cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
+      cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
+      return true;
+    }
+    return false;
+  } else {
+    return false;
+  }
+}
 }  // namespace
 
 GraphPartition::GraphPartition(const std::vector<PrimitivePtr> &cut_list, const std::string &backend_name)
@@ -719,6 +786,9 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
     auto &inputs = cnode->inputs();
     if (inputs.empty()) {
       MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
+    }
+    if (IsNeedInline(cnode)) {
+      return false;
     }
     AnfNodePtr fn = inputs[0];
     if (!IsValueNode<Primitive>(fn)) {
@@ -794,9 +864,15 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     } else {
       nodes = SplitSort(graph, default_target);
     }
+    const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+    if (graph_op_run) {
+      // Keep the cutting position as far back as possible
+      nodes = LazySort(nodes, {prim::kPrimPartial});
+    }
     nodes = ReorderVirtualNode(nodes, prim::kPrimTupleGetItem);
     nodes = ReorderVirtualNode(nodes, prim::kPrimDepend);
   }
+
   CheckDiffTargetNum(nodes);
   std::vector<GraphSegmentPtr> segments;
   std::vector<AnfNodePtr> segment_nodes;
