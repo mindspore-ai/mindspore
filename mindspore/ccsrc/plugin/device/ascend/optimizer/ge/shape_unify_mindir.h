@@ -37,6 +37,7 @@ class ShapeUnifyMindIR : public PatternProcessPass {
   CNodePtr CreateTensorShape(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node) const;
   CNodePtr CreateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &shape_node,
                               const AnfNodePtr &tuple_get_node, const FuncGraphManagerPtr &manager) const;
+  CNodePtr CreateTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

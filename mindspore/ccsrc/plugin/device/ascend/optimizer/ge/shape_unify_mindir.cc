@@ -19,6 +19,7 @@
 #include <vector>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 /* This pass changes the following pattern.
@@ -60,20 +61,23 @@ const AnfNodePtr ShapeUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(manager);
   auto shape_users = manager->node_users()[shape_cnode];
   for (auto &shape_user : shape_users) {
-    auto tuple_get_node = shape_user.first->cast<CNodePtr>();
-    if (common::AnfAlgo::CheckPrimitiveType(tuple_get_node, prim::kPrimTupleGetItem)) {
-      auto strided_slice_node = CreateStridedSlice(graph, tensor_shape_node, tuple_get_node, manager);
+    auto user_cnode = shape_user.first->cast<CNodePtr>();
+    if (common::AnfAlgo::CheckPrimitiveType(user_cnode, prim::kPrimTupleGetItem)) {
+      auto strided_slice_node = CreateStridedSlice(graph, tensor_shape_node, user_cnode, manager);
       MS_EXCEPTION_IF_NULL(strided_slice_node);
 
       CNodePtr tensor_to_scalar = CreateTensorToScalar(graph, strided_slice_node);
       MS_EXCEPTION_IF_NULL(tensor_to_scalar);
 
-      auto tuple_get_users = manager->node_users()[tuple_get_node];
+      auto tuple_get_users = manager->node_users()[user_cnode];
       for (auto &tuple_get_user : tuple_get_users) {
         auto post_cnode = tuple_get_user.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(post_cnode);
-        manager->SetEdge(post_cnode, GetInputNodeIndex(tuple_get_node, post_cnode) + kSizeOne, tensor_to_scalar);
+        manager->SetEdge(post_cnode, GetInputNodeIndex(user_cnode, post_cnode) + kSizeOne, tensor_to_scalar);
       }
+    } else if (common::AnfAlgo::CheckPrimitiveType(user_cnode, prim::kPrimReturn)) {
+      auto tensor_to_tuple_cnode = CreateTensorToTuple(graph, tensor_shape_node);
+      manager->SetEdge(user_cnode, GetInputNodeIndex(shape_cnode, user_cnode) + kSizeOne, tensor_to_tuple_cnode);
     }
   }
   return tensor_shape_node;
@@ -169,6 +173,22 @@ ValueNodePtr ShapeUnifyMindIR::CreateScalarValueTuple(const FuncGraphPtr &func_g
   tuple_node->set_abstract(tuple_value->ToAbstract());
   func_graph->AddValueNode(tuple_node);
   return tuple_node;
+}
+
+CNodePtr ShapeUnifyMindIR::CreateTensorToTuple(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+  auto prim = std::make_shared<Primitive>(kTensorToTupleOpName);
+  MS_EXCEPTION_IF_NULL(prim);
+  AnfNodePtrList inputs = {NewValueNode(prim), node};
+  CNodePtr tensor_to_tuple = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(tensor_to_tuple);
+
+  // set abstract
+  auto abs = InferAbstract(prim, {node});
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for TensorToTuple op is " << abs->ToString();
+  tensor_to_tuple->set_abstract(abs);
+
+  return tensor_to_tuple;
 }
 
 }  // namespace opt
