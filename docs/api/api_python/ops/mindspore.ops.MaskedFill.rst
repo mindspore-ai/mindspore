@@ -14,7 +14,7 @@ mindspore.ops.MaskedFill
     输入：
         - **input** (Tensor) - 输入Tensor。
         - **mask** (Tensor[bool]) - 输入的掩码，其数据类型为bool。
-        - **value** (Union[float, Tensor]) - 用来填充的值，只支持零维Tensor或float。
+        - **value** (Union[Number, Tensor]) - 用来填充的值，只支持零维Tensor或者Number。
 
     输出：
         Tensor，输出与输入的数据类型和shape相同。
