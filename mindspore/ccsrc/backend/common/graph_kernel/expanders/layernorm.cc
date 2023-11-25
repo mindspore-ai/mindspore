@@ -41,13 +41,6 @@ class LayerNorm : public OpDesc {
     auto x = input_x;
     auto gamma = input_gamma;
     auto beta = input_beta;
-    auto ori_type = input_x->type;
-    if (processor_ == "aicore" && ori_type == TypeId::kNumberTypeFloat16) {
-      x = gb.Cast(x, TypeId::kNumberTypeFloat32);
-      gamma = gb.Cast(gamma, TypeId::kNumberTypeFloat32);
-      beta = gb.Cast(beta, TypeId::kNumberTypeFloat32);
-    }
-
     auto ori_shape_x = input_x->shape;
     if (input_x->format == kOpFormat_FRAC_NZ) {
       ori_shape_x = InferShapeFromFractalnz(ori_shape_x);
@@ -101,12 +94,6 @@ class LayerNorm : public OpDesc {
     // Calculate scale and translate
     auto scale_mul = gb.Mul(normalize_mul, gamma);
     auto res = gb.Add(scale_mul, beta);
-
-    if (processor_ == "aicore" && ori_type == TypeId::kNumberTypeFloat16) {
-      res = gb.Cast(res, TypeId::kNumberTypeFloat16);
-      mean = gb.Cast(mean, TypeId::kNumberTypeFloat16);
-      variance = gb.Cast(variance, TypeId::kNumberTypeFloat16);
-    }
     return {res, mean, variance};
   }
 };

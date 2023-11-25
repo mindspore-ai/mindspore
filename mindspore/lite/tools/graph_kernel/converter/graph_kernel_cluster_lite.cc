@@ -81,13 +81,17 @@ std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
                               flags.enable_cluster_ops, flags.disable_cluster_ops);
 }
 
-bool IsByteAlign(const CNodePtr &cnode, const std::string &node_name) {
+bool CanCluster(const CNodePtr &cnode, const std::string &node_name) {
   constexpr int64_t byte_align = 32;
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   static const std::string target = cb->GetTargetFromContext(true);
   if (target.find("Ascend910B") == std::string::npos) {
     return true;
+  }
+  auto type_id = cb->GetOutputInferType(cnode, 0);
+  if (type_id != kNumberTypeFloat16 && type_id != kNumberTypeFloat32) {
+    return false;
   }
   if (node_name == "Mul" || node_name == "Add") {
     for (size_t i = 0; i < cnode->size() - 1; i++) {
@@ -103,7 +107,9 @@ bool IsByteAlign(const CNodePtr &cnode, const std::string &node_name) {
 
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
-    return true;
+    auto sub_graph = GetCNodeFuncGraph(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    return !sub_graph->has_attr("keep_basic");
   }
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
@@ -137,7 +143,7 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
         type_id != kNumberTypeFloat32) {
       return false;
     }
-    if (IsByteAlign(cnode, node_name) == false) {
+    if (CanCluster(cnode, node_name) == false) {
       return false;
     }
   }
