@@ -48,24 +48,24 @@ class IfParser(Parser):
         except RuntimeError:
             args = []
         if_node = ControlFlow("if_node", ast_if, False, args, stree)
+        stree.append_origin_field(if_node, node_manager)
         for body in ast_if.body:
             parser: Parser = ParserRegister.instance().get_parser(type(body))
             if parser is None:
                 stree.append_python_node(ast_if, body, node_manager=if_node)
             else:
                 parser.process(stree, body, node_manager=if_node)
-        stree.append_origin_field(if_node, node_manager)
         # parse ast codes of else branch into ControlFlow Node
         else_node = None
         if ast_if.orelse:
             else_node = ControlFlow("else_node", ast_if, True, args, stree)
+            stree.append_origin_field(else_node, node_manager)
             for body in ast_if.orelse:
                 parser: Parser = ParserRegister.instance().get_parser(type(body))
                 if parser is None:
                     stree.append_python_node(ast_if, body, node_manager=else_node)
                 else:
                     parser.process(stree, body, node_manager=else_node)
-            stree.append_origin_field(else_node, node_manager)
             else_node.set_body_node(if_node)
             if_node.set_orelse_node(else_node)
         # record eval result of ast.If's test

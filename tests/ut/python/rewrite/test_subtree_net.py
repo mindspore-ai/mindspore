@@ -172,14 +172,6 @@ def test_subtree_net():
     net = MainNet()
     stree = SymbolTree.create(net)
     transform(stree)
-    for node in stree.nodes():
-        if node.get_node_type() != NodeType.Tree:
-            continue
-        if node.get_name() == "conv":
-            modify_stree: SymbolTree = node.get_sub_tree()
-            for inner_node in modify_stree.nodes():
-                print("inserted subtree node: ", inner_node.get_name())
-
     inset_subtree2(stree)
     add_relu_in_conv11(stree)
 

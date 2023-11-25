@@ -202,7 +202,7 @@ class SymbolTree:
         return Node(node_impl)
 
     def get_inputs(self) -> List[Node]:
-        return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
+        return [Node(node_impl) for node_impl in self._symbol_tree.get_input_nodes()]
 
     def before(self, node: Union[Node, str]):
         """

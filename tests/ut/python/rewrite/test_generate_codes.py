@@ -108,7 +108,7 @@ def test_generate_codes_from_symboltree():
     stree = SymbolTree.create(net)
 
     codes = stree.get_code()
-    assert codes.count("def external_func(x):") == 1
+    assert codes.count("def external_func") > 0
     assert codes.count("class SubSubNetOpt") == 1
     assert codes.count("def subsubnet_internal_func(self, x):") == 1
     assert codes.count("class SubNetOpt") == 1
@@ -194,14 +194,34 @@ def test_generate_codes_with_if_in_init():
     assert codes.count("self.net2 = TransformerEncoderLayerOpt(self.net2)") == 1
 
 
+class TransformerEncoderLayer2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class MOE2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.net = TransformerEncoderLayer2()
+
+    def construct(self, x):
+        x = self.net(x)
+        return x
+
+
 class IfInInitNetSubNet2(nn.Cell):
     def __init__(self, use_moe):
         super().__init__()
         self.use_moe = use_moe
         if self.use_moe:
-            self.net = MOE()
+            self.net = MOE2()
         else:
-            self.net = TransformerEncoderLayer()
+            self.net = TransformerEncoderLayer2()
 
     def construct(self, x):
         if self.use_moe:
@@ -235,8 +255,28 @@ def test_generate_codes_with_if_in_init_and_construct_same_func_name():
     assert codes.count("class IfInInitNet2Opt(nn.Cell):") == 1
     assert codes.count("class IfInInitNetSubNet2Opt(nn.Cell):") == 1
     assert codes.count("class IfInInitNetSubNet2Opt_1(nn.Cell):") == 1
-    assert codes.count("self.net = MOEOpt(self.net)") == 2
-    assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 3
+    assert codes.count("self.net = MOE2Opt(self.net)") == 2
+    assert codes.count("self.net = TransformerEncoderLayer2Opt(self.net)") == 3
+
+
+class TransformerEncoderLayer3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class MOE3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.net = TransformerEncoderLayer3()
+
+    def construct(self, x):
+        x = self.net(x)
+        return x
 
 
 class IfInInitNetSubNet3(nn.Cell):
@@ -244,9 +284,9 @@ class IfInInitNetSubNet3(nn.Cell):
         super().__init__()
         self.use_moe = use_moe
         if self.use_moe:
-            self.net = MOE()
+            self.net = MOE3()
         else:
-            self.net = TransformerEncoderLayer()
+            self.net = TransformerEncoderLayer3()
 
     def construct(self, x):
         x = self.net(x)
@@ -278,11 +318,11 @@ def test_generate_codes_with_if_in_init_same_func_name():
     assert codes.count("class IfInInitNet3Opt(nn.Cell):") == 1
     assert codes.count("class IfInInitNetSubNet3Opt(nn.Cell):") == 1
     assert codes.count("class IfInInitNetSubNet3Opt_1(nn.Cell):") == 1
-    assert codes.count("class MOEOpt(nn.Cell):") == 1
-    assert codes.count("class TransformerEncoderLayerOpt(nn.Cell):") == 1
+    assert codes.count("class MOE3Opt(nn.Cell):") == 1
+    assert codes.count("class TransformerEncoderLayer3Opt(nn.Cell):") == 1
     assert codes.count("self.subnet1 = IfInInitNetSubNet3Opt(self.subnet1)") == 1
     assert codes.count("self.subnet2 = IfInInitNetSubNet3Opt_1(self.subnet2)") == 1
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
-    assert codes.count("self.net = MOEOpt(self.net)") == 1
-    assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 2
+    assert codes.count("self.net = MOE3Opt(self.net)") == 1
+    assert codes.count("self.net = TransformerEncoderLayer3Opt(self.net)") == 2

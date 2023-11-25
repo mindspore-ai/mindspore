@@ -16,6 +16,7 @@
 from typing import Optional
 import ast
 import inspect
+from textwrap import dedent
 
 from mindspore.nn import Cell
 from .symbol_tree import SymbolTree
@@ -39,7 +40,7 @@ class SymbolTreeBuilder:
             raise RuntimeError("Only support network with Cell type now, ", network)
         self._origin_net = network
         network_str = inspect.getsource(type(network))
-        self._ast_root: ast.Module = ast.parse(network_str)
+        self._ast_root: ast.Module = ast.parse(dedent(network_str))
         self._root_tree: Optional[SymbolTree] = None
 
     @staticmethod

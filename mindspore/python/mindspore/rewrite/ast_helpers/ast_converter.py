@@ -15,14 +15,34 @@
 """Convert ast node to other type."""
 from typing import Union, List
 import ast
-from ..api.scoped_value import ScopedValue
-from ..common.error_log import error_str
+import sys
 
+from mindspore import log as logger
+from ..api.scoped_value import ScopedValue, ValueType
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
+
+AST_CONSTANTS = (ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes)
 
 class AstConverter():
     """
     Get information from ast node and convert to other type.
     """
+
+    @staticmethod
+    def get_ast_constant_value(node: Union[ast.Constant, ast.NameConstant, ast.Num, ast.Str, ast.Bytes]):
+        """Get value from ast constant"""
+        if isinstance(node, (ast.Constant, ast.NameConstant)):
+            return node.value
+        if isinstance(node, ast.Num):
+            return node.n
+        if isinstance(node, (ast.Str, ast.Bytes)):
+            return node.s
+        raise ValueError(f"For get_ast_constant_value, node cannot be {type(node)}")
+
     @staticmethod
     def create_scopedvalue(node: ast.AST) -> ScopedValue:
         """
@@ -33,31 +53,25 @@ class AstConverter():
 
         Returns:
             An instance of ScopedValue.
-
-        Raises:
-            RuntimeError: Value of target of ast.Assign should be an ast.Name when target is an ast.Attribute.
-            RuntimeError: Type of input node is unsupported.
         """
         if isinstance(node, ast.Name):
             return ScopedValue.create_naming_value(node.id)
         if isinstance(node, ast.Attribute):
             scope = node.value
             if not isinstance(scope, ast.Name):
-                raise RuntimeError(error_str(f"value of target of ast.Assign should be a ast.Name when target is a "
-                                             f"ast.Attribute, but got ast type '{type(scope).__name__}'",
-                                             child_node=scope, father_node=node))
+                node_str = astunparse.unparse(node).strip()
+                logger.info(f"When creating scopedvalue for '{node_str}', value of ast.Attribute should be ast.Name, "
+                            f"but got ast type '{type(scope).__name__}'")
+                return ScopedValue(ValueType.UnsupportedValue, "", node_str)
             return ScopedValue.create_naming_value(node.attr, scope.id)
         if isinstance(node, (ast.List, ast.Tuple)):
             return AstConverter.create_scopedvalue_from_list(node.elts)
-        if isinstance(node, (ast.Constant, ast.NameConstant)):
-            return ScopedValue.create_variable_value(node.value)
-        if isinstance(node, ast.Num):
-            return ScopedValue.create_variable_value(node.n)
-        if isinstance(node, (ast.Str, ast.Bytes)):
-            return ScopedValue.create_variable_value(node.s)
-        raise RuntimeError(error_str(f"create_scopedvalue failed, only support (ast.Name, ast.Attribute, ast.Tuple, "
-                                     f"ast.Constant, ast.Num, ast.Str, ast.Bytes) as argument, but got ast type "
-                                     f"'{type(node).__name__}'", child_node=node))
+        if isinstance(node, AST_CONSTANTS):
+            value = AstConverter.get_ast_constant_value(node)
+            return ScopedValue.create_variable_value(value)
+        node_str = astunparse.unparse(node).strip()
+        logger.info(f"For '{node_str}', type '{type(node).__name__}' is not supported for ScopedValue now.")
+        return ScopedValue(ValueType.UnsupportedValue, "", node_str)
 
     @staticmethod
     def create_scopedvalue_from_list(ast_list: List[ast.AST]) -> ScopedValue:
@@ -69,16 +83,14 @@ class AstConverter():
 
         Returns:
             An instance of ScopedValue.
-
-        Raises:
-            RuntimeError: Only support [ast.Constant, ast.Name, ast.Attribute] as elts of node_list.
         """
         tuple_values = []
         for tuple_elt in ast_list:
             if not isinstance(tuple_elt, (ast.Constant, ast.Name, ast.Attribute)):
-                raise RuntimeError(error_str(f"Only support ast.Constant, ast.Name and ast.Attribute as elts of "
-                                             f"ast.Tuple, but got ast type {type(tuple_elt).__name__}",
-                                             child_node=tuple_elt))
+                node_str = astunparse.unparse(tuple_elt).strip()
+                logger.info(f"When create scopedvalue for '{node_str}' only support (ast.Constant, ast.Name, "
+                            f"ast.Attribute) as elts of ast.Tuple, but got ast type {type(tuple_elt).__name__}")
+                return ScopedValue(ValueType.UnsupportedValue, "", node_str)
             if isinstance(tuple_elt, ast.Constant):
                 tuple_values.append(tuple_elt.value)
             elif isinstance(tuple_elt, ast.Name):
@@ -95,6 +107,25 @@ class AstConverter():
         if isinstance(ast_node, ast.Attribute):
             return ast_node.attr
         return ""
+
+    @staticmethod
+    def ast_tuple_elts_support_scopledvalue(value: ast.Tuple) -> bool:
+        """ check whether each element's type in tuple is supported by scopled value. """
+        for elt in value.elts:
+            if not isinstance(elt, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num, ast.Str, ast.Bytes)):
+                return False
+        return True
+
+    @staticmethod
+    def ast_dict_support_scopledvalue(ast_dict: ast.Dict) -> bool:
+        """ check whether each element's type in dict is supported by scopled value. """
+        for key in ast_dict.keys:
+            if not (isinstance(key, ast.Constant) and isinstance(key.value, str)):
+                return False
+        for value in ast_dict.values:
+            if not isinstance(value, (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num, ast.Str, ast.Bytes)):
+                return False
+        return True
 
     @staticmethod
     def get_ast_target_elems(ast_target: ast.AST):

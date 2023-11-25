@@ -45,7 +45,7 @@ class SymbolTreeDumper:
 
     def _dump_inputs(self):
         """Dump inputs of SymbolTree."""
-        inputs = self._symbol_tree.get_inputs()
+        inputs = self._symbol_tree.get_input_nodes()
         self._dump_buffer += f"#Inputs num     : {len(inputs)}\n"
         for single_input in inputs:
             targets = single_input.get_targets()

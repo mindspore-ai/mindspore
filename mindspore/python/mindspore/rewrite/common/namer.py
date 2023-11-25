@@ -84,7 +84,7 @@ class Namer:
                 # When _names is {x:2} and origin_name is y,
                 # origin_name is not in _names and can be returned.
                 return name
-            if suffix_idx and not self._names.get(real_name, -1) >= suffix_idx:
+            if suffix_idx and not self._names.get(real_name, -1) > suffix_idx:
                 # When _names is {x:2} and origin_name is x_3,
                 # return x_3 and update _names to {x:2, x_3:1}
                 return name
@@ -167,7 +167,7 @@ class NodeNamer(Namer):
                 elif node_or_name.get_node_type() == NodeType.MathOps:
                     origin_name = "math_ops"
                 else:
-                    raise RuntimeError("Node type unsupported:", node_or_name.get_node_type())
+                    origin_name = str(node_or_name.get_node_type())
         elif isinstance(node_or_name, str):
             if not node_or_name:
                 raise RuntimeError("input node_name is empty.")
@@ -224,3 +224,51 @@ class ClassNamer(Namer):
         """
 
         super(ClassNamer, self).add_name(class_name + self._prefix)
+
+class FunctionNamer(Namer):
+    """
+    Used for unique-ing function name in a network.
+
+    Function name should be unique in a network, in other word, in a Rewrite process. So please do not invoke
+    constructor of `FunctionNamer` and call `instance()` of `FunctionNamer` to obtain singleton of FunctionNamer.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._prefix = ""
+
+    @classmethod
+    def instance(cls):
+        """
+        Class method of `FunctionNamer` for singleton of `FunctionNamer`.
+
+        Returns:
+            An instance of `FunctionNamer` as singleton of `FunctionNamer`.
+        """
+
+        if not hasattr(FunctionNamer, "_instance"):
+            FunctionNamer._instance = FunctionNamer()
+        return FunctionNamer._instance
+
+    def get_name(self, origin_func_name: str) -> str:
+        """
+        Unique input `origin_func_name`.
+
+        Args:
+            origin_func_name (str): A string represents original function name.
+
+        Returns:
+            A string represents a unique function name generated from `origin_func_name`.
+        """
+
+        return super(FunctionNamer, self).get_name(origin_func_name + self._prefix)
+
+    def add_name(self, func_name: str):
+        """
+        Declare a `func_name` so that other function can not apply this `func_name` anymore.
+
+        Args:
+            func_name (str): A string represents a function name.
+        """
+
+        super(FunctionNamer, self).add_name(func_name + self._prefix)

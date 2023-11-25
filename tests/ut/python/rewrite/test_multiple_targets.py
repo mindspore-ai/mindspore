@@ -15,7 +15,6 @@
 from mindspore.nn import Cell, Conv2d
 from mindspore.rewrite import SymbolTree, ScopedValue
 from mindspore.ops import operations as P
-from .utils import get_node_by_index
 
 
 class SubNet(Cell):
@@ -57,7 +56,7 @@ def test_multi_targets():
     """
     test_cls = NetMultiTargets()
     stree = SymbolTree.create(test_cls)
-    node = get_node_by_index(stree, 2)
+    node = stree.get_node('conv1')
     assert node is not None
     targets = node.get_targets()
     assert targets[0].value == 'c1'
@@ -91,19 +90,18 @@ def test_multi_targets_with_attribute():
     net = NetMultiTargetsWithAttribute()
     stree = SymbolTree.create(net)
     conv1_node = stree.get_node("conv1")
-    attr_node_c1 = stree.get_node("attribute_assign_1") # code: self_c1 = self.c1
-    attr_node_c2 = stree.get_node("attribute_assign") # code: self_c2 = self.c2
-    attr_node_c3 = stree.get_node("attribute_assign_2") # code: self_c3 = self.c3
-    assert conv1_node.get_handler().get_target_users(0)[0] == (attr_node_c1.get_handler(), 0)
-    assert conv1_node.get_handler().get_target_users(1)[0] == (attr_node_c2.get_handler(), 0)
-    assert conv1_node.get_handler().get_target_users(2)[0] == (attr_node_c3.get_handler(), 0)
+    add = stree.get_node("add") # code: x = self.add(self.c1, self.c2)
+    add_1 = stree.get_node("add_1") # x = self.add(x, self.c3)
+    assert conv1_node.get_handler().get_target_users(0)[0] == (add.get_handler(), 0)
+    assert conv1_node.get_handler().get_target_users(1)[0] == (add.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(2)[0] == (add_1.get_handler(), 1)
     # modify order of targets
     stree.get_handler().set_node_target(conv1_node.get_handler(), 0, ScopedValue.create_naming_value("c2", "self"))
     stree.get_handler().set_node_target(conv1_node.get_handler(), 1, ScopedValue.create_naming_value("c3", "self"))
     stree.get_handler().set_node_target(conv1_node.get_handler(), 2, ScopedValue.create_naming_value("c1", "self"))
-    assert conv1_node.get_handler().get_target_users(0)[0] == (attr_node_c2.get_handler(), 0)
-    assert conv1_node.get_handler().get_target_users(1)[0] == (attr_node_c3.get_handler(), 0)
-    assert conv1_node.get_handler().get_target_users(2)[0] == (attr_node_c1.get_handler(), 0)
+    assert conv1_node.get_handler().get_target_users(0)[0] == (add.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(1)[0] == (add_1.get_handler(), 1)
+    assert conv1_node.get_handler().get_target_users(2)[0] == (add.get_handler(), 0)
     codes = stree.get_code()
     assert codes.count("(self.c2, self.c3, self.c1) = self.conv1(x)")
 

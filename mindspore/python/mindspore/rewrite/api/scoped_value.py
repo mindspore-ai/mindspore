@@ -27,15 +27,17 @@ class ValueType(Enum):
       and container-type of ValueType.
     """
 
-    # base type
+    # constant type
     ConstantValue = 0
     # container type
     TupleValue = 20
     ListValue = 21
     DictValue = 22
-    # other type
+    # variable type
     NamingValue = 40
     CustomObjValue = 41
+    # unsupported type
+    UnsupportedValue = 50
 
 
 class ScopedValue:
@@ -85,13 +87,12 @@ class ScopedValue:
             return cls(ValueType.TupleValue, "",
                        tuple(cls.create_variable_value(single_value) for single_value in value))
         if isinstance(value, list):
-            return cls(ValueType.ListValue, "", list(cls.create_variable_value(single_value) for single_value in value))
+            return cls(ValueType.ListValue, "",
+                       list(cls.create_variable_value(single_value) for single_value in value))
         if isinstance(value, dict):
-            for key, _ in value.items():
-                if not isinstance(key, str):
-                    raise TypeError("key should be str, got: ", type(key))
             return cls(ValueType.DictValue, "",
-                       dict((key, cls.create_variable_value(single_value)) for key, single_value in value.items()))
+                       dict((cls.create_variable_value(key),
+                             cls.create_variable_value(single_value)) for key, single_value in value.items()))
         return cls(ValueType.CustomObjValue, "", value)
 
     @classmethod

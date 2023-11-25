@@ -25,11 +25,11 @@ class NodeManager:
     """
     NodeManager saves nodes and manager nodes' topological relationship.
     """
-    def __init__(self, node_namer):
+    def __init__(self):
         """Initializer of NodeManager"""
         self._topo_mgr = TopoManager()
         self._nodes: {str, Node} = {}
-        self._manager_node_namer = node_namer
+        self._manager_node_namer = None
         # record all tree nodes, which is used when generating codes
         self._tree_nodes: [Node] = []
         # head node is always point to the first node of nodes
@@ -113,7 +113,7 @@ class NodeManager:
         Erase a node from nodes.
 
         Args:
-            node (Node): _description_
+            node (Node): Node to be erased.
         """
         self._topo_mgr.on_erase_node(node)
         for key, value in self._nodes.items():
@@ -194,7 +194,7 @@ class NodeManager:
         """Get _node_manager_ast."""
         return self._node_manager_ast
 
-    def get_inputs(self):
+    def get_input_nodes(self):
         """Get _inputs"""
         return self._inputs
 
@@ -248,6 +248,23 @@ class NodeManager:
         dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
         dump_str += '\n'
         return dump_str
+
+    def get_top_manager(self) -> 'NodeManager':
+        """
+        Get the top node_manager with type of no-method CallFunction or SymbolTree this
+        node_manager belongs to.
+        """
+        from .call_function import CallFunction
+        from ..symbol_tree import SymbolTree
+        if isinstance(self, SymbolTree):
+            return self
+        if isinstance(self, CallFunction) and not self.is_method():
+            return self
+        return self.get_node_manager().get_top_manager()
+
+    def set_manager_node_namer(self, node_namer):
+        """Set manager node namer"""
+        self._manager_node_namer = node_namer
 
     def _add_node_to_nodes(self, node: Node):
         """

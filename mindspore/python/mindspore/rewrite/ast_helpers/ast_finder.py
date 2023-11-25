@@ -16,6 +16,12 @@
 
 from typing import Type, Any
 import ast
+import copy
+import sys
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 
 class AstFinder(ast.NodeVisitor):
@@ -354,3 +360,45 @@ class AstFunctionFinder(ast.NodeVisitor):
         self._results.clear()
         self.visit(self._scope)
         return self._results
+
+
+class AstImportFinder(ast.NodeVisitor):
+    """Find all import nodes from input ast node."""
+    def __init__(self, ast_root: ast.AST):
+        self.ast_root = ast_root
+        self.import_nodes = []
+        self.try_nodes = []
+        self.imports_str = []
+
+    def visit_Try(self, node: ast.Try) -> Any:
+        if isinstance(node.body[0], (ast.Import, ast.ImportFrom)):
+            self.try_nodes.append(copy.deepcopy(node))
+        return node
+
+    def visit_Import(self, node: ast.Import) -> Any:
+        """Iterate over all nodes and save ast.Import nodes."""
+        self.import_nodes.append(copy.deepcopy(node))
+        self.imports_str.append(astunparse.unparse(node))
+        return node
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
+        """Iterate over all nodes and save ast.ImportFrom nodes."""
+        self.import_nodes.append(copy.deepcopy(node))
+        self.imports_str.append(astunparse.unparse(node))
+        return node
+
+    def _remove_duplicated_import_in_try(self, node: [ast.Import, ast.ImportFrom]):
+        import_str = astunparse.unparse(node)
+        if import_str in self.imports_str:
+            self.import_nodes.remove(self.import_nodes[self.imports_str.index(import_str)])
+
+    def get_import_node(self):
+        self.generic_visit(self.ast_root)
+        for Try in self.try_nodes:
+            for body in Try.body:
+                self._remove_duplicated_import_in_try(body)
+            for handler in Try.handlers:
+                for body in handler.body:
+                    self._remove_duplicated_import_in_try(body)
+        self.import_nodes.extend(self.try_nodes)
+        return self.import_nodes

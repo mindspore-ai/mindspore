@@ -16,10 +16,11 @@
 import inspect
 from typing import Dict
 import ast
+from textwrap import dedent
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore._extends.parse.namespace import CellNamespace
-from . import Parser, ParserRegister, ModuleParser, reg_parser
+from . import Parser, ParserRegister, reg_parser
 from ..node import NodeManager
 from ..symbol_tree import SymbolTree
 from ..ast_helpers import AstReplacer, AstConverter
@@ -139,13 +140,9 @@ class ClassDefParser(Parser):
     @staticmethod
     def _process_one_father_class(stree: SymbolTree, father_class_def: type, father_class_name: str):
         """Process one father class"""
-        # save father class's file path and imports into symbol tree
-        net_path = inspect.getfile(father_class_def)
-        ModuleParser.save_file_path_to_sys(stree, 0, net_path)
-        ModuleParser.save_imports_from_file(stree, net_path)
         # get father class's ast
         source_code = inspect.getsource(father_class_def)
-        father_class_ast: ast.ClassDef = ast.parse(source_code).body[0]
+        father_class_ast: ast.ClassDef = ast.parse(dedent(source_code)).body[0]
         # process father class's father classes
         father_classes = ClassDefParser._process_father_classes(stree, father_class_ast, father_class_def)
         # process father class's __init__ function
@@ -160,7 +157,10 @@ class ClassDefParser(Parser):
                 # Remove other codes, which are copied in __init__ function.
                 father_class_ast.body.remove(body)
         # save father class's ast into symbol tree
-        stree.get_father_class_ast().append(father_class_ast)
+        stree.get_father_class_ast()[father_class_ast] = []
+        # save father class's file path and imports into symbol tree
+        net_path = inspect.getfile(father_class_def)
+        stree.save_imports_from_file(net_path, father_class_ast)
 
     @staticmethod
     def _func_decorator_process(node: ast.FunctionDef):
@@ -219,12 +219,18 @@ class ClassDefParser(Parser):
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
                     parser.process(stree, body, stree)
                 else:
-                    logger.info(
+                    logger.debug(
                         "Ignoring ast.FunctionDef in ast.ClassDef except __init__ and construct function: %s",
                         body.name)
             elif isinstance(body, (ast.Assign, ast.If, ast.IfExp)):
                 # Remove class variables, which are copied in __init__ function.
                 node.body.remove(body)
+            elif isinstance(body, ast.Expr) and \
+                (isinstance(body.value, ast.Str) or (isinstance(body.value, ast.Constant) and \
+                                                     isinstance(body.value.value, str))):
+                # delete the comments
+                node.body.remove(body)
+                continue
             else:
                 logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
         # Copy function class variables into new network

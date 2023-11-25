@@ -17,14 +17,12 @@ Parsers for resolve ast to SymbolTree
 """
 from .parser import Parser
 from .parser_register import ParserRegister, ParserRegistry, reg_parser
+from .module_parser import ModuleParser
 from .arguments_parser import ArgumentsParser
 from .assign_parser import AssignParser
-from .attribute_parser import AttributeParser
-from .constant_parser import NameParser, NumParser, StrParser
-from .container_parser import ListParser, TupleParser
 from .for_parser import ForParser
 from .function_def_parser import FunctionDefParser
 from .if_parser import IfParser
-from .module_parser import ModuleParser
 from .return_parser import ReturnParser
-from .class_def_parser import ClassDefParser # Rely on ModuleParser
+from .class_def_parser import ClassDefParser
+from .expr_parser import ExprParser # Rely on AssignParser

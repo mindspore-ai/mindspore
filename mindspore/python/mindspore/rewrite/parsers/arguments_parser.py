@@ -53,11 +53,11 @@ class ArgumentsParser(Parser):
         if hasattr(ast_node, "kwonlyargs"):
             stree.try_append_python_node(ast_node, ast_node.kwonlyargs, node_manager)
         if hasattr(ast_node, "kw_defaults"):
-            stree.try_append_python_node(ast_node, ast_node.kw_defaults, node_manager)
+            pass
         if hasattr(ast_node, "kwarg"):
             stree.try_append_python_node(ast_node, ast_node.kwarg, node_manager)
         if hasattr(ast_node, "defaults"):
-            stree.try_append_python_node(ast_node, ast_node.defaults, node_manager)
+            pass
 
 
 g_arguments_parser = reg_parser(ArgumentsParser())

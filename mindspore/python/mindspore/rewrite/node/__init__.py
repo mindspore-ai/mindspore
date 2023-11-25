@@ -15,7 +15,7 @@
 """
 SymbolTree node
 """
-from .node import Node, TreeNode
+from .node import Node, TreeNode, LocalPrim
 from .node_manager import NodeManager
 from .call_function import CallFunction
 from .cell_container import CellContainer

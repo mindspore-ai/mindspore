@@ -153,7 +153,7 @@ class Node:
             >>> print(new_node.get_node_type())
             NodeType.CallFunction
         """
-        Validator.check_value_type("function", function, [FunctionType, type], "create_call_function")
+        Validator.check_value_type("function", function, [FunctionType, type, type(abs)], "create_call_function")
         Validator.check_element_type_of_iterable("targets", targets, [ScopedValue, str], "create_call_function")
         if args is not None:
             Validator.check_element_type_of_iterable("args", args, [ScopedValue], "create_call_function")

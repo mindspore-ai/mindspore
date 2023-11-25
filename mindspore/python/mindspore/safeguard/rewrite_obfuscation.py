@@ -23,8 +23,8 @@ from mindspore.common.tensor import Tensor
 from mindspore import log as logger
 from mindspore import load_checkpoint, save_checkpoint
 from mindspore.rewrite import SymbolTree, Node, NodeType, ScopedValue
-from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
-from mindspore.rewrite.parsers.class_def_parser import ModuleParser
+from mindspore.rewrite.parsers import ClassDefParser
+from mindspore.rewrite.parsers import ModuleParser
 
 OBF_RATIOS_LENGTH = 1
 MAX_OBF_RATIOS_NUM = 50

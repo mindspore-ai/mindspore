@@ -14,7 +14,7 @@
 # ============================================================================
 """Ast optimizer for flatten recursive call."""
 
-from typing import Any, Tuple, List, Dict
+from typing import Any, Tuple, List, Dict, Union
 import keyword
 import ast
 import copy
@@ -38,13 +38,15 @@ class AstFlattener(ast.NodeTransformer):
         """
         self._flatten_table: dict = {
             ast.Return: ["value"],
-            ast.Call: ["args"],
+            ast.Call: ["func", "args", "keywords"],
             ast.BinOp: ["left", "right"],
             ast.BoolOp: ["values"],
             ast.UnaryOp: ["operand"],
             ast.Compare: ["left", "comparators"],
             ast.If: ["test"],
-            ast.For: ["iter"]
+            ast.For: ["iter"],
+            ast.Tuple: ["elts"],
+            ast.List: ["elts"],
         }
         self._transform_functions = []
         self._symbol_tree = None # Used to get unique name
@@ -88,8 +90,8 @@ class AstFlattener(ast.NodeTransformer):
             elif isinstance(func, ast.Attribute):
                 target_name = func.attr + "_var"
             else:
-                logger.info("unhandled type of func of ast.Call while generating new target name: %s ", type(func))
-                target_name = "function"
+                logger.debug("unhandled type of func of ast.Call while generating new target name: %s ", type(func))
+                target_name = "function_var"
         elif isinstance(node, ast.Return):
             target_name = "return_value"
         elif isinstance(node, (ast.BinOp, ast.BoolOp, ast.UnaryOp)):
@@ -101,9 +103,9 @@ class AstFlattener(ast.NodeTransformer):
         elif isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
             target_name = f"{node.value.id}_{node.attr}"
         else:
-            logger.info("unhandled type of node while generating new target name: %s ", type(node))
+            logger.debug("unhandled type of node while generating new target name: %s ", type(node))
             target_name = type(node).__name__.lower() + "_var"
-        # avoid python keyword
+        # avoid python built-in keyword
         if keyword.iskeyword(target_name):
             target_name = target_name + "_var"
         suffix = 0
@@ -116,25 +118,24 @@ class AstFlattener(ast.NodeTransformer):
         target_names.append(result)
         return result
 
-    def _create_new_assign_node(self, node: ast.AST, target_names) -> Tuple[str, ast.AST]:
+    def _create_new_assign_node(self, node: ast.AST, target_names, father_node: ast.AST) \
+            -> Tuple[Union[ast.Name, ast.Attribute], ast.AST]:
         """Create new assign node to be inserted into ast.FunctionDef."""
-        if isinstance(node, (ast.Name, ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes, ast.Ellipsis)):
-            return "", node
+        ast_unflattens = (ast.Name, ast.NameConstant, ast.Constant, ast.Num, ast.Str, ast.Bytes, ast.Ellipsis)
+        if isinstance(node, ast_unflattens):
+            return node, None
+        # ast.Attribute in ControlFlow will be force flatten
+        # when ast.Attribute is not in (ast.For, ast.While), it's value which is not type of ast.Name will be flatten
+        if isinstance(node, ast.Attribute) and not isinstance(father_node, (ast.For, ast.While)):
+            if isinstance(node.value, ast.Name):
+                return node, None
+            new_target_name = self._generate_target_name(node.value, target_names)
+            new_node = ast.Attribute(value=ast.Name(id=new_target_name, ctx=ast.Load()), attr=node.attr, ctx=node.ctx)
+            return new_node, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node.value)
+        # flatten nodes
         new_target_name = self._generate_target_name(node, target_names)
-        return new_target_name, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node)
-
-    def _flatten_list(self, node_list, target_names):
-        """Flatten a list of node."""
-        results = list()
-        new_list = list()
-        for node in node_list:
-            if isinstance(node, ast.Call):
-                new_target, new_node = self._create_new_assign_node(node, target_names)
-                results.append(new_node)
-                new_list.append(ast.Name(id=new_target, ctx=ast.Load()))
-            else:
-                new_list.append(node)
-        return results, new_list
+        new_node = ast.Name(id=new_target_name, ctx=ast.Load())
+        return new_node, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node)
 
     def _flatten_statement(self, node: ast.AST, target_names) -> [ast.AST]:
         """Flatten recursive statement according to different node type."""
@@ -153,32 +154,37 @@ class AstFlattener(ast.NodeTransformer):
                     if isinstance(todo, ast.Starred):
                         new_list.append(todo)
                         continue
-                    new_target_name, new_node = self._create_new_assign_node(todo, target_names)
-                    if id(new_node) == id(todo):
+                    # ast.keywords are processed individually:
+                    # y = func(key=value) => new_target_name = value & y = func(key=new_target_name)
+                    if isinstance(todo, ast.keyword):
+                        new_node, new_assign = self._create_new_assign_node(todo.value, target_names, node)
+                        if id(new_node) != id(todo.value):
+                            todo.value = new_node
+                            results.append(new_assign)
                         new_list.append(todo)
+                        continue
+                    new_node, new_assign = self._create_new_assign_node(todo, target_names, node)
+                    if id(new_node) != id(todo):
+                        new_list.append(new_node)
+                        results.append(new_assign)
                     else:
-                        new_list.append(ast.Name(id=new_target_name, ctx=ast.Load()))
-                        results.append(new_node)
-                    if isinstance(todo, (ast.Tuple, tuple)):
-                        _res, _new_list = self._flatten_list(new_node.value.elts, [new_target_name])
-                        new_node.value.elts = _new_list
-                        results.extend(_res)
+                        new_list.append(todo)
                 setattr(node, todo_name, new_list)
             elif isinstance(todos, dict):
                 new_dict = []
                 for key, value in todos:
-                    new_target_name, new_node = self._create_new_assign_node(value, target_names)
-                    if id(new_node) == id(value):
-                        new_dict[key] = value
+                    new_node, new_assign = self._create_new_assign_node(value, target_names, node)
+                    if id(new_node) != id(value):
+                        new_dict[key] = new_node
+                        results.append(new_assign)
                     else:
-                        new_dict[key] = ast.Name(id=new_target_name, ctx=ast.Load())
-                        results.append(new_node)
+                        new_dict[key] = value
                 setattr(node, todo_name, new_dict)
             else:
-                new_target_name, new_node = self._create_new_assign_node(todos, target_names)
+                new_node, new_assign = self._create_new_assign_node(todos, target_names, node)
                 if id(new_node) != id(todos):
-                    setattr(node, todo_name, ast.Name(id=new_target_name, ctx=ast.Load()))
-                    results.append(new_node)
+                    setattr(node, todo_name, new_node)
+                    results.append(new_assign)
         return results
 
     def _save_target_names(self, ast_body: List[ast.AST]):

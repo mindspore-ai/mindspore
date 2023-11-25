@@ -394,19 +394,6 @@ class SymbolTree(Observer, Observable, NodeManager):
         """get local primitives constructed during forward method"""
         return self._local_prim_inits
 
-    @staticmethod
-    def get_node_full_name(node: Node) -> str:
-        """Get full name of node"""
-        name = node.get_manager_name() if isinstance(node, NodeManager) else node.get_name()
-        # traverse node_manager with type of Node
-        node_manager = node.get_node_manager()
-        while isinstance(node_manager, Node):
-            name = f"{node.get_manager_name()}.{name}"
-            node_manager = node.get_node_manager()
-        # type of node_manager is SymbolTree now
-        name = f"{node_manager.get_manager_name()}.{name}"
-        return name
-
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)

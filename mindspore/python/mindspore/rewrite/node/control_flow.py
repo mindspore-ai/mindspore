@@ -39,7 +39,8 @@ class ControlFlow(Node, NodeManager):
             stree (SymbolTree): Symbol tree used to get node_namer.
         """
         Node.__init__(self, NodeType.ControlFlow, ast_node, None, node_name, args, {}, node_name, None)
-        NodeManager.__init__(self, stree.get_node_namer())
+        NodeManager.__init__(self)
+        NodeManager.set_manager_node_namer(self, stree.get_node_namer())
         NodeManager.set_manager_name(self, node_name)
         self.is_orelse = is_orelse
         self.body_node = None

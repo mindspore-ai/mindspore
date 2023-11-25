@@ -61,7 +61,13 @@ class FunctionDefParser(Parser):
         parser.process(stree, arguments, node_manager)
 
         # parse body as node of stree
-        for body in ast_node.body:
+        for body in ast_node.body[:]:
+            # delete the comment
+            if isinstance(body, ast.Expr) and \
+                (isinstance(body.value, ast.Str) or (isinstance(body.value, ast.Constant) and \
+                                                     isinstance(body.value.value, str))):
+                ast_node.body.remove(body)
+                continue
             # avoid add dead code, so we need to break if return is added.
             parser: Parser = ParserRegister.instance().get_parser(type(body))
             if parser is None:

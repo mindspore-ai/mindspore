@@ -43,7 +43,8 @@ class CellContainer(Node, NodeManager):
         if isinstance(func_name, str):
             func_name = ScopedValue.create_naming_value(func_name)
         Node.__init__(self, NodeType.CellContainer, ast_node, targets, func_name, args, kwargs, node_name, instance)
-        NodeManager.__init__(self, stree.get_node_namer())
+        NodeManager.__init__(self)
+        NodeManager.set_manager_node_namer(self, stree.get_node_namer())
         NodeManager.set_manager_name(self, func_name.value)
         NodeManager.set_manager_ast(self, ast_node)
 

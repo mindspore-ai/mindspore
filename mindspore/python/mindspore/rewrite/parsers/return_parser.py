@@ -18,7 +18,7 @@ import ast
 from . import Parser, reg_parser
 from ..symbol_tree import SymbolTree
 from ..node import Node, NodeManager
-from ..common.error_log import error_str
+from ..ast_helpers import AstConverter
 
 
 class ReturnParser(Parser):
@@ -30,11 +30,8 @@ class ReturnParser(Parser):
 
     def process(self, stree: SymbolTree, node: ast.Return, node_manager: NodeManager):
         """Parse ast.Return to output-node of SymbolTree."""
-        return_value = node.value
-        if not isinstance(return_value, ast.Name):
-            raise RuntimeError(error_str(f"only support ast.Name as return value, but got ast type "
-                                         f"'{type(return_value).__name__}'", father_node=node, child_node=return_value))
-        node_return = Node.create_output_node(node, [return_value.id])
+        return_scoped_value = AstConverter.create_scopedvalue(node.value)
+        node_return = Node.create_output_node(node, [return_scoped_value])
         stree.append_origin_field(node_return, node_manager)
 
 g_return_parser = reg_parser(ReturnParser())

@@ -119,7 +119,7 @@ def _allow_mix_precision(node, allowed_list, dtype) -> bool:
 
 def _insert_cast_operator_process(node, dtype):
     """insert cast for operators in white_list."""
-    dtype_str = "mindspore.bfloat16" if dtype == mstype.bfloat16 else "mindspore.float16"
+    dtype_str = "bfloat16" if dtype == mstype.bfloat16 else "float16"
     new_cast_node = None
     stree = node.get_symbol_tree()
     # insert cast fp16/bf16 before the primitive operators
@@ -127,7 +127,7 @@ def _insert_cast_operator_process(node, dtype):
         for idx, arg in enumerate(node.get_args()):
             position = stree.before(node)
             new_node = _amp_cast_op()
-            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, ""])
+            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, "mindspore"])
             arg_provider = node.get_handler().get_arg_providers()[idx]
             if arg_provider and len(arg_provider[0].get_target_users(arg_provider[1])) > 1:
                 cast_targets = [stree.unique_name(str(arg))]
@@ -149,8 +149,8 @@ def _insert_cast_operator_process(node, dtype):
     # insert cast float32 after the operators
     position = stree.after(node)
     new_node = _amp_cast_op()
-    cast_args = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
-                                                           "mindspore.float32"])
+    cast_args = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value, "float32"],
+                                                          [node.get_targets()[0].scope, "mindspore"])
     new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
                                                      targets=[node.get_targets()[0]],
                                                      args=cast_args,
@@ -237,8 +237,8 @@ def _insert_cast_for_cell_container(cell_container, dtype, allowed_list, *, whit
 
 def _need_removed_cast_pair(node, dtype):
     """check whether the cast pairs should be removed."""
-    dtype_str = "mindspore.bfloat16" if dtype == mstype.bfloat16 else "mindspore.float16"
-    cast_dtypes = ms.rewrite.ScopedValue.create_name_values([dtype_str, "mindspore.float32"])
+    dtype_str = "bfloat16" if dtype == mstype.bfloat16 else "float16"
+    cast_dtypes = ms.rewrite.ScopedValue.create_name_values([dtype_str, "float32"], ["mindspore", "mindspore"])
     cast_dtype_f16 = cast_dtypes[0]
     cast_dtype_f32 = cast_dtypes[1]
     # current node should be Cast Op to float32
