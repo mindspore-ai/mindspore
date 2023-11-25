@@ -235,7 +235,8 @@ void TileInfo::UpdateMultiples() {
       MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
     }
 
-    if (IsValueNode<ValueTuple>(cnode->input(2))) {
+    constexpr size_t kFuncGraphIndexInTile = 2;
+    if (IsValueNode<ValueTuple>(cnode->input(kFuncGraphIndexInTile))) {
       auto func_graph = cnode->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       auto manager = func_graph->manager();

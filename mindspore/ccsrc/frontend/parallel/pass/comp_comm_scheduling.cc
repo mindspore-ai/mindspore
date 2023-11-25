@@ -656,7 +656,6 @@ SchedulingOutput FastGreedyScheduler::ProcessCore(std::vector<std::shared_ptr<Ta
 SchedulingOutput FastGreedyScheduler::ProcessSingle(const SchedulingInput &input, const TaskSortFunction &sortPtr,
                                                     bool pe_load_sort, const std::string &graph_name) {
   auto tasks = input.tasks;
-  // auto tasks = GetTestTasks();
   auto type_to_num_cores_map = GetTestPEs();
   SchedulingOutput output{{}, 0};
   // Optional: verify input task graph is a DAG
