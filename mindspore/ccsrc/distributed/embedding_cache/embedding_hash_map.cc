@@ -106,7 +106,7 @@ int EmbeddingHashMap::FindPosUnsafe() {
 }
 
 int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
-                                       bool *const, int *swap_out_id) {
+                                       bool *const /*need_wait_graph*/, int *swap_out_id) {
   if (current_pos_ < valid_capacity_) {
     // Start from index 1.
     return ++current_pos_;
