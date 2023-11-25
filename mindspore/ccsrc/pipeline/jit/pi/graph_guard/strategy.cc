@@ -19,14 +19,20 @@ namespace mindspore {
 namespace jit {
 namespace graph {
 
-OptStrategy::ExecKind OptStrategy::MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf,
+OptStrategy::ExecKind OptStrategy::MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, int count,
                                                           double adj_coef) {
   PerfStatisticsPtr graph_stat = graph_perf->GetStatistics();
   PerfStatisticsPtr pynative_stat = graph_perf->GetStatistics();
-  if (graph_stat->GetAverageDuration() * (1 + adj_coef) > pynative_stat->GetAverageDuration()) {
+  if (graph_stat->GetTotalCount() < count) {
+    return ExecKind::kExecGraph;
+  } else if (pynative_stat->GetTotalCount() < count) {
     return ExecKind::kExecPyNative;
   } else {
-    return ExecKind::kExecGraph;
+    if (graph_stat->GetAverageDuration() * (1 + adj_coef) > pynative_stat->GetAverageDuration()) {
+      return ExecKind::kExecPyNative;
+    } else {
+      return ExecKind::kExecGraph;
+    }
   }
 }
 
