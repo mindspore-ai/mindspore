@@ -48,6 +48,7 @@
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
+#include "plugin/device/ascend/optimizer/mindir/slice_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/shape_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_unify_mindir.h"
@@ -129,6 +130,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
   opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
+  opt_acl_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

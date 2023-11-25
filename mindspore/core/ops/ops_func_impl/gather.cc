@@ -27,6 +27,12 @@ ShapeVector CalcuateGatherWithBatchDims(const PrimitivePtr &primitive, int64_t b
                                         const ShapeVector &ind_vec, const ShapeVector &params_vec) {
   MS_CHECK_VALUE(axis_val >= batch_dims, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                            "batch_dims", axis_val, kGreaterEqual, batch_dims, primitive));
+  MS_CHECK_VALUE(ind_vec.size() >= LongToSize(batch_dims),
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("indices shape size", ind_vec.size(), kGreaterEqual,
+                                                             LongToSize(batch_dims), primitive));
+  MS_CHECK_VALUE(params_vec.size() >= LongToSize(batch_dims),
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("params shape size", params_vec.size(), kGreaterEqual,
+                                                             LongToSize(batch_dims), primitive));
 
   for (size_t i = 0; i < LongToSize(batch_dims); i++) {
     if (ind_vec[i] == abstract::TensorShape::kShapeDimAny || params_vec[i] != abstract::TensorShape::kShapeDimAny) {
