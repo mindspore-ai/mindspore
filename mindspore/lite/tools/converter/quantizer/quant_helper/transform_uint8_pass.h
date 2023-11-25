@@ -43,7 +43,7 @@ class TransformUint8Pass {
  private:
   int DoParameterNodeTrans(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
 
-  int Uint8toInt8(uint8_t *data, int size);
+  int Uint8toInt8(uint8_t *data, int size) const;
 
   int DoNodeDTypeTrans(const CNodePtr &cnode);
 

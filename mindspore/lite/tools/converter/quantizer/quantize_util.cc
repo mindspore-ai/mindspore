@@ -150,12 +150,12 @@ bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
   }
-  CHECK_NULL_RETURN(manager);
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
   auto node_users = manager->node_users()[cnode];
-  MS_CHECK_TRUE_RET(!node_users.empty(), RET_NULL_PTR);
+  MS_CHECK_TRUE_MSG(!node_users.empty(), false, "node_users is empty.");
   for (auto &node_user : node_users) {
     auto output_cnode = node_user.first->cast<CNodePtr>();
-    CHECK_NULL_RETURN(output_cnode);
+    MS_CHECK_TRUE_MSG(output_cnode != nullptr, false, "output_cnode is nullptr.");
     if (!opt::CheckPrimitiveType(output_cnode, prim::kPrimReturn)) {
       return false;
     }
