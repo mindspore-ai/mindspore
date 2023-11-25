@@ -79,7 +79,9 @@ def get_loop_info(total_num, each_loop_num):
     last_loop_num = total_num - each_loop_num * (loop_times - 1)
     return loop_times, last_loop_num
 
+
 def elements_align(index_elements, data_size, align_size):
+    """Get element num align to align_size"""
     total_size = index_elements * data_size
     aligned_total_size = (total_size + align_size - 1) // align_size * align_size
     return aligned_total_size // data_size
