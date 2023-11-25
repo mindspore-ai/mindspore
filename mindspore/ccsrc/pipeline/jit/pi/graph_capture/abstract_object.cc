@@ -992,11 +992,32 @@ AObject *AbstractTuple::GetItem(AObject *k) {
   if (!IsElementValid()) {
     return AObject::MakeAObject(element_type_);
   }
-  Py_ssize_t index = GetTupleIndex(k, this->size());
-  if (index == -1) {
-    return AObject::MakeAObject(kTypeAnyValue);
+  AObject *resultTuple = AObject::MakeAObject(kTypeTuple);
+  if (k->GetType() == AObject::kTypeSlice) {
+    PyObject *slicePyObject = k->GetPyObject().ptr();
+
+    Py_ssize_t start, stop, step;
+    if (PySlice_Unpack(slicePyObject, &start, &stop, &step) < 0) {
+      return nullptr;
+    }
+    if (start >= stop) {
+      return resultTuple;
+    }
+    AbstractTuple *resultTuplePtr = static_cast<AbstractTuple *>(resultTuple);
+    if (start == 0 && step == 1) {
+      resultTuplePtr->Update(this->items());
+      return resultTuplePtr;
+    } else if (step > 1) {
+      int cursor = 0;
+      std::vector<AObject *> itemsVector;
+      for (cursor = 0; cursor < stop; cursor += step) {
+        itemsVector.push_back(this->items()[cursor]);
+      }
+      resultTuplePtr->Update(itemsVector);
+    }
+    return resultTuplePtr;
   }
-  return items_[index];
+  return resultTuple;
 }
 
 #undef GET_INDEX
