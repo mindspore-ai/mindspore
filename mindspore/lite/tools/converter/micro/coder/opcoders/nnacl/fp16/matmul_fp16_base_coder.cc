@@ -224,7 +224,7 @@ int MatMulFP16BaseCoder::Prepare(CoderContext *const context) {
   return RET_OK;
 }
 
-int MatMulFP16BaseCoder::CollectFilesForTarget(CoderContext *const context) {
+void MatMulFP16BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp16/pack_fp16.h",
@@ -252,7 +252,6 @@ int MatMulFP16BaseCoder::CollectFilesForTarget(CoderContext *const context) {
               "VecMatmulFp16.S",
             });
   }
-  return RET_OK;
 }
 
 int MatMulFP16BaseCoder::DoCode(CoderContext *const context) {

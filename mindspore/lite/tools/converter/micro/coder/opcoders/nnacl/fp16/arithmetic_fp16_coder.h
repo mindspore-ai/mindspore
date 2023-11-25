@@ -33,13 +33,14 @@ class ArithmeticFP16Coder final : public ArithmeticFP32Coder {
 
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int Prepare(CoderContext *const context) override;
 
   int ReSize(CoderContext *const context) override;
 
   void InitFunTable() override;
 
+ private:
   int ExecuteCode(const std::string &input0, const std::string &input1, const std::string &output, int size,
                   CoderContext *const context, NNaclFp32Serializer *const code);
   void *broadcast_temp_;

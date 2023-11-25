@@ -154,7 +154,7 @@ bool DirectoryGenerator::CreateDynamicDir(const int model_index) {
   auto ret = MkMicroDir(model_dir);
   if (ret == RET_ERROR) {
     pro_file.close();
-    return ret;
+    return false;
   }
   pro_file.close();
   return true;

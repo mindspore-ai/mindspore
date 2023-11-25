@@ -24,6 +24,7 @@
 #include "include/errorcode.h"
 #include "src/executor/kernel_exec.h"
 #include "nnacl/base/cast_base.h"
+#include "base/float16.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ResizeFP16Coder : public ResizeFP32Coder {
@@ -34,8 +35,10 @@ class ResizeFP16Coder : public ResizeFP32Coder {
   ~ResizeFP16Coder() override { FreeTmpBuffer(); };
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int DataTypeLen() override;
+  float16 *x_weights_fp16_{nullptr};
+  float16 *y_weights_fp16_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_RESIZE_FP16_CODER_H_

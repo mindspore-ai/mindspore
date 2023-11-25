@@ -40,9 +40,9 @@ class DirectoryGenerator {
 
   bool CreateDynamicDir(const int model_index);
 
-  const std::string &work_dir() { return work_dir_; }
+  const std::string &work_dir() const { return work_dir_; }
 
-  const std::string &project_name() { return project_name_; }
+  const std::string &project_name() const { return project_name_; }
 
  private:
   DirectoryGenerator() = default;

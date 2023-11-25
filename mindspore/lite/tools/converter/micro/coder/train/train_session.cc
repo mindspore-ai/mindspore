@@ -44,7 +44,8 @@ int CoderTrainSession::Run(const std::string &model_name) {
   ret = DoCode();
   MS_CHECK_RET_CODE(ret, "do code failed");
 
-  PassArgsToContext(model_name);
+  ret = PassArgsToContext(model_name);
+  MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   MS_LOG(INFO) << "run op coders success";
   return RET_OK;
 }

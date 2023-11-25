@@ -31,12 +31,7 @@ class ConcatFP16Coder final : public ConcatFP32Coder {
 
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;
-
- private:
-  int ReSize();
-
-  int axis_{0};
-  ConcatParameter *concat_param_{nullptr};
+  int ReSize() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_CONCAT_FP16_CODER_H_

@@ -42,7 +42,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   virtual int InitBufferForBias();
   virtual int InitBufferA();
   virtual int InitBufferB();
-  virtual int CollectFilesForTarget(CoderContext *const context);
+  virtual void CollectFilesForTarget(CoderContext *const context);
   virtual int Init();
   virtual void InitParameter();
   void CalculateOutBatchSize();
