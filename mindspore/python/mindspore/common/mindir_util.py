@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import os
+import stat
 from mindspore import log as logger
 from mindspore import _checkparam as Validator
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
@@ -86,6 +87,14 @@ def save_mindir(model, file_name):
 
     Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
+    if not file_name.endswith('.mindir'):
+        file_name += ".mindir"
+
+    current_path = os.path.abspath(file_name)
+    dirname = os.path.dirname(current_path)
+    os.makedirs(dirname, exist_ok=True)
+    if os.path.exists(file_name):
+        os.chmod(file_name, stat.S_IWUSR)
 
     if not isinstance(model, mindir_model):
         raise TypeError("For 'save_mindir', the argument 'model' must be ModelProto, "
@@ -93,6 +102,7 @@ def save_mindir(model, file_name):
     try:
         with open(file_name, "wb") as f:
             f.write(model.SerializeToString())
+            os.chmod(file_name, stat.S_IRUSR)
     except BaseException as e:
         logger.critical(f"Failed to save the file: {file_name} ,"
                         f" please check the correct file.")
