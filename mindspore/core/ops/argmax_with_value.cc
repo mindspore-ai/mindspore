@@ -87,6 +87,10 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   if (axis < 0) {
     axis += x_rank;
   }
+  if (x_shape[axis] == 0) {
+    MS_EXCEPTION(ValueError) << "For ArgMaxWithValue, the pos:" << axis << " of input_x's shape can not be 0, but got "
+                             << x_shape_ptr->ToString();
+  }
   // Calculate all the shapes.
   auto cal_shape = [axis, keep_dims](ShapeVector &shape, const ShapeVector &x_shape) -> void {
     (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());
