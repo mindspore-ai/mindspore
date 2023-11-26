@@ -14,13 +14,14 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -50,7 +51,8 @@ def test_round_cust_class():
 
     net = GetattrClassNet()
     out = net()
-    assert out[0] == 100.91, out[1] == 100.91
+    assert np.allclose(out[0], 100.91, 0.0001, 0.0001)
+    assert np.allclose(out[1], 100.91, 0.0001, 0.0001)
 
 
 @pytest.mark.level1
