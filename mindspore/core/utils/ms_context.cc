@@ -79,6 +79,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
   set_param<std::string>(MS_CTX_AOE_JOB_TYPE, "2");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
+  set_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP, "2");
 
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
   set_param<uint32_t>(MS_CTX_GE_REF, 0);
@@ -86,18 +87,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
   set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
   set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
-  auto env_device = common::GetEnv("DEVICE_ID");
-  if (!env_device.empty()) {
-    try {
-      uint32_t device_id = UlongToUint(std::stoul(env_device));
-      set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-    } catch (std::invalid_argument &e) {
-      MS_LOG(WARNING) << "Invalid DEVICE_ID env:" << env_device << ". Please set DEVICE_ID to 0-7";
-      set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
-    }
-  } else {
-    set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
-  }
+  MsContext::SetDeviceId();
 
   set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = target;
@@ -173,6 +163,21 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
   });
 
   return inst_context_;
+}
+
+void MsContext::SetDeviceId() {
+  auto env_device = common::GetEnv("DEVICE_ID");
+  if (!env_device.empty()) {
+    try {
+      uint32_t device_id = UlongToUint(std::stoul(env_device));
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+    } catch (std::invalid_argument &e) {
+      MS_LOG(WARNING) << "Invalid DEVICE_ID env:" << env_device << ". Please set DEVICE_ID to 0-7";
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
+    }
+  } else {
+    set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
+  }
 }
 
 void MsContext::Refresh() {
