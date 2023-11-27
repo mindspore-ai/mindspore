@@ -49,7 +49,8 @@ int ConvolutionBoltCPUKernel::InitWeightBiasDesc() {
     in_channel = UP_ROUND(in_channel, C8NUM);
   }
 
-  std::vector<TensorDesc> filter_desc, bias_desc;
+  std::vector<TensorDesc> filter_desc;
+  std::vector<TensorDesc> bias_desc;
   size_t channel_axis = 3;
   filter_desc.push_back(
     tensor4d(dt_, conv_param_spec_.num_outputs, in_channel, conv_param_spec_.kernel_h, conv_param_spec_.kernel_w));
