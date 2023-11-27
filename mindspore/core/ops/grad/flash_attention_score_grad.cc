@@ -101,6 +101,8 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
   auto input_layout = GetValue<std::string>(primitive->GetAttr("input_layout"));
   auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
     input_args[kFlashAttentionScoreGradInputQueryIndex]->BuildShape())[kShape];
+  ShapeVector expect_q_shape;
+  std::vector<ShapeVector> expect_kv_shape;
   if (input_layout == kInputLayoutBSH) {
     if (query_shape.size() != kInputQueryBSHRank) {
       MS_LOG(EXCEPTION) << op_name << ": The rank of input `query` must be " << kInputQueryBSHRank << ", but got "
@@ -114,14 +116,8 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
       MS_LOG(EXCEPTION) << op_name << ": 'hidden_size` must be divisible by `head_num`, but got " << hidden_size
                         << " and " << head_num;
     }
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputKeyIndex],
-                    {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name, "key");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputValueIndex],
-                    {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name, "value");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputAttentionInIndex], {batch_size, seq_len, hidden_size},
-                    op_name, "attention_in");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputDyIndex], {batch_size, seq_len, hidden_size}, op_name,
-                    "dy");
+    expect_q_shape = {batch_size, seq_len, hidden_size};
+    expect_kv_shape = {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}};
   } else if (input_layout == kInputLayoutBNSD) {
     if (query_shape.size() != kInputQueryBNSDRank) {
       MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRank << ", but got "
@@ -134,19 +130,16 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
     }
     seq_len = query_shape[kIndex2];
     head_size = query_shape[kIndex3];
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputKeyIndex],
-                    {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name, "key");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputValueIndex],
-                    {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name,
-                    "value");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputAttentionInIndex],
-                    {batch_size, head_num, seq_len, head_size}, op_name, "attention_in");
-    CheckInputShape(input_args[kFlashAttentionScoreGradInputDyIndex], {batch_size, head_num, seq_len, head_size},
-                    op_name, "dy");
+    expect_q_shape = {batch_size, head_num, seq_len, head_size};
+    expect_kv_shape = {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}};
   } else {
     MS_LOG(EXCEPTION) << op_name << ": The value of attribute 'input_layout' must be one of [" << kInputLayoutBNSD
                       << ", " << kInputLayoutBSH << "], but got " << input_layout;
   }
+  CheckInputShape(input_args[kFlashAttentionScoreGradInputKeyIndex], expect_kv_shape, op_name, "key");
+  CheckInputShape(input_args[kFlashAttentionScoreGradInputValueIndex], expect_kv_shape, op_name, "value");
+  CheckInputShape(input_args[kFlashAttentionScoreGradInputAttentionInIndex], expect_q_shape, op_name, "attention_in");
+  CheckInputShape(input_args[kFlashAttentionScoreGradInputDyIndex], expect_q_shape, op_name, "dy");
   CheckInputShape(input_args[kFlashAttentionScoreGradInputAttnMaskIndex], {batch_size, 1, seq_len, seq_len}, op_name,
                   "attn_mask");
   CheckInputShape(input_args[kFlashAttentionScoreGradInputDropMaskIndex], {batch_size, head_num, seq_len, seq_len / 8},
