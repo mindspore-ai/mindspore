@@ -105,6 +105,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config);
 #endif
 
+  int PrintOutputData();
+
   template <typename T>
   std::vector<int64_t> ConverterToInt64Vector(const std::vector<T> &srcDims) {
     std::vector<int64_t> dims;

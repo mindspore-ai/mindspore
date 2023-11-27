@@ -1233,6 +1233,54 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
 }
 #endif
 
+int BenchmarkUnifiedApi::PrintOutputData() {
+  for (size_t i = 0; i < ms_outputs_for_api_.size(); i++) {
+    mindspore::MSTensor input = ms_outputs_for_api_[i];
+    auto tensor_data_type = static_cast<int>(input.DataType());
+
+    std::cout << "OutData " << i << ": ";
+    if (tensor_data_type == TypeId::kNumberTypeFloat16) {
+      MS_LOG(INFO) << "DataType: " << TypeId::kNumberTypeFloat16;
+      continue;
+    }
+    if (tensor_data_type == TypeId::kObjectTypeString) {
+      std::vector<std::string> output_strings = MSTensor::TensorToStrings(input);
+      size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
+      for (size_t j = 0; j < print_num; j++) {
+        std::cout << output_strings[j] << std::endl;
+      }
+      continue;
+    }
+    size_t print_num = std::min(static_cast<int>(input.ElementNum()), kPrintDataNum);
+    const void *in_data = input.MutableData();
+    if (in_data == nullptr) {
+      MS_LOG(ERROR) << "out_data is nullptr.";
+      return RET_ERROR;
+    }
+
+    for (size_t j = 0; j < print_num; j++) {
+      if (tensor_data_type == TypeId::kNumberTypeFloat32 || tensor_data_type == TypeId::kNumberTypeFloat) {
+        std::cout << static_cast<const float *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt8) {
+        std::cout << static_cast<const int8_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeUInt8) {
+        std::cout << static_cast<const uint8_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt32) {
+        std::cout << static_cast<const int32_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt64) {
+        std::cout << static_cast<const int64_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeBool) {
+        std::cout << static_cast<const bool *>(in_data)[j] << " ";
+      } else {
+        MS_LOG(ERROR) << "Datatype: " << tensor_data_type << " is not supported.";
+        return RET_ERROR;
+      }
+    }
+    std::cout << std::endl;
+  }
+  return RET_OK;
+}
+
 int BenchmarkUnifiedApi::CompileGraph(mindspore::ModelType model_type, const std::shared_ptr<Context> &context,
                                       const std::string &model_name) {
   Key dec_key;

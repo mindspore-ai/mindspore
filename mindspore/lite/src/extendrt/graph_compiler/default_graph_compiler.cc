@@ -65,7 +65,7 @@ void DefaultGraphCompiler::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph)
   const ConfigInfos config_infos;
   auto &device_contexts = context_->MutableDeviceInfo();
   if (device_contexts.empty()) {
-    MS_LOG(ERROR) << "no context found";
+    MS_LOG(ERROR) << "No context found";
   }
   auto device_type = device_contexts.at(0)->GetDeviceType();
   auto provider = device_contexts.at(0)->GetProvider();
@@ -74,15 +74,12 @@ void DefaultGraphCompiler::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph)
   if (delegate != nullptr) {
     delegate->ReplaceNodes(graph);
   }
-  // other delegate // implement by plugin later
 }
 
 std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
-  MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
-
   inner_context_ = ContextUtils::Convert(context_.get());
   if (inner_context_ == nullptr || inner_context_->Init() != RET_OK) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile init inner context failed";
+    MS_LOG(ERROR) << "Init inner context failed";
     return nullptr;
   }
 
@@ -90,28 +87,29 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
 
   ReplaceNodes(graph);
 
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
+  MS_LOG(DEBUG) << "Partition graph begin";
   auto graph_segments = Partition(graph);
   if (graph_segments.empty()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile partition graph failed";
+    MS_LOG(ERROR) << "Partition graph failed";
     return nullptr;
   }
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph End";
+  MS_LOG(DEBUG) << "Partition graph end";
 
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Schedule Graph Execute Plan Begin";
+  MS_LOG(DEBUG) << "Schedule graph to execute plan begin";
   auto execution_plan = NonCFGCompile(graph_segments, graph);
   if (execution_plan == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Compile Schedule graph segments failed";
+    MS_LOG(ERROR) << "Schedule graph failed";
     return nullptr;
   }
-  MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Schedule Graph Execute Plan End";
+  MS_LOG(DEBUG) << "Schedule graph to execute plan end";
+
   return execution_plan;
 }
 
 std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr &graph) {
   auto partition = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, ms_infer_backend_name);
   if (partition == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Partition create graph partition failed, maybe not enough memory";
+    MS_LOG(ERROR) << "Create graph partition failed, maybe not enough memory";
     return {};
   }
 
@@ -210,7 +208,7 @@ Status DefaultGraphCompiler::CreateExecPlanKernels(const std::vector<GraphSegmen
   MS_ASSERT(execution_plan_ != nullptr);
   for (const auto &graph_segment : graph_segments) {
     if (graph_segment == nullptr) {
-      MS_LOG(ERROR) << "graph segment is nullptr.";
+      MS_LOG(ERROR) << "Graph segment is nullptr";
       return kLiteNullptr;
     }
     if (graph_segment->nodes_.size() == 1) {
@@ -225,7 +223,7 @@ Status DefaultGraphCompiler::CreateExecPlanKernels(const std::vector<GraphSegmen
     // maketuple tuplegetitem is deleted inside of Compile
     auto compile_result = this->Compile(graph_segment, inputs, outputs);
     if (compile_result == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphCompiler::CreateExecPlanKernels convert to CompileResult failed";
+      MS_LOG(ERROR) << "Convert to CompileResult failed";
       return kLiteError;
     }
     auto kernels = this->Schedule(compile_result);
@@ -253,7 +251,7 @@ Status DefaultGraphCompiler::CreateExecPlanInputs(const FuncGraphPtr &func_graph
   MS_ASSERT(graph_input_tensors_.empty());
   auto graph_inputs = func_graph->get_inputs();
   if (graph_inputs.empty()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
+    MS_LOG(ERROR) << "Get graph inputs node failed";
     return kLiteError;
   }
   for (const auto &input : func_graph->get_inputs()) {
@@ -281,14 +279,14 @@ Status DefaultGraphCompiler::CreateExecPlanOutputs(const FuncGraphPtr &func_grap
   anf_tensor_map_.clear();
   auto graph_output = func_graph->output();
   if (graph_output == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph output node failed";
+    MS_LOG(ERROR) << "Get graph output node failed";
     return kLiteError;
   }
   std::vector<AnfNodePtr> graph_outputs = SkipMakeTuple(graph_output);
 
   auto graph_output_tensors = DefaultGraphCompiler::CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
+    MS_LOG(ERROR) << "Create graph output tensor failed";
     return kLiteError;
   }
   for (size_t i = 0; i < graph_outputs.size(); i++) {

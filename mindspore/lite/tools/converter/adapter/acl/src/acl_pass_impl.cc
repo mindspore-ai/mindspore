@@ -187,14 +187,15 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
       return lite::RET_ERROR;
     }
   }
+
   if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
 
-  // this pass should in to_format_base_pass, but current some network is not correct for some reason
-  if (ModifyCNodeFormat(func_graph, NCHW)) {
-    MS_LOG(ERROR) << "Modify cnode format failed.";
+  // This modify should do in to format base pass, but many network not work now
+  if (ModifyCNodeFormat(func_graph, NCHW) != kSuccess) {
+    MS_LOG(ERROR) << "modify cnode format failed.";
     return lite::RET_ERROR;
   }
 

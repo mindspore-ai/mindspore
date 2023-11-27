@@ -26,18 +26,18 @@
 #include "src/executor/sub_graph_kernel.h"
 
 namespace mindspore::infer {
+/**
+ * ExecutionPlan: Execution plan for cloud infer
+ */
 class ExecutionPlan : public abstract::ExecutionPlan {
  public:
   ExecutionPlan() = default;
   ~ExecutionPlan() override;
 
-  std::vector<std::shared_ptr<abstract::ExecutionFlow>> GetExecutionFLows() override { return {}; }
-  std::vector<abstract::Kernel *> GetKernels() { return kernels_; }
+  std::vector<abstract::Kernel *> GetKernels() override { return kernels_; }
 
-  void SetExecutionFlows(std::vector<std::shared_ptr<abstract::ExecutionFlow>> execution_flows) override {}
   void SetKernels(std::vector<abstract::Kernel *> kernels) { this->kernels_ = std::move(kernels); }
 
-  void AddExecutionFlow(std::shared_ptr<abstract::ExecutionFlow> execution_flow) override {}
   void AddKernel(abstract::Kernel *kernel) override { this->kernels_.emplace_back(kernel); }
 
   FuncGraphPtr GetFuncGraph() override { return func_graph_; }
@@ -83,19 +83,27 @@ class ExecutionPlan : public abstract::ExecutionPlan {
   bool PrepareKernels();
 
  private:
-  bool MallocTensorData(abstract::Kernel *kernel);
+  bool CalcTensorRefCount(abstract::Kernel *kernel);
 
  private:
+  // compiled result kernels
   std::vector<abstract::Kernel *> kernels_;
+
+  // runtime kernel for execution
+  std::vector<abstract::Kernel *> kernel_list_;
+
   FuncGraphPtr func_graph_;
   std::vector<abstract::Tensor *> inputs_;
   std::vector<abstract::Tensor *> outputs_;
   std::shared_ptr<abstract::Context> context_;
+
+  // kernel callback pointers
   abstract::KernelCallBack before_;
   abstract::KernelCallBack after_;
+
+  // multi graph tensor mapping, used for sub graph parallelize execution
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *input_isolate_map_ = nullptr;
   std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map_ = nullptr;
-  std::vector<abstract::Kernel *> kernel_list_;
 };
 }  // namespace mindspore::infer
 

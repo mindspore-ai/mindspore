@@ -23,7 +23,7 @@
 
 namespace mindspore {
 MindRTGraphExecutor::MindRTGraphExecutor() {
-  name_ = "";
+  name_ = "MindRTGraphExecutor";
   execution_plan_ = nullptr;
 }
 
@@ -36,58 +36,58 @@ MindRTGraphExecutor::MindRTGraphExecutor(const std::string &name,
 bool MindRTGraphExecutor::Init() {
   auto infer_execution_plan = std::dynamic_pointer_cast<infer::ExecutionPlan>(execution_plan_);
   if (infer_execution_plan == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Not Supported execution plan is passed";
+    MS_LOG(ERROR) << "Not Supported execution plan is passed";
     return false;
-  } else {
-    mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetOutputsMap(),
-                                                                         infer_execution_plan->GetInputsMap());
-    if (!infer_execution_plan->PrepareKernels()) {
-      MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Build kernels failed";
-      return false;
-    }
   }
+  if (!infer_execution_plan->PrepareKernels()) {
+    MS_LOG(ERROR) << "Prepare kernels failed";
+    return false;
+  }
+
+  mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetOutputsMap(),
+                                                                       infer_execution_plan->GetInputsMap());
+  if (mindrt_executor_ == nullptr) {
+    MS_LOG(ERROR) << "Create mindrt executor failed";
+    return false;
+  }
+
+  inited_ = true;
+
   return true;
 }
 
 Status MindRTGraphExecutor::Prepare() {
   if (!Init()) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare init executor failed";
+    MS_LOG(ERROR) << "Init executor failed";
     return kLiteError;
   }
 
-  if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare executor is nullptr";
-    return kLiteError;
-  }
-
-  if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare execution plan is nullptr";
-    return kLiteError;
-  }
+  MS_ASSERT(inited_ == true);
+  MS_ASSERT(mindrt_executor_ != nullptr);
+  MS_ASSERT(execution_plan_ != nullptr);
 
   auto ret = mindrt_executor_->Prepare(execution_plan_->ToKernelList(), execution_plan_->GetInputs(),
                                        execution_plan_->GetOutputs(), execution_plan_->GetContext().get());
-  if (ret != 0) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Prepare prepare execution plan failed with code " << ret;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare execution plan failed with code " << ret;
     return kLiteError;
   }
   return kSuccess;
 }
 
 Status MindRTGraphExecutor::Execute() {
-  if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute executor is nullptr";
+  if (!inited_) {
+    MS_LOG(ERROR) << "Executor is not inited correctly";
     return kLiteError;
   }
-  if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute execution plan is nullptr";
-    return kLiteError;
-  }
+  MS_ASSERT(mindrt_executor_ != nullptr);
+  MS_ASSERT(execution_plan_ != nullptr);
+
   auto ret =
     mindrt_executor_->Run(execution_plan_->GetInputs(), execution_plan_->GetOutputs(), execution_plan_->ToKernelList(),
                           execution_plan_->GetKernelBeforeCallBack(), execution_plan_->GetKernelAfterCallBack());
-  if (ret != 0) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Execute run execution plan failed with code " << ret;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run execution plan failed with code " << ret;
     return kLiteError;
   }
   return kSuccess;
@@ -95,10 +95,12 @@ Status MindRTGraphExecutor::Execute() {
 
 int MindRTGraphExecutor::Resize(const std::vector<infer::abstract::Tensor *> &inputs,
                                 const std::vector<std::vector<int64_t>> &dims) {
-  if (mindrt_executor_ == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::Resize executor is nullptr";
+  if (!inited_) {
+    MS_LOG(ERROR) << "Executor is not inited correctly";
     return kLiteError;
   }
+  MS_ASSERT(mindrt_executor_ != nullptr);
+
   std::vector<std::vector<int>> dims32;
   std::transform(dims.begin(), dims.end(), std::back_inserter(dims32), [](std::vector<int64_t> shape) {
     std::vector<int> shape32;

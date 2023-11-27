@@ -25,101 +25,101 @@ namespace mindspore {
 using ExecutionPlan = mindspore::infer::abstract::ExecutionPlan;
 
 Status DefaultGraphRuntime::Prepare(std::shared_ptr<ExecutionPlan> execution_plan) {
-  MS_LOG(INFO) << "DefaultGraphRuntime::Prepare Begin";
+  MS_LOG(DEBUG) << "Graph runtime prepare begin";
 
   if (execution_plan == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Prepare Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution plan is nullptr.";
     return kLiteNullptr;
   }
   execution_plan_ = execution_plan;
 
   auto executor = SelectExecutor();
   if (executor == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Prepare Select Executor is nullptr.";
+    MS_LOG(ERROR) << "Select executor is nullptr.";
     return kLiteNullptr;
   }
 
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Prepare Prepare Execution Plan Begin of Executor " << executor->Name();
+  MS_LOG(DEBUG) << "Prepare executor begin";
   auto status = executor->Prepare();
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Prepare Prepare Execution Plan Failed in Executor " << executor->Name();
+    MS_LOG(ERROR) << "Prepare executor failed executor: " << executor->Name();
     return kLiteError;
   }
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Prepare Prepare Execution Plan End";
+  MS_LOG(DEBUG) << "Prepare executor end";
 
-  MS_LOG(INFO) << "AbstractRuntime::Prepare End";
+  MS_LOG(DEBUG) << "Graph runtime prepare end";
   return kSuccess;
 }
 
 Status DefaultGraphRuntime::Execute() {
-  MS_LOG(INFO) << "DefaultGraphRuntime::Execute Begin";
+  MS_LOG(INFO) << "Graph runtime execute begin";
 
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution plan is nullptr";
     return kLiteNullptr;
   }
 
   auto executor = SelectExecutor();
   if (executor == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Select Executor is nullptr.";
+    MS_LOG(ERROR) << "Select executor is nullptr";
     return kLiteNullptr;
   }
 
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan Begin of Executor " << executor->Name();
+  MS_LOG(DEBUG) << "Execute executor begin";
   auto status = executor->Execute();
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execute Execution Plan Failed in Executor " << executor->Name();
+    MS_LOG(ERROR) << "Execute executor failed executor: " << executor->Name();
     return kLiteError;
   }
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan End";
+  MS_LOG(DEBUG) << "Execute executor end";
 
-  MS_LOG(INFO) << "DefaultGraphRuntime::Execute End";
+  MS_LOG(DEBUG) << "Graph runtime execute end";
   return kSuccess;
 }
 
 Status DefaultGraphRuntime::Execute(const std::vector<infer::abstract::Tensor *> &inputs,
                                     const std::vector<infer::abstract::Tensor *> &outputs,
                                     infer::abstract::KernelCallBack before, infer::abstract::KernelCallBack after) {
-  MS_LOG(INFO) << "DefaultGraphRuntime::Execute Begin";
+  MS_LOG(DEBUG) << "Graph runtime execute begin";
 
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution Plan is nullptr";
     return kLiteNullptr;
   }
 
   auto executor = SelectExecutor();
   if (executor == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Select Executor is nullptr.";
+    MS_LOG(ERROR) << "Select Executor is nullptr.";
     return kLiteNullptr;
   }
 
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan Begin of Executor " << executor->Name();
+  MS_LOG(DEBUG) << "Execute executor begin";
   execution_plan_->SetInputs(inputs);
   execution_plan_->SetKernelBeforeCallBack(before);
   execution_plan_->SetKernelAfterCallBack(after);
   auto status = executor->Execute();
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execute Execution Plan Failed in Executor " << executor->Name();
+    MS_LOG(ERROR) << "Execute executor failed executor: " << executor->Name();
     return kLiteError;
   }
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Execute Execute Execution Plan End";
+  MS_LOG(DEBUG) << "Execute executor end";
 
-  MS_LOG(INFO) << "DefaultGraphRuntime::Execute End";
+  MS_LOG(INFO) << "Graph runtime execute end";
   return kSuccess;
 }
 
 Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
-  MS_LOG(INFO) << "DefaultGraphRuntime::Resize Begin";
+  MS_LOG(DEBUG) << "Graph runtime resize begin";
 
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Resize Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution plan is nullptr";
     return kLiteNullptr;
   }
 
   auto executor = SelectExecutor();
   if (executor == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Resize Select Executor is nullptr.";
+    MS_LOG(ERROR) << "Select executor is nullptr";
     return kLiteNullptr;
   }
 
@@ -136,22 +136,22 @@ Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> 
     return kLiteError;
   }
 
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Resize Resize Execution Plan Begin of Executor " << executor->Name();
+  MS_LOG(DEBUG) << "Resize executor begin";
   auto status = executor->Resize(inputs, dims);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Resize Resize Execution Plan Failed in Executor " << executor->Name();
+    MS_LOG(ERROR) << "Resize executor failed executor: " << executor->Name();
     return kLiteError;
   }
-  MS_LOG(DEBUG) << "DefaultGraphRuntime::Resize Resize Execution Plan End";
+  MS_LOG(DEBUG) << "Resize executor end";
 
-  MS_LOG(INFO) << "DefaultGraphRuntime::Resize End";
+  MS_LOG(DEBUG) << "Graph runtime resize end";
   return kSuccess;
 }
 
 bool DefaultGraphRuntime::ResizeKernels() {
   auto infer_execution_plan = std::dynamic_pointer_cast<infer::ExecutionPlan>(execution_plan_);
   if (infer_execution_plan == nullptr) {
-    MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Not Supported execution plan is passed";
+    MS_LOG(ERROR) << "Not Supported execution plan is passed";
     return false;
   }
   auto kernels = infer_execution_plan->ToKernelList();
@@ -159,7 +159,7 @@ bool DefaultGraphRuntime::ResizeKernels() {
   auto isolate_output_map = infer_execution_plan->GetOutputsMap();
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "DefaultGraphRuntime::ResizeKernels input kernel is nullptr!";
+      MS_LOG(ERROR) << "Input kernel is nullptr!";
       return false;
     }
     int ret;
@@ -186,11 +186,11 @@ bool DefaultGraphRuntime::ResizeKernels() {
       DrawDot(sub_graph_kernel, "resize");
     }
     if (ret == lite::RET_INFER_INVALID) {
-      MS_LOG(WARNING) << "DefaultGraphRuntime::ResizeKernels  InferShape is interrupted";
+      MS_LOG(WARNING) << "InferShape is interrupted";
       continue;
     }
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "DefaultGraphRuntime::ResizeKernels ReSize node " << kernel->name() << " failed";
+      MS_LOG(ERROR) << "ReSize node " << kernel->name() << " failed";
       return false;
     }
   }
@@ -199,7 +199,7 @@ bool DefaultGraphRuntime::ResizeKernels() {
 
 std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetInputs() {
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution plan is nullptr.";
     return std::vector<infer::abstract::Tensor *>{};
   }
   return execution_plan_->GetInputs();
@@ -207,18 +207,18 @@ std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetInputs() {
 
 std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetOutputs() {
   if (execution_plan_ == nullptr) {
-    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    MS_LOG(ERROR) << "Execution plan is nullptr.";
     return std::vector<infer::abstract::Tensor *>{};
   }
   return execution_plan_->GetOutputs();
 }
 
 std::shared_ptr<infer::abstract::Executor> DefaultGraphRuntime::SelectExecutor() {
-  if (default_executor_ == nullptr) {
-    default_executor_ =
-      GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
+  if (executor_ == nullptr) {
+    executor_ = GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
   }
-  return default_executor_;
+
+  return executor_;
 }
 
 static std::shared_ptr<infer::abstract::GraphRuntime> DefaultGraphRuntimeCreator() {

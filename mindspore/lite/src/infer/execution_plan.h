@@ -20,7 +20,8 @@
 #include <memory>
 
 #include "ir/func_graph.h"
-#include "infer/execution_flow.h"
+#include "infer/kernel.h"
+#include "infer/kernel_callback.h"
 #include "infer/context.h"
 
 namespace mindspore::infer::abstract {
@@ -28,26 +29,9 @@ class ExecutionPlan : public std::enable_shared_from_this<ExecutionPlan> {
  public:
   virtual ~ExecutionPlan() = default;
 
-  /// \brief Get list of execution flow in execution plan.
-  ///
-  /// \return vector of ExecutionFlow.
-  virtual std::vector<std::shared_ptr<ExecutionFlow>> GetExecutionFLows() = 0;
-
-  /// \brief Set Execution Flows for the execution plan.
-  ///
-  /// \param[in] execution_flows, the list of execution flows need run
-  ///
-  /// \return void.
-  virtual void SetExecutionFlows(std::vector<std::shared_ptr<ExecutionFlow>> execution_flows) = 0;
-
-  /// \brief Add a Execution Flow at end of the execution plan.
-  ///
-  /// \param[in] execution_flow, the execution flow need to add
-  ///
-  /// \return void.
-  virtual void AddExecutionFlow(std::shared_ptr<ExecutionFlow> execution_flow) = 0;
-
   virtual void AddKernel(abstract::Kernel *kernel) = 0;
+
+  virtual std::vector<abstract::Kernel *> GetKernels() = 0;
 
   /// \brief Get FuncGraph of Model need to run.
   ///
