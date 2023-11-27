@@ -363,15 +363,22 @@ void GetUnfoldInput(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_node
 
 bool IsNestedTuple(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  for (size_t idx = 1; idx < inputs.size(); ++idx) {
-    auto input = inputs[idx];
-    if (IsTupleInput(input)) {
-      return true;
-    }
+
+  auto abs = node->abstract();
+  if (abs != nullptr && abs->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    const auto &elements = abs_seq->elements();
+    bool is_nested = std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &item) {
+      return item != nullptr && item->isa<abstract::AbstractSequence>();
+    });
+
+    MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " is nested tuple: " << is_nested
+                  << ", debug name: " << node->DebugString() << ".";
+
+    return is_nested;
   }
+
   return false;
 }
 
