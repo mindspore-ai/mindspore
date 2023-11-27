@@ -639,6 +639,7 @@ Debugging Operator
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
     mindspore.ops.TensorSummary
+    mindspore.ops.TensorDump
     mindspore.ops.Print
     mindspore.ops.NPUAllocFloatStatus
     mindspore.ops.NPUClearFloatStatus

@@ -24,6 +24,7 @@
 #include "ir/primitive.h"
 #include "ops/structure_op_name.h"
 #include "utils/hash_map.h"
+#include "ops/image_op_name.h"
 
 namespace mindspore {
 static constexpr char kDoSignaturePrimitivePrefix[] = "S_Prim_";
@@ -94,6 +95,7 @@ GVAR_DEF(PrimitivePtr, kPrimImageSummary, std::make_shared<Primitive>("ImageSumm
 GVAR_DEF(PrimitivePtr, kPrimTensorSummary, std::make_shared<Primitive>("TensorSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramSummary, std::make_shared<Primitive>("HistogramSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramFixedWidth, std::make_shared<Primitive>("HistogramFixedWidth"));
+GVAR_DEF(PrimitivePtr, kPrimTensorDump, std::make_shared<Primitive>(kTensorDump));
 #endif
 GVAR_DEF(PrimitivePtr, kPrimDebug, std::make_shared<Primitive>("Debug"));
 
