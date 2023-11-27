@@ -979,7 +979,7 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
   OperatorAttrs attrs = {attr_op, attr_group};
   AnfNodePtr reduce_op;
-  if (dynamic_shape_indices_ || axis_split_forward_allreduce_) {
+  if (dynamic_shape_indices_ || axis_split_forward_allreduce_ || is_assigned_parallel_) {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
   } else {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(REDUCE_SCATTER, attrs), mul});
@@ -1076,6 +1076,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       shard_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
       shard_axis_util->set_attrs(attrs_);
       shard_axis_util->set_replace_op_name(replace_op_name_);
+      shard_axis_util->set_assigned_parallel(is_assigned_parallel_);
       break;
     }
     default:
