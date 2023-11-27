@@ -27,11 +27,6 @@
 #include "runtime/dev.h"
 #include "runtime/config.h"
 #include "acl/error_codes/rt_error_codes.h"
-#ifdef ASCEND_910
-#define EXPECT_ASCEND_VERSION "ascend910"
-#elif defined(ASCEND_910B)
-#define EXPECT_ASCEND_VERSION "ascend910b"
-#endif
 
 namespace mindspore {
 namespace device {
@@ -227,7 +222,7 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
   return find_iter->second;
 }
 
-#if defined(ASCEND_910) || defined(ASCEND_910B)
+#ifdef ASCEND_910
 constexpr auto k910AscendVersion = "Ascend910";
 constexpr auto k910BAscendVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
@@ -238,16 +233,6 @@ const std::map<std::string, std::string> kAscendSocVersions = {
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
-  // for 1951, if is_heterogenous, return true
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  if (is_heterogenous == 1) {
-    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscendVersion) {
-      exit(0);
-    } else {
-      return true;
-    }
-  }
   std::string soc_version = GetSocVersion();
   // if soc_version belongs to 310 or 710, return true
   if (soc_version.find(k910AscendVersion) == std::string::npos) {
@@ -257,23 +242,16 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter == kAscendSocVersions.end()) {
     exit(0);
   }
-  if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
-    exit(0);
-  }
-
-  auto enable_ge = common::GetEnv("MS_ENABLE_GE");
-  if (enable_ge.empty()) {
-    common::SetEnv("MS_ENABLE_GE", "1");
-  }
-
+  // default enable ge
+  common::SetEnv("MS_ENABLE_GE", "1");
+  // if format not set, user default format
   auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
   if (format_mode.empty()) {
     common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
   }
-
+  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
   auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
   auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
-  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
   if (force_acl.empty() && disable_ref != "1") {
     common::SetEnv("MS_DEV_FORCE_ACL", "1");
   }

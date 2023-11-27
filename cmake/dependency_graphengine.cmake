@@ -9,11 +9,8 @@ endfunction()
 
 set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910")
 if(DEFINED ASCEND_VERSION)
-    if(${ASCEND_VERSION} STREQUAL "910")
+    if(${ASCEND_VERSION} STREQUAL "910" OR ${ASCEND_VERSION} STREQUAL "910b")
         add_definitions(-DASCEND_910)
-    elseif(${ASCEND_VERSION} STREQUAL "910b")
-        set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910b")
-        add_definitions(-DASCEND_910B)
     endif()
 endif()
 

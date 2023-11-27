@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <fstream>
 #include "kernel/kernel.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
@@ -236,10 +235,8 @@ void ProfilingReporter::ConstructNodeNameIndexMap() {
 }
 
 uint32_t ProfilingReporter::GetBlockDim(const CNodePtr &node) {
-  auto kernel_mod = AnfAlgo::GetKernelMod(node);
-  auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
-  return ascend_kernel_mod->block_dim();
+  MS_EXCEPTION_IF_NULL(node);
+  return 1;
 }
 
 void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_id, uint32_t task_id,

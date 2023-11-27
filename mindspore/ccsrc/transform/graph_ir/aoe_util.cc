@@ -17,7 +17,7 @@
 #include <cxxabi.h>
 #include <set>
 #include <string>
-#if defined(ASCEND_910) || defined(ASCEND_910B)
+#if defined(ASCEND_910)
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #endif
 #include "include/common/debug/common.h"
@@ -43,7 +43,7 @@ void AoeUtil::Initialize() {
     MS_LOG(INFO) << "Aoe already initialized.";
     return;
   }
-#if defined(ASCEND_910) || defined(ASCEND_910B)
+#if defined(ASCEND_910)
   auto ascend_path = device::ascend::GetAscendPath();
   std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
   auto plugin_path = ascend_path + aoe_plugin_path;
@@ -84,7 +84,7 @@ void AoeUtil::Destroy() {
     MS_LOG(WARNING) << "AOE not initialize, stop destroy";
     return;
   }
-#if defined(ASCEND_910) || defined(ASCEND_910B)
+#if defined(ASCEND_910)
   try {
     const Aoe::AoeStatus status = aoe_finalize_();
     if (status != Aoe::AOE_SUCCESS) {
@@ -169,14 +169,15 @@ Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_sessio
     MS_LOG(ERROR) << "sess is null";
     return FAILED;
   }
-
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // set overflow mode in ascend910b
+  const auto &soc_version = ms_context->ascend_soc_version();
+  ::ge::AscendString precision_mode =
+    soc_version.find("ascend910b") == std::string::npos ? "allow_fp32_to_fp16" : "must_keep_origin_dtype";
   std::map<::ge::AscendString, ::ge::AscendString> tuneOptions = {
     {AoeOptions::FRAMEWORK, ::ge::AscendString("1")},
-#ifdef ASCEND_910
-    {AoeOptions::PRECISION_MODE, ::ge::AscendString("allow_fp32_to_fp16")},
-#else
-    {AoeOptions::PRECISION_MODE, ::ge::AscendString("must_keep_origin_dtype")},
-#endif
+    {AoeOptions::PRECISION_MODE, precision_mode},
     {AoeOptions::LOG_LEVEL, ::ge::AscendString("error")},
   };
 

@@ -16,10 +16,5 @@
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 
 namespace mindspore {
-namespace kernel {
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(Abs, aclnnAbs, 2)
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(Mul, aclnnMul, 3)
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(Div, aclnnDiv, 3)
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(Exp, aclnnExp, 2)
-}  // namespace kernel
+namespace kernel {}  // namespace kernel
 }  // namespace mindspore

@@ -22,7 +22,8 @@
 #include <set>
 #include "ops/array_op_name.h"
 #include "ops/nn_ops.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

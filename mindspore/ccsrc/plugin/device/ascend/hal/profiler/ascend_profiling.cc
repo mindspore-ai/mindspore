@@ -25,7 +25,6 @@
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
-#include "kernel/kernel.h"
 #include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;

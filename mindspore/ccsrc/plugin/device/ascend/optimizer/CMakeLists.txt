@@ -54,5 +54,4 @@ set_property(SOURCE ${_PREACTIVATE_SRC_LIST} ${MS_OPTIMIZER_910B} PROPERTY COMPI
 
 if(ENABLE_D OR ENABLE_ACL)
     add_library(_mindspore_plugin_device_ascend_optimizer_910b_obj OBJECT ${MS_OPTIMIZER_910B})
-    add_library(_mindspore_plugin_device_ascend_optimizer_obj OBJECT ${_PREACTIVATE_SRC_LIST})
 endif()

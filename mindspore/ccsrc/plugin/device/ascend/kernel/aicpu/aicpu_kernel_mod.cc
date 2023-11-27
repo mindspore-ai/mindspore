@@ -27,7 +27,6 @@
 #include "ops/lite_op_name.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
-#include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_proto_util.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
@@ -39,8 +38,7 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "aicpu/common/aicpu_task_struct.h"
 #include "external/graph/types.h"
-using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskInfo>;
-using EventWaitTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::EventWaitTaskInfo>;
+
 namespace mindspore {
 namespace kernel {
 namespace {

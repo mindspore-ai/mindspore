@@ -18,6 +18,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

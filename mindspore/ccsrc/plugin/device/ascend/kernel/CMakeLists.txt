@@ -52,8 +52,7 @@ set_property(SOURCE ${D_SRC_LIST} ${AKG_D_SRC_LIST} ${SRC_IN_910B}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 if(ENABLE_D)
     add_library(_mindspore_plugin_device_ascend_kernel_910b_obj OBJECT ${SRC_IN_910B})
-    add_library(_mindspore_plugin_device_ascend_kernel_obj OBJECT ${D_SRC_LIST} ${AKG_D_SRC_LIST})
 endif()
 
-add_subdirectory(bisheng)
+#add_subdirectory(bisheng)
 add_subdirectory(aicore)

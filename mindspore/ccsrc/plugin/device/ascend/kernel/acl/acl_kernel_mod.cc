@@ -22,12 +22,12 @@
 #include "ir/tensor.h"
 #include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "mindspore/ccsrc/include/transform/graph_ir/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace kernel {

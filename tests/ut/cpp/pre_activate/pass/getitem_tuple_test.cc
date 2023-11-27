@@ -15,7 +15,6 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "pipeline/jit/ps/resource.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"

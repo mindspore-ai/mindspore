@@ -29,12 +29,8 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 
-using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
-using mindspore::ge::model_runner::HcclTaskInfo;
 using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
-
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
