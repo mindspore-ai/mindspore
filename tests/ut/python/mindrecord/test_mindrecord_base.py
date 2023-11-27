@@ -2046,7 +2046,7 @@ def test_file_writer_encode_integrity_check_with_exception(file_name=None, remov
     ## 4.3 read without encode, with hash check
     set_enc_key(None)
     set_enc_mode("AES-CBC")
-    set_hash_mode("sha224")
+    set_hash_mode("sha384")
 
     with pytest.raises(RuntimeError) as err:
         # FileReader open the file

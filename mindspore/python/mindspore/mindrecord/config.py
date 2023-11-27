@@ -223,8 +223,8 @@ def set_hash_mode(hash_mode):
 
     Args:
         hash_mode (Union[str, function]): The parameter is used to specify the hash mode. Specifies the hash
-            mode or customized hash function, currently supports ``None``, ``"sha224"``, ``"sha256"``,
-            ``"sha384"``, ``"sha512"``, ``"sha3_224"``, ``"sha3_256"``, ``"sha3_384"``
+            mode or customized hash function, currently supports ``None``, ``"sha256"``,
+            ``"sha384"``, ``"sha512"``, ``"sha3_256"``, ``"sha3_384"``
             and ``"sha3_512"``. ``None`` indicates that hash check is not enabled.
 
     Raises:
@@ -248,7 +248,7 @@ def set_hash_mode(hash_mode):
     if not isinstance(hash_mode, str):
         raise ValueError("The input hash_mode is not str.")
 
-    if hash_mode not in ["sha224", "sha256", "sha384", "sha512", "sha3_224", "sha3_256", "sha3_384", "sha3_512"]:
+    if hash_mode not in ["sha256", "sha384", "sha512", "sha3_256", "sha3_384", "sha3_512"]:
         raise ValueError("The input hash_mode is invalid.")
 
     HASH_MODE = hash_mode
@@ -264,16 +264,12 @@ def _get_hash_func():
     if callable(HASH_MODE):
         return HASH_MODE
 
-    if HASH_MODE == "sha224":
-        return hashlib.sha224()
     if HASH_MODE == "sha256":
         return hashlib.sha256()
     if HASH_MODE == "sha384":
         return hashlib.sha384()
     if HASH_MODE == "sha512":
         return hashlib.sha512()
-    if HASH_MODE == "sha3_224":
-        return hashlib.sha3_224()
     if HASH_MODE == "sha3_256":
         return hashlib.sha3_256()
     if HASH_MODE == "sha3_384":
