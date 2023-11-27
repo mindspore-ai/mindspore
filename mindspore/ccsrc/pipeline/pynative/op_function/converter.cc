@@ -321,6 +321,14 @@ ScalarPtr Converter::ToScalar(size_t i) {
   return nullptr;
 }
 
+std::optional<ScalarPtr> Converter::ToScalarOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToScalar(i));
+}
+
 StringImmPtr Converter::ToString(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
@@ -338,29 +346,34 @@ StringImmPtr Converter::ToString(size_t i) {
   return nullptr;
 }
 
+std::optional<StringImmPtr> Converter::ToStringOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToString(i));
+}
+
 TypePtr Converter::ToDtype(size_t i) {
   const py::object &obj = (*python_args_)[i];
   if (!py::isinstance<mindspore::Type>(obj)) {
-    MS_LOG(EXCEPTION) << "Get arg is not mindspore type " << py::str(obj);
+    MS_LOG(EXCEPTION) << "Get arg is not mindspore type: " << py::str(obj);
   }
   return obj.cast<TypePtr>();
 }
 
-py::object Converter::Wrap(const TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  if (tensor->NeedWait()) {
-    py::gil_scoped_release release;
-    tensor->Wait();
+std::optional<TypePtr> Converter::ToDtypeOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
   }
-  py::tuple v(1);
-  v[0] = tensor;
-  return v[0];
+  return std::make_optional(ToDtype(i));
 }
 
 void Converter::ThrowException(size_t i) {
-  MS_LOG(EXCEPTION) << "For op " << op_def_->name_ << ", the " << i << "th arg dtype is not right!"
-                    << "expect dtype: " << ops::EnumToString(op_def_->args_[i].arg_dtype_)
-                    << "but got dtype: " << type((*python_args_)[i]);
+  MS_LOG(EXCEPTION) << "For op " << op_def_->name_ << ", the " << i + 1 << "th arg dtype is not right!"
+                    << " Expect dtype: " << ops::EnumToString(op_def_->args_[i].arg_dtype_)
+                    << ", but got dtype: " << py::str((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.

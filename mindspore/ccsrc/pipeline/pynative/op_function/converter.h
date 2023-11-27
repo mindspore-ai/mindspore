@@ -53,9 +53,11 @@ class Converter {
   template <typename T>
   std::optional<ValueTuplePtr> ToFloatListOptional(size_t i);
   ScalarPtr ToScalar(size_t i);
+  std::optional<ScalarPtr> ToScalarOptional(size_t i);
   StringImmPtr ToString(size_t i);
+  std::optional<StringImmPtr> ToStringOptional(size_t i);
   TypePtr ToDtype(size_t i);
-  py::object Wrap(const TensorPtr &tensor);
+  std::optional<TypePtr> ToDtypeOptional(size_t i);
 
  private:
   void ThrowException(size_t i);
