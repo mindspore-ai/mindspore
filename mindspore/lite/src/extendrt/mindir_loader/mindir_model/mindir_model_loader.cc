@@ -83,12 +83,6 @@ bool MindirModelLoader::ConvertModel(const mind_ir::ModelProto &model_proto) {
   for (int i = 0; i < model_proto.functions_size(); i++) {
     auto sub_graph_proto = model_proto.functions(i);
     auto *sub_graph = new LiteGraph::SubGraph();
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "MindirModelLoader: Import model failed, new sub graph failed.";
-      return mindspore::lite::RET_ERROR;
-    }
-    // MS_CHECK_FALSE_MSG(sub_graph == nullptr, mindspore::lite::RET_ERROR,
-    //                    "MindirModelLoader: Import model failed, new sub graph failed.");
     sub_graph->name_ = sub_graph_proto.name();
     MS_CHECK_TRUE_MSG(
       ConvertGraph(sub_graph_proto, sub_graph), false,
@@ -211,10 +205,6 @@ bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Lit
       continue;
     }
     auto *node = new LiteGraph::Node();
-    if (node == nullptr) {
-      MS_LOG(ERROR) << "MindirModelLoader: Convert nodes failed, new node failed.";
-      return false;
-    }
     node->name_ = node_proto.name();
     node->base_operator_ = this->MakePrimitiveC(node_proto.op_type());
     auto base_operator = std::reinterpret_pointer_cast<ops::BaseOperator>(node->base_operator_);
