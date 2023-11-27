@@ -289,6 +289,9 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     MS_LOG(INFO) << "The default value of jit_compile is set to 2.";
   }
 
+  auto ge_exception_dump = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP);
+  (*ge_options)["ge.exec.enable_exception_dump"] = ge_exception_dump;
+
   SetAscendHF32Config(ms_context_ptr, ge_options);
 
   if (ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE) != "") {
