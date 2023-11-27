@@ -2748,7 +2748,7 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   model_parser.SetMindIRPath(mindir_path);
   *func_graph = model_parser.Parse(model);
   for (const auto &info : model.user_info()) {
-    user_info->insert(info);
+    (void)user_info->insert(info);
   }
   return true;
 }
