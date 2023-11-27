@@ -949,6 +949,9 @@ bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &a
   if (fg->has_attr(kAttrNodeName)) {
     (*kernel_json)[kJsonKeyNodeName] = GetValue<std::string>(fg->get_attr(kAttrNodeName));
   }
+  if (fg->has_attr(kJsonKeyPrecisionMode)) {
+    (*kernel_json)[kJsonKeyPrecisionMode] = GetValue<std::string>(fg->get_attr(kJsonKeyPrecisionMode));
+  }
 
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
