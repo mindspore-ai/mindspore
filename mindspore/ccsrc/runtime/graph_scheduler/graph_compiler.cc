@@ -820,9 +820,14 @@ void GraphCompiler::GetParamAndOutputIndex(
 void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
                                             const std::map<KernelWithIndex, TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                                            const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info) {
+                                            const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
+                                            InputInfo *const input_info) {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_info);
+  if (is_run_pyboost) {
+    session_->GetOpInputTensorsFromCNode(kernel, op_output, parameter_index, graph_inputs, input_info);
+  } else {
+    session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_info);
+  }
 }
 
 TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,

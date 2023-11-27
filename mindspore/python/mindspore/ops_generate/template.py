@@ -112,11 +112,22 @@ REGISTER_DEFINE_TEMPLATE = CppTemplate(
     m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");""")
 REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {${register_func}\n}")
 
+REGISTER_PYBOOST_GRAD_DEFINE_TEMPLATE = CppTemplate(
+    "MS_REG_PYBOOST_GRAD_OP(${pyboost_op_name}, mindspore::runtime::${pyboost_cfunc_name});\n")
+REGISTER_PYBOOST_GRAD_TEMPLATE = CppTemplate("${register_func}")
+
 PYBOOST_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function.tpl'))
 
 PYBOOST_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function_header.tpl'))
+
+PYBOOST_GRAD_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/runtime/pynative/op_function/template/pyboost_grad_function.tpl'))
+
+PYBOOST_GRAD_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/runtime/pynative/op_function/template/pyboost_grad_function_header.tpl'))
 
 GEN_OPS_DEF_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/python/mindspore/ops_generate/gen_ops_def_header.tpl'))

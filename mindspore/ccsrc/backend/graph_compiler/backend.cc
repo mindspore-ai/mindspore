@@ -44,6 +44,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/graph_adapter.h"
+#include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #ifdef ENABLE_DEBUGGER
@@ -819,18 +820,22 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
     GilReleaseWithCheck gil_release;
     auto is_dynamic = root_graph_->has_flag(kFlagPyNativeBpropGraphIsDynamic);
+    bool has_bprop_cut = root_graph_->has_flag(kFlagPyNativeBpropGraphWithBpropCut);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    const std::string &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputInfo input_info;
       VectorRef op_outputs;
-      if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
+      if (has_bprop_cut && common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
         const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
         RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
                            inputs[graph_index], &input_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
-      } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
-        graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
+      } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
+        graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], false,
                                                  &input_info);
         VectorRef input_args;
         (void)std::transform(input_info.input_values.begin(), input_info.input_values.end(),
@@ -840,17 +845,27 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
       } else {
-        session::BackendOpRunInfoPtr op_run_info;
-        graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
-                                                 &input_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_info, is_dynamic, &op_run_info,
-                                                        &graph_output_info);
-        if (is_dynamic) {
-          op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
-          AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
-          RunOpDynamic(op_run_info, &op_outputs);
+        const auto &primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
+        MS_EXCEPTION_IF_NULL(primitive);
+        if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(primitive->name())) {
+          MS_LOG(DEBUG) << "Run " << primitive->name() << " by pyboost";
+          graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], true,
+                                                   &input_info);
+          runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(primitive, device_target, input_info.input_values,
+                                                                  &op_outputs);
         } else {
-          RunOp(op_run_info, &op_outputs);
+          session::BackendOpRunInfoPtr op_run_info;
+          graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], false,
+                                                   &input_info);
+          graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_info, is_dynamic, &op_run_info,
+                                                          &graph_output_info);
+          if (is_dynamic) {
+            op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
+            AnfAlgo::SetDynamicAttrToPrim(op_run_info->op_prim);
+            RunOpDynamic(op_run_info, &op_outputs);
+          } else {
+            RunOp(op_run_info, &op_outputs);
+          }
         }
       }
 

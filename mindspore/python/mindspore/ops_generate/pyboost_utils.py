@@ -113,6 +113,45 @@ def get_convert_type_str(dtype: str, optional):
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 
+def get_value_convert_type_str(dtype: str, optional):
+    """
+    Convert type
+    """
+    # add more type here
+    native_type_convert = {
+        'int': 'ToInt',
+        'float': 'ToFloat',
+        'bool': 'ToBool',
+        'number': 'ToScalar',
+        'tensor': 'ToTensor',
+        'str': 'ToString',
+        'type': 'ToDtype',
+        'tuple[int]': 'ToValueTuple',
+        'tuple[float]': 'ToValueTuple',
+        'tuple[bool]': 'ToValueTuple',
+        'tuple[tensor]': 'ToValueTuple',
+    }
+    optional_type_convert = {
+        'int': 'ToIntOptional',
+        'float': 'ToFloatOptional',
+        'number': 'ToScalarOptional',
+        'tensor': 'ToTensorOptional',
+        'type': 'ToDtypeOptional',
+        'str': 'ToStringOptional',
+        'tuple[int]': 'ToValueTupleOptional',
+        'tuple[float]': 'ToValueTupleOptional',
+        'tuple[bool]': 'ToValueTupleOptional',
+        'tuple[tensor]': 'ToValueTupleOptional',
+    }
+    if optional:
+        if dtype in optional_type_convert:
+            return optional_type_convert[dtype]
+        raise TypeError(f"""Unsupported convert optional type {dtype} for args.""")
+    if dtype in native_type_convert:
+        return native_type_convert[dtype]
+    raise TypeError(f"""Unsupported convert type {dtype} for args.""")
+
+
 def tuple_input_to_cpp_type(dtype: str):
     """
     dtype convert

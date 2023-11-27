@@ -41,7 +41,7 @@ tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
     auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-    auto alpha = std::make_shared<FP32Imm>(1);
+    ScalarPtr alpha = std::make_shared<FP32Imm>(1);
     LAUNCH_ACLNN(aclnnAdd, device_context, stream_ptr, x_tensor, y_tensor, alpha, outputs[0]);
     MS_LOG(DEBUG) << "Run device task Add end";
   }));
