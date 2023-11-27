@@ -131,8 +131,8 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
     MS_LOG(INTERNAL_EXCEPTION) << "Transform top graph error.";
   }
   FuncGraphPtr func_graph = resource->func_graph();
-  if (opt::FuncGraphHasTupleInput(func_graph)) {
-    opt::GraphTupleParamTransform graph_trans;
+  if (opt::FuncGraphHasSequenceInput(func_graph)) {
+    opt::GraphSequenceParamTransform graph_trans;
     func_graph = graph_trans(func_graph, resource->manager());
     resource->set_func_graph(func_graph);
     AbstractBasePtrList abs_spec_list;

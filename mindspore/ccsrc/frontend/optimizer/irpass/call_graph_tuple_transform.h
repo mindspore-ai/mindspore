@@ -52,32 +52,32 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
     if (abs == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
-    // Dynamic length tuple input can not be flattened.
+    // Dynamic length sequence input can not be flattened.
     if (!IsSequenceExpandable(arg->abstract())) {
       new_args->push_back(arg);
       continue;
     }
-    auto new_arg = TransformTupleArgument(fg, arg, abs->cast<abstract::AbstractTuplePtr>());
+    auto new_arg = TransformSequenceArgument(fg, arg, abs->cast<abstract::AbstractSequencePtr>());
     (void)new_args->insert(new_args->cend(), new_arg.cbegin(), new_arg.cend());
     change = true;
   }
   return change;
 }
 
-// fg(param1_tuple, param2)
+// fg(param1_sequence, param2)
 // =>
 // fg(param1_1, param1_2, ..., param1_n, param2)
-// Transform graph call tuple inputs to flat inputs.
-class GraphTupleTransform : public AnfVisitor {
+// Transform graph call sequence inputs to flat inputs.
+class GraphSequenceTransform : public AnfVisitor {
  public:
-  GraphTupleTransform() = default;
-  ~GraphTupleTransform() override = default;
+  GraphSequenceTransform() = default;
+  ~GraphSequenceTransform() override = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (!IsValueNode<FuncGraph>(node)) {
       return nullptr;
     }
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (!FuncGraphHasConstantTupleInput(fg)) {
+    if (!FuncGraphHasConstantSequenceInput(fg)) {
       return nullptr;
     }
     fg = graph_transform_(fg, optimizer->manager());
@@ -86,17 +86,17 @@ class GraphTupleTransform : public AnfVisitor {
   }
 
  private:
-  GraphTupleParamTransform graph_transform_;
+  GraphSequenceParamTransform graph_transform_;
 };
 
-// {PrimPartial, G, Tuple_Xs}
+// {PrimPartial, G, Sequence_Xs}
 // =>
-// {kPrimPartial, G, TupleGetItem{Tuple_Xs,0}, TupleGetItem{Tuple_Xs,1}, ..., TupleGetItem{Tuple_Xs,n}}
-// transform partial's tuple binding args to flat inputs.
-class PartialTupleArgTransform : public AnfVisitor {
+// {kPrimPartial, G, TupleGetItem{Sequence_Xs,0}, SequenceGetItem{Sequence_Xs,1}, ..., TupleGetItem{Sequence_Xs,n}}
+// transform partial's sequence binding args to flat inputs.
+class PartialSequenceArgTransform : public AnfVisitor {
  public:
-  PartialTupleArgTransform() = default;
-  ~PartialTupleArgTransform() override = default;
+  PartialSequenceArgTransform() = default;
+  ~PartialSequenceArgTransform() override = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (!IsPrimitiveCNode(node, prim::kPrimPartial)) {
       return nullptr;
@@ -117,14 +117,14 @@ class PartialTupleArgTransform : public AnfVisitor {
   }
 };
 
-// {G,Tuple_Xs}
+// {G,Sequence_Xs}
 // =>
-// {G, TupleGetItem{Tuple_Xs,0}, TupleGetItem{Tuple_Xs,1}, ..., TupleGetItem{Tuple_Xs,n}}
-// Transform call's tuple args to flat inputs.
-class CallTupleArgTransform : public AnfVisitor {
+// {G, TupleGetItem{Sequence_Xs,0}, TupleGetItem{Sequence_Xs,1}, ..., TupleGetItem{Sequence_Xs,n}}
+// Transform call's sequence args to flat inputs.
+class CallSequenceArgTransform : public AnfVisitor {
  public:
-  CallTupleArgTransform() = default;
-  ~CallTupleArgTransform() override = default;
+  CallSequenceArgTransform() = default;
+  ~CallSequenceArgTransform() override = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (!IsFuncGraphCallNode(node)) {
       return nullptr;
@@ -233,14 +233,14 @@ class PartialUnusedArgsEliminate : public AnfVisitor {
   }
 };
 
-class CallGraphTupleTransform : public OptimizerCaller {
+class CallGraphSequenceTransform : public OptimizerCaller {
  public:
-  CallGraphTupleTransform() {
-    (void)transformers_.emplace_back(std::make_shared<GraphTupleTransform>());
-    (void)transformers_.emplace_back(std::make_shared<PartialTupleArgTransform>());
-    (void)transformers_.emplace_back(std::make_shared<CallTupleArgTransform>());
+  CallGraphSequenceTransform() {
+    (void)transformers_.emplace_back(std::make_shared<GraphSequenceTransform>());
+    (void)transformers_.emplace_back(std::make_shared<PartialSequenceArgTransform>());
+    (void)transformers_.emplace_back(std::make_shared<CallSequenceArgTransform>());
   }
-  ~CallGraphTupleTransform() override = default;
+  ~CallGraphSequenceTransform() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     if (AlreadyHasSparseComponent(node)) {
