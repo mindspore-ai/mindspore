@@ -141,6 +141,7 @@ constexpr auto kApplyCamePart2OpName = "ApplyCamePart2";
 constexpr auto kApplyCamePart3OpName = "ApplyCamePart3";
 constexpr auto kApplyCamePart4OpName = "ApplyCamePart4";
 constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
+constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
 }  // namespace mindspore
