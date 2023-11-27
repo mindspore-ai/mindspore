@@ -103,7 +103,7 @@ def generate_malloc_input(is_ascend, need_malloc_tensors, call_args_after_conver
             args_list += f'{item}, '
         args_list = args_list[:-2]
         if args_list:
-            malloc_inputs += f'PyBoostUtils::PrepareOpInputs(device_context, {args_list});\n'
+            malloc_inputs += f'PyBoostUtils::MallocOpInputs(device_context, {args_list});\n'
     else:
         args_list = ''
         for item in call_args_after_convert:
@@ -115,6 +115,17 @@ def generate_malloc_input(is_ascend, need_malloc_tensors, call_args_after_conver
                          f'PyBoostUtils::GetKernelTensorFromAddress(inputs_device_address);'
     return malloc_inputs
 
+
+def generate_create_input_address(need_malloc_tensors):
+    """create input address"""
+    create_input_address = ''
+    args_list = ''
+    for item in need_malloc_tensors:
+        args_list += f'{item}, '
+    args_list = args_list[:-2]
+    if args_list:
+        create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, {args_list});\n'
+    return create_input_address
 
 def generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter):
     """ generate_pyboost_op_source_code """
@@ -135,6 +146,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         is_gpu = 'gpu' in gen_path
         malloc_inputs = generate_malloc_input(is_ascend, converter.need_malloc_tensors,
                                               converter.call_args_after_convert)
+        create_input_address = generate_create_input_address(converter.need_malloc_tensors)
 
         # call_impl
         call_impl = ''
@@ -189,6 +201,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          call_tensors=call_args_tensor,
                                          value_tuple_convert=converter.value_tuple_convert,
                                          const_number_convert=converter.const_number_convert,
+                                         create_input_address=create_input_address,
                                          malloc_inputs=malloc_inputs,
                                          get_cube_math_type=get_cube_math_type,
                                          cube_math_type=cube_math_type,
@@ -445,9 +458,8 @@ def generate_inplace_process_cpp_code(op_proto):
     has_ref = False
     for index, return_obj in enumerate(op_proto.returns):
         if return_obj.inplace != '':
-            inplace_process += f'op->device_sync_promises()[{index}]->SetValue(' \
-                               f'std::make_shared<pynative::DeviceAddressFutureData>(' \
-                               f'{return_obj.inplace}_tensor->device_address(), nullptr)); '
+            inplace_process += f'outputs_[{index}]->set_device_address(' \
+                               f'{return_obj.inplace}_tensor->device_address()); '
             has_ref = True
             break
     if has_ref:

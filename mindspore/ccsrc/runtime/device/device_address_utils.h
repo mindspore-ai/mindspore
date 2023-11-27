@@ -62,6 +62,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
   // Overloading
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
                                        const tensor::TensorPtr &tensor);
+  static void MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor);
+  static void MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val);
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
                                        const std::optional<tensor::TensorPtr> &val);
   template <typename T>
@@ -107,8 +109,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
   }
 
   static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
-  static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs,
-                                        const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises);
+
+  static void MallocForOutputs(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
   static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
                                                       const abstract::AbstractBasePtr &abs, size_t index,

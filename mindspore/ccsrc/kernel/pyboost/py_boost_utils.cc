@@ -20,6 +20,8 @@
 #include "runtime/device/device_address_utils.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_def.h"
+#include "runtime/pynative/op_executor.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace kernel {
@@ -79,49 +81,6 @@ tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
   return std::make_shared<tensor::Tensor>(value, type);
 }
 }  // namespace
-
-void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                                      std::vector<pynative::DeviceAddressPromisePtr> *device_sync_promises) {
-  auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
-    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    (void)outputs->emplace_back(output_tensor);
-    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-
-    DeviceAddressPromisePtr promise =
-      std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
-    auto future = promise->GetFuture();
-    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
-    output_tensor->set_address_future(device_address_future);
-    (void)device_sync_promises->emplace_back(std::move(promise));
-  };
-
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractSequence>()) {
-    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
-    auto elements = seq->elements();
-    for (const auto &element : elements) {
-      CreateOutputTensor(element, outputs, device_sync_promises);
-    }
-  } else if (abstract->isa<abstract::AbstractTensor>()) {
-    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    auto shape = abstract_tensor->BuildShape();
-    auto type = abstract_tensor->element()->BuildType();
-    MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
-    if (!shape->isa<abstract::Shape>()) {
-      MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
-    }
-    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    create_tensor(type, shape_vector);
-  } else if (abstract->isa<abstract::AbstractScalar>()) {
-    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
-    const auto &type = scalar->BuildType();
-    MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    create_tensor(type, {});
-  } else {
-    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
-  }
-}
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
@@ -184,6 +143,7 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
                                                                  const TensorStorageInfoPtr &old_storage_info) {
   MS_EXCEPTION_IF_NULL(old_device_address);
   MS_EXCEPTION_IF_NULL(old_storage_info);
+  GilReleaseWithCheck gil_release;
 
   const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {old_device_address->device_name(), old_device_address->device_id()});
@@ -285,32 +245,6 @@ device::DeviceAddressPtrList PyBoostUtils::CreateOutputDeviceAddress(DeviceConte
   return output_device_address;
 }
 
-device::DeviceAddressPtrList PyBoostUtils::CreateOutputDeviceAddress(
-  DeviceContext *device_context, const abstract::AbstractBasePtr &abs, const std::vector<TensorPtr> &outputs,
-  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
-  auto output_size = outputs.size();
-  if (output_size != device_sync_promises.size()) {
-    MS_LOG(EXCEPTION) << "Outputs tensor size " << output_size << " but device_sync_promises size "
-                      << device_sync_promises.size();
-  }
-  device::DeviceAddressPtrList output_device_address;
-  if (output_size == 1) {
-    (void)output_device_address.emplace_back(runtime::DeviceAddressUtils::CreateOutputAddress(
-      device_context, abs, kIndex0, outputs[kIndex0], device_sync_promises[kIndex0]));
-  } else {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    if (output_size != abs_seq->size()) {
-      MS_LOG(EXCEPTION) << "Outputs size " << output_size << " but output abstract size " << abs_seq->size();
-    }
-    for (size_t i = 0; i < output_size; ++i) {
-      (void)output_device_address.emplace_back(runtime::DeviceAddressUtils::CreateOutputAddress(
-        device_context, abs_seq->elements()[i], i, outputs[i], device_sync_promises[i]));
-    }
-  }
-  return output_device_address;
-}
-
 tensor::TensorPtr PyBoostUtils::ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
   if (scalar == nullptr) {
     MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
@@ -371,7 +305,20 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
   return device_context;
 }
 
-void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) { task->Run(); }
+void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  // TODO(caifubi): enable cpu/gpu async.
+  if (sync || device == kGPUDevice || device == kCPUDevice || mode == mindspore::kGraphMode) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+    task->Run();
+  } else {
+    runtime::OpExecutor::GetInstance().PushOpRunTask(task);
+  }
+}
 
 std::vector<kernel::KernelTensor *> PyBoostUtils::GetKernelTensorFromAddress(
   const device::DeviceAddressPtrList &input_device_address) {
