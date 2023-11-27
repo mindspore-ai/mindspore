@@ -14,6 +14,9 @@
 # ============================================================================
 """pyboost utils."""
 
+import os
+from gen_utils import safe_load_yaml
+
 
 def is_optional_param(op_arg):
     if op_arg.as_init_arg and str(op_arg.default) == 'None':
@@ -189,27 +192,6 @@ def is_cube(class_name):
     return False
 
 
-def get_aclnn_interface(class_name):
-    """
-    get aclnn interface name.
-    :param class_name:
-    :return:
-    """
-    aclnn_map = {
-        'Bmm': 'aclnnBatchMatMul',
-        'SiLU': 'aclnnSilu',
-        'Pow': 'aclnnPowTensorTensor',
-        'MatMul': 'aclnnMatmul',
-        'MaskedFill': 'aclnnInplaceMaskedFillTensor',
-        'GreaterEqual': 'aclnnGeTensor',
-        'Less': 'aclnnLtTensor',
-        'Sum': 'aclnnReduceSum',
-    }
-    if class_name in aclnn_map.keys():
-        return aclnn_map[class_name]
-    return "aclnn" + class_name
-
-
 def get_return_type(dtype: str):
     """
     Convert type
@@ -282,3 +264,22 @@ def is_pyboost_enable(operator_data):
         if enable:
             return True
     return False
+
+
+class AclnnUtils:
+    """
+    aclnn utils
+    """
+    work_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
+    aclnn_map = safe_load_yaml(os.path.join(work_path, "./mindspore/python/mindspore/ops_generate/aclnn_config.yaml"))
+
+    @staticmethod
+    def get_aclnn_interface(class_name):
+        """
+        get aclnn interface name.
+        :param class_name:
+        :return:
+        """
+        if class_name in AclnnUtils.aclnn_map.keys():
+            return AclnnUtils.aclnn_map[class_name]
+        return "aclnn" + class_name
