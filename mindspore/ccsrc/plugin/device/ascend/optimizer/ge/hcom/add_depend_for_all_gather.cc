@@ -257,6 +257,10 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  auto is_enable = context->get_param<bool>(MS_CTX_ENABLE_OPT_SHARD_COMM_OPT);
+  if (is_enable) {
+    return false;
+  }
   const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   if (cell_reuse) {
     return false;
