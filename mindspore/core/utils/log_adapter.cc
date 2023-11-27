@@ -206,9 +206,8 @@ void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const 
 
 // Function to split string based on character delimiter
 void SplitString(const std::string &message, const std::string &delimiter, std::vector<std::string> *output) {
-  size_t pos1, pos2;
-  pos1 = 0;
-  pos2 = message.find(delimiter);
+  size_t pos1 = 0;
+  size_t pos2 = message.find(delimiter);
   MS_EXCEPTION_IF_NULL(output);
 
   while (pos2 != std::string::npos) {

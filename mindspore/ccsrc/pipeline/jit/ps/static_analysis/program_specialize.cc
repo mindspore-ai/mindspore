@@ -1513,7 +1513,8 @@ void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeP
   }
 
   // Only success processed node can be added to seen.
-  MS_LOG(DEBUG) << "New CNode: " << cnode->DebugString(2);
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "New CNode: " << cnode->DebugString(recursive_level);
   specializer_->AddSeen(cnode);
 }
 

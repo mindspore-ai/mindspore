@@ -220,7 +220,8 @@ AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr 
 
 AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_abs_list) {
-  CheckRequiredArgsSize(primitive->name(), args_abs_list, 7);
+  constexpr size_t size_expected = 7;
+  CheckRequiredArgsSize(primitive->name(), args_abs_list, size_expected);
   AbstractBasePtrList elements;
   const size_t args_size = 2;
   for (size_t i = 0; i < args_size; ++i) {
@@ -231,7 +232,8 @@ AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, c
 
 AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_abs_list) {
-  CheckRequiredArgsSize(primitive->name(), args_abs_list, 6);
+  constexpr size_t size_expected = 6;
+  CheckRequiredArgsSize(primitive->name(), args_abs_list, size_expected);
   AbstractBasePtrList elements;
   elements.push_back(args_abs_list[0]->Clone()->Broaden());
   return std::make_shared<AbstractTuple>(elements);
