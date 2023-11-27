@@ -87,7 +87,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     if use_ge:
         # TODO export MS_DISABLE_REF_MODE=1;
-        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
                     file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
@@ -110,7 +110,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     if use_ge:
         # TODO export MS_DISABLE_REF_MODE=1;
-        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
                      file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)

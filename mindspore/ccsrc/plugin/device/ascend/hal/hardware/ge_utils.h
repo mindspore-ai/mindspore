@@ -31,7 +31,7 @@ std::string GetGraphName(const FuncGraphPtr &graph);
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape);
 void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option);
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air);
-bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map);
+bool AddFakeGraph(const FuncGraphPtr &anf_graph);
 bool IsGeTrain();
 inline std::string GetPhasePrefix() {
   const std::string &phase = PhaseManager::GetInstance().phase();
