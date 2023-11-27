@@ -384,7 +384,6 @@ class RegOp:
         """
         if not isinstance(value, str):
             raise TypeError("%s value must be str" % str(value))
-        return True
 
     def _is_int(self, value):
         """
@@ -398,7 +397,6 @@ class RegOp:
         """
         if not isinstance(value, int):
             raise TypeError("%s value must be int" % str(value))
-        return True
 
     def _is_bool(self, value):
         """
@@ -412,7 +410,6 @@ class RegOp:
         """
         if not isinstance(value, bool):
             raise TypeError("%s value must be bool" % str(value))
-        return True
 
     @staticmethod
     def _is_list(value):
@@ -427,7 +424,6 @@ class RegOp:
         """
         if not isinstance(value, list):
             raise TypeError("%s value must be list" % str(value))
-        return True
 
     def _check_param(self, param_list, key_list, fn_list, kwargs):
         """
@@ -494,8 +490,8 @@ class RegOp:
             self._is_string(arg[0])
             self._is_string(arg[1])
             if len(arg) == 3:
-                if self._is_string(arg[2]):
-                    dtype_format.append(arg)
+                self._is_string(arg[2])
+                dtype_format.append(arg)
             else:
                 dtype_format.append(arg)
         self.dtype_format_.append(tuple(dtype_format))
@@ -779,8 +775,8 @@ class TBERegOp(RegOp):
                                          False: indicates that the operator does not support dynamic rank.
                                          Default: ``False`` .
         """
-        if self._is_bool(dynamic_rank_support):
-            self.dynamic_rank_support_ = dynamic_rank_support
+        self._is_bool(dynamic_rank_support)
+        self.dynamic_rank_support_ = dynamic_rank_support
         return self
 
     def real_input_index(self, real_input_index):
@@ -893,8 +889,8 @@ class TBERegOp(RegOp):
         Args:
             dynamic_compile_static (bool): Value of dynamic compile static. Default: ``False`` .
         """
-        if self._is_bool(dynamic_compile_static):
-            self.dynamic_compile_static_ = dynamic_compile_static
+        self._is_bool(dynamic_compile_static)
+        self.dynamic_compile_static_ = dynamic_compile_static
         return self
 
     def need_check_supported(self, need_check_supported=False):
@@ -904,8 +900,8 @@ class TBERegOp(RegOp):
         Args:
             need_check_supported (bool): Value of need_check_supported. Default: ``False`` .
         """
-        if self._is_bool(need_check_supported):
-            self.need_check_support_ = need_check_supported
+        self._is_bool(need_check_supported)
+        self.need_check_support_ = need_check_supported
         return self
 
     def is_dynamic_format(self, is_dynamic_format=False):
@@ -915,8 +911,8 @@ class TBERegOp(RegOp):
         Args:
             is_dynamic_format (bool): Value of is_dynamic_format. Default: ``False`` .
         """
-        if self._is_bool(is_dynamic_format):
-            self.dynamic_format_ = is_dynamic_format
+        self._is_bool(is_dynamic_format)
+        self.dynamic_format_ = is_dynamic_format
         return self
 
     def op_pattern(self, pattern=None):
@@ -926,7 +922,8 @@ class TBERegOp(RegOp):
         Args:
             pattern (str): Value of op pattern, e.g. "broadcast", "reduce". Default: ``None`` .
         """
-        if pattern is not None and self._is_string(pattern):
+        if pattern is not None:
+            self._is_string(pattern)
             self.op_pattern_ = pattern
         return self
 

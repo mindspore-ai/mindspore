@@ -62,11 +62,11 @@ struct TensorStorageInfo {
     std::stringstream buf;
     buf << "TensorStorageInfo(shape=" << VectorToString(shape);
     buf << "  strides=" << VectorToString(strides);
-    buf << "  storage_offset=" << std::to_string(storage_offset);
+    buf << "  storage_offset=" << storage_offset;
     buf << "  ori_shape=" << VectorToString(ori_shape);
     buf << "  ori_strides=" << VectorToString(ori_strides);
-    buf << "  is_contiguous=" << std::to_string(is_contiguous);
-    buf << "  data_type=" << std::to_string(data_type);
+    buf << "  is_contiguous=" << is_contiguous;
+    buf << "  data_type=" << data_type;
     buf << ")";
     return buf.str();
   }
