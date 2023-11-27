@@ -29,18 +29,18 @@
 
 namespace mindspore {
 namespace opt {
-bool FuncGraphHasTupleInput(const FuncGraphPtr &fg);
-bool FuncGraphHasConstantTupleInput(const FuncGraphPtr &fg);
+bool FuncGraphHasSequenceInput(const FuncGraphPtr &fg);
+bool FuncGraphHasConstantSequenceInput(const FuncGraphPtr &fg);
 bool IsSequenceExpandable(const AbstractBasePtr &abs);
-std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
-                                               const abstract::AbstractTuplePtr &abs);
+std::vector<AnfNodePtr> TransformSequenceArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                                  const abstract::AbstractSequencePtr &abs);
 bool ContainSparseTensor(const abstract::AbstractBasePtr &abs);
 bool ParamContainSparseTensor(const AnfNodePtr &param);
 
-class GraphTupleParamTransform {
+class GraphSequenceParamTransform {
  public:
-  GraphTupleParamTransform() : cache_() {}
-  ~GraphTupleParamTransform() { cache_.clear(); }
+  GraphSequenceParamTransform() : cache_() {}
+  ~GraphSequenceParamTransform() { cache_.clear(); }
   FuncGraphPtr operator()(const FuncGraphPtr &fg, const FuncGraphManagerPtr &mng) {
     if (cache_.find(fg) != cache_.end()) {
       return cache_[fg];
@@ -50,14 +50,15 @@ class GraphTupleParamTransform {
     return new_fg;
   }
 
-  AnfNodePtr GenerateTupleParams(const abstract::AbstractTuplePtr &tuple_abs, const FuncGraphPtr &fg,
-                                 std::vector<AnfNodePtr> *params) {
+  AnfNodePtr GenerateSequenceParams(const abstract::AbstractSequencePtr &seq_abs, const FuncGraphPtr &fg,
+                                    std::vector<AnfNodePtr> *params) {
     std::vector<AnfNodePtr> inputs;
-    inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
-    auto &elements = tuple_abs->elements();
+    auto prim_sequence = seq_abs->isa<abstract::AbstractTuple>() ? prim::kPrimMakeTuple : prim::kPrimMakeList;
+    inputs.push_back(NewValueNode(prim_sequence));
+    auto &elements = seq_abs->elements();
     for (auto &item : elements) {
-      if (item->isa<abstract::AbstractTuple>()) {
-        inputs.push_back(GenerateTupleParams(item->cast<abstract::AbstractTuplePtr>(), fg, params));
+      if (item->isa<abstract::AbstractSequence>()) {
+        inputs.push_back(GenerateSequenceParams(item->cast<abstract::AbstractSequencePtr>(), fg, params));
       } else {
         auto p = std::make_shared<Parameter>(fg);
         p->set_abstract(item);
@@ -66,7 +67,7 @@ class GraphTupleParamTransform {
       }
     }
     auto node = fg->NewCNode(inputs);
-    node->set_abstract(tuple_abs);
+    node->set_abstract(seq_abs);
     return node;
   }
 
@@ -79,10 +80,10 @@ class GraphTupleParamTransform {
     for (auto &param : params) {
       auto abs = param->abstract();
       if (IsSequenceExpandable(abs)) {
-        auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
-        std::vector<AnfNodePtr> tuple_params;
-        (void)repl.emplace(param, GenerateTupleParams(tuple_abs, new_fg, &tuple_params));
-        std::transform(tuple_params.begin(), tuple_params.end(), std::back_inserter(new_params),
+        auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
+        std::vector<AnfNodePtr> sequence_params;
+        (void)repl.emplace(param, GenerateSequenceParams(sequence_abs, new_fg, &sequence_params));
+        std::transform(sequence_params.begin(), sequence_params.end(), std::back_inserter(new_params),
                        [](AnfNodePtr p) { return p; });
       } else {
         new_params.push_back(param);
