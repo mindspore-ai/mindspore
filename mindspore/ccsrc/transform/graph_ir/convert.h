@@ -129,8 +129,6 @@ class DfGraphConvertor {
 
     std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
     std::string graph_name = anf_graph_->ToString();
-    graph_manager_ = Manage(anf_graph_, true);
-    MS_EXCEPTION_IF_NULL(graph_manager_);
     MS_LOG(INFO) << "Create DfGraphConvertor with graph: " << graph_name << "(type: " << graph_type << ")"
                  << ", training: " << training_ << ", dynamic input: " << dynamic_shape_inputs_
                  << ", distribute: " << distribute_;
@@ -316,7 +314,6 @@ class DfGraphConvertor {
   bool IsConstantOp(const OperatorPtr &op) const;
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
-  FuncGraphManagerPtr graph_manager_{nullptr};
   RefModeFlag ref_mode_type_ = RefModeFlag::kRefModeNone;
   bool ref_mode_ = false;
   std::vector<std::string> extra_variables_names_;
