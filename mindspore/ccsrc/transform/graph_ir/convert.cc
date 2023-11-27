@@ -323,8 +323,8 @@ std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNo
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> visited;
-  auto node_users_map = manager->node_users();
-  for (const auto &node_pair : node_users_map[node]) {
+  const auto &nodes = manager->node_users()[node];
+  for (const auto &node_pair : nodes) {
     if (AnfUtils::IsRealKernel(node_pair.first) && node_pair.first->isa<CNode>()) {
       visited.push_back(node_pair.first);
     }
