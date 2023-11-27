@@ -1408,7 +1408,7 @@ void KernelGraph::InferType() {
                           << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
       }
       MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
-      abstracts.emplace_back(abstract);
+      (void)abstracts.emplace_back(abstract);
     }
 
     // Fetch infer function.

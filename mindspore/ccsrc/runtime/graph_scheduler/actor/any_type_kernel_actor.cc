@@ -740,7 +740,7 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
     MS_LOG(EXCEPTION) << "Invalid input node:" << output_node->DebugString()
                       << " front node:" << front_node->DebugString();
   }
-  size_t index = iter - input_nodes.begin();
+  size_t index = LongToSize(iter - input_nodes.begin());
   if (index >= node_device_tensors_.size()) {
     MS_LOG(EXCEPTION) << "Invalid input index:" << index << " by node:" << output_node->DebugString()
                       << " for actor:" << GetAID();
