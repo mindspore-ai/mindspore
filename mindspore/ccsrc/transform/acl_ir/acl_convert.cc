@@ -324,11 +324,10 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
 void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
                                      const std::vector<KernelTensor *> &inputs,
                                      const std::vector<TensorParams> &input_params) {
-  auto &prim_name = prim->name();
-  auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
+  auto info = GeAdapterManager::GetInstance().GetInfo(prim->name(), true);
   MS_EXCEPTION_IF_NULL(info);
   auto flags = info->GetInputMappingFlags();
-  if ((flags & GeTensorInfo::kEmptyParam) != 0) {
+  if (flags & GeTensorInfo::kEmptyParam) {
     return;
   }
 
@@ -352,6 +351,44 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
     return {GetAddrPtr(inputs[ms_real_idx]), nullptr};
   };
 
+  auto convert_one_input = [this, set_const, &input_params, &get_input_param](
+                             const MsInputInfo &ms_input_info, size_t ge_offset, const Ms2GeParamInfo &ge_input_info) {
+    AclDumpString dump_str;
+    AclDumpString *dump_str_pointer = transform::AclHelper::IsPrintDebugString() ? &dump_str : nullptr;
+
+    for (size_t i = 0; i < ms_input_info.folded_size; i++) {
+      size_t ms_real_idx = ms_input_info.real_offset + i;
+      auto [dev_address, host_tensor] = get_input_param(ms_input_info.proto_index, ms_real_idx);
+      std::string arg_name =
+        (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? ge_input_info.name + std::to_string(i) : ge_input_info.name);
+      size_t ge_real_idx = ge_offset + i;
+      MS_LOG(DEBUG) << "Fill ge real input " << ge_real_idx << " use ms real input " << ms_real_idx;
+      auto [acl_desc, acl_data] =
+        (host_tensor != nullptr)
+          ? ConvertTensorToAclDesc(host_tensor, input_params[ms_real_idx], arg_name, dump_str_pointer)
+          : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, dump_str_pointer);
+      if (set_const && (host_tensor != nullptr)) {
+        (void)aclSetTensorConst(acl_desc, host_tensor->data_c(), host_tensor->Size());
+      }
+      runner_.SetInput(ge_real_idx, acl_desc, acl_data);
+      if (transform::AclHelper::IsPrintDebugString()) {
+        input_str_[ge_real_idx] = dump_str;
+      }
+    }
+  };
+
+  if (flags & GeTensorInfo::kMultiDynParam) {
+    ConvertInputsMutiDynParams(prim, inputs, info, convert_one_input);
+  } else {
+    ConvertInputsNormal(prim, inputs, info, convert_one_input);
+  }
+
+  // fill null optional input in the range of inputs with placeholder
+  runner_.FillOptInputWithPlaceHolder();
+}
+
+void AclConverter::ConvertInputsNormal(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
+                                       const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input) {
   // NOTE: num of real inputs params may less than `info->GetNumInputsOfMsOpProto()`, e.g. Conv2D without bias
   size_t num_real_inputs = inputs.size();
   size_t ms_real_idx = 0;
@@ -370,36 +407,53 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
     auto opt_ge_input_info = info->GetOptGeInputByMsInputIndex(ms_idx);
     // mindpore input mapped to GE attribute
     if (!opt_ge_input_info.has_value()) {
-      MS_LOG(DEBUG) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive " << prim_name;
+      MS_LOG(DEBUG) << "Not found matched GE input for mindspore input idx:" << ms_idx << " of primitive "
+                    << prim->name();
       ms_real_idx += 1;
       continue;
     }
 
     auto &ge_input_info = opt_ge_input_info.value();
     size_t count = (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? num_folded_inputs_ : 1);
+    MsInputInfo ms_input_info{.proto_index = ms_idx, .real_offset = ms_real_idx, .folded_size = count};
     size_t ge_start_idx = (ge_input_info.is_after_dynamic ? ge_input_info.index + count - 1 : ge_input_info.index);
-    AclDumpString dump_str;
-    AclDumpString *dump_str_pointer = transform::AclHelper::IsPrintDebugString() ? &dump_str : nullptr;
 
-    for (size_t i = 0; i < count; i++) {
-      auto [dev_address, host_tensor] = get_input_param(ms_idx, ms_real_idx);
-      std::string arg_name =
-        (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? ge_input_info.name + std::to_string(i) : ge_input_info.name);
-      size_t acl_real_input_idx = ge_start_idx + i;
-      MS_LOG(DEBUG) << "Fill acl real input " << acl_real_input_idx << " use ms real input " << ms_real_idx;
-      auto [acl_desc, acl_data] =
-        (host_tensor != nullptr)
-          ? ConvertTensorToAclDesc(host_tensor, input_params[ms_real_idx], arg_name, dump_str_pointer)
-          : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, dump_str_pointer);
-      if (set_const && (host_tensor != nullptr)) {
-        (void)aclSetTensorConst(acl_desc, host_tensor->data_c(), host_tensor->Size());
-      }
-      runner_.SetInput(acl_real_input_idx, acl_desc, acl_data);
-      if (transform::AclHelper::IsPrintDebugString()) {
-        input_str_[acl_real_input_idx] = dump_str;
-      }
-      ms_real_idx += 1;
+    convert_one_input(ms_input_info, ge_start_idx, ge_input_info);
+    ms_real_idx += count;
+  }
+}
+
+void AclConverter::ConvertInputsMutiDynParams(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
+                                              const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input) {
+  // Calculate GE input proto index to MS real input index and number of folded inputs
+  // NOTE: here we use an ordered map to sort ge input indices ascendly
+  std::map<uint32_t, MsInputInfo> ge2ms_real_input_map;
+  size_t ms_idx = 0;
+  size_t offset = 0;  // offset in real inputs corresponding to input proto index
+  while (offset < inputs.size()) {
+    size_t num_folded_inputs = (dyn_inputs_map_.count(ms_idx) > 0 ? dyn_inputs_map_[ms_idx] : 1);
+    auto ge_idx = info->GetGeInputByMsInputIndex(ms_idx).index;
+    ge2ms_real_input_map[ge_idx] = MsInputInfo{ms_idx, offset, num_folded_inputs};
+    offset += num_folded_inputs;
+    ms_idx += 1;
+  }
+  if (offset != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Number of real inputs is " << inputs.size() << ", which is not equal to expected size "
+                      << offset << " of primitive " << prim->name();
+  }
+
+  // construct acl inputs by ge input indices increasingly
+  size_t ge_start_idx = 0;
+  size_t ge_index_cnt = 0;
+  for (auto &[ge_idx, ms_info] : ge2ms_real_input_map) {
+    if (ge_idx != ge_index_cnt++) {
+      MS_LOG(EXCEPTION) << "There is no mindspore input corresponded to ge input index " << ge_index_cnt
+                        << " of primitive " << prim->name();
     }
+
+    auto &ge_input_info = info->GetGeInputByMsInputIndex(ms_info.proto_index);
+    convert_one_input(ms_info, ge_start_idx, ge_input_info);
+    ge_start_idx += ms_info.folded_size;
   }
 }
 
@@ -631,17 +685,43 @@ void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
   auto flags = info->GetInputMappingFlags();
   size_t num_max_inputs = info->GetNumInputsOfMsOpProto();
 
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (prim->HasAttr(kAttrDynInputSizes)) {
+    dyn_input_sizes = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDynInputSizes));
+  }
+
   if (flags & GeTensorInfo::kDynamicParam) {
-    std::vector<int64_t> dyn_input_sizes = {};
-    if (prim->HasAttr(kAttrDynInputSizes)) {
-      dyn_input_sizes = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDynInputSizes));
-    }
     if (dyn_input_sizes.empty()) {
       MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of primitive " << prim_name << " is "
                         << dyn_input_sizes << ", of which size is empty";
     }
     num_folded_inputs_ = LongToSize(dyn_input_sizes[0]);
     num_max_inputs = info->GetNumInputsOfMsOpProto() + num_folded_inputs_ - 1;
+  } else if (flags & GeTensorInfo::kMultiDynParam) {
+    // initialize dyn_inputs_map_ with number of folded inputs equal to 1
+    for (auto &[ms_idx, ge_info] : info->GetMs2GeInputMap()) {
+      if (ge_info.type != Ms2GeParamInfo::DYNAMIC) {
+        continue;
+      }
+      dyn_inputs_map_[ms_idx] = 1;
+    }
+
+    // suppose number of folded inputs in attribute kAttrDynInputSizes is stored by input index ascendly
+    // NOTE: dyn_inputs_map_ is an ordered map, sort by MindSpore dynamic input index ascendly
+    auto iter = dyn_inputs_map_.begin();
+    for (const auto num_folded_inputs : dyn_input_sizes) {
+      if (iter == dyn_inputs_map_.end()) {
+        break;
+      }
+      iter->second = num_folded_inputs;
+      ++iter;
+    }
+
+    // calculate max size
+    num_max_inputs = info->GetNumInputsOfMsOpProto();
+    for (auto it = dyn_inputs_map_.cbegin(); it != dyn_inputs_map_.cend(); ++it) {
+      num_max_inputs += it->second - 1;
+    }
   }
 
   if (transform::AclHelper::IsPrintDebugString()) {
