@@ -56,27 +56,38 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
       return ge::GRAPH_PARAM_INVALID;
   }
 
-  int64_t seq_len_axis = kAxisTwo;
   const gert::StorageShape *cache_shape = context->GetInputShape(index0);
   const gert::StorageShape *update_shape = context->GetInputShape(index1);
+
+  bool is_dim4 = true;
+  const size_t kDim3 = 3;
+  const size_t kDim4 = 4;
+  if (cache_shape->GetStorageShape().GetDimNum() == kDim4) {
+    is_dim4 = true;
+  } else if (cache_shape->GetStorageShape().GetDimNum() == kDim3) {
+    is_dim4 = false;
+  } else {
+    return ge::GRAPH_PARAM_INVALID;
+  }
+
   int64_t b = cache_shape->GetStorageShape().GetDim(index0);
   int64_t ub = update_shape->GetStorageShape().GetDim(index0);
   // s need get when run
-  int64_t d = update_shape->GetStorageShape().GetDim(index3);
   int64_t h = 0;
   int64_t s = 0;
   int64_t us = 0;
+  int64_t d = 0;
 
-  if (seq_len_axis == kAxisOne) {
-    h = update_shape->GetStorageShape().GetDim(index2);
-    s = cache_shape->GetStorageShape().GetDim(index1);
-    us = update_shape->GetStorageShape().GetDim(index1);
-  } else if (seq_len_axis == kAxisTwo) {
+  if (is_dim4) {
+    h = update_shape->GetStorageShape().GetDim(index1);
     s = cache_shape->GetStorageShape().GetDim(index2);
     us = update_shape->GetStorageShape().GetDim(index2);
-    h = update_shape->GetStorageShape().GetDim(index1);
+    d = update_shape->GetStorageShape().GetDim(index3);
   } else {
-    return ge::GRAPH_FAILED;
+    h = 1;
+    s = cache_shape->GetStorageShape().GetDim(index1);
+    us = update_shape->GetStorageShape().GetDim(index1);
+    d = update_shape->GetStorageShape().GetDim(index2);
   }
 
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
@@ -124,9 +135,17 @@ static ge::graphStatus CheckSupported(const ge::Operator &op, ge::AscendString &
     }
   }
 
-  const int64_t input_dim_num = 4;
-  if (op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim_num ||
-      op.GetInputDesc(index1).GetShape().GetDimNum() != input_dim_num) {
+  const int64_t input_dim3_num = 3;
+  const int64_t input_dim4_num = 4;
+  if (op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim3_num &&
+      op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim4_num) {
+    resultStr = R"({"ret_code": "1", "reason": "input dim is not supported, cache and update dim must be 4."})";
+    result = ge::AscendString(resultStr.c_str());
+    return ge::GRAPH_FAILED;
+  }
+
+  if (op.GetInputDesc(index1).GetShape().GetDimNum() != input_dim3_num &&
+      op.GetInputDesc(index1).GetShape().GetDimNum() != input_dim4_num) {
     resultStr = R"({"ret_code": "1", "reason": "input dim is not supported, cache and update dim must be 4."})";
     result = ge::AscendString(resultStr.c_str());
     return ge::GRAPH_FAILED;

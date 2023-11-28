@@ -57,26 +57,34 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
       return ge::GRAPH_PARAM_INVALID;
   }
 
-  int64_t seq_len_axis = kAxisTwo;
   const gert::StorageShape *cur_shape = context->GetInputShape(index1);
+
+  bool is_dim4 = true;
+  const size_t kDim3 = 3;
+  const size_t kDim4 = 4;
+  if (cur_shape->GetStorageShape().GetDimNum() == kDim4) {
+    is_dim4 = true;
+  } else if (cur_shape->GetStorageShape().GetDimNum() == kDim3) {
+    is_dim4 = false;
+  } else {
+    return ge::GRAPH_PARAM_INVALID;
+  }
+
   int64_t b = cur_shape->GetStorageShape().GetDim(index0);
-  // s need get when run
-  int64_t d = cur_shape->GetStorageShape().GetDim(index3);
   int64_t h = 0;
   int64_t us = 0;
+  // s need get when run
+  int64_t d = 0;
 
-  if (seq_len_axis == kAxisOne) {
-    // (b, us, h, d) -> (bs, us, d)
-    us = cur_shape->GetStorageShape().GetDim(index1);
-    h = cur_shape->GetStorageShape().GetDim(index2);
-    d = h * d;
-    h = 1;
-  } else if (seq_len_axis == kAxisTwo) {
+  if (is_dim4) {
     // (b, h, us, d) -> (bs, us, d)
     h = cur_shape->GetStorageShape().GetDim(index1);
     us = cur_shape->GetStorageShape().GetDim(index2);
+    d = cur_shape->GetStorageShape().GetDim(index3);
   } else {
-    return ge::GRAPH_FAILED;
+    h = 1;
+    us = cur_shape->GetStorageShape().GetDim(index1);
+    d = cur_shape->GetStorageShape().GetDim(index2);
   }
 
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
@@ -122,9 +130,10 @@ static ge::graphStatus CheckSupported(const ge::Operator &op, ge::AscendString &
     }
   }
 
-  const int64_t input_dim_num = 4;
-  if (op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim_num ||
-      op.GetInputDesc(index1).GetShape().GetDimNum() != input_dim_num) {
+  const int64_t input_dim3_num = 3;
+  const int64_t input_dim4_num = 4;
+  if (op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim3_num &&
+      op.GetInputDesc(index0).GetShape().GetDimNum() != input_dim4_num) {
     resultStr = R"({"ret_code": "1", "reason": "input dim is not supported, cache and update dim must be 4."})";
     result = ge::AscendString(resultStr.c_str());
     return ge::GRAPH_FAILED;

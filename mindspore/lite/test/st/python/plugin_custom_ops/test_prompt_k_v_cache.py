@@ -32,6 +32,8 @@ ub = 40
 us = 512
 ps = s - us
 
+is_4d = True
+
 
 class PromptKVCacheNet(nn.Cell):
     """
@@ -57,16 +59,25 @@ def np_inference(cache, update, valid_seq_len, batch_index):
     """
     np_inference
     """
-    s_ = cache.shape[2]
-    us_ = update.shape[2]
+    cache_rank = len(cache.shape)
+    if cache_rank == 4:
+        s_ = cache.shape[2]
+        us_ = update.shape[2]
+    elif cache_rank == 3:
+        s_ = cache.shape[1]
+        us_ = update.shape[1]
+
     for i in range(batch_index.size):
         b_idx = batch_index[i]
         s_idx = valid_seq_len[i]
         if b_idx < 0:
             continue
-        if s_idx < 0 or s_idx + us > s_:
+        if s_idx < 0 or s_idx + us_ > s_:
             continue
-        cache[b_idx, :, s_idx:s_idx + us_, :] = update[i]
+        if cache_rank == 4:
+            cache[b_idx, :, s_idx:s_idx + us_, :] = update[i]
+        elif cache_rank == 3:
+            cache[b_idx, s_idx:s_idx + us_, :] = update[i]
 
     return cache
 
@@ -75,8 +86,12 @@ def create_numpy_inputs():
     """
     create inputs
     """
-    cache_shape = (b, h, s, d)
-    update_shape = (ub, h, us, d)
+    if is_4d:
+        cache_shape = (b, h, s, d)
+        update_shape = (ub, h, us, d)
+    else:
+        cache_shape = (b, s, h * d)
+        update_shape = (ub, us, h * d)
     cache = np.random.rand(*cache_shape).astype(np.float16)
     update = np.random.rand(*update_shape).astype(np.float16)
     valid_seq_len = np.random.randint(-1, s, size=ub).astype(np.int64)
@@ -101,13 +116,6 @@ def create_ms_inputs():
     ms_cur_max_seq_len = Tensor(cur_max_seq_len)
     return (ms_cache, ms_update, ms_valid_seq_len, ms_batch_index, ms_seq_len_axis,
             ms_new_max_seq_len, ms_cur_max_seq_len)
-
-
-def create_np_inputs(cache, update, batch_index):
-    """
-    create_np_inputs
-    """
-    return (cache, update, batch_index)
 
 
 def create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len):
@@ -138,15 +146,13 @@ def inference_prompt_k_v_cache(mindir_model):
     model.build_from_file(
         mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
 
-    for i in range(100):
+    for i in range(50):
         cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, \
             cur_max_seq_len = create_numpy_inputs()
         input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
                                               new_max_seq_len, cur_max_seq_len))
         mslite_output = model.predict(input_lists)
-        np_cache, np_update, batch_index = create_np_inputs(
-            cache, update, batch_index)
-        expect_output = np_inference(np_cache, np_update, valid_seq_len, batch_index)
+        expect_output = np_inference(cache, update, valid_seq_len, batch_index)
         assert np.allclose(
             mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
         print(f"prompt_k_v_cache st {i} times: inference success.")
@@ -160,7 +166,10 @@ def export_prompt_k_v_cache_model():
     cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len = create_ms_inputs()
 
     net = PromptKVCacheNet("right")
-    file_name = "prompt_k_v_cache_primitive"
+    if is_4d:
+        file_name = "prompt_k_v_cache_primitive_4d"
+    else:
+        file_name = "prompt_k_v_cache_primitive_3d"
 
     export(net, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len,
            file_name=file_name, file_format='MINDIR')
@@ -169,9 +178,24 @@ def export_prompt_k_v_cache_model():
     return model_name
 
 
-if __name__ == '__main__':
+def test_4d():
+    global is_4d
+    is_4d = True
     model_path = export_prompt_k_v_cache_model()
-    print("prompt_k_v_cache st : export success path: ", model_path)
+    print("prompt_k_v_cache 4d st : export success path: ", model_path)
 
     inference_prompt_k_v_cache(model_path)
-    print(f"prompt_k_v_cache st : inference end.")
+    print(f"prompt_k_v_cache 4d st : inference end.")
+
+def test_3d():
+    global is_4d
+    is_4d = False
+    model_path = export_prompt_k_v_cache_model()
+    print("prompt_k_v_cache 3d st : export success path: ", model_path)
+
+    inference_prompt_k_v_cache(model_path)
+    print(f"prompt_k_v_cache 3d st : inference end.")
+
+if __name__ == '__main__':
+    test_3d()
+    test_4d()
