@@ -122,13 +122,14 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   Tensor *axes_data = ctx.Input(1);
   KERNEL_CHECK_NULLPTR(axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
-  if (axes_data_addr[0] > kDimsNum - 1 || axes_data_addr[0] < -kDimsNum) {
+  auto data_addr_zero = axes_data_addr[0];
+  if (data_addr_zero > kDimsNum - 1 || data_addr_zero < -kDimsNum) {
     KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum, kDimsNum - 1,
-                     axes_data_addr[0]);
+                     data_addr_zero);
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (axes_data_addr[0] < 0) {
-    axes_data_addr[0] += kDimsNum;
+  if (data_addr_zero < 0) {
+    data_addr_zero += kDimsNum;
   }
   // get y
   Tensor *output_data = ctx.Output(0);
@@ -137,12 +138,12 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   int64_t output_data_num = output_data->NumElements();
   if (output_data_num * sizeof(T3) < kDataSize) {
     int64_t output_seq[kDimsNum];
-    output_seq[axes_data_addr[0]] = 0;
+    output_seq[data_addr_zero] = 0;
     for (int64_t i = 0; i < output_data_num; i++) {
       int64_t tmp = i;
       int64_t addr_base = 0;
       for (int64_t j = kDimsNum - 1; j > -1; j--) {
-        if (j == axes_data_addr[0]) {
+        if (j == data_addr_zero) {
           continue;
         }
         output_seq[j] = tmp % dims[j];
@@ -151,8 +152,8 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
       }
       T1 max_value = input_data_addr[addr_base];
       T3 max_loc = 0;
-      for (int64_t j = 1; j < dims[axes_data_addr[0]]; j++) {
-        int64_t get_addr = addr_base + j * dims_addr[axes_data_addr[0]];
+      for (int64_t j = 1; j < dims[data_addr_zero]; j++) {
+        int64_t get_addr = addr_base + j * dims_addr[data_addr_zero];
         T1 get_data = input_data_addr[get_addr];
         if (max_value < get_data) {
           max_value = get_data;
@@ -170,11 +171,11 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
     auto shard_compute = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         int64_t output_seq[kDimsNum];
-        output_seq[axes_data_addr[0]] = 0;
+        output_seq[data_addr_zero] = 0;
         int64_t tmp = i;
         int64_t addr_base = 0;
         for (int64_t j = kDimsNum - 1; j > -1; j--) {
-          if (j == axes_data_addr[0]) {
+          if (j == data_addr_zero) {
             continue;
           }
           output_seq[j] = tmp % dims[j];
@@ -183,8 +184,8 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
         }
         T1 max_value = input_data_addr[addr_base];
         T3 max_loc = 0;
-        for (int64_t j = 1; j < dims[axes_data_addr[0]]; j++) {
-          int64_t get_addr = addr_base + j * dims_addr[axes_data_addr[0]];
+        for (int64_t j = 1; j < dims[data_addr_zero]; j++) {
+          int64_t get_addr = addr_base + j * dims_addr[data_addr_zero];
           T1 get_data = input_data_addr[get_addr];
           if (max_value < get_data) {
             max_value = get_data;
