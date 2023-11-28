@@ -2627,9 +2627,10 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
   std::vector<int> ge_tensor_orders =
     GetGeTensorOrders(ge_input_to_ms_input, *dyn_input_sizes, ge_input_size, &new_dyn_input_sizes);
 
+  std::vector<size_t> ms_control_inputs;
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (HasAbstractMonad(inputs[i])) {
-      ge_tensor_orders.push_back(i - kIndex1);
+      ms_control_inputs.push_back(i);
     }
   }
 
@@ -2692,6 +2693,11 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
       DrawOpInput(node, pred, ge_input_idx);
       AddGraphConstInput(handles[0].op);
     }
+  }
+
+  for (size_t ms_control_input : ms_control_inputs) {
+    AnfNodePtr pred = inputs[ms_control_input];
+    SetNodeControlInput(node, pred);
   }
 
   // Set input from attr.
