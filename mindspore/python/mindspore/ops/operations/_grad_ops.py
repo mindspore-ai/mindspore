@@ -3865,3 +3865,20 @@ class FlashAttentionScoreGrad(Primitive):
                                         'softmax_sum', 'dy', 'drop_mask', 'real_shift', "padding_mask", 'softmax_out',
                                         'prefix'],
                                 outputs=['dq', 'dk', 'dv'])
+
+class RmsNormGrad(Primitive):
+    r"""
+    Calculates the gradient of RmsNorm operation.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize RmsNormGrad."""
+        self.init_prim_io_names(inputs=["dy", "x", "rstd", "gamma"],
+                                outputs=["dx", "dgamma"])
+        
