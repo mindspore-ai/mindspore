@@ -61,7 +61,10 @@ void MergeAllGather(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphMan
         auto ag2_prim = GetCNodePrimitive(allgather_cnode2);
         auto group1 = ag1_prim->GetAttr(GROUP);
         auto group2 = ag2_prim->GetAttr(GROUP);
-        if (!group1 || !group2 || group1 != group2) {
+        if (!group1 || !group2) {
+          return false;
+        }
+        if (GetValue<std::string>(group1) != GetValue<std::string>(group2)) {
           return false;
         }
         if (IsPrimitiveCNode(allgather_cnode1->input(1), prim::kPrimReshape) !=
