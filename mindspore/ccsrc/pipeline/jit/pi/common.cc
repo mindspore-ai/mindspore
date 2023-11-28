@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/common.h"
 #include <algorithm>
 #include <iomanip>
+#include <regex>
 #include <list>
 #include <map>
 #include <string>
@@ -34,6 +35,7 @@
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "runtime/pynative/op_executor.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace jit {
@@ -569,7 +571,7 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
   }
 }
 
-static void CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
+static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
   CallableGraph callable = mindspore::jit::graph::Compiler::Compile(*func, *frame, phase);
@@ -590,6 +592,22 @@ static void CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, co
   }
   jcr->code->SetNativeFunc(phase, callable, rFunc);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  return phase;
+}
+
+std::string GraphToString(FuncGraphPtr graph) {
+  std::ostringstream graph_buffer;
+  DumpIR(graph_buffer, graph);
+  auto ret = graph_buffer.str();
+  std::regex regAddress("(0x)([0-9a-f]+)");
+  ret = std::regex_replace(ret, regAddress, "");
+  std::regex regFunc(std::string("(") + graph->ToString() + std::string(")"));
+  ret = std::regex_replace(ret, regFunc, "");
+  std::regex regVar("(\\%[0-9]+\\()([A-Za-z0-9_]+)(\\))");
+  ret = std::regex_replace(ret, regVar, "$1$3");
+  std::regex regNode("CNode_([0-9]+)");
+  ret = std::regex_replace(ret, regNode, "");
+  return ret;
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
@@ -598,9 +616,43 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
 
-  CallGraphCompiler(jcr, func, frame);
+  std::string phase = CallGraphCompiler(jcr, func, frame);
 
   Py_DECREF(new_func);
+
+  if (jcr->conf->GetBoolConfig(GraphJitConfig::kReuseGraph)) {
+    auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
+    FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
+    std::string key = GraphToString(ms_func_graph);
+    auto vCode = jcr->codehub->Get(key);
+    bool bFind = false;
+    for (auto code : vCode) {
+      FuncGraphPtr func_graph = graph_executor->GetFuncGraph(code->GetPhase());
+      FuncGraphPairMapEquiv equiv_graph;
+      NodeMapEquiv equiv_node;
+      if (func_graph != nullptr && Isomorphic(ms_func_graph, func_graph, &equiv_graph, &equiv_node)) {
+        if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
+          std::ostringstream graph_buffer;
+          DumpIR(graph_buffer, ms_func_graph);
+          std::cout << "Graph Duplicated:" << std::endl;
+          std::cout << "  Graph:" << graph_buffer.str() << std::endl;
+          std::cout << "  Bytecode:" << std::endl;
+          Utils::DisFuncObject(reinterpret_cast<PyObject *>(frame->f_code));
+        }
+        // find duplicate graph and reuse it
+        code->Copy(jcr->code);
+        bFind = true;
+        break;
+      }
+    }
+    if (!bFind) {
+      // current graph is a new one and register it
+      jcr->codehub->Register(key, jcr->code);
+    }
+  }
+
+  OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
+                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount), jcr->code);
 }
 
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);
@@ -789,6 +841,7 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
+  c->code->Inc();
 
   if (graph_preferred) {
     code_size_execute_graph[PyBytes_GET_SIZE(f->f_code->co_code)]++;
@@ -809,15 +862,18 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   c->code = nullptr;
-
+  std::map<std::string, PyObject *> cache;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
   for (auto &oc : c->codehub->GetOptTarget(opt)) {
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
-    if (guard != nullptr && guard->Check(f, print_guard)) {
+    if (guard != nullptr && guard->Check(f, print_guard, &cache)) {
       c->code = oc;
       break;
     }
+  }
+  for (auto item : cache) {
+    Py_XDECREF(item.second);
   }
   MS_LOG(DEBUG) << __FUNCTION__ << (c->code != nullptr ? " success !" : " failed !");
   return c->code != nullptr;

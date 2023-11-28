@@ -18,6 +18,7 @@
 
 #include <Python.h>
 #include "pipeline/jit/pi/graph_guard/perf.h"
+#include "pipeline/jit/pi/graph_guard/cache.h"
 
 namespace mindspore {
 namespace jit {
@@ -33,6 +34,7 @@ class OptStrategy {
   static ExecKind MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, int count,
                                          double adj_coef = 0.1);
   static ExecKind MakeExecStrategyByComplex(PyCodeObject *code, int threshold);
+  static void MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, OptCodePtr except);
 };
 
 }  // namespace graph

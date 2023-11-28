@@ -30,6 +30,17 @@ namespace jit {
 namespace graph {
 using NativeFunc = std::function<PyObject *(PyObject *, PyObject *)>;
 using ReleaseFunc = std::function<void()>;
+class OptFunc {
+ public:
+  OptFunc(NativeFunc cFunc, ReleaseFunc rFunc);
+  virtual ~OptFunc();
+  NativeFunc GetFunc();
+
+ protected:
+  NativeFunc cFunc_;
+  ReleaseFunc rFunc_;
+};
+using OptFuncPtr = std::shared_ptr<OptFunc>;
 
 /// \brief OptOption is the compilation option for the code
 class OptOption : public std::enable_shared_from_this<OptOption> {
@@ -64,16 +75,20 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   PyCodeObject *GetPythonCode() const;
   void SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc);
   NativeFunc GetNativeFunc() const;
+  std::string GetPhase() const;
+  void Copy(std::shared_ptr<OptCode> dst);
+  void Inc();
+  uint64_t Count();
 
  protected:
   std::string phase_;
-  NativeFunc cFunc_;
-  ReleaseFunc rFunc_;
+  OptFuncPtr compiled_func_;
   py::object compiled_code_;
   OptGuardPtr guard_;
   OptOptionPtr option_;
   OptPerfPtr graph_perf_;
   OptPerfPtr pynative_perf_;
+  uint64_t call_count_;
 };
 using OptCodePtr = std::shared_ptr<OptCode>;
 using OptCodeSet = std::vector<OptCodePtr>;
@@ -86,9 +101,14 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
   virtual OptCodePtr AddOptTarget(OptOptionPtr option);
   virtual OptCodeSet GetOptTarget(OptOptionPtr option);
   virtual void DelOptTarget(OptOptionPtr option, OptCodePtr code);
+  virtual void DelOptTarget(OptCodePtr code);
+  virtual std::vector<OptCodeSet> GetAllOptTarget();
+  virtual void Register(std::string key, OptCodePtr code);
+  virtual OptCodeSet Get(std::string key);
 
  protected:
   std::map<OptOptionPtr, OptCodeSet> codeMap_;
+  std::map<std::string, OptCodeSet> codeSet_;
 };
 
 using OptCodeHubPtr = std::shared_ptr<OptCodeHub>;

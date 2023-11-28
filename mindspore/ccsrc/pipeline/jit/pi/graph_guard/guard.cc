@@ -105,10 +105,10 @@ OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
 
 OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print) {
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache) {
   for (size_t i = 0; i < guardList_.size(); ++i) {
     GuardItemPtr item = guardList_[i];
-    if (!item->Check(frame)) {
+    if (!item->Check(frame, cache)) {
       // reorder list to speed up check on next run
       GuardItemPtr tmp = item;
       guardList_.erase(guardList_.begin() + i);
@@ -150,7 +150,11 @@ bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int rec
     item = GuardEqual(var, 0);
   }
   if (item != nullptr) {
-    guardList_.push_back(item);
+    std::string strItem = item->ToString();
+    if (guardMap_.find(strItem) == guardMap_.end()) {
+      guardList_.push_back(item);
+      guardMap_[strItem] = item;
+    }
     return true;
   } else {
     return false;
@@ -346,11 +350,15 @@ void OptGuard::UpdateConfig(const std::map<std::string, bool> &config) {
 void OptGuard::Backup() {
   backupList_.clear();
   backupList_.insert(backupList_.begin(), guardList_.begin(), guardList_.end());
+  backupMap_.clear();
+  backupMap_.insert(guardMap_.begin(), guardMap_.end());
 }
 
 void OptGuard::Rollback() {
   backupList_.swap(guardList_);
   backupList_.clear();
+  backupMap_.swap(guardMap_);
+  backupMap_.clear();
 }
 }  // namespace graph
 }  // namespace jit

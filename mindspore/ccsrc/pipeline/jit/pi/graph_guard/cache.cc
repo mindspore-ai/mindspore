@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/cache.h"
+#include <algorithm>
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
 namespace jit {
 namespace graph {
+OptFunc::OptFunc(NativeFunc cFunc, ReleaseFunc rFunc) : cFunc_(cFunc), rFunc_(rFunc) {}
+
+OptFunc::~OptFunc() {
+  if (rFunc_ != nullptr) {
+    rFunc_();
+  }
+}
+
+NativeFunc OptFunc::GetFunc() { return cFunc_; }
+
 bool OptOption::operator==(const OptOption &obj) const {
   if (obj.target_ == this->target_) {
     return true;
@@ -41,25 +52,29 @@ std::shared_ptr<OptOption> OptOption::CreateOptionByPoint(void *ptr) {
   return ret;
 }
 
-OptCode::OptCode() : phase_(""), cFunc_(nullptr), rFunc_(nullptr), compiled_code_() {
+OptCode::OptCode() : phase_(""), compiled_code_(), call_count_(0) {
   guard_ = std::make_shared<OptGuard>();
   graph_perf_ = std::make_shared<OptPerf>();
   pynative_perf_ = std::make_shared<OptPerf>();
+  compiled_func_ = nullptr;
 }
 
-OptCode::~OptCode() {
-  if (rFunc_ != nullptr) {
-    rFunc_();
-  }
-}
+OptCode::~OptCode() {}
 
 void OptCode::SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc) {
   phase_ = phase;
-  cFunc_ = cFunc;
-  rFunc_ = rFunc;
+  compiled_func_ = std::make_shared<OptFunc>(cFunc, rFunc);
 }
 
-NativeFunc OptCode::GetNativeFunc() const { return cFunc_; }
+NativeFunc OptCode::GetNativeFunc() const {
+  if (compiled_func_ != nullptr) {
+    return compiled_func_->GetFunc();
+  } else {
+    return nullptr;
+  }
+}
+
+std::string OptCode::GetPhase() const { return phase_; }
 
 void OptCode::SetPythonCode(const py::object &code) {
   MS_EXCEPTION_IF_CHECK_FAIL(code.ptr() != nullptr && PyCode_Check(code.ptr()) && Py_REFCNT(code.ptr()) == 1,
@@ -87,6 +102,17 @@ OptPerfPtr OptCode::GetPerf(OptPerf::PerfKind kind) {
       return nullptr;
   }
 }
+
+void OptCode::Copy(OptCodePtr dst) {
+  dst->graph_perf_ = graph_perf_;
+  dst->pynative_perf_ = pynative_perf_;
+  dst->phase_ = phase_;
+  dst->compiled_func_ = compiled_func_;
+}
+
+void OptCode::Inc() { call_count_++; }
+
+uint64_t OptCode::Count() { return call_count_; }
 
 OptCodePtr OptCodeHub::AddOptTarget(OptOptionPtr option) {
   OptCodePtr ret;
@@ -122,8 +148,61 @@ void OptCodeHub::DelOptTarget(OptOptionPtr option, OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
+      for (auto &vCode : codeSet_) {
+        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code](const auto &item) {
+          if (item == code) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (its != vCode.second.end()) {
+          vCode.second.erase(its);
+        }
+      }
       break;
     }
+  }
+}
+
+void OptCodeHub::DelOptTarget(OptCodePtr code) {
+  for (auto &item : codeMap_) {
+    auto it = std::find(item.second.begin(), item.second.end(), code);
+    if (it != item.second.end()) {
+      item.second.erase(it);
+      if (item.second.size() == 0) {
+        codeMap_.erase(item.first);
+      }
+      for (auto &vCode : codeSet_) {
+        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code, this](const auto &item) {
+          if (item == code) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (its != vCode.second.end()) {
+          vCode.second.erase(its);
+        }
+      }
+      break;
+    }
+  }
+}
+
+std::vector<OptCodeSet> OptCodeHub::GetAllOptTarget() {
+  std::vector<OptCodeSet> ret;
+  std::transform(codeMap_.begin(), codeMap_.end(), ret.begin(), [](const auto &item) { return item.second; });
+  return ret;
+}
+
+void OptCodeHub::Register(std::string key, OptCodePtr code) { codeSet_[key].push_back(code); }
+
+OptCodeSet OptCodeHub::Get(std::string key) {
+  if (codeSet_.find(key) != codeSet_.end()) {
+    return codeSet_[key];
+  } else {
+    return {};
   }
 }
 }  // namespace graph
