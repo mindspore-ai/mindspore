@@ -70,6 +70,10 @@ uint32_t IdentityNCpuKernel::Compute(CpuKernelContext &ctx) {
 
     // memory copy
     if (out_data != in_data) {
+      // Don't memory copy when out_data is empty tensor.
+      if (out_size == 0) {
+        continue;
+      }
       int cpret = memcpy_s(out_data, out_size, in_data, in_size);
       KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR,
                          "[%s] memcpy_s to output failed, destMax [%ld], count [%ld].", kIdentityN, out_size, in_size);
