@@ -869,6 +869,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i4}).SetBody(BOD
     shape = ib->EmitValue(MakeValue(new_shape));
   } else {
     shape = ib->ShapeCalc(g_resize_nearest_neighbor, {x})[0];
+    shape = ib->TensorToTuple(shape);
   }
   auto dx =
     ib->Emit("ResizeNearestNeighborGrad", {dout, ib->TensorToTuple(shape), align_corners, half_pixel_centers}, {});
