@@ -20,9 +20,10 @@ import argparse
 import os
 import logging
 import gen_utils
+from pyboost_utils import AclnnUtils
 
 
-def gen_h(op_name, op_yaml, kernelmod_h_path, need_update_shape):
+def gen_h(op_name, aclnn_name, op_yaml, kernelmod_h_path, need_update_shape):
     """generate h files"""
     kernelmod_name = op_yaml.get('dispatch').get("Ascend")
     h_head = f"""
@@ -45,11 +46,11 @@ namespace kernel {{
 
 class {kernelmod_name} : public AclnnKernelMod {{
  public:
-  {kernelmod_name}() {{}}
+  explicit {kernelmod_name}() : AclnnKernelMod(std::move("{aclnn_name}")) {{}}
   ~{kernelmod_name}() = default;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   {update_shape}
 }};
 }}  // namespace kernel
@@ -61,7 +62,6 @@ class {kernelmod_name} : public AclnnKernelMod {{
     h_file = os.fdopen(fd, 'w')
     h_file.write(gen_utils.cc_license_str + h_head + h_body)
     h_file.close()
-    fd.close()
 
 def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
     """generate cc files"""
@@ -95,7 +95,7 @@ namespace kernel {{
 void {kernelmod_name}::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {{
   auto return_value = GEN_EXECUTOR(op_type_, {inputs});
-  UpdateWorkspace(std::get<0>(return_value));
+  UpdateWorkspace(return_value);
 }}
 """
     launch = f"""
@@ -103,7 +103,7 @@ bool {kernelmod_name}::Launch(const std::vector<KernelTensor *> &inputs, const s
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {{
   MS_EXCEPTION_IF_NULL(stream_ptr);
   ParseGenExecutor(GEN_EXECUTOR(op_type_, {inputs}));
-  RunOp(op_type_, stream_ptr, workspace);
+  RunOp(stream_ptr, workspace);
   return true;
 }}
 """
@@ -127,13 +127,13 @@ MS_ACLLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
     cc_file = os.fdopen(fd, 'w')
     cc_file.write(gen_utils.cc_license_str + cc_head + workspace_info + launch + update_shape + reg)
     cc_file.close()
-    fd.close()
 
 def gen_nnacl_kernelmod(op_name, class_name, op_yaml, h_and_cc, need_update_shape):
     """generate cc and h files"""
     kernelmod_h_path = h_and_cc[0]
     kernelmod_cc_path = h_and_cc[1]
-    gen_h(op_name, op_yaml, kernelmod_h_path, need_update_shape)
+    aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
+    gen_h(op_name, aclnn_name, op_yaml, kernelmod_h_path, need_update_shape)
     gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape)
 
 def main(op_name, need_update_shape):
@@ -158,7 +158,7 @@ def main(op_name, need_update_shape):
                          "please provide the KernelMod name in dispatch.".format(op_name))
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
     op_class = op_yaml.get("class")
-    if None not in [op_class, op_class.get("name")]:
+    if op_class is not None and op_class.get("name") is not None:
         class_name = op_class.get("name")
     h_and_cc = [kernelmod_h_path, kernelmod_cc_path]
     gen_nnacl_kernelmod(op_name, class_name, op_yaml, h_and_cc, need_update_shape)

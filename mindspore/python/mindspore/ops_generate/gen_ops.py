@@ -21,7 +21,7 @@ import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
-from pyboost_utils import get_pyboost_name, is_pyboost_enable
+from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils
 from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
 
@@ -718,8 +718,9 @@ namespace kernel {{
         if op_class and op_class.get("name") is not None:
             class_name = op_class.get("name")
         inputs_outputs_num = len(operator_data.get("args")) + len(operator_data.get("returns"))
+        aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
         reg_code += f"""
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, aclnn{class_name}, {inputs_outputs_num})"""
+MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num})"""
     reg_code += f"""
 }}  // namespace kernel
 }}  // namespace mindspore
