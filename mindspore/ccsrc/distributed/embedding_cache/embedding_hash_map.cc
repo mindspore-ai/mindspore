@@ -109,7 +109,7 @@ int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_
                                        bool *const /*need_wait_graph*/, int *swap_out_id) {
   if (current_pos_ < valid_capacity_) {
     // Start from index 1.
-    return ++current_pos_;
+    return SizeToInt(++current_pos_);
   }
   if (valid_capacity_ == 0) {
     return kInvalidIndexValue;

@@ -43,14 +43,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
 
   explicit LRUCache(size_t capacity) : Cache<KeyType, ValueType>(capacity) {}
 
-  ~LRUCache() override {
-    elements_.clear();
-    try {
-      element_keys_to_iters_.clear();
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Failed to clear element keys to iters HashMap, error message: " << e.what();
-    }
-  }
+  ~LRUCache() override = default;
 
   // Insert an element (key-value pair) into the lru cache.
   // The newly inserted element is considered hot data and will be placed at the head of the linked list, because this
