@@ -2501,6 +2501,14 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, value_node});
+
+  // b += list_x.pop(a)
+  // -->  list_x, b = list_x, b + list_x.pop(a) need renew the list_x.
+  if (IsPopOperation(value_node)) {
+    ProcessPopOperationInAugAssign(block, value_node, target_node, op_node, target_object);
+    return block;
+  }
+
   WriteAssignVars(block, target_object, augassign_app);
   return block;
 }
@@ -4121,6 +4129,22 @@ void Parser::ProcessPopOperation(const FunctionBlockPtr &block, const AnfNodePtr
     WriteAssignVars(block, list_pop_target_obj_, new_list);
   }
   WriteAssignVars(block, target_object, pop_node);
+}
+
+void Parser::ProcessPopOperationInAugAssign(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                                            const AnfNodePtr &target_node, const AnfNodePtr &op_node,
+                                            const py::object &target_object) {
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto new_list =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
+  auto pop_node =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+  if (!(ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_))) {
+    WriteAssignVars(block, list_pop_target_obj_, new_list);
+  }
+  AnfNodePtr augassign_app = block->func_graph()->NewCNodeInOrder({op_node, target_node, pop_node});
+  WriteAssignVars(block, target_object, augassign_app);
 }
 
 // Process a assign statement, such as a = b,  a, b = tuple(xx, xx)
