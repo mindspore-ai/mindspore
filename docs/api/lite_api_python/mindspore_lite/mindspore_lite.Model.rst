@@ -117,3 +117,16 @@ mindspore_lite.Model
             - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
             - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
             - **RuntimeError** - 调整输入形状的大小失败。
+
+    .. py:method:: update_weights(weights)
+
+        对模型中的常量tensor进行权重更新。
+
+        参数：
+            - **weights** (list[list[Tensor]]) - 需要更新的Tensor。
+
+        异常：
+
+            - **RuntimeError** - `weights` 不是两层list。
+            - **RuntimeError** - `weights` 是list，但是两层list中的元素不是Tensor。
+            - **RuntimeError** - 权重更新失败。

@@ -620,6 +620,15 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
   return MSTensor(tensor_impl);
 }
 
+Status ModelImpl::UpdateWeights(const std::vector<std::vector<MSTensor>> &weights) {
+  std::vector<std::vector<mindspore::tensor::TensorPtr>> new_weights;
+  for (auto &weight : weights) {
+    std::vector<mindspore::tensor::TensorPtr> new_weight = TensorUtils::MSTensorToTensorPtr(weight);
+    new_weights.push_back(new_weight);
+  }
+  return session_->UpdateWeights(new_weights);
+}
+
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
