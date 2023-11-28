@@ -166,7 +166,8 @@ Status MatMulBase::CheckBatchDimensions(const Dimensions &long_strategy, const D
   size_t len_diff = long_size - short_size;
   for (size_t j = 0; j < SECOND_FROM_END(short_size); ++j) {
     if (long_strategy.at(len_diff + j) != short_strategy.at(j)) {
-      if (long_shape.at(len_diff + j) == 1 || short_shape.at(j) == 1) {
+      if (long_shape.at(len_diff + j) == 1 || short_shape.at(j) == 1 || long_shape.at(len_diff + j) == -1 ||
+          short_shape.at(j) == -1) {
         continue;  // support broadcast, such as: long shape:[A, 1, C, D], short shape:[B, C, D]
       }
       MS_LOG(ERROR) << "Strategies of batch dimensions are not equal, long strategy is " << ShapeToString(long_strategy)
