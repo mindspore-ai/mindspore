@@ -17,7 +17,10 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ANY_TYPE_GRAPH_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ANY_TYPE_GRAPH_SCHEDULER_H_
 
+#include <map>
+#include <utility>
 #include <vector>
+
 #include "utils/ms_utils.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 
@@ -38,6 +41,10 @@ class AnyTypeGraphScheduler {
   std::vector<AbstractActorPtr> Transform(const KernelGraphPtr &model_graph, const KernelGraphPtr &real_graph,
                                           const DeviceContext *device_context,
                                           const std::vector<AnfNodePtr> &front_parameters);
+
+  void Optimize(const ActorSetPtr &actor_set,
+                const std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>,
+                               session::KernelWithIndexCmp> &graph_output_to_actor) const;
 
  private:
   void TransArrowInActorSetToAnyTypeKernelActor(const ActorSet *const actor_set, const KernelGraphPtr &model_graph,

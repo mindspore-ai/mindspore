@@ -125,7 +125,8 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
                            .get();
     if (device_tensor == nullptr) {
       MS_LOG(EXCEPTION) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                        << " index:" << device_tensor_store_key.first;
+                        << " index:" << device_tensor_store_key.first
+                        << " device type:" << device_contexts_[0]->GetDeviceType();
       continue;
     }
     if (device_tensor_store_key.first >= input_device_tensors_.size()) {

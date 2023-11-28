@@ -530,5 +530,90 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   graph_compiler_info->graphs_.clear();
   return actors;
 }
+
+void AnyTypeGraphScheduler::Optimize(const ActorSetPtr &actor_set,
+                                     const std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>,
+                                                    session::KernelWithIndexCmp> &graph_output_to_actor) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  for (const auto &any_type_kernel_actor : actor_set->any_type_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor->graph());
+    for (const auto &input_node : any_type_kernel_actor->graph()->input_nodes()) {
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto front_node_with_index = any_type_kernel_actor->graph()->GetOriginFrontNodeByInternalParameter(input_node);
+      auto front_node = front_node_with_index.first;
+      // Update device tensor store key in any type kernel actor for value tuple node.
+      if (front_node == nullptr || !front_node->isa<ValueNode>()) {
+        continue;
+      }
+      const auto &value_node = front_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      const auto &value = value_node->value();
+      if (value == nullptr || (!value->isa<ValueSequence>())) {
+        continue;
+      }
+      auto iter = std::find_if(any_type_kernel_actor->device_tensor_store_keys_.begin(),
+                               any_type_kernel_actor->device_tensor_store_keys_.end(),
+                               [value_node](const auto &node_pair) { return node_pair.second == value_node; });
+      if (iter == any_type_kernel_actor->device_tensor_store_keys_.end() || iter->second == nullptr) {
+        continue;
+      }
+      MS_LOG(DEBUG) << "Prepare fix device tensor store key:" << iter->second->DebugString()
+                    << " input index:" << iter->first
+                    << " in any type kernel actor:" << any_type_kernel_actor->GetAID();
+      const auto &output_pair_iter = graph_output_to_actor.find(front_node_with_index);
+      if (output_pair_iter == graph_output_to_actor.end()) {
+        MS_LOG(DEBUG) << "Failed to get device tensor store key:" << iter->second->DebugString()
+                      << " input index:" << iter->first
+                      << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      const auto &backend_node_with_index = output_pair_iter->second.second;
+      if (backend_node_with_index.first == nullptr || !backend_node_with_index.first->isa<ValueNode>()) {
+        MS_LOG(WARNING) << "Failed to get backend by device tensor store key:" << iter->second->DebugString()
+                        << " input index:" << iter->first
+                        << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      if (any_type_kernel_actor->device_contexts_.empty() || any_type_kernel_actor->device_contexts_[0] == nullptr) {
+        MS_LOG(WARNING) << "Failed to get device context in any type kernel actor:" << any_type_kernel_actor->GetAID();
+        continue;
+      }
+      const auto &device_context = any_type_kernel_actor->device_contexts_[0];
+      if (DeviceTensorStore::GetInstance().Fetch(backend_node_with_index.first.get(),
+                                                 device_context->GetDeviceType()) == nullptr) {
+        MS_LOG(DEBUG) << "Fetch no device tensor store by:" << backend_node_with_index.first->fullname_with_scope()
+                      << ", type:" << device_context->GetDeviceType()
+                      << " for actor:" << any_type_kernel_actor->GetAID();
+        const auto &device_addresses = DeviceTensorStore::GetInstance().Fetch(backend_node_with_index.first.get());
+        if (device_addresses.empty() || device_addresses[0] == nullptr ||
+            device_addresses[0]->kernel_tensor() == nullptr) {
+          MS_LOG(WARNING) << "Failed to get device tensor store by backend node:"
+                          << backend_node_with_index.first->DebugString() << " input index:" << iter->first
+                          << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+          continue;
+        }
+
+        const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+          device_addresses[0]->kernel_tensor()->GetShape(), device_addresses[0]->kernel_tensor()->GetType(),
+          backend_node_with_index.first->cast<ValueNodePtr>()->value(), nullptr,
+          device_addresses[0]->kernel_tensor()->size(), device_addresses[0]->kernel_tensor()->GetStringFormat(),
+          device_addresses[0]->kernel_tensor()->dtype_id(), device_addresses[0]->kernel_tensor()->GetShapeVector(),
+          device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+        auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+        MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
+                      << " device type:" << device_context->GetDeviceType()
+                      << " type:" << other_type_device_tensor->type_id()
+                      << " for actor:" << any_type_kernel_actor->GetAID();
+        SchedulerHelper::AddDeviceTensorStore(backend_node_with_index.first.get(), other_type_device_tensor);
+      }
+
+      MS_LOG(INFO) << "Get backend:" << backend_node_with_index.first->DebugString()
+                   << " by device tensor store key:" << iter->second->DebugString() << " input index:" << iter->first
+                   << " in graph output any type kernel actor:" << any_type_kernel_actor->GetAID();
+      iter->second = backend_node_with_index.first;
+    }
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

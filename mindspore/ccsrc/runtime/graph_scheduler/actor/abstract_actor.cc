@@ -57,8 +57,8 @@ void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTenso
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
-                << ") receive the input op control and check running condition:" << is_run
-                << ", sequential num:" << sequential_num;
+                << ") receive the input op control from:" << (input_control == nullptr ? "null" : input_control->Name())
+                << " and check running condition:" << is_run << ", sequential num:" << sequential_num;
   if (is_run) {
     Run(context);
   }
