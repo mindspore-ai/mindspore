@@ -68,8 +68,13 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
       fg->set_manager(mng);
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    auto use_akg_cce = false;
+    if (cnode != nullptr && cnode->HasAttr("use_akg_cce")) {
+      use_akg_cce = true;
+    }
     GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
-    (void)graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
+    (void)graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list, use_akg_cce);
     auto json_kernel_name = graph_kernel_json_generator.kernel_name();
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;

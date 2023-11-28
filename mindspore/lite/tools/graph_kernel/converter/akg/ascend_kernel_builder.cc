@@ -16,6 +16,7 @@
 #include "tools/graph_kernel/converter/akg/ascend_kernel_builder.h"
 #include "utils/anf_utils.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 bool AscendKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
@@ -61,6 +62,9 @@ AnfNodePtr AscendKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, c
   custom_prim->set_attr("output_names", MakeValue(output_names));
   custom_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
   custom_cnode->set_abstract(cnode->abstract()->Clone());
+  if (GkUtils::UseAkgCceLib(cnode)) {
+    custom_cnode->AddAttr("use_akg_cce", MakeValue(true));
+  }
   return custom_cnode;
 }
 }  // namespace mindspore::graphkernel

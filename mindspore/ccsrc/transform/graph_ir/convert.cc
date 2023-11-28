@@ -676,6 +676,26 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
                                   [&node_use](const PrimitivePtr &prim) { return IsPrimitiveCNode(node_use, prim); })) {
         return true;
       }
+      // check if node is ReshapeAndKVCache which is fused by akg.
+      if (IsPrimitiveCNode(node_use, prim::kPrimCustom)) {
+        auto prim_custom = GetCNodePrimitive(node_use);
+        const std::string kAttrNameInfoPath = "info_path";
+        if (!prim_custom->HasAttr(kAttrNameInfoPath)) {
+          continue;
+        }
+        auto info_path_attr_node = prim_custom->GetAttr(kAttrNameInfoPath);
+        if (info_path_attr_node == nullptr) {
+          MS_LOG(EXCEPTION) << "attr node '" << kAttrNameInfoPath << "' is null";
+        }
+        std::string info_path = GetValue<std::string>(info_path_attr_node);
+        const std::string kOpReshapeAndCache = "ReshapeAndCache";
+        if (info_path.find(kOpReshapeAndCache) == std::string::npos) {
+          continue;
+        }
+
+        MS_LOG(INFO) << "found ReshapeAndCache, make use inpu keep update";
+        return true;
+      }
     }
   }
   return false;

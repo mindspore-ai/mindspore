@@ -21,6 +21,7 @@
 
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
@@ -106,6 +107,10 @@ bool CanCluster(const CNodePtr &cnode, const std::string &node_name) {
 }
 
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
+  if (GkUtils::UseAkgCceLib(node)) {
+    // do not cluster any other node into akg cce lib subgraph.
+    return false;
+  }
   if (AnfUtils::IsGraphKernel(node)) {
     auto sub_graph = GetCNodeFuncGraph(node);
     MS_EXCEPTION_IF_NULL(sub_graph);
