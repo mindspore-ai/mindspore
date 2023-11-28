@@ -112,7 +112,10 @@ int ResizeCPUKernel::MallocTmpBuffer() {
   // make sure y_bottoms_, y_tops_, etc. are null before malloc
   FreeTmpBuffer();
 
-  int x_len = 0, y_len = 0, x_weight_len = 0, y_weight_len = 0;
+  int x_len = 0;
+  int y_len = 0;
+  int x_weight_len = 0;
+  int y_weight_len = 0;
   CalTmpBufferLen(&x_len, &y_len, &x_weight_len, &y_weight_len);
 
   // malloc memory for x, y coordinates
