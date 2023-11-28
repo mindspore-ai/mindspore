@@ -230,7 +230,7 @@ void AnyTypeGraphScheduler::TransArrowInOutputActorToAnyTypeKernelActor(AnyTypeK
       if (output_data_arrow->to_op_id_.Name() == output_actor->GetAID().Name()) {
         output_data_arrow->to_op_id_ = any_type_kernel_actor->GetAID();
         MS_EXCEPTION_IF_NULL(any_type_kernel_actor->graph());
-        output_data_arrow->to_input_index_ += any_type_kernel_actor->graph()->input_nodes().size();
+        output_data_arrow->to_input_index_ += SizeToInt(any_type_kernel_actor->graph()->input_nodes().size());
         any_type_kernel_actor->graph_output_data_num_[id]++;
         MS_LOG(DEBUG) << "Add graph output data arrow for actor:" << any_type_kernel_actor->GetAID()
                       << " from actor:" << actor->GetAID() << " from index:" << output_data_arrow->from_output_index_

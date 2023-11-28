@@ -406,7 +406,7 @@ std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithOutMonadAndParameter(const
         node_with_index.first->isa<ValueNode>()) {
       continue;
     }
-    real_output.emplace_back(node_with_index);
+    (void)real_output.emplace_back(node_with_index);
   }
   return real_output;
 }
