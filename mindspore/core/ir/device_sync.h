@@ -70,7 +70,7 @@ class DeviceSync {
   virtual UserDataPtr user_data() const { return user_data_; }
   virtual void set_user_data(const UserDataPtr &user_data) { user_data_ = user_data; }
   void set_is_view(bool is_view) { is_view_ = is_view; }
-  bool is_view() { return is_view_; }
+  bool is_view() const { return is_view_; }
 
  protected:
   mutable size_t original_ref_count_{1};
