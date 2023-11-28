@@ -68,7 +68,7 @@ class LRScheduler:
         ...             return [lr * self.factor for lr in self._last_lr]
         ...         if self.last_epoch != self.total_iters:
         ...             return [lr * 1. for lr in self._last_lr]
-        ...         return sreturn [lr / self.factor for lr in self._last_lr]
+        ...         return [lr / self.factor for lr in self._last_lr]
         >>>
         >>> net = nn.Dense(8, 2)
         >>> optimizer = optim.SGD(net.trainable_params(), 0.01)
@@ -843,7 +843,7 @@ class ReduceLROnPlateau:
         >>> metrics = [1, 1.5, 1.8, 0.4, 0.5]
         >>> for i in range(5):
         ...     scheduler.step(metrics[i])
-        ...     current_lr = scheduler._last_lr
+        ...     current_lr = scheduler.get_last_lr()
         ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.1)]
         [Tensor(shape=[], dtype=Float32, value= 0.01)]
@@ -1188,7 +1188,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         >>> optimizer = optim.SGD(net.trainable_params(), lr=0.1, momentum=0.9)
         >>> scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 2)
         >>> iters = 3
-        >>> for epoch in range(4):
+        >>> for epoch in range(2):
         ...     for i in range(iters):
         ...         scheduler.step(epoch + i / iters)
         ...         current_lr = scheduler.get_last_lr()
