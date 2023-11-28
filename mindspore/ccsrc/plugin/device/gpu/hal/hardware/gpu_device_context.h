@@ -52,9 +52,15 @@ class GPUDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool CreateStream(size_t *stream_id) const override;
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
+  void *GetStream(size_t stream_id) const;
   bool DestroyStream(size_t stream_id) const override;
+  void SetCurrentStreamId(size_t stream_id) override;
+  size_t GetCurrentStreamId() const override;
+  bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;
   bool SyncAllStreams() const override;
+  size_t DefaultStream() const override;
 
   bool LoadCollectiveCommLib() override;
 
@@ -150,8 +156,10 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
   DeprecatedInterface *GetDeprecatedInterface() override;
 
   static uint32_t GetDeviceCount();
-  static std::string GetDeviceName(uint32_t);
+  static std::string GetDeviceName(uint32_t device_id);
+  static std::vector<int> GetDeviceCapability(uint32_t device_id);
   static cudaDeviceProp GetDeviceProperties(uint32_t device_id);
+  static std::string GetArchList();
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);

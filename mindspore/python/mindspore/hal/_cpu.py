@@ -26,28 +26,30 @@ class _HalCPU(_HalBase):
 
     def device_count(self):
         """
-        Return CPU device count.
+        Return CPU device count. Always return 1 for CPU.
         """
         return 1
 
     def get_device_capability(self, device_id):
         """
-        Get CPU capability of the specified device id.
+        Get CPU capability of the specified device id. Not implemented for CPU.
         """
+        logger.warning("'get_device_capability' for CPU is not implemented. Return None.")
 
     def get_device_properties(self, device_id):
         """
-        Get CPU properties of the specified device id.
+        Get CPU properties of the specified device id. Not implemented for CPU.
         """
-        return ""
+        logger.warning("'get_device_properties' for CPU is not implemented. Return None.")
 
     def get_device_name(self, device_id):
         """
-        Get CPU name of the specified device id.
+        Get CPU name of the specified device id. Always return "CPU".
         """
         return "CPU"
 
     def get_arch_list(self):
         """
-        Get the architecture list this MindSpore was compiled for.
+        Get the architecture list this MindSpore was compiled for. Not implemented for CPU.
         """
+        logger.warning("'get_arch_list' for CPU is not implemented. Return None.")

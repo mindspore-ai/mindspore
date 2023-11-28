@@ -14,9 +14,12 @@
 # ============================================================================
 
 """Hardware device interfaces."""
+import inspect
+import functools
 from mindspore._c_expression import MSContext, DeviceContextManager
 from mindspore import log as logger
 from mindspore import context
+
 
 try:
     from ._cpu import _HalCPU
@@ -54,6 +57,31 @@ for target in valid_targets:
             pass
 
 
+def _check_device_target_validation(fn):
+    """
+    Decorator to check whether the device target validation.
+    If device target's hal instance is not created, throw an exception.
+    """
+    @functools.wraps(fn)
+    def deco(*args, **kwargs):
+        bound_args = inspect.signature(fn).bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        params = bound_args.arguments
+        if "device_target" in params:
+            device_target = params["device_target"]
+            if device_target is None:
+                device_target = context.get_context("device_target")
+                params["device_target"] = device_target
+            if device_target not in valid_targets:
+                raise ValueError(f"The argument 'device_target' must be one of "
+                                 f"{valid_targets}, but got {device_target}.")
+            if device_target not in hal_instances:
+                raise ValueError(f"{device_target} backend is not available for this MindSpore package."
+                                 "You can call hal.is_available to check the reason.")
+        return fn(*bound_args.args, **bound_args.kwargs)
+    return deco
+
+
 def is_initialized(device_target):
     """
     Return whether specified backend is initialized.
@@ -61,7 +89,7 @@ def is_initialized(device_target):
         MindSpore's backends "CPU", "GPU" and "Ascend" will be initialized in the following scenarios:
         - For distributed job, backend will be initialized after `mindspore.communication.init` is called.
         - For graph mode, backend is initialized after graph compiling phase.
-        - For PyNative mode, backend is initialized when creating the first tensor.
+        - For PyNative mode, backend is initialized when running the first operator.
     """
     if device_target not in valid_targets:
         raise ValueError(f"For 'hal.is_initialized', the argument 'device_target' must be one of "
@@ -85,66 +113,51 @@ def is_available(device_target):
     # MindSpore will try to load plugins in "import mindspore", and availability status will be stored.
     if not _context_handle.is_pkg_support_device(device_target):
         logger.warning(f"Backend {device_target} is not available.")
-        loading_plugin_error = _context_handle.loading_plugin_error()
-        if loading_plugin_error != "":
+        load_plugin_error = _context_handle.load_plugin_error()
+        if load_plugin_error != "":
             logger.warning(f"Here's error when loading plugin for MindSpore package."
-                           f"Error message: {loading_plugin_error}")
+                           f"Error message: {load_plugin_error}")
         return False
     return True
 
 
+@_check_device_target_validation
 def device_count(device_target=None):
     """
     Return device count of currently used backend.
     Note:
         If `device_target` is not specified, get the device count of the current backend set by context.
     """
-    if device_target is None:
-        device_target = context.get_context("device_target")
-    if device_target not in hal_instances:
-        logger.warning(f"{device_target} backend is not available for this MindSpore package."
-                       "You can call hal.is_available to check the reason.")
     return hal_instances[device_target].device_count()
 
 
+@_check_device_target_validation
 def get_device_capability(device_id, device_target=None):
     """
     Get specified device's capability.
     """
-    if device_target is None:
-        device_target = context.get_context("device_target")
-    if device_target not in hal_instances:
-        logger.warning(f"{device_target} backend is not available for this MindSpore package."
-                       "You can call hal.is_available to check the reason.")
     return hal_instances[device_target].get_device_capability(device_id)
 
 
+@_check_device_target_validation
 def get_device_properties(device_id, device_target=None):
     """
     Get specified device's properties.
     """
-    if device_target is None:
-        device_target = context.get_context("device_target")
-    if device_target not in hal_instances:
-        logger.warning(f"{device_target} backend is not available for this MindSpore package."
-                       "You can call hal.is_available to check the reason.")
     return hal_instances[device_target].get_device_properties(device_id)
 
 
+@_check_device_target_validation
 def get_device_name(device_id, device_target=None):
     """
     Get specified device's name.
     """
-    if device_target is None:
-        device_target = context.get_context("device_target")
-    if device_target not in hal_instances:
-        logger.warning(f"{device_target} backend is not available for this MindSpore package."
-                       "You can call hal.is_available to check the reason.")
     return hal_instances[device_target].get_device_name(device_id)
 
 
-def get_arch_list():
+@_check_device_target_validation
+def get_arch_list(device_target=None):
     """
     Get the architecture list this MindSpore was compiled for.
     """
-    return
+    return hal_instances[device_target].get_arch_list()

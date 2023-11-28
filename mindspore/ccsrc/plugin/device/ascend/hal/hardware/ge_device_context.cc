@@ -586,10 +586,12 @@ AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   const char *name = aclrtGetSocName();
   device_properties.name = (name == nullptr) ? "" : name;
 
-  size_t free_size;
-  size_t total_size;
-  aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size);
+  size_t free_size{0}, total_size{0};
+  if (aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size) != ACL_SUCCESS) {
+    MS_LOG(WARNING) << "Failed get memory info for current device.";
+  }
   device_properties.total_global_memory = total_size;
+  device_properties.free_memory = free_size;
   return device_properties;
 }
 
@@ -642,6 +644,10 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
 // Register functions to _c_expression so python hal module could call Ascend device interfaces.
 void PybindAscendStatelessFunc(py::module *m) {
   MS_EXCEPTION_IF_NULL(m);
+  (void)py::class_<AscendDeviceProperties>(*m, "AscendDeviceProperties")
+    .def_readonly("name", &AscendDeviceProperties::name)
+    .def_readonly("total_global_memory", &AscendDeviceProperties::total_global_memory)
+    .def_readonly("free_memory", &AscendDeviceProperties::free_memory);
   (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
   (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
                "Get Ascend device name of specified device id.");

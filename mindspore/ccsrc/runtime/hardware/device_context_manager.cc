@@ -523,11 +523,15 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
 }
 
 DeviceContextPtr DeviceContextManager::GetDeviceContext(const std::string &device_target) {
-  if (backend_to_device_context_.count(device_target) == 0) {
-    MS_LOG(WARNING) << "Device context of device " << device_target << " is not created yet.";
+  std::string backend_name = device_target;
+  if (!IsNotAscend(backend_name) && MsContext::GetInstance()->backend_policy() == "ge") {
+    backend_name = "GE";
+  }
+  if (backend_to_device_context_.count(backend_name) == 0) {
+    MS_LOG(WARNING) << "Device context of device " << backend_name << " is not created yet.";
     return nullptr;
   }
-  return backend_to_device_context_[device_target];
+  return backend_to_device_context_[backend_name];
 }
 
 void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {

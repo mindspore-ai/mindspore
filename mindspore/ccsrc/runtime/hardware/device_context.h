@@ -201,18 +201,45 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    MS_LOG(WARNING) << "Unimplemented interface: 'CreateStream'.";
+    *stream_id = kSizeZero;
     return false;
   }
 
+  // Create a stream with priority.
+  virtual bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+    MS_LOG(WARNING) << "Unimplemented interface: 'CreateStreamWithPriority'.";
+    *stream_id = kSizeZero;
+    return false;
+  }
+
+  // Get the stream pointer by stream_id.
   virtual void *GetStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    MS_LOG(WARNING) << "Unimplemented interface: 'GetStream'.";
     return nullptr;
   };
 
+  // Set currently using stream id.
+  virtual void SetCurrentStreamId(size_t stream_id) {
+    MS_LOG(WARNING) << "Unimplemented interface: 'SetCurrentStreamId'.";
+    return;
+  }
+
+  // Get currently using stream id.
+  virtual size_t GetCurrentStreamId() const {
+    MS_LOG(WARNING) << "Unimplemented interface: 'GetCurrentStreamId'.";
+    return kSizeZero;
+  }
+
   // Destroy a stream bound to the input parameter "stream_id".
   virtual bool DestroyStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    MS_LOG(WARNING) << "Unimplemented interface: 'DestroyStream'.";
+    return false;
+  }
+
+  // Query tasks' completion status of a stream.
+  virtual bool QueryStream(size_t stream_id) const {
+    MS_LOG(WARNING) << "Unimplemented interface: 'QueryStream'.";
     return false;
   }
 
@@ -224,6 +251,9 @@ class BACKEND_EXPORT DeviceResManager {
   // "SyncAllStreams" interfaces are implemented by subclasses.
   virtual bool SyncStream(size_t stream_id) const { return true; }
   virtual bool SyncAllStreams() const { return true; }
+
+  // Return default stream id. Normally it's 0.
+  virtual size_t DefaultStream() const { return 0; }
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.

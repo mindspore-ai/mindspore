@@ -79,6 +79,11 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
+  // If this is the first stream ever created, set it as default stream.
+  if (streams_.size() == 1) {
+    default_stream_ = *stream;
+    default_stream_id_ = kIndex0;
+  }
   AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
 }
 
@@ -205,6 +210,24 @@ bool AscendStreamMng::SyncAllStreams() const {
     }
   }
   return true;
+}
+
+bool AscendStreamMng::QueryStream(size_t stream_id) {
+  if (stream_id >= streams_.size()) {
+    MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";
+  }
+  const auto stream = streams_[stream_id];
+  if (stream == nullptr) {
+    MS_LOG(WARNING) << "Stream for stream id[" << stream_id << "] has been destroyed.";
+    return false;
+  }
+
+  aclrtStreamStatus status;
+  auto ret = aclrtStreamQuery(stream, &status);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to query completion status for stream id: " << stream_id;
+  }
+  return status == ACL_STREAM_STATUS_COMPLETE;
 }
 }  // namespace ascend
 }  // namespace device

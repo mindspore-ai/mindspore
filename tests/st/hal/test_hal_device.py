@@ -21,8 +21,6 @@ from mindspore.ops import operations as P
 from mindspore.hal import is_initialized, is_available, device_count,\
                       get_device_properties, get_device_name
 
-context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -35,19 +33,86 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
-def test_hal_device():
+def test_hal_device_gpu():
     """
     Feature: Hal device api.
-    Description: Test hal.device api.
+    Description: Test hal.device api on GPU platform.
     Expectation: hal.device api performs as expected.
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     assert not is_initialized("GPU")
     assert is_available("GPU")
     assert is_available("CPU")
+    assert not is_available("Ascend")
     net = Net()
     net(Tensor(2.0))
     assert not is_initialized("CPU")
     assert is_initialized("GPU")
-    print("Device count is", device_count())
-    print("Device properties is", get_device_properties(0))
-    print("Device name is", get_device_name(0))
+    try:
+        device_count("Ascend")
+    except ValueError as e:
+        assert str(e).find('not available') != -1
+
+    dev_cnt = device_count()
+    assert dev_cnt > 0
+    print("Device count is", dev_cnt)
+    print("Device properties is", get_device_properties(dev_cnt - 1))
+    print("Device name is", get_device_name(dev_cnt - 1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_hal_device_ascend():
+    """
+    Feature: Hal device api.
+    Description: Test hal.device api on Ascend platform.
+    Expectation: hal.device api performs as expected.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    assert not is_initialized("Ascend")
+    assert is_available("Ascend")
+    net = Net()
+    net(Tensor(2.0))
+    assert not is_initialized("CPU")
+    assert is_initialized("Ascend")
+    dev_cnt = device_count()
+    assert dev_cnt > 0
+    print("Device count is", dev_cnt)
+    print("Device properties is", get_device_properties(dev_cnt - 1))
+    print("Device name is", get_device_name(dev_cnt - 1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hal_device_cpu():
+    """
+    Feature: Hal device api.
+    Description: Test hal.device api on CPU platform.
+    Expectation: hal.device api performs as expected.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    assert not is_initialized("CPU")
+    assert is_available("CPU")
+    net = Net()
+    net(Tensor(2.0))
+    assert is_initialized("CPU")
+
+
+@pytest.mark.level0
+# @pytest.mark.platform_arm_ascend_training
+# @pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_hal_device_pynative():
+    """
+    Feature: Hal device api.
+    Description: Test hal.device api on in pynative mode.
+    Expectation: hal.device api performs as expected.
+    """
+    context.set_context(device_target='Ascend')
+    assert not is_initialized("Ascend")
+    t = Tensor(2.0)
+    P.Abs()(t)
+    assert is_initialized("Ascend")

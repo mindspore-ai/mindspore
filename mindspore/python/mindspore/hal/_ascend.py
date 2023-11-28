@@ -15,6 +15,7 @@
 
 """Hal ascend interfaces."""
 from mindspore._c_expression import ascend_get_device_count, ascend_get_device_name, ascend_get_device_properties
+from mindspore import log as logger
 from ._base import _HalBase
 
 
@@ -33,9 +34,9 @@ class _HalAscend(_HalBase):
 
     def get_device_capability(self, device_id):
         """
-        Get Ascend capability of the specified device id.
+        Get Ascend capability of the specified device id. Not implemented for Ascend.
         """
-        return ""
+        logger.warning("'get_device_capability' for Ascend is not implemented. Return None.")
 
     def get_device_properties(self, device_id):
         """
@@ -51,6 +52,6 @@ class _HalAscend(_HalBase):
 
     def get_arch_list(self):
         """
-        Get the architecture list this MindSpore was compiled for.
+        Get the architecture list this MindSpore was compiled for. Not implemented for Ascend yet.
         """
-        return ""
+        logger.warning("'get_arch_list' for Ascend is not implemented. Return None.")

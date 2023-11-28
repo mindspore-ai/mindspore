@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Hal gpu interfaces."""
-from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_properties
+from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_capability, gpu_get_device_properties
 from ._base import _HalBase
 
 
@@ -35,6 +35,7 @@ class _HalGPU(_HalBase):
         """
         Get GPU capability of the specified device id.
         """
+        return gpu_get_device_capability(device_id)
 
     def get_device_properties(self, device_id):
         """

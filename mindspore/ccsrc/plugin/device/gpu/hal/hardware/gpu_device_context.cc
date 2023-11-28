@@ -908,8 +908,26 @@ bool GPUDeviceResManager::CreateStream(size_t *stream_id) const {
   return GPUDeviceManager::GetInstance().CreateStream(stream_id);
 }
 
+bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+  return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
+}
+
+void *GPUDeviceResManager::GetStream(size_t stream_id) const {
+  return GPUDeviceManager::GetInstance().GetStream(stream_id);
+}
+
 bool GPUDeviceResManager::DestroyStream(size_t stream_id) const {
   return GPUDeviceManager::GetInstance().DestroyStream(stream_id);
+}
+
+void GPUDeviceResManager::SetCurrentStreamId(size_t stream_id) {
+  GPUDeviceManager::GetInstance().set_current_stream(stream_id);
+}
+
+size_t GPUDeviceResManager::GetCurrentStreamId() const { return GPUDeviceManager::GetInstance().current_stream(); }
+
+bool GPUDeviceResManager::QueryStream(size_t stream_id) const {
+  return GPUDeviceManager::GetInstance().QueryStream(stream_id);
 }
 
 bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
@@ -939,6 +957,8 @@ bool GPUDeviceResManager::SyncAllStreams() const {
 #endif
   return result;
 }
+
+size_t GPUDeviceResManager::DefaultStream() const { return GPUDeviceManager::GetInstance().default_stream_id(); }
 
 uint32_t GPUKernelExecutor::GetRankID() const {
   bool collective_inited = distributed::collective::CollectiveManager::instance()->initialized();
@@ -1025,9 +1045,17 @@ std::string GPUDeviceContext::GetDeviceName(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->name();
 }
 
+std::vector<int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
+  int major_sm = GPUdeviceInfo::GetInstance(device_id)->major_sm();
+  int minor_sm = GPUdeviceInfo::GetInstance(device_id)->minor_sm();
+  return {major_sm, minor_sm};
+}
+
 cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->properties();
 }
+
+std::string GPUDeviceContext::GetArchList() { return ""; }
 
 std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
   void *ptr;
@@ -1059,6 +1087,8 @@ void PybindGPUStatelessFunc(py::module *m) {
   (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp").def_readonly("name", &cudaDeviceProp::name);
   (void)m->def("gpu_get_device_count", &GPUDeviceContext::GetDeviceCount, "Get GPU device count.");
   (void)m->def("gpu_get_device_name", &GPUDeviceContext::GetDeviceName, "Get GPU device name of specified device id.");
+  (void)m->def("gpu_get_device_capability", &GPUDeviceContext::GetDeviceCapability,
+               "Get GPU major and minor capability of specified device id.");
   (void)m->def("gpu_get_device_properties", &GPUDeviceContext::GetDeviceProperties,
                "Get GPU device properties of specified device id.");
 }

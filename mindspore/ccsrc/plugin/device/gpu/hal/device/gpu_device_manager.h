@@ -41,8 +41,12 @@ class GPUDeviceManager {
 
   bool CreateStream(CudaDeviceStream *stream);
   bool CreateStream(size_t *stream_id);
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority);
   bool DestroyStream(size_t stream_id);
   CudaDeviceStream GetStream(size_t stream_id) const;
+  void set_current_stream(size_t stream_id);
+  size_t current_stream() const;
+  bool QueryStream(size_t stream_id);
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
   bool SyncAllStreams() const;
@@ -77,6 +81,8 @@ class GPUDeviceManager {
   CudaDeviceStream default_stream_{nullptr};
 
   size_t default_stream_id_{0};
+
+  size_t current_stream_id_{0};
 
   // all gpu CUDA streams including default_stream_.
   std::vector<CudaDeviceStream> gpu_streams_;

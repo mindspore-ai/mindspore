@@ -227,12 +227,46 @@ bool GeDeviceResManager::CreateStream(size_t *stream_id) const {
   return true;
 }
 
+bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC),
+    IntToUint(priority);
+  return true;
+}
+
 void *GeDeviceResManager::GetStream(size_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return nullptr;
   }
   return AscendStreamMng::GetInstance().GetStream(stream_id);
+}
+
+void GeDeviceResManager::SetCurrentStreamId(size_t stream_id) {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return;
+  }
+  AscendStreamMng::GetInstance().set_current_stream(stream_id);
+}
+
+size_t GeDeviceResManager::GetCurrentStreamId() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().current_stream();
+}
+
+bool GeDeviceResManager::QueryStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().QueryStream(stream_id);
 }
 
 bool GeDeviceResManager::SyncStream(size_t stream_id) const {
@@ -249,6 +283,14 @@ bool GeDeviceResManager::SyncAllStreams() const {
   }
   runtime_instance_->SetContext();
   return AscendStreamMng::GetInstance().SyncAllStreams();
+}
+
+size_t GeDeviceResManager::DefaultStream() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().default_stream_id();
 }
 }  // namespace ascend
 }  // namespace device

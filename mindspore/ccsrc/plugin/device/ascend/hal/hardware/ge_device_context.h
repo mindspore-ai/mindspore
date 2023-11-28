@@ -35,10 +35,11 @@ namespace ascend {
 class GeGraphExecutor;
 class GeKernelExecutor;
 class GeDeviceResManager;
-
+// The Ascend device properties defined by MindSpore because ACL does not have interface to get this info.
 struct AscendDeviceProperties {
   std::string name;
   size_t total_global_memory;
+  size_t free_memory;
 };
 
 class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor, GeDeviceResManager> {

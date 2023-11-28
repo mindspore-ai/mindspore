@@ -57,8 +57,10 @@ class CudaDriver {
   // Encapsulate the cuda APIs associated with device resource
   // such as Stream and Event.
   static bool CreateStream(CudaDeviceStream *stream);
+  static bool CreateStreamWithPriority(CudaDeviceStream *stream, int priority);
   static bool DestroyStream(const CudaDeviceStream &stream);
   static bool SyncStream(const CudaDeviceStream &stream);
+  static bool QueryStream(const CudaDeviceStream &stream);
 
   static bool ConstructEvent(CudaDeviceEvent *event, unsigned int flag = cudaEventDefault);
   static bool DestroyEvent(const CudaDeviceEvent &event);

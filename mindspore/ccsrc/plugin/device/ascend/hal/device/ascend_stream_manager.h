@@ -64,8 +64,14 @@ class AscendStreamMng {
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(aclrtStream stream) const;
   bool SyncAllStreams() const;
+  bool QueryStream(size_t stream_id);
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
+
+  void set_current_stream(size_t stream_id) { current_stream_id_ = stream_id; }
+  size_t current_stream() const { return current_stream_id_; }
+
+  size_t default_stream_id() const { return default_stream_id_; }
 
  private:
   // Count streams and events number in task sink scenario
@@ -81,6 +87,13 @@ class AscendStreamMng {
   // all gpu CUDA streams including default_stream_.
   std::vector<void *> streams_;
   std::vector<aclrtEvent> events_{};
+
+  // Currently using stream id.
+  size_t current_stream_id_{0};
+
+  // Default stream. We consider the first stream created as default stream.
+  void *default_stream_{nullptr};
+  size_t default_stream_id_{0};
 };
 }  // namespace ascend
 }  // namespace device

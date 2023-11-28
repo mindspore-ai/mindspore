@@ -95,9 +95,14 @@ class GeDeviceResManager : public DeviceResManager {
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
 
   bool CreateStream(size_t *stream_id) const override;
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
   void *GetStream(size_t stream_id) const override;
+  void SetCurrentStreamId(size_t stream_id) override;
+  size_t GetCurrentStreamId() const override;
+  bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id = 0) const override;
   bool SyncAllStreams() const override;
+  size_t DefaultStream() const override;
 
  private:
   friend class GeGraphExecutor;
