@@ -85,22 +85,22 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
 
 NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
-  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
-  NodePtr x_mask;
-  if (is_minimum) {
-    x_mask = ib->LessEqual(x, y);
-  } else {
-    x_mask = ib->GreaterEqual(x, y);
-  }
-
-  auto grad_x = ib->Select(x_mask, dout, zeros);
-  auto grad_y = ib->Select(x_mask, zeros, dout);
-
   auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
   auto half_dout = ib->Div(dout, half_ratio);
   NodePtr equal_mask = ib->Equal(x, y);
-  grad_x = ib->Select(equal_mask, half_dout, grad_x);
-  grad_y = ib->Select(equal_mask, half_dout, grad_y);
+  auto grad_x = ib->Select(equal_mask, half_dout, dout);
+  auto grad_y = ib->Select(equal_mask, half_dout, dout);
+
+  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
+  NodePtr is_less = ib->Less(x, y);
+  NodePtr is_greater = ib->Greater(x, y);
+  if (is_minimum) {
+    grad_x = ib->Select(is_greater, zeros, grad_x);
+    grad_y = ib->Select(is_less, zeros, grad_y);
+  } else {
+    grad_x = ib->Select(is_less, zeros, grad_x);
+    grad_y = ib->Select(is_greater, zeros, grad_y);
+  }
 
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }

@@ -225,3 +225,25 @@ def test_max_tensor_grad_with_same_input():
     expect1 = np.array([0.5, -0.5, 0.])
     assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_input_nan():
+    """
+    Feature: test maximumgrad on CPU
+    Description: test maximumgrad with input nan.
+    Expectation: result match to expected result.
+    """
+    x_np = np.full((3,), np.nan).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.28, -0.23, 0.96]).astype(np.float32)
+    net = MaxmumGradNet()
+    output = net(Tensor(x_np), Tensor(y_np), Tensor(dout))
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([1.28, -0.23, 0.96])
+    expect1 = np.array([1.28, -0.23, 0.96])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
