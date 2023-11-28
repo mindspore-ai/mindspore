@@ -916,6 +916,11 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
     MS_EXCEPTION_IF_NULL(kernel_tensor_value);
 
+    if (kernel_tensor_value->GetDataSize() % sizeof(T) != 0) {
+      MS_LOG(EXCEPTION) << "The size is incompatible, kernel tensor value size: " << kernel_tensor_value->GetDataSize()
+                        << ", expected element size: " << sizeof(T);
+    }
+
     size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
     if (element_size != 0) {
       const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());

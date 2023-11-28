@@ -22,6 +22,7 @@
 #include <numeric>
 #include "kernel/format_utils.h"
 #include "kernel/common_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -353,14 +354,27 @@ void KernelTensor::set_padding_type(const std::string &padding_type) { padding_t
 
 bool KernelTensor::SyncDataFromDeviceToHost() const {
   if (device_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed.";
+    MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed, size: " << size_;
     return false;
+  }
+
+  // For performance, the CPU back-end does not need to copy the device to host, and directly uses the
+  // device pointer in the kernel Tensor.
+  if (device_name_ == kCPUDevice) {
+    if (!kernel_tensor_value_) {
+      kernel_tensor_value_ = std::make_shared<KernelTensorValue>(device_ptr_, size_, type_);
+    } else {
+      kernel_tensor_value_->SetDataPtr(device_ptr_);
+      kernel_tensor_value_->Resize(size_);
+    }
+    return true;
   }
 
   if (!kernel_tensor_value_) {
     kernel_tensor_value_ = std::make_shared<KernelTensorValue>(size_, type_);
+  } else {
+    kernel_tensor_value_->Resize(size_);
   }
-  kernel_tensor_value_->Resize(size_);
 
   if (size_ == 0) {
     return true;
@@ -372,7 +386,7 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   MS_EXCEPTION_IF_NULL(device_synchronizer_);
   if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr_, size_, format_, shape_vector_, stream_id_,
                                               user_data_)) {
-    MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+    MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
   }
   return true;
 }
