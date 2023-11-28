@@ -24,6 +24,7 @@
 #include "ir/func_graph.h"
 #include "ir/value.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_mutator.h"
+#include "utils/trace_info.h"
 
 namespace mindspore {
 namespace jit {
@@ -61,7 +62,8 @@ class FuncGraphBuilder : public ir::IRMutator {
         args_(args),
         kwargs_(kwargs),
         func_graph_(std::make_shared<FuncGraph>()),
-        func_graph_mgr_(nullptr) {}
+        func_graph_mgr_(nullptr),
+        last_line_no_(func->GetFirstLineNo()) {}
   virtual ~FuncGraphBuilder() = default;
   static FuncGraphPtr BuildFuncGraph(const ir::FunctionNodePtr &func, const py::tuple &args, const py::dict &kwargs);
   static FuncGraphPtr BuildFuncGraph(const ir::FunctionNodePtr &func, const AnfNodePtrList &args,
@@ -100,6 +102,7 @@ class FuncGraphBuilder : public ir::IRMutator {
   ir::NodePtr Mutate_(const ir::AttrNodePtr &node) override;
 
  private:
+  void UpdateLocation(const AnfNodePtr &anf_node, const ir::NodePtr &node);
   AnfNodePtr ConvertListOrTupleToCNode(const py::object &obj);
   AnfNodePtr GetAnfNode(const ir::NodePtr &node);
   AnfNodePtr MergeList(const AnfNodePtr &left, const AnfNodePtr &right);
@@ -111,6 +114,7 @@ class FuncGraphBuilder : public ir::IRMutator {
   AnfNodePtr kwargs_;
   FuncGraphPtr func_graph_;
   FuncGraphManagerPtr func_graph_mgr_;
+  int last_line_no_;
 
   // Store variable's name, variable's node.
   std::map<std::string, AnfNodePtr> assigned_vars_;
