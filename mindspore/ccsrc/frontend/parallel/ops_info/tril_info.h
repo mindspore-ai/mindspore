@@ -25,7 +25,6 @@
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/activation_info.h"
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
@@ -33,17 +32,20 @@ namespace parallel {
 class TrilInfo : public ActivationBase {
  public:
   TrilInfo(const std::string &name, const Shapes &input_shape, const Shapes &output_shape, const PrimitiveAttrs &attrs)
-      : ActivationBase(name, input_shape, output_shape, attrs, std::make_shared<AddNCost>()) {}
+      : ActivationBase(name, input_shape, output_shape, attrs, std::make_shared<ReLUCost>()) {}
   ~TrilInfo() = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
-  void ReComputeBatchSplitFlagList() override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status GetAttrs() override { return SUCCESS; };
+  Status GetAttrs() override;
+  void ReplaceNodeInputOrAttrs() override;
+
+  int64_t GetDiag();
+  int64_t diagonal_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

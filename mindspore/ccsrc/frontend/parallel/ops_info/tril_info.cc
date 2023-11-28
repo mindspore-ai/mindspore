@@ -42,16 +42,6 @@ Status TrilInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << ", but got strategie value size is " << stra_value.size();
     return FAILED;
   }
-  auto last_stra = *(stra_value.rbegin());
-  if (last_stra != 1) {
-    MS_LOG(ERROR) << name_ << ": The last strategy value must be equal to 1, but got " << last_stra;
-    return FAILED;
-  }
-  auto penultimate_stra = *(stra_value.rbegin() + 1);
-  if (penultimate_stra != 1) {
-    MS_LOG(ERROR) << name_ << ": The penultimate strategy value must be equal to 1, but got " << penultimate_stra;
-    return FAILED;
-  }
   return SUCCESS;
 }
 
@@ -61,8 +51,6 @@ std::vector<StrategyPtr> TrilInfo::GenerateOpStrategies(int64_t stage_id) {
   }
 
   Shape input0_split(inputs_shape_.at(0).size(), 1);
-  *(input0_split.rbegin()) = 0;
-  *(input0_split.rbegin() + 1) = 0;
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;
@@ -72,10 +60,57 @@ std::vector<StrategyPtr> TrilInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-void TrilInfo::ReComputeBatchSplitFlagList() {
-  // The last two dim can not be spilt
-  constexpr size_t last_two_dim = 2;
-  split_flag_list_[0] = inputs_shape_[0].size() > last_two_dim ? true : false;
+int64_t TrilInfo::GetDiag() {
+  const auto &input_shape = inputs_shape_.at(0);
+  auto row = *(input_shape.rbegin() + 1);
+  auto col = *(input_shape.rbegin());
+  auto stra = strategy();
+  Strategies strategies = stra->GetInputDim();
+  auto stra_value = strategies.at(0);
+  auto c = *(stra_value.rbegin() + 1);
+  auto d = *(stra_value.rbegin());
+  int64_t rank = g_device_manager->rank_index_in_stage();
+  auto t = row / c;
+  auto u = col / d;
+  // represent position in the row
+  int64_t m = 0;
+  // represent position in the col
+  int64_t n = 0;
+  if (repeated_calc_num_ > 1) {
+    // repeated calc
+    auto h = *(dev_matrix_shape().rbegin());
+    m = (rank / d / h % c) * t;
+    n = (rank / h % d) * u;
+  } else {
+    m = (rank / d % c) * t;
+    n = (rank % d) * u;
+  }
+  // numbers to be retained in the first complete row.
+  auto x = m + diagonal_ + 1;
+  // numbers removed from the left of the first row
+  auto y = n;
+  // Numbers to be reserved in the first row of the fragment.
+  auto z = x - y;
+  // clip
+  if (z > u) {
+    z = u;
+  } else if (z < -t + 1) {
+    z = -t + 1;
+  }
+  return z - 1;
+}
+
+void TrilInfo::ReplaceNodeInputOrAttrs() {
+  for (auto &node : cnodes_) {
+    auto prim = GetValueNode<PrimitivePtr>(node->input(0));
+    auto new_diag = GetDiag();
+    prim->set_attr("diagonal", MakeValue(new_diag));
+  }
+}
+
+Status TrilInfo::GetAttrs() {
+  diagonal_ = GetIntAttr("diagonal");
+  return SUCCESS;
 }
 
 REGISTER(TrilInfo);
