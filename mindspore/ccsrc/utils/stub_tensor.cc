@@ -23,7 +23,9 @@ namespace mindspore {
 namespace stub {
 namespace {
 StubNodePtr MakeStubNode(const TypePtr &type) {
-  if (type->isa<Tuple>() || type->isa<List>()) {
+  if (type->isa<TensorType>()) {
+    return std::make_shared<TensorNode>();
+  } else if (type->isa<Tuple>() || type->isa<List>()) {
     TypePtrList elements;
     if (type->isa<Tuple>()) {
       auto tuple_type = type->cast<TuplePtr>();
@@ -43,11 +45,9 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
   } else if (type == kTypeNone) {
     return std::make_shared<NoneTypeNode>();
   } else {
-    if (!type->isa<TensorType>()) {
-      MS_LOG(WARNING) << "stub tensor is create for type: " << type->ToString();
-    }
-    return std::make_shared<TensorNode>();
+    MS_LOG(WARNING) << "stub tensor is create for type: " << type->ToString();
   }
+  return nullptr;
 }
 
 py::object MakeOutput(const StubNodePtr &node) {

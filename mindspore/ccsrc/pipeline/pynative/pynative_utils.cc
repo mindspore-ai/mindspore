@@ -390,7 +390,7 @@ tensor::TensorPtr Common::GetTensorFromParam(const AnfNodePtr &param_node) {
   return tensor_value;
 }
 
-std::shared_ptr<PyNativeExecutor> Common::GetPyNativeExecutor() {
+const std::shared_ptr<PyNativeExecutor> &Common::GetPyNativeExecutor() {
   const auto &executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   return executor;
@@ -1137,7 +1137,7 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
 }
 
 FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
-  if (args.size() != kIndex2) {
+  if (MS_UNLIKELY(args.size() != kIndex2)) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
                       << ", but got " << args.size();
   }
@@ -1151,21 +1151,25 @@ FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
 }
 
 void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
-  std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : outputs) {
-    MS_EXCEPTION_IF_NULL(output_tensor);
-    if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
-    }
-    (void)output_values.emplace_back(output_tensor);
+  size_t size = outputs.size();
+  if (size == kSizeOne) {
+    op_run_info->real_out = outputs[0];
+    return;
   }
-  auto result_value = std::make_shared<ValueTuple>(output_values);
-  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->real_out = result_value->value().front();
-  } else {
-    op_run_info->real_out = result_value;
+  std::vector<ValuePtr> output_values(size);
+  for (size_t i = 0; i < size; ++i) {
+    const auto &output_tensor = outputs[i];
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    output_values[i] = output_tensor;
+  }
+  op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
+}
+
+void PyBoost::UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    const auto &output_tensor = outputs[i];
+    output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+    output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
   }
 }
 
@@ -1192,15 +1196,16 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(op_run_info);
   // Set result to python
-  op_run_info->base_op_run_info.abstract = op->output_abs();
   MakeOutputValue(op_run_info, op->outputs());
   UpdateStubOutput(op_run_info, op->output_abs());
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
+    op_run_info->base_op_run_info.abstract = op->output_abs();
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
+    UpdateOutputTensorGradInfo(op->outputs());
     op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
   }
 }

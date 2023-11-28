@@ -382,9 +382,6 @@ void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
     op_run_info->base_op_run_info.use_dynamic_shape_process =
       grad()->forward_use_dynamic_shape_process() || grad()->use_dynamic_shape_process();
   }
-  auto new_prim = std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim);
-  new_prim->EnableSharedMutex();
-  op_run_info->op_grad_info->op_prim = new_prim;
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
   op_run_info->cell_obj_id = GetCurrentCellObjId();
 }
