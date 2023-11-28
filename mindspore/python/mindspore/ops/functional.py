@@ -19,7 +19,6 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
-from mindspore.ops.auto_generate.gen_ops_def import *
 from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P

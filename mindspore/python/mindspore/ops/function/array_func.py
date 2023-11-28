@@ -62,7 +62,7 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_
+from mindspore.ops.auto_generate import concat_, range
 from mindspore.ops.operations.manually_defined import tile
 
 tuple_to_tensor_ = TupleToTensor()
@@ -7430,6 +7430,7 @@ __all__ = [
     'full_like',
     'dyn_shape',
     'arange',
+    'range',
     'reshape',
     'reshape_',
     'flatten',
