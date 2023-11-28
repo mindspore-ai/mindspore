@@ -44,7 +44,7 @@ def test_number_add_number():
     Description: test add operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For 'Add', the element of 'x' must be one of Tensor"):
+    with pytest.raises(TypeError) as err:
         input_x = 0.1
         input_y = -3.2
         result1 = input_x + input_y
@@ -53,6 +53,7 @@ def test_number_add_number():
         expect = -3.1
         assert result1 == expect
         assert result2 == expect
+    assert "Failed calling Add with" in str(err.value)
 
 
 @pytest.mark.level1
@@ -495,7 +496,7 @@ def test_number_mul_number():
     Description: test mul operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For 'Mul', the element of 'x' must be one of Tensor"):
+    with pytest.raises(TypeError) as err:
         input_x = 4.91
         input_y = 0.16
         result1 = input_x * input_y
@@ -509,6 +510,7 @@ def test_number_mul_number():
         assert np.all(-diff1 < error)
         assert np.all(diff2 < error)
         assert np.all(-diff2 < error)
+    assert "Failed calling Mul with" in str(err.value)
 
 
 @pytest.mark.level1
@@ -857,7 +859,7 @@ def test_number_floordiv_number():
     Description: test floordiv operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="For FloorDiv, one of the inputs must be tensor type but got Int64 and Int64"):
+    with pytest.raises(TypeError) as err:
         input_x = 2
         input_y = 5
         result1 = input_x // input_y
@@ -866,6 +868,7 @@ def test_number_floordiv_number():
         expect = 0
         assert np.all(result1 == expect)
         assert np.all(result2 == expect)
+    assert "Failed calling FloorDiv with" in str(err.value)
 
 
 @pytest.mark.level1
@@ -952,7 +955,7 @@ def test_number_floormod_number():
     Description: test floormod operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError, match="must be all tensor and those type must be same."):
+    with pytest.raises(TypeError) as err:
         input_x = 2
         input_y = 5
         result1 = input_x % input_y
@@ -961,6 +964,7 @@ def test_number_floormod_number():
         expect = 2
         assert np.all(result1 == expect)
         assert np.all(result2 == expect)
+    assert "Failed calling FloorMod with" in str(err.value)
 
 
 @pytest.mark.level1
