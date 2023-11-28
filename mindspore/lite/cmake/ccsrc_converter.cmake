@@ -94,6 +94,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/backend/common/graph_kernel/split_model/*.cc
                 ${CCSRC_DIR}/backend/common/graph_kernel/graph_kernel_flags.cc
                 ${CCSRC_DIR}/kernel/graph_kernel/graph_kernel_json_generator.cc
+                ${CCSRC_DIR}/backend/common/optimizer/optimizer.cc
                 )
         set(CCSRC_SRC
                 ${CCSRC_SRC}

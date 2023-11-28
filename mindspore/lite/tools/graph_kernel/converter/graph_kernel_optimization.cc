@@ -32,6 +32,8 @@
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
+#include "backend/common/graph_kernel/core/split_reshape_and_cache.h"
+#include "backend/common/graph_kernel/core/cluster_cce_lib_ops.h"
 
 #include "tools/graph_kernel/converter/akg/utils.h"
 #include "tools/graph_kernel/converter/callback_impl.h"
@@ -104,9 +106,15 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
 GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageCluster, "cluster");
+
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
+  pm->Add(std::make_shared<SplitReshapeAndCache>(), OptLevel_0, is_ascend);
+  if (graphkernel::GraphKernelFlags::GetInstance().enable_cce_lib) {
+    // akg cce lib ops
+    pm->Add(std::make_shared<ClusterCceLibOps>(), OptLevel_0, is_ascend);
+  }
   // Combine supported parallel ops that with common inputs
   pm->Add(std::make_shared<GraphKernelOpCombiner>(), OptLevel_3);
 

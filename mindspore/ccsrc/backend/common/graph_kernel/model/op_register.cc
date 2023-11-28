@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,4 +129,7 @@ OP_REGISTER("Pool2D", Pool2DOp);
 // virtual ops
 OP_REGISTER("Assign", VirtualOp);
 OP_REGISTER("TupleGetItem", TupleGetItemOp);
+OP_REGISTER("PagedAttention", OpaqueOp);
+OP_REGISTER("PagedAttentionMask", OpaqueOp);
+OP_REGISTER("ReshapeAndCache", OpaqueOp);
 }  // namespace mindspore::graphkernel::inner
