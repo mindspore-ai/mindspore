@@ -59,6 +59,26 @@ size_t TOTAL_OPS = 0;
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
+bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input) {
+  if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
+      (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+    return true;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimCast) && IsPrimitiveCNode(input, prim::kPrimTupleGetItem)) {
+    BaseShapePtr base_shape_ptr = node->Shape();
+    if (base_shape_ptr == nullptr) {
+      MS_LOG(EXCEPTION) << "IsDynamicShapeInput: " << node->ToString() << " shape_ptr is nullptr, full name is "
+                        << node->fullname_with_scope();
+    }
+    auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    if (shape_ptr->shape().size() == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   if (!cnode) {
     return false;
@@ -1102,8 +1122,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
@@ -1678,7 +1697,12 @@ bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) 
   return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == kTupleGetItemOpName) ||
          (prev_prim->name() == kDependOpName) || (prev_prim->name() == kMakeListOpName) ||
          (prev_prim->name() == kLoadOpName) || (prev_prim->name() == kMakeTupleOpName) ||
-         IsAutoParallelCareNode(prev_cnode);
+         (prev_prim->name() == SHAPE_OP) || IsAutoParallelCareNode(prev_cnode);
+}
+
+bool IsCrossedCNode(std::string prev_prim_name) {
+  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, SHAPE_OP};
+  return crossed_cnode_list.find(prev_prim_name) != crossed_cnode_list.end();
 }
 
 // Needed by rec_parser
@@ -1735,6 +1759,14 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           name_inputs.push_back(prev_node->UniqueId());
           break;
         }
+
+        // In dynamic shape scenarios, the situation op1->Shape->TupleGetItem->op2 will occur.
+        // The incoming operator of op2 should be op1 instead of Shape,
+        // so the Shape operator is skipped when looking for the incoming operator.
+        if (prev_prim->name() == SHAPE_OP) {
+          continue;
+        }
+
         if (!IsAutoParallelCareNode(prev_cnode) && !IsValueNode<FuncGraph>(prev_cnode->input(0))) {
           MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
         }
@@ -1747,7 +1779,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
           name_inputs.push_back(prev_node->UniqueId());
           break;
         }
-      } else if (prev_prim->name() == kDependOpName || prev_prim->name() == kLoadOpName) {
+      } else if (IsCrossedCNode(prev_prim->name())) {
         // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
         // this 'depend'
         prev_node = prev_cnode->input(1);
