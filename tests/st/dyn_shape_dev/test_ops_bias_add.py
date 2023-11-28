@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor
-from mindspore import ops
+from mindspore import ops, jit
 import test_utils
 
 
@@ -190,3 +190,29 @@ def test_bias_add_vmap(mode):
                             [[14, 15],
                              [17, 18]]]]).astype(np.float16)
     assert np.allclose(output.asnumpy(), expect_out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+def test_bias_add_ncdhw(mode):
+    """
+    Feature: BiasAdd with format NCDHW.
+    Description: test BiasAdd with NCDHW inputs.
+    Expectation: the result match with expected result.
+    """
+    @jit
+    def bias_add(x, b):
+        return ops.BiasAdd(data_format="NCDHW")(x, b)
+
+    ms.context.set_context(mode=mode)
+    x_shape = [2, 5, 2, 3, 4]
+    x = np.ones(x_shape).astype(np.int64)
+    b = np.array([1, 3, 5, 7, 9]).astype(np.int64)
+    output = bias_add(Tensor(x), Tensor(b))
+    expect_output = x
+    for i in range(x_shape[0]):
+        for j in range(x_shape[1]):
+            expect_output[i][j] = x[i][j] + b[j]
+    assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
