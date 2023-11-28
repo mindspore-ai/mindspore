@@ -58,6 +58,28 @@ class BaseModel:
         """
         return self._model.get_model_info(key)
 
+    def update_weights(self, weights):
+        """
+        Update constant weight of the model node.
+        """
+        if not isinstance(weights, list):
+            raise TypeError("weights must be list, but got {}.".format(type(weights)))
+        _weights = []
+        for i, weight in enumerate(weights):
+            _weight = []
+            if not isinstance(weight, list):
+                raise TypeError("weight must be list, but got {}.".format(type(weight)))
+            # pylint: disable=protected-access
+            for j, tensor in enumerate(weight):
+                if not isinstance(tensor, Tensor):
+                    raise TypeError(f"weights element must be Tensor, but got "
+                                    f"{type(tensor)} at index {i}{j}.")
+                _weight.append(tensor._tensor)
+            _weights.append(_weight)
+        ret = self._model.update_weights(_weights)
+        if not ret.IsOk():
+            raise RuntimeError(f"update weight failed! Error is {ret.ToString()}")
+
     def predict(self, inputs, outputs=None):
         """
         Inference model.

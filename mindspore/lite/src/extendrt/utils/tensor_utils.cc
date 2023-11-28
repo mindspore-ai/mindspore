@@ -88,6 +88,8 @@ std::vector<mindspore::tensor::TensorPtr> TensorUtils::MSTensorToTensorPtr(const
     auto data_size = ms_tensor.DataSize();
     auto ref_tensor_data = std::make_shared<TensorRefData>(data, ms_tensor.ElementNum(), data_size, shape.size());
     auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape, ref_tensor_data);
+    tensor_ptr->set_name(ms_tensor.Name());
+    tensor_ptr->set_data_type(type_id);
     tensor_ptrs.push_back(tensor_ptr);
   }
   return tensor_ptrs;

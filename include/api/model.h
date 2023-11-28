@@ -136,6 +136,13 @@ class MS_API Model {
   /// \return Status.
   Status UpdateWeights(const std::vector<MSTensor> &new_weights);
 
+  /// \brief Change the size and or content of weight tensors
+  ///
+  /// \param[in]  A vector where model constant are arranged in sequence
+  ///
+  /// \return Status.
+  Status UpdateWeights(const std::vector<std::vector<MSTensor>> &new_weights);
+
   /// \brief Inference model API. If use this API in train mode, it's equal to RunStep API.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
