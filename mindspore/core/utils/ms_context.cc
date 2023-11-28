@@ -132,6 +132,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
   set_param<bool>(MS_CTX_RECOMPUTE_COMM_OVERLAP, false);
   set_param<bool>(MS_CTX_GRAD_COMM_OVERLAP, false);
+  set_param<bool>(MS_CTX_ENABLE_OPT_SHARD_COMM_OPT, false);
   set_param<bool>(MS_CTX_ENABLE_TASK_OPT, false);
   set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
   set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
