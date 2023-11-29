@@ -2147,14 +2147,14 @@ class ClipByNorm(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=None):
         """Initialize ClipByNorm"""
-        self.Axis = 'axis'
+        self.axis_str = 'axis'
         self.axis = () if axis is None else axis
-        validator.check_value_type(self.Axis, self.axis, [int, tuple, list], self.name)
+        validator.check_value_type(self.axis_str, self.axis, [int, tuple, list], self.name)
         axis_check = self.axis if isinstance(self.axis, Iterable) else (self.axis,)
         for i, value in enumerate(axis_check):
             validator.check_value_type('axis[%d]' % i, value, [int], self.name)
-        self.init_attrs[self.Axis] = self.axis
-        self.add_prim_attr(self.Axis, self.axis)
+        self.init_attrs[self.axis_str] = self.axis
+        self.add_prim_attr(self.axis_str, self.axis)
         self.init_prim_io_names(inputs=['x', 'clip_norm'], outputs=['output'])
 
     def infer_shape(self, x_shape, clip_norm_shape):
