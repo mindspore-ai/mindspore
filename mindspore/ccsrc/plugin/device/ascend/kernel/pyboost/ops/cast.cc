@@ -35,15 +35,14 @@ tensor::TensorPtr CastAscend::Call(const TensorPtr &input_tensor, const TypePtr 
 
   // Async
   auto op = get_op();
-  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, type]() {
+  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, type]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    std::vector<kernel::KernelTensor *> input_kernel_tensors;
-    (void)runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
+    PyBoostUtils::PrepareOpInputs(device_context, input_tensor);
 
     // Malloc for output tensors
-    PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+    PyBoostUtils::PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
 
     auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
     LAUNCH_ACLNN(aclnnCast, device_context, stream_ptr, input_tensor, type, outputs[0]);

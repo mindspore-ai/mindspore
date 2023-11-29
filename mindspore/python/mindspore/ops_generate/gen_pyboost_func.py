@@ -88,25 +88,31 @@ class TemplatePaths:
         self.code_generate_path = code_generate_path
 
 
-def generate_malloc_input(is_ascend, need_malloc_tensors, common_inputs):
+def generate_malloc_input(is_ascend, need_malloc_tensors, call_args_after_convert):
     """
     generate malloc inputs
     :param is_ascend:
     :param need_malloc_tensors:
-    :param common_inputs:
+    :param call_args_after_convert:
     :return:
     """
     malloc_inputs = ''
     if is_ascend:
+        args_list = ''
         for item in need_malloc_tensors:
-            malloc_inputs += \
-                f'(void)runtime::DeviceAddressUtils::CreateInputAddress(device_context, {item}, "{item}");\n'
+            args_list += f'{item}, '
+        args_list = args_list[:-2]
+        if args_list:
+            malloc_inputs += f'PyBoostUtils::PrepareOpInputs(device_context, {args_list});\n'
     else:
-        malloc_inputs += f'std::vector<kernel::KernelTensor *> input_kernel_tensors;\n'
-        for item in common_inputs:
-            malloc_inputs += f'const auto &address_{item} = ' \
-                             f'runtime::DeviceAddressUtils::CreateInputAddress(device_context, {item}, "{item}");\n'
-            malloc_inputs += f'(void)input_kernel_tensors.emplace_back(address_{item}->kernel_tensor().get());\n'
+        args_list = ''
+        for item in call_args_after_convert:
+            args_list += f'{item}, '
+        args_list = args_list[:-2]
+        malloc_inputs += f'const auto &inputs_device_address = ' \
+                         f'PyBoostUtils::CreateInputDeviceAddress(device_context, op->input_abs(), {args_list});\n'
+        malloc_inputs += f'const auto &inputs_kernel_tensors = ' \
+                         f'PyBoostUtils::GetKernelTensorFromAddress(inputs_device_address);'
     return malloc_inputs
 
 
@@ -127,8 +133,9 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         is_ascend = 'ascend' in gen_path
         is_cpu = 'cpu' in gen_path
         is_gpu = 'gpu' in gen_path
-        malloc_inputs = generate_malloc_input(is_ascend, converter.need_malloc_tensors, converter.common_inputs)
-        # launch mode: cube or not
+        malloc_inputs = generate_malloc_input(is_ascend, converter.need_malloc_tensors,
+                                              converter.call_args_after_convert)
+
         # call_impl
         call_impl = ''
         customize_include = ''
@@ -185,7 +192,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          malloc_inputs=malloc_inputs,
                                          get_cube_math_type=get_cube_math_type,
                                          cube_math_type=cube_math_type,
-                                         aclnn_call_args=converter.call_args_after_convert,
+                                         real_call_args=converter.call_args_after_convert,
                                          return_values=converter.call_func_outputs,
                                          outputs=real_output,
                                          inplace_process=converter.inplace_process)
@@ -487,21 +494,9 @@ class OpTemplateConverter:
         self.need_malloc_tensors = self.parse_need_malloc_tensors(op_proto.op_args, self.call_args)
         self.call_args_after_convert, self.value_tuple_convert, self.const_number_convert = \
             self.op_args_converter(op_proto.op_args, self.call_args)
-        self.common_inputs = self.parse_common_inputs(self.call_args_after_convert)
         self.cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
         self.op_outputs, self.call_func_outputs = generate_pyboost_outputs(op_proto)
         self.inplace_process = generate_inplace_process_cpp_code(op_proto)
-
-    @staticmethod
-    def parse_common_inputs(call_args):
-        """
-        :param call_args:
-        :return: all args after convert
-        """
-        common_inputs = []
-        for call_arg in call_args:
-            common_inputs.append(call_arg)
-        return common_inputs
 
     @staticmethod
     def parse_call_args_types(op_args):
@@ -597,6 +592,10 @@ class OpTemplateConverter:
                 value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
             else:
                 call_args_after_convert.append(call_arg)
+        if const_number_convert:
+            const_number_convert.insert(0, '// Convert ValuePtr to c++ scalar\n')
+        if value_tuple_convert:
+            value_tuple_convert.insert(0, '// ValueTuple to std::vector\n')
         return call_args_after_convert, value_tuple_convert, const_number_convert
 
 
