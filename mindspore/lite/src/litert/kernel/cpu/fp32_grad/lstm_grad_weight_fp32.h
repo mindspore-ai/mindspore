@@ -42,7 +42,7 @@ class LSTMGradWeightCPUKernel : public LiteKernel {
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();
-  void ReorderLstmWeightGrad(float *dst, float *src, LstmGradParameter *param);
+  void ReorderLstmWeightGrad(float *dst, const float *src, LstmGradParameter *param) const;
 
   static const int input_index = 0;
   static const int hidden_input_index = 1;
@@ -53,7 +53,7 @@ class LSTMGradWeightCPUKernel : public LiteKernel {
 
   int input_size_align_ = 1;
   float *dW_tmp_ = nullptr;
-  float *workspace_ = nullptr;
+  float *lstm_grad_weight_workspace_ = nullptr;
 
   int row_tile_ = 0;
   int col_tile_ = 0;

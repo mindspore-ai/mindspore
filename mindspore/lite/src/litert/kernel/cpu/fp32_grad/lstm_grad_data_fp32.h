@@ -39,7 +39,7 @@ class LSTMGradDataCPUKernel : public LiteKernel {
  private:
   int LstmBackpropUnidirectional(bool is_backward, float *w, float *v);
 
-  void ReorderLstmWeightGrad(float *dst, float *src);
+  void ReorderLstmWeightGrad(float *dst, float *src) const;
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();

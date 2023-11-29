@@ -121,12 +121,12 @@ int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(bool is_backward, float 
                                  : hidden_state + (real_t + prev_time_stamp_offset) * lstm_param_->output_step_;
     float *curr_input = input_ + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
     float *curr_da = dA_ + real_t * num_of_gates * state_len;
-    LstmGradDoWeightStep(curr_input, prev_hidden_state, curr_da, dw, dv, db, workspace_, lstm_param_);
+    LstmGradDoWeightStep(curr_input, prev_hidden_state, curr_da, dw, dv, db, lstm_grad_weight_workspace_, lstm_param_);
   }
   return RET_OK;
 }
 
-void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, LstmGradParameter *param) {
+void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, const float *src, LstmGradParameter *param) const {
   int uni_batch = param->bidirectional_ ? weight_batch_ / C2NUM : weight_batch_;
   // 4xWixWh,4xWirxWhr,4xBiBh,4xBirBhr
   ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIOFG());
@@ -210,8 +210,9 @@ int LSTMGradWeightCPUKernel::MallocRunBuffer() {
     return RET_ERROR;
   }
 
-  workspace_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(workspace_size * sizeof(float)));
-  if (workspace_ == nullptr) {
+  lstm_grad_weight_workspace_ =
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(static_cast<size_t>(workspace_size) * sizeof(float)));
+  if (lstm_grad_weight_workspace_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradWeightCPUKernel malloc run workspace error.";
     return RET_ERROR;
   }
@@ -231,9 +232,9 @@ int LSTMGradWeightCPUKernel::MallocRunBuffer() {
 }
 
 void LSTMGradWeightCPUKernel::FreeRunBuffer() {
-  if (workspace_ != nullptr) {
-    ms_context_->allocator->Free(workspace_);
-    workspace_ = nullptr;
+  if (lstm_grad_weight_workspace_ != nullptr) {
+    ms_context_->allocator->Free(lstm_grad_weight_workspace_);
+    lstm_grad_weight_workspace_ = nullptr;
   }
   if (dW_tmp_ != nullptr) {
     ms_context_->allocator->Free(dW_tmp_);
