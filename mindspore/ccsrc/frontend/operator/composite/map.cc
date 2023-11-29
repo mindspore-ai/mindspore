@@ -289,7 +289,7 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
   });
   if (convert_to_interpret) {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-    const std::vector<std::string> funcs_str{"tuple", "map"};
+    const std::vector<std::string> funcs_str{"map"};
     auto ret_node = fallback::GeneratePyInterpretWithAbstract(func_graph, funcs_str, args_abs_list.size());
     func_graph->set_output(ret_node);
     return func_graph;

@@ -842,6 +842,11 @@ def get_script_id_attrs(script):
     return res
 
 
+def generate_lambda_object(script):
+    """Generate lambda expression object using script"""
+    return eval(script, {}, {})
+
+
 def get_global_params():
     """Get the global parameter."""
     logger.debug(f"get global_dict: {_global_params}")

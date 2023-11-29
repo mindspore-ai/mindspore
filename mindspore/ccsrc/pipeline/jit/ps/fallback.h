@@ -36,6 +36,7 @@ constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
 constexpr auto kObjectAttrChange = "object_attr_change";
 constexpr auto kCheckListDictInplace = "check_list_dict_inplace";
+constexpr auto kLocalDictCheck = "local_dict_check";
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -76,6 +77,9 @@ AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePt
 
 // Convert GetAttr node to PyInterpret/PyExecute.
 AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name);
+
+// Get Python object from abstract function.
+py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs);
 
 // Function about jit annotation.
 using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
