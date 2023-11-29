@@ -45,7 +45,7 @@ std::string EnumToString(OP_DTYPE dtype) {
 
   auto it = kEnumToStringMap.find(dtype);
   if (it == kEnumToStringMap.end()) {
-    MS_LOG(ERROR) << "Failed to map Enum[" << dtype << "] to String.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed to map Enum[" << dtype << "] to String.";
   }
   return it->second;
 }
