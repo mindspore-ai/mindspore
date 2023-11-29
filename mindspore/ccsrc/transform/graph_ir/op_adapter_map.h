@@ -490,6 +490,9 @@ constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
 constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
 constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
 constexpr const char kNameNanToNum[] = "NanToNum";
+constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
+constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
+constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
 
 class OpAdapterDesc;
 
