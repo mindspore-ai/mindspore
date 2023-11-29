@@ -99,7 +99,7 @@ class LRScheduler:
                                    f"in param_groups[{i}] when resuming an optimizer")
         self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
-        self._last_lr = [group['lr'] for group in optimizer.param_groups]
+        self._last_lr = [lr for lr in optimizer.lrs]
         self.groups_num = len(optimizer.param_groups)
         self.last_epoch = Parameter(Tensor(last_epoch, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)

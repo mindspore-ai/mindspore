@@ -104,6 +104,7 @@ class Optimizer(Cell):
         self.state = defaultdict(dict)
         self.param_groups = []
         self.parameters = []
+        self.lrs = []
         self.map_ = C.Map()
         self.group_start_id = [0]
         if not isinstance(param_groups[0], dict):
@@ -112,6 +113,7 @@ class Optimizer(Cell):
         for param_group in param_groups:
             self.add_param_group(param_group)
         self.parameters = ParameterTuple(self.parameters)
+        self.lrs = ParameterTuple(self.lrs)
         self.hyper_map = C.HyperMap()
         self.enable_tuple_broaden = True
 
@@ -146,6 +148,7 @@ class Optimizer(Cell):
 
         lr = self._build_single_lr(param_group.get("lr"), 'learning_rate_group_' + str(group_id))
         weight_decay = self._preprocess_weight_decay(param_group.get("weight_decay", 0.0))
+        self.lrs.append(lr)
         param_group["lr"] = lr
         param_group["weight_decay"] = weight_decay
         self.param_groups.append(param_group)
@@ -252,6 +255,6 @@ def _tensor_apply_decay(weight_decay, weight, gradient):
     return op_add((op_mul(weight, F.cast(weight_decay, F.dtype(weight))), gradient))
 
 def check_not_less_than(arg_value, arg_name, prim, value=0.):
-    if arg_value < 0.:
+    if arg_value < value:
         raise ValueError("For {}, the {} must be greater than or equal to {}, "
                          "but got {}.".format(prim, arg_name, value, arg_value))
