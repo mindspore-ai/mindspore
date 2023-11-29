@@ -17,14 +17,10 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
-
-using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
-using mindspore::ge::model_runner::HcclTaskInfo;
 
 namespace mindspore::kernel {
 bool HcomAllToAllKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,

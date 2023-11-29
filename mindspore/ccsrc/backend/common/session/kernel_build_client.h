@@ -200,52 +200,6 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
   return result;
 }
 
-class BACKEND_EXPORT AscendKernelBuildClient : public KernelBuildClient {
- public:
-  // Server configure
-  constexpr inline static auto kGetPathScript =
-    "-c "
-    "\""
-    "import pkgutil;"
-    "path = pkgutil"
-    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_ascend\\\")"  // Server module name
-    ".get_filename();"
-    "print('[~]' + path)"
-    "\"";
-
-  constexpr inline static auto kServerScript = "kernel_build_server_ascend.py";
-
-  // Receive the response from server
-  constexpr inline static auto kFailed = "-1";
-
-  // Send server info. query to server
-  constexpr inline static auto kFormat = "FORMAT";
-  constexpr inline static auto kSupport = "SUPPORT";
-
-  static AscendKernelBuildClient &Instance();
-
-  std::string GetEnv() override { return GetPyExe(); }
-
-  std::string GetScript() override {
-    auto env = GetPyExe();
-    return GetScriptFilePath(env, kGetPathScript, kServerScript);
-  }
-  // Run TBE building.
-  std::string DispatchToServer(const std::string &job_json_str);
-
-  AscendKernelBuildClient(const AscendKernelBuildClient &) = delete;
-  AscendKernelBuildClient &operator=(const AscendKernelBuildClient &) = delete;
-
-  AscendKernelBuildClient(AscendKernelBuildClient &&) = delete;
-  AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
-
- protected:
-  ~AscendKernelBuildClient() override { Close(); }
-
- private:
-  AscendKernelBuildClient() { Open(); }
-};
-
 class BACKEND_EXPORT AkgKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure

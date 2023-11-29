@@ -23,9 +23,8 @@
 #include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "plugin/factory/ms_factory.h"
 #include "kernel/kernel.h"
+#include "plugin/factory/ms_factory.h"
 #include "include/common/utils/utils.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"

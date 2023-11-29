@@ -27,10 +27,6 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 
-#ifdef ASCEND_910
-using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
-#endif
-
 namespace mindspore {
 namespace kernel {
 bool ReshapeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,

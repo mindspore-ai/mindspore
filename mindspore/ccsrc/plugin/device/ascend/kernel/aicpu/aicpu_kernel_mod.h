@@ -20,7 +20,6 @@
 #include <string>
 #include <map>
 #include "runtime/rt.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 

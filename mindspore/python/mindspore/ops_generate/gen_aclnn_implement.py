@@ -76,7 +76,6 @@ def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
 #include "ir/tensor.h"
 #include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 

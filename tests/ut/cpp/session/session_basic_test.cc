@@ -17,11 +17,12 @@
 #include "common/common_test.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "frontend/operator/ops.h"
-#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/session/session_basic.h"
+#include "backend/common/session/session_factory.h"
 
 namespace mindspore {
 namespace session {
@@ -70,7 +71,7 @@ TEST_F(SessionBasicTest, ConstructKernelGraph) {
 
   std::vector<AnfNodePtr> lst = {original_add, original_mul};
   std::vector<AnfNodePtr> outputs = {original_mul};
-  session::SessionPtr sess = std::make_shared<session::AscendSession>();
+  auto sess = session::SessionFactory::Get().Create(kSessionBasic);
   sess->Init(0);
   auto kernel_graph = sess->ConstructKernelGraph(lst, outputs);
   EXPECT_NE(kernel_graph, nullptr);

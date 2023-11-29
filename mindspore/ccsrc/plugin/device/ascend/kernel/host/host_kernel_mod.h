@@ -20,7 +20,7 @@
 #include <string>
 #include <map>
 #include <utility>
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "kernel/kernel.h"
 namespace mindspore {
 namespace kernel {
 class HostKernelMod : public KernelMod {

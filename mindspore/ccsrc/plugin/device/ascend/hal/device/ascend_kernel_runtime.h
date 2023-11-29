@@ -28,9 +28,6 @@
 #include "runtime/context.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/session/session_basic.h"
-#ifndef ENABLE_SECURITY
-#include "plugin/device/ascend/hal/device/dump/data_dumper.h"
-#endif
 #include "acl/acl_rt.h"
 
 using std::unordered_map;

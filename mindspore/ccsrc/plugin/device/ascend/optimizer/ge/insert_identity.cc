@@ -18,7 +18,8 @@
 #include <memory>
 #include <string>
 #include "ops/array_ops.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

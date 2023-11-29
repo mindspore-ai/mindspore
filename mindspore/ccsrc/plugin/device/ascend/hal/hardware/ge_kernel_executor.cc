@@ -23,7 +23,6 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
@@ -32,10 +31,9 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"

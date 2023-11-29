@@ -67,7 +67,6 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ASCEND_VERSION="$DEVICE_VERSION"
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage

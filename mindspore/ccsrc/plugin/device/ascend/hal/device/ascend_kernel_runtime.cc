@@ -32,7 +32,6 @@
 #include "plugin/device/ascend/hal/device/ascend_runtime_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
@@ -76,7 +75,6 @@ namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
 void IntHandler(int, siginfo_t *, void *) {
-  mindspore::kernel::AscendKernelBuildClient::Instance().Close();
   int this_pid = getpid();
   MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
   (void)kill(this_pid, SIGTERM);
