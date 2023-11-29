@@ -32,7 +32,7 @@ const ValuePtrList &InputsCollector::GetInputs() {
   return inputs_;
 }
 
-void InputsCollector::Visit_(const ir::LoadNodePtr &node) {
+void InputsCollector::Visit_(const ir::LoadValueNodePtr &node) {
   if (node->GetOpCode() == LOAD_FAST) {
     AddInput(node->GetArg(0));
   } else {
@@ -123,10 +123,8 @@ void FuncWrapper::GenerateReturn() const {
   }
   MS_EXCEPTION_IF_CHECK_FAIL(!outputs_.empty(), "Output can not be empty.");
   ir::NodePtrList opnds;
-  std::transform(outputs_.begin(), outputs_.end(), std::back_inserter(opnds), [](const ir::ValuePtr &value) {
-    ir::NodePtrList args = {value};
-    return std::make_shared<ir::LoadNode>(LOAD_FAST, args);
-  });
+  std::transform(outputs_.begin(), outputs_.end(), std::back_inserter(opnds),
+                 [](const ir::ValuePtr &value) { return std::make_shared<ir::LoadValueNode>(LOAD_FAST, value); });
   ir::NodePtr tuple = std::make_shared<ir::BuildNode>(BUILD_TUPLE, opnds);
   ir::ReturnNodePtr ret = std::make_shared<ir::ReturnNode>(tuple);
   func_->AddNode(ret);

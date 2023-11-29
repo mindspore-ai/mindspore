@@ -19,12 +19,15 @@
 #include <regex>
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
+#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/code_gen.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
+#include "pipeline/jit/pi/graph_compiler/abstract_type_deducer.h"
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 #include "pipeline/jit/pi/graph_compiler/cg/byte_code_generator.h"
 #include "pipeline/jit/pi/graph_compiler/inliner/func_inliner.h"
@@ -904,7 +907,62 @@ static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   return compiled;
 }
 
+py::tuple EliminateStubTensor(const py::tuple &args) {
+  py::tuple new_args = py::reinterpret_steal<py::tuple>(PyTuple_New(args.size()));
+  for (size_t idx = 0; idx < args.size(); idx++) {
+    new_args[idx] = IsStubTensor(args[idx]) ? python_adapter::CallPyObjMethod(args[idx], "stub_sync") : args[idx];
+  }
+  return new_args;
+}
+
+// bellowing code is used for debugging code generate, and will be remove soon
+py::object test_graph_ir_code_gen(PyFrameObject *frame) {
+  PyFrame_FastToLocals(frame);
+  auto func =
+    py::reinterpret_steal<py::object>(PyFunction_New(reinterpret_cast<PyObject *>(frame->f_code), frame->f_globals));
+  mindspore::jit::graph::Utils::DisFuncObject(func.ptr());
+  auto byteCodeParser = std::make_shared<mindspore::jit::graph::ByteCodeParser>(func);
+  mindspore::jit::graph::ir::FunctionNodePtr func_node = byteCodeParser->Parse();
+  auto inliner = std::make_shared<mindspore::jit::graph::FuncInliner>(func_node);
+  inliner->Run();
+  int arg_cnt = frame->f_code->co_argcount + frame->f_code->co_kwonlyargcount;
+  if (frame->f_code->co_flags & CO_VARARGS) {
+    arg_cnt++;
+  }
+  py::list locals = py::reinterpret_steal<py::list>(PyDict_Values(frame->f_locals));
+  py::tuple args = py::reinterpret_steal<py::tuple>(PyList_AsTuple(PyList_GetSlice(locals.ptr(), 0, arg_cnt)));
+  py::dict kwargs =
+    (frame->f_code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
+  args = EliminateStubTensor(args);
+  mindspore::jit::graph::AbstractTypeDeducer::Deduce(func_node, args, kwargs);
+  func_node->Sort();
+  std::cout << func_node->ToString() << std::endl;
+  auto func_obj = mindspore::jit::graph::ByteCodeGenerator::GenFunction(func_node);
+  mindspore::jit::graph::Utils::DisFuncObject(func_obj.ptr());
+  if ((func_node->GetFlags() & CO_VARARGS) != 0) {
+    auto pos_cnt = args.size() - 1;
+    auto var_vargs = py::cast<py::tuple>(args[pos_cnt]);
+    auto new_args = py::reinterpret_steal<py::tuple>(PyTuple_New(pos_cnt + var_vargs.size()));
+    size_t index = 0;
+    std::for_each(args.begin(), args.end() - 1, [&index, &new_args](const py::handle &arg) {
+      new_args[index] = arg;
+      index++;
+    });
+    std::for_each(var_vargs.begin(), var_vargs.end(), [&index, &new_args](const py::handle &arg) {
+      new_args[index] = arg;
+      index++;
+    });
+    args = new_args;
+  }
+  auto res = py::reinterpret_steal<py::object>(PyObject_Call(func_obj.ptr(), args.ptr(), kwargs.ptr()));
+  res.inc_ref();
+  return res;
+}
+
 static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameObject *frame) {
+  if (c->conf->GetBoolConfig(GraphJitConfig::kTestGraphIR)) {
+    return test_graph_ir_code_gen(frame);
+  }
   bool just_compiled = false;
   switch (c->stat) {
     case JitCompileResults::NEVER_COMPILE:
@@ -928,13 +986,9 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       just_compiled = true;
     /* fallthrough */
     case JitCompileResults::GRAPH_CALLABLE: {
-      bool check_guard;
-      {
-        runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
-                                           "PIJitGuard");
-        check_guard = CheckGuard(c, frame);
-      }
-      if (check_guard) {
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
+                                         "PIJitGuard");
+      if (CheckGuard(c, frame)) {
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
       }
@@ -944,7 +998,6 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       }
       MS_LOG(EXCEPTION) << "shouldn't reach here";
     }
-    /* fallthrough */
     case JitCompileResults::GRAPH_BUILDING:
       MS_LOG(ERROR) << "recursive call, compiler call the code "
                     << std::string(py::str(reinterpret_cast<PyObject *>(frame->f_code))) << " which is compiling";
@@ -1039,19 +1092,6 @@ py::bool_ pi_jit_disable() {
   return true;
 }
 
-// bellowing code is used for debugging code generate, and will be remove soon
-py::object test_graph_ir_code_gen(const py::object &func) {
-  mindspore::jit::graph::Utils::DisFuncObject(func.ptr());
-  auto byteCodeParser = std::make_shared<mindspore::jit::graph::ByteCodeParser>(func);
-  mindspore::jit::graph::ir::FunctionNodePtr func_node = byteCodeParser->Parse();
-  auto inliner = std::make_shared<mindspore::jit::graph::FuncInliner>(func_node);
-  inliner->Run();
-  auto func_obj = mindspore::jit::graph::ByteCodeGenerator::GenFunction(func_node);
-  mindspore::jit::graph::Utils::DisFuncObject(func_obj.ptr());
-  func_obj.inc_ref();
-  return func_obj;
-}
-
 py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &tag) {
   PyObject *func = funcHandle.ptr();
   PyObject *code = NULL;
@@ -1100,8 +1140,6 @@ py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) {
                   << " only support on python3.9 or python3.7";
   return py::bool_(false);
 }
-// bellowing code is used for debugging code generate, and will be remove soon
-py::object test_graph_ir_code_gen(const py::object &func) { return py::bool_(false); }
 
 #endif
 

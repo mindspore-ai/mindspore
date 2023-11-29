@@ -22,25 +22,18 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "base/base.h"
+#include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/ops.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/python_adapter.h"
-#include "ir/anf.h"
-#include "ir/tensor.h"
-#include "ir/value.h"
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/structure_ops.h"
 #include "pipeline/jit/pi/graph_compiler/func_wrapper.h"
-#include "pipeline/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
-#include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_mutator.h"
 #include "pipeline/jit/pi/graph_compiler/utils.h"
-#include "frontend/operator/composite/unpack_call.h"
-#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/ps/parse/parse.h"
-#include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -450,36 +443,40 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::UpdateNodePtr &node) {
   return std::make_shared<MindNode>(n);
 }
 
-ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadNodePtr &node) {
+ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadValueNodePtr &node) {
   AnfNodePtr n = GetAnfNode(node->GetArg(0));
   ir::OpCode op_code = node->GetOpCode();
-  if (op_code == LOAD_CONST || op_code == LOAD_GLOBAL || op_code == LOAD_CLOSURE) {
-    // no need to do anything
-  } else if (op_code == LOAD_FAST) {
+  if (op_code == LOAD_FAST) {
     MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(n), "Invalid var name.");
     std::string key = GetValue<std::string>(GetValueNode(n));
     auto found = assigned_vars_.find(key);
     MS_EXCEPTION_IF_CHECK_FAIL(found != assigned_vars_.end(), "Found not define var " + key + ".");
     n = assigned_vars_[key];
   } else if (op_code == LOAD_DEREF || op_code == LOAD_CLASSDEREF) {
-    auto arg = node->GetArg(1);
+    auto arg = node->GetArg();
     MS_EXCEPTION_IF_CHECK_FAIL(arg->isa<ir::Value>(), "Excepted a python object as arg of load_closure.");
     auto cell = arg->cast<ir::ValuePtr>()->GetValue();
     n = GraphUtils::ConvertPythonObjectToAnfNode(py::cast<py::object>(PyCell_Get(cell.ptr())));
   } else {
-    auto base = n;
-    if (base->isa<Parameter>()) {
-      auto name = base->cast<ParameterPtr>()->name();
-      auto iter = param_name_to_index_.find(name);
-      MS_EXCEPTION_IF_CHECK_FAIL(iter != param_name_to_index_.end(), name + " is not a parameter.");
-      base = args_[param_name_to_index_.at(name)];
-    }
-    auto attr = GetAnfNode(node->GetArg(1));
-    MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(attr), "Excepted attr/name.");
-    n = func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {base, attr});
+    // no need to do anything
+    MS_EXCEPTION_IF_CHECK_FAIL((op_code == LOAD_CONST || op_code == LOAD_GLOBAL || op_code == LOAD_CLOSURE),
+                               "Not Expected bytecode.");
   }
   UpdateLocation(n, node);
   return std::make_shared<MindNode>(n);
+}
+
+ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadFieldNodePtr &node) {
+  auto instance = GetAnfNode(node->GetArg(0));
+  if (instance->isa<Parameter>()) {
+    auto name = instance->cast<ParameterPtr>()->name();
+    auto iter = param_name_to_index_.find(name);
+    MS_EXCEPTION_IF_CHECK_FAIL(iter != param_name_to_index_.end(), name + " is not a parameter.");
+    instance = args_[param_name_to_index_.at(name)];
+  }
+  auto field = GetAnfNode(node->GetArg(1));
+  MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(field), "Excepted attr/name.");
+  return std::make_shared<MindNode>(func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {instance, field}));
 }
 
 ir::NodePtr FuncGraphBuilder::Mutate_(const ir::BuildNodePtr &node) {

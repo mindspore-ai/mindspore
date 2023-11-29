@@ -40,18 +40,60 @@ static std::string GetOpName(OpCode op) {
 class Operation : public Node {
  public:
   /**
-   * \brief The constructor of operation node.
+   * \brief The constructor of operation.
    *
-   * \param[in] kind the kind of this operation node.
-   * \param[in] op the opcode of this operation node.
+   * \param[in] op the opcode of this operation.
    *
-   * \return The instance of operation node.
+   * \return The instance of operation.
    */
-  explicit Operation(OpCode op) : opcode_(op), need_ext_instr_(false) {}
+  explicit Operation(OpCode op) : Operation(op, {}) {}
+
+  /**
+   * \brief The constructor of operation.
+   *
+   * \param[in] op the opcode of this operation.
+   * \param[in] args the opands of this operation.
+   *
+   * \return The instance of operation.
+   */
+  explicit Operation(OpCode op, const NodePtrList &args) : opcode_(op), need_ext_instr_(false), args_(args) {}
 
   /// \brief Destructor.
   ~Operation() override = default;
   JIT_DECLARE_PARENT(Operation, Node);
+
+  /**
+   * \brief Judge whether this node is an operation(instruction).
+   *
+   * \return The result of the judgment.
+   */
+  bool IsOperation() const override { return true; }
+
+  /**
+   * \brief Set the id of this operation.
+   *
+   * \note This method should not be actively called by the program writer, it should only be called by the method
+   * Sort()
+   */
+  void SetNodeId(size_t *id) override {
+    for (const auto &arg : args_) {
+      arg->SetNodeId(id);
+    }
+    Node::SetNodeId(id);
+  }
+
+  /**
+   * \brief Set the offset of this operation.
+   *
+   * \note This method should not be actively called by the program writer, it should only be called by the method
+   * Sort()
+   */
+  void SetOffset(size_t *offset) override {
+    for (const auto &arg : args_) {
+      arg->SetOffset(offset);
+    }
+    Node::SetOffset(offset);
+  }
 
   /**
    * \brief Get opcode of this operation.
@@ -79,112 +121,93 @@ class Operation : public Node {
    *
    * \return the count of args.
    */
-  virtual size_t GetArgsCnt() const = 0;
-
-  /**
-   * \brief Judge whether this node is an operation(instruction).
-   *
-   * \return The result of the judgment.
-   */
-  bool IsOperation() const override { return true; }
+  size_t GetArgsCnt() const { return args_.size(); }
 
   /**
    * \brief Get the specified positional operand of this operation.
    *
-   * \return the the specified positional operand
+   * \return The specified positional operand
    */
-  virtual const NodePtr &GetArg(size_t index) const = 0;
+  const NodePtr &GetArg(size_t index = 0) const { return args_[index]; }
+
+  /**
+   * \brief Set the operand of this operation.
+   *
+   * \param[in] index the position of the arg.
+   * \param[in] arg the value of the arg.
+   */
+  void SetArg(size_t index, const NodePtr &arg) { args_[index] = arg; }
+
+  /**
+   * \brief Get the operands of this operation.
+   *
+   * \return the operands of this operation.
+   */
+  const NodePtrList &GetArgs() const { return args_; }
+
+  /**
+   * \brief Get the operands of this operation.
+   *
+   * \return the operands of this operation.
+   */
+  NodePtrList &GetArgs() { return args_; }
+
+  /**
+   * \brief Set the operands of this operation.
+   *
+   * \param[in] args the new value of the operation.
+   */
+  void SetArgs(const NodePtrList &args) { args_ = args; }
 
  private:
   /// \brief The opcode of this operation.
   OpCode opcode_;
   /// \brief The EXTENDED_ARG instruction is required.
   bool need_ext_instr_;
+  /// \brief The operands of this operation.
+  NodePtrList args_;
 };
+
+using OperationPtr = std::shared_ptr<Operation>;
 
 /// \brief UnaryOperation is is the parent class of all class which represent the operation of instruction with one
 /// operand.
 class UnaryOperation : public Operation {
  public:
   /**
-   * \brief The constructor of unary operation node.
+   * \brief The constructor of unary operation.
    *
-   * \param[in] op the opcode of this unary operation node.
-   * \param[in] arg the operand of this unary operation node.
+   * \param[in] op the opcode of this unary operation.
+   * \param[in] arg the operand of this unary operation.
    *
-   * \return The instance of unary operation node.
+   * \return The instance of unary operation.
    */
-  UnaryOperation(OpCode op, const NodePtr &arg) : Operation(op), arg_(arg) {}
+  UnaryOperation(OpCode op, const NodePtr &arg) : Operation(op, {arg}) {}
 
   /// \brief Destructor.
   ~UnaryOperation() override = default;
   JIT_DECLARE_PARENT(UnaryOperation, Operation);
 
   /**
-   * \brief Set the id of this node.
-   *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
-   */
-  void SetNodeId(size_t *id) override {
-    arg_->SetNodeId(id);
-    Node::SetNodeId(id);
-  }
-
-  /**
-   * \brief Set the offset of this node.
-   *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
-   */
-  void SetOffset(size_t *offset) override {
-    arg_->SetOffset(offset);
-    Node::SetOffset(offset);
-  }
-
-  /**
-   * \brief Get the count of args.
-   *
-   * \return the count of args.
-   */
-  size_t GetArgsCnt() const override { return 1; }
-
-  /**
-   * \brief Get the specified positional operand of this operation.
-   *
-   * \return the the specified positional operand
-   */
-  const NodePtr &GetArg(size_t index) const override { return arg_; }
-
-  /**
-   * \brief Get the operand of this unary operation.
-   *
-   * \return the operand of this unary operation.
-   */
-  const NodePtr &GetArg() const { return arg_; }
-
-  /**
    * \brief Set the operand of this unary operation.
+   *
+   * \param[in] arg the value of the arg.
    */
-  void SetArg(const NodePtr &arg) { arg_ = arg; }
+  void SetArg(const NodePtr &arg) { Operation::SetArg(0, arg); }
 
   /**
    * \brief Get the description of this unary operation.
    * \return The description.
    */
   std::string ToString() const override {
-    return arg_->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "(" +
-           GetOpName(GetOpCode()) + ", %" + std::to_string(arg_->GetNodeId()) + ")\n";
+    return GetArg()->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" +
+           GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", %" + std::to_string(GetArg()->GetNodeId()) + ")\n";
   }
-
- private:
-  /// \brief The operand of this unary operation.
-  NodePtr arg_;
 };
 
 using UnaryOperationPtr = std::shared_ptr<UnaryOperation>;
 
-/// \brief UnaryOperation is is the parent class of all class which represent the operation of instruction with two
+/// \brief BinaryOperation is is the parent class of all class which represent the operation of instruction with two
 /// operand.
 class BinaryOperation : public Operation {
  public:
@@ -197,99 +220,50 @@ class BinaryOperation : public Operation {
    *
    * \return The instance of binary operation node.
    */
-  BinaryOperation(OpCode op, const NodePtr &left, const NodePtr &right) : Operation(op), left_(left), right_(right) {}
+  BinaryOperation(OpCode op, const NodePtr &left, const NodePtr &right) : Operation(op, {left, right}) {}
 
   /// \brief Destructor.
   ~BinaryOperation() override = default;
   JIT_DECLARE_PARENT(BinaryOperation, Operation);
 
   /**
-   * \brief Set the id of this node.
+   * \brief Get the operand of this binary operation.
    *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
+   * \return the operand of this binary operation.
    */
-  void SetNodeId(size_t *id) override {
-    left_->SetNodeId(id);
-    right_->SetNodeId(id);
-    Node::SetNodeId(id);
-  }
-
-  /**
-   * \brief Set the offset of this node.
-   *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
-   */
-  void SetOffset(size_t *offset) override {
-    left_->SetOffset(offset);
-    right_->SetOffset(offset);
-    Node::SetOffset(offset);
-  }
-
-  /**
-   * \brief Get the count of args.
-   *
-   * \return the count of args.
-   */
-  size_t GetArgsCnt() const override { return 2; }
-
-  /**
-   * \brief Get the specified positional operand of this operation.
-   *
-   * \return the the specified positional operand
-   */
-  const NodePtr &GetArg(size_t index = 0) const override {
-    if (index == 0) {
-      return left_;
-    }
-    return right_;
-  }
-
-  /**
-   * \brief Get the operand of this unary operation.
-   *
-   * \return the operand of this unary operation.
-   */
-  const NodePtr &GetLeftArg() const { return left_; }
+  const NodePtr &GetLeftArg() const { return GetArg(0); }
 
   /**
    * \brief Set the first operand of this binary operation.
    */
-  void SetLeftArg(const NodePtr &arg) { left_ = arg; }
+  void SetLeftArg(const NodePtr &arg) { SetArg(0, arg); }
 
   /**
-   * \brief Get the operand of this unary operation.
+   * \brief Get the operand of this binary operation.
    *
-   * \return the operand of this unary operation.
+   * \return the operand of this binary operation.
    */
-  const NodePtr &GetRightArg() const { return right_; }
+  const NodePtr &GetRightArg() const { return GetArg(1); }
 
   /**
    * \brief Set the second operand of this binary operation.
    */
-  void SetRightArg(const NodePtr &arg) { right_ = arg; }
+  void SetRightArg(const NodePtr &arg) { SetArg(1, arg); }
 
   /**
    * \brief Get the description of this binary operation.
    * \return The description.
    */
   std::string ToString() const override {
-    return left_->ToString() + "\n" + right_->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() +
-           "(" + GetOpName(GetOpCode()) + ", %" + std::to_string(left_->GetNodeId()) + ", %" +
-           std::to_string(right_->GetNodeId()) + ")\n";
+    return GetArg(0)->ToString() + "\n" + GetArg(1)->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " +
+           GetNodeName() + "[" + GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", %" +
+           std::to_string(GetArg(0)->GetNodeId()) + ", %" + std::to_string(GetArg(1)->GetNodeId()) + ")\n";
   }
-
- private:
-  /// \brief The operand of this binary operation.
-  NodePtr left_;
-  /// \brief The operand of this binary operation.
-  NodePtr right_;
 };
 
 using BinaryOperationPtr = std::shared_ptr<BinaryOperation>;
 
-/// \brief UnaryOperation is is the parent class of all class which represent the operation of instruction with
+/// \brief NaryOperation is is the parent class of all class which represent the operation of instruction with
 /// indeterminate number of operands.
 class NaryOperation : public Operation {
  public:
@@ -310,75 +284,11 @@ class NaryOperation : public Operation {
    *
    * \return The instance of nary operation node.
    */
-  NaryOperation(OpCode op, const NodePtrList &args) : Operation(op), args_(args) {}
+  NaryOperation(OpCode op, const NodePtrList &args) : Operation(op, args) {}
 
   /// \brief Destructor.
   ~NaryOperation() override = default;
   JIT_DECLARE_PARENT(NaryOperation, Operation);
-
-  /**
-   * \brief Set the id of this node.
-   *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
-   */
-  void SetNodeId(size_t *id) override {
-    for (const auto &arg : args_) {
-      arg->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
-
-  /**
-   * \brief Set the offset of this node.
-   *
-   * \note This method should not be actively called by the program writer, it should only be called by the method
-   * Sort()
-   */
-  void SetOffset(size_t *offset) override {
-    for (const auto &arg : args_) {
-      arg->SetOffset(offset);
-    }
-    Node::SetOffset(offset);
-  }
-
-  /**
-   * \brief Get the count of args.
-   *
-   * \return the count of args.
-   */
-  size_t GetArgsCnt() const override { return args_.size(); }
-
-  /**
-   * \brief Get the specified positional operand of this nary operation.
-   *
-   * \return the specified positional operand
-   */
-  const NodePtr &GetArg(size_t index) const override { return args_[index]; }
-
-  /**
-   * \brief Get the operands of this nary operation.
-   *
-   * \return the operands of this nary operation.
-   */
-  const NodePtrList &GetArgs() const { return args_; }
-
-  /**
-   * \brief Get the operands of this nary operation.
-   *
-   * \return the operands of this nary operation.
-   */
-  NodePtrList &GetArgs() { return args_; }
-
-  /**
-   * \brief Set the specified positional operand of this nary operation.
-   */
-  void SetArg(size_t index, const NodePtr &arg) { args_[index] = arg; }
-
-  /**
-   * \brief Set the operands of this nary operation.
-   */
-  void SetArgs(const NodePtrList &args) { args_ = args; }
 
   /**
    * \brief Get the description of this nary operation.
@@ -386,20 +296,17 @@ class NaryOperation : public Operation {
    */
   std::string ToString() const override {
     std::string str;
-    for (const auto &arg : args_) {
+    for (const auto &arg : GetArgs()) {
       str += arg->ToString() + "\n";
     }
-    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "(" + GetOpName(GetOpCode());
-    for (const auto &arg : args_) {
+    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" + GetType()->GetName() + "](" +
+           GetOpName(GetOpCode());
+    for (const auto &arg : GetArgs()) {
       str += ", %" + std::to_string(arg->GetNodeId());
     }
     str += ")\n";
     return str;
   }
-
- private:
-  /// \brief The operands of this nary operation.
-  NodePtrList args_;
 };
 
 using NaryOperationPtr = std::shared_ptr<NaryOperation>;

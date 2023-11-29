@@ -60,6 +60,7 @@ class IRMutator {
   virtual NodePtr Mutate_(const NotNodePtr &node);
   virtual NodePtr Mutate_(const InvertNodePtr &node);
   virtual NodePtr Mutate_(const ReturnNodePtr &node);
+  virtual NodePtr Mutate_(const LoadValueNodePtr &node);
   virtual NodePtr Mutate_(const CastNodePtr &node);
   virtual NodePtr Mutate_(const FormatNodePtr &node);
   virtual NodePtr Mutate_(const AddNodePtr &node);
@@ -71,7 +72,7 @@ class IRMutator {
   virtual NodePtr Mutate_(const ContainsNodePtr &node);
   virtual NodePtr Mutate_(const StoreNodePtr &node);
   virtual NodePtr Mutate_(const CompareNodePtr &node);
-  virtual NodePtr Mutate_(const LoadNodePtr &node);
+  virtual NodePtr Mutate_(const LoadFieldNodePtr &node);
   virtual NodePtr Mutate_(const BuildNodePtr &node);
   virtual NodePtr Mutate_(const CallNodePtr &node);
   virtual NodePtr Mutate_(const NaryWithFlagNodePtr &node);

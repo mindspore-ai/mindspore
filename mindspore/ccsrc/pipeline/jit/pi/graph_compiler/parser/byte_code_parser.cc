@@ -107,7 +107,7 @@ void ByteCodeParser::BuildLoadStoreMethodMap() {
   // op : 74, opname : LOAD_ASSERTION_ERROR
   instr_method_map_[LOAD_ASSERTION_ERROR] = &ByteCodeParser::ParseLoadAssertError;
   // op : 84, opname : IMPORT_STAR
-  instr_method_map_[IMPORT_STAR] = &ByteCodeParser::ParseUnaryOpertion;
+  instr_method_map_[IMPORT_STAR] = &ByteCodeParser::ParseImport;
   // op : 90, opname : STORE_NAME
   instr_method_map_[STORE_NAME] = &ByteCodeParser::ParseStoreName;
   // op : 95, opname : STORE_ATTR
@@ -121,9 +121,9 @@ void ByteCodeParser::BuildLoadStoreMethodMap() {
   // op : 106, opname : LOAD_ATTR
   instr_method_map_[LOAD_ATTR] = &ByteCodeParser::ParseLoadAttr;
   // op : 108, opname : IMPORT_NAME
-  instr_method_map_[IMPORT_NAME] = &ByteCodeParser::ParseLoadAttr;
+  instr_method_map_[IMPORT_NAME] = &ByteCodeParser::ParseImport;
   // op : 109, opname : IMPORT_FROM
-  instr_method_map_[IMPORT_FROM] = &ByteCodeParser::ParseLoadAttr;
+  instr_method_map_[IMPORT_FROM] = &ByteCodeParser::ParseImport;
   // op : 116, opname : LOAD_GLOBAL
   instr_method_map_[LOAD_GLOBAL] = &ByteCodeParser::ParseLoadGlobal;
   // op : 124, opname : LOAD_FAST
@@ -714,7 +714,7 @@ void ByteCodeParser::ParseReturnValue(const InstrPtr &instr) {
 void ByteCodeParser::ParseLoadConst(const InstrPtr &instr) {
   py::object opnd = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_consts, instr->GetArg()));
   ir::ValuePtr arg = std::make_shared<ir::Value>(opnd, py::str(opnd), ir::kScopeConst);
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), arg);
+  ir::NodePtr node = std::make_shared<ir::LoadValueNode>(instr->GetOpCode(), arg);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -722,7 +722,7 @@ void ByteCodeParser::ParseLoadConst(const InstrPtr &instr) {
 void ByteCodeParser::ParseLoadName(const InstrPtr &instr) {
   py::object name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_names, instr->GetArg()));
   ir::ValuePtr arg = std::make_shared<ir::Value>(name, name.cast<std::string>(), ir::kScopeName);
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), arg);
+  ir::NodePtr node = std::make_shared<ir::LoadValueNode>(instr->GetOpCode(), arg);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -783,12 +783,22 @@ void ByteCodeParser::ParseBuild(const InstrPtr &instr) {
 void ByteCodeParser::ParseLoadAttr(const InstrPtr &instr) {
   auto attr_name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_names, instr->GetArg()));
   ir::ValuePtr attr = std::make_shared<ir::Value>(attr_name, attr_name.cast<std::string>(), ir::kScopeName);
-  auto top = PopStack();
-  ir::NodePtrList opnds = {top, attr};
+  ir::NodePtr node = std::make_shared<ir::LoadFieldNode>(instr->GetOpCode(), PopStack(), attr);
+  node->SetDebugInfo(GetNodeDebugInfo(instr));
+  PushStack(node);
+}
+
+void ByteCodeParser::ParseImport(const InstrPtr &instr) {
+  ir::NodePtrList opnds = {PopStack()};
   if (instr->GetOpCode() == IMPORT_NAME) {
-    opnds.push_back(PopStack());
+    opnds.insert(opnds.begin(), PopStack());
   }
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnds);
+  if (instr->GetOpCode() != IMPORT_STAR) {
+    auto attr_name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_names, instr->GetArg()));
+    ir::ValuePtr attr = std::make_shared<ir::Value>(attr_name, attr_name.cast<std::string>(), ir::kScopeName);
+    opnds.push_back(attr);
+  }
+  ir::NodePtr node = std::make_shared<ir::NaryOperation>(instr->GetOpCode(), opnds);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -799,7 +809,7 @@ void ByteCodeParser::ParseLoadGlobal(const InstrPtr &instr) {
   py::object global = is_global ? globals_[name] : builtins_[name];
   ir::Scope scope = is_global ? ir::kScopeGlobal : ir::kScopeBuiltIn;
   ir::ValuePtr value = std::make_shared<ir::Value>(global, name.cast<std::string>(), scope);
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), value);
+  ir::NodePtr node = std::make_shared<ir::LoadValueNode>(instr->GetOpCode(), value);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -823,7 +833,7 @@ void ByteCodeParser::ParseContainsOp(const InstrPtr &instr) {
 void ByteCodeParser::ParseLoadFast(const InstrPtr &instr) {
   auto name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_varnames, instr->GetArg()));
   ir::ValuePtr value = std::make_shared<ir::Value>(name, name.cast<std::string>(), ir::kScopeLocal);
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), value);
+  ir::NodePtr node = std::make_shared<ir::LoadValueNode>(instr->GetOpCode(), value);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -839,7 +849,7 @@ void ByteCodeParser::ParseStoreName(const InstrPtr &instr) {
   auto scope = (op_code == STORE_FAST)
                  ? ir::kScopeLocal
                  : (op_code == STORE_DEREF) ? (is_free_var ? ir::kScopeFreeVar : ir::kScopeCellVar) : ir::kScopeName;
-  ir::ValuePtr value = std::make_shared<ir::Value>(name, scope);
+  ir::ValuePtr value = std::make_shared<ir::Value>(name, name.cast<std::string>(), scope);
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::StoreNode>(op_code, top, value);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
@@ -908,7 +918,7 @@ void ByteCodeParser::ParseLoadClosure(const InstrPtr &instr) {
     auto name = py::cast<std::string>(PyTuple_GET_ITEM(code_.co_freevars, index));
     opnd = std::make_shared<ir::Value>(clousre_[index], name, ir::kScopeClousre);
   }
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnd);
+  ir::NodePtr node = std::make_shared<ir::LoadValueNode>(instr->GetOpCode(), opnd);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }
@@ -947,9 +957,7 @@ void ByteCodeParser::ParseFormatValue(const InstrPtr &instr) {
 void ByteCodeParser::ParseLoadMethod(const InstrPtr &instr) {
   auto name = py::cast<py::object>(PyTuple_GET_ITEM(code_.co_names, instr->GetArg()));
   ir::ValuePtr method = std::make_shared<ir::Value>(name, name.cast<std::string>(), ir::kScopeName);
-  auto top = PopStack();
-  ir::NodePtrList opnds = {top, method};
-  ir::NodePtr node = std::make_shared<ir::LoadNode>(instr->GetOpCode(), opnds);
+  ir::NodePtr node = std::make_shared<ir::LoadFieldNode>(instr->GetOpCode(), PopStack(), method);
   node->SetDebugInfo(GetNodeDebugInfo(instr));
   PushStack(node);
 }

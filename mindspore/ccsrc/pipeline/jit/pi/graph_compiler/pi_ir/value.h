@@ -117,7 +117,7 @@ class Value : public Node {
    * \return The description.
    */
   std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = Value(Name : " + name_ +
+    return "%" + std::to_string(GetNodeId()) + " = Value[" + GetType()->GetName() + "](Name : " + name_ +
            " Value : " + py::str(value_).cast<std::string>() + ")";
   }
 

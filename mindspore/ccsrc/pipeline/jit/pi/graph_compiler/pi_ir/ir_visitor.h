@@ -57,6 +57,7 @@ class IRVisitor {
   virtual void Visit_(const NegativeNodePtr &node);
   virtual void Visit_(const NotNodePtr &node);
   virtual void Visit_(const ReturnNodePtr &node);
+  virtual void Visit_(const LoadValueNodePtr &node);
   virtual void Visit_(const UnaryOperationPtr &node);
   virtual void Visit_(const AddNodePtr &node);
   virtual void Visit_(const SubNodePtr &node);
@@ -70,7 +71,7 @@ class IRVisitor {
   virtual void Visit_(const StoreNodePtr &node);
   virtual void Visit_(const UpdateNodePtr &node);
   virtual void Visit_(const BinaryOperationPtr &node);
-  virtual void Visit_(const LoadNodePtr &node);
+  virtual void Visit_(const LoadFieldNodePtr &node);
   virtual void Visit_(const BuildNodePtr &node);
   virtual void Visit_(const CallNodePtr &node);
   virtual void Visit_(const NaryWithFlagNodePtr &node);

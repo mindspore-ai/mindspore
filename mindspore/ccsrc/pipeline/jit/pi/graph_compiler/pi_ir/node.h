@@ -43,7 +43,7 @@ class Node : public std::enable_shared_from_this<Node> {
    * \return The instance of Node.
    */
   Node()
-      : type_(kTypeUnknown),
+      : type_(std::make_shared<Type>()),
         node_id_(0),
         offset_(std::numeric_limits<size_t>::max()),
         debug_info_(std::make_shared<DebugInfo>("")) {}
@@ -59,12 +59,12 @@ class Node : public std::enable_shared_from_this<Node> {
    *
    * \return The type of this node.
    */
-  Type GetType() const { return type_; }
+  const TypePtr &GetType() const { return type_; }
 
   /**
    * \brief Set type of this node.
    */
-  void SetType(const Type type) { type_ = type; }
+  void SetType(const TypePtr type) { type_ = type; }
 
   /**
    * \brief Get the id of this node.
@@ -221,7 +221,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
  private:
   /// \brief The type of this node.
-  Type type_;
+  TypePtr type_;
   /// \brief The id of this node, used to describe node when dump.
   size_t node_id_;
   /// \brief The offset of this node, only makes sense when the node is an operation.

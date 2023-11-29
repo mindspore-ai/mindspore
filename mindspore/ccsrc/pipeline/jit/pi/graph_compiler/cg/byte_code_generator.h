@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
 
@@ -62,7 +63,8 @@ class ByteCodeGenerator : public ir::IRVisitor {
   void Visit_(const ir::JumpNodePtr &node) override;
   void Visit_(const ir::CompareNodePtr &node) override;
   void Visit_(const ir::UpdateNodePtr &node) override;
-  void Visit_(const ir::LoadNodePtr &node) override;
+  void Visit_(const ir::LoadValueNodePtr &node) override;
+  void Visit_(const ir::LoadFieldNodePtr &node) override;
   void Visit_(const ir::BuildNodePtr &node) override;
   void Visit_(const ir::CallNodePtr &node) override;
   void Visit_(const ir::NaryWithFlagNodePtr &node) override;
@@ -120,12 +122,15 @@ class ByteCodeGenerator : public ir::IRVisitor {
     {ir::kScopeName, &co_names_map_},        {ir::kScopeFreeVar, &co_free_vars_map_},
     {ir::kScopeCellVar, &co_cell_vars_map_}, {ir::kScopeClousre, &co_free_vars_map_},
     {ir::kScopeBuiltIn, &co_names_map_},     {ir::kScopeGlobal, &co_names_map_}};
-  const std::map<ir::Scope, py::list> scope_name_list_ = {
-    {ir::kScopeClousre, co_free_vars_}, {ir::kScopeBuiltIn, co_names_}, {ir::kScopeGlobal, co_names_}};
-  const std::map<ir::Scope, py::list> scope_value_list_ = {
-    {ir::kScopeConst, co_consts_},      {ir::kScopeLocal, co_var_names_},   {ir::kScopeName, co_names_},
-    {ir::kScopeFreeVar, co_free_vars_}, {ir::kScopeCellVar, co_cell_vars_}, {ir::kScopeClousre, clousre_},
-    {ir::kScopeBuiltIn, builtins_},     {ir::kScopeGlobal, globals_}};
+  const std::map<ir::Scope, std::pair<py::list, py::object>> scope_value_list_ = {
+    {ir::kScopeConst, {co_consts_, co_consts_}},
+    {ir::kScopeLocal, {co_var_names_, co_var_names_}},
+    {ir::kScopeName, {co_names_, co_names_}},
+    {ir::kScopeFreeVar, {co_free_vars_, co_free_vars_}},
+    {ir::kScopeCellVar, {co_cell_vars_, co_cell_vars_}},
+    {ir::kScopeClousre, {co_free_vars_, clousre_}},
+    {ir::kScopeBuiltIn, {co_names_, builtins_}},
+    {ir::kScopeGlobal, {co_names_, globals_}}};
   int cell_var_cnt_{0};
 };
 

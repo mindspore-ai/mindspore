@@ -228,6 +228,24 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
     });
   resource->SetResult(kOutput, run);
 }
+
+FuncGraphPtr ConstructGraphForEval(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  if (func->isa<FuncGraph>()) {
+    return func->cast<FuncGraphPtr>();
+  }
+  auto func_abs = func->ToAbstract();
+  if (!func_abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";
+  }
+  // construct a function graph.
+  auto infer_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
+  std::transform(args_abs.begin(), args_abs.end(), std::back_inserter(inputs),
+                 [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
+  auto infer_node = infer_graph->NewCNode(inputs);
+  infer_graph->set_return(infer_node);
+  return infer_graph;
+}
 }  // namespace
 using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;

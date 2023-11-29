@@ -123,11 +123,13 @@ AnfNodePtr GraphUtils::GetPrimOrMetaFuncGraph(int op_code) {
 
 PrimitivePtr GraphUtils::GetPrimitive(int op_code) {
   static std::map<int, PrimitivePtr> op_code_2_prim = {
-    {UNARY_INVERT, prim::kPrimInvert},          {RETURN_VALUE, prim::kPrimReturn},
-    {LIST_TO_TUPLE, prim::kPrimMakeTuple},      {BUILD_TUPLE, prim::kPrimMakeTuple},
-    {BUILD_LIST, prim::kPrimMakeList},          {BUILD_SET, prim::kPrimMakeList},
-    {BUILD_MAP, prim::kPrimMakeDict},           {BUILD_SLICE, prim::kPrimMakeSlice},
-    {BUILD_CONST_KEY_MAP, prim::kPrimMakeDict}, {BUILD_STRING, prim::kPrimStringConcat}};
+    {UNARY_INVERT, prim::kPrimInvert},       {RETURN_VALUE, prim::kPrimReturn},
+    {LIST_TO_TUPLE, prim::kPrimMakeTuple},   {LIST_APPEND, prim::kPrimListAppend},
+    {BUILD_TUPLE, prim::kPrimMakeTuple},     {BUILD_LIST, prim::kPrimMakeList},
+    {BUILD_SET, prim::kPrimMakeList},        {BUILD_MAP, prim::kPrimMakeDict},
+    {BUILD_SLICE, prim::kPrimMakeSlice},     {BUILD_CONST_KEY_MAP, prim::kPrimMakeDict},
+    {BUILD_STRING, prim::kPrimStringConcat}, {LOAD_ATTR, prim::kPrimGetAttr},
+    {LOAD_METHOD, prim::kPrimGetAttr}};
 
   if (op_code_2_prim.find(op_code) == op_code_2_prim.end()) {
     return nullptr;
@@ -163,10 +165,15 @@ AnfNodePtr GraphUtils::GetMetaFuncGraph(int op_code) {
                                                             {INPLACE_RSHIFT, "right_shift"},
                                                             {INPLACE_AND, "bitwise_and"},
                                                             {INPLACE_XOR, "bitwise_xor"},
-                                                            {INPLACE_OR, "bitwise_or"}};
-  MS_EXCEPTION_IF_CHECK_FAIL(op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end(),
-                             "Not find the mutitype ops of OpCode " + std::to_string(op_code) + ".");
-  return GetMetaFuncGraph(op_code_2_graph_name.at(op_code));
+                                                            {INPLACE_OR, "bitwise_or"},
+                                                            {DICT_MERGE, "add"},
+                                                            {LIST_EXTEND, "add"}};
+  // MS_EXCEPTION_IF_CHECK_FAIL(op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end(),
+  //                            "Not find the mutitype ops of OpCode " + std::to_string(op_code) + ".");
+  if (op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end()) {
+    return GetMetaFuncGraph(op_code_2_graph_name.at(op_code));
+  }
+  return nullptr;
 }
 
 AnfNodePtr GraphUtils::GetMetaFuncGraph(const std::string &name) {
@@ -180,8 +187,7 @@ AnfNodePtr GraphUtils::ConvertPythonObjectToAnfNode(const py::object &object) {
   if (!succ) {
     MS_LOG(EXCEPTION) << "Convert " << (std::string)py::str(object) << " To AnfNode Fail.";
   }
-  auto node = NewValueNode(value);
-  return node;
+  return NewValueNode(value);
 }
 
 }  // namespace graph

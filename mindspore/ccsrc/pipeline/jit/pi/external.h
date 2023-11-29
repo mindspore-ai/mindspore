@@ -24,8 +24,6 @@ namespace mindspore {
 py::bool_ pi_jit_enable();
 py::bool_ pi_jit_disable();
 py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag);
-// bellowing code is used for debugging code generate, and will be remove soon
-py::object test_graph_ir_code_gen(const py::object &func);
 void update_pijit_default_config(const py::kwargs &conf);
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)

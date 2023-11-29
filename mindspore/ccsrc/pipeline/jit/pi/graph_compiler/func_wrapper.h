@@ -38,7 +38,7 @@ class InputsCollector final : public ir::IRVisitor {
   explicit InputsCollector(const ir::NodePtrList &nodes) : nodes_(nodes) {}
   virtual ~InputsCollector() = default;
   const ValuePtrList &GetInputs();
-  void Visit_(const ir::LoadNodePtr &node) override;
+  void Visit_(const ir::LoadValueNodePtr &node) override;
   void Visit_(const ir::StoreNodePtr &node) override;
 
  private:

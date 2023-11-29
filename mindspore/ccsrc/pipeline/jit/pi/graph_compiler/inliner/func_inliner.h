@@ -75,7 +75,7 @@ class FuncParameterEliminator : public ir::IRMutator {
   void Run();
 
   ir::NodePtr Mutate_(const ir::ParameterPtr &node) override;
-  ir::NodePtr Mutate_(const ir::LoadNodePtr &node) override;
+  ir::NodePtr Mutate_(const ir::LoadValueNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::StoreNodePtr &node) override;
 
  private:

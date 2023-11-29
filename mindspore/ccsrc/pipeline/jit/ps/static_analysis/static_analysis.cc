@@ -1683,7 +1683,8 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
 EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
   auto evaluator = GetPrimEvaluator(primitive, nullptr);
   if (evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+    MS_LOG(ERROR) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+    return nullptr;
   }
   auto trivial_evaluator = dyn_cast_ptr<TrivialPrimEvaluator>(evaluator);
   if (trivial_evaluator != nullptr) {
@@ -1695,8 +1696,9 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
       (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
     return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
   }
-  MS_LOG(EXCEPTION) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
-                    << evaluator->ToString();
+  MS_LOG(ERROR) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
+                << evaluator->ToString();
+  return nullptr;
 }
 }  // namespace abstract
 }  // namespace mindspore

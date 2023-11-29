@@ -57,6 +57,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"perf_statistics", &GraphJitConfig::SetBool<GraphJitConfig::kPerfStatistics>},
   {"LOG_GRAPH_BREAK", &GraphJitConfig::SetBool<GraphJitConfig::kLogGraphBreak>},
   {"LOG_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogPerf>},
+  {"test_graph_ir", &GraphJitConfig::SetBool<GraphJitConfig::kTestGraphIR>},
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
   {"MAX_INLINE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxInlineDepth>},
@@ -102,6 +103,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPerfStatistics - kBoolConf] = false;
   bool_conf[kLogGraphBreak - kBoolConf] = false;
   bool_conf[kLogPerf - kBoolConf] = false;
+  bool_conf[kTestGraphIR - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the
    *__getattr__, __getitem__ function of the user-defined object do not affect the correctness.
