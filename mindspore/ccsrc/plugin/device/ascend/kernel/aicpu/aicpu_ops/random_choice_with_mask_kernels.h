@@ -23,18 +23,14 @@
 namespace aicpu {
 class RandomChoiceWithMaskKernel : public KernelBase {
  public:
-  RandomChoiceWithMaskKernel() : KernelBase("RandomChoiceWithMask"), count_(0), seed_(0), seed2_(0) {}
+  RandomChoiceWithMaskKernel() : KernelBase("RandomChoiceWithMask"), count_target_(0) {}
   ~RandomChoiceWithMaskKernel() = default;
 
  protected:
-  int64_t count_;
-  uint64_t seed_;
-  uint64_t seed2_;
-  std::mt19937 rng_;
+  int64_t count_target_;
   std::vector<int64_t> dims_;
   uint32_t DoCompute() override;
   uint32_t ParseKernelParam() override;
-  void UpdateOutputShapeValue(int64_t non_zero_num, int64_t output_length);
 };
 }  // namespace aicpu
 #endif  // AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
