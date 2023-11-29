@@ -324,7 +324,7 @@ IMPLEMT_INFERFUNC(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape) {
   argShapeVec.push_back(inputShape[0]);
   argShapeVec.push_back(dOut);
   argShapeVec.push_back(inputShape[2] * kernelList[2] * kernelList[3] * kernelList[4]);
-  argShapeVec.push_back((int64_t)(alignedBmLine / 16));
+  argShapeVec.push_back(static_cast<int64_t>(alignedBmLine / 16));
   argShapeVec.push_back(inputShape[5]);
   Shape argmaxShape(argShapeVec);
   argmaxDesc.SetShape(argmaxShape);
@@ -582,7 +582,7 @@ IMPLEMT_INFERFUNC(NthElement, NthElementInfer) {
     }
   }
 
-  int64_t existing = x_shape.GetDimNum();
+  int64_t existing = static_cast<int64_t>(x_shape.GetDimNum());
   int64_t last_input_dim = x_shape.GetDim(existing - 1);
   if ((last_input_dim != ge::UNKNOWN_DIM) && (n_dim != ge::UNKNOWN_DIM) && (last_input_dim <= n_dim)) {
     std::string err_msg =

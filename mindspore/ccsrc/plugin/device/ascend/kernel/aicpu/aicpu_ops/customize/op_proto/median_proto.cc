@@ -40,7 +40,7 @@ bool InferShapeAndTypeMedian(Operator &op, const string &input_name, const strin
     if (ge::GRAPH_SUCCESS != op.GetAttr(attr2_name.c_str(), attr_dim)) attr_dim = 0;
     if (ge::GRAPH_SUCCESS != op.GetAttr(attr3_name.c_str(), attr_keepdim)) attr_keepdim = false;
     if (attr_dim < 0) {
-      attr_dim += dim_x.size();
+      attr_dim += static_cast<int64_t>(dim_x.size());
     }
     for (size_t i = 0; i < dim_x.size(); i++) {
       if (i != static_cast<size_t>(attr_dim)) {

@@ -180,7 +180,8 @@ CUST_IMPLEMT_INFERFUNC(Sspaddmm, SspaddmmInfer) {
     mat1_unique_row_set.insert(mat1_indices_value[i]);
   }
 
-  int64_t y_indices_right = mat1_unique_row_set.size() * mat2_right_shape + input_indices_tensor.GetShape().GetDim(1);
+  int64_t y_indices_right = static_cast<int64_t>(mat1_unique_row_set.size() * static_cast<size_t>(mat2_right_shape) +
+                                                 input_indices_tensor.GetShape().GetDim(1));
 
   // output shape and indices to be set as zero, we will memecpy it at
   // calculating
