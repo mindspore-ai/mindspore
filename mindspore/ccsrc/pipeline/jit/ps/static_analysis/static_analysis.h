@@ -377,6 +377,8 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
 // the value 1234 would become ANYTHING.
 AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden = false);
 
+EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
+
 template <typename T>
 AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);

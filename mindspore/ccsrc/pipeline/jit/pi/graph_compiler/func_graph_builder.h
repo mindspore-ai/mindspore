@@ -94,7 +94,8 @@ class FuncGraphBuilder : public ir::IRMutator {
   ir::NodePtr Mutate_(const ir::ContainsNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::StoreNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::CompareNodePtr &node) override;
-  ir::NodePtr Mutate_(const ir::LoadNodePtr &node) override;
+  ir::NodePtr Mutate_(const ir::LoadValueNodePtr &node) override;
+  ir::NodePtr Mutate_(const ir::LoadFieldNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::BuildNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::CallNodePtr &node) override;
   ir::NodePtr Mutate_(const ir::UpdateNodePtr &node) override;

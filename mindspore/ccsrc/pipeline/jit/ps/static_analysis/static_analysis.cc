@@ -1606,5 +1606,26 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
   }
   return a;
 }
+
+EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
+  auto evaluator = GetPrimEvaluator(primitive, nullptr);
+  if (evaluator == nullptr) {
+    MS_LOG(ERROR) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+    return nullptr;
+  }
+  auto trivial_evaluator = dyn_cast_ptr<TrivialPrimEvaluator>(evaluator);
+  if (trivial_evaluator != nullptr) {
+    return trivial_evaluator->EvalPrim(nullptr, arg_specs);
+  }
+  // Support MakeTuple/MakeList ops in PyNative mode.
+  auto transition_evaluator = dyn_cast_ptr<TransitionPrimEvaluator>(evaluator);
+  if (transition_evaluator != nullptr &&
+      (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
+    return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
+  }
+  MS_LOG(ERROR) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
+                << evaluator->ToString();
+  return nullptr;
+}
 }  // namespace abstract
 }  // namespace mindspore

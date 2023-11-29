@@ -24,57 +24,45 @@ IRMutator::FMutate &IRMutator::vtable() {  // NOLINT(*)
   return inst;
 }
 
-#define DEFINE_LEAF_NODE_MUTATE_(OP) \
+#define DEFINE_LEAF_NODE_MUTATE_FUNC_(OP) \
   NodePtr IRMutator::Mutate_(const OP &node) { return node; }
 
-DEFINE_LEAF_NODE_MUTATE_(RefNodePtr)
-DEFINE_LEAF_NODE_MUTATE_(ValuePtr)
-DEFINE_LEAF_NODE_MUTATE_(ParameterPtr)
+DEFINE_LEAF_NODE_MUTATE_FUNC_(RefNodePtr)
+DEFINE_LEAF_NODE_MUTATE_FUNC_(ValuePtr)
+DEFINE_LEAF_NODE_MUTATE_FUNC_(ParameterPtr)
 
-#define DEFINE_UN_NODE_MUTATE_(OP)             \
-  NodePtr IRMutator::Mutate_(const OP &node) { \
-    node->SetArg(Mutate(node->GetArg()));      \
-    return node;                               \
-  }
-
-DEFINE_UN_NODE_MUTATE_(CastNodePtr)
-DEFINE_UN_NODE_MUTATE_(InvertNodePtr)
-DEFINE_UN_NODE_MUTATE_(NegativeNodePtr)
-DEFINE_UN_NODE_MUTATE_(NotNodePtr)
-DEFINE_UN_NODE_MUTATE_(ReturnNodePtr)
-DEFINE_UN_NODE_MUTATE_(UnaryOperationPtr)
-
-#define DEFINE_BIN_NODE_MUTATE_(OP)                 \
-  NodePtr IRMutator::Mutate_(const OP &node) {      \
-    node->SetLeftArg(Mutate(node->GetLeftArg()));   \
-    node->SetRightArg(Mutate(node->GetRightArg())); \
-    return node;                                    \
-  }
-
-DEFINE_BIN_NODE_MUTATE_(AddNodePtr)
-DEFINE_BIN_NODE_MUTATE_(SubNodePtr)
-DEFINE_BIN_NODE_MUTATE_(MulNodePtr)
-DEFINE_BIN_NODE_MUTATE_(DivNodePtr)
-DEFINE_BIN_NODE_MUTATE_(BitwiseNodePtr)
-DEFINE_BIN_NODE_MUTATE_(CompareNodePtr)
-DEFINE_BIN_NODE_MUTATE_(ContainsNodePtr)
-DEFINE_BIN_NODE_MUTATE_(IsNodePtr)
-DEFINE_BIN_NODE_MUTATE_(StoreNodePtr)
-DEFINE_BIN_NODE_MUTATE_(UpdateNodePtr)
-DEFINE_BIN_NODE_MUTATE_(BinaryOperationPtr)
-
-#define DEFINE_N_NODE_MUTATE_(OP)              \
+#define DEFINE_OP_NODE_MUTATE_(OP)             \
   NodePtr IRMutator::Mutate_(const OP &node) { \
     MUTATE_NODE_LIST(node->GetArgs())          \
     return node;                               \
   }
 
-DEFINE_N_NODE_MUTATE_(LoadNodePtr)
-DEFINE_N_NODE_MUTATE_(BuildNodePtr)
-DEFINE_N_NODE_MUTATE_(CallNodePtr)
-DEFINE_N_NODE_MUTATE_(FormatNodePtr)
-DEFINE_N_NODE_MUTATE_(NaryOperationPtr)
-DEFINE_N_NODE_MUTATE_(NaryWithFlagNodePtr)
+DEFINE_OP_NODE_MUTATE_(CastNodePtr)
+DEFINE_OP_NODE_MUTATE_(InvertNodePtr)
+DEFINE_OP_NODE_MUTATE_(NegativeNodePtr)
+DEFINE_OP_NODE_MUTATE_(NotNodePtr)
+DEFINE_OP_NODE_MUTATE_(ReturnNodePtr)
+DEFINE_OP_NODE_MUTATE_(LoadValueNodePtr)
+DEFINE_OP_NODE_MUTATE_(UnaryOperationPtr)
+
+DEFINE_OP_NODE_MUTATE_(AddNodePtr)
+DEFINE_OP_NODE_MUTATE_(SubNodePtr)
+DEFINE_OP_NODE_MUTATE_(MulNodePtr)
+DEFINE_OP_NODE_MUTATE_(DivNodePtr)
+DEFINE_OP_NODE_MUTATE_(BitwiseNodePtr)
+DEFINE_OP_NODE_MUTATE_(CompareNodePtr)
+DEFINE_OP_NODE_MUTATE_(ContainsNodePtr)
+DEFINE_OP_NODE_MUTATE_(IsNodePtr)
+DEFINE_OP_NODE_MUTATE_(StoreNodePtr)
+DEFINE_OP_NODE_MUTATE_(UpdateNodePtr)
+DEFINE_OP_NODE_MUTATE_(BinaryOperationPtr)
+
+DEFINE_OP_NODE_MUTATE_(LoadFieldNodePtr)
+DEFINE_OP_NODE_MUTATE_(BuildNodePtr)
+DEFINE_OP_NODE_MUTATE_(CallNodePtr)
+DEFINE_OP_NODE_MUTATE_(FormatNodePtr)
+DEFINE_OP_NODE_MUTATE_(NaryOperationPtr)
+DEFINE_OP_NODE_MUTATE_(NaryWithFlagNodePtr)
 
 NodePtr IRMutator::Mutate_(const FunctionNodePtr &node) {
   MUTATE_NODE_LIST(node->GetParameters())
@@ -122,6 +110,7 @@ STATIC_IR_FUNCTOR(IRMutator, vtable)
   .DISPATCH_TO_MUTATE(NegativeNode)
   .DISPATCH_TO_MUTATE(NotNode)
   .DISPATCH_TO_MUTATE(ReturnNode)
+  .DISPATCH_TO_MUTATE(LoadValueNode)
   .DISPATCH_TO_MUTATE(UnaryOperation)
   .DISPATCH_TO_MUTATE(AddNode)
   .DISPATCH_TO_MUTATE(SubNode)
@@ -134,7 +123,7 @@ STATIC_IR_FUNCTOR(IRMutator, vtable)
   .DISPATCH_TO_MUTATE(StoreNode)
   .DISPATCH_TO_MUTATE(UpdateNode)
   .DISPATCH_TO_MUTATE(BinaryOperation)
-  .DISPATCH_TO_MUTATE(LoadNode)
+  .DISPATCH_TO_MUTATE(LoadFieldNode)
   .DISPATCH_TO_MUTATE(BuildNode)
   .DISPATCH_TO_MUTATE(CallNode)
   .DISPATCH_TO_MUTATE(FormatNode)

@@ -136,7 +136,7 @@ class Parameter : public Node {
   std::string ToString() const override {
     std::string str = (value_ == nullptr ? "" : value_->ToString()) + "\n";
     str += (default_value_ == nullptr ? "" : default_value_->ToString()) + "\n";
-    str += "%" + std::to_string(GetNodeId()) + " = Parameter(Name : " + name_;
+    str += "%" + std::to_string(GetNodeId()) + " = Parameter[" + GetType()->GetName() + "](Name : " + name_;
     str += " Value : " + (value_ == nullptr ? "Null" : "%" + std::to_string(value_->GetNodeId()));
     str +=
       " Default Value : " + (default_value_ == nullptr ? "Null" : "%" + std::to_string(default_value_->GetNodeId())) +
@@ -171,17 +171,19 @@ class FunctionNode : public Node {
    *
    * \return The instance of function node.
    */
-  explicit FunctionNode(const std::string &name) : name_(name) {}
+  explicit FunctionNode(const std::string &name) : FunctionNode(name, {}) {}
 
   /**
    * \brief The constructor of function node.
    *
    * \param[in] name the name of function.
-   * \param[in] name the body of function.
+   * \param[in] nodes the body of function.
+   * \param[in] use_global the global will be used in code generator.
    *
    * \return The instance of function node.
    */
-  FunctionNode(const std::string &name, const NodePtrList &nodes) : name_(name), nodes_(nodes) {}
+  FunctionNode(const std::string &name, const NodePtrList &nodes, const NodePtr &use_global = nullptr)
+      : name_(name), nodes_(nodes), use_global_(use_global) {}
 
   // \brief Destructor.
   ~FunctionNode() override = default;
@@ -223,18 +225,6 @@ class FunctionNode : public Node {
    * \return the name of function.
    */
   const std::string &GetName() const { return name_; }
-
-  /**
-   * \brief Judgment whether the function is a method.
-   *
-   * \return the result of judgment.
-   */
-  bool IsMethod() const { return is_method_; }
-
-  /**
-   * \brief Mark the function is a method.
-   */
-  void MarkMethod() { is_method_ = true; }
 
   /**
    * \brief Get the count of positional args.
@@ -414,6 +404,20 @@ class FunctionNode : public Node {
   }
 
   /**
+   * \brief Get the global will be used in code generator.
+   *
+   * \return The global will be used in code generator.
+   */
+  const NodePtr &GetUseGlobal() const { return use_global_; }
+
+  /**
+   * \brief Get the global will be used in code generator.
+   *
+   * \param[in] use_global the global will be used in code generator.
+   */
+  void SetUseGlobal(const NodePtr &use_global) { use_global_ = use_global; }
+
+  /**
    * \brief Get the file name of the function.
    *
    * \return The file name of the function.
@@ -502,6 +506,8 @@ class FunctionNode : public Node {
   NodePtrList parameters_;
   /// \brief The body of function
   NodePtrList nodes_;
+  /// \brief The global will be used in code generator
+  NodePtr use_global_;
   /// \brief The name of the file where the function resides.
   std::vector<std::string> file_names_;
   /// \brief The number of the first line.

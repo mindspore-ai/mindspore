@@ -16,22 +16,63 @@
 #ifndef MINDSPORE_JIT_GRAPH_TYPE_H_
 #define MINDSPORE_JIT_GRAPH_TYPE_H_
 
+#include <memory>
+#include <string>
+
 namespace mindspore {
 namespace jit {
 namespace graph {
 namespace ir {
-enum Type {
-  kTypeUnknown,
-  kTypeVoid,
-  kTypeNone,
-  kTypeEllipsis,
-  kTypeScalar,
-  kTypeString,
-  kTypeList,
-  kTypeTuple,
-  kTypeDict,
-  kTypeTensor
+using TypeId = int;
+
+class Type : public std::enable_shared_from_this<Type> {
+ public:
+  /// \brief The default constructor for Type.
+  Type() : Type(0, "Unknown") {}
+
+  /// \brief The constructor for Type.
+  explicit Type(const TypeId type_id, const std::string &name) : type_id_(type_id), name_(name) {}
+
+  /// \brief The copy constructor of Type.
+  ///
+  /// \param[in] other Define another instance of Type.
+  ///
+  /// \return The instance of Type.
+  explicit Type(const Type &other) : std::enable_shared_from_this<Type>(other) {}
+
+  /// \brief Destructor.
+  virtual ~Type() = default;
+
+  /// \brief The operator overloading for "==".
+  ///
+  /// \param[in] rhs Define the right operand of "==".
+  ///
+  /// \return The comparison result.
+  virtual bool operator==(const Type &rhs) { return this == &rhs || (type_id_ == rhs.type_id_ && name_ == rhs.name_); }
+
+  /// \brief Get the type id of this object.
+  ///
+  /// \return The type id.
+  TypeId GetTypeId() const { return type_id_; }
+
+  /// \brief Get the type name of this object.
+  ///
+  /// \return The type name.
+  const std::string &GetName() const { return name_; }
+
+  /// \brief Get the string representation of this object.
+  ///
+  /// \return The string representation.
+  virtual std::string ToString() const { return GetName(); }
+
+ private:
+  /// \brief The id of this Type.
+  TypeId type_id_;
+  /// \brief The name of this Type.
+  std::string name_;
 };
+
+using TypePtr = std::shared_ptr<Type>;
 }  // namespace ir
 }  // namespace graph
 }  // namespace jit

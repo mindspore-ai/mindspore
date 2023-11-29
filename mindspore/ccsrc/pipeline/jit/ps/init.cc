@@ -644,7 +644,5 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("jit_mode_pi_enable", &mindspore::pi_jit_enable, "enable jit from python byte code");
   (void)m.def("jit_mode_pi_disable", &mindspore::pi_jit_disable, "disable jit from python byte code");
   (void)m.def("jit_mode_pi_compile", &mindspore::pi_jit_should_compile, "add function to compile");
-  // belowing code is used for debugging code generate, and will be remove soon
-  (void)m.def("TestGraphIRCodeGen", &mindspore::test_graph_ir_code_gen, "add function to compile");
   (void)m.def("update_pijit_default_config", &mindspore::update_pijit_default_config, "update pijit default config");
 }

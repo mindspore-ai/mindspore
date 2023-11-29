@@ -25,54 +25,46 @@ IRVisitor::FVisit &IRVisitor::vtable() {  // NOLINT(*)
   return inst;
 }
 
-#define DEFINE_LEAF_NODE_VISIT_(OP) \
+#define DEFINE_LEAF_NODE_VISIT_FUNC_(OP) \
   void IRVisitor::Visit_(const OP &node) {}
 
-DEFINE_LEAF_NODE_VISIT_(PlaceHolderPtr)
-DEFINE_LEAF_NODE_VISIT_(RefNodePtr)
-DEFINE_LEAF_NODE_VISIT_(ValuePtr)
-DEFINE_LEAF_NODE_VISIT_(ParameterPtr)
+DEFINE_LEAF_NODE_VISIT_FUNC_(PlaceHolderPtr)
+DEFINE_LEAF_NODE_VISIT_FUNC_(RefNodePtr)
+DEFINE_LEAF_NODE_VISIT_FUNC_(ValuePtr)
+DEFINE_LEAF_NODE_VISIT_FUNC_(ParameterPtr)
 
-#define DEFINE_UN_NODE_VISIT_(OP) \
-  void IRVisitor::Visit_(const OP &node) { Visit(node->GetArg()); }
-
-DEFINE_UN_NODE_VISIT_(CastNodePtr)
-DEFINE_UN_NODE_VISIT_(DeleteNodePtr)
-DEFINE_UN_NODE_VISIT_(GetNodePtr)
-DEFINE_UN_NODE_VISIT_(InvertNodePtr)
-DEFINE_UN_NODE_VISIT_(NegativeNodePtr)
-DEFINE_UN_NODE_VISIT_(NotNodePtr)
-DEFINE_UN_NODE_VISIT_(ReturnNodePtr)
-DEFINE_UN_NODE_VISIT_(UnaryOperationPtr)
-
-#define DEFINE_BIN_NODE_VISIT_(OP)         \
-  void IRVisitor::Visit_(const OP &node) { \
-    Visit(node->GetLeftArg());             \
-    Visit(node->GetRightArg());            \
-  }
-
-DEFINE_BIN_NODE_VISIT_(AddNodePtr)
-DEFINE_BIN_NODE_VISIT_(SubNodePtr)
-DEFINE_BIN_NODE_VISIT_(MulNodePtr)
-DEFINE_BIN_NODE_VISIT_(DivNodePtr)
-DEFINE_BIN_NODE_VISIT_(BitwiseNodePtr)
-DEFINE_BIN_NODE_VISIT_(CompareNodePtr)
-DEFINE_BIN_NODE_VISIT_(ContainsNodePtr)
-DEFINE_BIN_NODE_VISIT_(IsNodePtr)
-DEFINE_BIN_NODE_VISIT_(JumpNodePtr)
-DEFINE_BIN_NODE_VISIT_(StoreNodePtr)
-DEFINE_BIN_NODE_VISIT_(UpdateNodePtr)
-DEFINE_BIN_NODE_VISIT_(BinaryOperationPtr)
-
-#define DEFINE_N_NODE_VISIT_(OP) \
+#define DEFINE_OP_NODE_VISIT_FUNC_(OP) \
   void IRVisitor::Visit_(const OP &node) { VISIT_NODE_LIST(node->GetArgs()) }
 
-DEFINE_N_NODE_VISIT_(LoadNodePtr)
-DEFINE_N_NODE_VISIT_(BuildNodePtr)
-DEFINE_N_NODE_VISIT_(CallNodePtr)
-DEFINE_N_NODE_VISIT_(NaryWithFlagNodePtr)
-DEFINE_N_NODE_VISIT_(FormatNodePtr)
-DEFINE_N_NODE_VISIT_(NaryOperationPtr)
+DEFINE_OP_NODE_VISIT_FUNC_(CastNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(DeleteNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(GetNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(InvertNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(NegativeNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(NotNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(ReturnNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(LoadValueNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(UnaryOperationPtr)
+
+DEFINE_OP_NODE_VISIT_FUNC_(AddNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(SubNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(MulNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(DivNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(BitwiseNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(CompareNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(ContainsNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(IsNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(JumpNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(StoreNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(UpdateNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(BinaryOperationPtr)
+
+DEFINE_OP_NODE_VISIT_FUNC_(LoadFieldNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(BuildNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(CallNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(NaryWithFlagNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(FormatNodePtr)
+DEFINE_OP_NODE_VISIT_FUNC_(NaryOperationPtr)
 
 void IRVisitor::Visit_(const FunctionNodePtr &node) {
   VISIT_NODE_LIST(node->GetParameters())
@@ -117,6 +109,7 @@ STATIC_IR_FUNCTOR(IRVisitor, vtable)
   .DISPATCH_TO_VISIT(NegativeNode)
   .DISPATCH_TO_VISIT(NotNode)
   .DISPATCH_TO_VISIT(ReturnNode)
+  .DISPATCH_TO_VISIT(LoadValueNode)
   .DISPATCH_TO_VISIT(UnaryOperation)
   .DISPATCH_TO_VISIT(AddNode)
   .DISPATCH_TO_VISIT(SubNode)
@@ -130,7 +123,7 @@ STATIC_IR_FUNCTOR(IRVisitor, vtable)
   .DISPATCH_TO_VISIT(StoreNode)
   .DISPATCH_TO_VISIT(UpdateNode)
   .DISPATCH_TO_VISIT(BinaryOperation)
-  .DISPATCH_TO_VISIT(LoadNode)
+  .DISPATCH_TO_VISIT(LoadFieldNode)
   .DISPATCH_TO_VISIT(BuildNode)
   .DISPATCH_TO_VISIT(CallNode)
   .DISPATCH_TO_VISIT(NaryWithFlagNode)

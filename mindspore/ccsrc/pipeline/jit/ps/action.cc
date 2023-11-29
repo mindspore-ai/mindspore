@@ -227,6 +227,9 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
 }
 
 FuncGraphPtr ConstructGraphForEval(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  if (func->isa<FuncGraph>()) {
+    return func->cast<FuncGraphPtr>();
+  }
   auto func_abs = func->ToAbstract();
   if (!func_abs->isa<abstract::AbstractFunction>()) {
     MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";

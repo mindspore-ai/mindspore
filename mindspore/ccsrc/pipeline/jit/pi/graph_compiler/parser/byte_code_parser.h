@@ -131,6 +131,7 @@ class ByteCodeParser {
   void ParseMakeFunction(const InstrPtr &instr);
   void ParseBuild(const InstrPtr &instr);
   void ParseLoadAttr(const InstrPtr &instr);
+  void ParseImport(const InstrPtr &instr);
   // Process Load a global module/class/function/method/variable etc.
   void ParseLoadGlobal(const InstrPtr &instr);
   // Whether two objects are the same

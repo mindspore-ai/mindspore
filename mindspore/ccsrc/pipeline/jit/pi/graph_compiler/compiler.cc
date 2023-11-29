@@ -17,10 +17,10 @@
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 #include <memory>
 #include <string>
-#include "pipeline/jit/pi/graph_compiler/func_graph_builder.h"
-#include "pipeline/jit/pi/graph_compiler/utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/func_graph.h"
+#include "pipeline/jit/pi/graph_compiler/func_graph_builder.h"
+#include "pipeline/jit/pi/graph_compiler/utils.h"
 #include "pipeline/jit/pi/graph_compiler/parser/byte_code_parser.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -181,10 +181,6 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   args = EliminateStubTensor(args);
   auto byteCodeParser = std::make_shared<ByteCodeParser>(func);
   ir::FunctionNodePtr func_node = byteCodeParser->Parse();
-  bool is_method = !args.empty() && !GraphUtils::IsTensor(args[0]) && py::hasattr(args[0], common::SafeCStr(name));
-  if (is_method) {
-    func_node->MarkMethod();
-  }
   FuncGraphPtr graph = FuncGraphBuilder::BuildFuncGraph(func_node, args, kwargs);
   if (graph == nullptr) {
     return nullptr;

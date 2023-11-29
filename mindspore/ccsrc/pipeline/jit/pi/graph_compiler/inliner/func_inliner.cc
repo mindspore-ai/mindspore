@@ -33,8 +33,8 @@ py::object GetPyFunction(const ir::NodePtr &node) {
       return value;
     }
   } else {
-    MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ir::LoadNode>(), "Expected load a function.");
-    auto load = node->cast<ir::LoadNodePtr>();
+    MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ir::LoadValueNode>(), "Expected load a function.");
+    auto load = node->cast<ir::LoadValueNodePtr>();
     if (load->GetOpCode() == LOAD_GLOBAL) {
       return GetPyFunction(load->GetArgs().back());
     }
@@ -53,6 +53,61 @@ void FuncInlineDetector::Visit_(const ir::FunctionNodePtr &node) {
   });
 }
 
+// Input form : {BUILD_TUPLE, (pos_args)}
+//              {BUILD_LIST, (pos_args)}
+//              {LIST_EXTEND, ([pos_args], (vargs))}
+//              {LIST_TO_TUPLE, [pos_args, vargs]}
+const ir::NodePtrList &UnpackArgShell(const ir::NodePtr &arg) {
+  MS_EXCEPTION_IF_CHECK_FAIL(arg->isa<ir::Operation>(), "Arg should be a operation.");
+  const auto op = arg->cast<ir::OperationPtr>();
+  bool is_expected = op->GetOpCode() == BUILD_LIST || op->GetOpCode() == BUILD_TUPLE ||
+                     op->GetOpCode() == LIST_TO_TUPLE || op->GetOpCode() == LIST_EXTEND;
+  MS_EXCEPTION_IF_CHECK_FAIL(is_expected, "Not expected operation.");
+  if (arg->isa<ir::CastNode>()) {
+    return UnpackArgShell(op->GetArg());
+  }
+  return op->GetArgs();
+}
+
+// Input form : {DICT_MERGE, ({}, kwargs)}
+const ir::NodePtr &UnpackKwargsShell(const ir::NodePtr &kwargs) {
+  if (!kwargs->isa<ir::UpdateNode>()) {
+    return kwargs;
+  }
+  auto node = kwargs->cast<ir::UpdateNodePtr>();
+  bool is_valid = node->GetArg()->isa<ir::BuildNode>() && node->GetArg()->cast<ir::BuildNodePtr>()->GetArgsCnt() == 0;
+  MS_EXCEPTION_IF_CHECK_FAIL(is_valid, "First arg should be a empty build node.");
+  return node->GetArg(1);
+}
+
+// Input form : {}
+//              {(pos_args)}
+//              {varargs}
+//              {kwargs}
+//              {((pos_args), vargs)}
+//              {(pos_args), kwargs}
+//              {vargs, kwargs}
+//              {((pos_args), vargs), kwargs}
+// Output form : {pos_args..., vargs, kwargs}
+void UnpackArgsInTuple(const py::object &func, ir::NodePtrList *args) {
+  MS_EXCEPTION_IF_CHECK_FAIL(py::isinstance<py::function>(func), "Should be a function object.");
+  const auto code = reinterpret_cast<const PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
+  if ((code->co_flags & CO_VARKEYWORDS) != 0) {
+    args->back() = UnpackKwargsShell(args->back());
+  }
+  if (code->co_argcount == 0) {
+    return;
+  }
+  const auto &inner_args = UnpackArgShell(args->front());
+  args->erase(args->begin());
+  args->insert(args->begin(), inner_args.begin(), inner_args.end());
+  if ((code->co_flags & CO_VARARGS) != 0) {
+    const auto &pos_args = UnpackArgShell(args->front());
+    args->erase(args->begin());
+    args->insert(args->begin(), pos_args.begin(), pos_args.end());
+  }
+}
+
 void FuncInlineDetector::Visit_(const ir::CallNodePtr &node) {
   auto arg = node->GetArg(0);
   if (!CanBeInlined(arg)) {
@@ -62,6 +117,9 @@ void FuncInlineDetector::Visit_(const ir::CallNodePtr &node) {
     auto byteCodeParser = std::make_shared<ByteCodeParser>(func);
     ir::FunctionNodePtr func_node = byteCodeParser->Parse();
     ir::NodePtrList args(node->GetArgs().begin() + 1, node->GetArgs().end());
+    if (node->GetOpCode() != CALL_FUNCTION) {
+      UnpackArgsInTuple(func, &args);
+    }
     EvolvingFunction(func_node, args);
     node->SetArg(0, func_node);
     node_2_index_[node] = index_;
@@ -83,7 +141,7 @@ const ir::NodePtr &FuncInlineDetector::GetRootNode(const ir::CallNodePtr &node) 
 }
 
 bool FuncInlineDetector::CanBeInlined(const ir::NodePtr &node) const {
-  if (!node->isa<ir::Value>() && !node->isa<ir::LoadNode>()) {
+  if (!node->isa<ir::Value>() && !node->isa<ir::LoadValueNode>()) {
     return false;
   }
   auto func = GetPyFunction(node);
@@ -107,7 +165,9 @@ void FuncLocalVarRenamer::Visit_(const ir::ParameterPtr &node) {
 
 void FuncLocalVarRenamer::Visit_(const ir::ValuePtr &node) {
   if (node->GetScope() == ir::kScopeLocal) {
-    node->SetValue(py::str(func_->GetName() + "_" + py::cast<std::string>(node->GetValue())));
+    auto name = func_->GetName() + "_" + node->GetName();
+    node->SetValue(py::str(name));
+    node->SetName(name);
   }
 }
 
@@ -122,16 +182,9 @@ ir::NodePtr FuncParameterEliminator::Mutate_(const ir::ParameterPtr &node) {
   return node;
 }
 
-ir::NodePtr FuncParameterEliminator::Mutate_(const ir::LoadNodePtr &node) {
-  auto arg = node->GetArg(0);
-  if (node->GetOpCode() != LOAD_FAST) {
-    for (ir::NodePtr &n : node->GetArgs()) {
-      n = Mutate(n);
-    }
-    return node;
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(arg->isa<ir::Value>(), "Expected a local var name.");
-  auto name = py::cast<std::string>(arg->cast<ir::ValuePtr>()->GetValue());
+ir::NodePtr FuncParameterEliminator::Mutate_(const ir::LoadValueNodePtr &node) {
+  MS_EXCEPTION_IF_CHECK_FAIL(node->GetArg()->isa<ir::Value>(), "Expected a local var name.");
+  auto name = node->GetArg()->cast<ir::ValuePtr>()->GetName();
   if (name_2_node_.find(name) != name_2_node_.end()) {
     return name_2_node_.at(name);
   }

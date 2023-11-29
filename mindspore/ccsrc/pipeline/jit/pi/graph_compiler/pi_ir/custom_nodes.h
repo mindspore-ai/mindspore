@@ -58,8 +58,8 @@ class RefNode : public Node {
    * \return The description.
    */
   std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = (" + GetNodeName() + ", " + std::to_string(real_node_->GetNodeId()) +
-           ")\n";
+    return "%" + std::to_string(GetNodeId()) + " = [" + GetType()->GetName() + "](" + GetNodeName() + ", " +
+           std::to_string(real_node_->GetNodeId()) + ")\n";
   }
 
  private:
@@ -103,7 +103,8 @@ class PlaceHolder : public Node {
    * \return The description.
    */
   std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = (" + GetNodeName() + ", " + tag_ + ")\n";
+    return "%" + std::to_string(GetNodeId()) + " = [" + GetType()->GetName() + "](" + GetNodeName() + ", " + tag_ +
+           ")\n";
   }
 
  private:
@@ -511,6 +512,45 @@ class GetNode : public UnaryOperation {
 
 using GetNodePtr = std::shared_ptr<GetNode>;
 
+/// \brief LoadValueNode is the class which represent load a value to stack.
+class LoadValueNode : public UnaryOperation {
+ public:
+  /**
+   * \brief The constructor of load node.
+   *
+   * \param[in] value the value will be load.
+   *
+   * \return The instance of load node.
+   */
+  LoadValueNode(OpCode op, const NodePtr &value) : UnaryOperation(op, value) {}
+
+  // \brief Destructor.
+  ~LoadValueNode() override = default;
+  JIT_DECLARE_PARENT(LoadValueNode, NaryOperation);
+};
+
+using LoadValueNodePtr = std::shared_ptr<LoadValueNode>;
+
+/// \brief LoadFieldNode is the class which represent load a filed of class to stack.
+class LoadFieldNode : public BinaryOperation {
+ public:
+  /**
+   * \brief The constructor of load node.
+   *
+   * \param[in] cls_ins the instance of class.
+   * \param[in] field the field will be load.
+   *
+   * \return The instance of load node.
+   */
+  LoadFieldNode(OpCode op, const NodePtr &cls_ins, const NodePtr &field) : BinaryOperation(op, cls_ins, field) {}
+
+  // \brief Destructor.
+  ~LoadFieldNode() override = default;
+  JIT_DECLARE_PARENT(LoadFieldNode, BinaryOperation);
+};
+
+using LoadFieldNodePtr = std::shared_ptr<LoadFieldNode>;
+
 /// \brief AddNode is the class which represent the addition of two operands.
 class AddNode : public BinaryOperation {
  public:
@@ -807,7 +847,8 @@ class JumpNode : public BinaryOperation {
     if (left != nullptr) {
       str += left->ToString() + "\n";
     }
-    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "(" + GetOpName(GetOpCode());
+    str += "%" + std::to_string(GetNodeId()) + " = " + GetNodeName() + "[" + GetType()->GetName() + "](" +
+           GetOpName(GetOpCode());
     if (left != nullptr) {
       str += ", %" + std::to_string(left->GetNodeId());
     } else {
@@ -851,7 +892,7 @@ class CompareNode : public BinaryOperation, public InstrArg {
     auto left = GetLeftArg();
     auto right = GetRightArg();
     return left->ToString() + "\n" + right->ToString() + "\n%" + std::to_string(GetNodeId()) + " = " + GetNodeName() +
-           "(" + GetOpName(GetOpCode()) + ", " + std::to_string(GetInstrArg()) + ", %" +
+           "[" + GetType()->GetName() + "](" + GetOpName(GetOpCode()) + ", " + std::to_string(GetInstrArg()) + ", %" +
            std::to_string(left->GetNodeId()) + ", %" + std::to_string(right->GetNodeId()) + ")\n";
   }
 };
@@ -904,34 +945,6 @@ class FormatNode : public NaryOperation, public InstrArg {
 };
 
 using FormatNodePtr = std::shared_ptr<FormatNode>;
-
-/// \brief LoadNode is the class which represent load a value to stack.
-class LoadNode : public NaryOperation {
- public:
-  /**
-   * \brief The constructor of load node.
-   *
-   * \param[in] opnd the operand of load node.
-   *
-   * \return The instance of load node.
-   */
-  LoadNode(OpCode op, const NodePtr &opnd) : NaryOperation(op, {opnd}) {}
-
-  /**
-   * \brief The constructor of load node.
-   *
-   * \param[in] opnds the operands of load node.
-   *
-   * \return The instance of load node.
-   */
-  LoadNode(OpCode op, const NodePtrList &opnds) : NaryOperation(op, opnds) {}
-
-  // \brief Destructor.
-  ~LoadNode() override = default;
-  JIT_DECLARE_PARENT(LoadNode, NaryOperation);
-};
-
-using LoadNodePtr = std::shared_ptr<LoadNode>;
 
 /// \brief BuildNode is the class which represent build a value.
 class BuildNode : public NaryOperation {

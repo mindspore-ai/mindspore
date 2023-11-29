@@ -35,6 +35,10 @@ constexpr int bits_per_byte = 8;
 
 py::object ByteCodeGenerator::GenFunction(const ir::FunctionNodePtr &func) {
   ByteCodeGeneratorPtr generator = std::make_shared<ByteCodeGenerator>();
+  auto use_global = func->GetUseGlobal();
+  if (use_global != nullptr) {
+    generator->globals_ = use_global->cast<ir::ValuePtr>()->GetValue().cast<py::dict>();
+  }
   return generator->Generate(func);
 }
 
@@ -55,8 +59,8 @@ py::object ByteCodeGenerator::Generate(const ir::FunctionNodePtr &func) {
   auto cell_vars = py::cast<py::tuple>(co_cell_vars_);
   PyCodeObject *code = PyCode_New(func->GetPosArgsCnt(), func->GetKwOnlyArgsCnt(), var_names.size(),
                                   func->GetStackSize(), func->GetFlags(), byte_code.ptr(), consts.ptr(), names.ptr(),
-                                  var_names.ptr(), free_vars.ptr(), cell_vars.ptr(), py::str(func->GetName()).ptr(),
-                                  py::str(names).ptr(), func->GetFirstLineNo(), lnotab.ptr());
+                                  var_names.ptr(), free_vars.ptr(), cell_vars.ptr(), py::str(func->GetFileName()).ptr(),
+                                  py::str(func->GetName()).ptr(), func->GetFirstLineNo(), lnotab.ptr());
   globals_[py::str("__builtins__")] = builtins_.ptr();
   auto function = py::reinterpret_steal<py::object>(PyFunction_New(reinterpret_cast<PyObject *>(code), globals_.ptr()));
   Py_DECREF(code);
@@ -205,7 +209,15 @@ void ByteCodeGenerator::Visit_(const ir::UpdateNodePtr &node) {
   SetStartsLine(node);
 }
 
-void ByteCodeGenerator::Visit_(const ir::LoadNodePtr &node) {
+void ByteCodeGenerator::Visit_(const ir::LoadValueNodePtr &node) {
+  VISIT_NODE_LIST(node->GetArgs())
+  int arg = GetValueIndex(node->GetArg()->cast<ir::ValuePtr>());
+  CheckInstrOffset(node);
+  GenerateInstr(node->GetOpCode(), arg);
+  SetStartsLine(node);
+}
+
+void ByteCodeGenerator::Visit_(const ir::LoadFieldNodePtr &node) {
   VISIT_NODE_LIST(node->GetArgs())
   int arg = GetValueIndex(node->GetArg(1)->cast<ir::ValuePtr>());
   CheckInstrOffset(node);
@@ -246,20 +258,26 @@ int ByteCodeGenerator::GetValueIndex(const ir::ValuePtr &node) {
   auto scope = node->GetScope();
   MS_EXCEPTION_IF_CHECK_FAIL(scope_inquire_map_.find(scope) != scope_inquire_map_.end(),
                              "Invalid scope in " + node->ToString());
-  auto name_map = *scope_inquire_map_.at(scope);
+  auto name_map = scope_inquire_map_.at(scope);
   auto name = node->GetName();
-  if (name_map.find(name) != name_map.end()) {
-    return name_map.at(name);
+  if (name_map->find(name) != name_map->end()) {
+    return name_map->at(name);
   }
   auto values = scope_value_list_.at(scope);
-  values.append(node->GetValue());
-  if (scope_name_list_.find(scope) == scope_name_list_.end()) {
-    name_map[name] = values.size() - 1;
+  if (values.first.is(values.second)) {
+    (*name_map)[name] = values.first.size();
+    values.first.append(node->GetValue());
   } else {
-    name_map[name] = scope_name_list_.at(scope).size();
-    scope_name_list_.at(scope).append(py::str(name));
+    (*name_map)[name] = values.first.size();
+    auto obj = py::str(name);
+    values.first.append(obj);
+    if (scope == ir::kScopeClousre) {
+      (py::cast<py::list>(values.second)).append(node->GetValue());
+    } else {
+      (py::cast<py::dict>(values.second))[obj] = node->GetValue();
+    }
   }
-  return name_map.at(name);
+  return name_map->at(name);
 }
 
 void ByteCodeGenerator::CheckInstrOffset(const ir::NodePtr &node) {
