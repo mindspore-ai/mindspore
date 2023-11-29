@@ -733,7 +733,7 @@ def generate_aclnn_reg_file(work_path, yaml_str):
     Generate nnacl kernelmod register
     """
     tmp_register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/tmp_aclnn_kernel_register.cc'
-    register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_kernel_register.cc'
+    register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/auto_aclnn_kernel_register.cc'
     reg_code = generate_aclnn_reg_code(yaml_str)
     with open(tmp_register_file, 'w') as reg_file:
         reg_file.write(cc_license_str + reg_code)

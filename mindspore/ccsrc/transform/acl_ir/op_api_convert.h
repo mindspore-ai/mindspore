@@ -122,40 +122,28 @@ auto ConvertToOpApiFunc(const Tuple &params, void *opApiAddr) {
 }
 
 // Convert Value
-class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
+class OpApiTensorConverter : public AttrHelper<OpApiTensorConverter> {
  public:
-  OpApiAttrConverter() = default;
-  ~OpApiAttrConverter() = default;
+  OpApiTensorConverter() = default;
+  ~OpApiTensorConverter() = default;
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar **scalar) {
     auto real_val = GetValue<T>(value);
     MS_EXCEPTION_IF_NULL(scalar);
-    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
-    if (aclCreateScalar == nullptr) {
-      *scalar = nullptr;
-    }
-    *scalar = aclCreateScalar(&real_val, GetDataType(value));
+    *scalar = CreateAclScalar(&real_val, GetDataType(value));
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar **scalar) {
     auto real_val = static_cast<int64_t>(GetValue<int32_t>(value));
     MS_EXCEPTION_IF_NULL(scalar);
-    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
-    if (aclCreateScalar == nullptr) {
-      *scalar = nullptr;
-    }
-    *scalar = aclCreateScalar(&real_val, ACL_INT64);
+    *scalar = CreateAclScalar(&real_val, ACL_INT64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, aclIntArray *array) {
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-    if (aclCreateIntArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateIntArray(array_list.data(), array_list.size());
+    array = CreateIntArray(array_list);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int32_t>> &, aclIntArray *array) {
@@ -164,31 +152,52 @@ class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
     std::vector<int64_t> array_list_int64;
     (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int64),
                          [](const int val) { return IntToLong(val); });
-    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-    if (aclCreateIntArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateIntArray(array_list_int64.data(), array_list_int64.size());
+    array = CreateIntArray(array_list_int64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<uint8_t>> &, aclBoolArray *array) {
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    static const auto aclCreateBoolArray = GET_OP_API_FUNC(aclCreateBoolArray);
-    if (aclCreateBoolArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateBoolArray(reinterpret_cast<const bool *>(array_list.data()), array_list.size());
+    array = CreateBoolArray(array_list);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<float>> &, aclFloatArray *array) {
     std::vector<float> array_list;
     ConvertValueSequenceToList(value, &array_list);
+    array = CreateFloatArray(array_list);
+  }
+
+  template <typename T>
+  aclScalar *CreateAclScalar(T *val, aclDataType dtype) {
+    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
+    if (aclCreateScalar == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateScalar` func.";
+    }
+    return aclCreateScalar(val, dtype);
+  }
+
+  aclIntArray *CreateIntArray(const std::vector<int64_t> &val) {
+    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
+    if (aclCreateIntArray == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateIntArray` func.";
+    }
+    return aclCreateIntArray(val.data(), val.size());
+  }
+
+  aclBoolArray *CreateBoolArray(const std::vector<uint8_t> &val) {
+    static const auto aclCreateBoolArray = GET_OP_API_FUNC(aclCreateBoolArray);
+    if (aclCreateBoolArray == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateBoolArray` func.";
+    }
+    return aclCreateBoolArray(reinterpret_cast<const bool *>(val.data()), val.size());
+  }
+
+  aclFloatArray *CreateFloatArray(const std::vector<float> &val) {
     static const auto aclCreateFloatArray = GET_OP_API_FUNC(aclCreateFloatArray);
     if (aclCreateFloatArray == nullptr) {
-      array = nullptr;
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateFloatArray` func.";
     }
-    array = aclCreateFloatArray(array_list.data(), array_list.size());
+    return aclCreateFloatArray(val.data(), val.size());
   }
 
  private:
@@ -231,11 +240,6 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
                                     shape_size, tensor->device_ptr());
   return acl_tensor;
-}
-
-inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
-  MS_LOG(EXCEPTION) << "Current not support tensor list!";
-  return tensor_list;
 }
 
 inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
@@ -331,10 +335,21 @@ inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_l
   return aclCreateTensorList(tmp.data(), tmp.size());
 }
 
+inline aclTensorList *ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](mindspore::kernel::KernelTensor *tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
 inline aclScalar *ConvertType(const ScalarPtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   aclScalar *acl_scalar;
-  OpApiAttrConverter converter;
+  OpApiTensorConverter converter;
   if (value->isa<BoolImm>()) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
@@ -364,6 +379,45 @@ T ConvertType(T value) {
 template <typename... Ts>
 constexpr auto ConvertTypes(const Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
+}
+
+template <typename T>
+T ConvertKernelTensor(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->GetValueWithCheck<T>();
+}
+
+template <>
+inline aclScalar *ConvertKernelTensor<aclScalar *>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto value_ptr = tensor->GetValueTrack();
+  if (!value_ptr || !value_ptr->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "Current tensor's must be a scalar, please check!";
+  }
+  auto scalar_ptr = value_ptr->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar_ptr);
+  return ConvertType(scalar_ptr);
+}
+
+template <>
+inline aclIntArray *ConvertKernelTensor<aclIntArray *>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  OpApiTensorConverter converter;
+  return converter.CreateIntArray(tensor->GetValueWithCheck<std::vector<int64_t>>());
+}
+
+template <>
+inline aclFloatArray *ConvertKernelTensor<aclFloatArray *>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  OpApiTensorConverter converter;
+  return converter.CreateFloatArray(tensor->GetValueWithCheck<std::vector<float>>());
+}
+
+template <>
+inline aclBoolArray *ConvertKernelTensor<aclBoolArray *>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  OpApiTensorConverter converter;
+  return converter.CreateBoolArray(tensor->GetValueWithCheck<std::vector<uint8_t>>());
 }
 
 inline void Release(aclTensor *p) {
