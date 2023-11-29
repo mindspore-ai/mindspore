@@ -407,6 +407,10 @@ class Parser {
   void ProcessPopOperation(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                            const py::object &target_object);
 
+  void ProcessPopOperationInAugAssign(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
+                                      const AnfNodePtr &target_node, const AnfNodePtr &op_node,
+                                      const py::object &target_object);
+
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
   // Set if defer resolve during parsing.
