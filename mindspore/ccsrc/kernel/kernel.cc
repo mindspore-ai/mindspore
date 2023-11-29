@@ -145,7 +145,7 @@ ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
   auto type_ptr = seq_abs->elements()[0]->BuildType();
   MS_EXCEPTION_IF_NULL(type_ptr);
   if (!type_ptr->isa<TensorType>()) {
-    return {(int64_t)seq_abs->elements().size()};
+    return {static_cast<int64_t>(seq_abs->elements().size())};
   }
   // for tuple of tensor, the tensors shape must be same
   ShapeVector flatten_shp;
