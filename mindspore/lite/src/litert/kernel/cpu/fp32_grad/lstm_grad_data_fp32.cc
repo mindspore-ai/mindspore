@@ -159,7 +159,7 @@ void LSTMGradDataCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *
   }
 }
 
-void LSTMGradDataCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
+void LSTMGradDataCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) const {
   int uni_batch = lstm_param_->bidirectional_ ? weight_batch_ / C2NUM : weight_batch_;
   ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIFGO());
   src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
@@ -224,7 +224,8 @@ int LSTMGradDataCPUKernel::MallocRunBuffer() {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run workspace 0 error.";
     return RET_ERROR;
   }
-  workspace_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(workspace_size * sizeof(float)));
+  workspace_ =
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(static_cast<size_t>(workspace_size) * sizeof(float)));
   if (workspace_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run workspace error.";
     return RET_ERROR;
@@ -234,20 +235,22 @@ int LSTMGradDataCPUKernel::MallocRunBuffer() {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run dA_tmp size error.";
     return RET_ERROR;
   }
-  dA_tmp_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(dA_size * sizeof(float)));
+  dA_tmp_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(static_cast<size_t>(dA_size) * sizeof(float)));
   if (dA_tmp_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run dA_tmp alloc error.";
     return RET_ERROR;
   }
   int weights_size = weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_ +  // IW matrics
                      weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;  // V matrics
-  weights_tmp_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weights_size * sizeof(float)));
+  weights_tmp_ =
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(static_cast<size_t>(weights_size) * sizeof(float)));
   if (weights_tmp_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run weights_tmp_ alloc error.";
     return RET_ERROR;
   }
   int curr_dy_size = lstm_param_->hidden_size_ * lstm_param_->batch_;
-  curr_dy_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(curr_dy_size * sizeof(float)));
+  curr_dy_ =
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(static_cast<size_t>(curr_dy_size) * sizeof(float)));
   if (curr_dy_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run curr_dy_ alloc error.";
     return RET_ERROR;
