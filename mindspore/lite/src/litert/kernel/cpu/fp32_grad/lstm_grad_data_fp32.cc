@@ -77,9 +77,9 @@ int LSTMGradDataCPUKernel::Run() {
   dC_ = reinterpret_cast<float *>(dC_tensor->data());
   dH_ = reinterpret_cast<float *>(dH_tensor->data());
   dX_ = reinterpret_cast<float *>(dX_tensor->data());
-  memset(dH_, 0, dH_tensor->Size());
-  memset(dC_, 0, dC_tensor->Size());
-  memset(dX_, 0, dX_tensor->Size());
+  (void)memset(dH_, 0, dH_tensor->Size());
+  (void)memset(dC_, 0, dC_tensor->Size());
+  (void)memset(dX_, 0, dX_tensor->Size());
 
   int w_size = lstm_param_->hidden_size_ * lstm_param_->input_size_;
   int h_size = lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
@@ -126,7 +126,7 @@ int LSTMGradDataCPUKernel::Run() {
   return RET_OK;
 }
 
-int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, float *v) {
+void LSTMGradDataCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, float *v) {
   auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
   int state_len = lstm_param_->batch_ * lstm_param_->hidden_size_;
   float *cell_state = intermediate_data_ + seq_stride * C1NUM;
@@ -157,7 +157,6 @@ int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w
     float *dA_t = dA_tmp_ + real_t * num_of_gates * state_len;
     std::copy(&(dA[0]), &(dA[num_of_gates * state_len]), &dA_t[0]);  // for w grad step
   }
-  return RET_OK;
 }
 
 void LSTMGradDataCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
@@ -177,8 +176,6 @@ void LSTMGradDataCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
     dst += uni_batch * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
   }
 }
-
-int LSTMGradDataCPUKernel::DoGrad(int thread_id) { return RET_OK; }
 
 int LSTMGradDataCPUKernel::InitParam() {
   auto input = in_tensors_.front();

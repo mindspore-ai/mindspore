@@ -44,12 +44,12 @@ int UnsortedSegmentSumCPUKernel::Prepare() {
   unit_num_ = 1;
   input_dim1_ = 1;
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    unit_num_ *= input_shape[i];
+    unit_num_ *= static_cast<size_t>(input_shape[i]);
     if (i >= segment_ids_shape.size()) {
       input_dim1_ *= static_cast<size_t>(input_shape[i]);
     }
   }
-  output_dim0_ = output_shape[0];
+  output_dim0_ = static_cast<size_t>(output_shape[0]);
   output_dim1_ = 1;
   for (size_t j = 1; j < output_shape.size(); j++) {
     output_dim1_ *= static_cast<size_t>(output_shape[j]);

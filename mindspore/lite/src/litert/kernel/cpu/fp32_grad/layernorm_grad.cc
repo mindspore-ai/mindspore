@@ -50,11 +50,11 @@ int LayerNormGradCPUKernel::Prepare() {
   std::vector<int> x_shape = input_x->shape();
   int begin_norm_axis = lngrad_param->begin_norm_axis_;
   if (begin_norm_axis < 0) {
-    begin_norm_axis += x_shape.size();
+    begin_norm_axis += static_cast<int>(x_shape.size());
   }
   auto begin_params_axis = lngrad_param->begin_params_axis_;
   if (begin_params_axis < 0) {
-    begin_params_axis += x_shape.size();
+    begin_params_axis += static_cast<int>(x_shape.size());
   }
   for (size_t i = 0; i < static_cast<size_t>(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
@@ -65,7 +65,7 @@ int LayerNormGradCPUKernel::Prepare() {
   for (size_t i = 0; i < static_cast<size_t>(begin_params_axis); i++) {
     param_size_ *= x_shape[i];
   }
-  for (size_t i = begin_params_axis; i < x_shape.size(); i++) {
+  for (size_t i = static_cast<size_t>(begin_params_axis); i < x_shape.size(); i++) {
     param_num_ *= x_shape[i];
   }
   if (block_num_ <= 0 || block_size_ <= 0) {

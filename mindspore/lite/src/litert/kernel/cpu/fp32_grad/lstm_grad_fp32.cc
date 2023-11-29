@@ -86,10 +86,10 @@ int LSTMGradCPUKernel::Run() {
   dH_ = reinterpret_cast<float *>(dH_tensor->data());
   dX_ = reinterpret_cast<float *>(dX_tensor->data());
   input_ = reinterpret_cast<float *>(input_tensor->data());
-  memset(dH_, 0, dH_tensor->Size());
-  memset(dC_, 0, dC_tensor->Size());
-  memset(dX_, 0, dX_tensor->Size());
-  memset(dW_tmp_, 0, dW_tensor->Size());
+  (void)memset(dH_, 0, dH_tensor->Size());
+  (void)memset(dC_, 0, dC_tensor->Size());
+  (void)memset(dX_, 0, dX_tensor->Size());
+  (void)memset(dW_tmp_, 0, dW_tensor->Size());
 
   if (lstm_param_->bidirectional_) {
     // Adjust pointer to backward cell
@@ -135,13 +135,13 @@ int LSTMGradCPUKernel::Run() {
   dc_out_ = reinterpret_cast<float *>(dC_out_tensor->data());
   std::copy(&(dH_[0]), &(dH_[dH_tensor->ElementsNum()]), &(dh_out_[0]));
   std::copy(&(dC_[0]), &(dC_[dC_tensor->ElementsNum()]), &(dc_out_[0]));
-  ReorderLstmWeightGrad(dW_, dW_tmp_, getLstmOrderIOFG(), lstm_param_->has_bias_);
+  ReorderLstmWeightGrad(dW_, dW_tmp_, getLstmOrderIOFG(), static_cast<bool>(lstm_param_->has_bias_));
   FreeRunBuffer();
   return RET_OK;
 }
 
-int LSTMGradCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, float *v, float *dw, float *dv,
-                                                  float *db) {
+void LSTMGradCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, float *v, float *dw, float *dv,
+                                                   float *db) {
   auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
   float *hidden_state = intermediate_data_;
   float *cell_state = intermediate_data_ + seq_stride * C1NUM;
@@ -177,7 +177,6 @@ int LSTMGradCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, fl
                         curr_forget_gate, curr_dy_, dC_, dH_, &dA, curr_dx, w, v, workspace_, lstm_param_);
     LstmGradDoWeightStep(curr_input, prev_hidden_state, dA, dw, dv, db, workspace_gemm, lstm_param_);
   }
-  return RET_OK;
 }
 
 void LSTMGradCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, const int *order, bool include_bias) {
@@ -191,8 +190,6 @@ void LSTMGradCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, const int 
     ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, order);
   }
 }
-
-int LSTMGradCPUKernel::DoGrad(int thread_id) { return RET_OK; }
 
 int LSTMGradCPUKernel::InitParam() {
   auto input = in_tensors_.front();

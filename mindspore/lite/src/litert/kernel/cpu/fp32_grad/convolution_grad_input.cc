@@ -95,7 +95,7 @@ int ConvolutionGradInputCPUKernel::DoExecute(int task_id) {
   int in_w = conv_param->input_w_;
   int k_h = conv_param->kernel_h_;
   int k_w = conv_param->kernel_w_;
-  int nweights = input_w->ElementsNum();
+  int nweights = static_cast<int>(input_w->ElementsNum());
   int out_ch = conv_param->output_channel_;
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
