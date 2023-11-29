@@ -121,17 +121,11 @@ class LLMRole(Enum):
 
 
 class LLMKVCacheNotExist(RuntimeError):
-    """
-    Key & Value cache does not exist in Prompt cluster specified by parameter LLMReq.prompt_cluster_id, and the
-    LLM request may have been released in Prompt cluster by calling method LLMEngine.complete_request.
-    Raised in LLMEngine.predict.
-    """
+    pass
 
 
 class LLMWaitProcessTimeOut(RuntimeError):
-    """
-    Request waiting for processing timed out. Raised in LLMEngine.predict.
-    """
+    pass
 
 
 class LLMEngine:
@@ -235,10 +229,6 @@ class LLMEngine:
             TypeError: `inputs` is a list, but the elements are not Tensor.
             RuntimeError: schedule and execute inference request failed.
             RuntimeError: this LLMEngine object has not been inited
-            LLMKVCacheNotExist: Key & Value cache does not exist in Prompt cluster specified by
-                `llm_req.prompt_cluster_id`, and the LLM request may have been released in Prompt cluster
-                by calling method LLMEngine.complete_request.
-            LLMWaitProcessTimeOut: Request waiting for processing timed out. Raised in LLMEngine.predict.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
