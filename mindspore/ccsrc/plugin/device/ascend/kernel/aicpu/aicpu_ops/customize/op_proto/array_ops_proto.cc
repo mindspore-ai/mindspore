@@ -25,8 +25,8 @@ namespace ge {
 template <typename T>
 static bool ExpandCalDim(const Tensor &data, std::vector<int64_t> &vec_dim, std::vector<int64_t> &x_dims,
                          std::vector<std::pair<int64_t, int64_t>> &range_vector) {
-  int64_t len_x = x_dims.size();
-  int64_t len_shape = data.GetSize() / sizeof(T);
+  int64_t len_x = static_cast<int64_t>(x_dims.size());
+  int64_t len_shape = static_cast<int64_t>(data.GetSize() / sizeof(T));
   int64_t diff = abs(len_x - len_shape);
   const char *op_name = "Expand";
 
@@ -134,7 +134,7 @@ IMPLEMT_INFERFUNC(Expand, ExpandInferShape) {
       OP_LOGE(op_name, "The dim numbers of shape [%zu] are more than one.", dim_num);
       return GRAPH_FAILED;
     }
-    int64_t max_len = x_dims.size();
+    int64_t max_len = static_cast<int64_t>(x_dims.size());
     if (shape_dims[0] > max_len) {
       max_len = shape_dims[0];
     }

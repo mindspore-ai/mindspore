@@ -39,7 +39,7 @@ IMPLEMT_COMMON_INFERFUNC(EigInferShape) {
     OP_LOGE(TbeGetName(op).c_str(), "For Eig, get attr compute_v failed!");
     return GRAPH_FAILED;
   }
-  int64_t rank = x_shape.GetDimNum();
+  int64_t rank = static_cast<int64_t>(x_shape.GetDimNum());
   vector<int64_t> x_shape_list = x_shape.GetDims();
   if (rank < 2) {
     OP_LOGE(TbeGetName(op).c_str(), "For Eig, rank of input x must be equal to or greater than 2.");

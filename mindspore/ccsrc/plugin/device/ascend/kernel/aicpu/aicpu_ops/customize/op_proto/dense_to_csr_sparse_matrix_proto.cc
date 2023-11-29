@@ -41,8 +41,8 @@ CUST_IMPLEMT_INFERFUNC(DenseToCSRSparseMatrix, DenseToCSRSparseMatrixInfer) {
   DataType dense_input_type = op.GetInputDescByName("dense_input").GetDataType();
   Shape indices_shape = op.GetInputDescByName("indices").GetShape();
   DataType indices_type = op.GetInputDescByName("indices").GetDataType();
-  const int64_t dense_input_rank = dense_input_shape.GetDimNum();
-  const int64_t indices_rank = indices_shape.GetDimNum();
+  const int64_t dense_input_rank = static_cast<int64_t>(dense_input_shape.GetDimNum());
+  const int64_t indices_rank = static_cast<int64_t>(indices_shape.GetDimNum());
   if ((dense_input_rank != 2 && dense_input_rank != 3)) {
     err_msg = "Rank of dense input should be 2 or 3, please check!";
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);

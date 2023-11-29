@@ -128,8 +128,8 @@ graphStatus MatrixSolve(const TensorDesc &tensor1, const TensorDesc &tensor2, bo
   }
 
   int64_t dim_val = 0;
-  int64_t lhs_rank = lhs.GetDimNum();
-  int64_t rhs_rank = rhs.GetDimNum();
+  int64_t lhs_rank = static_cast<int64_t>(lhs.GetDimNum());
+  int64_t rhs_rank = static_cast<int64_t>(rhs.GetDimNum());
   int64_t dim_lhs = lhs.GetDim(lhs_rank - 2);
   int64_t dim_rhs = rhs.GetDim(rhs_rank - 2);
   // lhs and rhs have the same value for m to be compatible.
