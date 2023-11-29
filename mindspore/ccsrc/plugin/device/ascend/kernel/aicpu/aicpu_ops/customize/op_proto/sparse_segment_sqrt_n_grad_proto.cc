@@ -74,15 +74,16 @@ CUST_IMPLEMT_INFERFUNC(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradInfer) {
   }
   Tensor dims0_tensor;
   Shape dim0_shape;
-  const int32_t *dims0_data;
+  int64_t dims0_data;
   if (op.GetInputConstData("output_dim0", dims0_tensor) == GRAPH_SUCCESS) {
-    void *dims0 = dims0_tensor.GetData();
-    dims0_data = static_cast<const int32_t *>(dims0);
+    if (MakeDimForScalarInput(dims0_tensor, dims0_data, op) != GRAPH_SUCCESS) {
+      dims0_data = UNKNOWN_DIM;
+    }
   } else {
-    dims0_data = reinterpret_cast<const int32_t *>(&UNKNOWN_DIM);
+    dims0_data = UNKNOWN_DIM;
   }
 
-  dim0_shape = Shape({*dims0_data});
+  dim0_shape = Shape({dims0_data});
 
   Shape out;
   if (Concatenate(dim0_shape, subshape, out) != GRAPH_SUCCESS) {

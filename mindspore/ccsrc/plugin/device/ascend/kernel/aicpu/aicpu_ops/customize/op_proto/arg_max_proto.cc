@@ -58,7 +58,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMaxInferShape) {
   int64_t dimension = 0;
   static const int64_t dimension_input_idx = 1;
   if (ops::GetConstInt(op, dimension_input_idx, dimension)) {
-    dimension = dimension < 0 ? dimension + x_shape.GetDimNum() : dimension;
+    dimension = dimension < 0 ? dimension + static_cast<int64_t>(x_shape.GetDimNum()) : dimension;
     if ((dimension < 0) || (dimension >= static_cast<int64_t>(x_shape.GetDimNum()))) {
       OP_LOGE(TbeGetName(op), "The dimension value %ld must in range of input shape size %ld.", dimension,
               x_shape.GetDimNum());

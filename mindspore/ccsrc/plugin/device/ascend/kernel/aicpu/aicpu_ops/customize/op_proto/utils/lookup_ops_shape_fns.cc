@@ -44,8 +44,8 @@ graphStatus ValidateTableResourceHandle(Shape keys, std::vector<ShapeAndType> ha
     output_shape_and_type.SetType(value_shape_and_type.GetDataType());
     if (is_lookup) {
       if ((RankKnown(key_shape_and_type.GetShape()) == GRAPH_SUCCESS) && (RankKnown(keys) == GRAPH_SUCCESS)) {
-        int keys_rank = keys.GetDims().size();
-        int keys_suffix_rank = key_shape_and_type.GetShape().GetDims().size();
+        int keys_rank = static_cast<int>(keys.GetDims().size());
+        int keys_suffix_rank = static_cast<int>(key_shape_and_type.GetShape().GetDims().size());
         if (keys_rank < keys_suffix_rank) {
           std::string err_msg = OtherErrMsg("Expected keys to have suffix");
           VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, err_msg);
@@ -126,8 +126,8 @@ graphStatus ValidateTableResourceHandle(const Operator &op, Shape &keys, const D
 
   if (is_lookup) {
     if (RankKnown(key_shape_and_type.GetShape()) && RankKnown(keys)) {
-      int64_t keys_rank = keys.GetDimNum();
-      int64_t key_suffix_rank = key_shape_and_type.GetShape().GetDimNum();
+      int64_t keys_rank = static_cast<int64_t>(keys.GetDimNum());
+      int64_t key_suffix_rank = static_cast<int64_t>(key_shape_and_type.GetShape().GetDimNum());
       if (keys_rank < key_suffix_rank) {
         std::string err_msg =
           OtherErrMsg(ConcatString("Expected keys to have suffix ", key_suffix_rank, ", but saw shape ", keys_rank));

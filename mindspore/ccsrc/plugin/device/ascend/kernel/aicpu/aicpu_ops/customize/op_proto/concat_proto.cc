@@ -128,8 +128,8 @@ bool ConcatInferShapeCommonStatic(Operator &op, const int64_t dynamic_input_star
     output_shape.SetDimNum(1);
     output_shape.SetDim(0, 1);
   }
-  size_t output_dim = output_shape.GetDimNum();
-  if ((axis < -static_cast<int64_t>(output_dim)) || (axis >= static_cast<int64_t>(output_dim))) {
+  auto output_dim = static_cast<int64_t>(output_shape.GetDimNum());
+  if ((axis < -output_dim) || (axis >= output_dim)) {
     // axes is valid
     return false;
   }
@@ -149,12 +149,12 @@ bool ConcatInferShapeCommonStatic(Operator &op, const int64_t dynamic_input_star
       // dynamic case
       return false;
     }
-    if (input_i_shape.GetDimNum() != output_dim) {
+    if (input_i_shape.GetDimNum() != static_cast<size_t>(output_dim)) {
       // input shape size is not equal output
       return false;
     }
     // check whether the non concat dim is equal
-    for (int64_t check_dim = 0; check_dim < static_cast<int64_t>(output_dim); check_dim++) {
+    for (int64_t check_dim = 0; check_dim < output_dim; check_dim++) {
       if (check_dim != axis && input_i_shape.GetDim(check_dim) != output_shape.GetDim(check_dim)) {
         return false;
       }
@@ -237,7 +237,7 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += dim_num;
+    non_negative_axis += static_cast<int64_t>(dim_num);
   }
 
   vector<int64_t> output_shape_dims;

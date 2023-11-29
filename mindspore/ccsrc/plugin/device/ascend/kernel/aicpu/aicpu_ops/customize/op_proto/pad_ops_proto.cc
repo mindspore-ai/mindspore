@@ -195,7 +195,7 @@ IMPLEMT_COMMON_INFERFUNC(PadV3InferShape) {
 
   if (expand_num > 0) {
     std::vector<int64_t> pad_vec;
-    for (int i = input_shape_max; i > 0; i--) {
+    for (size_t i = input_shape_max; i > 0; i--) {
       pad_vec.push_back(paddings[i * 2 - 2]);
       pad_vec.push_back(paddings[i * 2 - 1]);
     }
@@ -204,7 +204,7 @@ IMPLEMT_COMMON_INFERFUNC(PadV3InferShape) {
 
   if (!paddings_contiguous) {
     std::vector<int64_t> pads;
-    int64_t rank = paddings.size() / 2;
+    int64_t rank = static_cast<int64_t>(paddings.size() / 2);
     for (int i = 0; i < rank; i++) {
       pads.push_back(paddings[i]);
       pads.push_back(paddings[i + rank]);

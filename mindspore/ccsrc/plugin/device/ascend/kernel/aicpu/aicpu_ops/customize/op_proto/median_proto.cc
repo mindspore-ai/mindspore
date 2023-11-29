@@ -44,7 +44,7 @@ bool InferShapeAndTypeMedian(Operator &op, const string &input_name, const strin
       attr_keepdim = false;
     }
     if (attr_dim < 0) {
-      attr_dim += dim_x.size();
+      attr_dim += static_cast<int64_t>(dim_x.size());
     }
     for (size_t i = 0; i < dim_x.size(); i++) {
       if (i != static_cast<size_t>(attr_dim)) {

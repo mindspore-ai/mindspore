@@ -123,7 +123,7 @@ bool ShapeTransferAccordingToFormat::GetFzShapeByAxisValue(ge::GeShape &newShape
     if (implType == static_cast<int64_t>(EN_IMPL_HW_TBE) || implType == static_cast<int64_t>(EN_IMPL_CUSTOM_TBE) ||
         implType == static_cast<int64_t>(EN_IMPL_NON_PERSISTENT_CUSTOM_TBE)) {
       CHECK(axisValue.size() <= static_cast<size_t>(AXIS_C1), LOG_INFO("AxisValue is not correct!"), return true);
-      int64_t hwc1 = static_cast<size_t>(axisValue[AXIS_C1] * axisValue[AXIS_H] * axisValue[AXIS_W]);
+      int64_t hwc1 = static_cast<int64_t>(axisValue[AXIS_C1] * axisValue[AXIS_H] * axisValue[AXIS_W]);
       newDimVec.push_back(hwc1);
       newDimVec.push_back(DivisionCeiling(static_cast<size_t>(axisValue[AXIS_N]), NI));
       newDimVec.push_back(NI);
@@ -190,7 +190,7 @@ bool ShapeTransferAccordingToFormat::GetNzShapeByAxisValue(ge::GeShape &newShape
   /* sizeOfOriginalVec - 1 mean the last value of original vec
    * sizeOfOriginalVec - 2 mean the second last value of original vec */
   newDimVec[sizeOfOriginalVec - MINUS_VALUE_ONE] =
-    DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_TWO], (int64_t)SHAPE_NUMBER_16);
+    DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_TWO], static_cast<int64_t>(SHAPE_NUMBER_16));
 
   newDimVec[sizeOfOriginalVec - MINUS_VALUE_TWO] =
     DivisionCeiling(ndValue[sizeOfOriginalVec - MINUS_VALUE_ONE], static_cast<size_t>(axisValue[AXIS_C0]));

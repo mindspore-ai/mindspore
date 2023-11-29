@@ -52,7 +52,7 @@ IMPLEMT_INFERFUNC(MatrixDeterminant, MatrixDeterminantInfer) {
     return GRAPH_FAILED;
   }
 
-  int64_t existing = s.GetDimNum();
+  int64_t existing = static_cast<int64_t>(s.GetDimNum());
   int64_t dim1 = s.GetDim(existing - 1);
   int64_t dim2 = s.GetDim(existing - 2);
   int64_t unused_dim = 0;
@@ -109,7 +109,7 @@ CUST_IMPLEMT_INFERFUNC(Geqrf, GeqrfInfer) {
     return GRAPH_FAILED;
   }
 
-  int dim_num = input.GetDimNum();
+  int dim_num = static_cast<int>(input.GetDimNum());
   int m = input.GetDim(dim_num - 2);
   int n = input.GetDim(dim_num - 1);
   Shape r_shape;
@@ -160,7 +160,7 @@ CUST_IMPLEMT_INFERFUNC(LuUnpack, LuUnpackInferShape) {
     return GRAPH_FAILED;
   }
 
-  int64_t existing = LU_data.GetDimNum();
+  int64_t existing = static_cast<int64_t>(LU_data.GetDimNum());
   int64_t dim1 = LU_data.GetDim(existing - 2);
   int64_t dim2 = LU_data.GetDim(existing - 1);
 
@@ -418,7 +418,7 @@ IMPLEMT_INFERFUNC(Qr, QrInfer) {
     return GRAPH_FAILED;
   }
 
-  int dim_num = input.GetDimNum();
+  int dim_num = static_cast<int>(input.GetDimNum());
   int m = input.GetDim(dim_num - 2);
   int n = input.GetDim(dim_num - 1);
   Shape q_shape;

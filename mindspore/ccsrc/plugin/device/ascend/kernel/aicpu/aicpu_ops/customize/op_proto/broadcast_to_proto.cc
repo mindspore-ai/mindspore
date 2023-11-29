@@ -21,9 +21,9 @@
 namespace ge {
 template <typename T>
 static void CaclDims(const Tensor &data, std::vector<int64_t> &vec_dim) {
-  int32_t size = data.GetSize() / sizeof(T);
+  int32_t size = static_cast<int32_t>(data.GetSize() / sizeof(T));
   for (int32_t i = 0; i < size; i++) {
-    T dim = *((T *)data.GetData() + i);
+    T dim = *(reinterpret_cast<const T *>(data.GetData()) + i);
     vec_dim.push_back(dim);
   }
 }

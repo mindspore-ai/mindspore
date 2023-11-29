@@ -166,9 +166,9 @@ bool TwoShapeAndRangeBroadcastIntegration(const Operator &op, std::vector<int64_
     range = range_temp;
   }
   if (dimVec.size() != dims.size()) {
-    int dec = dimVec.size() - dims.size();
+    int dec = static_cast<int>(dimVec.size() - dims.size());
     for (int i = 0; i < dec; i++) {
-      dims.insert(dims.begin(), (int64_t)1);
+      dims.insert(dims.begin(), 1);
     }
   }
   for (size_t i = 0; i < dimVec.size(); i++) {
@@ -415,9 +415,9 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 
   // pad 1 for small shape
   if (dimsX.size() != dimsY.size()) {
-    int dec = dimsX.size() - dimsY.size();
+    int dec = static_cast<int>(dimsX.size() - dimsY.size());
     for (int i = 0; i < dec; i++) {
-      dimsY.insert(dimsY.begin(), (int64_t)1);
+      dimsY.insert(dimsY.begin(), static_cast<int64_t>(1));
     }
   }
 
@@ -534,9 +534,9 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 
   // pad 1 for small shape
   if (dimsX.size() != dimsY.size()) {
-    int dec = dimsX.size() - dimsY.size();
+    int dec = static_cast<int>(dimsX.size() - dimsY.size());
     for (int i = 0; i < dec; i++) {
-      dimsY.insert(dimsY.begin(), (int64_t)1);
+      dimsY.insert(dimsY.begin(), static_cast<int64_t>(1));
     }
   }
 
@@ -747,7 +747,7 @@ static std::vector<int64_t> GetNewAxis4NDC1HWC0(std::size_t ori_shape_len, int64
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) < ori_format_upper.length()) {
@@ -790,7 +790,7 @@ static std::vector<int64_t> GetNewAxis4NC1HWC0(std::size_t ori_shape_len, int64_
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) < ori_format_upper.length()) {
@@ -816,7 +816,7 @@ static std::vector<int64_t> GetNewAxis4FRACTAL_NZ(std::size_t ori_shape_len, int
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) >= ori_shape_len) {
@@ -1019,7 +1019,7 @@ template <typename T>
 static std::vector<int64_t> GetConstIntData(const uint8_t *const_data, size_t data_size) {
   size_t size = data_size / sizeof(T);
   std::vector<int64_t> result(size);
-  T *data = (T *)const_data;
+  const T *data = reinterpret_cast<const T *>(const_data);
   for (size_t i = 0; i < size; i++) {
     result[i] = *(data + i);
   }
@@ -1054,18 +1054,20 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
   CHECK(dtype != ge::DT_INT32 && dtype != ge::DT_INT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("not support this type")), return false);
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
     size_t size = const_tensor.GetSize() / sizeof(int32_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back((int32_t)((*(const_data_ptr + i))));
-      OP_LOGD(TbeGetName(op).c_str(), "const data int32 fusion pass ====== %d", (int32_t)(*(const_data_ptr + i)));
+      const_data.push_back(static_cast<int32_t>(*(const_data_ptr + i)));
+      OP_LOGD(TbeGetName(op).c_str(), "const data int32 fusion pass ====== %d",
+              static_cast<int32_t>(*(const_data_ptr + i)));
     }
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
     size_t size = const_tensor.GetSize() / sizeof(int64_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back(((int64_t)(*(const_data_ptr + i))));
-      OP_LOGD(TbeGetName(op).c_str(), "const data int64 fusion pass ====== %ld", (int64_t)(*(const_data_ptr + i)));
+      const_data.push_back((static_cast<int64_t>(*(const_data_ptr + i))));
+      OP_LOGD(TbeGetName(op).c_str(), "const data int64 fusion pass ====== %ld",
+              static_cast<int64_t>(*(const_data_ptr + i)));
     }
   }
   return true;
@@ -1076,12 +1078,12 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
   size_t size = 0;
   CHECK(dtype != ge::DT_UINT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("not support this type")), return false);
-  uint64_t *const_data_ptr = (uint64_t *)const_tensor.GetData();
+  const uint64_t *const_data_ptr = reinterpret_cast<const uint64_t *>(const_tensor.GetData());
   size = const_tensor.GetSize() / sizeof(uint64_t);
   for (size_t i = 0; i < size; ++i) {
-    const_data.push_back((uint64_t)(*(const_data_ptr + i)));
+    const_data.push_back(static_cast<uint64_t>(*(const_data_ptr + i)));
     OP_LOGD(TbeGetName(op).c_str(), "const data uint64 fusion pass, const_data[%lu]",
-            (uint64_t)(*(const_data_ptr + i)));
+            static_cast<uint64_t>(*(const_data_ptr + i)));
   }
   return true;
 }
@@ -1089,23 +1091,23 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
 bool GetConstValue(const Operator &op, const GeTensor *const_tensor, const DataType &dtype,
                    std::vector<int64_t> &const_data) {
   size_t size = const_tensor->GetData().GetSize();
-  void *data_ptr = (void *)const_tensor->GetData().GetData();
+  const void *data_ptr = static_cast<const void *>(const_tensor->GetData().GetData());
   CHECK(data_ptr == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("data is null.")),
         return false);
 
   CHECK(dtype != ge::DT_INT32 && dtype != ge::DT_INT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("const not support this type")), return false);
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = reinterpret_cast<int32_t *>(data_ptr);
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(data_ptr);
     size = size / sizeof(int32_t);
     for (size_t i = 0; i < size; i++) {
-      const_data.push_back((int64_t)((int32_t)((*(const_data_ptr + i)))));
+      const_data.push_back(static_cast<int64_t>(*(const_data_ptr + i)));
     }
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = reinterpret_cast<int64_t *>(data_ptr);
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(data_ptr);
     size = size / sizeof(int64_t);
     for (size_t i = 0; i < size; i++) {
-      const_data.push_back((int64_t)((int64_t)((*(const_data_ptr + i)))));
+      const_data.push_back(static_cast<int64_t>(*(const_data_ptr + i)));
     }
   }
   return true;
@@ -1118,11 +1120,11 @@ bool GetConstValue(const Operator &op, const GeTensorPtr &const_tensor, const Da
 
 bool GetScalerValue(const Operator &op, const Tensor &const_tensor, const DataType &dtype, std::int64_t &const_data) {
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
-    const_data = (int32_t)(*const_data_ptr);
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
+    const_data = static_cast<int64_t>(*const_data_ptr);
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
-    const_data = (int64_t)(*const_data_ptr);
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
+    const_data = static_cast<int64_t>(*const_data_ptr);
   } else {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg(ConcatString("not support this type:", dtype)));
     return false;
@@ -1893,7 +1895,7 @@ ge::graphStatus InferElementwiseAxisTypeHelper(const Operator &op, vector<AxisTy
 
   for (size_t idx = 0; idx < excepted_axes.size(); ++idx) {
     if (excepted_axes[idx] < 0) {
-      excepted_axes[idx] = excepted_axes[idx] + dim_num;
+      excepted_axes[idx] = excepted_axes[idx] + static_cast<int64_t>(dim_num);
     }
   }
 
