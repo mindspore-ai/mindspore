@@ -614,7 +614,7 @@ def test_raise_constant_folding_int64():
     assert "The input can not be 11." in str(raise_info_constant_int64.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -639,9 +639,8 @@ def test_assert_tensor_join_assert():
     y = Tensor(3, ms.int32)
     with pytest.raises(AssertionError) as err:
         net = Net()
-        output = net(x, y)
-        print("output:", output)
-    assert "The output is 5, y is 3." in str(err)
+        net(x, y)
+    assert "The output is 5, y is 3" in str(err)
 
 
 def judge_tuple_index_dim_check_error(index_dim, data_dim, x):
