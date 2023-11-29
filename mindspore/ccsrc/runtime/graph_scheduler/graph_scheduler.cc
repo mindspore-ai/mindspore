@@ -2289,8 +2289,8 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
     if ((last_actor != nullptr) && (to_actor != nullptr)) {
       SchedulerHelper::AddControlArrow(last_actor, to_actor);
     } else {
-      MS_LOG(INFO) << "Skip add control arrow, from kernel: " << execution_order[i - 1]->fullname_with_scope()
-                   << ", to kernel: " << to_kernel->fullname_with_scope();
+      MS_LOG(WARNING) << "Skip add control arrow, from kernel: " << execution_order[i - 1]->fullname_with_scope()
+                      << ", to kernel: " << to_kernel->fullname_with_scope();
     }
     if (to_actor != nullptr) {
       last_actor = to_actor;
@@ -2301,8 +2301,7 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                                          const std::vector<KernelGraphPtr> &graphs,
                                                          const GraphCompilerInfo &graph_compiler_info) const {
-  const size_t kCommunicationNodesMinNum = 2;
-  if (communication_nodes.size() < kCommunicationNodesMinNum) {
+  if (communication_nodes.empty()) {
     return;
   }
 

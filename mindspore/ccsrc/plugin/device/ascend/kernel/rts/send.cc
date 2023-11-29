@@ -46,8 +46,8 @@ bool SendKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool SendKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                        const std::vector<AddressPtr> &, void *stream_ptr) {
+bool SendKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                        const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto status = aclrtRecordEvent(event_, stream_ptr);
