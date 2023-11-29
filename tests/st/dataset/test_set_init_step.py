@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.dataset as ds
 import mindspore.nn as nn
-from mindspore import Callback, context, ops
+from mindspore import Callback, context, ops, Parameter
 from mindspore.train import Model
 
 
@@ -43,12 +43,17 @@ class Net(nn.Cell):
     """
     A very simple network.
     """
-
+    def __init__(self):
+        super(Net, self).__init__()
+        # Until 11/28/2023, GE will return directly if no parameters in graph,
+        # which causes Loop Sinking unavailable.
+        # Thus we add a "w" here to prevent early return.
+        self.w = Parameter(1., name="w")
     def construct(self, x):
         """
         Take the squre of the input.
         """
-        return ops.square(x)
+        return ops.square(x) * self.w
 
 
 class TestBreakpointTraining:
@@ -172,6 +177,7 @@ class TestBreakpointTraining:
 
     @pytest.mark.level0
     @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
@@ -206,6 +212,7 @@ class TestBreakpointTraining:
 
     @pytest.mark.level0
     @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
