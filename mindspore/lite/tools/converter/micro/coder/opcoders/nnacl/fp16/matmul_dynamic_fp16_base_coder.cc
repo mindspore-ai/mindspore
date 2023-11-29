@@ -212,7 +212,7 @@ int MatMulDynamicFP16BaseCoder::InitMatrixB(CoderContext *const context) {
   return RET_OK;
 }
 
-int MatMulDynamicFP16BaseCoder::CollectFilesForTarget(CoderContext *const context) {
+void MatMulDynamicFP16BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp16/pack_fp16.h",
@@ -240,6 +240,5 @@ int MatMulDynamicFP16BaseCoder::CollectFilesForTarget(CoderContext *const contex
               "VecMatmulFp16.S",
             });
   }
-  return RET_OK;
 }
 }  // namespace mindspore::lite::micro::nnacl

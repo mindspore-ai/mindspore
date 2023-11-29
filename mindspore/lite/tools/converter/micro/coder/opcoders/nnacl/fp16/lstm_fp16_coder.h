@@ -36,10 +36,12 @@ class LstmFP16Coder final : public LstmFP32Coder {
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int MallocRunBuffer(CoderContext *const context) override;
   int InitInputWeightBias(CoderContext *const context) override;
   int InitStateWeightBias(CoderContext *const context) override;
+
+ private:
   int InitProjectWeight(CoderContext *const context);
   void *buffer_fp16_[7] = {nullptr};
   void *weight_pro_ptr_{nullptr};

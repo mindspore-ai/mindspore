@@ -33,7 +33,7 @@ class TransposeFp16Coder final : public TransposeFp32Coder {
 
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int ResetStatus() override;
 };
 }  // namespace mindspore::lite::micro::nnacl

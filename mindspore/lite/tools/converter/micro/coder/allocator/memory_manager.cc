@@ -81,7 +81,8 @@ void MemoryManager::ReleaseInputs(const std::unique_ptr<OperatorCoder> &node, co
     if (input->category() != Category::VAR && input->data() != nullptr) {
       continue;
     }
-    bool is_output = std::any_of(outputs.begin(), outputs.end(), [&input](Tensor *tensor) { return tensor == input; });
+    bool is_output =
+      std::any_of(outputs.begin(), outputs.end(), [&input](const Tensor *tensor) { return tensor == input; });
     if (is_output) {
       continue;
     }

@@ -31,10 +31,12 @@ class CoderTrainSession : public CoderSession {
 
   int GenerateCode() override;
 
- private:
+ protected:
   int DoCode() override;
-  int UpdateCodeBlocksWithFlag();
   int PassArgsToContext(const std::string &model_name) override;
+
+ private:
+  int UpdateCodeBlocksWithFlag();
   void FindEvalCoders(OperatorCoder *coder);
   int CompileTrainCoders();
   int CompileEvalCoders(const std::map<std::string, std::vector<Tensor *>> &eval_outputs_map);

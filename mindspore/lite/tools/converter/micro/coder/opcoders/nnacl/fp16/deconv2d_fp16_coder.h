@@ -36,7 +36,7 @@ class DeConvolutionFP16Coder final : public DeConvolutionFP32Coder {
 
   ~DeConvolutionFP16Coder() override = default;
 
- private:
+ protected:
   int InitRunBuf() override;
   int InitWeightBias(CoderContext *const context) override;
   void CollectFilesForFunc(CoderContext *const context) override;

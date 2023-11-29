@@ -131,7 +131,7 @@ class CoderContext {
 
   std::vector<std::string> GetInitWeightSizeCode() const;
 
-  int GetCurModelIndex() { return model_index_; }
+  int GetCurModelIndex() const { return model_index_; }
 
   std::set<std::string> c_files() const { return c_files_; }
   void set_c_files(const std::set<std::string> &files) { c_files_.insert(files.begin(), files.end()); }
@@ -142,9 +142,9 @@ class CoderContext {
   std::set<std::string> asm_files() const { return asm_files_; }
   void set_asm_files(const std::set<std::string> &files) { asm_files_.insert(files.begin(), files.end()); }
 
-  size_t max_buffer_size() { return max_buffer_size_; }
+  size_t max_buffer_size() const { return max_buffer_size_; }
 
-  bool end_flag() { return end_flag_; }
+  bool end_flag() const { return end_flag_; }
 
  private:
   std::string model_name_;
