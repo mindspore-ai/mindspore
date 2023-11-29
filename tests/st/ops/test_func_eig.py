@@ -52,3 +52,24 @@ def test_eig(mode):
     expect_vector = np.array([[1.+0.j, 0.+0.j], [0.+0.j, 1.+0.j]])
     assert np.allclose(expect_value, value.asnumpy())
     assert np.allclose(expect_vector, vector.asnumpy())
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_eig_abnormal_input(mode):
+    """
+    Feature: ops.eig
+    Description: Verify the illegal input of eig
+    Expectation: Raise ValueError
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+
+    inputs = ms.Tensor(np.random.uniform(-10, 10, size=())).astype(ms.float32)
+    with pytest.raises(ValueError) as err:
+        _ = net(inputs)
+    assert "ValueError" in str(err)

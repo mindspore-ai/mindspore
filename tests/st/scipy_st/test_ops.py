@@ -134,6 +134,27 @@ def test_eig(shape, data_type, rtol, atol):
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(), (1)])
+@pytest.mark.parametrize('data_type', [np.float32, np.float64])
+def test_eig_illegal_input(shape, data_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Eig operator when input are illegal
+    Expectation: Eig raise ValueError
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    a = create_random_rank_matrix(shape, data_type)
+    tensor_a = Tensor(a)
+
+    # Check Eig with illegal input
+    with pytest.raises(ValueError) as err:
+        _ = Eig(True)(tensor_a)
+    assert "ValueError" in str(err)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2, 4, 4)])
 @pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
                                                    (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
