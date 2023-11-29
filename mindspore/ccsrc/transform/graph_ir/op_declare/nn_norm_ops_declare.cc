@@ -113,6 +113,21 @@ ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
 
+// LayerNormV3
+INPUT_MAP(LayerNormV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
+ATTR_MAP(LayerNormV3) = {{"begin_norm_axis", ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
+                         {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
+                         {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(LayerNormV3) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(LayerNormV3, prim::kPrimLayerNormV3->name(), ADPT_DESC(LayerNormV3))
+
+// LayerNormGradV3
+INPUT_MAP(LayerNormGradV3) = {
+  {1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(gamma)}};
+ATTR_MAP(LayerNormGradV3) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LayerNormGradV3) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
+REG_ADPT_DESC(LayerNormGradV3, prim::kPrimLayerNormGradV3->name(), ADPT_DESC(LayerNormGradV3))
+
 // LayerNormBetaGammaBackpropV2
 INPUT_MAP(LayerNormBetaGammaBackpropV2) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(res_for_gamma)}};
 ATTR_MAP(LayerNormBetaGammaBackpropV2) = {{"shape_gamma", ATTR_DESC(shape_gamma, AnyTraits<std::vector<int64_t>>())}};

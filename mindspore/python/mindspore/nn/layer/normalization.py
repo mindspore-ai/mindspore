@@ -37,7 +37,7 @@ from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.nn.cell import Cell
 from mindspore import log as logger
 
-__all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'LayerNormV3', 'GroupNorm',
            'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']
 
 
@@ -758,7 +758,104 @@ class LayerNorm(Cell):
                                       epsilon=self.epsilon)
 
     def construct(self, input_x):
-        y, _, _ = self.layer_norm(input_x, self.gamma.astype(input_x.dtype), self.beta.astype(input_x.dtype))
+        y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
+        return y
+
+    def extend_repr(self):
+        return 'normalized_shape={}, begin_norm_axis={}, begin_params_axis={}, gamma{}, beta={}'.format(
+            self.normalized_shape, self.begin_norm_axis, self.begin_params_axis, self.gamma, self.beta)
+
+
+class LayerNormV3(Cell):
+    r"""
+    Applies Layer Normalization over a mini-batch of inputs.
+
+    Layer Normalization is widely used in recurrent neural networks. It applies
+    normalization on a mini-batch of inputs for each single training case as described
+    in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
+    Normalization, Layer Normalization performs exactly the same computation at training and
+    testing time. It is applied across all channels and pixel but only one batch size.
+    :math:`\gamma` and :math:`\beta` are trainable scale and shift.
+    It can be described using the following formula:
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    Args:
+        normalized_shape (Union(tuple[int], list[int])): The normalization is performed over axis
+            `begin_norm_axis ... R - 1`. R is the dimension size of input `x`.
+        begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
+            `begin_norm_axis: R`, the value should be in [-1, R). Default: ``-1`` .
+        begin_params_axis (int): The begin axis of the parameter input :math:`(\gamma, \beta)` to
+            apply LayerNorm, the value should be in [-1, R). Default: ``-1`` .
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
+            The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
+            ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
+        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
+
+    Inputs:
+        - **x** (Tensor) - The shape of `x` is :math:`(x_1, x_2, ..., x_R)`,
+          and `input_shape[begin_norm_axis:]` is equal to `normalized_shape`.
+
+    Outputs:
+        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
+
+    Raises:
+        TypeError: If `normalized_shape` is neither a list nor tuple.
+        TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
+        TypeError: If `epsilon` is not a float.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.ones([20, 5, 10, 10]), ms.float32)
+        >>> shape1 = x.shape[1:]
+        >>> m = ms.nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
+        >>> output = m(x).shape
+        >>> print(output)
+        (20, 5, 10, 10)
+    """
+
+    def __init__(self,
+                 normalized_shape,
+                 begin_norm_axis=-1,
+                 begin_params_axis=-1,
+                 gamma_init='ones',
+                 beta_init='zeros',
+                 epsilon=1e-7,
+                 dtype=mstype.float32
+                 ):
+        """Initialize LayerNorm."""
+        super(LayerNormV3, self).__init__()
+        if not isinstance(normalized_shape, (tuple, list)):
+            raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
+                            f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
+        if not normalized_shape:
+            raise ValueError(
+                f"Expected normalized_shape to be at least 1-dimensional, i.e., containing at "
+                f"least one element, but got normalized_shape = {normalized_shape}"
+            )
+        self.normalized_shape = normalized_shape
+        self.begin_norm_axis = begin_norm_axis
+        self.begin_params_axis = begin_params_axis
+        self.epsilon = epsilon
+        self.gamma = Parameter(initializer(
+            gamma_init, normalized_shape, dtype=dtype), name="gamma")
+        self.beta = Parameter(initializer(
+            beta_init, normalized_shape, dtype=dtype), name="beta")
+        self.layer_norm_v3 = P.LayerNormV3(begin_norm_axis=self.begin_norm_axis,
+                                           begin_params_axis=self.begin_params_axis,
+                                           epsilon=self.epsilon)
+
+    def construct(self, input_x):
+        y, _, _ = self.layer_norm_v3(input_x, self.gamma, self.beta)
         return y
 
     def extend_repr(self):
