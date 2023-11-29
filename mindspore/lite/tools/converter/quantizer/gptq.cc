@@ -116,7 +116,7 @@ int Gptq::CalculateHessianInv(float *hessian_data, float *hessian_inv_data, int 
     *(hessian_data + i * hessian_length + i) += damp;
   }
   float *hessian_data_tmp = reinterpret_cast<float *>(malloc(hessian_length * hessian_length * sizeof(float)));
-  MS_CHECK_TRUE_MSG(hessian_data_tmp != nullptr, false, "Malloc hessian data failed.");
+  MS_CHECK_TRUE_MSG(hessian_data_tmp != nullptr, RET_ERROR, "Malloc hessian data failed.");
   std::vector<int64_t> dims{hessian_length, hessian_length};
   if (quant::CalculateCholesky<float>(hessian_data, hessian_data_tmp, dims) != RET_OK) {
     MS_LOG(ERROR) << "Calculate Hessian matrix cholesky failed";
