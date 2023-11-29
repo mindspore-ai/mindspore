@@ -40,11 +40,13 @@ class ConvertAttrToInput : public opt::Pass {
   ConvertAttrToInput() : Pass("convert_attr_to_input") {}
   ~ConvertAttrToInput() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+  static bool Process(const AnfNodePtr &node);
 
  private:
-  bool Process(const CNodePtr &cnode, const ops::OpDefPtr &op_def, const PrimitivePtr &primitive);
-  void AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name, const std::string &arg_handler,
-                      const PrimitivePtr &primitive);
+  static void AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name, const std::string &arg_handler,
+                             const PrimitivePtr &primitive);
 };
+
+bool NeedConvertInputAndAttr(const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CONVERT_INPUT_AND_ATTR_H_

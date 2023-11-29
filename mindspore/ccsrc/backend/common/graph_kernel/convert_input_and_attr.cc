@@ -17,8 +17,9 @@
 #include <vector>
 #include <unordered_map>
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
+#include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
-#include "backend/common/graph_kernel/adapter/callback_impl.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/sequence_ops.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -241,9 +242,19 @@ void ConvertAttrToInput::AddAttrToInput(const CNodePtr &cnode, const std::string
   primitive->DelAttr(arg_name);
 }
 
-bool ConvertAttrToInput::Process(const CNodePtr &cnode, const ops::OpDefPtr &op_def, const PrimitivePtr &primitive) {
+bool ConvertAttrToInput::Process(const AnfNodePtr &node) {
+  auto primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &op_name = primitive->name();
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(WARNING) << op_name << " not found in op def.";
+    return false;
+  }
   const auto &op_def_args = op_def->args_;
   bool changed = false;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto ori_input_size = cnode->size() - 1;
   auto iter = op_def_args.cbegin() + ori_input_size;
   for (; iter != op_def_args.cend(); ++iter) {
@@ -252,11 +263,10 @@ bool ConvertAttrToInput::Process(const CNodePtr &cnode, const ops::OpDefPtr &op_
       MS_LOG(EXCEPTION) << primitive->name() << "'s input:" << iter->arg_name_
                         << " must have as_init_arg_ when convert attr to input.";
     }
-    MS_LOG(DEBUG) << cnode->ToString() << " convert attr [" << iter->arg_name_ << "] to input.";
-    AddAttrToInput(cnode, iter->arg_name_, iter->arg_handler_, primitive);
+    MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << iter->arg_name_ << "] to input.";
+    ConvertAttrToInput::AddAttrToInput(cnode, iter->arg_name_, iter->arg_handler_, primitive);
     changed = true;
   }
-
   if (changed) {
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
@@ -270,28 +280,19 @@ bool ConvertAttrToInput::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->get_return());
   auto todos = TopoSort(func_graph->get_return());
-  const auto &input_to_attr_ops = GetConvertInputAttrOps();
   for (auto &node : todos) {
-    auto primitive = GetCNodePrimitive(node);
-    if (primitive == nullptr) {
-      continue;
+    if (NeedConvertInputAndAttr(node)) {
+      changed = ConvertAttrToInput::Process(node) || changed;
     }
-    const auto &op_name = primitive->name();
-    if (input_to_attr_ops.count(op_name) == 0) {
-      continue;
-    }
-    auto op_def = mindspore::ops::GetOpDef(op_name);
-    if (op_def == nullptr) {
-      MS_LOG(WARNING) << op_name << " not found in op def.";
-      continue;
-    }
-    auto cnode = dyn_cast<CNode>(node);
-    changed = Process(cnode, op_def, primitive) || changed;
   }
   if (changed) {
     auto mng = GkUtils::GetFuncGraphManager(func_graph);
     GkUtils::UpdateFuncGraphManager(mng, func_graph);
   }
   return changed;
+}
+
+bool NeedConvertInputAndAttr(const AnfNodePtr &node) {
+  return node->isa<CNode>() && GetConvertInputAttrOps().count(AnfUtils::GetCNodeName(node)) != 0;
 }
 }  // namespace mindspore::graphkernel

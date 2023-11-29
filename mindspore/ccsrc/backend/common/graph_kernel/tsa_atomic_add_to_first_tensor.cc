@@ -136,7 +136,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
   new_sub_graph->set_output(identity_node);
   auto new_copy_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph), tsa_first_input.first});
   new_copy_composite_node->set_abstract(identity_node->abstract());
-  SetNewKernelInfo(new_copy_composite_node, new_sub_graph, {tsa_first_input.first}, {identity_node});
+  Callback::Instance()->SetGraphKernelNodeKernelInfo(new_copy_composite_node);
   auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "tsa_identity");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
   new_sub_graph->set_attr("composite_type", MakeValue("tsa_identity"));
