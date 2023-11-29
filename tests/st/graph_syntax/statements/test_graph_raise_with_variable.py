@@ -478,6 +478,8 @@ def test_raise_with_input_error_type_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_raise_join_in_control_flow():
     """
