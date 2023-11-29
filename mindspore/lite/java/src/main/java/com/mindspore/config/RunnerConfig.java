@@ -110,7 +110,7 @@ public class RunnerConfig {
     /**
      * Set device id list
      *
-     * @param deviceIdList The device id list.
+     * @param deviceIds The device id list.
      */
     public void setDeviceIds(ArrayList<Integer> deviceIds) {
         int len = deviceIds.size();
@@ -131,7 +131,9 @@ public class RunnerConfig {
     }
 
     /**
-     * @return Get device id list
+     * Get device id list.
+     *
+     * @return device id list.
      */
     public ArrayList<Integer> getDeviceIds() {
         return getDeviceIds(runnerConfigPtr);
