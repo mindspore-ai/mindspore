@@ -542,13 +542,10 @@ MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(uint32_t, const 
 }
 
 void SingleOpInferSession::AscendFinalize() {
-  if (!kernel::AscendKernelPlugin::Register()) {
-    return;
-  }
   auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
-    MS_LOG(WARNING) << "Create kernel mod failed: " << kernel_name;
+    MS_LOG(INFO) << "Create kernel mod failed: " << kernel_name;
     return;
   }
   (void)kernel_mod->Finalize();
