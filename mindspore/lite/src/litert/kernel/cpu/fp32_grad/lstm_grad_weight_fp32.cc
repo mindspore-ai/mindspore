@@ -62,7 +62,7 @@ int LSTMGradWeightCPUKernel::Run() {
   // Get Tensors Data
   int time_stamp_len = lstm_param_->batch_ * lstm_param_->hidden_size_;
   input_ = reinterpret_cast<float *>(input_tensor->data());
-  memset(dW_tmp_, 0, dW_tensor->Size());
+  (void)memset(dW_tmp_, 0, dW_tensor->Size());
 
   int w_size = lstm_param_->hidden_size_ * lstm_param_->input_size_;
   int h_size = lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
@@ -108,7 +108,7 @@ int LSTMGradWeightCPUKernel::Run() {
   return RET_OK;
 }
 
-int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *dw, float *dv, float *db) {
+void LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *dw, float *dv, float *db) {
   float *hidden_state = intermediate_data_;
   int state_len = lstm_param_->batch_ * lstm_param_->hidden_size_;
   int prev_time_stamp_offset = (is_backward) ? 1 : -1;
@@ -123,7 +123,6 @@ int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(bool is_backward, float 
     float *curr_da = dA_ + real_t * num_of_gates * state_len;
     LstmGradDoWeightStep(curr_input, prev_hidden_state, curr_da, dw, dv, db, workspace_, lstm_param_);
   }
-  return RET_OK;
 }
 
 void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, LstmGradParameter *param) {
@@ -158,8 +157,6 @@ void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, Lstm
     }
   }
 }
-
-int LSTMGradWeightCPUKernel::DoGrad(int thread_id) { return RET_OK; }
 
 int LSTMGradWeightCPUKernel::InitParam() {
   auto input = in_tensors_.front();

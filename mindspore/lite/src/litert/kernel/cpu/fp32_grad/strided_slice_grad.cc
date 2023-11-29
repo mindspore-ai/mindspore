@@ -80,7 +80,8 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
     if (real_index >= 0) {
       param_->begins_[i] = begins[real_index];
       param_->ends_[i] = ends[real_index];
-      param_->strides_[i] = strides[real_index--];
+      param_->strides_[i] = strides[real_index];
+      real_index--;
     } else {
       param_->begins_[i] = 0;
       param_->ends_[i] = 1;

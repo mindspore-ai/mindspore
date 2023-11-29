@@ -170,7 +170,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() {
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto dims = in_tensors_.at(0)->shape();
   param->n_dim_ = 2;
-  param->number_of_classes_ = dims.at(1);
+  param->number_of_classes_ = static_cast<size_t>(dims.at(1));
   param->batch_size_ = dims.at(0);
   for (unsigned int i = 0; i < dims.size(); i++) {
     param->input_shape_[i] = dims.at(i);

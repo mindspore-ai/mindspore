@@ -135,7 +135,7 @@ int ConvolutionGradFilterCPUKernel::DoExecute(int task_id) {
     for (int i = 0; i < conv_param->output_batch_; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
         real_chunk = MSMIN(m - ci, chunk_);
-        mat_b = workspace_temp + task_id * ws_size_;
+        mat_b = workspace_temp + task_id * static_cast<int>(ws_size_);
         im = x_addr + (i * in_ch * in_h * in_w);
         RollingIm2ColPackDwUnitFp32(im, conv_param, mat_b, real_chunk, ci);
         for (int j = start; j < end; ++j) {
