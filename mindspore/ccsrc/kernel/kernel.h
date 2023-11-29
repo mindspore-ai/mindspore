@@ -260,7 +260,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
     // Sync value data from device.
     if (!SyncDataFromDeviceToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+      MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
     }
     return kernel_tensor_value_->GetDataPtr();
   }
@@ -280,7 +280,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
     // Sync value data from device.
     if (!SyncDataFromDeviceToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+      MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
     }
     return kernel_tensor_value_;
   }
@@ -299,7 +299,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     } else {
       // Sync value data from device.
       if (!SyncDataFromDeviceToHost()) {
-        MS_LOG(ERROR) << "Sync data form device to host side failed";
+        MS_LOG(ERROR) << "Sync data from device to host side failed";
         return std::nullopt;
       }
     }
@@ -332,7 +332,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     } else {
       // Sync value data from device.
       if (!SyncDataFromDeviceToHost()) {
-        MS_LOG(ERROR) << "Sync data form device to host side failed";
+        MS_LOG(ERROR) << "Sync data from device to host side failed";
         return std::nullopt;
       }
     }
@@ -567,13 +567,13 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The memory size in byte of the KernelTensor.
   size_t size_{0};
 
-  // The device target name, such "GPU","Ascend".
+  // The device target name, such as "GPU","Ascend".
   std::string device_name_;
 
   // Represents the device card id associated with the KernelTensor.
   uint32_t device_id_;
 
-  // The stream index in all stream array managed by Framework, starting form 0.
+  // The stream index in all stream array managed by Framework, starting from 0.
   size_t stream_id_{0};
 
   // User data is the extra data required by the kernel or framework.

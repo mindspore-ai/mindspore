@@ -22,22 +22,32 @@ KernelTensorValue::KernelTensorValue(size_t size, const TypePtr &t) : Value(t) {
   if (t) {
     obj_type_id_ = t->object_type();
   }
-  unified_data_.resize(size);
-  use_unified_storage_ = true;
+  mutable_data_ = std::shared_ptr<uint8_t[]>(new (std::nothrow) uint8_t[size]);
+  size_ = size;
+  use_mutable_storage_ = true;
+}
+
+KernelTensorValue::KernelTensorValue(const void *data, size_t size, const TypePtr &t) : Value(t) {
+  if (t) {
+    obj_type_id_ = t->object_type();
+  }
+  mutable_data_ = data;
+  size_ = size;
+  use_mutable_storage_ = true;
 }
 
 KernelTensorValue::KernelTensorValue(const tensor::TensorDataPtr &tensor_data, const TypePtr &t) : Value(t) {
-  data_ = tensor_data;
+  const_data_ = tensor_data;
   obj_type_id_ = kObjectTypeTensorType;
 }
 
 KernelTensorValue::KernelTensorValue(std::vector<uint8_t> &&array_data, const TypePtr &t) : Value(t) {
-  data_ = std::move(array_data);
+  const_data_ = std::move(array_data);
   obj_type_id_ = kObjectTypeTuple;
 }
 
 KernelTensorValue::KernelTensorValue(const StringImmPtr &string, const TypePtr &t) : Value(t) {
-  data_ = string;
+  const_data_ = string;
   obj_type_id_ = kObjectTypeString;
 }
 
@@ -50,28 +60,31 @@ bool KernelTensorValue::operator==(const Value &other) const {
 }
 
 bool KernelTensorValue::operator==(const KernelTensorValue &other) const {
-  if (use_unified_storage_) {
-    return unified_data_ == other.unified_data_;
+  if (use_mutable_storage_) {
+    return mutable_data_ == other.mutable_data_;
   }
-  return data_ == other.data_;
+  return const_data_ == other.const_data_;
 }
 
 void *KernelTensorValue::GetMutableDataPtr() {
-  if (use_unified_storage_) {
-    return unified_data_.data();
+  if (use_mutable_storage_ && std::holds_alternative<std::shared_ptr<uint8_t[]>>(mutable_data_)) {
+    return std::get<std::shared_ptr<uint8_t[]>>(mutable_data_).get();
   }
   MS_LOG(EXCEPTION) << "Can not get mutable data pointer for read-only KernelTensorValue.";
 }
 
 const void *KernelTensorValue::GetDataPtr() const {
-  if (use_unified_storage_) {
-    return unified_data_.data();
+  if (use_mutable_storage_) {
+    if (std::holds_alternative<std::shared_ptr<uint8_t[]>>(mutable_data_)) {
+      return std::get<std::shared_ptr<uint8_t[]>>(mutable_data_).get();
+    }
+    return std::get<const void *>(mutable_data_);
   }
 
   switch (obj_type_id_) {
     case kObjectTypeNumber:
     case kObjectTypeTuple: {
-      const std::vector<uint8_t> &data = std::get<std::vector<uint8_t>>(data_);
+      const std::vector<uint8_t> &data = std::get<std::vector<uint8_t>>(const_data_);
       if (data.empty()) {
         return nullptr;
       }
@@ -79,13 +92,13 @@ const void *KernelTensorValue::GetDataPtr() const {
     }
 
     case kObjectTypeTensorType: {
-      const tensor::TensorDataPtr &tensor_data = std::get<tensor::TensorDataPtr>(data_);
+      const tensor::TensorDataPtr &tensor_data = std::get<tensor::TensorDataPtr>(const_data_);
       MS_EXCEPTION_IF_NULL(tensor_data);
       return tensor_data->data();
     }
 
     case kObjectTypeString: {
-      const StringImmPtr &string_imm = std::get<StringImmPtr>(data_);
+      const StringImmPtr &string_imm = std::get<StringImmPtr>(const_data_);
       MS_EXCEPTION_IF_NULL(string_imm);
       return string_imm->value().data();
     }
@@ -96,14 +109,14 @@ const void *KernelTensorValue::GetDataPtr() const {
 }
 
 size_t KernelTensorValue::GetDataSize() const {
-  if (use_unified_storage_) {
-    return unified_data_.size();
+  if (use_mutable_storage_) {
+    return size_;
   }
 
   switch (obj_type_id_) {
     case kObjectTypeNumber:
     case kObjectTypeTuple: {
-      const std::vector<uint8_t> &data = std::get<std::vector<uint8_t>>(data_);
+      const std::vector<uint8_t> &data = std::get<std::vector<uint8_t>>(const_data_);
       if (data.empty()) {
         return 0;
       }
@@ -111,13 +124,13 @@ size_t KernelTensorValue::GetDataSize() const {
     }
 
     case kObjectTypeTensorType: {
-      const tensor::TensorDataPtr &tensor_data = std::get<tensor::TensorDataPtr>(data_);
+      const tensor::TensorDataPtr &tensor_data = std::get<tensor::TensorDataPtr>(const_data_);
       MS_EXCEPTION_IF_NULL(tensor_data);
       return tensor_data->nbytes();
     }
 
     case kObjectTypeString: {
-      const StringImmPtr &string_imm = std::get<StringImmPtr>(data_);
+      const StringImmPtr &string_imm = std::get<StringImmPtr>(const_data_);
       MS_EXCEPTION_IF_NULL(string_imm);
       return string_imm->value().size();
     }
@@ -127,10 +140,29 @@ size_t KernelTensorValue::GetDataSize() const {
   }
 }
 
-void KernelTensorValue::Resize(size_t size) {
-  if (use_unified_storage_) {
-    return unified_data_.resize(size);
+void KernelTensorValue::SetDataPtr(const void *data_ptr) {
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  if (!use_mutable_storage_) {
+    MS_LOG(EXCEPTION) << "Can not set data for const KernelTensorValue.";
   }
-  MS_LOG(EXCEPTION) << "Can not resize for read-only KernelTensorValue.";
+  if (std::holds_alternative<const void *>(mutable_data_)) {
+    mutable_data_ = data_ptr;
+    return;
+  }
+
+  MS_LOG(EXCEPTION) << "Can not set data pointer for KernelTensorValue which uses shared pointer to storage data.";
+}
+
+void KernelTensorValue::Resize(size_t size) {
+  if (!use_mutable_storage_) {
+    MS_LOG(EXCEPTION) << "Can not resize const KernelTensorValue.";
+  }
+
+  if (std::holds_alternative<std::shared_ptr<uint8_t[]>>(mutable_data_)) {
+    if (size_ < size) {
+      mutable_data_ = std::shared_ptr<uint8_t[]>(new (std::nothrow) uint8_t[size]);
+    }
+  }
+  size_ = size;
 }
 }  // namespace mindspore
