@@ -344,7 +344,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
       MS_CHECK_TRUE_MSG(ret != RET_ERROR, lite::RET_ERROR, "get datatype from MakeTuple input failed.");
       tuple_type_list.push_back(TypeIdToType(orig_type_id));
 
-      manager->SetEdge(anf_node, i, node);
+      manager->SetEdge(anf_node, static_cast<int>(i), node);
     } else {  // For ValueNode the input type is int32
       auto node = GenerateScalarValueTensor(func_graph, anf_node, i);
       MS_CHECK_TRUE_MSG(node != nullptr, lite::RET_ERROR, "generate ScalarValueTensor node failed.");
@@ -371,7 +371,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
   MS_CHECK_TRUE_RET(primitive != nullptr, lite::RET_ERROR);
   size_t num_of_inputs = anf_node->cast<CNodePtr>()->inputs().size() - kSizeOne;
   primitive->set_attr("N", MakeValue<int64_t>(static_cast<int64_t>(num_of_inputs)));
-  primitive->set_attr("inputNums", MakeValue<int64_t>(num_of_inputs));
+  primitive->set_attr("inputNums", MakeValue<int64_t>(static_cast<int64_t>(num_of_inputs)));
 
   // The first input type is used as the type for concat (need to add type check)
   TypeId make_tuple_type;
