@@ -8,23 +8,19 @@ from mindspore import Tensor, nn, ops
 import mindspore as ms
 
 
-def find_npy_file(folder_path):
+def find_npy_files(folder_path):
     folder_path = Path(folder_path)
-    npy_files = list(folder_path.glob('*.npy'))
-    res = None
-
-    if not npy_files:
-        raise FileNotFoundError("No .npy file found in the folder.")
-    if len(npy_files) == 1:
-        res = str(npy_files[0])
-    if len(npy_files) > 1:
-        raise ValueError(
-            "Multiple .npy files found in the folder. There should be only one.")
-    return res
+    result = {}
+    for file in folder_path.glob('*.npy'):
+        file_name = file.stem
+        file_name_without_id = file_name.split('_')[-1]
+        result[file_name_without_id] = str(file.absolute())
+    return result
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize(
     "dtype",
@@ -54,11 +50,15 @@ def test_net(dtype, mode):
         def __init__(self, path):
             super(Net, self).__init__()
             self.dump = ops.TensorDump()
-            self.path = str(path / "out")
+            self.path_x1 = str(path / "x1")
+            self.path_x2 = str(path / "x2")
+            self.path_out = str(path / "out")
 
         def construct(self, x1, x2):
+            self.dump(self.path_x1, x1)
+            self.dump(self.path_x2, x2)
             out = x1 + x2
-            self.dump(self.path, out)
+            self.dump(self.path_out, out)
             return out
 
     ms.set_context(device_target="Ascend", mode=mode)
@@ -70,11 +70,16 @@ def test_net(dtype, mode):
     output = net(Tensor(x1), Tensor(x2))
     out = output.asnumpy()
     time.sleep(0.1)
-    assert np.allclose(out, np.load(find_npy_file(path)))
+    name2file = find_npy_files(path)
+
+    assert np.allclose(x1.asnumpy(), np.load(name2file["x1"]))
+    assert np.allclose(x2.asnumpy(), np.load(name2file["x2"]))
+    assert np.allclose(out, np.load(name2file["out"]))
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_net_bool(mode):
@@ -88,11 +93,15 @@ def test_net_bool(mode):
         def __init__(self, path):
             super(Net, self).__init__()
             self.dump = ops.TensorDump()
-            self.path = str(path / "out")
+            self.path_x1 = str(path / "x1")
+            self.path_x2 = str(path / "x2")
+            self.path_out = str(path / "out")
 
         def construct(self, x1, x2):
+            self.dump(self.path_x1, x1)
+            self.dump(self.path_x2, x2)
             out = ops.logical_and(x1, x2)
-            self.dump(self.path, out)
+            self.dump(self.path_out, out)
             return out
 
     ms.set_context(device_target="Ascend", mode=mode)
@@ -104,4 +113,7 @@ def test_net_bool(mode):
     output = net(Tensor(x1), Tensor(x2))
     out = output.asnumpy()
     time.sleep(0.1)
-    assert np.allclose(out, np.load(find_npy_file(path)))
+    name2file = find_npy_files(path)
+    assert np.allclose(x1.asnumpy(), np.load(name2file["x1"]))
+    assert np.allclose(x2.asnumpy(), np.load(name2file["x2"]))
+    assert np.allclose(out, np.load(name2file["out"]))
