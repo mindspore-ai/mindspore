@@ -17,6 +17,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "ops/nn_op_name.h"
 #include "ops/array_op_name.h"
+#include "runtime/device/device_address_utils.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_dense_embedding_operation.h"
 namespace mindspore {
 namespace runtime {
@@ -242,6 +243,10 @@ void DeviceDenseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
   MS_EXCEPTION_IF_NULL(device_context_->GetKernelExecutor(false));
   device_context_->GetKernelExecutor(false)->CreateKernel({embedding_cache_lookup_node_});
   AnfAlgo::SetStreamId(stream_id_, embedding_cache_lookup_node_.get());
+
+  DeviceAddressUtils::CreateParameterDeviceAddress(device_context_, graph);
+  DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context_, graph, false);
+  DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context_, graph);
 }
 
 void DeviceDenseEmbeddingOperation::BuildEmbeddingCacheUpdateKernel() {
@@ -271,6 +276,10 @@ void DeviceDenseEmbeddingOperation::BuildEmbeddingCacheUpdateKernel() {
   MS_EXCEPTION_IF_NULL(device_context_->GetKernelExecutor(false));
   device_context_->GetKernelExecutor(false)->CreateKernel({embedding_cache_update_node_});
   AnfAlgo::SetStreamId(stream_id_, embedding_cache_update_node_.get());
+
+  DeviceAddressUtils::CreateParameterDeviceAddress(device_context_, graph);
+  DeviceAddressUtils::CreateKernelOutputDeviceAddress(device_context_, graph, false);
+  DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context_, graph);
 }
 
 bool DeviceDenseEmbeddingOperation::LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num,
@@ -280,41 +289,51 @@ bool DeviceDenseEmbeddingOperation::LookupDeviceCache(void *indices, void *embed
   MS_ERROR_IF_NULL(outputs);
   MS_ERROR_IF_NULL(embedding_cache_lookup_node_);
 
-  // 1. Update parameter nodes' shape.
-  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexZero);
-  MS_ERROR_IF_NULL(input_param_node);
-  const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
-  auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
-  input_param_node->set_abstract(input_param_abstract);
+  // 1. Get input and output kernel tensors.
+  std::vector<kernel::KernelTensor *> input_kernel_tensors =
+    AnfAlgo::GetOrCreateAllInputKernelTensors(embedding_cache_lookup_node_);
+  std::vector<kernel::KernelTensor *> output_kernel_tensors =
+    AnfAlgo::GetOrCreateAllOutputKernelTensors(embedding_cache_lookup_node_);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex1]);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex2]);
 
-  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexOne);
-  MS_ERROR_IF_NULL(input_indices_node);
-  const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
-  auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
-  input_indices_node->set_abstract(input_indices_abstract);
+  MS_EXCEPTION_IF_CHECK_FAIL((input_kernel_tensors.size() == kCacheOpInputNum),
+                             "For op: " + embedding_cache_lookup_node_->fullname_with_scope() +
+                               " need 3 inputs, but got " + std::to_string(input_kernel_tensors.size()));
+  MS_EXCEPTION_IF_CHECK_FAIL((output_kernel_tensors.size() == kCacheOpOutputNum),
+                             "For op: " + embedding_cache_lookup_node_->fullname_with_scope() +
+                               " has 1 output, but got " + std::to_string(output_kernel_tensors.size()));
 
-  auto input_offset_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexTwo);
-  MS_ERROR_IF_NULL(input_offset_node);
-  auto offset_address = AnfAlgo::GetMutableOutputAddr(input_offset_node, 0);
-  MS_ERROR_IF_NULL(offset_address);
+  std::vector<abstract::AbstractBasePtr> input_kernel_tensors_for_infer(kCacheOpInputNum, nullptr);
+  for (size_t i = 0; i < kCacheOpInputNum; i++) {
+    const auto &kernel_tensor = AnfAlgo::GetPrevNodeOutputKernelTensor(embedding_cache_lookup_node_, i);
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    input_kernel_tensors_for_infer[i] = kernel_tensor;
+  }
 
-  // 2. Infer shape for embedding cache look up kernel(operator name: 'EmbeddingLookup') which is dynamic shape kernel.
-  if (!InferOpShape(embedding_cache_lookup_node_)) {
+  // 2. Update input shape.
+  ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
+  input_kernel_tensors[kIndex0]->SetShape(std::make_shared<abstract::TensorShape>(std::move(input_param_shape)));
+  ShapeVector input_indices_shape = {SizeToLong(indices_num)};
+  input_kernel_tensors[kIndex1]->SetShape(std::make_shared<abstract::TensorShape>(std::move(input_indices_shape)));
+
+  // 3. Infer shape for embedding cache look up kernel(operator name: 'EmbeddingLookup') which is dynamic shape kernel.
+  if (!InferOpShape(embedding_cache_lookup_node_, input_kernel_tensors, output_kernel_tensors,
+                    input_kernel_tensors_for_infer)) {
     MS_LOG(ERROR) << "Infer operator shape failed, op name: " << embedding_cache_lookup_node_->fullname_with_scope();
     return false;
   }
 
-  // 3. Do embedding cache look up on device.
-  AddressPtrList kernel_inputs = {
-    std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float)),
-    std::make_shared<Address>(indices, indices_num * sizeof(int)),
-    std::make_shared<Address>(offset_address->GetMutablePtr(), offset_address->GetSize())};
-  AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
+  // 4. Do embedding cache look up on device.
+  input_kernel_tensors[kIndex0]->set_device_ptr(embedding_cache);
+  input_kernel_tensors[kIndex1]->set_device_ptr(indices);
+  output_kernel_tensors[kIndex1]->set_device_ptr(outputs);
 
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->GetKernelExecutor(false));
-  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {},
-                                                                     kernel_outputs, stream_id_);
+  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_lookup_node_, input_kernel_tensors,
+                                                                     {}, output_kernel_tensors, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
     return false;
@@ -329,43 +348,54 @@ bool DeviceDenseEmbeddingOperation::UpdateDeviceCache(void *indices, void *updat
   MS_ERROR_IF_NULL(embedding_cache);
   MS_ERROR_IF_NULL(embedding_cache_update_node_);
 
-  // 1. Update parameter nodes' shape.
-  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexZero);
-  MS_ERROR_IF_NULL(input_param_node);
-  const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
-  auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
-  input_param_node->set_abstract(input_param_abstract);
+  // 1. Get input and output kernel tensors.
+  std::vector<kernel::KernelTensor *> input_kernel_tensors =
+    AnfAlgo::GetOrCreateAllInputKernelTensors(embedding_cache_update_node_);
+  std::vector<kernel::KernelTensor *> output_kernel_tensors =
+    AnfAlgo::GetOrCreateAllOutputKernelTensors(embedding_cache_update_node_);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex0]);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex1]);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensors[kIndex2]);
 
-  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexOne);
-  MS_ERROR_IF_NULL(input_indices_node);
+  MS_EXCEPTION_IF_CHECK_FAIL((input_kernel_tensors.size() == kCacheOpInputNum),
+                             "For op: " + embedding_cache_update_node_->fullname_with_scope() +
+                               " need 3 inputs, but got " + std::to_string(input_kernel_tensors.size()));
+  MS_EXCEPTION_IF_CHECK_FAIL((output_kernel_tensors.size() == kCacheOpOutputNum),
+                             "For op: " + embedding_cache_update_node_->fullname_with_scope() +
+                               " has 1 output, but got " + std::to_string(output_kernel_tensors.size()));
+
+  std::vector<abstract::AbstractBasePtr> input_kernel_tensors_for_infer(kCacheOpInputNum, nullptr);
+  for (size_t i = 0; i < kCacheOpInputNum; i++) {
+    const auto &kernel_tensor = AnfAlgo::GetPrevNodeOutputKernelTensor(embedding_cache_update_node_, i);
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    input_kernel_tensors_for_infer[i] = kernel_tensor;
+  }
+
+  // 2. Update input shape.
+  ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
+  input_kernel_tensors[kIndex0]->SetShape(std::make_shared<abstract::TensorShape>(std::move(input_param_shape)));
   const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
-  auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
-  input_indices_node->set_abstract(input_indices_abstract);
-
-  auto update_values_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexTwo);
-  MS_ERROR_IF_NULL(update_values_node);
+  input_kernel_tensors[kIndex1]->SetShape(std::make_shared<abstract::TensorShape>(std::move(input_indices_shape)));
   const ShapeVector update_values_shape = {SizeToLong(indices_num), SizeToLong(embedding_size)};
-  auto update_values_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, update_values_shape);
-  update_values_node->set_abstract(update_values_abstract);
+  input_kernel_tensors[kIndex2]->SetShape(std::make_shared<abstract::TensorShape>(std::move(update_values_shape)));
 
-  // 2. Infer shape for embedding cache update kernel(operator name: 'ScatterUpdate') which is dynamic shape kernel.
-  if (!InferOpShape(embedding_cache_update_node_)) {
+  // 3. Infer shape for embedding cache update kernel(operator name: 'ScatterUpdate') which is dynamic shape kernel.
+  if (!InferOpShape(embedding_cache_update_node_, input_kernel_tensors, output_kernel_tensors,
+                    input_kernel_tensors_for_infer)) {
     MS_LOG(ERROR) << "Infer operator shape failed, op name: " << embedding_cache_update_node_->fullname_with_scope();
     return false;
   }
 
-  // 3. Do update cache on device.
-  AddressPtrList kernel_inputs = {
-    std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float)),
-    std::make_shared<Address>(indices, indices_num * sizeof(int)),
-    std::make_shared<Address>(update_value, indices_num * embedding_size * sizeof(float))};
-  AddressPtrList kernel_outputs = {
-    std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float))};
+  // 4. Do update cache on device.
+  input_kernel_tensors[kIndex0]->set_device_ptr(embedding_cache);
+  input_kernel_tensors[kIndex1]->set_device_ptr(indices);
+  input_kernel_tensors[kIndex2]->set_device_ptr(update_value);
+  output_kernel_tensors[kIndex0]->set_device_ptr(embedding_cache);
 
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->GetKernelExecutor(false));
-  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {},
-                                                                     kernel_outputs, stream_id_);
+  auto ret = device_context_->GetKernelExecutor(false)->LaunchKernel(embedding_cache_update_node_, input_kernel_tensors,
+                                                                     {}, output_kernel_tensors, stream_id_);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;

@@ -130,8 +130,11 @@ device::DeviceAddressPtr ContiguousByDeviceAddress(const device::DeviceAddressPt
   if (old_storage_info->data_type == kTypeUnknown) {
     MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
   }
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();

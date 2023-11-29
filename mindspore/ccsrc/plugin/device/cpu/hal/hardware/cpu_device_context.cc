@@ -194,21 +194,6 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
 }
 }  // namespace
 
-DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                          const string &format, TypeId type_id,
-                                                          const ShapeVector &shape,
-                                                          const UserDataPtr &user_data) const {
-  auto device_address = std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                           device_context_->device_context_key().device_name_,
-                                                           device_context_->device_context_key().device_id_);
-  device_address->set_host_shape(shape);
-  if (user_data != nullptr) {
-    FillUserData(user_data, device_address.get());
-  }
-  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
-  return device_address;
-}
-
 DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto device_address = std::make_shared<CPUDeviceAddress>(kernel_tensor);
