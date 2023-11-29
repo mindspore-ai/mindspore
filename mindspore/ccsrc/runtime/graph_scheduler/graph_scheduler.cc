@@ -1005,6 +1005,7 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
   }
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
+  any_type_graph_scheduler_.Optimize(actor_set, graph_output_to_actor_);
 }
 
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -1490,7 +1491,9 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     // The gather of linking data arrows of kernel by the different from kernel type.
     LinkDataArrow(to_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
   }
-
+  if (graph->is_any_type_input()) {
+    return;
+  }
   // Foreach the execution order to add the auto monad device tensor stores.
   auto &execution_order = graph->execution_order();
   (void)std::for_each(execution_order.begin(), execution_order.end(), [&](const CNodePtr &kernel) {
