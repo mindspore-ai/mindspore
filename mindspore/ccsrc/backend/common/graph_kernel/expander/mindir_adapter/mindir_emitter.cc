@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/expander/mindir_adapter/mindir_emitter.h"
-#include <algorithm>
 #include "ir/primitive.h"
 #include "backend/common/graph_kernel/expander/mindir_adapter/anf_node_holder.h"
 #include "backend/common/graph_kernel/model/op_register.h"
@@ -49,7 +48,7 @@ NodePtr MindirEmitter::DefaultEmitFunc(const std::string &op_name, const NodePtr
     for (auto &[k, v] : kargs) {
       attrs[k] = v->GetValue();
     }
-    prim->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
   }
   AnfNodePtrList inputs(args.size() + 1);
   inputs[0] = NewValueNode(prim);

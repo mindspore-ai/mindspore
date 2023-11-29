@@ -112,8 +112,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
       MS_LOG(ERROR) << "malloc CustomParameter failed.";
       return nullptr;
     }
-    memset(param, 0, sizeof(CustomParameter));
-    param->op_parameter_.type_ = PrimType_Inner_GraphKernel;
+    (void)memset(param, 0, sizeof(CustomParameter));
+    param->op_parameter_.type_ = static_cast<int>(PrimType_Inner_GraphKernel);
     // Just use the attr_data pointer to save the prim directly, the inner value is parsed as necessary.
     param->attr_data[0] = static_cast<char *>(const_cast<void *>(prim));
     return reinterpret_cast<OpParameter *>(param);

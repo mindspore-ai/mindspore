@@ -245,7 +245,8 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   if (used_param.size() == ori_parameter.size()) {
     return;
   }
-  AnfNodePtrList new_parameter, new_inputs{(*inputs)[0]};
+  AnfNodePtrList new_parameter;
+  AnfNodePtrList new_inputs{(*inputs)[0]};
   for (size_t i = 0; i < ori_parameter.size(); ++i) {
     if (used_param.count(ori_parameter[i]) > 0) {
       new_parameter.push_back(ori_parameter[i]);

@@ -15,7 +15,6 @@
  */
 #include "backend/common/graph_kernel/core/tuning_splitter.h"
 #include <fstream>
-#include <vector>
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {

@@ -128,7 +128,7 @@ class OperationBuilderRegistry {
 
   class RegHelper {
    public:
-    explicit RegHelper(const std::string &name) { builder_ = OperationBuilderRegistry::Instance().NewBuilder(name); }
+    explicit RegHelper(const std::string &name) : builder_(OperationBuilderRegistry::Instance().NewBuilder(name)) {}
     RegHelper &SetBuildShape(const std::initializer_list<DependOn> &depends, const InferFunc &func) {
       builder_->build_shape_depend = depends;
       builder_->build_shape_func = func;
