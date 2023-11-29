@@ -859,7 +859,9 @@ def get_dtype(name: str):
 
 
 def check_attrs(target_object, func_name: str):
-    if hasattr(target_object, func_name) and hasattr(target_object.__class__.__base__, func_name):
+    if hasattr(target_object, func_name):
+        if not hasattr(target_object.__class__.__base__, func_name):
+            return True
         if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
             return True
     return False
@@ -1161,6 +1163,16 @@ class Parser:
         logger.error("Fn type is invalid")
         return None, None
 
+    def get_name_from_namespace(self, value):
+        try:
+            value_str = value.__name__
+            logger.debug(
+                f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+        except:
+            value_str = str(value)
+            logger.debug(f"value: {type(value)}, '{value_str}'.")
+        return value_str
+
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""
         if var in self.closure_namespace:
@@ -1173,8 +1185,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            self.get_name_from_namespace(value)
             # To check if allowed to support.
             value = self.get_convert_object_for_mutable(value)
             support_type = self.get_syntax_support_type(value)
@@ -1209,8 +1220,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            value_str = self.get_name_from_namespace(value)
             value = self.get_convert_object_for_mutable(value)
             if is_from_third_party_library(value):
                 logger.debug(f"value: '{value}' is from third party library.")

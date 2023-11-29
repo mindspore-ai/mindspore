@@ -626,7 +626,9 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
   const auto &module_name = name_space->module();
   auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
   if (module_name == RESOLVE_NAMESPACE_NAME_CLASS_MEMBER || data_converter::IsCellInstance(symbol_obj)) {
-    return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
+    auto res = ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
+    res->set_user_data<py::object>("__getattr__", std::make_shared<py::object>(symbol_obj));
+    return res;
   }
   return nullptr;
 }
