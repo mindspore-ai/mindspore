@@ -1080,6 +1080,18 @@ std::string MindRTBackendBase::GetRandomStatus(const ActorInfo &actor_info) {
   return device_context->graph_executor_->GetRandomStatus(graphs);
 }
 
+namespace {
+bool IsTupleOutputOfAnyType(const abstract::AbstractBasePtr &abstract, const tensor::TensorPtr &tensor) {
+  if (abstract == nullptr || !abstract->isa<abstract::AbstractAny>() || tensor == nullptr) {
+    return false;
+  }
+  auto device_tensor = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  return device_tensor != nullptr && device_tensor->user_data() == nullptr &&
+         device_tensor->kernel_tensor() != nullptr && device_tensor->kernel_tensor()->GetShape() != nullptr &&
+         device_tensor->kernel_tensor()->GetShape()->isa<abstract::SequenceShape>();
+}
+}  // namespace
+
 BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                                      const std::vector<tensor::TensorPtr> &output_tensors,
                                                      size_t *output_position,
@@ -1095,6 +1107,22 @@ BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBas
   }
 
   if (!abstract->isa<abstract::AbstractSequence>()) {
+    if (IsTupleOutputOfAnyType(abstract, output_tensors[*output_position])) {
+      MS_LOG(DEBUG) << "Any output for position:" << *output_position;
+      VectorRef outputs;
+      auto device_tensor =
+        std::dynamic_pointer_cast<device::DeviceAddress>(output_tensors[*output_position]->device_address());
+      ConstructOutputByTupleTensor(output_tensors[*output_position],
+                                   device_tensor->kernel_tensor()->GetShape()->cast<abstract::SequenceShapePtr>(),
+                                   &outputs, tuple_tensors);
+      (*output_position)++;
+      std::vector<ValuePtr> values;
+
+      (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(values),
+                           [](const auto &output) { return utils::cast<ValuePtr>(output); });
+      return std::make_shared<ValueList>(values);
+    }
+
     (*output_position)++;
     return output_tensors[(*output_position) - 1];
   }
@@ -1131,6 +1159,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
   MS_EXCEPTION_IF_NULL(tensor_shape);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(tuple_tensors);
+  MS_LOG(DEBUG) << "Tensor shape:" << tensor_shape->ToString();
   // If outputs an empty sequence return an empty sequence value.
   if (tensor_shape->size() == 0) {
     if (tensor_shape->isa<abstract::TupleShape>()) {
@@ -1255,7 +1284,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     prim::kPrimMakeCOOTensor,
     prim::kPrimMakeRowTensor,
   };
-
+  MS_LOG(DEBUG) << "output node:" << output_node->DebugString();
   // If outputs an empty sequence return an empty sequence value.
   if (IsEmptySequence(output_node, output_tensors, output_position)) {
     if (output_node->abstract()->isa<abstract::AbstractTuple>()) {
@@ -1314,9 +1343,11 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   auto &output_abstract = output_node->abstract();
   MS_EXCEPTION_IF_NULL(output_abstract);
   // Wrap output to VectorRef if the output is tuple.
+  MS_LOG(DEBUG) << "output abstract:" << output_abstract->ToString();
   if (output_abstract->isa<abstract::AbstractSequence>()) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
+      MS_LOG(DEBUG) << "output index:" << i;
       if (*output_position >= output_tensors.size()) {
         MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: "
                                    << *output_position;

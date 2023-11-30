@@ -347,7 +347,8 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
 }
 
 py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
+  if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>() ||
+      abs->isa<abstract::AbstractAny>()) {
     return BaseRefToPyData(value_list, abs);
   }
   // Need to consider AbstractAny with vector ref scene later.
