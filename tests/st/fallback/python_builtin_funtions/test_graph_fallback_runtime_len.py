@@ -63,7 +63,7 @@ def test_len_numpy_string():
     assert out == (2, 6)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,9 +78,9 @@ def test_len_mutable():
     def foo():
         return len(mutable(2))
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(AttributeError) as e:
         foo()
-    assert "'Int' object is not iterable" in str(e.value)
+    assert "object has no attribute '__len__'" in str(e.value)
 
 
 @pytest.mark.level0

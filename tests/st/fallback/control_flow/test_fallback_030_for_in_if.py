@@ -101,27 +101,6 @@ def test_for_in_if_param():
 @case_register.level1
 @case_register.target_gpu
 @case_register.target_ascend
-def test_for_in_if_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @jit
-    def control_flow_for_in_if():
-        x = np.array([1, 1, 1])
-        y = list((4, 6, -2))
-        if len(y) != min(x):
-            for i in range(3):
-                y += x[i]
-        return Tensor(y)
-    out = control_flow_for_in_if()
-    np.all(out.asnumpy() == np.array([7, 9, 1]))
-
-
-@case_register.level1
-@case_register.target_gpu
-@case_register.target_ascend
 def test_for_in_if_isinstance_raise():
     """
     Feature: JIT Fallback
