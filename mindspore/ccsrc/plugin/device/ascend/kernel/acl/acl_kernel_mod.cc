@@ -285,6 +285,10 @@ void AclKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> & 
   }
   for (size_t i = 0; i < output_shape.size(); ++i) {
     outputs[i]->SetShapeVector(output_shape[i]);
+    size_t dtype_byte = GetTypeByte(TypeIdToType(outputs[i]->dtype_id()));
+    size_t update_size = LongToSize(
+      std::accumulate(output_shape[i].begin(), output_shape[i].end(), dtype_byte, std::multiplies<int64_t>()));
+    outputs[i]->set_size(update_size);
   }
 }
 }  // namespace kernel
