@@ -124,6 +124,7 @@ struct PyBoost {
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
+  static py::object RunPyFunction(const py::args &args);
   template <typename T>
   static ValuePtr OptionalToValue(const std::optional<T> &val) {
     if (!val.has_value()) {

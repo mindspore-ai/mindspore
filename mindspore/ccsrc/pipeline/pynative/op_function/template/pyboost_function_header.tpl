@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "include/common/pybind_api/api_register.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/op_function/converter.h"

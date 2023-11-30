@@ -1205,6 +1205,23 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   }
 }
 
+py::object PyBoost::RunPyFunction(const py::args &args) {
+  const auto &adapter = args[kIndex0].cast<PrimitivePyAdapterPtr>();
+  MS_EXCEPTION_IF_NULL(adapter);
+  auto prim = adapter->attached_primitive();
+  if (prim == nullptr) {
+    prim = std::make_shared<PrimitivePy>(args[kIndex0]);
+    adapter->set_attached_primitive(prim);
+  }
+  py::str prim_name = prim->name();
+  py::tuple wrap_args(kIndex3);
+  wrap_args[kIndex0] = args[kIndex0];
+  wrap_args[kIndex1] = prim_name;
+  wrap_args[kIndex2] = args[kIndex1];
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  return pynative_executor->RunOpStub(wrap_args);
+}
+
 void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward = pynative_executor->forward_executor();

@@ -1,15 +1,16 @@
 py::object ${func_name}(const py::args &args) {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
-  auto op_run_info = PyNativeAlgo::PyBoost::Init(args);
-  static Converter converter(&ops::${op_def_name});
-  py::list input_args = args[kIndex1];
-  converter.Parse(input_args);
-  ${parser_body}
+  #ifndef ENABLE_TEST
+    runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
+    auto op_run_info = PyNativeAlgo::PyBoost::Init(args);
+    static Converter converter(&ops::${op_def_name});
+    py::list input_args = args[kIndex1];
+    converter.Parse(input_args);
+    ${parser_body}
 
-  auto top_type = PredictOutType(op_run_info);
-  auto node = stub::MakeTopNode(top_type);
-  GilReleaseWithCheck release_gil;
-  op_run_info->stub_output = node.second;
+    auto top_type = PredictOutType(op_run_info);
+    auto node = stub::MakeTopNode(top_type);
+    GilReleaseWithCheck release_gil;
+    op_run_info->stub_output = node.second;
 
     DispatchOp(
       std::make_shared<FrontendTask>(
@@ -40,5 +41,8 @@ py::object ${func_name}(const py::args &args) {
         op_run_info
       )
     );
-  return node.first;
+    return node.first;
+  #else
+    return PyNativeAlgo::PyBoost::RunPyFunction(args);
+  #endif
 }
