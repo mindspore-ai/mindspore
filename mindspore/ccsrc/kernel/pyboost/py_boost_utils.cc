@@ -256,8 +256,7 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
   }
-  MS_LOG(DEBUG) << prim->name() << " infer failed";
-  return nullptr;
+  MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
 }
 
 device::DeviceAddressPtrList PyBoostUtils::CreateOutputDeviceAddress(DeviceContext *device_context,
