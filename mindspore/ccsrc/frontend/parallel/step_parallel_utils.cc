@@ -892,10 +892,17 @@ void LabelGenMaskMicro(const FuncGraphPtr &root) {
 
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+    if (!IsPrimitiveCNode(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    auto cnode_prim = GetCNodePrimitive(cnode);
+    if (cnode_prim->HasAttr("DISABLE_MERGE_ASSIGN_ADD")) {
+      cnode->AddPrimalAttr("DISABLE_MERGE_ASSIGN_ADD", cnode_prim->GetAttr("DISABLE_MERGE_ASSIGN_ADD"));
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
+      continue;
+    }
     auto cast_input = RealInputNode(cnode, 1);
     if (cast_input->isa<Parameter>() && cast_input->cast<ParameterPtr>()->has_default()) {
       MS_LOG(INFO) << "Cast for parameter no needs recompute to avoid redundant trans_data operator";
