@@ -73,7 +73,7 @@ class OperatorCoder {
 
   void set_parameter(OpParameter *parameter);
 
-  OpParameter *get_parameter() const { return parameter_; }
+  OpParameter *get_parameter() { return parameter_; }
 
   const LiteGraph::Node *node() const { return this->node_; }
 

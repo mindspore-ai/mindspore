@@ -33,9 +33,9 @@ class ArithmeticFP16Coder final : public ArithmeticFP32Coder {
 
   int DoCode(CoderContext *const context) override;
 
- protected:
   int Prepare(CoderContext *const context) override;
 
+ protected:
   int ReSize(CoderContext *const context) override;
 
   void InitFunTable() override;
