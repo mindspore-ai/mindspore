@@ -178,6 +178,29 @@ def test_use_local_variable_in_if_with_nested_for():
     assert "return y" in str(err.value)
 
 
+def test_use_local_variable_in_for_if():
+    """
+    Feature: use undefined variables in while with defined function.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            y = 0
+            for _ in range(3):
+                if True: # pylint: disable=using-constant-test
+                    a = 1
+                y += a
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'a' defined in the 'for' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
+    assert "y += a" in str(err.value)
+
+
 def test_function_args_same_name():
     """
     Feature: Parse function.
