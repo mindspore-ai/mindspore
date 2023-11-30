@@ -84,35 +84,22 @@ std::pair<KernelTensorPtr, TensorPtr> CreateKernelTensor4Output(const AbstractBa
   return std::pair<KernelTensorPtr, TensorPtr>(kernel_tensor, out_tensor);
 }
 
-std::shared_ptr<ops::BaseOperator> CreateOperator(const PrimitivePtr &prim) {
-  std::string ori_kernel_name =
-    prim->HasAttr(kAttrMeOpName) ? GetValue<std::string>(prim->GetAttr(kAttrMeOpName)) : prim->name();
-  auto &operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  auto it = operator_fns.find(ori_kernel_name);
-  if (it == operator_fns.end()) {
-    MS_LOG(DEBUG) << "Cannot create BaseOperator for " << ori_kernel_name;
-    return nullptr;
-  }
-  auto base_operator = it->second(prim);
-  return base_operator;
-}
-
 std::pair<bool, TensorPtr> CreateInOutKernelTensor(const AbstractBasePtr &abs_base, const AbstractBasePtrList &args,
-                                                   std::vector<KernelTensorPtr> *inputs,
-                                                   std::vector<KernelTensorPtr> *outputs) {
+                                                   std::vector<KernelTensor *> *inputs,
+                                                   std::vector<KernelTensor *> *outputs) {
   for (auto &arg : args) {
     auto kernel_tensor = CreateKernelTensor4Input(arg);
     if (kernel_tensor == nullptr) {
       return std::pair<bool, TensorPtr>(false, nullptr);
     }
-    (void)inputs->emplace_back(kernel_tensor);
+    (void)inputs->emplace_back(kernel_tensor.get());
   }
 
   auto [kernel_tensor, tensor] = CreateKernelTensor4Output(abs_base);
   if (kernel_tensor == nullptr) {
     return std::pair<bool, TensorPtr>(false, nullptr);
   }
-  (void)outputs->emplace_back(kernel_tensor);
+  (void)outputs->emplace_back(kernel_tensor.get());
 
   return std::pair<bool, TensorPtr>(true, tensor);
 }
@@ -140,20 +127,15 @@ ValuePtr OpEvaluator::ComputeValue(const PrimitivePtr &prim, const AbstractBaseP
     return kValueAny;
   }
 
-  auto op = CreateOperator(prim);
-  if (op == nullptr) {
-    return kValueAny;
-  }
-
-  std::vector<std::shared_ptr<mindspore::kernel::KernelTensor>> inputs;
-  std::vector<std::shared_ptr<mindspore::kernel::KernelTensor>> outputs;
+  std::vector<mindspore::kernel::KernelTensor *> inputs;
+  std::vector<mindspore::kernel::KernelTensor *> outputs;
   auto [success, out_tensor] = CreateInOutKernelTensor(out, args, &inputs, &outputs);
   if (!success) {
     MS_LOG(DEBUG) << "Can not call cpp infer value, since some inputs have any value";
     return kValueAny;
   }
 
-  if (!cpu_kernel_mod->Init_(op, inputs, outputs)) {
+  if (!cpu_kernel_mod->Init(inputs, outputs)) {
     MS_LOG(EXCEPTION) << "Failed to call cpu kernel module init for primitive " << prim->name();
   }
 
@@ -161,13 +143,9 @@ ValuePtr OpEvaluator::ComputeValue(const PrimitivePtr &prim, const AbstractBaseP
     MS_LOG(EXCEPTION) << "Failed to call cpu kernel module resize for primitive " << prim->name();
   }
 
-  std::vector<AddressPtr> addr_in, addr_ws, addr_out;
-  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(addr_in),
-                       [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
-  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(addr_out),
-                       [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
+  std::vector<KernelTensor *> workspace;
 
-  if (!cpu_kernel_mod->Launch(addr_in, addr_ws, addr_out, nullptr)) {
+  if (!cpu_kernel_mod->Launch(inputs, workspace, outputs, nullptr)) {
     MS_LOG(ERROR) << "Launch cpu kernel module for primitive " << prim->name() << " failed";
     return kValueAny;
   }

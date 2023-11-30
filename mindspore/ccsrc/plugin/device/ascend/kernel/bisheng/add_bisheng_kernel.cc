@@ -26,11 +26,8 @@ constexpr size_t kAddInputsNum = 2;
 constexpr size_t kAddOutputsNum = 1;
 }  // namespace
 
-bool AddBishengKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  MS_EXCEPTION_IF_NULL(base_operator->GetPrim());
-  kernel_name_ = base_operator->GetPrim()->name();
+bool AddBishengKernel::Init(const std::vector<kernel::KernelTensor *> &inputs,
+                            const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -44,21 +41,22 @@ bool AddBishengKernel::Init(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool AddBishengKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs, void *stream) {
+bool AddBishengKernel::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                                    const std::vector<kernel::KernelTensor *> &workspace,
+                                    const std::vector<kernel::KernelTensor *> &outputs, void *stream) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddOutputsNum, kernel_name_);
   MS_EXCEPTION_IF_NULL(stream);
-  if (inputs[0]->size != inputs[1]->size) {
-    MS_LOG(EXCEPTION) << "Input memory size of first input " << inputs[0]->size
-                      << " must be equal to memory size of second input " << inputs[1]->size;
+  if (inputs[0]->size() != inputs[1]->size()) {
+    MS_LOG(EXCEPTION) << "Input memory size of first input " << inputs[0]->size()
+                      << " must be equal to memory size of second input " << inputs[1]->size();
   }
-  if (inputs[0]->size != outputs[0]->size) {
-    MS_LOG(EXCEPTION) << "Input memory size of input " << inputs[0]->size << " must be equal to memory size of output "
-                      << outputs[0]->size;
+  if (inputs[0]->size() != outputs[0]->size()) {
+    MS_LOG(EXCEPTION) << "Input memory size of input " << inputs[0]->size()
+                      << " must be equal to memory size of output " << outputs[0]->size();
   }
-  bisheng::Add<T>(inputs[0]->addr, inputs[1]->addr, outputs[0]->addr, workspace[0]->addr, stream);
+  bisheng::Add<T>(inputs[0]->device_ptr(), inputs[1]->device_ptr(), outputs[0]->device_ptr(),
+                  workspace[0]->device_ptr(), stream);
   return true;
 }
 

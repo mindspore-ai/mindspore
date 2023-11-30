@@ -342,13 +342,13 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
     } else {
       auto kernel_attrs = cpu_kernel_mod->GetOpSupport();
       SetCpuRefMapToKernelInfo(kernel_node, kernel_attrs);
-      auto op = kernel::CreateOperatorByCNode(kernel_node);
-      auto ret = cpu_kernel_mod->Init_(op, args.inputs, args.outputs);
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel_node);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel_node);
+      auto ret = cpu_kernel_mod->Init(inputs, outputs);
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(kernel_node);
       }
-      if (cpu_kernel_mod->Resize(args.inputs, args.outputs, inputs_tensor_map) ==
-          static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
+      if (cpu_kernel_mod->Resize(inputs, outputs) == static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());

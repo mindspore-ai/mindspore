@@ -772,9 +772,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::InferOp(kernel);
-      auto args = kernel::GetArgsFromCNode(kernel);
-      auto op = GetValueNode<PrimitivePtr>(kernel->inputs()[0]);
-      if (gpu_kernel->Resize(args->inputs, args->outputs, args->depend_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (gpu_kernel->Resize(inputs, outputs) == kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }
@@ -903,8 +903,9 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::InferOp(kernel);
-      auto args = kernel::GetArgsFromCNode(kernel);
-      if (gpu_kernel->Resize(args->inputs, args->outputs, args->depend_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (gpu_kernel->Resize(inputs, outputs) == kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }

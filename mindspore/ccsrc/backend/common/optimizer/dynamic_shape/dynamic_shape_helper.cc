@@ -698,13 +698,9 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   AnfUtils::CustomActorCallback actor_func = [kernel_mod, cnode](void *) {
-    auto args = cnode->user_data<kernel::KernelArgs>();
-    if (args == nullptr) {
-      args = std::make_shared<kernel::KernelArgs>();
-    }
-    MS_LOG(DEBUG) << "resize for cnode:" << cnode->fullname_with_scope();
-    if (kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
-        static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
+    auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(cnode);
+    auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(cnode);
+    if (kernel_mod->Resize(inputs, outputs) == static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
       MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Resize failed.";
     }
   };
