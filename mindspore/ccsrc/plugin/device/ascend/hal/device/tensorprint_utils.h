@@ -46,6 +46,7 @@ class AclHandle {
   static AclHandle &GetInstance();
   ChannelType GetChannelType() { return channel_type_; }
   acltdtChannelHandle *Get() { return acl_handle_; }
+  void SetNull() { acl_handle_ = nullptr; }
   bool CreateChannel(uint32_t deviceId, std::string name, size_t capacity = 16);
 
   ~AclHandle() = default;
