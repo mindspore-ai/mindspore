@@ -466,6 +466,10 @@ void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
                         << " contains negative value.";
     }
     outputs[i]->SetShapeVector(shape);
+    size_t dtype_byte = GetTypeByte(TypeIdToType(outputs[i]->dtype_id()));
+    size_t update_size =
+      LongToSize(std::accumulate(shape.begin(), shape.end(), dtype_byte, std::multiplies<int64_t>()));
+    outputs[i]->set_size(update_size);
   }
 }
 
