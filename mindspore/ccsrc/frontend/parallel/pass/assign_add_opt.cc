@@ -31,6 +31,8 @@
 namespace mindspore {
 namespace parallel {
 namespace {
+constexpr auto kAttrConcatN = "N";
+
 void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGraphPtr &each_graph,
                                const std::vector<CNodePtr> &matmul_dw_nodes,
                                const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &pair) {
@@ -89,8 +91,12 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   concat2->abstract()->set_shape(concat2_shape_value);
   auto concat1_prim = GetCNodePrimitive(concat1);
   concat1_prim->set_attr(AXIS, MakeValue<int64_t>(axis1));
+  concat1_prim->set_attr(kAttrInputNums, MakeValue<int64_t>(maketuple1_abs_inputs.size()));
+  concat1_prim->set_attr(kAttrConcatN, MakeValue<int64_t>(maketuple1_abs_inputs.size()));
   auto concat2_prim = GetCNodePrimitive(concat2);
   concat2_prim->set_attr(AXIS, MakeValue<int64_t>(axis2));
+  concat2_prim->set_attr(kAttrInputNums, MakeValue<int64_t>(maketuple2_abs_inputs.size()));
+  concat2_prim->set_attr(kAttrConcatN, MakeValue<int64_t>(maketuple2_abs_inputs.size()));
   merged_matmul->set_abstract(matmul_dw_node_front->abstract()->Clone());
   auto merged_matmul_prim = GetCNodePrimitive(merged_matmul);
   merged_matmul_prim->SetAttrs(mat1_prim->attrs());
