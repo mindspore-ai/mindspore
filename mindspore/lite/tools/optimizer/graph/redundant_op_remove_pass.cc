@@ -459,8 +459,8 @@ int RemoveRedundantOpPass::FlattenMakeTuple(const FuncGraphPtr &func_graph, cons
 }
 
 int RemoveRedundantOpPass::RemoveUmonad(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(manager != nullptr);
+  CHECK_NULL_RETURN(func_graph);
+  CHECK_NULL_RETURN(manager);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     auto cnode = node->cast<CNodePtr>();

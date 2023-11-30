@@ -185,7 +185,7 @@ int InsertShiftForActivation(const FuncGraphPtr &func_graph, const CNodePtr &cno
   return RET_OK;
 }
 
-int UpdateQuantParam(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const tensor::TensorPtr &tensor_info,
+int UpdateQuantParam(const CNodePtr &cnode, const tensor::TensorPtr &tensor_info,
                      const std::vector<schema::QuantParamT> &matrix_a_quants, const std::vector<float> &smooth_scales,
                      const std::vector<float> &smooth_shift) {
   auto cnode_name = cnode->fullname_with_scope();
@@ -214,8 +214,13 @@ int UpdateQuantParam(const FuncGraphPtr &func_graph, const CNodePtr &cnode, cons
   // update weight quant info
   auto weight_tensor_data = static_cast<float *>(tensor_info->data_c());
   std::vector<schema::QuantParamT> weight_quant_params;
-  GetPerAxisQuantParams(weight_tensor_data, tensor_info->DataSize(), ConvertShapeVectorToInt32(tensor_info->shape_c()),
-                        CHANNEL_OUT_AXIS, &weight_quant_params);
+  ret =
+    GetPerAxisQuantParams(weight_tensor_data, tensor_info->DataSize(),
+                          ConvertShapeVectorToInt32(tensor_info->shape_c()), CHANNEL_OUT_AXIS, &weight_quant_params);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << cnode_name << " get per axis quant param failed.";
+    return ret;
+  }
   holder->set_input_quant_param(kWeightIndex, weight_quant_params);
   // Bias dont need adjust. Y = (1 / Scale)X * (Scale)W + Bias
   if (cnode->size() > kBiasIndex + kPrimOffset) {
@@ -307,10 +312,13 @@ int SmoothQuant::LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cn
   }
   float *weight_tensor_data = static_cast<float *>(weight_tensor_info->data_c());
   std::vector<schema::QuantParamT> smooth_weight_quant_params;
-  GetPerAxisQuantParams(weight_tensor_data, weight_tensor_info->DataSize(),
-                        ConvertShapeVectorToInt32(weight_tensor_info->shape_c()), CHANNEL_IN_AXIS,
-                        &smooth_weight_quant_params);
-
+  auto ret = GetPerAxisQuantParams(weight_tensor_data, weight_tensor_info->DataSize(),
+                                   ConvertShapeVectorToInt32(weight_tensor_info->shape_c()), CHANNEL_IN_AXIS,
+                                   &smooth_weight_quant_params);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << cnode_name << " get per axis quant param failed.";
+    return ret;
+  }
   size_t scale_size = matrix_a_quants.size();
   auto matrix_b_quants = smooth_weight_quant_params;
   if (matrix_a_quants.size() != matrix_b_quants.size()) {
@@ -320,7 +328,6 @@ int SmoothQuant::LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cn
     return RET_OK;
   }
   std::vector<float> smooth_shift(scale_size);
-  int ret;
   if (enable_shift) {
     ret = InsertShift(func_graph, cnode, weight_tensor_info, matrix_a_quants, &smooth_shift);
     if (ret != RET_OK) {
@@ -355,7 +362,7 @@ int SmoothQuant::LinearSmooth(const FuncGraphPtr &func_graph, const CNodePtr &cn
   }
 
   // update act quant param.
-  ret = UpdateQuantParam(func_graph, cnode, weight_tensor_info, matrix_a_quants, smooth_scales, smooth_shift);
+  ret = UpdateQuantParam(cnode, weight_tensor_info, matrix_a_quants, smooth_scales, smooth_shift);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << cnode_name << " update quant param failed.";
     return ret;
