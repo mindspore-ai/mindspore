@@ -55,9 +55,6 @@ class FallbackIRBuilder : public Emitter {
   const NodePtrList &GetInputs() const { return inputs_; }
 
  protected:
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
-  void ConvertConstInputToTensorInput(const PrimitivePtr &p, NodePtrList *inputs_ptr);
-
   std::string name_;
   NodePtrList inputs_;
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
