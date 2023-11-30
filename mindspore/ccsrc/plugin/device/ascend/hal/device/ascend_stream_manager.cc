@@ -212,6 +212,17 @@ bool AscendStreamMng::SyncAllStreams() const {
   return true;
 }
 
+bool AscendStreamMng::SyncNotCurrentStreams() const {
+  bool res = true;
+  for (size_t i = 0; i < streams_.size(); i++) {
+    if (i != current_stream_id_ && !SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for ascend stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
 bool AscendStreamMng::QueryStream(size_t stream_id) {
   if (stream_id >= streams_.size()) {
     MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";

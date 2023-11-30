@@ -693,5 +693,8 @@ static inline uint64_t GetCurrentUSec() {
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
 #define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
+
+#define _STRINGIZE(x) #x
+#define STRINGIZE(x) _STRINGIZE(x)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

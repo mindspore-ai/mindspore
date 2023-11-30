@@ -22,6 +22,7 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
+#include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
 
@@ -285,12 +286,26 @@ bool GeDeviceResManager::SyncAllStreams() const {
   return AscendStreamMng::GetInstance().SyncAllStreams();
 }
 
+bool GeDeviceResManager::SyncNotCurrentStreams() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().SyncNotCurrentStreams();
+}
+
 size_t GeDeviceResManager::DefaultStream() const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return SIZE_MAX;
   }
   return AscendStreamMng::GetInstance().default_stream_id();
+}
+
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(uint32_t flag) const {
+  auto event = std::make_shared<AscendEvent>(flag);
+  MS_EXCEPTION_IF_NULL(event);
+  return event;
 }
 }  // namespace ascend
 }  // namespace device

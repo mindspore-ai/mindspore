@@ -64,6 +64,7 @@ class AscendStreamMng {
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(aclrtStream stream) const;
   bool SyncAllStreams() const;
+  bool SyncNotCurrentStreams() const;
   bool QueryStream(size_t stream_id);
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }

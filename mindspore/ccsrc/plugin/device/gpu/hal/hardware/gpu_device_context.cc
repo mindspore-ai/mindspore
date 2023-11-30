@@ -42,6 +42,7 @@
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/hal/device/gpu_event.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_task.h"
 #include "plugin/device/gpu/hal/device/gpu_hash_table_util.h"
 #include "plugin/device/gpu/optimizer/reg_gpu_const_input_to_attr.h"
@@ -957,6 +958,9 @@ bool GPUDeviceResManager::SyncAllStreams() const {
 #endif
   return result;
 }
+bool GPUDeviceResManager::SyncNotCurrentStreams() const {
+  return GPUDeviceManager::GetInstance().SyncNotCurrentStreams();
+}
 
 size_t GPUDeviceResManager::DefaultStream() const { return GPUDeviceManager::GetInstance().default_stream_id(); }
 
@@ -969,6 +973,12 @@ uint32_t GPUKernelExecutor::GetRankID() const {
     }
   }
   return rank_id;
+}
+
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(uint32_t flag) const {
+  auto event = std::make_shared<GpuEvent>(flag);
+  MS_EXCEPTION_IF_NULL(event);
+  return event;
 }
 
 bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
@@ -1055,7 +1065,7 @@ cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->properties();
 }
 
-std::string GPUDeviceContext::GetArchList() { return ""; }
+std::string GPUDeviceContext::GetArchList() { return STRINGIZE(CUDA_ARCH_LIST); }
 
 std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
   void *ptr;
@@ -1091,6 +1101,7 @@ void PybindGPUStatelessFunc(py::module *m) {
                "Get GPU major and minor capability of specified device id.");
   (void)m->def("gpu_get_device_properties", &GPUDeviceContext::GetDeviceProperties,
                "Get GPU device properties of specified device id.");
+  (void)m->def("gpu_get_arch_list", &GPUDeviceContext::GetArchList, "Get GPU arch list of this MindSpore package.");
 }
 REGISTER_DEV_STATELESS_FUNC_CB(kGPUDevice, PybindGPUStatelessFunc);
 }  // namespace gpu

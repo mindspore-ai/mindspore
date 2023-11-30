@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Hal cpu interfaces."""
+from mindspore import log as logger
 from ._base import _HalBase
 
 

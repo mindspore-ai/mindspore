@@ -50,6 +50,7 @@ class GPUDeviceManager {
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
   bool SyncAllStreams() const;
+  bool SyncNotCurrentStreams() const;
   const CudaDeviceStream &default_stream() const;
   size_t default_stream_id() const;
 

@@ -33,6 +33,7 @@
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "runtime/pynative/async/task.h"
+#include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -251,9 +252,13 @@ class BACKEND_EXPORT DeviceResManager {
   // "SyncAllStreams" interfaces are implemented by subclasses.
   virtual bool SyncStream(size_t stream_id) const { return true; }
   virtual bool SyncAllStreams() const { return true; }
+  virtual bool SyncNotCurrentStreams() const { return true; }
 
   // Return default stream id. Normally it's 0.
   virtual size_t DefaultStream() const { return 0; }
+
+  // Create device event with flag.
+  virtual DeviceEventPtr CreateEventWithFlag(uint32_t flag) const { return nullptr; };
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.

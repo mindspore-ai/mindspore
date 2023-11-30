@@ -29,6 +29,14 @@ AscendEvent::AscendEvent() {
   }
 }
 
+AscendEvent::AscendEvent(uint32_t flag) {
+  auto ret = aclrtCreateEventWithFlag(&event_, flag);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtCreateEventWithFlag failed, ret:" << ret;
+    event_ = nullptr;
+  }
+}
+
 AscendTimeEvent::AscendTimeEvent() {
   auto ret = aclrtCreateEventWithFlag(&event_, ACL_EVENT_TIME_LINE);
   if (ret != ACL_ERROR_NONE) {
@@ -78,6 +86,16 @@ void AscendEvent::SyncEvent() {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSynchronizeEvent failed, ret:" << ret;
   }
+}
+
+bool AscendEvent::QueryEvent() {
+  MS_EXCEPTION_IF_NULL(event_);
+  aclrtEventRecordedStatus status;
+  auto ret = aclrtQueryEventStatus(event_, &status);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclQueryEventStatus failed, ret:" << ret;
+  }
+  return status == ACL_EVENT_RECORDED_STATUS_COMPLETE;
 }
 
 void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {

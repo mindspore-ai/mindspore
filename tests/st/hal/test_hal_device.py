@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.hal import is_initialized, is_available, device_count,\
-                      get_device_properties, get_device_name
+                      get_device_properties, get_device_name, get_arch_list
 
 class Net(nn.Cell):
     def __init__(self):
@@ -58,6 +58,8 @@ def test_hal_device_gpu():
     print("Device count is", dev_cnt)
     print("Device properties is", get_device_properties(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
+    print("Arch list is", get_arch_list())
+    assert not get_arch_list("CPU")
 
 
 @pytest.mark.level0

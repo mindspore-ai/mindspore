@@ -26,6 +26,14 @@ GpuEvent::GpuEvent() {
   }
 }
 
+GpuEvent::GpuEvent(uint32_t flag) {
+  auto ret = cudaEventCreateWithFlags(&event_, flag);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaEventCreateWithFlags failed, ret:" << ret;
+    event_ = nullptr;
+  }
+}
+
 GpuEvent::~GpuEvent() { CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaEventDestroy(event_), "cudaEventDestory failed"); }
 
 void GpuEvent::WaitEvent() {
@@ -45,6 +53,11 @@ void GpuEvent::RecordEvent() {
 void GpuEvent::SyncEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventSynchronize(event_), "cudaEventSynchronize failed");
+}
+
+bool GpuEvent::QueryEvent() {
+  MS_EXCEPTION_IF_NULL(event_);
+  return (cudaEventQuery(event_) == cudaSuccess) ? true : false;
 }
 
 void GpuEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {

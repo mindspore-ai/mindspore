@@ -24,12 +24,14 @@ namespace mindspore::device::ascend {
 class AscendEvent : public DeviceEvent {
  public:
   AscendEvent();
+  explicit AscendEvent(uint32_t flag);
   ~AscendEvent() override;
 
   void WaitEvent() override;
   void RecordEvent() override;
   bool NeedWait() override;
   void SyncEvent() override;
+  bool QueryEvent() override;
   void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
   void set_wait_stream(aclrtStream wait_stream) override { wait_stream_ = wait_stream; }
   void set_record_stream(aclrtStream record_stream) override { record_stream_ = record_stream; }

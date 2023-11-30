@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Hal gpu interfaces."""
-from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_capability, gpu_get_device_properties
+from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_capability, gpu_get_device_properties, gpu_get_arch_list
 from ._base import _HalBase
 
 
@@ -53,3 +53,4 @@ class _HalGPU(_HalBase):
         """
         Get the architecture list this MindSpore was compiled for.
         """
+        return gpu_get_arch_list()

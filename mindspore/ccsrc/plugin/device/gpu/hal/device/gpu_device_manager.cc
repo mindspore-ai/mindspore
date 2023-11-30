@@ -208,6 +208,17 @@ bool GPUDeviceManager::SyncAllStreams() const {
   return true;
 }
 
+bool GPUDeviceManager::SyncNotCurrentStreams() const {
+  bool res = true;
+  for (size_t i = 0; i < gpu_streams_.size(); i++) {
+    if (i != current_stream_id_ && !SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for gpu stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
 bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {
   return CudaDriver::CopyDeviceMemToHost(dst, src, size);
 }

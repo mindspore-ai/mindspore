@@ -60,7 +60,10 @@ class GPUDeviceResManager : public DeviceResManager {
   bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;
   bool SyncAllStreams() const override;
+  bool SyncNotCurrentStreams() const override;
   size_t DefaultStream() const override;
+
+  DeviceEventPtr CreateEventWithFlag(uint32_t flag) const override;
 
   bool LoadCollectiveCommLib() override;
 

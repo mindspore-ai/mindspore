@@ -203,3 +203,6 @@ ACL_FUNC_VISIBILITY aclError aclrtMalloc(void **devPtr, size_t size, aclrtMemMal
   return ACL_SUCCESS;
 }
 ACL_FUNC_VISIBILITY aclError aclrtStreamQuery(aclrtStream stream, aclrtStreamStatus *status) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtQueryEventStatus(aclrtEvent event, aclrtEventRecordedStatus *status) {
+  return ACL_SUCCESS;
+}
