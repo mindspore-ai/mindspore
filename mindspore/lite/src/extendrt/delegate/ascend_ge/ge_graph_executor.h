@@ -184,8 +184,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   transform::DfGraphPtr CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                             std::map<std::string, std::string> *ge_options_ptr);
 
-  transform::DfGraphPtr CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr,
-                                        const transform::DfGraphPtr &init_graph);
+  transform::DfGraphPtr CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr);
 
   bool CreateGeGraphOffline(const FuncGraphPtr &anf_graph, std::map<std::string, std::string> *ge_options_ptr,
                             uint32_t *graph_id);
