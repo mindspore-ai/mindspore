@@ -80,6 +80,8 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
 
     uint32_t parallel_group_id = static_cast<uint32_t>(group_id) << 16 | static_cast<uint32_t>(index);
     cnode->AddAttr(kParallelGroupId, MakeValue(parallel_group_id));
+    MS_LOG(INFO) << "Successfully add _parallel_group_id: " << parallel_group_id
+                 << " to node: " << cnode->fullname_with_scope();
   }
   return true;
 }
