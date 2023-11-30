@@ -34,7 +34,7 @@ uint32_t UniformRealKernel::DoCompute() {
   float *tmp_out;
   if (out_count_ > 0) {
     tmp_out = reinterpret_cast<float *>(malloc(out_count_ * sizeof(float)));
-    if (tmp_out == NULL) {
+    if (tmp_out == nullptr) {
       return kAicpuKernelStateInvalid;
     }
   } else {
@@ -58,7 +58,7 @@ uint32_t UniformRealKernel::DoCompute() {
   int ret =
     memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), out_count_ * sizeof(float), tmp_out, out_count_ * sizeof(float));
   free(tmp_out);
-  tmp_out = NULL;
+  tmp_out = nullptr;
   if (ret < 0) {
     return kAicpuKernelStateInvalid;
   }

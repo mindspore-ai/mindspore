@@ -167,7 +167,8 @@ bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   std::vector<int64_t> x_stride = construct_stride<int64_t>(input_shape);
   if (input_size > N2) {
     // set the vx_shape and vx_stride
-    std::vector<int64_t> vx_shape, vx_stride;
+    std::vector<int64_t> vx_shape;
+    std::vector<int64_t> vx_stride;
     for (unsigned int tmp_dim = 0; tmp_dim < input_size; tmp_dim++) {
       if (tmp_dim != dim1_ && tmp_dim != dim2_) {
         vx_shape.push_back(input_shape[tmp_dim]);

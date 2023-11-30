@@ -135,7 +135,7 @@ def get_bprop_matrix_triangular_solve(self):
 
     def bprop(matrix, rhs, out, dout):
         grad_rhs = matrix_triangular_solve_op(matrix, dout)
-        if matrix.dtype == mstype.complex64 or matrix.dtype == mstype.complex128:
+        if matrix.dtype in (mstype.complex64, mstype.complex128):
             grad_rhs_temp = _adjoint(grad_rhs)
             out_temp = _adjoint(out)
         else:
@@ -156,14 +156,14 @@ def get_bprop_matrix_triangular_solve(self):
                 grad_matrix = mat_mul_op(grad_rhs, out_temp)
                 grad_matrix = neg_op(grad_matrix)
         if lower_a:
-            if grad_matrix.dtype == mstype.complex64 or grad_matrix.dtype == mstype.complex128:
+            if grad_matrix.dtype in (mstype.complex64, mstype.complex128):
                 grad_matrix_real = matrix_band_part_op(real_op(grad_matrix), -1, 0)
                 grad_matrix_imag = matrix_band_part_op(imag_op(grad_matrix), -1, 0)
                 grad_matrix = complex_op(grad_matrix_real, grad_matrix_imag)
             else:
                 grad_matrix = matrix_band_part_op(grad_matrix, -1, 0)
         else:
-            if grad_matrix.dtype == mstype.complex64 or grad_matrix.dtype == mstype.complex128:
+            if grad_matrix.dtype in (mstype.complex64, mstype.complex128):
                 grad_matrix_real = matrix_band_part_op(real_op(grad_matrix), 0, -1)
                 grad_matrix_imag = matrix_band_part_op(imag_op(grad_matrix), 0, -1)
                 grad_matrix = complex_op(grad_matrix_real, grad_matrix_imag)
@@ -219,7 +219,7 @@ def get_bprop_matrix_solve(self):
 @_primexpr
 def _generate_perm_matrix_solve_ls(x_dim):
     perm = tuple(range(x_dim - 2))
-    perm = perm + (x_dim-1, x_dim-2)
+    perm = perm + (x_dim - 1, x_dim - 2)
     return perm
 
 
@@ -647,20 +647,21 @@ def _fft_rank_offset(norm_shape, rank):
 @_primexpr
 def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     """generate reverse term for fft_with_size"""
+    norm_ = None
     if inverse is False:
         if norm == "forward":
             norm_ = 1 / _fft_rank_offset(norm_shape, rank)
-        if norm == "backward":
+        elif norm == "backward":
             norm_ = 1 * _fft_rank_offset(norm_shape, rank)
-        if norm == "ortho":
-            norm_ = 1
-    if inverse is True:
+        elif norm == "ortho":
+            norm_ = 1.0
+    else:
         if norm == "forward":
             norm_ = 1 * _fft_rank_offset(norm_shape, rank)
-        if norm == "backward":
+        elif norm == "backward":
             norm_ = 1 / _fft_rank_offset(norm_shape, rank)
-        if norm == "ortho":
-            norm_ = 1
+        elif norm == "ortho":
+            norm_ = 1.0
     return norm_
 
 
@@ -670,9 +671,9 @@ def _rfft_norm(norm_shape, norm, rank):
     norm_ = 1.0
     if norm == "forward":
         norm_ = 1 / _fft_rank_offset(norm_shape, rank)
-    if norm == "backward":
-        norm_ = 1
-    if norm == "ortho":
+    elif norm == "backward":
+        norm_ = 1.0
+    elif norm == "ortho":
         norm_ = 1 / np.sqrt(_fft_rank_offset(norm_shape, rank))
     return norm_
 

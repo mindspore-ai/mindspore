@@ -203,7 +203,7 @@ def get_bprop_index_put(self):
         if is_ascend:
             indices_ms = [convert_idx_positive(indices_ms[i], x1.shape[i]) for i in range(len(indices_ms))]
         indices_me = stack(indices_ms)
-        indices_grad = F.transpose(indices_me, F.make_range(F.rank(indices_me)-1, -1, -1))
+        indices_grad = F.transpose(indices_me, F.make_range(F.rank(indices_me) - 1, -1, -1))
         values_grad = gather_nd(dout, indices_grad)
         if equal(cast(x2.shape[0], mstype.int32), Tensor(1)):
             values_grad = values_grad.sum().reshape(1)

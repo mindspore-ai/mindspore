@@ -449,7 +449,7 @@ template <typename T, size_t N>
 class TensorAcc {
  public:
   TensorAcc(T *data_, int64_t *sizes_, int64_t *strides_) : dataptr(data_), sizes(sizes_), strides(strides_) {}
-  TensorAcc(const TensorAcc<T, 4> &tacc) { TensorAcc(tacc.dataptr, tacc.sizes, tacc.strides); }
+  explicit TensorAcc(const TensorAcc<T, 4> &tacc) { TensorAcc(tacc.dataptr, tacc.sizes, tacc.strides); }
   int64_t stride(int64_t i) const { return strides[i]; }
   int64_t size(int64_t i) const { return sizes[i]; }
   T *data() { return dataptr; }

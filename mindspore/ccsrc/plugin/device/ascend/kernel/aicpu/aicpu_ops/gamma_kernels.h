@@ -31,10 +31,10 @@ class GammaKernel : public KernelBase {
 
   uint32_t ParseKernelParam() override;
 
-  float *alpha_ = NULL;
-  float *beta_ = NULL;
-  int64_t *seed_ = NULL;
-  int64_t *seed2_ = NULL;
+  float *alpha_ = nullptr;
+  float *beta_ = nullptr;
+  int64_t *seed_ = nullptr;
+  int64_t *seed2_ = nullptr;
   std::vector<uint64_t> shape;
   std::vector<uint64_t> alpha_shape;
   std::vector<uint64_t> beta_shape;

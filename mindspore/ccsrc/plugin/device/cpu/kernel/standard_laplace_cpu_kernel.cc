@@ -46,7 +46,7 @@ bool StandardLaplaceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]->addr);
 
   // Init output address.
-  auto output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto output = static_cast<float *>(outputs[kIndex0]->addr);
 
   // Init sample number.
   size_t num_sample = outputs[kIndex0]->size / sizeof(float);

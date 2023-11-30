@@ -438,7 +438,8 @@ void NuclearNormCpuKernelMod::svd_tail(const int *M, const int *N, T *S, const T
 template <typename T>
 T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, const T *mat,
                                                     const std::vector<kernel::AddressPtr> &workspace) {
-  size_t n1 = dim0, n2 = dim1;
+  size_t n1 = dim0;
+  size_t n2 = dim1;
   T *M = GetDeviceAddress<T>(workspace, kIndex1);
   size_t copy_size = dim0 * dim1 * sizeof(T);
   auto ret0 = memcpy_s(M, copy_size, &mat[0], copy_size);

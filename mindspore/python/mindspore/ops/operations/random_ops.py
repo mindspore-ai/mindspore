@@ -346,6 +346,7 @@ class LogNormalReverse(Primitive):
     @prim_attr_register
     def __init__(self, mean=1.0, std=2.0):
         """Initialize LogNormalReverse"""
+        super().__init__(name="LogNormalReverse")
         self.add_prim_attr("side_effect_hidden", True)
         Validator.check_value_type("mean", mean, [float], self.name)
         Validator.check_value_type("std", std, [float], self.name)

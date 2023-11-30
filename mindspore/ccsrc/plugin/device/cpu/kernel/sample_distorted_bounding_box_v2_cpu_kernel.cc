@@ -320,12 +320,12 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::CheckSDBBExt2(T *inputs0, float *
 template <typename T>
 void SampleDistortedBoundingBoxV2CPUKernelMod::LaunchSDBBExt2(const std::vector<AddressPtr> &inputs,
                                                               const std::vector<AddressPtr> &outputs) {
-  auto image_size = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto bounding_boxes = reinterpret_cast<float *>(inputs[kIndex1]->addr);
-  auto min_object_covered = reinterpret_cast<float *>(inputs[kIndex2]->addr);
-  auto begin = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto size = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto bboxes = reinterpret_cast<float *>(outputs[kIndex2]->addr);
+  auto image_size = static_cast<T *>(inputs[kIndex0]->addr);
+  auto bounding_boxes = static_cast<float *>(inputs[kIndex1]->addr);
+  auto min_object_covered = static_cast<float *>(inputs[kIndex2]->addr);
+  auto begin = static_cast<T *>(outputs[kIndex0]->addr);
+  auto size = static_cast<T *>(outputs[kIndex1]->addr);
+  auto bboxes = static_cast<float *>(outputs[kIndex2]->addr);
   CheckSDBBExt2(image_size, bounding_boxes, min_object_covered, begin, size, bboxes);
 
   const int32_t height = static_cast<int32_t>(image_size[kIndex0]);

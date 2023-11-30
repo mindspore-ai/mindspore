@@ -1763,16 +1763,18 @@ class FillV2(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
     def check_elim(self, dims, x):
-        if x is None or (not isinstance(x, (Tensor, Tensor_))) or (x.shape != ()) or\
-            dims is None or (isinstance(dims, (tuple, list)) and dims) or\
-            isinstance(dims, (Tensor, Tensor_)):
+        x_is_invalid = x is None or (not isinstance(x, (Tensor, Tensor_))) or (x.shape != ())
+        dims_is_invalid = dims is None or (isinstance(dims, (tuple, list)) and dims) or\
+            isinstance(dims, (Tensor, Tensor_))
+        if x_is_invalid or dims_is_invalid:
             return (False, None)
         return (True, x)
 
     def infer_value(self, dims, x):
-        if x is None or dims is None or\
+        dims_is_invalid = dims is None or\
             (isinstance(dims, (tuple, list)) and dims) or\
-            isinstance(dims, (Tensor, Tensor_)):
+            isinstance(dims, (Tensor, Tensor_))
+        if x is None or dims_is_invalid:
             return None
         return x
 

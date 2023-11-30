@@ -91,10 +91,24 @@ bool ExtractVolumePatchesKernelMod::LaunchKernel(const std::vector<kernel::Addre
   constexpr size_t x_dim_num = 5;
   constexpr size_t out_dim_num = 5;
   constexpr size_t extract_dims = 6;
-  constexpr size_t xn = 0, xc = 1, xd = 2, xh = 3, xw = 4;
-  constexpr size_t on = 0, oc = 1, od = 2, oh = 3, ow = 4;
-  constexpr size_t kd = 2, kh = 3, kw = 4;
-  constexpr size_t sd = 2, sh = 3, sw = 4;
+  constexpr size_t xn = 0;
+  constexpr size_t xc = 1;
+  constexpr size_t xd = 2;
+  constexpr size_t xh = 3;
+  constexpr size_t xw = 4;
+
+  constexpr size_t on = 0;
+  constexpr size_t oc = 1;
+  constexpr size_t od = 2;
+  constexpr size_t oh = 3;
+  constexpr size_t ow = 4;
+
+  constexpr size_t kd = 2;
+  constexpr size_t kh = 3;
+  constexpr size_t kw = 4;
+  constexpr size_t sd = 2;
+  constexpr size_t sh = 3;
+  constexpr size_t sw = 4;
   constexpr int storage_option = static_cast<int>(Eigen::RowMajor);
   constexpr int alignment_type = static_cast<int>(Eigen::Aligned);
 
