@@ -74,7 +74,8 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
       param_->in_shape_[i] = 1;
     }
   }
-  int out_shape_length = in_tensors_.at(1)->shape().at(0);
+  auto out_shape = in_tensors_.at(1)->shape();
+  int out_shape_length = out_shape.at(0);
   real_index = out_shape_length - 1;
   for (i = DIMENSION_8D - 1; i >= 0; --i) {
     if (real_index >= 0) {
