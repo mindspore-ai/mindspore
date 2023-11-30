@@ -116,6 +116,10 @@ bool InsertTensorMoveForHcclOpGe::NeedInsertTensorMove(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(cur_node);
+  auto tuple = input->abstract()->cast<abstract::AbstractTuplePtr>();
+  if (tuple) {
+    return false;
+  }
   if (IsNodeOutPutUsedByOtherRealKernel(graph, input, input_idx, cur_node)) {
     return true;
   }
