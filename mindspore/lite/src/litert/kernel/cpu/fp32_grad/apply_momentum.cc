@@ -59,7 +59,7 @@ int ApplyMomentumCPUKernel::DoExecute(int task_id) {
   auto length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
 
   MS_CHECK_TRUE_RET(thread_count_ > 0, RET_ERROR);
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(static_cast<int>(length), thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
   count = (count < 0) ? 0 : count;
   int start = stride * task_id;
@@ -101,7 +101,7 @@ int ApplyMomentumCPUKernel::Prepare() {
   CHECK_NULL_RETURN(apply_momentum_param_);
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   for (int i = 0; i < DIMENSION_5D; i++) {
-    CHECK_NULL_RETURN(in_tensors_.at(i));
+    CHECK_NULL_RETURN(in_tensors_.at(static_cast<size_t>(i)));
   }
   auto ret = OptimizerKernel::Prepare();
   if (ret != RET_OK) {

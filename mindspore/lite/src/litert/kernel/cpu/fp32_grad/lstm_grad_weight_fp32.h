@@ -34,10 +34,9 @@ class LSTMGradWeightCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoGrad(int thread_id);
 
  private:
-  int LstmBackpropUnidirectional(bool is_backward, float *dw, float *dv, float *db);
+  void LstmBackpropUnidirectional(bool is_backward, float *dw, float *dv, float *db);
 
   int InitParam();
   int MallocRunBuffer();

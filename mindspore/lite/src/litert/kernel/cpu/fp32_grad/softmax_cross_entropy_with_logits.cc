@@ -82,7 +82,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
   auto dims = in_tensors_.at(0)->shape();
   param_->n_dim_ = 2;
   CHECK_LESS_RETURN(dims.size(), DIMENSION_2D);
-  param_->number_of_classes_ = dims.at(1);
+  param_->number_of_classes_ = static_cast<size_t>(dims.at(1));
   param_->batch_size_ = dims.at(0);
   for (unsigned int i = 0; i < dims.size(); i++) param_->input_shape_[i] = dims.at(i);
   if (this->in_tensors_.size() != 2) {
@@ -91,7 +91,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
   }
   auto *in0 = in_tensors_.front();
   if (in0 == nullptr) {
-    MS_LOG(ERROR) << "softmax etropy loss in0 have no data";
+    MS_LOG(ERROR) << "softmax entropy loss in0 have no data";
     return RET_ERROR;
   }
 
