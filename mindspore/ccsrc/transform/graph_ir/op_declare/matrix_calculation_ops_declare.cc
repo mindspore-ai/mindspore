@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/matrix_calculation_ops_declare.h"
 #include <string>
+#include <vector>
 #include "ops/array_op_name.h"
 #include "ops/ascend_op_name.h"
 #include "ops/math_op_name.h"
@@ -264,4 +265,35 @@ CUST_INPUT_MAP(TraceGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_shape)}};
 CUST_ATTR_MAP(TraceGrad) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(TraceGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(TraceGrad, prim::kPrimTraceGrad->name(), CUST_ADPT_DESC(TraceGrad));
+
+// SwinAttentionFFN
+INPUT_MAP(SwinAttentionFFN) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(x3)}};
+ATTR_MAP(SwinAttentionFFN) = {{"shifts", ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinAttentionFFN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SwinAttentionFFN, kNameSwinAttentionFFN, ADPT_DESC(SwinAttentionFFN));
+
+// SwinTransformerLnQKV
+INPUT_MAP(SwinTransformerLnQKV) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}, {4, INPUT_DESC(weight)}, {5, INPUT_DESC(bias)}};
+ATTR_MAP(SwinTransformerLnQKV) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                                  {"head_dim", ATTR_DESC(head_dim, AnyTraits<int64_t>())},
+                                  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
+                                  {"seq_length", ATTR_DESC(seq_length, AnyTraits<int64_t>())},
+                                  {"shifts", ATTR_DESC(shifts, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinTransformerLnQKV) = {
+  {0, OUTPUT_DESC(query_output)}, {1, OUTPUT_DESC(key_output)}, {2, OUTPUT_DESC(value_output)}};
+REG_ADPT_DESC(SwinTransformerLnQKV, kNameSwinTransformerLnQKV, ADPT_DESC(SwinTransformerLnQKV));
+
+// SwinAttentionScore
+INPUT_MAP(SwinAttentionScore) = {{1, INPUT_DESC(query)},         {2, INPUT_DESC(key)},           {3, INPUT_DESC(value)},
+                                 {4, INPUT_DESC(padding_mask1)}, {5, INPUT_DESC(padding_mask2)}, {6, INPUT_DESC(scale)},
+                                 {7, INPUT_DESC(drop_mask)}};
+ATTR_MAP(SwinAttentionScore) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+                                {"query_transpose", ATTR_DESC(query_transpose, AnyTraits<bool>())},
+                                {"key_transpose", ATTR_DESC(key_transpose, AnyTraits<bool>())},
+                                {"bmm_score_transpose_a", ATTR_DESC(bmm_score_transpose_a, AnyTraits<bool>())},
+                                {"bmm_score_transpose_b", ATTR_DESC(bmm_score_transpose_b, AnyTraits<bool>())},
+                                {"softmax_axes", ATTR_DESC(softmax_axes, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SwinAttentionScore) = {{0, OUTPUT_DESC(attention_score)}, {1, OUTPUT_DESC(softmax)}};
+REG_ADPT_DESC(SwinAttentionScore, kNameSwinAttentionScore, ADPT_DESC(SwinAttentionScore));
 }  // namespace mindspore::transform
