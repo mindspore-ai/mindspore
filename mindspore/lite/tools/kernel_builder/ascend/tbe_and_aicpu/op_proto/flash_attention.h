@@ -19,11 +19,11 @@
 #include "graph/operator_reg.h"
 namespace ge {
 REG_OP(FlashAttention)
-  .INPUT(q, TensorType({DT_FLOAT16}))
-  .INPUT(k, TensorType({DT_FLOAT16}))
-  .INPUT(v, TensorType({DT_FLOAT16}))
-  .OPTIONAL_INPUT(attention_mask, TensorType({DT_FLOAT16}))
-  .OUTPUT(y, TensorType({DT_FLOAT16}))
+  .INPUT(q, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(k, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(v, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(attention_mask, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
   .OP_END_FACTORY_REG(FlashAttention)
 }
 #endif  // GE_OP_FLASHATTENTION_H
