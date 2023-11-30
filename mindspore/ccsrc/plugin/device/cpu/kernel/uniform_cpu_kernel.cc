@@ -121,7 +121,7 @@ bool UniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformOutputsNum, kernel_name_);
 
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto y = static_cast<T *>(outputs[0]->addr);
   for (int64_t i = 0; i < input_elements_; i++) {
     y[i] = static_cast<T>(RandFloat() * (to_ - from_) + from_);
   }

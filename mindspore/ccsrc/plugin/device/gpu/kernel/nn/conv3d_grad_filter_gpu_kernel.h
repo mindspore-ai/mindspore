@@ -359,7 +359,12 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     auto dilation_d = dilation[kIndex2];
     auto dilation_h = dilation[kIndex3];
     auto dilation_w = dilation[kIndex4];
-    int64_t pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right;
+    int64_t pad_head;
+    int64_t pad_tail;
+    int64_t pad_top;
+    int64_t pad_bottom;
+    int64_t pad_left;
+    int64_t pad_right;
 
     auto pad_needed_d = (dout_shape_norm[kIndex2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - x_size_v[kIndex2];
     pad_needed_d = 0 > pad_needed_d ? 0 : pad_needed_d;

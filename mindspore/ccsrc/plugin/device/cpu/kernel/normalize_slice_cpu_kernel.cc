@@ -161,18 +161,18 @@ std::vector<KernelAttr> NormalizeSliceInfoCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
-                 [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeSliceFunc> {
-                   return {KernelAttr()
-                             .AddInputAttr(data_type_id)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64),
-                           &NormalizeSliceInfoCpuKernelMod::LaunchKernel};
-                 });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeSliceFunc> {
+                         return {KernelAttr()
+                                   .AddInputAttr(data_type_id)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64),
+                                 &NormalizeSliceInfoCpuKernelMod::LaunchKernel};
+                       });
 
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, NormalizeSliceFunc> &item) { return item.first; });

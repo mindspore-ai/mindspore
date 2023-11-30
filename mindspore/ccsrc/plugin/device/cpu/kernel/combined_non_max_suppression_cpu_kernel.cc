@@ -72,8 +72,12 @@ float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>>
                                                  const int j) const {
   std::vector<float> box_a = (*boxes_buffer)[i];
   std::vector<float> box_b = (*boxes_buffer)[j];
-  float lx, ly, rx, ry;
-  float w, h;
+  float lx;
+  float ly;
+  float rx;
+  float ry;
+  float w;
+  float h;
   float area;
   float area_a = (box_a[KIndex2] - box_a[0]) * (box_a[KIndex3] - box_a[KIndex1]);
   float area_b = (box_b[KIndex2] - box_b[0]) * (box_b[KIndex3] - box_b[KIndex1]);

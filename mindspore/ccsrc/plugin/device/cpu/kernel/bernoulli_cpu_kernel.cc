@@ -118,8 +118,8 @@ bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   InitMSPhiloxRandom(seed_, offset_);
 
   input_elements_nums = std::accumulate(x_shape_.begin(), x_shape_.end(), int64_t(1), std::multiplies<int64_t>());
-  auto p = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto y = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto p = static_cast<S *>(inputs[kIndex1]->addr);
+  auto y = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t p_dims = static_cast<int64_t>(p_shape_.size());
   int64_t x_dims = static_cast<int64_t>(x_shape_.size());
   auto p_num = p_dims == 0 ? 1 : p_shape_[0];

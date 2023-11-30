@@ -158,15 +158,15 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   CheckCopy(output_empty_attr, sizeof(int64_t), &empty_slice, sizeof(int64_t), kernel_name_);
   out_shapes_.clear();
   if (tuple_index_types_.empty()) {
-    out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size()), 1}));
+    (void)out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size()), 1}));
   } else {
-    out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size())}));
+    (void)out_shapes_.emplace_back(ShapeVector({SizeToLong(indices.size())}));
   }
-  out_shapes_.emplace_back(ShapeVector{SizeToLong(value_shape.size())});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{1});
-  out_shapes_.emplace_back(ShapeVector{});
+  (void)out_shapes_.emplace_back(ShapeVector{SizeToLong(value_shape.size())});
+  (void)out_shapes_.emplace_back(ShapeVector{1});
+  (void)out_shapes_.emplace_back(ShapeVector{1});
+  (void)out_shapes_.emplace_back(ShapeVector{1});
+  (void)out_shapes_.emplace_back(ShapeVector{});
   return true;
 }
 
@@ -185,21 +185,21 @@ std::vector<KernelAttr> SliceToIndicesCpuKernelMod::GetOpSupport() {
                                        kNumberTypeInt16,     kNumberTypeInt32,     kNumberTypeInt64,   kNumberTypeUInt8,
                                        kNumberTypeUInt16,    kNumberTypeUInt32,    kNumberTypeUInt64,  kNumberTypeBool,
                                        kNumberTypeComplex64, kNumberTypeComplex128};
-  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
-                 [](TypeId data_type_id) -> std::pair<KernelAttr, SliceToIndicesFunc> {
-                   return {KernelAttr()
-                             .AddInputAttr(data_type_id)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddInputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64),
-                           &SliceToIndicesCpuKernelMod::LaunchKernel};
-                 });
+  (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                       [](TypeId data_type_id) -> std::pair<KernelAttr, SliceToIndicesFunc> {
+                         return {KernelAttr()
+                                   .AddInputAttr(data_type_id)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddInputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64)
+                                   .AddOutputAttr(kNumberTypeInt64),
+                                 &SliceToIndicesCpuKernelMod::LaunchKernel};
+                       });
 
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, SliceToIndicesFunc> &item) { return item.first; });

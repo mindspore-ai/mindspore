@@ -1242,6 +1242,7 @@ class Bucketize(Primitive):
     @prim_attr_register
     def __init__(self, boundaries):
         """Initialize Bucketize"""
+        super().__init__(name="Bucketize")
         validator.check_value_type("boundaries", boundaries, [list], self.name)
         for index, one_boundaries in enumerate(boundaries):
             validator.check_value_type('boundaries[%d]' % index, one_boundaries, [float], self.name)
@@ -2096,6 +2097,7 @@ class InplaceIndexAdd(Primitive):
     @prim_attr_register
     def __init__(self, axis):
         """Initialize InplaceIndexAdd"""
+        super().__init__(name="InplaceIndexAdd")
         self.init_prim_io_names(inputs=['var', 'indices', 'updates'], outputs=['var'])
         self.axis = axis
         validator.check_value_type('axis', axis, [int], self.name)
@@ -2494,6 +2496,7 @@ class Reciprocal(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_value(self, x):
+        """Infer value for Reciprocal"""
         if x is not None:
             x = x.asnumpy()
             out = 1.0 / x
@@ -2551,6 +2554,7 @@ class Pow(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     def infer_value(self, x, power):
+        """infer value for _BinaryOp"""
         if x is not None and power is not None:
             x = x.asnumpy()
             power = power.asnumpy()
@@ -2682,6 +2686,7 @@ class ReduceStd(Primitive):
     @prim_attr_register
     def __init__(self, axis=(), unbiased=True, keep_dims=False):
         """Initialize ReduceStd """
+        super().__init__(name="ReduceStd")
         validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         validator.check_value_type("unbiased", unbiased, [bool], self.name)
         validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
@@ -2853,6 +2858,7 @@ class Diagonal(Primitive):
     @prim_attr_register
     def __init__(self, offset=0, dim1=0, dim2=1):
         """Initialize Diagonal"""
+        super().__init__(name="Diagonal")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_is_int(offset, "offset", self.name)
         validator.check_is_int(dim1, "dim1", self.name)
@@ -2931,8 +2937,9 @@ class Histogram(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, bins=100, min=0.0, max=0.0):  # pylint: disable=W0622
+    def __init__(self, bins=100, min=0.0, max=0.0):  # pylint: disable=redefined-builtin
         """Initialize Histogram."""
+        super().__init__(name="Histogram")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("bins", bins, [int], self.name)
         validator.check_value_type("min", min, [float], self.name)
@@ -2980,6 +2987,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
         """Initialize HistogramFixedWidth."""
+        super().__init__(name="HistogramFixedWidth")
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, validator.GE, "nbins", self.name)
         valid_values = ['int32']
