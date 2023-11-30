@@ -217,24 +217,6 @@ bool CompileSingleJson(const std::string &json_name) {
   return true;
 }
 
-bool RetStatus(const int status) {
-  if (WIFEXITED(status)) {
-    if (WEXITSTATUS(status) == 0) {
-      MS_LOG(INFO) << "compile all pass for subprocess!";
-      return true;
-    } else {
-      MS_LOG(ERROR) << "Some jsons compile fail, please check log!";
-    }
-  } else if (WIFSIGNALED(status)) {
-    MS_LOG(ERROR) << "compile stopped by signal, maybe cost too long time!";
-  } else if (WSTOPSIG(status)) {
-    MS_LOG(ERROR) << "compile process is stopped by others!";
-  } else {
-    MS_LOG(ERROR) << "unknown error in compiling!";
-  }
-  return false;
-}
-
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list) {
   auto json_list_size = static_cast<int>(json_list.size());
   auto thread_num = std::min(PROCESS_LIMIT, json_list_size);
