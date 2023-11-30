@@ -25,6 +25,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./format_type/set_fracz_group_attr.cc"
         "./format_type/utils.cc"
         "./format_type/deal_ref_output.cc"
+        "./common/gllo_utils.cc"
         "./ir_fission/cdist_fission.cc"
         "./ir_fission/bn_split.cc"
         "./ir_fission/bn_grad_split.cc"
@@ -37,6 +38,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/batchnormgrad_to_bninfergrad.cc"
         "./ir_fusion/histogram_fixed_width_fusion.cc"
         "./ir_fusion/adaptive_max_pool2d_fusion.cc"
+        "./ir_fusion/flash_attention_fusion.cc"
         "./enhancer/add_placeholder_for_dynamic_rnn.cc"
         "./enhancer/add_placeholder_for_dynamic_gru.cc"
         )
