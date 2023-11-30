@@ -1112,8 +1112,7 @@ bool GeGraphExecutor::UpdateWeights(const std::vector<std::vector<std::shared_pt
   return true;
 }
 
-transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr,
-                                                       const transform::DfGraphPtr &init_graph) {
+transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr) {
   if (enable_update_weight_) {
     MS_LOG(INFO) << "Enable update weight, skip create small ge graph";
     return nullptr;
@@ -1170,13 +1169,10 @@ transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std
     }
     auto df_graph = GenExampleGraph(graph_key);
     if (df_graph == nullptr) {
-      MS_LOG(WARNING) << "Failed to create fake ge graph for graph " << graph_key << ", skip create small ge graph";
+      MS_LOG(WARNING) << "Failed to create small ge graph for graph " << graph_key << ", skip create small ge graph";
       return nullptr;
     }
-    MS_LOG(INFO) << "Create fake ge graph for graph " << graph_key;
-    if (init_graph != nullptr) {
-      (void)GetNextGraphIdx();  // update graph id
-    }
+    MS_LOG(INFO) << "Create small  ge graph for graph " << graph_key;
     return df_graph;
   } catch (const std::exception &error) {
     MS_LOG(WARNING) << "parse model cache idx json failed, idx file: " << idx_file_name
@@ -1212,21 +1208,7 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
     MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
     return nullptr;
   }
-  if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
-    auto ref_data_names = converter->GetRefDataNames();
-    std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
-    std::transform(ref_data_names.begin(), ref_data_names.end(), std::back_inserter(ref_datas),
-                   [&params_vals](auto &item) { return std::make_pair(item, params_vals.at(item)); });
-    if (!InitRefDataContext(ref_datas, ge_options_ptr)) {
-      MS_LOG(ERROR) << "Failed to init refdata context";
-      return nullptr;
-    }
-  }
   auto init_graph = transform::GetInitGraph(converter);
-  auto fake_df_graph = CreateFakeGraph(ge_options_ptr, init_graph);
-  if (fake_df_graph != nullptr) {
-    return fake_df_graph;
-  }
   if (init_graph != nullptr) {
     uint32_t init_graph_id = 0;
     if (!AddGraph(init_graph, {}, &init_graph_id)) {
@@ -1253,6 +1235,20 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
     }
   } else {
     MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
+  }
+  if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
+    auto ref_data_names = converter->GetRefDataNames();
+    std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
+    std::transform(ref_data_names.begin(), ref_data_names.end(), std::back_inserter(ref_datas),
+                   [&params_vals](auto &item) { return std::make_pair(item, params_vals.at(item)); });
+    if (!InitRefDataContext(ref_datas, ge_options_ptr)) {
+      MS_LOG(ERROR) << "Failed to init refdata context";
+      return nullptr;
+    }
+  }
+  auto fake_df_graph = CreateFakeGraph(ge_options_ptr);
+  if (fake_df_graph != nullptr) {
+    return fake_df_graph;
   }
   auto df_graph = transform::GetComputeGraph(converter);
   return df_graph;
