@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.dataset as ds
 import mindspore.nn as nn
-from mindspore import Callback, context, ops, Parameter
+from mindspore import Callback, context, ops
 from mindspore.train import Model
 
 
@@ -43,17 +43,12 @@ class Net(nn.Cell):
     """
     A very simple network.
     """
-    def __init__(self):
-        super(Net, self).__init__()
-        # Until 11/28/2023, GE will return directly if no parameters in graph,
-        # which causes Loop Sinking unavailable.
-        # Thus we add a "w" here to prevent early return.
-        self.w = Parameter(1., name="w")
+
     def construct(self, x):
         """
         Take the squre of the input.
         """
-        return ops.square(x) * self.w
+        return ops.square(x)
 
 
 class TestBreakpointTraining:
