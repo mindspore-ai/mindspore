@@ -37,7 +37,6 @@ class MatmulDynamicInt8CPUKernel : public MatmulDynamicBaseInt8CPUKernel {
  private:
   void InitParameter() override;
 
- private:
   PackFunc a_pack_func_{nullptr};
 };
 }  // namespace mindspore::kernel
