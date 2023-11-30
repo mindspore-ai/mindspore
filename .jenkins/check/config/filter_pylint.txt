@@ -234,7 +234,3 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-whitespace"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-continuation"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-continuation"
-"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_and_aicpu/tbe/impl/flash_attention.py"              "missing-docstring"
-"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_and_aicpu/tbe/impl/flash_attention.py"              "no-else-return"
-"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_and_aicpu/tbe/impl/flash_attention.py"              "unused-variable"
-"mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_and_aicpu/tbe/impl/flash_attention.py"              "wrong-import-order"
