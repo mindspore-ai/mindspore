@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <mutex>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
 #include "include/common/utils/utils.h"
@@ -35,6 +36,7 @@ namespace {
 std::thread g_acl_tdt_print = {};
 const size_t kMbufCapacitySize = 128;
 const int32_t kMbufDestroyDelayTime = 500;
+std::mutex g_tdt_destroy_mutex_;
 
 const std::map<aclDataType, TypeId> kPrintAclDataTypeMap = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
@@ -282,11 +284,11 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
   return ret_end_thread;
 }
 
-void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
+void TensorPrintStdOut(const acltdtChannelHandle *) {
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
-
   while (true) {
+    usleep(100);
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -294,15 +296,24 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
+      {
+        std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+        acltdtChannelHandle *acl_handle = AclHandle::GetInstance().Get();
+
+        if (acl_handle == nullptr) {
+          ret = -1;
+          MS_LOG(WARNING) << "acl_handle is nullptr or has destroyed.";
+          break;
+        }
+        // 2000 ms timeout
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 2000);
+      }
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
-        MS_LOG(DEBUG) << "queue is empty.";
         break;
       }
 
       if (ret != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "AclHandle failed to receive tensor.ret = " << ret;
+        MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
         break;
       }
       if (ConvertDataset2Tensor(acl_dataset)) {
@@ -311,18 +322,19 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && ret == ACL_SUCCESS && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Std out: AcltdtDestroyDataset failed.";
       break;
     }
 
-    if (ret != ACL_SUCCESS) {
+    if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
+      MS_LOG(INFO) << "Failed to receive tensor.ret = " << ret;
       break;
     }
   }
 }
 
-void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::string &print_file_path) {
+void TensorPrintOut2File(const acltdtChannelHandle *, const std::string &print_file_path) {
   prntpb::Print print;
   ChangeFileMode(print_file_path, S_IWUSR);
   std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
@@ -330,6 +342,7 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
   while (true) {
+    usleep(100);
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -338,13 +351,22 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
         break;
       }
       // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
+      {
+        std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+        acltdtChannelHandle *acl_handle = AclHandle::GetInstance().Get();
+        if (acl_handle == nullptr) {
+          ret = -1;
+          MS_LOG(WARNING) << "acl_handle is nullptr or has destroyed.";
+          break;
+        }
+        // 2000 ms timeout
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 2000);
+      }
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
-        MS_LOG(INFO) << "queue is empty.";
         break;
       }
       if (ret != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "Acltdt failed to receive tensor.";
+        MS_LOG(WARNING) << "Acltdt failed to receive tensor. ret = " << ret;
         break;
       }
 
@@ -354,12 +376,13 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && ret == ACL_SUCCESS && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Out to file: AcltdtDestroyDataset failed.";
       break;
     }
 
-    if (ret != ACL_SUCCESS) {
+    if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
+      MS_LOG(INFO) << "Failed to receive tensor.ret = " << ret;
       break;
     }
   }
@@ -451,15 +474,19 @@ void DestroyTensorPrintThread() {
   if (channel_type != ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  aclError destroyed_status = acltdtDestroyChannel(acl_handle);
-  if (destroyed_status != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
-    return;
+  {
+    std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+    aclError destroyed_status = acltdtDestroyChannel(acl_handle);
+    AclHandle::GetInstance().SetNull();
+    if (destroyed_status != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
+      return;
+    }
   }
+  MS_LOG(INFO) << "Succeed destroy acl channel";
   if (channel_type == ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  tdt_handle::DelHandle(&acl_handle);
-  MS_LOG(INFO) << "Succeed destroy acl channel";
+  MS_LOG(INFO) << "Succeed destroy tensor print thread";
 }
 }  // namespace mindspore::device::ascend
