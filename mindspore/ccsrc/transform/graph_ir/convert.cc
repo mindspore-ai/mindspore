@@ -745,10 +745,6 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
     return *this;
   }
 
-  if (tensors.empty()) {
-    return *this;
-  }
-
   InitParamWithData(tensors);
   init_sout_ << "}" << endl;
   return *this;
