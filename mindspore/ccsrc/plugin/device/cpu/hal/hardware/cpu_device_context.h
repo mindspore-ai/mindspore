@@ -60,6 +60,7 @@ class CPUKernelExecutor : public KernelExecutor {
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override;
 
   // Kernel that is not supported by other device can be backed off and rebuilt on the CPU.
   // The function will set kernel info and create kernel mod.

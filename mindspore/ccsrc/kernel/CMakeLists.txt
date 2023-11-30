@@ -11,6 +11,7 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "kash/*.cc"
     "oplib/*.cc"
     "environ_manager.cc"
+    "kernel_mod_cache.cc"
 )
 
 if(NOT BUILD_LITE)

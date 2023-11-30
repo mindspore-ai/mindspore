@@ -405,6 +405,10 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   (void)profiler::CollectHostInfo(kModelNameCPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
 }
 
+kernel::KernelModPtr CPUKernelExecutor::CreateKernelMod(const std::string &op_name) const {
+  return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(op_name);
+}
+
 void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
