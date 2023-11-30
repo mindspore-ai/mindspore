@@ -137,8 +137,8 @@ class Adagrad(Optimizer):
         for group_id, group in enumerate(self.param_groups):
             opt = P.ApplyAdagradV2(epsilon=group["eps"], update_slots=True)
 
-            lr = group.get("lr")
-            if isinstance(lr, float):
+            lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
 
             decay_lr = lr / (1 + self.step_t * group["lr_decay"])

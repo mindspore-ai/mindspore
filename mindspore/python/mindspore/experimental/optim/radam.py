@@ -162,8 +162,8 @@ class RAdam(Optimizer):
         self.assignadd(self.step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
 
-            lr = group.get("lr")
-            if isinstance(lr, float):
+            lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
                 lr = op_cast(group.get("lr"), mstype.float32)
 
             beta1, beta2 = group["betas"]

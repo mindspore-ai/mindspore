@@ -132,8 +132,8 @@ class Rprop(Optimizer):
     def construct(self, gradients):
         op_assignadd(self.step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
-            lr = group.get("lr")
-            if isinstance(lr, float):
+            lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
             maximize = group.get("maximize")
 

@@ -165,7 +165,7 @@ class Adam(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
 
-            lr = group.get("lr")
+            lr = self.lrs[group_id]
             weight_decay = group.get("weight_decay")
             beta1, beta2 = group.get("betas")
             maximize = group.get("maximize")
@@ -178,7 +178,7 @@ class Adam(Optimizer):
             grads = gradients[start_id: end_id]
             grads = grads if not maximize else -grads
             grads = self._decay_weight(weight_decay, params, grads)
-            if isinstance(lr, float):
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
             if group.get("amsgrad"):
                 self.hyper_map(F.partial(_adam_opt, adam_with_amsgrad_opt, beta1_power, beta2_power, lr),
