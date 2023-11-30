@@ -43,7 +43,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ListDiffInferShapeFront(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
@@ -55,11 +55,25 @@ abstract::TupleShapePtr ListDiffInferShape(const PrimitivePtr &, const std::vect
     MS_EXCEPTION(ValueError) << "For ListDiff, input x, y should be 1D, but get x dims = " << x_shape.size()
                              << ", y dims = " << y_shape.size() << ".";
   }
-  int64_t max_size = x_shape[kInputIndex0];
   ShapeVector out_shape_dynamic = {abstract::Shape::kShapeDimAny};
+  abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_shape_dynamic);
+  abstract::ShapePtr idx_shape = std::make_shared<abstract::Shape>(out_shape_dynamic);
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, idx_shape});
+}
+
+abstract::TupleShapePtr ListDiffInferShapeBackend(const PrimitivePtr &,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  bool shape_check_pass = x_shape.size() == kDim1 && y_shape.size() == kDim1;
+  if (!shape_check_pass) {
+    MS_EXCEPTION(ValueError) << "For ListDiff, input x, y should be 1D, but get x dims = " << x_shape.size()
+                             << ", y dims = " << y_shape.size() << ".";
+  }
+  int64_t max_size = x_shape[kInputIndex0];
   ShapeVector out_max_shape = {max_size};
-  abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_shape_dynamic, out_max_shape);
-  abstract::ShapePtr idx_shape = std::make_shared<abstract::Shape>(out_shape_dynamic, out_max_shape);
+  abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_max_shape);
+  abstract::ShapePtr idx_shape = std::make_shared<abstract::Shape>(out_max_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, idx_shape});
 }
 
@@ -90,7 +104,7 @@ AbstractBasePtr ListDiffInfer(const abstract::AnalysisEnginePtr &, const Primiti
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   auto types = ListDiffInferType(primitive, input_args);
-  auto shapes = ListDiffInferShape(primitive, input_args);
+  auto shapes = ListDiffInferShapeFront(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
@@ -101,7 +115,7 @@ class MIND_API AGListDiffInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return ListDiffInferShape(primitive, input_args);
+    return ListDiffInferShapeBackend(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
