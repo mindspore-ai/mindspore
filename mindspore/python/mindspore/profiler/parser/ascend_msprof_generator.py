@@ -110,7 +110,9 @@ class AscendMsprofDataGenerator:
                 iteration = int(file.split('_')[-1].split('.')[0])
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 header = next(reader)
-                self.link_index_with_name(header, self.op_summary_basis_name)
+                flag = self.link_index_with_name(header, self.op_summary_basis_name)
+                if not flag:
+                    raise RuntimeError("Read op summary failed. The file is missing basic fields.")
                 extend_flag = self.link_index_with_name(header, self.op_summary_extend_name)
                 if extend_flag:
                     self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_extend_name}
@@ -137,7 +139,9 @@ class AscendMsprofDataGenerator:
             with open(file, newline='') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 header = next(reader)
-                self.link_index_with_name(header, self.op_statistic_name)
+                flag = self.link_index_with_name(header, self.op_statistic_name)
+                if not flag:
+                    raise RuntimeError("Read op summary failed. The file is missing basic fields.")
                 for row in reader:
                     row = [row[index.get('index')] for index in self.op_statistic_name.values()]
                     row = ['0' if i == 'N/A' else i for i in row]
@@ -155,7 +159,9 @@ class AscendMsprofDataGenerator:
             with open(file, newline='') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 header = next(reader)
-                self.link_index_with_name(header, self.steptrace_name)
+                flag = self.link_index_with_name(header, self.steptrace_name)
+                if not flag:
+                    raise RuntimeError("Read op summary failed. The file is missing basic fields.")
                 for row in reader:
                     rows = [row[index.get('index')] for index in self.steptrace_name.values()]
                     if row[9:]:

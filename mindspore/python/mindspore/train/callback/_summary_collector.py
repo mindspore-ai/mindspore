@@ -1157,7 +1157,7 @@ class SummaryCollector(Callback):
         except TypeError as exc:
             logger.warning("Summary cannot collect the type of metrics, currently support type: dict, list, tuple, "
                            "str, int, float, bool and None. %s.", str(exc))
-        self._parse_dataset(cb_params, eval_lineage)
+        _ = self._parse_dataset(cb_params, eval_lineage)
 
         eval_lineage_message = self._package_eval_lineage_message(eval_lineage)
         self._record.add_value(PluginEnum.EVAL_LINEAGE.value, 'eval_lineage', eval_lineage_message)
