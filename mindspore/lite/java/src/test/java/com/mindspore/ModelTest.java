@@ -51,7 +51,7 @@ public class ModelTest {
         assertTrue(isBuildSuccess);
         boolean isSetLearningRateSuccess = liteModel.setLearningRate(1.0f);
         assertTrue(isSetLearningRateSuccess);
-        boolean isSetupVirtualBatchSuccess = liteModel.setupVirtualBatch(2,1.0f,0.5f);
+        boolean isSetupVirtualBatchSuccess = liteModel.setupVirtualBatch(2,1.0f, 0.5f);
         assertTrue(isSetupVirtualBatchSuccess);
         liteModel.free();
         context.free();
@@ -254,6 +254,7 @@ public class ModelTest {
         isSuccess = liteModel.exportWeightsCollaborateWithMicro(weightFile, true, false, weightNames);
         assertTrue(isSuccess);
         liteModel.free();
+        g.free();
         context.free();
     }
 
