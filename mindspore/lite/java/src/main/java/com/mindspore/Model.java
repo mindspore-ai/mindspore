@@ -213,7 +213,7 @@ public class Model {
      * @return input tensors.
      */
     public List<MSTensor> getInputs() {
-        if (this.inputTensors != null){
+        if (this.inputTensors != null) {
             return this.inputTensors;
         }
         List<Long> tensorAddrs = this.getInputs(this.modelPtr);
@@ -444,7 +444,7 @@ public class Model {
      * Free model
      */
     public void free() {
-        if (this.inputTensors != null){
+        if (this.inputTensors != null) {
             for (MSTensor tensor : this.inputTensors) {
                 tensor.free();
             }
@@ -460,10 +460,10 @@ public class Model {
     private native boolean buildByGraph(long modelPtr, long graphPtr, long contextPtr, long cfgPtr);
 
     private native boolean buildByPath(long modelPtr, String modelPath, int modelType, long contextPtr,
-                                    char[] dec_key, String dec_mod, String cropto_lib_path);
+                                       char[] dec_key, String dec_mod, String cropto_lib_path);
 
     private native boolean buildByBuffer(long modelPtr, MappedByteBuffer buffer, int modelType, long contextPtr,
-                                      char[] dec_key, String dec_mod, String cropto_lib_path);
+                                         char[] dec_key, String dec_mod, String cropto_lib_path);
 
     private native List<Long> getInputs(long modelPtr);
 
@@ -489,10 +489,11 @@ public class Model {
 
     private native boolean updateConfig(long modelPtr, String section, HashMap<String, String> config);
 
-    private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer, String[] outputTensorNames);
+    private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer,
+                                  String[] outputTensorNames);
 
     private native boolean exportWeightsCollaborateWithMicro(long modelPtr, String weightFile, boolean isInference,
-                                         boolean enableFp16, String[] changeableWeightNames);
+                                                             boolean enableFp16, String[] changeableWeightNames);
 
     private native List<Long> getFeatureMaps(long modelPtr);
 
@@ -500,5 +501,6 @@ public class Model {
 
     private native boolean setLearningRate(long modelPtr, float learning_rate);
 
-    private native boolean setupVirtualBatch(long modelPtr, int virtualBatchMultiplier, float learningRate, float momentum);
+    private native boolean setupVirtualBatch(long modelPtr, int virtualBatchMultiplier, float learningRate,
+                                             float momentum);
 }

@@ -1158,8 +1158,16 @@ CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, cons
   cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-" + input_2->fullname_with_scope() + "-Mul");
   ShapeVector input1_shape;
   ShapeVector input2_shape;
-  opt::FetchShapeFromAbstract(input_1->abstract(), &input1_shape);
-  opt::FetchShapeFromAbstract(input_2->abstract(), &input2_shape);
+  auto ret = opt::FetchShapeFromAbstract(input_1->abstract(), &input1_shape);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch shape from abstract failed.";
+    return nullptr;
+  }
+  ret = opt::FetchShapeFromAbstract(input_2->abstract(), &input2_shape);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch shape from abstract failed.";
+    return nullptr;
+  }
   MS_LOG(INFO) << cnode->fullname_with_scope() << " shape is " << input1_shape << " " << input2_shape;
   cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
