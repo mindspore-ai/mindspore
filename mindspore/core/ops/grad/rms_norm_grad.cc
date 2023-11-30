@@ -61,10 +61,10 @@ TypePtr RmsNormGradInferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("dy", input_args[0]->BuildType());
-  (void)types.emplace("x", input_args[1]->BuildType());
-  (void)types.emplace("rstd", input_args[2]->BuildType());
-  (void)types.emplace("gamma", input_args[3]->BuildType());
+  (void)types.emplace("dy", input_args[kIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kIndex1]->BuildType());
+  (void)types.emplace("rstd", input_args[kIndex2]->BuildType());
+  (void)types.emplace("gamma", input_args[kIndex3]->BuildType());
   auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, output_type});
 }

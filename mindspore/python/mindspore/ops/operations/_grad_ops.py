@@ -3866,6 +3866,7 @@ class FlashAttentionScoreGrad(Primitive):
                                         'prefix'],
                                 outputs=['dq', 'dk', 'dv'])
 
+
 class RmsNormGrad(Primitive):
     r"""
     Calculates the gradient of RmsNorm operation.
