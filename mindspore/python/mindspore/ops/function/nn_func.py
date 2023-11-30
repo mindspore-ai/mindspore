@@ -40,7 +40,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -3289,49 +3289,6 @@ def pad(input_x, padding, mode='constant', value=None):
     if is_expand:
         out = out.squeeze(0)
     return out
-
-
-def relu(input):
-    r"""
-    Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
-
-    It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
-
-    .. math::
-
-        ReLU(input) = (input)^+ = \max(0, input)
-
-    ReLU Activation Function Graph:
-
-    .. image:: ../images/ReLU.png
-        :align: center
-
-    Args:
-        input (Tensor): The input Tensor.
-
-    Returns:
-        Tensor, has the same dtype and shape as `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not supported.
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.relu(input)
-        >>> print(output)
-        [[0. 4. 0.]
-         [2. 0. 9.]]
-    """
-    relu_ = _get_cache_prim(NN_OPS.ReLU)()
-    return relu_(input)
 
 
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):

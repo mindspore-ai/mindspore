@@ -56,6 +56,7 @@ constexpr auto kInv = "Inv";
 constexpr auto kInvert = "Invert";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kLogicalNot = "LogicalNot";
+constexpr auto kLogicalEqual = "LogicalEqual";
 constexpr auto kAsin = "Asin";
 constexpr auto kACos = "ACos";
 constexpr auto kAtan = "Atan";
@@ -664,6 +665,26 @@ void Relu(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_
 }
 
 template <typename T, typename S>
+void ReluFloat16(ArithmeticSelfCpuKernelFuncFloat16<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [in, out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i] > T(0) ? in[i] : T(0);
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
+void ReluBool(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i] ? true : false;
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
 void Relu6(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [in, out](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
@@ -777,8 +798,12 @@ void ArithmeticSelfCpuKernelFuncBool<T, S>::LaunchKernel(const std::vector<Kerne
     return LogicalEqual<T, S>(this, input, output, lens);
   } else if (this->kernel_name_ == kReciprocal) {
     return Reciprocal<T, S>(this, input, output, lens);
-  } else {
+  } else if (this->kernel_name_ == kLogicalNot) {
     return LogicalNot<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kReLU) {
+    return ReluBool<T, S>(this, input, output, lens);
+  } else {
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << this->kernel_name_ << " with bool as input.";
   }
 }
 
@@ -886,15 +911,16 @@ void ArithmeticSelfCpuKernelFuncFloat16<T, S>::LaunchKernel(const std::vector<Ke
   static const std::unordered_map<
     std::string, std::function<void(ArithmeticSelfCpuKernelFuncFloat16<T, S> *, const T *, S *, size_t)>>
     arithmeticSelfFuncMap{
-      {prim::kPrimNeg->name(), Neg<T, S>},         {prim::kPrimAcosh->name(), Acosh<T, S>},
-      {prim::kPrimSin->name(), Sin<T, S>},         {prim::kPrimCos->name(), Cos<T, S>},
-      {prim::kPrimAsin->name(), Asin<T, S>},       {prim::kPrimACos->name(), ACos<T, S>},
-      {prim::kPrimSinh->name(), Sinh<T, S>},       {prim::kPrimCosh->name(), Cosh<T, S>},
-      {prim::kPrimAsinh->name(), Asinh<T, S>},     {prim::kPrimErfc->name(), Erfc<T, S>},
-      {prim::kPrimRsqrt->name(), Rsqrt<T, S>},     {prim::kPrimErf->name(), Erf<T, S>},
-      {prim::kPrimSign->name(), Sign<T, S>},       {prim::kPrimRint->name(), Rint<T, S>},
-      {prim::kPrimAtan->name(), Atan<T, S>},       {prim::kPrimSqrt->name(), Sqrt<T, S>},
-      {prim::kPrimSigmoid->name(), Sigmoid<T, S>}, {prim::kPrimLog->name(), Log<T, S>},
+      {prim::kPrimNeg->name(), Neg<T, S>},          {prim::kPrimAcosh->name(), Acosh<T, S>},
+      {prim::kPrimSin->name(), Sin<T, S>},          {prim::kPrimCos->name(), Cos<T, S>},
+      {prim::kPrimAsin->name(), Asin<T, S>},        {prim::kPrimACos->name(), ACos<T, S>},
+      {prim::kPrimSinh->name(), Sinh<T, S>},        {prim::kPrimCosh->name(), Cosh<T, S>},
+      {prim::kPrimAsinh->name(), Asinh<T, S>},      {prim::kPrimErfc->name(), Erfc<T, S>},
+      {prim::kPrimRsqrt->name(), Rsqrt<T, S>},      {prim::kPrimErf->name(), Erf<T, S>},
+      {prim::kPrimSign->name(), Sign<T, S>},        {prim::kPrimRint->name(), Rint<T, S>},
+      {prim::kPrimAtan->name(), Atan<T, S>},        {prim::kPrimSqrt->name(), Sqrt<T, S>},
+      {prim::kPrimSigmoid->name(), Sigmoid<T, S>},  {prim::kPrimLog->name(), Log<T, S>},
+      {prim::kPrimReLU->name(), ReluFloat16<T, S>},
     };
   const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
   if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -1296,6 +1322,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
      &CreateArithSelfFuncCommon<double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      &CreateArithSelfFuncCommon<int64_t, int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
@@ -1304,7 +1332,14 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &CreateArithSelfFuncCommon<int8_t, int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-     &CreateArithSelfFuncCommon<uint8_t, uint8_t>}}},
+     &CreateArithSelfFuncCommon<uint8_t, uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CreateArithSelfFuncCommon<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CreateArithSelfFuncCommon<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CreateArithSelfFuncCommon<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), &CreateArithSelfFuncBool<bool, bool>}}},
   {kReLU6,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<float, float>}}},

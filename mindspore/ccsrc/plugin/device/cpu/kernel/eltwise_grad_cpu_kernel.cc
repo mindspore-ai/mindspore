@@ -103,6 +103,14 @@ void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *ou
   }
 }
 
+template <>
+void EltWiseGradCpuTypeFunc<bool>::ReluGrad(const bool *input1, const bool *input2, bool *out, size_t start,
+                                            size_t end) const {
+  for (size_t i = start; i < end; i++) {
+    out[i] = input2[i] ? input1[i] : false;
+  }
+}
+
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
@@ -539,12 +547,23 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const PrimitivePtr &primitive, const st
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
-  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>)) {
+  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
+                (std::is_same_v<T, uint64_t>)) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
       elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with uint as input.";
+      MS_LOG(EXCEPTION) << "EltWiseGrad Cpu does not support " << kernel_name_ << " with uint as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+    return;
+  }
+  if constexpr (std::is_same_v<T, bool>) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGrad Cpu does not support " << kernel_name_ << " with bool as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
@@ -592,7 +611,9 @@ std::shared_ptr<CpuKernelFunc> SpecializeEltWiseGradFunc() {
 using FuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> kernel_attr_list_map = {
   {kReluGrad,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     &SpecializeEltWiseGradFunc<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &SpecializeEltWiseGradFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
      &SpecializeEltWiseGradFunc<int16_t>},
@@ -604,6 +625,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<uint8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
      &SpecializeEltWiseGradFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &SpecializeEltWiseGradFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &SpecializeEltWiseGradFunc<uint64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &SpecializeEltWiseGradFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
