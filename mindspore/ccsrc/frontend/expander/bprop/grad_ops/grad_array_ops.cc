@@ -141,7 +141,7 @@ NodePtrList TensorScatterPossibleReplacement(BpropIRBuilder *ib) {
   auto x_indicators = ib->Cast(ib->Equal(x, out), kInt32);
   auto possibly_updated = ib->GatherNd(out, indices);
   auto out_indicators = ib->Cast(ib->Equal(updates, possibly_updated), kInt32);
-  auto input_shape = ib->Shape(x, true);
+  auto input_shape = ib->Shape(x);
   auto scattered_out_indicators = ib->ScatterNd(indices, out_indicators, input_shape);
   auto indicators = ib->Add(x_indicators, scattered_out_indicators);
   auto dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),

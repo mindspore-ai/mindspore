@@ -254,7 +254,7 @@ def test_dynamic_setitem_tensor_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -701,7 +701,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
 def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
-    Description: The input shape is dynamic and the tensor index is multy tensors.
+    Description: The input shape is dynamic and the tensor index is multi tensors.
     Expectation: Assert the result is equal the numpy result.
     """
     class Net(Cell):
@@ -740,7 +740,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
 def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
-    Description: The input shape is dynamic and the tensor index is multy tensors.
+    Description: The input shape is dynamic and the tensor index is multi tensors.
     Expectation: Assert the result is equal the numpy result.
     """
     class Net(Cell):
