@@ -841,9 +841,27 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   return type_ptr->type_id();
 }
 
+namespace {
+bool IsTupleInTupleValueNode(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<ValueNode>()) {
+    return false;
+  }
+  const auto &value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  if (value == nullptr || !value->isa<ValueSequence>()) {
+    return false;
+  }
+  const auto &value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  return std::any_of(value_sequence->value().begin(), value_sequence->value().end(),
+                     [](const ValuePtr &sub_value) { return sub_value != nullptr && sub_value->isa<ValueSequence>(); });
+}
+}  // namespace
+
 TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (IsCallNode(node)) {
+  if (IsCallNode(node) || IsTupleInTupleValueNode(node)) {
     if (node->abstract() == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Empty abstract of call node:" << node->DebugString();
     }

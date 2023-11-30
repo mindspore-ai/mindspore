@@ -385,7 +385,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
     MS_EXCEPTION_IF_NULL(input_kernel_tensor);
     node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
-    if (type_ != KernelTransformType::kSuperKernelActor) {
+    if (type_ != KernelTransformType::kSuperKernelActor && input_kernel_tensor->GetValueTrack() != nullptr) {
       node_device_kernel_tensor->set_value(input_kernel_tensor->GetValueTrack());
     }
 

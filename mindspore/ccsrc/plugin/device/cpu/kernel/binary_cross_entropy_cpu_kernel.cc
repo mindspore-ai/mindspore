@@ -113,7 +113,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   }
   ParallelLaunchAutoSearch(func, input_size_, this, &parallel_search_info_);
 
-  if (reduction_ != kNone) {
+  if (reduction_ != kNone && input_size_ > 0) {
     LaunchToScalar<T>(input_size_, reduction_, loss, tmp_loss.data());
   }
 }
