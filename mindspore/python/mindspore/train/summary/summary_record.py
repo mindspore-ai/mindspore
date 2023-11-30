@@ -61,7 +61,6 @@ def _cache_summary_tensor_data(summary):
     with _summary_lock:
         for item in summary:
             SUMMARY_TENSOR_CACHE[item['name']] = item['data']
-        return True
 
 
 def _get_summary_tensor_data(end_flag=None, del_end_flag=False):
@@ -454,7 +453,7 @@ class SummaryRecord:
                                         self._num_process,
                                         self.raise_exception,
                                         **filename_dict)
-        _get_summary_tensor_data()
+        _ = _get_summary_tensor_data()
         atexit.register(self.close)
 
     def _add_summary_tensor_data(self, step_index=-1):
