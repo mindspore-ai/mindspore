@@ -542,19 +542,13 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
       // Check JIT forbidden API
       CheckJITForbiddenAPI(obj);
-      const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
       // Check if the function is from a third-party library.
       py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
       bool is_third_party_function =
         python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY, obj).cast<bool>();
       if (is_third_party_function) {
-        if (allow_fallback_runtime) {
-          MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
-          return std::make_shared<InterpretedObject>(obj);
-        } else {
-          MS_EXCEPTION(ValueError) << "Converting the function from third-party library:" << py::str(obj)
-                                   << " need set jit_syntax_level to LAX.";
-        }
+        MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
+        return std::make_shared<InterpretedObject>(obj);
       }
     }
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
