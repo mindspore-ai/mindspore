@@ -19,13 +19,14 @@ from __future__ import absolute_import
 import os
 import logging
 from enum import Enum
-import numpy
+import numpy as np
 
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import Tensor
 from mindspore_lite.base_model import BaseModel
+from mindspore_lite._parse_update_weights_name import _parse_update_weight_config_name, _rename_variable_weight
 
 __all__ = ['ModelType', 'Model', 'ModelParallelRunner', 'ModelGroup']
 
@@ -234,6 +235,12 @@ class Model(BaseModel):
             if not ret.IsOk():
                 raise RuntimeError(
                     f"load configuration failed! Error is {ret.ToString()}")
+            update_names = _parse_update_weight_config_name(config_path)
+            if update_names is not None:
+                if config_dict is None:
+                    config_dict = {"ascend_context": {"variable_weights_list": update_names}}
+                else:
+                    config_dict['ascend_context']["variable_weights_list"] = update_names
 
         if config_dict:
             check_isinstance("config_dict", config_dict, dict)
@@ -280,6 +287,24 @@ class Model(BaseModel):
         """
         # pylint: disable=useless-super-delegation
         return super(Model, self).get_inputs()
+
+    def update_weights(self, weights):
+        """
+        Update constant weight of the model node.
+
+        Args:
+            weights (list(list[Tensor])): A list that includes all update weight Tensors.
+
+        Raises:
+            RuntimeError: `weights` is not a list(list).
+            RuntimeError: `weights` is a list, but the elements are not Tensor.
+            RuntimeError: update weight failed.
+        """
+        for weight in weights:
+            for tensor in weight:
+                name = _rename_variable_weight(tensor.name)
+                tensor.name = name
+        return super(Model, self).update_weights(weights)
 
     def predict(self, inputs, outputs=None):
         """
@@ -365,7 +390,7 @@ class Model(BaseModel):
             raise RuntimeError(f"inputs size is wrong.")
         inputs_tensor = []
         for i, in_tensor in enumerate(inputs):
-            if isinstance(in_tensor, numpy.ndarray):
+            if isinstance(in_tensor, np.ndarray):
                 model_input_tensors[i].set_data_from_numpy(in_tensor)
                 inputs_tensor.append(model_input_tensors[i])
             elif isinstance(in_tensor, Tensor):

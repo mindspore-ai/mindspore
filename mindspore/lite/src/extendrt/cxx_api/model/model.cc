@@ -373,6 +373,10 @@ bool Model::CheckModelSupport(DeviceType device_type, ModelType model_type) {
   return ModelImpl::CheckModelSupport(device_type, model_type);
 }
 
+Status Model::UpdateWeights(const std::vector<std::vector<MSTensor>> &new_weights) {
+  return impl_->UpdateWeights(new_weights);
+}
+
 Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;

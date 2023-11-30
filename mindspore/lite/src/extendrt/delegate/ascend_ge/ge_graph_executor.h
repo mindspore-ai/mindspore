@@ -32,6 +32,7 @@
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
 #include "extendrt/delegate/ascend_ge/ge_memory_manager.h"
 #include "extendrt/delegate/ascend_ge/ge_context_manager.h"
+#include "extendrt/delegate/ascend_ge/update_weight.h"
 
 namespace mindspore {
 struct RefDataInfo {
@@ -94,8 +95,11 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool Init();
   bool AoeTuning(const FuncGraphPtr &graph);
   bool OfflineBuildGraph(const FuncGraphPtr &graph);
+  bool UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) override;
 
  private:
+  std::shared_ptr<UpdateWeight> update_weight_ptr_ = nullptr;
+  bool enable_update_weight_ = false;
   const std::shared_ptr<mindspore::Context> context_;
   ConfigInfos config_infos_;
   std::shared_ptr<ge::Session> ge_session_ = nullptr;
