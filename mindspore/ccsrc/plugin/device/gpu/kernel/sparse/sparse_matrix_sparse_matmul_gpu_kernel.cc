@@ -75,7 +75,6 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const std::vector<KernelTensor *
   if (inputs.at(kIndex4)->dtype_id() == TypeId::kNumberTypeComplex128) {
     computeType = CUDA_C_64F;
   }
-  is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < inputs.size(); i++) {
     std::vector<int64_t> input_shape =
       std::vector<int64_t>(inputs.at(i)->GetDeviceShapeVector().begin(), inputs.at(i)->GetDeviceShapeVector().end());

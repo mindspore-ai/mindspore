@@ -39,7 +39,6 @@ bool MaskedSelectCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  is_need_retrieve_output_shape_ = true;  // MaskedSelect is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
   return true;
 }

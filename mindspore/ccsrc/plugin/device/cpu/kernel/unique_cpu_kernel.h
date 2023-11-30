@@ -121,7 +121,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
-    is_need_retrieve_output_shape_ = true;
     auto batch_rank = ops::get_batch_rank(primitive_);
     if (batch_rank < 0) {
       return false;

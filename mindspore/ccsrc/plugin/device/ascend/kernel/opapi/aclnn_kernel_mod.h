@@ -66,7 +66,7 @@ class AclnnKernelMod : public KernelMod {
 
   void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
 
-  bool IsNeedRetrieveOutputShape() override { return false; }
+  bool IsNeedUpdateOutputShapeAndSize() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
   void UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);

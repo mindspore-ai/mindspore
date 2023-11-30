@@ -1160,7 +1160,7 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!kernel_mod->IsNeedRetrieveOutputShape()) {
+  if (!kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
     return;
   }
 

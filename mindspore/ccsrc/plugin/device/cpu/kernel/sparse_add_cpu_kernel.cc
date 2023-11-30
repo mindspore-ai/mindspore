@@ -54,7 +54,6 @@ bool SparseAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < kOutputNum; i++) {
     auto dtype = inputs[i]->dtype_id();
     (void)types_.emplace_back(dtype);

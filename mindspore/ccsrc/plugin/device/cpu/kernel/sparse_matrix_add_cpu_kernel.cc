@@ -61,7 +61,6 @@ bool SparseMatrixAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

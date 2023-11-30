@@ -113,7 +113,6 @@ bool NonMaxSuppressionV3GpuKernelMod::Init(const std::vector<KernelTensor *> &in
   if (!is_match) {
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   return true;
 }

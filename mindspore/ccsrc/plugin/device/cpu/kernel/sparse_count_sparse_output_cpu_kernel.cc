@@ -112,7 +112,6 @@ bool SparseCountSparseOutputCpuKernelMod::Init(const std::vector<KernelTensor *>
   (void)types_.emplace_back(TypeId::kNumberTypeInt64);
   (void)types_.emplace_back(inputs[1]->dtype_id());
   (void)types_.emplace_back(TypeId::kNumberTypeInt64);
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

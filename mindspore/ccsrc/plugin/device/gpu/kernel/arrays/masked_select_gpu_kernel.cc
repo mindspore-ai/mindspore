@@ -72,7 +72,6 @@ bool MaskedSelectGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  is_need_retrieve_output_shape_ = true;  // MaskedSelect is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   mask_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);

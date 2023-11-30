@@ -34,7 +34,6 @@ int PadAndShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                   << cum_sum_arr_shape.size() << ".";
   }
   cum_sum_size_ = LongToSize(cum_sum_arr_shape[0]);
-  is_need_retrieve_output_shape_ = true;
   return KRET_OK;
 }
 

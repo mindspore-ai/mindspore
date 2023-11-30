@@ -40,7 +40,6 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    is_need_retrieve_output_shape_ = true;
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
     if (!is_match) {

@@ -157,7 +157,6 @@ bool UniqueConsecutiveCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
   } else {
     axis_ = GetValue<int64_t>(axis_ptr);
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

@@ -41,8 +41,6 @@ bool GammaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   shape_shape_ = inputs[0]->GetShapeVector();
   rng_.Init(seed, seed2);
 
-  is_need_retrieve_output_shape_ = true;
-
   return true;
 }
 
