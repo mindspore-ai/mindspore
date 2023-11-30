@@ -232,8 +232,8 @@ bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pri
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return false;
   }
-  AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC),
-    IntToUint(priority);
+  AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC,
+                                                       IntToUint(priority));
   return true;
 }
 
