@@ -347,4 +347,5 @@ INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
 OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
+REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
 }  // namespace mindspore::transform
