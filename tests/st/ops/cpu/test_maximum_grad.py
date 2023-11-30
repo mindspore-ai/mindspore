@@ -19,6 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 from tests.st.pynative.utils import GradOfAllInputs
 
 context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="CPU")
@@ -247,3 +248,29 @@ def test_max_tensor_grad_with_input_nan():
     expect1 = np.array([1.28, -0.23, 0.96])
     assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_max_grad_vmap():
+    """
+    Feature: maximumgrad vmap
+    Description: test the maximumgrad vmap when in_axes=(0, 0, 0).
+    Expectation: match to np benchmark.
+    """
+    net = MaxmumGradNet()
+    vmap_net = vmap(net, in_axes=(0, 0, 0))
+    np.random.seed(20)
+    x = Tensor(np.random.rand(2, 4))
+    y = Tensor(np.random.rand(2, 4))
+    sens = Tensor(np.random.rand(2, 4))
+    dx, dy = vmap_net(x, y, sens)
+
+    expect0 = np.array([[0., 0.75128073, 0.23921822, 0.25480601],
+                        [0., 0., 0., 0.17878053]])
+    expect1 = np.array([[0.11669374, 0., 0., 0.],
+                        [0.85762554, 0.94977903, 0.56168687, 0.]])
+
+    assert np.allclose(dx.asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
