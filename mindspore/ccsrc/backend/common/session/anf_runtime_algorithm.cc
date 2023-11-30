@@ -1807,7 +1807,7 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   if (kernel_mod == nullptr) {
     return true;
   }
-  return kernel_mod->IsNeedRetrieveOutputShape();
+  return kernel_mod->IsNeedUpdateOutputShapeAndSize();
 }
 
 void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {

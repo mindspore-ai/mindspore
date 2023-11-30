@@ -53,7 +53,6 @@ bool CombinedNonMaxSuppressionGpuKernelMod::Init(const std::vector<KernelTensor 
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the kernel type should be in "
                   << "[float32,int32], but got: " << kernel_attr;
   }
-  is_need_retrieve_output_shape_ = true;
   kernel_func_ = func_list_[index].second;
   return true;
 }

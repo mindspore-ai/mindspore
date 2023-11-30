@@ -40,7 +40,6 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Init(const std::vector<KernelTen
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  is_need_retrieve_output_shape_ = true;  // NonMaxSuppressionWithOverlaps is a dynamic shape operator.
   return true;
 }
 

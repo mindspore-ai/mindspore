@@ -26,7 +26,6 @@ constexpr auto kConvertToDynamicRank = "ConvertToDynamic";
 }  // namespace
 bool ConvertToDynamicCpuKernelMod::Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
   kernel_name_ = kConvertToDynamicRank;
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

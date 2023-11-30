@@ -430,9 +430,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
 
 bool AicpuOpKernelMod::IsNeedUpdateOutputShapeAndSize() {
   if (IsOneOfComputeDepend(kernel_name_)) {
-    is_need_retrieve_output_shape_ = true;
+    return true;
   }
-  return is_need_retrieve_output_shape_;
+  return false;
 }
 
 void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,

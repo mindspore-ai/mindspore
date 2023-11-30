@@ -53,7 +53,6 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     if (inputs.size() != input_num) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
     }
-    is_need_retrieve_output_shape_ = true;
     return true;
   }
 
@@ -69,6 +68,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
       input_size_ *= e;
     }
     InitSizeLists();
+    outputs[0]->set_size(output_size_list_[0]);
     return KRET_OK;
   }
 

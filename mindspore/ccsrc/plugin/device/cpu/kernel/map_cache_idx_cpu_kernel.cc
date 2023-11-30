@@ -63,7 +63,6 @@ bool MapCacheIdxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
-  is_need_retrieve_output_shape_ = true;
   outputs_size_ = outputs.size();
   for (size_t i = 0; i < outputs_size_; i++) {
     MS_EXCEPTION_IF_NULL(outputs[i]);

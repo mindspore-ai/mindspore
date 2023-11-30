@@ -153,7 +153,6 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::Init(const std::vector<KernelTens
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

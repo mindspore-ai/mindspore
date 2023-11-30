@@ -54,7 +54,6 @@ bool SparseSparseMinimumCpuKernelMod::Launch(const std::vector<kernel::KernelTen
 
 bool SparseSparseMinimumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  is_need_retrieve_output_shape_ = true;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSparseMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSparseMinimumOutputsNum, kernel_name_);
   dtype_ = inputs.at(kIndex1)->dtype_id();

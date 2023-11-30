@@ -115,7 +115,6 @@ void UnionSparseIndicesAndValues(
 
 bool SparseSparseMaximumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  is_need_retrieve_output_shape_ = true;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   TypeId a_dtype = inputs.at(kInputa_values)->dtype_id();

@@ -122,7 +122,6 @@ int UniqueWithPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_shapes.emplace_back(inputs[1]->GetDeviceShapeVector());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  is_need_retrieve_output_shape_ = false;
   return KRET_OK;
 }
 

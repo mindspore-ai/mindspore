@@ -149,7 +149,6 @@ bool ListDiffGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   if (!is_match) {
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'ListDiff' got empty inputs or outputs, which is invalid.";

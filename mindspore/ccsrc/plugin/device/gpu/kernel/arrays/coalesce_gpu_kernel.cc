@@ -84,7 +84,6 @@ bool CoalesceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   }
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

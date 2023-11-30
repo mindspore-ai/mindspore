@@ -696,7 +696,6 @@ class BACKEND_EXPORT KernelMod {
     const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
   // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
-  virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape_; }
   std::vector<KernelTensorPtr> RetrieveOutputShape() {
     SyncOutputShape();
     return outputs_;
@@ -758,7 +757,6 @@ class BACKEND_EXPORT KernelMod {
   std::vector<AddressPtr> outputs_addr_;
 
   // =======================Old member, will deleted after all kernel modified used new interface=================
-  bool is_need_retrieve_output_shape_ = false;
   int32_t task_id_ = -1;
   BaseOperatorPtr op_;
   std::vector<KernelTensorPtr> inputs_;

@@ -114,7 +114,6 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     }
 
     max_output_length_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
-    is_need_retrieve_output_shape_ = true;
     return true;
   }
 

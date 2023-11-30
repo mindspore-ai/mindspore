@@ -40,7 +40,6 @@ bool NormalizeTupleIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &in
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

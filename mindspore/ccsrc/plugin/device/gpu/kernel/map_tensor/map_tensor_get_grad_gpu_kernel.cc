@@ -69,8 +69,6 @@ bool MapTensorGetGradGpuKernelMod::Init(const std::vector<KernelTensor *> &input
   input_keys_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   input_dout_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
-  // The output of this kernel is dynamic, so need update the output shape.
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
