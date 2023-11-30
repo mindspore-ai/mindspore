@@ -66,7 +66,7 @@ const AnfNodePtr HardSwishFusion::Process(const FuncGraphPtr &func_graph, const 
   if (IsMarkedTrainOp(div_cnode)) {
     return nullptr;
   }
-  if (!CheckPattern(func_graph, equiv)) {
+  if (!CheckPattern(equiv)) {
     return nullptr;
   }
 
@@ -102,7 +102,7 @@ bool HardSwishFusion::Init() const {
   return true;
 }
 
-bool HardSwishFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
+bool HardSwishFusion::CheckPattern(const EquivPtr &equiv) const {
   // add const
   auto add_const_node = utils::cast<AnfNodePtr>((*equiv)[add_const_]);
   MS_CHECK_TRUE_RET(add_const_node != nullptr, false);

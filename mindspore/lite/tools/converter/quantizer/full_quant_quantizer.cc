@@ -199,7 +199,7 @@ int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const
     quant_param.zeroPoint = info->GetZeroPoint();
     quant_param.max = info->GetEncodeMax();
     quant_param.min = info->GetEncodeMin();
-    quant_param.numBits = init_param_.bit_num_;
+    quant_param.numBits = static_cast<int32_t>(init_param_.bit_num_);
     quant_param.narrowRange = true;
     quant_param.inited = true;
     quant_param.roundType = 1;

@@ -209,7 +209,6 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
 }
 
 int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
-  auto op_name = cnode->fullname_with_scope();
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr.");
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
