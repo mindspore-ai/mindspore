@@ -419,6 +419,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set device id.
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
 
+  // Get logical stream id.
+  size_t stream_id() { return stream_id_; }
+
   // Set logical stream id.
   void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
 

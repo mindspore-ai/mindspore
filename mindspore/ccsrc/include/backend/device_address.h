@@ -231,6 +231,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   uint32_t device_id() const { return kernel_tensor_->device_id(); }
 
   void set_stream_id(uint32_t stream_id) { kernel_tensor_->set_stream_id(stream_id); }
+  uint32_t stream_id() { return kernel_tensor_->stream_id(); }
 
   void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }
