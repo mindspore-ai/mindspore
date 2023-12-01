@@ -84,7 +84,7 @@ bool InsertDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allgat
     auto cur_node_users = manager->node_users()[current_ag_node];
     for (const auto &allgather_node_user : cur_node_users) {
       if (!IsPrimitiveCNode(allgather_node_user.first) ||
-          (IsPrimitiveCNode(allgather_node_user.first, prim::kPrimDepend) && allgather_node_user.second == 2)) {
+          (IsPrimitiveCNode(allgather_node_user.first, prim::kPrimDepend) && allgather_node_user.second == kIndexTwo)) {
         continue;
       }
       auto allgather_node_user_cnode = allgather_node_user.first->cast<CNodePtr>();
