@@ -63,7 +63,7 @@ class SGD(Optimizer):
             parameter groups.
         lr (Union[int, float, Tensor]): learning rate.
         momentum (Union[int, float], optional): momentum factor. Default: ``0``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.
         nesterov (bool, optional): enables Nesterov momentum. Default: ``False``.
 
@@ -104,7 +104,7 @@ class SGD(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *,
+    def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0., nesterov=False, *,
                  maximize=False):
         Validator.check_value_type("lr", lr, [float, int, Tensor], self.cls_name)
         if lr < 0.0:
@@ -133,8 +133,8 @@ class SGD(Optimizer):
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
             opt = P.SGD(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
-            lr = group.get("lr")
-            if isinstance(lr, float):
+            lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
             maximize = group.get("maximize")
             momentum = self.op_cast(group.get("momentum"), mstype.float32)

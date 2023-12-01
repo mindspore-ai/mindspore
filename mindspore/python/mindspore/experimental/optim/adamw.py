@@ -103,7 +103,7 @@ class AdamW(Optimizer):
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
             numerical stability. Default: ``1e-8``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
 
     Keyword Args:
@@ -173,8 +173,9 @@ class AdamW(Optimizer):
             beta1, beta2 = group['betas']
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
+            lr = self.lrs[group_id]
             grads = gradients[start_id: end_id] if not group.get("maximize") else -gradients[start_id: end_id]
-            self.hyper_map(F.partial(_adamw_opt, group.get("weight_decay"), group.get("lr"), group.get("amsgrad"),
+            self.hyper_map(F.partial(_adamw_opt, group.get("weight_decay"), lr, group.get("amsgrad"),
                                      group.get("eps"), self.state_step, beta1, beta2),
                            self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],
                            self.exp_avg_sq[start_id: end_id], self.max_exp_avg_sq[start_id: end_id])

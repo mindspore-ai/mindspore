@@ -12,8 +12,16 @@ Experimental Optimizer
     :template: classtemplate.rst
 
     mindspore.experimental.optim.Optimizer
+    mindspore.experimental.optim.Adadelta
+    mindspore.experimental.optim.Adagrad
     mindspore.experimental.optim.Adam
+    mindspore.experimental.optim.Adamax
     mindspore.experimental.optim.AdamW
+    mindspore.experimental.optim.ASGD
+    mindspore.experimental.optim.NAdam
+    mindspore.experimental.optim.RAdam
+    mindspore.experimental.optim.RMSprop
+    mindspore.experimental.optim.Rprop
     mindspore.experimental.optim.SGD
 
 
