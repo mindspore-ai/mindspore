@@ -34,7 +34,7 @@ using GeTensor = ::ge::Tensor;
 namespace mindspore {
 namespace transform {
 enum Status : int { SUCCESS = 0, FAILED, INVALID_ARGUMENT, ALREADY_EXISTS, NOT_FOUND };
-typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32 } AclPrecisionMode;
+typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32, MUST_KEEP_ORIGIN_DTYPE } AclPrecisionMode;
 
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = std::shared_ptr<MeTensor>;
@@ -74,6 +74,10 @@ static std::map<std::string, GeDataType> ge_str_dtype_map = {{"float", GeDataTyp
                                                              {"dual_sub_uint8", GeDataType::DT_DUAL_SUB_UINT8},
                                                              {"int4", GeDataType::DT_INT4},
                                                              {"bfloat16", GeDataType::DT_BF16}};
+
+static std::map<AclPrecisionMode, std::string> acl_precision_map = {{ALLOW_FP32_TO_FP16, "allow_fp32_to_fp16"},
+                                                                    {FORCE_FP32, "force_fp32"},
+                                                                    {MUST_KEEP_ORIGIN_DTYPE, "must_keep_origin_dtype"}};
 
 struct DfGraphWrapper {
  public:
