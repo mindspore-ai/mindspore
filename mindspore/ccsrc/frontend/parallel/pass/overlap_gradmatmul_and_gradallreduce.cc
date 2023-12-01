@@ -106,7 +106,7 @@ void ExtractBackwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological
   }
 
   for (const auto &matmul_list_pair : backward_matmul_map) {
-    if (matmul_list_pair.second.size() != 2) {
+    if (matmul_list_pair.second.size() != SIZE_TWO) {
       continue;
     }
     auto matmul_list = matmul_list_pair.second;
@@ -144,7 +144,7 @@ std::vector<CNodePtr> GetCommInputMatMulNode(const AnfNodePtr &node,
     }
     auto input_size = cnode_queue_end->size();
     if (IsPrimitiveCNode(cnode_queue_end, prim::kPrimDepend)) {
-      input_size = 2;
+      input_size = SIZE_TWO;
     }
     for (size_t i = 1; i < input_size; ++i) {
       anf_queue.push(cnode_queue_end->input(i));
