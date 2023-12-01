@@ -3562,7 +3562,7 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
     AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
     // If exist interpret node in JoinedStr, all object in py_values will convert to interpret node.
     // Need to parse all elements in py_values in order to put them in local param dict.
-    if (!has_interpret_node && IsPrimitiveCNode(str_value, prim::kPrimPyInterpret)) {
+    if (!has_interpret_node && fallback::CheckInterpretInput(str_value)) {
       has_interpret_node = true;
     }
     (void)value_nodes.emplace_back(str_value);

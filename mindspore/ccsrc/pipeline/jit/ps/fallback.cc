@@ -617,6 +617,20 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
   return ss.str();
 }
 
+bool CheckInterpretInput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
+    return true;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    return std::any_of(inputs.begin(), inputs.end(),
+                       [](const AnfNodePtr &input) { return CheckInterpretInput(input); });
+  }
+  return false;
+}
+
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
   MS_EXCEPTION_IF_NULL(node);
   if (!EnableFallbackListDictInplace()) {
