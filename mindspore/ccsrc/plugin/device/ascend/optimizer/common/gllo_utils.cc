@@ -25,24 +25,8 @@
 
 namespace mindspore {
 namespace opt {
-bool IsParamNode(const BaseRef &n) {
-  if (!utils::isa<ParameterPtr>(n)) {
-    return false;
-  }
-  auto parameter = utils::cast<ParameterPtr>(n);
-  if (!parameter->has_default() || parameter->default_param() == nullptr) {
-    return false;
-  }
-  auto tensor = parameter->default_param()->cast<tensor::TensorPtr>();
-  if (tensor == nullptr) {
-    return false;
-  }
-  return tensor->data_c() != nullptr;
-}
-
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
   if (node == nullptr || primitive_type == nullptr) {
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
     return false;
   }
   if (node->isa<CNode>()) {

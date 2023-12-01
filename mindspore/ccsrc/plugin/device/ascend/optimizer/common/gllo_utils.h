@@ -32,8 +32,6 @@ constexpr int RET_ERROR = -1;
 constexpr int RET_NULL_PTR = -2;  // NULL pointer returned.
 
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
-bool IsParamNode(const BaseRef &n);
-bool IsMarkedTrainOp(const CNodePtr &cnode);
 
 #define MS_CHECK_TRUE_RET(value, errcode) \
   do {                                    \
@@ -41,24 +39,6 @@ bool IsMarkedTrainOp(const CNodePtr &cnode);
       return errcode;                     \
     }                                     \
   } while (0)
-
-class ReturnCode {
- public:
-  static ReturnCode *GetSingleReturnCode() {
-    static ReturnCode return_code;
-    return &return_code;
-  }
-  void UpdateReturnCode(STATUS status) {
-    if (status_code_ == RET_OK) {
-      status_code_ = status;
-    }
-  }
-
- private:
-  ReturnCode() = default;
-  virtual ~ReturnCode() = default;
-  int status_code_ = RET_OK;
-};
 
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
