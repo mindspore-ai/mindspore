@@ -82,6 +82,7 @@ ADD_CONVERTER_TBE_OP(Conv2DTransposeV2)
 ADD_CONVERTER_TBE_OP(NonZeroV2)
 ADD_CONVERTER_TBE_OP(AdaptiveAvgPool)
 ADD_CONVERTER_TBE_OP(Im2col)
+ADD_CONVERTER_TBE_OP(AscendQuant)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
