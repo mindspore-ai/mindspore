@@ -479,6 +479,20 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadFieldNodePtr &node) {
   return std::make_shared<MindNode>(func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {instance, field}));
 }
 
+AnfNodePtrList GetConstKeys(const AnfNodePtr &node) {
+  AnfNodePtrList keys;
+  if (node->isa<CNode>()) {
+    auto inputs = node->cast<CNodePtr>()->inputs();
+    keys.insert(keys.begin(), inputs.begin() + 1, inputs.end());
+  } else {
+    MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<ValueTuple>(node), "The keys must be a ValueTuple.");
+    auto tuple = GetValueNode<ValueTuplePtr>(node);
+    std::transform(tuple->value().begin(), tuple->value().end(), std::back_inserter(keys),
+                   [](const ValuePtr &value) { return NewValueNode(value); });
+  }
+  return keys;
+}
+
 ir::NodePtr FuncGraphBuilder::Mutate_(const ir::BuildNodePtr &node) {
   AnfNodePtrList array;
   std::transform(node->GetArgs().begin(), node->GetArgs().end(), std::back_inserter(array),
@@ -507,13 +521,10 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::BuildNodePtr &node) {
         keys.push_back(array[index + 1]);
       }
     } else {
-      AnfNodePtr const_key = array.back();
-      array.pop_back();
-      auto tuple = GetValueNode<ValueTuplePtr>(const_key);
-      MS_EXCEPTION_IF_CHECK_FAIL((tuple->size() == array.size()), "The count of keys not match the size of Dict.");
-      std::transform(tuple->value().begin(), tuple->value().end(), std::back_inserter(keys),
-                     [](const ValuePtr &value) { return NewValueNode(value); });
+      auto key_list = GetConstKeys(array.back());
+      keys.insert(keys.begin(), key_list.begin(), key_list.end());
       values.insert(values.begin(), array.begin(), array.end());
+      MS_EXCEPTION_IF_CHECK_FAIL((keys.size() == values.size()), "The keys and values of Dict are not match.");
     }
     CNodePtr cnode_keys = func_graph_->NewCNodeInOrder(prim::kPrimMakeTuple, keys);
     CNodePtr cnode_values = func_graph_->NewCNodeInOrder(prim::kPrimMakeTuple, values);
