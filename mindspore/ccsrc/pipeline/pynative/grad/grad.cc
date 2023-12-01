@@ -38,6 +38,7 @@
 #include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/expander/pack/packfunc_grad.h"
+#include "runtime/pynative/op_executor.h"
 namespace mindspore {
 namespace pynative {
 namespace {
@@ -1954,6 +1955,8 @@ void GradExecutor::ClearBpropTask() const {
 void GradExecutor::WaitBpropTask() const {
   if (bprop_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
+    // Wait for the forward tasks finish.
+    runtime::OpExecutor::GetInstance().WaitForBuild();
     bprop_queue_->Wait();
     assist_queue_->Wait();
     bprop_queue_->CheckException();
