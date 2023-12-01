@@ -36,7 +36,10 @@ int AscendKernelPlugin::Register() {
     return lite::RET_OK;
   }
   Dl_info dl_info;
-  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  if (dladdr(reinterpret_cast<void *>(this), &dl_info) == 0) {
+    MS_LOG(ERROR) << "dladdr error.";
+    return lite::RET_ERROR;
+  }
   std::string cur_so_path = dl_info.dli_fname;
   auto converter_pos = cur_so_path.find("libmindspore_converter.so");
   if (converter_pos != std::string::npos) {
