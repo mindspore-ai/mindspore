@@ -210,14 +210,16 @@ AnfNodePtr DynamicGRUV2GradFission::AddTConcatNode(const FuncGraphPtr &func_grap
                                    &gru_hidden_grad_node_outputs);
     (void)concat_inputs.emplace_back(gru_hidden_grad_node_outputs[concat_output_index]);
   }
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(0)));
+  (void)concat_inputs.emplace_back(axis_node);
   auto concat_t_node = NewCNode(concat_inputs, func_graph);
   auto out_dims = common::AnfAlgo::GetOutputInferShape(gru_hidden_grad_nodes[kIndex0], concat_output_index);
   ShapeVector concat_output_shape = {SizeToLong(t_size), out_dims[kDim1], out_dims[kDim2]};
   auto out_type = common::AnfAlgo::GetOutputInferDataType(gru_hidden_grad_nodes[kIndex0], concat_output_index);
   common::AnfAlgo::SetOutputInferTypeAndShape({out_type}, {concat_output_shape}, concat_t_node.get());
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(t_size)), concat_t_node);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(t_size)}), concat_t_node);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat_t_node);
+  std::vector<int64_t> dyn_input_size{SizeToLong(t_size), (int64_t)-1};
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_t_node);
   return concat_t_node;
 }
 
@@ -305,10 +307,12 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
     MS_LOG(INTERNAL_EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
                                << trace::DumpSourceLines(splitv);
   }
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(0)));
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   auto init_h_reshape = CreateHReshape(func_graph, dynamic_gru_v2_grad_cnode->input(input_index["init_h"]));
   (void)concat_inputs.emplace_back(init_h_reshape);
   (void)concat_inputs.emplace_back(splitv_outputs[kIndex0]);
+  (void)concat_inputs.emplace_back(axis_node);
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
   ShapeVector output_shape = Convert2Long({t_size, batch_size, hidden_size});
@@ -316,8 +320,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
                                               {output_shape}, concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(kConcatNum)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum}), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum, (int64_t)-1}), concat);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
   return concat;
 }
@@ -394,13 +397,14 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDgateXConcatDNode(const FuncGraphPtr &
   } else {
     (void)concat_inputs.emplace_back(dnt_x);
   }
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(kDim2)));
+  (void)concat_inputs.emplace_back(axis_node);
   auto concat_op = NewCNode(concat_inputs, func_graph);
   auto shape = Convert2Long({t_size, batch_size, kGateNum * hidden_size});
   auto types = {common::AnfAlgo::GetOutputInferDataType(dnt_x, 0)};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, concat_op.get());
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(kConcatNum)), concat_op);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum}), concat_op);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kDim2)), concat_op);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kConcatNum, (int64_t)-1}), concat_op);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat_op);
   return concat_op;
 }

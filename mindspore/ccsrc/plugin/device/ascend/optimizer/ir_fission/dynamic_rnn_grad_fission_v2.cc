@@ -482,8 +482,9 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   auto reshape = NewCNode(reshape_input, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape_tmp},
                                               reshape.get());
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(0)));
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name())),
-                                           reshape, splitv_outputs[0]};
+                                           reshape, splitv_outputs[0], axis_node};
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
   auto splitv_output0_shape = common::AnfAlgo::GetOutputInferShape(splitv, 0);
@@ -498,8 +499,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
                                               concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat);
   return concat;
 }
@@ -525,6 +526,14 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcat(const FuncGraphPtr &func_graph,
     concat_inputs.push_back(origin_input0);
   }
   concat_inputs.push_back(h_concat);
+
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(1)));
+    concat_inputs.push_back(axis_node);
+  } else {
+    auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(kAttrAxis2Value)));
+    concat_inputs.push_back(axis_node);
+  }
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
   auto h_concat_output_shape = common::AnfAlgo::GetOutputInferShape(h_concat, 0);
@@ -540,12 +549,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcat(const FuncGraphPtr &func_graph,
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
-  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
-  }
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   if (specs.shape_need_align) {
     common::AnfAlgo::SetNodeAttr(kAttrFixedInputFormat,
                                  MakeValue(std::vector<string>{kOpFormat_FRAC_NZ, kOpFormat_FRAC_NZ}), concat);
@@ -598,6 +603,13 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_input4, 0)}, {shape_tmp},
                                               reshape_in4.get());
   concat_inputs.push_back(reshape_in4);
+  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
+    auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(1)));
+    concat_inputs.push_back(axis_node);
+  } else {
+    auto axis_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(kAttrAxis2Value)));
+    concat_inputs.push_back(axis_node);
+  }
   auto concat = NewCNode(concat_inputs, func_graph);
   // Set infer data type and shape
   ShapeVector shape;
@@ -610,12 +622,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, concat.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kAttrNValue)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue}), concat);
-  if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(1), concat);
-  } else {
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kAttrAxis2Value)), concat);
-  }
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{kAttrDynInputSizesValue, (int64_t)-1}), concat);
   if (specs.shape_need_align) {
     common::AnfAlgo::SetNodeAttr(kAttrFixedInputFormat,
                                  MakeValue(std::vector<string>{kOpFormat_FRAC_NZ, kOpFormat_FRAC_NZ}), concat);
