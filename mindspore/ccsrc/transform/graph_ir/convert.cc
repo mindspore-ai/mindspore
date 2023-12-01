@@ -321,8 +321,8 @@ std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNo
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> visited;
-  auto node_users_map = manager->node_users();
-  for (const auto &node_pair : node_users_map[node]) {
+  const auto &nodes = manager->node_users()[node];
+  for (const auto &node_pair : nodes) {
     if (AnfUtils::IsRealKernel(node_pair.first) && node_pair.first->isa<CNode>()) {
       visited.push_back(node_pair.first);
     }
@@ -684,8 +684,7 @@ void DfGraphConvertor::JudgeParamTransType(const bool &node_will_update, bool *a
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
-  auto manager = Manage(anf_graph_, true);
-  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(graph_manager_);
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (const auto &it : tensors) {
@@ -709,13 +708,13 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
 
-    auto desc =
-      TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), SelectParamOriFormat(manager, node));
+    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(),
+                                               SelectParamOriFormat(graph_manager_, node));
     if (desc == nullptr) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
-    auto node_will_update = NodeInputKeepUpdate(manager, node);
+    auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
     bool as_ref_data = false;
     bool as_constant = false;
     JudgeParamTransType(node_will_update, &as_ref_data, &as_constant);
@@ -2144,7 +2143,7 @@ void DfGraphConvertor::UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr
   }
   auto para = it->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para);
-  std::string format = kOpFormat_DEFAULT;
+  std::string format = SelectParamOriFormat(graph_manager_, it);
   std::string param_debug_info = para->DebugString();
   auto param_format = param_format_.find(param_debug_info);
   if (param_format != param_format_.end()) {
@@ -2198,7 +2197,7 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   std::ostringstream buf;
   buf << "[" << shape << "]";
   MS_LOG(INFO) << "input shape is " << buf.str() << ", type is " << me_type;
-  std::string format = kOpFormat_DEFAULT;
+  std::string format = SelectParamOriFormat(graph_manager_, it);
   if (it->isa<Parameter>()) {
     auto param = it->cast<ParameterPtr>();
     std::string param_name = param->DebugString();
