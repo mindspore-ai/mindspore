@@ -123,11 +123,11 @@ public class AscendDeviceInfo {
         return deviceType;
     }
 
-     /**
-      * Get Ascend device provider.
-      *
-      * @return the provider
-      */
+    /**
+     * Get Ascend device provider.
+     *
+     * @return the provider
+     */
     public String getProvider() {
         return provider;
     }
