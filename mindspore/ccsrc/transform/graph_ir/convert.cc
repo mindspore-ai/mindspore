@@ -3486,6 +3486,7 @@ void DfGraphConvertor::ConvertParallelGroupIdToHcom(const CNodePtr &node) {
   }
   MS_EXCEPTION_IF_NULL(op);
   (void)op->SetAttr(kParallelGroupId, parallel_group_id);
+  MS_LOG(INFO) << "Successfully convert _parallel_group_id: " << parallel_group_id << " to ge op: " << op->GetName();
 }
 
 void DfGraphConvertor::ConvertPrint(const CNodePtr &node) {
