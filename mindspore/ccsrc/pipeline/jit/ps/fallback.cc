@@ -813,11 +813,27 @@ AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_gra
     script_buffer << "__import__('mindspore').ops.composite.multitype_ops." << name << "(";
   }
   for (size_t i = 0; i < node_inputs_size; i++) {
-    std::stringstream input_key;
-    input_key << "__input_key_" << i << "__";
-    (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
-    (void)key_value_list.emplace_back(node_inputs[i]);
-    script_buffer << input_key.str();
+    if (types[i]->isa<Slice>()) {
+      (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
+      auto start_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("start")});
+      auto end_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("stop")});
+      auto step_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("step")});
+      (void)key_value_list.emplace_back(start_node);
+      (void)key_value_list.emplace_back(end_node);
+      (void)key_value_list.emplace_back(step_node);
+      script_buffer << "slice(__start__,__stop__,__step__)";
+    } else {
+      std::stringstream input_key;
+      input_key << "__input_key_" << i << "__";
+      (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
+      (void)key_value_list.emplace_back(node_inputs[i]);
+      script_buffer << input_key.str();
+    }
     if (i != node_inputs_size) {
       script_buffer << ",";
     }

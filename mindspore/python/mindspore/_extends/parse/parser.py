@@ -788,12 +788,12 @@ def _convert_stub_tensor(data):
             fields = data_dict.keys()
             return namedtuple(type_name, fields)(**_convert_stub_tensor(data_dict))
         return tuple(_convert_stub_tensor(x) for x in data)
-    if isinstance(data, list):
+    if data.__class__ is list:
         # Keep the list object not change.
         for i in range(len(data)):
             data[i] = _convert_stub_tensor(data[i])
         return data
-    if isinstance(data, dict):
+    if data.__class__ is dict:
         # Keep the dict object not change.
         keys = tuple(data.keys())
         for key in keys:
