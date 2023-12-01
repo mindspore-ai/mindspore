@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MM_ACLNN_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MM_ACLNN_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BMM_ACLNN_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BMM_ACLNN_KERNEL_MOD_H_
 #include <vector>
 #include <utility>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
-
 namespace mindspore {
 namespace kernel {
-using TensorParams = transform::TensorParams;
 
-class MMAclnnKernelMod : public AclnnKernelMod {
+class BMMAclnnKernelMod : public AclnnKernelMod {
  public:
-  MMAclnnKernelMod() : AclnnKernelMod("aclnnMatmul") {}
-  ~MMAclnnKernelMod() = default;
+  BMMAclnnKernelMod() : AclnnKernelMod("aclnnMatmul") {}
+  ~BMMAclnnKernelMod() = default;
 
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -41,4 +39,4 @@ class MMAclnnKernelMod : public AclnnKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MM_ACLNN_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BMM_ACLNN_KERNEL_MOD_H_

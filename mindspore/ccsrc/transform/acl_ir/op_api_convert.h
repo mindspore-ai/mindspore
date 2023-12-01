@@ -22,6 +22,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <utility>
 #include <tuple>
 #include "acl/acl_base.h"
 #include "ir/tensor.h"
@@ -236,6 +237,50 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   strides.push_back(1);
   for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
     strides[i] = strides[i] * strides[i + 1];
+  }
+  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                    shape_size, tensor->device_ptr());
+  return acl_tensor;
+}
+
+inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
+  auto shape = tensor->GetShapeVector();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+
+  // Create strides.
+  auto strides = shape;
+  if (!strides.empty()) {
+    strides.erase(strides.begin());
+  }
+  strides.push_back(1);
+  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+    strides[i] = strides[i] * strides[i + 1];
+  }
+  // Check if shape need transpose.
+  if (trans) {
+    std::swap(shape[shape.size() - 1], shape[shape.size() - 2]);
+    std::swap(strides[strides.size() - 1], strides[strides.size() - 2]);
   }
   auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
                                     shape_size, tensor->device_ptr());
