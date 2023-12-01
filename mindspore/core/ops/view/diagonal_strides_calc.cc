@@ -20,7 +20,7 @@
 #include "ops/op_utils.h"
 
 namespace mindspore::ops {
-constexpr size_t kDiagonalInputsNum = 1;
+constexpr size_t kDiagonalInputsNum = 4;
 constexpr int64_t kDimNum = 2;
 
 int64_t ComputeData(int64_t offset, int64_t dim1, int64_t dim2, std::vector<int64_t> old_shape) {
@@ -46,9 +46,9 @@ TensorStorageInfoPtrList DiagonalCalc(const PrimitivePtr &prim, const std::vecto
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto storage_offset = old_tensor_info->old_offset;
-  auto offset = GetValue<int64_t>(prim->GetAttr("offset"));
-  auto dim1 = GetValue<int64_t>(prim->GetAttr("dim1"));
-  auto dim2 = GetValue<int64_t>(prim->GetAttr("dim2"));
+  auto offset = GetValue<int64_t>(inputs[1]);
+  auto dim1 = GetValue<int64_t>(inputs[2]);
+  auto dim2 = GetValue<int64_t>(inputs[3]);
   int64_t dim_size = old_shape.size();
   (void)CheckAndConvertUtils::CheckInRange<int64_t>("dim1", dim1, kIncludeBoth, {-dim_size, dim_size - 1},
                                                     prim->name());

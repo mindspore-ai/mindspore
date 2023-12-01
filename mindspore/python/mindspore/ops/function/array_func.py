@@ -31,7 +31,6 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-from mindspore.ops.operations.math_ops import Diagonal
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -6600,57 +6599,6 @@ def _check_diagonal_axes(dim1, dim2, x_ndim):
     return axes
 
 
-def diagonal(input, offset=0, dim1=0, dim2=1):
-    """
-    Returns specified diagonals of `input`.
-
-    If `input` is 2-D, returns the diagonal of `input` with the given offset.
-    If `input` has more than two
-    dimensions, then the axes specified by `dim1` and `dim2` are used to determine
-    the 2-D sub-array whose diagonal is returned. In this case, remove the `dim1` and `dim2` dimensions of `input`
-    and insert the last dimension of `input` by the diagonal elements determined by `dim1` and `dim2`.
-
-    Args:
-        input (Tensor): Array from which the diagonals are taken.
-        offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Default: ``0`` .
-        dim1 (int, optional): Axis to be used as the first axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            first axis (0). Default: ``0`` .
-        dim2 (int, optional): Axis to be used as the second axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            second axis (1). Default: ``1`` .
-
-    Returns:
-        Tensor, if `input` is 2-D, then `input` 1-D array containing the diagonal. If
-        ``input.ndim > 2``, then the dimensions specified by `dim1` and `dim2` are removed,
-        and a new axis inserted at the end corresponding to the diagonal.
-
-    Raises:
-        TypeError: if `dim1` or `dim2` are not an int.
-        ValueError: if the input tensor has less than two dimensions.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor([[0, 1], [2, 3]], mstype.float32)
-        >>> output = ops.diagonal(x)
-        >>> print(output)
-        [0 3]
-    """
-    x_ndim = input.ndim
-    if x_ndim < 2:
-        raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
-    _check_attr_dtype("dim1", dim1, [int], "diagonal")
-    _check_attr_dtype("dim2", dim2, [int], "diagonal")
-
-    _diagonal = _get_cache_prim(Diagonal)(offset, dim1, dim2)
-    return _diagonal(input)
-
-
 def _check_is_tensor(param_name, input, cls_name):
     """Returns True if input is Tensor."""
     if not isinstance(input, Tensor):
@@ -7519,7 +7467,6 @@ __all__ = [
     'expand',
     'fold',
     'unfold',
-    'diagonal',
     'diagonal_scatter',
     'lstsq',
     'mvlgamma',
