@@ -16,7 +16,7 @@
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 任意维度输入Tensor。数据类型支持float16、float32或float64。
+        - **logits** (Tensor) - 任意维度输入Tensor。数据类型支持float16或float32。
         - **labels** (Tensor) - 真实值。shape和数据类型 与 `logits` 相同。
 
     输出：

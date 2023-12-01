@@ -568,7 +568,6 @@ class SmoothL1Loss(LossBase):
         \end{cases}
 
     .. note::
-        - On the Ascend platform, float64 data type will result in low operator performance.
         - SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
         - L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
         - squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
@@ -585,8 +584,8 @@ class SmoothL1Loss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16,
-          float32 and float64.
+        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16 or
+          float32.
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
