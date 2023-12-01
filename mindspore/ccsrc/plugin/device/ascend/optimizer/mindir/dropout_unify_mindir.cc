@@ -163,7 +163,7 @@ CNodePtr CreateDynamicShapeCNode(const FuncGraphPtr &func_graph, const AnfNodePt
                                  const abstract::ShapePtr &input_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_shape);
-  std::vector<AnfNodePtr> dynamic_shape_inputs{NewValueNode(std::make_shared<Primitive>("DynamicShape")), node_input};
+  std::vector<AnfNodePtr> dynamic_shape_inputs{NewValueNode(std::make_shared<Primitive>("TensorShape")), node_input};
   CNodePtr dynamic_shape = func_graph->NewCNode(dynamic_shape_inputs);
   MS_EXCEPTION_IF_NULL(dynamic_shape);
   ShapeVector tensor_shp({static_cast<int64_t>(input_shape->shape().size())});
