@@ -467,7 +467,8 @@ class Reshape(OpInfer):
 
 class ExpandDimAndSqueeze(Reshape):
     """ExpandDimAndSqueeze."""
-    def copy_axis(self, axis):
+    @staticmethod
+    def copy_axis(axis):
         """copy axis."""
         out_axis = []
         if isinstance(axis, int):
