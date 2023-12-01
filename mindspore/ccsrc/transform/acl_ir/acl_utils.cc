@@ -296,14 +296,11 @@ void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
     MS_EXCEPTION_IF_NULL(ms_context);
     precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
   }
+  auto iter = acl_precision_map.find(mode);
   if (!precision_mode.empty()) {
     ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
-  } else if (mode == ALLOW_FP32_TO_FP16) {
-    static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
-  } else if (mode == FORCE_FP32) {
-    static const std::string force_fp32 = "force_fp32";
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
+  } else if (iter != acl_precision_map.end()) {
+    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, iter->second.c_str());
   } else {
     MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
   }
