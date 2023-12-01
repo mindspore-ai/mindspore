@@ -1,0 +1,38 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.0.0"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+
+dependencies {
+    testImplementation 'junit:junit:4.13'
+
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+}
+
+test {
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = 'full'
+}
+
+task releaseJar(type: Jar) {
+    from('build/classes/java/main')
+    destinationDirectory = file('build/output')
+}
+releaseJar.dependsOn(build)
