@@ -87,6 +87,8 @@ GVAR_DEF(PrimitivePtr, kPrimL2Normalize, std::make_shared<Primitive>("L2Normaliz
 GVAR_DEF(PrimitivePtr, kPrimL2NormalizeGrad, std::make_shared<Primitive>("L2NormalizeGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNorm, std::make_shared<Primitive>(kLayerNormOpName));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormGrad, std::make_shared<Primitive>(kLayerNormGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimLayerNormV3, std::make_shared<Primitive>(kLayerNormV3OpName));
+GVAR_DEF(PrimitivePtr, kPrimLayerNormGradV3, std::make_shared<Primitive>(kLayerNormGradV3OpName));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormGradGrad, std::make_shared<Primitive>("LayerNormGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackprop, std::make_shared<Primitive>("LayerNormXBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackpropV2, std::make_shared<Primitive>("LayerNormXBackpropV2"));
