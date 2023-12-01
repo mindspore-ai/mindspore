@@ -549,8 +549,17 @@ def transpose(x, *axis):
     return F.transpose(x, perm)
 
 
+def T(x):
+    """
+    Return the transposed tensor.
+    """
+    if x.ndim <= 1:
+        return x
+    return transpose(x)
+
+
 # `tensor.T` is used as a property in graph mode
-T_ = transpose
+T_ = T
 
 
 def reshape(x, *shape):
