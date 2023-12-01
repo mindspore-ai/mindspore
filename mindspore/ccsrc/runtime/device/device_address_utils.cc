@@ -49,7 +49,8 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
   return false;
 }
 
-device::DeviceAddressPtr GetDeviceAddress(const DeviceContext *device_context, const ValueNodePtr &value_node) {
+device::DeviceAddressPtr CreateDeviceAddressForScalarAndString(const DeviceContext *device_context,
+                                                               const ValueNodePtr &value_node) {
   device::DeviceAddressPtr address = nullptr;
   const auto &node_value = value_node->value();
   MS_EXCEPTION_IF_NULL(node_value);
@@ -394,7 +395,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       continue;
     }
 
-    device::DeviceAddressPtr address = GetDeviceAddress(device_context, value_node);
+    device::DeviceAddressPtr address = CreateDeviceAddressForScalarAndString(device_context, value_node);
     // Deal with string and scalar; Address will be nullptr if the input is a type.
     if (address && (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end())) {
       address->UpdateFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
