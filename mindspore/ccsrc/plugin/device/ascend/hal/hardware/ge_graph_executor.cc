@@ -927,12 +927,22 @@ void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
   }
 }
 
-void SetOutput(GeTensor *ge_output, const AnfNodePtr &output_node, size_t idx) {
-  auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
-  auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
-  output_addr->SetSize(ge_output->GetSize());
+void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNodePtr &output_node, size_t idx) {
+  if (output_node->isa<ValueNode>()) {
+    auto &&ge_data_uni = ge_output->ResetData();
+    auto deleter = ge_data_uni.get_deleter();
+    auto ge_data = ge_data_uni.release();
+    deleter(ge_data);
+    return;
+  }
   auto actual_shapes = ge_output->GetTensorDesc().GetShape().GetDims();
-  auto placement = ge_output->GetTensorDesc().GetPlacement();
+  for (size_t i = 0; i < actual_shapes.size(); ++i) {
+    if (actual_shapes[i] < 0) {
+      MS_LOG(EXCEPTION) << "Output shape must be greater than 0, but got " << actual_shapes;
+    }
+  }
+  auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx, false);
+  output_addr->SetSize(ge_output->GetSize());
   auto &&ge_data_uni = ge_output->ResetData();
   auto deleter = ge_data_uni.get_deleter();
   auto ge_data = ge_data_uni.release();
@@ -941,18 +951,19 @@ void SetOutput(GeTensor *ge_output, const AnfNodePtr &output_node, size_t idx) {
   output_addr->set_from_mem_pool(false);
   output_addr->set_deleter(deleter);
   output_addr->set_ptr(ge_data);
-  if (placement != ::ge::kPlacementDevice) {
-    MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
-                      << "'s output data's placement is host now.";
+  auto placement = ge_output->GetTensorDesc().GetPlacement();
+  if (placement == ::ge::kPlacementHost) {
+    MS_LOG(DEBUG) << output_node->DebugString() << "'s output data's placement is host";
+    size_t size = ge_output->GetSize();
+    void *mem = res_manager->AllocateMemory(size);
+    output_addr->set_from_mem_pool(true);
+    output_addr->set_ptr(mem);
+    auto *ascend_addr = dynamic_cast<AscendDeviceAddress *>(output_addr.get());
+    MS_EXCEPTION_IF_NULL(ascend_addr);
+    ascend_addr->SyncHostToDevice(size, ge_data);
   }
-  for (size_t i = 0; i < actual_shapes.size(); ++i) {
-    if (actual_shapes[i] < 0) {
-      MS_LOG(EXCEPTION) << "Output shape must be greater than 0, but got " << actual_shapes;
-    }
-  }
-
   // Update shape in kernel tensor.
-  const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, real_index);
+  const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   kernel_tensor->SetShapeVector(actual_shapes);
   MS_LOG(DEBUG) << "[ZeroCopy] Update output " << output_node->DebugString() << " address to "
@@ -1040,11 +1051,6 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     if (!sync_ret) {
       MS_LOG(EXCEPTION) << "Sync stream failed";
     }
-    transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
-    }
-    MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
   }
   // copy output from host to device
   auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
@@ -1060,7 +1066,8 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     }
     real_output_size++;
     if (is_dynamic_shape) {
-      SetOutput(&ge_outputs[i], output_node, idx);
+      MS_EXCEPTION_IF_NULL(ResManager());
+      SetOutput(ResManager(), &ge_outputs[i], output_node, idx);
     }
   }
   if (real_output_size != ge_outputs.size()) {
@@ -1069,6 +1076,13 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   }
 
   ClearForwardOutputAddress(kg, device_context_);
+  if (is_dynamic_shape) {
+    transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Exec graph failed";
+    }
+    MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
+  }
   return true;
 }
 
