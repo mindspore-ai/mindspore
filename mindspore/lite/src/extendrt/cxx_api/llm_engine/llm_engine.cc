@@ -100,6 +100,27 @@ FuncGraphPtr LoadMindIR(const std::string &model_path) {
   }
   return func_graph;
 }
+
+Status LoadAndGetModelInfo(const std::string &model_path, LLMEngineModelInfo *model_info_ptr) {
+  auto func_graph = LoadMindIR(model_path);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to load mindir " << model_path;
+    return kLiteError;
+  }
+  LLMEngineModelInfo &model_info = *model_info_ptr;
+  if (GetModelInfo(func_graph, &model_info) != kSuccess) {
+    MS_LOG(ERROR) << "Failed to ge graph info, mindir " << model_path;
+    return kLiteError;
+  }
+  // relative weight path
+  if (!model_info.weight_dir.empty() && model_info.weight_dir[0] != '/') {
+    if (model_path.find("/") != std::string::npos) {
+      model_info.weight_dir = model_path.substr(0, model_path.rfind("/") + 1) + model_info.weight_dir;
+      MS_LOG(INFO) << "Update " << model_path << " weight dir to " << model_info.weight_dir;
+    }
+  }
+  return kSuccess;
+}
 }  // namespace
 
 typedef LLMEnginePluginBase *(*CreateLLMEnginePluginFunc)();
@@ -159,7 +180,8 @@ std::shared_ptr<LLMEnginePluginBase> LLEnginePluginLoader::CreatePlugin() {
 LLMEngine::LLMEngine() { plugin_ = LLEnginePluginLoader::Instance().CreatePlugin(); }
 
 Status LLMEngine::Init(const std::vector<std::string> &model_paths, LLMRole role, uint64_t cluster_id,
-                       const std::map<std::string, std::string> &options) {
+                       const std::map<std::string, std::string> &options, const std::string &batch_mode,
+                       const std::string &postprocess_model_path) {
   if (plugin_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine plugin has not been created";
     return kLiteError;
@@ -167,22 +189,10 @@ Status LLMEngine::Init(const std::vector<std::string> &model_paths, LLMRole role
   std::vector<LLMEngineModelInfo> infos;
   std::set<std::string> names;
   for (auto &model_path : model_paths) {
-    auto func_graph = LoadMindIR(model_path);
-    if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "Failed to load mindir " << model_path;
-      return kLiteError;
-    }
     LLMEngineModelInfo model_info;
-    if (GetModelInfo(func_graph, &model_info) != kSuccess) {
+    if (LoadAndGetModelInfo(model_path, &model_info) != kSuccess) {
       MS_LOG(ERROR) << "Failed to ge graph info, mindir " << model_path;
       return kLiteError;
-    }
-    // relative weight path
-    if (!model_info.weight_dir.empty() && model_info.weight_dir[0] != '/') {
-      if (model_path.find("/") != std::string::npos) {
-        model_info.weight_dir = model_path.substr(0, model_path.rfind("/") + 1) + model_info.weight_dir;
-        MS_LOG(INFO) << "Update weight dir to " << model_info.weight_dir;
-      }
     }
     infos.push_back(model_info);
     names.emplace(model_info.name);
@@ -192,7 +202,14 @@ Status LLMEngine::Init(const std::vector<std::string> &model_paths, LLMRole role
       infos[i].name += "_U" + std::to_string(i);  // make unique name
     }
   }
-  return plugin_->Init(infos, role, cluster_id, options);
+  LLMEngineModelInfo postprocess_model_info;
+  if (!postprocess_model_path.empty()) {
+    if (LoadAndGetModelInfo(postprocess_model_path, &postprocess_model_info) != kSuccess) {
+      MS_LOG(ERROR) << "Failed to ge graph info, mindir " << postprocess_model_path;
+      return kLiteError;
+    }
+  }
+  return plugin_->Init(infos, role, cluster_id, options, batch_mode, postprocess_model_info);
 }
 
 void LLMEngine::Finalize() {
@@ -204,6 +221,15 @@ void LLMEngine::Finalize() {
 }
 
 Status LLMEngine::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->Predict(req, inputs, outputs);
+}
+
+Status LLMEngine::Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                          std::vector<MSTensor> *outputs) {
   if (plugin_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine plugin has not been created";
     return kLiteError;
@@ -241,5 +267,21 @@ Status LLMEngine::ReleasePromptPrefix(const LLMReq &req) {
     return kLiteError;
   }
   return plugin_->ReleasePromptPrefix(req);
+}
+
+Status LLMEngine::PullKV(const LLMReq &req) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->PullKV(req);
+}
+
+Status LLMEngine::MergeKV(const LLMReq &req, uint32_t batch_index) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->MergeKV(req, batch_index);
 }
 }  // namespace mindspore
