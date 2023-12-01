@@ -20,40 +20,14 @@ namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, "NCH");
 
-REGISTER_ACL_OP(BNTrainingUpdate)
-  .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"})
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Input(5, {"NCHW"})
-  .Input(6, {"NCHW"})
-  .Output(0, 0);
+REGISTER_ACL_OP(BNTrainingUpdate).Input(0, {"NCHW"}, "NCH").Output(0, 0);
 
-REGISTER_ACL_OP(BNTrainingUpdateGrad)
-  .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"}, "NCH")
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"});
+REGISTER_ACL_OP(BNTrainingUpdateGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}, "NCH");
 
-REGISTER_ACL_OP(BNTrainingReduceGrad)
-  .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"}, "NCH")
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Input(5, {"NCHW"})
-  .Input(6, {"NCHW"})
-  .Output(0, 0);
+REGISTER_ACL_OP(BNTrainingReduceGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}, "NCH").Output(0, 0);
 
-REGISTER_ACL_OP(BNInfer)
-  .Input(0, {"NCHW"}, "NCH")
-  .Input(1, {"NCHW"})
-  .Input(2, {"NCHW"})
-  .Input(3, {"NCHW"})
-  .Input(4, {"NCHW"})
-  .Output(0, 0);
+REGISTER_ACL_OP(BNInfer).Input(0, {"NCHW"}, "NCH").Output(0, 0);
 
-REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}).Input(2, {"NCHW"}).Output(0, 0);
+REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Output(0, 0);
 }  // namespace transform
 }  // namespace mindspore
