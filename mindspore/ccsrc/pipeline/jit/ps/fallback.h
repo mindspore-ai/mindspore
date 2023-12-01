@@ -90,6 +90,9 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 std::string GetPyObjectPtrStr(const py::object &obj);
 
+// Check whether the node contains PyInterpret input.
+bool CheckInterpretInput(const AnfNodePtr &node);
+
 // Function about list/dict inplace operation.
 bool EnableFallbackListDictInplace();
 // Generate python object according to abstract.
