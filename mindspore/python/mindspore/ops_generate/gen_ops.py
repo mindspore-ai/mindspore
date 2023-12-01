@@ -601,7 +601,7 @@ from mindspore.ops import signature as sig
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops_generate.arg_dtype_cast import type_it
+from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 from mindspore.ops.auto_generate.gen_enum_def import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
@@ -667,12 +667,11 @@ def generate_ops_cc_files(work_path, yaml_str):
     check_change_and_replace_file(op_name_path, tmp_op_name_path)
 
 
-def generate_py_labels(yaml_data):
+def generate_op_labels(yaml_data):
     """
     Generate python labels
     """
-    label_py_header = f"""\"\"\"Operator labels dict.\"\"\"\n\n"""
-    gen_label_py = label_py_header + f"""op_labels = {{"""
+    gen_label_py = f"""op_labels = {{"""
     for operator_name, operator_data in yaml_data.items():
         labels = operator_data.get('labels')
         if labels is not None:
@@ -686,15 +685,43 @@ def generate_py_labels(yaml_data):
     return gen_label_py
 
 
-def generate_labels_file(work_path, yaml_str):
+def generate_op_arg_default_value(yaml_data):
     """
-    Generate labels python file from yaml.
+    Generate python default value.
     """
-    op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_labels.py')
-    tmp_op_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_labels.py')
-    py_labels = generate_py_labels(yaml_str)
+    default_py_header = f"""\"\"\"Operator labels and args default value.\"\"\"
+from mindspore.common import dtype as mstype\n\n"""
+
+    gen_default_py = default_py_header + f"""op_args_default_value = {{"""
+    for operator_name, operator_data in yaml_data.items():
+        arg_default_dict = {}
+        args = operator_data.get('args')
+        for arg_name, arg_info in args.items():
+            arg_default = arg_info.get('default')
+            if arg_default is not None:
+                arg_default_dict[arg_name] = arg_default
+        if arg_default_dict:
+            class_name = get_op_name(operator_name, operator_data.get('class'))
+            gen_default_py += f"""
+    "{class_name}": {{"""
+            gen_default_py += f""", """.join([f""""{key}": {value}""" for key, value in arg_default_dict.items()])
+            gen_default_py += f"""}},"""
+    gen_default_py += f"""
+}}"""
+    return gen_default_py
+
+
+def generate_create_instance_helper_file(work_path, yaml_str):
+    """
+    Generate C++ helper file from yaml.
+    """
+    dst_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
+    op_py_path = os.path.join(dst_dir, 'cpp_create_prim_instance_helper.py')
+    tmp_op_py_path = os.path.join(dst_dir, 'tmp_cpp_create_prim_instance_helper.py')
+    py_labels = generate_op_labels(yaml_str)
+    py_arg_default = generate_op_arg_default_value(yaml_str)
     with open(tmp_op_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + "\n" + py_labels + "\n")
+        py_file.write(py_licence_str + "\n" + py_arg_default + "\n\n" + py_labels + "\n")
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
 
@@ -801,16 +828,22 @@ def generate_enum_files(work_path):
     yaml_str = safe_load_yaml(enum_yaml_path)
     py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
 
+    dst_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
-    dst_arg_handler_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
-    dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'gen_arg_handler.py')
-    tmp_dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'tmp_gen_arg_handler.py')
-    if not os.path.exists(dst_arg_handler_dir):
-        os.makedirs(dst_arg_handler_dir)
+    dst_arg_handler_path = os.path.join(dst_dir, 'gen_arg_handler.py')
+    tmp_dst_arg_handler_path = os.path.join(dst_dir, 'tmp_gen_arg_handler.py')
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
     shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
     with open(tmp_dst_arg_handler_path, 'a') as py_file:
         py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
+
+    src_arg_dtype_cast_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_dtype_cast.py')
+    dst_arg_dtype_cast_path = os.path.join(dst_dir, 'gen_arg_dtype_cast.py')
+    tmp_arg_dtype_cast_path = os.path.join(dst_dir, 'tmp_arg_dtype_cast.py')
+    shutil.copy(src_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
+    check_change_and_replace_file(dst_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
 
     enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py')
     tmp_enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_enum_def.py')
@@ -860,8 +893,8 @@ def main():
 
     # generate ops c++ files
     generate_ops_cc_files(work_path, all_ops_str)
-    # generate ops label python files
-    generate_labels_file(work_path, all_ops_str)
+    # generate create prim instance helper file
+    generate_create_instance_helper_file(work_path, all_ops_str)
     # generate pyboost code
     gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path))
     # generate aclnn kernelmod register
