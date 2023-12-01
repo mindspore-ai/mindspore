@@ -183,6 +183,18 @@ DeviceMemPtr DynamicMemPoolBestFit::FindMemBufInSpecifiedMng(size_t size, bool f
     (target_status == DynamicMemBufStatus::kMemBufIdle) ? mem_mng->idle_mem_buf_map_ : mem_mng->eager_free_mem_buf_map_;
   auto iter = mem_buf_map.lower_bound(size);
   if (iter != mem_buf_map.end()) {
+    if (IsMemoryPoolRecycle()) {
+      // Ensure that the addresses corresponding to the same Tensor for each step are consistent, making the memory pool
+      // recycling function more stable.
+      auto find_size = iter->first;
+      // Can be optimized in the future.
+      auto [lb, ub] = mem_buf_map.equal_range(find_size);
+      for (auto i = lb; i != ub; ++i) {
+        if (i->second->device_addr_ > iter->second->device_addr_) {
+          iter = i;
+        }
+      }
+    }
     auto mem_buf = iter->second;
     MS_EXCEPTION_IF_NULL(mem_buf);
     if (mem_buf->status_ != target_status) {
