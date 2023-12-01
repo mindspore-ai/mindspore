@@ -82,25 +82,24 @@ class AclConverter {
  public:
   void ConvertToAclOpType(const std::string &prim_name);
   void ResizeAclOpInputs(const PrimitivePtr &prim);
-  void ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
-                         const std::vector<KernelTensor *> &inputs, const std::vector<TensorParams> &input_params);
+  void ConvertToAclInput(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
+                         const std::vector<TensorParams> &input_params);
   void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                           const std::vector<TensorParams> &output_params);
 
   void ConvertValueDependToHostInput(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<TensorParams> &input_params,
-                                     const std::set<int64_t> &value_depend_args, AclInputToHost *inputs_on_host);
+                                     const std::set<int64_t> &value_depend_args);
 
-  void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name,
-                             AclInputToHost *inputs_on_host);
+  void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name);
   void ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
-  void ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);
   void ProcessRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params);
   void SetRunnerSpecialInfo();
 
   bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
+  size_t GetDynInputSize() { return num_folded_inputs_; }
 
   std::string DebugString() const;
 
@@ -125,6 +124,10 @@ class AclConverter {
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
                                                                      AclDumpString *dump_str) const;
+  std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AclHostInfoPtr &address,
+                                                                     const TensorParams &params,
+                                                                     const std::string &desc_name,
+                                                                     AclDumpString *dump_str) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const tensor::TensorPtr &host_tensor,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
@@ -142,10 +145,12 @@ class AclConverter {
                                   const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input);
 
   AclRunner runner_;
+  AclInputToHost input_on_host_;
+  std::vector<std::vector<uint8_t>> value_depend_cast_;
 
   std::vector<AclDumpString> input_str_;
   std::vector<AclDumpString> output_str_;
-  std::vector<std::string> attr_map_str_;
+  std::map<std::string, std::string> attr_map_str_;
   // number of folded inputs of dynamic input, only used for op with only one dynamic input
   size_t num_folded_inputs_ = 0;
   bool is_dynamic_ = false;
@@ -254,7 +259,7 @@ class AttrConverter : public AttrHelper<AttrConverter> {
 
 class ValueDependToInputConverter : public AttrHelper<ValueDependToInputConverter> {
  public:
-  const tensor::TensorPtr &GetTensor() const { return tensor_; }
+  const std::vector<uint8_t> GetData() const { return data_; }
   const std::map<TypeId, TypeId> &GetValueDependCastMap() {
     static const std::map<TypeId, TypeId> kValueDependCastMap = {{kNumberTypeInt32, kNumberTypeInt64},
                                                                  {kNumberTypeInt64, kNumberTypeInt32},
@@ -265,45 +270,49 @@ class ValueDependToInputConverter : public AttrHelper<ValueDependToInputConverte
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &) {
     MS_EXCEPTION_IF_NULL(value);
-    std::vector<int32_t> vec;
     auto ori_vec = ops::GetArrayValue<int64_t>(value).value().ToVector();
-    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
-                         [](const auto &v) { return static_cast<int32_t>(v); });
-    tensor_ = std::make_shared<tensor::Tensor>(vec);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(ori_vec.size() * sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < ori_vec.size(); ++i) {
+      data_ptr[i] = static_cast<int32_t>(ori_vec[i]);
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &) {
     MS_EXCEPTION_IF_NULL(value);
-    std::vector<int64_t> vec;
     auto ori_vec = ops::GetArrayValue<int32_t>(value).value().ToVector();
-    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
-                         [](const auto &v) { return static_cast<int64_t>(v); });
-    tensor_ = std::make_shared<tensor::Tensor>(vec);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(ori_vec.size() * sizeof(int64_t));
+    int64_t *data_ptr = reinterpret_cast<int64_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < ori_vec.size(); ++i) {
+      data_ptr[i] = static_cast<int64_t>(ori_vec[i]);
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<float> &) {
     MS_EXCEPTION_IF_NULL(value);
-    std::vector<double> vec;
     auto ori_vec = ops::GetArrayValue<float>(value).value().ToVector();
-    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
-                         [](const auto &v) { return static_cast<double>(v); });
-    tensor_ = std::make_shared<tensor::Tensor>(vec);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(ori_vec.size() * sizeof(double));
+    double *data_ptr = reinterpret_cast<double *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < ori_vec.size(); ++i) {
+      data_ptr[i] = static_cast<double>(ori_vec[i]);
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<double> &) {
     MS_EXCEPTION_IF_NULL(value);
-    std::vector<float> vec;
     auto ori_vec = ops::GetArrayValue<double>(value).value().ToVector();
-    (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
-                         [](const auto &v) { return static_cast<float>(v); });
-    tensor_ = std::make_shared<tensor::Tensor>(vec);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(ori_vec.size() * sizeof(float));
+    float *data_ptr = reinterpret_cast<float *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < ori_vec.size(); ++i) {
+      data_ptr[i] = static_cast<float>(ori_vec[i]);
+    }
   }
 
-  tensor::TensorPtr tensor_;
+  std::vector<uint8_t> data_;
 };
 
 class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {

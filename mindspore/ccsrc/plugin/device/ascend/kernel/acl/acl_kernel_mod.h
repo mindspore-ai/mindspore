@@ -88,7 +88,6 @@ class AclKernelMod : public KernelMod {
   transform::AclConverterPtr converter_;
 
   bool need_convert_host_tensor_{false};
-  transform::AclInputToHost input_to_host_array_;
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;

@@ -95,6 +95,9 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
     idx_ms2ge[ms_idx] = Ms2GeParamInfo{ge_idx, v.name, Ms2GeParamInfo::DYNAMIC, ge_idx > ge_dynmaic_idx};
     // input/output: GE(GraphEngine) Index --> MindSpore Index
     idx_ge2ms[ge_idx] = ms_idx;
+    if (is_input) {
+      dyn_input_ms_proto_idx_ = ms_idx;
+    }
   }
 }
 

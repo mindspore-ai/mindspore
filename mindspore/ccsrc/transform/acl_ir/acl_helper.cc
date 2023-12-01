@@ -482,9 +482,6 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
 bool AclHelper::IsInputDtypeSupport(const std::string &kernel_name, TypeId base_type, size_t idx) {
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
   MS_EXCEPTION_IF_NULL(info);
-  if (idx >= info->GetNumInputsOfMsOpProto()) {
-    return true;
-  }
   auto input_supported_dtypes = info->input_supported_dtypes();
   if (idx >= info->GetNumInputsOfMsOpProto()) {
     // this branch represent input_attr_map, didn't need check

@@ -251,22 +251,12 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<::ge::Data
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {
-  (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), aclDestroyTensorDesc);
   (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
-  (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(), aclDestroyDataBuffer);
   (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
-  if (acl_param_.attr != nullptr) {
-    aclopDestroyAttr(acl_param_.attr);
-    acl_param_.attr = nullptr;
-  }
-
-  acl_param_.input_desc.clear();
-  acl_param_.input_buffer.clear();
 
   acl_param_.output_desc.clear();
   acl_param_.output_buffer.clear();
 
-  op_type_ = "";
   is_dynamic_ = true;
 }
 
