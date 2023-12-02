@@ -56,7 +56,7 @@ int SoftmaxCrossEntropyWithLogitsCoder::DoCode(CoderContext *const context) {
             "softmax_fp32.c",
             "softmax_cross_entropy_with_logits.c",
           });
-  NNaclFp32Serializer code, init_code;
+  NNaclFp32Serializer code;
   code.CodeStruct("softmax_params", softmax_params_);
   code.CodeStruct("input_shape", input_shape_, DIMENSION_5D);
 

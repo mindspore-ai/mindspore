@@ -30,9 +30,11 @@ class TrainGenerator : public Generator {
       : Generator(std::move(ctx)), code_blocks_with_flag_(std::move(code_blocks_with_flag)) {}
   ~TrainGenerator() override = default;
 
+ protected:
+  void CodeNetExecuteFunc(std::ofstream &ofs) override;
+
  private:
   void CodeTrainAndEvalFunc(std::ofstream &ofs);
-  void CodeNetExecuteFunc(std::ofstream &ofs) override;
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 
