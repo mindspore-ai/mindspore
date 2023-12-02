@@ -68,6 +68,7 @@ int ScaleFP16Coder::DoCode(CoderContext *const context) {
     case schema::ActivationType_RELU: {
       code.CodeFunction("Fp16DoScaleRelu", input_tensor_, output_tensor_, scale, offset, kDefaultTaskId,
                         "&scale_struct");
+      break;
     }
     case schema::ActivationType_NO_ACTIVATION:
       code.CodeFunction("DoScaleFp16", input_tensor_, output_tensor_, scale, offset, kDefaultTaskId, "&scale_struct");
