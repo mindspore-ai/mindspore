@@ -69,7 +69,7 @@ public class ModelParallelRunner {
             rwLock.writeLock().unlock();
             return false;
         }
-        if (modelParallelRunnerPtr != 0L){
+        if (modelParallelRunnerPtr != 0L) {
             rwLock.writeLock().unlock();
             return true;
         }

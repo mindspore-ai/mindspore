@@ -55,7 +55,7 @@ class LstmMindirFp32CPUKernel : public LstmFp32BaseCPUKernel {
 
  private:
   void RecordStates(const float *hidden_state, float *cell_state, float *input_gate, const float *output_gate,
-                    float *forget_gate, const float *cell_gate, float *intermediate_states, int step);
+                    float *forget_gate, const float *cell_gate, float *intermediate_states, int step) const;
   bool gpu_orig_state_{false};
 };
 }  // namespace mindspore::kernel

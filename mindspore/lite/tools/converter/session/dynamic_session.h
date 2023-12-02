@@ -39,7 +39,7 @@ class DynamicSession : public LiteSession {
   int RunKernel(int index, const KernelHook &before = nullptr, const KernelHook &after = nullptr);
   std::vector<Tensor *> GetInTensors(int index);
   std::vector<Tensor *> GetOutTensors(int index);
-  size_t GetKernelNum() { return kernels_.size(); }
+  size_t GetKernelNum() const { return kernels_.size(); }
   void SetSampleNum(int sample_num) { sample_num_ = sample_num; }
   void SetWeightsName(const std::set<std::string> &weights_name) { weights_name_ = weights_name; }
 
@@ -47,7 +47,7 @@ class DynamicSession : public LiteSession {
   int PreProcess(kernel::KernelExec *, std::vector<void *> *, std::vector<void *> *);
   void PrepareInOuts(kernel::KernelExec *, const std::vector<void *> &, const std::vector<void *> &, int);
   void ResetInOuts(kernel::KernelExec *, const std::vector<void *> &, const std::vector<void *> &);
-  bool CheckTensorIsVar(Tensor *);
+  bool CheckTensorIsVar(const Tensor *);
   int sample_num_{0};
   int execute_index_{-1};
   std::set<std::string> weights_name_;
