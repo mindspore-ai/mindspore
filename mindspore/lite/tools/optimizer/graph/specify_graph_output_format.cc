@@ -120,9 +120,9 @@ STATUS SpecifyGraphOutputFormat::HandleGraphOutput(const FuncGraphPtr &graph) {
     auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(kIndex0));
     MS_CHECK_TRUE_MSG(trans_prim != nullptr, lite::RET_NULL_PTR, "GetValueNode Failed");
     if (exp_graph_output_format_ == mindspore::NCHW) {
-      trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+      (void)trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
     } else {
-      trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
+      (void)trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
     }
     auto trans_abstract = abstract->Clone();
     MS_CHECK_TRUE_MSG(trans_abstract != nullptr, lite::RET_NULL_PTR, "clone abstract failed");
