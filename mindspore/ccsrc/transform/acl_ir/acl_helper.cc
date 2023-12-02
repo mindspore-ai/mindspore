@@ -457,6 +457,11 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
     return KernelType::UNKNOWN_KERNEL_TYPE;
   }
 
+  if (common::AnfAlgo::IsCommunicationOp(node)) {
+    *err_type = kNormalOp;
+    return HCCL_KERNEL;
+  }
+
   auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
   if (info == nullptr) {
     *err_type = kUnknownOp;
@@ -471,11 +476,6 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
   }
 
   *err_type = kNormalOp;
-  const auto &op_type = info->op_type();
-  if (kHcomOps.find(op_type) != kHcomOps.end()) {
-    return HCCL_KERNEL;
-  }
-
   return ACL_KERNEL;
 }
 
