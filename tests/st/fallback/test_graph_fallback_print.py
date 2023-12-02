@@ -597,6 +597,8 @@ def judge_tuple_index_dim_lambda(data, tuple_index):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_print_in_lambda_func_graph_with_isolate_node():
     """
@@ -619,7 +621,7 @@ def test_print_in_lambda_func_graph_with_isolate_node():
         time.sleep(0.1)
         assert (output == data).all()
 
-    patterns = {"Tensor(shape=[2, 2], dtype=Int64, value=\n[[0 2]\n [4 6]])"}
+    patterns = {"Tensor(shape=[2 2], dtype=Int64, value=\n[[0 2]\n [4 6]])"}
     check_output(cap.output, patterns)
 
 

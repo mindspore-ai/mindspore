@@ -379,6 +379,8 @@ def test_dict_inplace_setitem_with_attribute_3():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_dict_getitem_after_setitem():
     """
@@ -437,6 +439,8 @@ def test_dict_getitem_after_setitem_2():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_dict_inplace_setitem_with_dict_getitem():
     """
