@@ -38,14 +38,11 @@ class ReduceFP32Coder : public ReduceBaseCoder {
  protected:
   void GenerateCode(CoderContext *const context);
   int MallocTmpBuffer(mindspore::TypeId type_id);
-
+  int ReSize() override;
   std::string reduce_;
   std::string int_reduce_;
   TypeIdC data_type_{::kNumberTypeFloat32};
   std::vector<float *> data_buffers_;
-
- private:
-  int ReSize() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_REDUCE_FP32_CODER_H_

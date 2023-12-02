@@ -37,7 +37,7 @@ class FullConnectionInt8Coder final : public MatMulBaseInt8Coder {
 
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int ReSize(CoderContext *const context) override;
 };
 }  // namespace mindspore::lite::micro::nnacl

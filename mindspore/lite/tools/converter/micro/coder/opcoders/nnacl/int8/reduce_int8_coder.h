@@ -56,8 +56,6 @@ class ReduceInt8Coder final : public ReduceBaseCoder {
   int CalReduceMeanQuantParam();
   int CalReduceProdQuantParam();
   int CalReduceSumSquareQuantParam();
-
- private:
   ReduceQuantArg quant_arg_{0};
   int32_t *begin_src_data_{nullptr};
   std::vector<int32_t *> data_buffers_;

@@ -37,8 +37,6 @@ class StridedSliceBaseCoder final : public OperatorCoder {
   bool MatchFastPattern();
   int DoNormalCode(CoderContext *ctx);
   int DoFastCode(CoderContext *ctx);
-
- private:
   StridedSliceParameter *strided_slice_parameter_{nullptr};
   int split_axis_{-1};
   int inner_{1};

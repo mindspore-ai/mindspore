@@ -64,7 +64,6 @@ class MemoryManager {
 
   void StoreMembufListInfo(const std::unique_ptr<OperatorCoder> &node);
 
- private:
   std::vector<MembufPtr> membuf_list_;
   std::vector<std::pair<size_t, std::vector<MembufPtr>>> all_membuf_list_info_;
   std::map<Tensor *, size_t> variables_offset_;

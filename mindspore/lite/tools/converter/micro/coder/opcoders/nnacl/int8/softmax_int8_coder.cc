@@ -57,8 +57,8 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   for (int i = softmax_param_->axis_ + 1; i < n_dim_; i++) {
     inner_size *= input_shape_[i];
   }
-  sum_data_size_ = inner_size * sizeof(int);
-  sum_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, sum_data_size_, kWorkspace));
+  sum_data_sizes_ = inner_size * sizeof(int);
+  sum_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, sum_data_sizes_, kWorkspace));
   MS_CHECK_PTR(sum_data_);
   return ReSize();
 }
@@ -87,7 +87,7 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("input_shape", input_shape_, DIMENSION_5D);
 
   code.CodeFunction("memset", exp_data_, 0, exp_data_size_);
-  code.CodeFunction("memset", sum_data_, 0, sum_data_size_);
+  code.CodeFunction("memset", sum_data_, 0, sum_data_sizes_);
 
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(outter_size, thread_num_);

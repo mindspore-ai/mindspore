@@ -38,17 +38,6 @@ class MatMulBaseInt8Coder : public OperatorCoder {
   int Init();
   void InitParameter();
   virtual int ReSize(CoderContext *const context);
-
- private:
-  void DoBatchCode(NNaclInt8Serializer *code_ptr);
-  void ResizeParameter();
-  int MallocQuantParam();
-  void FreeQuantParam();
-  int InitQuantParam();
-  int InitBias();
-  int InitTmpBuffer();
-
- protected:
   bool filter_per_channel_{true};
   int thread_count_{1};
   int thread_stride_{0};
@@ -70,6 +59,13 @@ class MatMulBaseInt8Coder : public OperatorCoder {
   std::vector<int> b_offset_;
 
  private:
+  void DoBatchCode(NNaclInt8Serializer *code_ptr);
+  void ResizeParameter();
+  int MallocQuantParam();
+  void FreeQuantParam();
+  int InitQuantParam();
+  int InitBias();
+  int InitTmpBuffer();
   int weight_quant_num_{0};
   int row_tile_{C4NUM};
   int col_tile_{C4NUM};

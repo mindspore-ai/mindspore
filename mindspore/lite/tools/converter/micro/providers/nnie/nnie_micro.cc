@@ -140,7 +140,9 @@ static int NnieKernel(TensorC *inputs, int input_num, TensorC *outputs, int outp
 
 namespace proposal {
 static int ProposalKernel(TensorC *inputs, int input_num, TensorC *outputs, int output_num, CustomParameter *param) {
-  int ndims, image_height, image_width;
+  int ndims;
+  int image_height;
+  int image_width;
   if (input_num != kNumInput2) {
     printf("inputs tensor num error.\n");
     return kMSStatusLiteError;
