@@ -32,7 +32,7 @@ class CoderSession {
  public:
   CoderSession();
 
-  ~CoderSession();
+  virtual ~CoderSession();
 
   int Init(const void *content, int size, const int model_index, bool end_flag, bool enable_fp16);
 
