@@ -196,9 +196,9 @@ class ModelImpl {
   std::string GetConfig(const std::string &section, const std::string &key);
 
   static bool CheckModelSupport(DeviceType device_type, ModelType model_type);
-  void SetModelInfo(std::string key, std::string value) { model_info_[key] = value; }
+  void SetModelInfo(const std::string &key, const std::string &value) { model_info_[key] = value; }
 
-  std::map<std::string, std::string> GetModelInfo() { return model_info_; }
+  std::map<std::string, std::string> GetModelInfo() const { return model_info_; }
 
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
