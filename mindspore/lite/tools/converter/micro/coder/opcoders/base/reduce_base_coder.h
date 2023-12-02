@@ -42,8 +42,6 @@ class ReduceBaseCoder : public OperatorCoder {
   int num_axes_{0};
   int mode_{0};
   bool reduce_to_end_{false};
-
- protected:
   void CalculateTmpBufferSize();
   void CalculateInnerOuterSize();
   std::vector<size_t> buffer_sizes_;

@@ -99,8 +99,6 @@ class ArithmeticSelfFP32Coder final : public OperatorCoder {
 
  private:
   int ReSize();
-
- private:
   int thread_sz_count_{0};
   int thread_sz_stride_{0};
   size_t data_size_{0};

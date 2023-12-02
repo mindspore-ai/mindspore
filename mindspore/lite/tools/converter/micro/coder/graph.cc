@@ -24,7 +24,6 @@
 #include "coder/opcoders/op_coder_register.h"
 #include "coder/utils/type_cast.h"
 #include "coder/utils/train_utils.h"
-#include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
 #include "src/litert/lite_model.h"

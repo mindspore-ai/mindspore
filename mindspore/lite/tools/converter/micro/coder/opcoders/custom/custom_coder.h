@@ -40,8 +40,7 @@ class CustomCoder final : public OperatorCoder {
   int TransformParams(Serializer *code, std::string var_name);
   void FreeParams(Serializer *code, std::string var_name);
   void FreeTensors(Serializer *code, std::string array_name, size_t tensors_num);
-
-  std::string type_;
+  std::string custom_type_;
   std::map<std::string, std::string> attrs_;
   static std::map<Tensor *, void *> const_tensor_map_;
 };

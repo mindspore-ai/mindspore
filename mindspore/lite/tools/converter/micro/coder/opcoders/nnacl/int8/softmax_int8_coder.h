@@ -38,7 +38,7 @@ class SoftMaxInt8Coder final : public SoftmaxBaseCoder {
   int *sum_data_{nullptr};
   int *exp_data_{nullptr};
   size_t exp_data_size_{0};
-  size_t sum_data_size_{0};
+  size_t sum_data_sizes_{0};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_SOFTMAX_INT8_CODER_H_

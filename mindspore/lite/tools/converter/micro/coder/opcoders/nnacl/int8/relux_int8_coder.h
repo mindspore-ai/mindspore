@@ -40,9 +40,6 @@ class ReluxInt8Coder : public OperatorCoder {
 
  protected:
   ReluXQuantArg quant_arg_{};
-
- private:
-  int type_{0};
 };
 
 class ReluInt8Coder final : public ReluxInt8Coder {

@@ -114,7 +114,7 @@ int AddInt8Coder::ReSize() {
 
   if (arith_para_->broadcasting_) {
     size_t break_pos_ = 0;
-    for (auto i = arith_para_->ndim_ - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(arith_para_->ndim_) - 1; i >= 0; --i) {
       if (arith_para_->in_shape0_[i] != arith_para_->in_shape1_[i]) {
         break_pos_ = i;
         break;

@@ -147,7 +147,8 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
   std::string packed_weight_str = "(int8_t **)&" + allocator_->GetRuntimeAddr(packed_weight_);
   std::string bias_data_str = "(int32_t **)&" + allocator_->GetRuntimeAddr(bias_data_);
 
-  nnacl::NNaclInt8Serializer code, w_init_size_code;
+  nnacl::NNaclInt8Serializer code;
+  nnacl::NNaclInt8Serializer w_init_size_code;
   if (filter_peroc_) {
     filter_zp_str = allocator_->GetRuntimeAddr(filter_zp_ptr_);
   } else {
