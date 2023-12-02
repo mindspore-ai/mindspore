@@ -41,7 +41,7 @@ int AssignCPUKernel::DoExecute(int task_id) {
   int start = stride * task_id;
 
   if (count > 0) {
-    memcpy(&(x[start]), &(y[start]), static_cast<size_t>(count) * sizeof(float));
+    (void)memcpy(&(x[start]), &(y[start]), static_cast<size_t>(count) * sizeof(float));
   }
   return RET_OK;
 }
