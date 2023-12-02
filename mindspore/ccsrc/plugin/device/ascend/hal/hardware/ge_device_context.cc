@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include <tuple>
 #include <algorithm>
+#include <sstream>
 #include <map>
 #include <set>
 #include "include/transform/graph_ir/types.h"
@@ -578,11 +579,7 @@ std::string GeDeviceContext::GetDeviceName(uint32_t) {
 }
 
 AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
-  static AscendDeviceProperties device_properties;
-  if (!device_properties.name.empty()) {
-    return device_properties;
-  }
-
+  AscendDeviceProperties device_properties;
   const char *name = aclrtGetSocName();
   device_properties.name = (name == nullptr) ? "" : name;
 
@@ -591,7 +588,7 @@ AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   if (ret != ACL_SUCCESS) {
     MS_LOG(WARNING) << "Failed get memory info for current device. Error info: " << GetErrorMsg(ret);
   }
-  device_properties.total_global_memory = total_size;
+  device_properties.total_memory = total_size;
   device_properties.free_memory = free_size;
   return device_properties;
 }
@@ -647,8 +644,14 @@ void PybindAscendStatelessFunc(py::module *m) {
   MS_EXCEPTION_IF_NULL(m);
   (void)py::class_<AscendDeviceProperties>(*m, "AscendDeviceProperties")
     .def_readonly("name", &AscendDeviceProperties::name)
-    .def_readonly("total_global_memory", &AscendDeviceProperties::total_global_memory)
-    .def_readonly("free_memory", &AscendDeviceProperties::free_memory);
+    .def_readonly("total_memory", &AscendDeviceProperties::total_memory)
+    .def_readonly("free_memory", &AscendDeviceProperties::free_memory)
+    .def("__repr__", [](const AscendDeviceProperties &p) {
+      std::ostringstream s;
+      s << "AscendDeviceProperties(name='" << p.name << "', total_memory=" << p.total_memory / (1024 * 1024)
+        << "MB, free_memory=" << p.free_memory / (1024 * 1024) << "MB)";
+      return s.str();
+    });
   (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
   (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
                "Get Ascend device name of specified device id.");

@@ -38,7 +38,7 @@ class GeDeviceResManager;
 // The Ascend device properties defined by MindSpore because ACL does not have interface to get this info.
 struct AscendDeviceProperties {
   std::string name;
-  size_t total_global_memory;
+  size_t total_memory;
   size_t free_memory;
 };
 

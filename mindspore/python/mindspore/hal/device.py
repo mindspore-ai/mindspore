@@ -57,7 +57,7 @@ for target in valid_targets:
             pass
 
 
-def _check_device_target_validation(fn):
+def _check_inputs_validation(fn):
     """
     Decorator to check whether the device target validation.
     If device target's hal instance is not created, throw an exception.
@@ -78,6 +78,12 @@ def _check_device_target_validation(fn):
             if device_target not in hal_instances:
                 raise ValueError(f"{device_target} backend is not available for this MindSpore package."
                                  "You can call hal.is_available to check the reason.")
+
+        if "device_id" in params:
+            device_id = params["device_id"]
+            if device_id < 0:
+                raise ValueError(f"`device_id` should not be negative, but got {device_id}.")
+
         return fn(*bound_args.args, **bound_args.kwargs)
     return deco
 
@@ -85,11 +91,18 @@ def _check_device_target_validation(fn):
 def is_initialized(device_target):
     """
     Return whether specified backend is initialized.
+
     Note:
         MindSpore's backends "CPU", "GPU" and "Ascend" will be initialized in the following scenarios:
-        - For distributed job, backend will be initialized after `mindspore.communication.init` is called.
+        - For distributed job, backend will be initialized after `mindspore.communication.init` method is called.
         - For graph mode, backend is initialized after graph compiling phase.
         - For PyNative mode, backend is initialized when running the first operator.
+
+    Args:
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        Bool, whether the specified backend is initialized.
     """
     if device_target not in valid_targets:
         raise ValueError(f"For 'hal.is_initialized', the argument 'device_target' must be one of "
@@ -105,6 +118,12 @@ def is_available(device_target):
     """
     Return whether specified backend is available.
     All dependent libraries should be successfully loaded if this backend is available.
+
+    Args:
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        Bool, whether the specified backend is available for this MindSpore package.
     """
     if device_target not in valid_targets:
         raise ValueError(f"For 'hal.is_available', the argument 'device_target' must be one of "
@@ -121,43 +140,103 @@ def is_available(device_target):
     return True
 
 
-@_check_device_target_validation
+@_check_inputs_validation
 def device_count(device_target=None):
     """
-    Return device count of currently used backend.
+    Return device count of specified backend.
+
     Note:
         If `device_target` is not specified, get the device count of the current backend set by context.
+        For CPU backend, this method always returns 1.
+
+    Args:
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        int.
     """
     return hal_instances[device_target].device_count()
 
 
-@_check_device_target_validation
+@_check_inputs_validation
 def get_device_capability(device_id, device_target=None):
     """
     Get specified device's capability.
+
+    Note:
+        If `device_target` is not specified, get the device capability of the current backend set by context.
+
+    Args:
+        device_id (int): The device id of which the capability will be returned.
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        tuple(int, int) for GPU.
+        None for Ascend and CPU.
     """
     return hal_instances[device_target].get_device_capability(device_id)
 
 
-@_check_device_target_validation
+@_check_inputs_validation
 def get_device_properties(device_id, device_target=None):
     """
     Get specified device's properties.
+
+    Note:
+        If `device_target` is not specified, get the device properties of the current backend set by context.
+        For Ascend, backend must be initialized before calling this method,
+        or `total_memory` and `free_memory` will be 0,
+        and `device_id` will be ignored since this method only returns current device's properties.
+
+    Args:
+        device_id (int): The device id of which the properties will be returned.
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        `cudaDeviceProp` for GPU.
+        `AscendDeviceProperties` for Ascend:
+        AscendDeviceProperties {
+            std::string name;
+            size_t total_memory;
+            size_t free_memory;
+        }.
+        None for CPU.
     """
     return hal_instances[device_target].get_device_properties(device_id)
 
 
-@_check_device_target_validation
+@_check_inputs_validation
 def get_device_name(device_id, device_target=None):
     """
     Get specified device's name.
+
+    Note:
+        If `device_target` is not specified, get the device name of the current backend set by context.
+        This method always returns "CPU" for CPU backend.
+
+    Args:
+        device_id (int): The device id of which the name will be returned.
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        str.
     """
     return hal_instances[device_target].get_device_name(device_id)
 
 
-@_check_device_target_validation
+@_check_inputs_validation
 def get_arch_list(device_target=None):
     """
     Get the architecture list this MindSpore was compiled for.
+
+    Note:
+        If `device_target` is not specified, get the device name of the current backend set by context.
+
+    Args:
+        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+
+    Return:
+        str for GPU.
+        None for Ascend and CPU.
     """
     return hal_instances[device_target].get_arch_list()

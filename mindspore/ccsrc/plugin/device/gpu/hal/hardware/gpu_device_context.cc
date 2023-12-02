@@ -1094,7 +1094,23 @@ MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
 // Register functions to _c_expression so python hal module could call GPU device interfaces.
 void PybindGPUStatelessFunc(py::module *m) {
   MS_EXCEPTION_IF_NULL(m);
-  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp").def_readonly("name", &cudaDeviceProp::name);
+  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp")
+    .def_readonly("name", &cudaDeviceProp::name)
+    .def_readonly("major", &cudaDeviceProp::major)
+    .def_readonly("minor", &cudaDeviceProp::minor)
+    .def_readonly("is_multi_gpu_board", &cudaDeviceProp::isMultiGpuBoard)
+    .def_readonly("is_integrated", &cudaDeviceProp::integrated)
+    .def_readonly("multi_processor_count", &cudaDeviceProp::multiProcessorCount)
+    .def_readonly("total_memory", &cudaDeviceProp::totalGlobalMem)
+    .def_readonly("warp_size", &cudaDeviceProp::warpSize)
+    .def("__repr__", [](const cudaDeviceProp &p) {
+      std::ostringstream s;
+      s << "cudaDeviceProp(name='" << p.name << "', major=" << p.major << ", minor=" << p.minor
+        << ", is_multi_gpu_board=" << p.isMultiGpuBoard << ", is_integrated=" << p.integrated
+        << ", multi_processor_count=" << p.multiProcessorCount << ", total_memory=" << p.totalGlobalMem / (1024 * 1024)
+        << "MB, warp_size=" << p.warpSize << ")";
+      return s.str();
+    });
   (void)m->def("gpu_get_device_count", &GPUDeviceContext::GetDeviceCount, "Get GPU device count.");
   (void)m->def("gpu_get_device_name", &GPUDeviceContext::GetDeviceName, "Get GPU device name of specified device id.");
   (void)m->def("gpu_get_device_capability", &GPUDeviceContext::GetDeviceCapability,

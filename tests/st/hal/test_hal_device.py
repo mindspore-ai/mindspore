@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.hal import is_initialized, is_available, device_count,\
-                      get_device_properties, get_device_name, get_arch_list
+                      get_device_capability, get_device_properties, get_device_name, get_arch_list
 
 class Net(nn.Cell):
     def __init__(self):
@@ -56,7 +56,11 @@ def test_hal_device_gpu():
     dev_cnt = device_count()
     assert dev_cnt > 0
     print("Device count is", dev_cnt)
-    print("Device properties is", get_device_properties(dev_cnt - 1))
+    prop = get_device_properties(dev_cnt - 1)
+    print("Device properties is", prop)
+    print("Device properties attributes", prop.name, prop.major, prop.minor, prop.is_multi_gpu_board,
+          prop.is_integrated, prop.multi_processor_count, prop.total_memory, prop.warp_size)
+    print("Device capability is", get_device_capability(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
     print("Arch list is", get_arch_list())
     assert not get_arch_list("CPU")
@@ -75,12 +79,19 @@ def test_hal_device_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     assert not is_initialized("Ascend")
     assert is_available("Ascend")
+    assert get_device_properties(0).total_memory == 0
     net = Net()
     net(Tensor(2.0))
     assert not is_initialized("CPU")
     assert is_initialized("Ascend")
     dev_cnt = device_count()
     assert dev_cnt > 0
+    assert get_device_properties(dev_cnt - 1).total_memory > 0
+    try:
+        get_device_name(-1)
+    except ValueError as e:
+        assert str(e).find('negative') != -1
+    assert get_arch_list() is None
     print("Device count is", dev_cnt)
     print("Device properties is", get_device_properties(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
@@ -101,6 +112,7 @@ def test_hal_device_cpu():
     net = Net()
     net(Tensor(2.0))
     assert is_initialized("CPU")
+    assert get_arch_list() is None
 
 
 @pytest.mark.level0
