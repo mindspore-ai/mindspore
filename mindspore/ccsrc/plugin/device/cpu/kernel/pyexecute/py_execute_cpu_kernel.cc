@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -28,6 +29,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "include/backend/py_execute_utils.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/pipeline/jit/ps/parse/resolve.h"
 #include "utils/trace_base.h"
@@ -59,12 +61,23 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
   if (outputs.empty() || outputs[0] == nullptr) {
     MS_LOG(EXCEPTION) << "Invalid output";
   }
-  // Check if output exists created by 'CppInferShapeAndType'.
-  if (!fallback::HasPyExecuteOutput()) {
-    MS_LOG(ERROR) << "Prebuilt output result not exists in pyexecute.";
-    return false;
+  MS_EXCEPTION_IF_NULL(primitive_);
+  auto output_value = primitive_->GetAttr(kAttrPyExecuteOutput);
+  if (output_value == nullptr) {
+    MS_LOG(INFO) << "Prebuilt output result not exists in pyexecute.";
+    std::vector<abstract::AbstractBase *> real_inputs;
+    std::transform(inputs.begin(), inputs.end(), std::back_inserter(real_inputs),
+                   [](const auto &real_input) { return real_input; });
+    (void)opt::LaunchPy(primitive_, real_inputs);
+    output_value = primitive_->GetAttr(kAttrPyExecuteOutput);
+    if (output_value == nullptr) {
+      MS_LOG(ERROR) << "Rebuilt output result not exists in pyexecute.";
+      return false;
+    }
   }
-  const auto &output = fallback::PopPyExecuteOutput();
+  const auto &py_object_output_value = output_value->cast<parse::PyObjectWrapperPtr>();
+  MS_EXCEPTION_IF_NULL(py_object_output_value);
+  const auto &output = py_object_output_value->obj();
   const auto &output_type = py::str(output.get_type());
   MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
   const auto &py_output = std::make_shared<PyExecuteOutputUserData>();

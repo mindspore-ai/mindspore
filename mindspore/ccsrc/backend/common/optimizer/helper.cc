@@ -1497,8 +1497,13 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
 
 void InferOp(const CNodePtr &node, void *args) { dynamic_shape::InferOp(node, args); }
 
-void SetCppInferPyHanbdler(const InfPyHandler &infer_handler) {
-  dynamic_shape::set_cpp_infer_py_handler(infer_handler);
+LaunchHandler launch_py_handler{nullptr};
+void set_launch_handler(const LaunchHandler &handler) { launch_py_handler = handler; }
+
+abstract::AbstractBasePtr LaunchPy(const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBase *> &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(launch_py_handler);
+  return launch_py_handler(primitive, args_abs_list);
 }
 
 AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list) {

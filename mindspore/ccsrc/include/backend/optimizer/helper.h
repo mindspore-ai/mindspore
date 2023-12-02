@@ -272,9 +272,12 @@ BACKEND_EXPORT AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr 
 
 BACKEND_EXPORT void InferOp(const CNodePtr &node, void *args = nullptr);
 
-using InfPyHandler = abstract::AbstractBasePtr (*)(const PrimitivePtr &, const AbstractBasePtrList &);
-BACKEND_EXPORT void SetCppInferPyHanbdler(const InfPyHandler &infer_handler);
+using LaunchHandler = abstract::AbstractBasePtr (*)(const PrimitivePtr &,
+                                                    const std::vector<abstract::AbstractBase *> &);
+BACKEND_EXPORT void set_launch_handler(const LaunchHandler &handler);
 
+BACKEND_EXPORT abstract::AbstractBasePtr LaunchPy(const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBase *> &args_abs_list);
 BACKEND_EXPORT AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list);
 
 BACKEND_EXPORT AnfNodePtr CreateValueNodeWithKernelInfo(const FuncGraphPtr &graph, const ValuePtr &value);

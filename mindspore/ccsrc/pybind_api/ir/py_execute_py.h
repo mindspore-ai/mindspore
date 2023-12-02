@@ -89,18 +89,18 @@ class PyExecuteInitializer {
  public:
   PyExecuteInitializer() {
     mindspore::ops::PyExecuteInfer::set_infer_handler(CppInferShapeAndTypePy);
-    mindspore::opt::SetCppInferPyHanbdler(CppInferShapeAndTypePy);
+    mindspore::opt::set_launch_handler(CppInferShapeAndTypePy);
   }
 
   ~PyExecuteInitializer() = default;
 
  private:
-  static ValuePtr GetValueByAbstract(const AbstractBasePtr &abstract) {
+  static ValuePtr GetValueByAbstract(const abstract::AbstractBase *abstract) {
     MS_EXCEPTION_IF_NULL(abstract);
     if (!abstract->isa<kernel::KernelTensor>()) {
       MS_LOG(EXCEPTION) << "Invalid kernel tensor:" << abstract->ToString();
     }
-    const auto &kernel_tensor = abstract->cast<kernel::KernelTensorPtr>();
+    const auto &kernel_tensor = dynamic_cast<const kernel::KernelTensor *>(abstract);
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     if (kernel_tensor->user_data() != nullptr) {
       return std::make_shared<parse::PyObjectWrapper>(
@@ -166,7 +166,7 @@ class PyExecuteInitializer {
   }
 
   static std::pair<ValuePtr, size_t> ConstructInputValue(const ValuePtr &value,
-                                                         const AbstractBasePtrList &input_abstract,
+                                                         const std::vector<abstract::AbstractBase *> &input_abstract,
                                                          size_t input_index) {
     MS_EXCEPTION_IF_NULL(value);
     auto begin_iter = input_abstract.begin() + input_index;
@@ -180,9 +180,8 @@ class PyExecuteInitializer {
         (void)values.emplace_back(value);
         offset += offset_inner;
       }
-      (void)std::for_each(begin_iter, begin_iter + offset, [](AbstractBasePtr abs) -> void {
-        MS_LOG(DEBUG) << "The convert abs is :" << abs->ToString();
-      });
+      (void)std::for_each(begin_iter, begin_iter + offset,
+                          [](const auto &abs) -> void { MS_LOG(DEBUG) << "The convert abs is :" << abs->ToString(); });
       return std::make_pair(std::make_shared<ValueTuple>(values), offset);
     }
 
@@ -196,7 +195,8 @@ class PyExecuteInitializer {
     }
   }
 
-  static ValuePtr ConstructInputValues(const PrimitivePtr &prim, const AbstractBasePtrList &input_abstract) {
+  static ValuePtr ConstructInputValues(const PrimitivePtr &prim,
+                                       const std::vector<abstract::AbstractBase *> &input_abstract) {
     MS_EXCEPTION_IF_NULL(prim);
     auto input_structural = prim->GetAttr(kAttrTupleInputStructural);
     if (input_structural == nullptr) {
@@ -225,7 +225,7 @@ class PyExecuteInitializer {
     return std::make_shared<ValueTuple>(values);
   }
 
-  static abstract::AbstractBasePtr PyExecuteInferPy(const ValuePtr &input_value) {
+  static abstract::AbstractBasePtr PyExecuteInferPy(const PrimitivePtr &primitive, const ValuePtr &input_value) {
     MS_EXCEPTION_IF_NULL(input_value);
     if (!input_value->isa<ValueSequence>()) {
       MS_LOG(EXCEPTION) << "Invalid pyexecute input value:" << input_value->ToString();
@@ -289,7 +289,7 @@ class PyExecuteInitializer {
         MS_EXCEPTION(TypeError) << "PyExecute node output can not contain stub tensor.";
       }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
-      fallback::PushPyExecuteOutput(output);
+      primitive->set_attr(kAttrPyExecuteOutput, std::make_shared<parse::PyObjectWrapper>(output, "graph python obj"));
       if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
         const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
@@ -318,7 +318,7 @@ class PyExecuteInitializer {
   }
 
   static abstract::AbstractBasePtr CppInferShapeAndTypePy(const PrimitivePtr &primitive,
-                                                          const AbstractBasePtrList &args_abs_list) {
+                                                          const std::vector<abstract::AbstractBase *> &args_abs_list) {
     // We can't catch the pybind11 exception by py::builtin_exception or its base class,
     // so we have to list all pybind11 exceptions and catch one by one here.
     AbstractBasePtr res;
@@ -327,7 +327,7 @@ class PyExecuteInitializer {
     std::function<void(void)> default_error_handler;
     HandleExceptionRethrow(
       [&res, &primitive, &args_abs_list]() {
-        res = PyExecuteInferPy(ConstructInputValues(primitive, args_abs_list));
+        res = PyExecuteInferPy(primitive, ConstructInputValues(primitive, args_abs_list));
         MS_LOG(DEBUG) << "The abstract:" << res;
         return res;
       },

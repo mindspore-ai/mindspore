@@ -80,11 +80,6 @@ struct AnfDumpHandlerRegister {
 } callback_register;
 }  // namespace
 
-PyObjectWrapper::~PyObjectWrapper() {
-  py::gil_scoped_acquire acquire_gil;
-  obj_ = nullptr;
-}
-
 InterpretedObject::InterpretedObject(const py::object &obj) : PyObjectWrapper(obj) {
   std::stringstream buf;
   auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);

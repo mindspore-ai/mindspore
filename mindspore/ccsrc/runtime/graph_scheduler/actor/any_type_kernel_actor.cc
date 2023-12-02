@@ -342,6 +342,25 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphInput(OpContext<Devi
   }
 }
 
+namespace {
+void ClearAttrForGraph(const KernelGraphPtr &graph, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &node_pair : graph->front_backend_anf_map()) {
+    MS_EXCEPTION_IF_NULL(node_pair.second);
+    if (!node_pair.second->isa<CNode>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Check for node:" << node_pair.second->DebugString() << " attr name:" << attr_name;
+    const auto &cnode = node_pair.second->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::HasNodeAttr(attr_name, cnode)) {
+      MS_LOG(DEBUG) << "Erase flag for node:" << node_pair.second->DebugString() << " attr name:" << attr_name;
+      common::AnfAlgo::EraseNodeAttr(attr_name, cnode);
+    }
+  }
+}
+}  // namespace
+
 void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   actor_state_ = AnyTypeKernelActorState::kAnyTypeKernelActorSendInput;
@@ -354,6 +373,8 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
     try {
       std::lock_guard<std::mutex> lock(instance_lock_);
       InferParameterAbstractForModelGraph(graph(), input_device_tensors_, any_type_parameter_indexes_);
+      ClearAttrForGraph(graph(), kAttrInputIsDynamicShape);
+      ClearAttrForGraph(graph(), kAttrOutputIsDynamicShape);
       graph()->InferType();
       const auto &return_node = graph()->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
