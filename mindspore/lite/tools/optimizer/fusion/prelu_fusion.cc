@@ -61,7 +61,7 @@ const AnfNodePtr PReluFusion::Process(const FuncGraphPtr &func_graph, const AnfN
     return nullptr;
   }
   std::vector<float> slope;
-  if (!CheckPattern(func_graph, equiv, &slope)) {
+  if (!CheckPattern(equiv, &slope)) {
     return nullptr;
   }
 
@@ -98,7 +98,7 @@ const AnfNodePtr PReluFusion::Process(const FuncGraphPtr &func_graph, const AnfN
   return new_node;
 }
 
-bool PReluFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, std::vector<float> *slope) const {
+bool PReluFusion::CheckPattern(const EquivPtr &equiv, std::vector<float> *slope) const {
   // mul const
   auto mul_const_cnode = utils::cast<AnfNodePtr>((*equiv)[mul_const_]);
   MS_CHECK_TRUE_RET(mul_const_cnode != nullptr, false);

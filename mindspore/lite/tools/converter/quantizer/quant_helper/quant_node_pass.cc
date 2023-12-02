@@ -42,7 +42,7 @@ int QuantNodePass::DoWeightQuant(const CNodePtr &cnode) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
-    if (!CanTensorQuantized(cnode, input)) {
+    if (!CanTensorQuantized(input)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantized.";
       continue;
     }
@@ -260,7 +260,7 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-bool QuantNodePass::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node) {
+bool QuantNodePass::CanTensorQuantized(const AnfNodePtr &input_node) {
   if (input_node == nullptr) {
     MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
     return false;

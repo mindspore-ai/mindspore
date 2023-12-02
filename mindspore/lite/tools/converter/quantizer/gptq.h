@@ -75,7 +75,7 @@ class Gptq {
   int CalculateHessianInv(float *hessian_data, float *hessian_inv_data, int hessian_length, float percdamp);
 
   int CloneMatrix(float *dest, int dst_rows, int dst_columns, const float *src, int src_rows, int src_columns, int i1,
-                  int i2, int j1, int j2);
+                  int i2, int j1, int j2) const;
 
   int QuantizePerBlock(std::vector<float> *weight_data, std::vector<int> *quant_data, std::vector<float> *error,
                        std::vector<float> *loss, const std::vector<float> *hinv, int count);

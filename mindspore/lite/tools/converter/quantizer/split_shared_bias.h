@@ -36,7 +36,6 @@ class SplitSharedBias {
   AnfNodePtr CloneParameterNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &func_graph,
                                 const std::shared_ptr<ConverterPara> &param);
 
- private:
   FuncGraphPtr func_graph_ = nullptr;
   std::shared_ptr<ConverterPara> param_ = nullptr;
 };
