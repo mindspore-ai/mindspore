@@ -16,7 +16,6 @@
 
 #include "tools/converter/quantizer/gptq.h"
 #include <memory>
-#include <cmath>
 #include "tools/converter/quantizer/eigen_util.h"
 #include "tools/common/statistic_utils.h"
 #include "src/common/quant_utils.h"
@@ -136,7 +135,7 @@ int Gptq::CalculateHessianInv(float *hessian_data, float *hessian_inv_data, int 
 
 // Clone matrix, src[i1:i2, j1:j2] -> dest[r, c]
 int Gptq::CloneMatrix(float *dest, int dst_rows, int dst_columns, const float *src, int src_rows, int src_columns,
-                      int i1, int i2, int j1, int j2) {
+                      int i1, int i2, int j1, int j2) const {
   CHECK_NULL_RETURN(dest);
   CHECK_NULL_RETURN(src);
   MS_CHECK_TRUE_MSG(i1 >= 0 && i1 < src_rows, RET_ERROR, "Index i1 out-of-range.");

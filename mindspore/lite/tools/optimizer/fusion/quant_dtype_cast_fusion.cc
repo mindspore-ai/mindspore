@@ -45,7 +45,7 @@ const AnfNodePtr QuantDtypeCastFusion::Process(const FuncGraphPtr &func_graph, c
   if (IsMarkedTrainOp(cnode)) {
     return nullptr;
   }
-  if (!CheckPattern(func_graph, equiv, node)) {
+  if (!CheckPattern(equiv, node)) {
     return nullptr;
   }
 
@@ -62,8 +62,7 @@ const AnfNodePtr QuantDtypeCastFusion::Process(const FuncGraphPtr &func_graph, c
   return cnode;
 }
 
-bool QuantDtypeCastFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                        const AnfNodePtr &node) const {
+bool QuantDtypeCastFusion::CheckPattern(const EquivPtr &equiv, const AnfNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(cnode != nullptr, false);
   auto first_cast_cnode = cnode->input(kInputIndexOne)->cast<CNodePtr>();
