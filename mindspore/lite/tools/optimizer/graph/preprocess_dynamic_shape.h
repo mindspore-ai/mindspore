@@ -33,7 +33,7 @@ class DynamicShapePreprocessor {
   DynamicShapePreprocessor() = default;
   ~DynamicShapePreprocessor() = default;
   int Run(const FuncGraphPtr &func_graph);
-  const ShapeContainer &GetShapeContainer() { return op_shape_infos_; }
+  const ShapeContainer &GetShapeContainer() const { return op_shape_infos_; }
 
  private:
   bool CheckIsDynamicModel(const FuncGraphPtr &func_graph);

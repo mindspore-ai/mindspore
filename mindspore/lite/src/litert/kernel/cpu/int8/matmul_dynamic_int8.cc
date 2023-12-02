@@ -113,7 +113,7 @@ int MatmulDynamicInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(a_ptr);
   CHECK_NULL_RETURN(c_ptr);
   for (int i = 0; i < param_->batch; i++) {
-    memset(pack_a_ptr_, *(quant_param_->input_zp_), param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
+    (void)memset(pack_a_ptr_, *(quant_param_->input_zp_), param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
     auto current_src_a = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {
       MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
