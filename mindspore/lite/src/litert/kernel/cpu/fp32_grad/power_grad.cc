@@ -60,8 +60,8 @@ int PowerGradCPUKernel::DoExecute(int task_id) {
   int end = start + count;
 
   float exp = power_ - 1;
-  Power(&(x_addr[start]), &exp, &(dx_addr[start]), count, scale_, shift_, true);
-  ElementMul(&(dx_addr[start]), &(dy_addr[start]), &(dx_addr[start]), count);
+  (void)Power(&(x_addr[start]), &exp, &(dx_addr[start]), count, scale_, shift_, true);
+  (void)ElementMul(&(dx_addr[start]), &(dy_addr[start]), &(dx_addr[start]), count);
   float scale = scale_ * power_;
   for (int i = start; i < end; i++) {
     dx_addr[i] *= scale;

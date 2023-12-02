@@ -69,12 +69,12 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
            (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
            (conv_param->dilation_w_ == 1);
 
-  ws_size_ = chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
+  ws_size_ = static_cast<size_t>(chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_);
   ws_size_ = do_dw_ ? ws_size_ : ws_size_ / static_cast<size_t>(conv_param->group_);
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
   auto thread_num = static_cast<size_t>(op_parameter_->thread_num_);
-  mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
+  mat_alloc_ = static_cast<size_t>(MatSizeTotal(k, n, chunk_, 0));
   set_workspace_size((ws_size_ + mat_alloc_ + static_cast<size_t>(k * n)) * thread_num * sizeof(float));
   return RET_OK;
 }
