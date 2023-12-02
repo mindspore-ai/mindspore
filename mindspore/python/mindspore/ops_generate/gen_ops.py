@@ -26,30 +26,61 @@ from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
 
 
-def get_op_name(operator_name, class_def):
+def _get_op_name(yaml_key, yaml_value):
     """
     Get op name for python class Primitive or c++ OpDef name.
     """
-    class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
+    # If has class item, use the specified item.
+    class_def = yaml_value.get("class")
     if class_def is not None:
-        item = class_def.get("name")
-        if item is not None:
-            class_name = item
-    return class_name
+        class_name_specify = class_def.get("name")
+        if class_name_specify is not None:
+            return class_name_specify
+    # Else use the default rule generate class name.
+    op_name = yaml_key
+    class_name_normal = ''.join(word.capitalize() for word in op_name.split('_'))
+    return class_name_normal
 
 
-def get_disable_flag(yaml_def):
-    """
-    Get class or functional api disable generate flag.
-    """
-    disable_flag = False
-    if yaml_def is not None:
-        item = yaml_def.get("disable")
+def _get_op_func_name(yaml_key, yaml_value):
+    func_def = yaml_value.get('function')
+    func_name = yaml_key
+
+    if func_def is not None:
+        item = func_def.get("name")
         if item is not None:
-            if item is not True and item is not False:
-                raise TypeError(f"The disable label for function should be True or False, but get {item}.")
-            disable_flag = item
-    return disable_flag
+            func_name = item
+    return func_name
+
+
+def _auto_generate_class_disabled(yaml_value):
+    """Check whether class can be auto generated."""
+    if 'class' not in yaml_value.keys():
+        return False
+    class_def = yaml_value.get("class")
+    if 'disable' not in class_def.keys():
+        return False
+    disable_item = class_def.get("disable")
+    if disable_item is True:
+        return True
+    if disable_item is False:
+        return False
+    raise TypeError(f"The disable label for class should be True or False, but get {disable_item}.")
+
+
+def _auto_generate_func_disabled(yaml_value):
+    """Check whether function can be auto generated."""
+    if 'function' not in yaml_value.keys():
+        return False
+    func_def = yaml_value.get('function')
+    if 'disable' not in func_def.keys():
+        return False
+    disable_item = func_def.get("disable")
+    if disable_item is True:
+        return True
+    if disable_item is False:
+        return False
+    raise TypeError(f"The disable label for function should be True or False, but get {disable_item}.")
 
 
 def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
@@ -179,7 +210,7 @@ def generate_py_op_deprecated(deprecated):
     return deprecated
 
 
-def _process_description(description):
+def _normalize_func_description_fromat(description):
     """
     Process description.
     """
@@ -210,19 +241,12 @@ def generate_py_op_func(yaml_data, doc_data):
         op_desc_dict[operator_name] = desc
 
     for operator_name, operator_data in yaml_data.items():
-        func_def = operator_data.get('function')
-        func_name = operator_name
-        if func_def is not None:
-            func_disable = get_disable_flag(func_def)
-            if func_disable:
-                continue
-            item = func_def.get("name")
-            if item is not None:
-                func_name = item
-
+        if _auto_generate_func_disabled(operator_data):
+            continue
+        func_name = _get_op_func_name(operator_name, operator_data)
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        class_name = get_op_name(operator_name, operator_data.get('class'))
+        class_name = _get_op_name(operator_name, operator_data)
         func_args = []
         prim_init_args = []
         prim_call_args = []
@@ -245,7 +269,7 @@ def generate_py_op_func(yaml_data, doc_data):
             else:
                 prim_call_args.append(arg_name)
 
-        description = _process_description(description)
+        description = _normalize_func_description_fromat(description)
         function_code = f"""\n
 def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
@@ -321,19 +345,38 @@ def generate_pyboost_import_header(yaml_data):
     return pyboost_import_header
 
 
+def _generate_class_description(class_name, func_name, input_args, init_args):
+    """Generate description for every primitive definition."""
+    description_str = f"""    r\"\"\"
+    .. code-block::
+        
+        prim = ops.{class_name}({', '.join(init_args)})
+        out = prim({', '.join(input_args)})
+        
+    is equivalent to
+    
+    .. code-block::
+    
+        ops.{func_name}({", ".join(input_args + init_args)})
+        
+    Refer to :func:`mindspore.ops.{func_name}` for more details.
+    \"\"\"
+"""
+    return description_str
+
+
 def generate_py_primitive(yaml_data):
     """
     Generate python primitive
     """
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
-        class_def = operator_data.get('class')
-        class_disable = get_disable_flag(class_def)
-        if class_disable:
+        if _auto_generate_class_disabled(operator_data):
             continue
-        args = operator_data.get('args')
-        class_name = get_op_name(operator_name, class_def)
+        class_name = _get_op_name(operator_name, operator_data)
+        func_name = _get_op_func_name(operator_name, operator_data)
         pyboost_func_name = get_pyboost_name(operator_name)
+        args = operator_data.get('args')
         inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
         init_code = '\n'.join(args_assign)
         signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
@@ -351,6 +394,7 @@ def generate_py_primitive(yaml_data):
 
         primitive_code = f"""\n
 class {class_name}(Primitive):\n"""
+        primitive_code += _generate_class_description(class_name, func_name, inputs_args, init_args)
         if signature_code != "":
             primitive_code += signature_code
         if deprecated_code != "":
@@ -414,7 +458,7 @@ namespace mindspore::ops {{
     op_name_gen = ''
     op_name_gen += op_name_head
     for operator_name, operator_data in yaml_data.items():
-        k_name_op = get_op_name(operator_name, operator_data.get('class'))
+        k_name_op = _get_op_name(operator_name, operator_data)
         op_name_gen += f"""constexpr auto kName{k_name_op} = "{k_name_op}";
 """
 
@@ -446,7 +490,7 @@ namespace mindspore::prim {{
     ops_prim_gen = ''
     ops_prim_gen += ops_prim_head
     for operator_name, operator_data in yaml_data.items():
-        k_name_op = get_op_name(operator_name, operator_data.get('class'))
+        k_name_op = _get_op_name(operator_name, operator_data)
         ops_prim_gen += f"""GVAR_DEF(PrimitivePtr, kPrim{k_name_op}, std::make_shared<Primitive>(ops::kName{k_name_op}))
 """
     ops_prim_gen += ops_prim_end
@@ -491,7 +535,7 @@ namespace mindspore::ops {
     lite_ops_h_gen += lite_ops_h_head
     lite_ops_cc_gen += lite_ops_cc_head
     for operator_name, operator_data in yaml_data.items():
-        op_name = get_op_name(operator_name, operator_data.get('class'))
+        op_name = _get_op_name(operator_name, operator_data)
         lite_ops_h_gen += f"""class MIND_API {op_name} : public BaseOperator {{
  public:
   MIND_API_BASE_MEMBER({op_name});
@@ -515,7 +559,7 @@ namespace mindspore::ops {
             lite_ops_cc_gen += f"""void {op_name}::set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n\n"""
             lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
 
-            op_name = get_op_name(operator_name, operator_data.get('class'))
+            op_name = _get_op_name(operator_name, operator_data)
         lite_ops_cc_gen += f"""REGISTER_PRIMITIVE_C(kName{op_name}, {op_name});\n"""
         lite_ops_cc_gen += f"""MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n\n"""
         lite_ops_h_gen += f"""}};\n\n"""
@@ -538,7 +582,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         returns = operator_data.get('returns')
-        class_name = get_op_name(operator_name, operator_data.get('class'))
+        class_name = _get_op_name(operator_name, operator_data)
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
                    f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
@@ -675,7 +719,7 @@ def generate_op_labels(yaml_data):
     for operator_name, operator_data in yaml_data.items():
         labels = operator_data.get('labels')
         if labels is not None:
-            class_name = get_op_name(operator_name, operator_data.get('class'))
+            class_name = _get_op_name(operator_name, operator_data)
             gen_label_py += f"""
     "{class_name}": {{"""
             gen_label_py += f""", """.join([f""""{key}": {value}""" for key, value in labels.items()])
@@ -701,7 +745,7 @@ from mindspore.common import dtype as mstype\n\n"""
             if arg_default is not None:
                 arg_default_dict[arg_name] = arg_default
         if arg_default_dict:
-            class_name = get_op_name(operator_name, operator_data.get('class'))
+            class_name = _get_op_name(operator_name, operator_data)
             gen_default_py += f"""
     "{class_name}": {{"""
             gen_default_py += f""", """.join([f""""{key}": {value}""" for key, value in arg_default_dict.items()])
