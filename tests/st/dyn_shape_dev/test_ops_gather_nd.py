@@ -68,6 +68,24 @@ def test_gather_nd_backward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_gather_nd_backward_1d(mode):
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op gather_nd with 1d input.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    input_x = Tensor(np.array([1, 2]), ms.int64)
+    indices = Tensor(np.array([[1], [0]]), ms.int32)
+    output = gather_nd_backward_func(input_x, indices)
+    expect = [1, 1]
+    assert np.allclose(output.asnumpy(), expect, rtol=0.001)
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard

@@ -192,8 +192,8 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   return true;
 }
 
-#define DTYPE_REGISTER_(DT1, UPDATES, SHAPE, OUTPUT, DT2, T)                                      \
-  KernelAttr().AddInputAttr(DT1).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
+#define DTYPE_REGISTER_(DT1, UPDATES, SHAPE, OUTPUT, DT2, T)                                                        \
+  KernelAttr().AddInputAttr(DT1).AddInputAttr(UPDATES).AddInputAttr(kObjectTypeTuple, SHAPE).AddOutputAttr(OUTPUT), \
     &ScatterNdCpuKernelMod::LaunchKernel<DT2, T>
 
 #define DTYPE_REGISTER(UPDATES, SHAPE, OUTPUT, T)                              \

@@ -83,7 +83,8 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type_indices != data_type_shape) {
-    KERNEL_LOG_ERROR("Indices and shape must have the same type.");
+    KERNEL_LOG_ERROR("Indices and shape must have the same type, but got indices type: [%s] vs shape type: [%s].",
+                     DTypeStr(data_type_indices).c_str(), DTypeStr(data_type_shape).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
