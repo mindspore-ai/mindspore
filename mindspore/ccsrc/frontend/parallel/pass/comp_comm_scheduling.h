@@ -72,22 +72,19 @@ enum TaskSort {
 class Task {
  public:
   // Constructors
-  Task(const TaskId &id, const TaskType &type) {
-    this->id_ = id;
-    this->type_ = type;
-    // scheduling related
-    this->weight_ = 1;
-    this->parallel_weight_ = 1;
-    this->bottom_level_ = 0;
-    this->top_level_ = 0;
-    this->depth_ = 0;
-    this->succ_diff_type_ = 0;
-    this->weighted_length_ = 0.0;
-    this->start_ = SIZE_MAX;
-    this->end_ = 0;
-    this->pred_comm_ = 0;
-  }
-
+  Task(const TaskId &id, const TaskType &type)
+      : id_(id),
+        type_(type),
+        weight_(1),
+        parallel_weight_(1),
+        bottom_level_(0),
+        top_level_(0),
+        depth_(0),
+        succ_diff_type_(0),
+        weighted_length_(0.0),
+        start_(SIZE_MAX),
+        end_(0),
+        pred_comm_(0) {}
   // Accessors
   TaskId id() const { return this->id_; }
   TaskType type() const { return this->type_; }
