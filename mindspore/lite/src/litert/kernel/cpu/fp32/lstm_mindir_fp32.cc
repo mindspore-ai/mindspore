@@ -91,7 +91,7 @@ int LstmMindirFp32CPUKernel::InitInputWeightBias() {
   auto bias_size = weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float);
   input_bias_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(bias_size));
   MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc input_bias_ failed.");
-  memset(input_bias_, 0, bias_size);
+  (void)memset(input_bias_, 0, bias_size);
   running_buffer_.push_back(input_bias_);
   if (!lstm_param_->has_bias_) {
     return RET_OK;
@@ -147,7 +147,7 @@ int LstmMindirFp32CPUKernel::InitStateWeightBias() {
   auto bias_pack_size = weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float);
   state_bias_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(bias_pack_size));
   MS_CHECK_TRUE_MSG(state_bias_ != nullptr, lite::RET_NULL_PTR, "LstmMindirCPUKernel malloc state_bias_ failed.");
-  memset(state_bias_, 0, bias_pack_size);
+  (void)memset(state_bias_, 0, bias_pack_size);
   running_buffer_.push_back(state_bias_);
   if (!lstm_param_->has_bias_ || !gpu_orig_state_) {
     return RET_OK;
@@ -226,7 +226,7 @@ void LstmMindirFp32CPUKernel::LstmUnidirectional(float *output, const float *wei
     for (int b = 0; b < lstm_param_->batch_; b++) {
       int batch_offset = b * dir_mult * lstm_param_->output_size_;
       float *output_ptr = output + seq_offset + batch_offset;
-      memcpy(output_ptr, tmp + b * lstm_param_->output_size_, lstm_param_->output_size_ * sizeof(float));
+      (void)memcpy(output_ptr, tmp + b * lstm_param_->output_size_, lstm_param_->output_size_ * sizeof(float));
     }
     if (intermediate_states) {
       RecordStates(hidden_state, cell_state, input_gate_t, output_gate_t, forget_gate_t, cell_gate_t,
@@ -237,7 +237,7 @@ void LstmMindirFp32CPUKernel::LstmUnidirectional(float *output, const float *wei
 
 void LstmMindirFp32CPUKernel::RecordStates(const float *hidden_state, float *cell_state, float *input_gate,
                                            const float *output_gate, float *forget_gate, const float *cell_gate,
-                                           float *intermediate_states, int step) {
+                                           float *intermediate_states, int step) const {
   float *states = intermediate_states;
   auto hidden_size = lstm_param_->batch_ * lstm_param_->output_size_;
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
@@ -251,16 +251,16 @@ void LstmMindirFp32CPUKernel::RecordStates(const float *hidden_state, float *cel
                                                        : lstm_param_->batch_ * lstm_param_->hidden_size_;
   auto stride = step * other_output_step;
   auto seq_stride = lstm_param_->seq_len_ * other_output_step;
-  memcpy(states + hidden_stride, hidden_state, hidden_size * sizeof(float));
+  (void)memcpy(states + hidden_stride, hidden_state, hidden_size * sizeof(float));
   stride += hidden_seq_stride;
-  memcpy(states + stride, cell_state, state_size * sizeof(float));
+  (void)memcpy(states + stride, cell_state, state_size * sizeof(float));
   stride += seq_stride;
-  memcpy(states + stride, input_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, input_gate, state_size * sizeof(float));
   stride += seq_stride;
-  memcpy(states + stride, output_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, output_gate, state_size * sizeof(float));
   stride += seq_stride;
-  memcpy(states + stride, forget_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, forget_gate, state_size * sizeof(float));
   stride += seq_stride;
-  memcpy(states + stride, cell_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, cell_gate, state_size * sizeof(float));
 }
 }  // namespace mindspore::kernel
