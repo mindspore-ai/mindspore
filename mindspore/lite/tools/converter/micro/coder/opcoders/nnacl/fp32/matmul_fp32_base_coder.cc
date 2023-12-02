@@ -203,7 +203,8 @@ void MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
 
 int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
-  NNaclFp32Serializer code, init_code;
+  NNaclFp32Serializer code;
+  NNaclFp32Serializer init_code;
   size_t w_buf_size = 0;
   std::string param_name = "mat_mul_parameter";
   code.CodeStruct(param_name, params_);

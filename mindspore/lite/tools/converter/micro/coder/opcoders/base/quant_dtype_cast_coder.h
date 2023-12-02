@@ -38,7 +38,6 @@ class QuantDTypeCastCoder final : public OperatorCoder {
  private:
   TypeId src_dtype{kTypeUnknown};
   TypeId dst_dtype{kTypeUnknown};
-  int thread_num_{0};
   int thread_n_num_{0};
   int thread_n_stride_{0};
   int num_unit_{0};

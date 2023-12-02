@@ -89,12 +89,18 @@ static size_t GetFillIndex(char **input_name, size_t input_size, const HI_CHAR *
     char *post = strrchr(input_name[i], '_');
     if (post && (!strcmp(post + 1, "pre") || !strcmp(post + 1, "post"))) {
       HI_U32 prefix_len = (HI_U32)(post - input_name[i]);
-      if (prefix_len >= kNNIEMaxNameLen) return input_size;
+      if (prefix_len >= kNNIEMaxNameLen) {
+        return input_size;
+      }
       strncpy(prefix, input_name[i], prefix_len);
       prefix[prefix_len] = '\0';
-      if (strcmp(prefix, name) == 0) break;
+      if (strcmp(prefix, name) == 0) {
+        break;
+      }
     } else {
-      if (strcmp(input_name[i], name) == 0) break;
+      if (strcmp(input_name[i], name) == 0) {
+        break;
+      }
     }
   }
   if (i == input_size) {
@@ -105,9 +111,13 @@ static size_t GetFillIndex(char **input_name, size_t input_size, const HI_CHAR *
         if (prefix_len >= kNNIEMaxNameLen) return input_size;
         strncpy(prefix, input_name[i], prefix_len);
         prefix[prefix_len] = '\0';
-        if (strncmp(prefix, name, prefix_len) == 0) break;
+        if (strncmp(prefix, name, prefix_len) == 0) {
+          break;
+        }
       } else {
-        if (strncmp(input_name[i], name, strlen(input_name[i])) == 0) break;
+        if (strncmp(input_name[i], name, strlen(input_name[i])) == 0) {
+          break;
+        }
       }
     }
   }
@@ -118,7 +128,8 @@ int NnieFillData(NnieHandle *h, NnieTensors *inputs) {
   SVP_NNIE_MODEL_S *model = h->cfg_.param_.model_;
   unsigned int seg_id = h->cfg_.run_idx_.seg_idx_;
   bool run_box = false;
-  size_t i, j;
+  size_t i;
+  size_t j;
   if (model->astSeg[seg_id].enNetType == SVP_NNIE_NET_TYPE_ROI) {
     run_box = true;
     for (i = 0; i < static_cast<size_t>(inputs->size_); i++) {
@@ -182,7 +193,8 @@ int NnieRun(NnieHandle *h, NnieTensors *outputs) {
   SVP_NNIE_MODEL_S *model = h->cfg_.param_.model_;
   unsigned int seg_id = h->cfg_.run_idx_.seg_idx_;
   bool run_box = false;
-  int i, j;
+  int i;
+  int j;
   if (model->astSeg[seg_id].enNetType == SVP_NNIE_NET_TYPE_ROI) {
     run_box = true;
   }
