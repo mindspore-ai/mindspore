@@ -36,16 +36,11 @@ const size_t kIndex3 = 3;
 const size_t kIndex4 = 4;
 }  // namespace
 
-std::vector<int64_t> GetSamples(const bool *input, int64_t input_size, int64_t count_target) {
+std::vector<int64_t> GetAllSamples(const bool *input, int64_t input_size) {
   std::vector<int64_t> sample_ids{};
-  int64_t count{0};
   for (int64_t i = 0; i < input_size; ++i) {
     if (input[i]) {
       sample_ids.push_back(i);
-      count++;
-    }
-    if (count >= count_target) {
-      break;
     }
   }
   return sample_ids;
@@ -64,12 +59,12 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   auto *mask = reinterpret_cast<bool *>(io_addrs_[kIndex4]);
 
   int64_t input_size = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int64_t>());
-  std::vector<int64_t> sample_ids = GetSamples(input, input_size, count_target_);
-  size_t count = sample_ids.size();
+  std::vector<int64_t> sample_ids = GetAllSamples(input, input_size);
 
   std::random_device rd;
   std::mt19937 g(rd());
   std::shuffle(sample_ids.begin(), sample_ids.end(), g);
+  size_t count = std::min(sample_ids.size(), static_cast<size_t>(count_target_));
 
   // Calculate coordinates
   auto *output_offset = output_coordinate;
