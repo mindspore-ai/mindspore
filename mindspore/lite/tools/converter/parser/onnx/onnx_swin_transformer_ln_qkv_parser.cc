@@ -50,6 +50,6 @@ PrimitiveCPtr OnnxSwinTransformerLnQKVParser::Parse(const onnx::GraphProto &onnx
   return prim;
 }
 
-OnnxNodeRegistrar g_onnxSwinTransformerLnQKVV2Parser("SwinTransformerLnQKVV2", new OnnxSwinTransformerLnQKVParser());
+OnnxNodeRegistrar g_onnxSwinTransformerLnQKVParser("SwinTransformerLnQKV", new OnnxSwinTransformerLnQKVParser());
 }  // namespace lite
 }  // namespace mindspore

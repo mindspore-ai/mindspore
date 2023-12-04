@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 class OnnxSwinTransformerLnQKVParser : public OnnxNodeParser {
  public:
-  OnnxSwinTransformerLnQKVParser() : OnnxNodeParser("SwinTransformerLnQKVV2") {}
+  OnnxSwinTransformerLnQKVParser() : OnnxNodeParser("SwinTransformerLnQKV") {}
   ~OnnxSwinTransformerLnQKVParser() override = default;
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
