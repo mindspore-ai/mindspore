@@ -358,6 +358,11 @@ class MS_API Model {
 
   const std::shared_ptr<ModelImpl> impl() const { return impl_; }
 
+  /// \brief Get model info by key
+  ///
+  /// \param[in] key The key of model info key-value pair
+  ///
+  /// \return The value of the model info associated with the given key.
   inline std::string GetModelInfo(const std::string &key);
 
  private:
