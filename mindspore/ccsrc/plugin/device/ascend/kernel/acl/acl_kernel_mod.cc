@@ -46,6 +46,17 @@ std::string MsTensorDescString(const TensorParams &param) {
 
 bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   converter_ = std::make_shared<transform::AclConverter>();
+  converter_->ConvertToAclOpType(kernel_name_);
+  converter_->ResizeAclOpInputs(primitive_);
+  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
+  converter_->ConvertInputToAclAttr(inputs, kernel_name_);
+  if (transform::AclHelper::IsPrintDebugString()) {
+    ms_attr_str_.clear();
+    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, &ms_attr_str_);
+  } else {
+    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, nullptr);
+  }
+  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
   return true;
 }
 
@@ -143,19 +154,9 @@ int AclKernelMod::GetOutputInfo(const std::vector<KernelTensor *> &outputs) {
 void AclKernelMod::CreateAclConverter() {
   MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
-  converter_->ConvertToAclOpType(kernel_name_);
-  converter_->ResizeAclOpInputs(primitive_);
-  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_, &input_to_host_array_);
   if (inputs_ != nullptr) {
     converter_->ConvertInputToAclAttr(*inputs_, kernel_name_);
   }
-  if (transform::AclHelper::IsPrintDebugString()) {
-    ms_attr_str_.clear();
-    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, &ms_attr_str_);
-  } else {
-    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, nullptr);
-  }
-  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
 }
 
 int AclKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -194,9 +195,18 @@ void AclKernelMod::SetValueDependArgs(const std::set<int64_t> &indices) {
   MS_EXCEPTION_IF_NULL(info);
 
   value_depend_args_.clear();
-  for (auto item : indices) {
-    if (info->input_attr_map().count(item) == 0) {
-      value_depend_args_.emplace(item);
+  for (auto ms_real_idx : indices) {
+    auto dyn_input_ms_proto_idx = info->GetDynInputMsProtoIndex();
+    bool is_ms_idx_after_dynamic = ms_real_idx > dyn_input_ms_proto_idx;
+    auto ms_proto_idx = ms_real_idx;
+    if (is_ms_idx_after_dynamic) {
+      auto dyn_input_size = converter_->GetDynInputSize();
+      int64_t idx = ms_real_idx - dyn_input_size + 1;
+      ms_proto_idx = idx < dyn_input_ms_proto_idx ? dyn_input_ms_proto_idx : idx;
+    }
+
+    if (info->input_attr_map().count(ms_proto_idx) == 0) {
+      value_depend_args_.emplace(ms_real_idx);
     }
   }
 }
@@ -214,9 +224,8 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   // operator validation (e.g. ReduceSum), so put it on host will be more efficiencient to reduce the count of sync from
   // device to host.
   MS_EXCEPTION_IF_NULL(converter_);
-  converter_->ConvertValueDependToHostInput(kernel_name_, inputs, input_params_, value_depend_args_,
-                                            &input_to_host_array_);
-  converter_->ConvertToAclInput(primitive_, input_to_host_array_, inputs, input_params_);
+  converter_->ConvertValueDependToHostInput(kernel_name_, inputs, input_params_, value_depend_args_);
+  converter_->ConvertToAclInput(primitive_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);
   converter_->SetRunnerSpecialInfo();
   // cppcheck-suppress unreadVariable

@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <utility>
 #include <map>
 #include "acl/acl_op_compiler.h"
@@ -37,6 +38,15 @@ struct AclExecParam {
   aclopAttr *attr = nullptr;
 };
 
+struct AclHostInfo {
+  AclHostInfo() : host_addr(nullptr), size(0), dtype_id(kTypeUnknown) {}
+  AclHostInfo(void *addr, size_t addr_size, TypeId type_id) : host_addr(addr), size(addr_size), dtype_id(type_id) {}
+  void *host_addr;
+  size_t size;
+  TypeId dtype_id;
+};
+using AclHostInfoPtr = std::shared_ptr<AclHostInfo>;
+
 class AclInputToHost {
  public:
   AclInputToHost() { clear(); }
@@ -48,7 +58,7 @@ class AclInputToHost {
     size_ = 0;
   }
 
-  tensor::TensorPtr get(size_t index) const {
+  AclHostInfoPtr get(size_t index) const {
     if (index >= MAX_INPUT_TO_HOST) {
       MS_LOG(EXCEPTION) << "Index is bigger than max input to host size, index: " << index
                         << ", max_input_to_host: " << MAX_INPUT_TO_HOST;
@@ -56,15 +66,15 @@ class AclInputToHost {
     return input_to_host_[index];
   }
 
-  void emplace(size_t index, const tensor::TensorPtr &tensor_ptr) {
-    auto origin_tensor = get(index);
-    if (origin_tensor == nullptr && tensor_ptr != nullptr) {
+  void emplace(size_t index, const AclHostInfoPtr &acl_input) {
+    auto origin_input = get(index);
+    if (origin_input == nullptr && acl_input != nullptr) {
       size_++;
     }
-    input_to_host_[index] = tensor_ptr;
+    input_to_host_[index] = acl_input;
   }
 
-  void build(const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
+  void build(const std::map<uint32_t, AclHostInfoPtr> &inputs_on_host) {
     clear();
     for (auto &kv : inputs_on_host) {
       emplace(kv.first, kv.second);
@@ -74,7 +84,7 @@ class AclInputToHost {
   bool empty() const { return size_ == 0; }
 
  private:
-  tensor::TensorPtr input_to_host_[MAX_INPUT_TO_HOST];
+  AclHostInfoPtr input_to_host_[MAX_INPUT_TO_HOST];
   size_t size_{};
 };
 
