@@ -37,7 +37,7 @@ class QuantDtypeCastFusion : public LitePatternProcessPass {
  private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const AnfNodePtr &node) const;
+  bool CheckPattern(const EquivPtr &equiv, const AnfNodePtr &node) const;
 
  protected:
   mutable VarPtr input_ = nullptr;

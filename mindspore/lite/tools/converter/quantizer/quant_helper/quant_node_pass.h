@@ -45,7 +45,7 @@ class QuantNodePass {
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
   int CheckNodeDType(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
-  bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node);
+  bool CanTensorQuantized(const AnfNodePtr &input_node);
 
   FuncGraphPtr func_graph_ = nullptr;
   // key is tensor_name, to delete
