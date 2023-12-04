@@ -38,6 +38,22 @@ std::pair<std::vector<MSTensorPtr>, Status> PyLLMEnginePredict(LLMEngine *llm_en
   return {MSTensorToMSTensorPtr(outputs), status};
 }
 
+std::pair<std::vector<MSTensorPtr>, Status> PyLLMEnginePredictBatch(LLMEngine *llm_engine,
+                                                                    const std::vector<LLMReq> &req,
+                                                                    const std::vector<MSTensorPtr> &inputs_ptr) {
+  if (llm_engine == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
+  std::vector<MSTensor> outputs;
+  auto status = llm_engine->Predict(req, inputs, &outputs);
+  if (!status.IsOk()) {
+    return {{}, status};
+  }
+  return {MSTensorToMSTensorPtr(outputs), status};
+}
+
 Status PyLLMEnginePreloadPromptPrefix(LLMEngine *llm_engine, const LLMReq &req,
                                       const std::vector<MSTensorPtr> &inputs_ptr) {
   if (llm_engine == nullptr) {
@@ -70,9 +86,12 @@ void LLMEnginePyBind(const py::module &m) {
     .def("init", &LLMEngine::Init, py::call_guard<py::gil_scoped_release>())
     .def("finalize", &LLMEngine::Finalize, py::call_guard<py::gil_scoped_release>())
     .def("predict", &PyLLMEnginePredict, py::call_guard<py::gil_scoped_release>())
+    .def("predict_batch", &PyLLMEnginePredictBatch, py::call_guard<py::gil_scoped_release>())
     .def("complete_request", &LLMEngine::CompleteRequest, py::call_guard<py::gil_scoped_release>())
     .def("fetch_status", &LLMEngine::FetchStatus, py::call_guard<py::gil_scoped_release>())
     .def("preload_prompt_prefix", &PyLLMEnginePreloadPromptPrefix, py::call_guard<py::gil_scoped_release>())
-    .def("release_prompt_prefix", &LLMEngine::ReleasePromptPrefix, py::call_guard<py::gil_scoped_release>());
+    .def("release_prompt_prefix", &LLMEngine::ReleasePromptPrefix, py::call_guard<py::gil_scoped_release>())
+    .def("pull_kv", &LLMEngine::PullKV, py::call_guard<py::gil_scoped_release>())
+    .def("merge_kv", &LLMEngine::MergeKV, py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace mindspore::lite
