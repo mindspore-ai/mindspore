@@ -1999,6 +1999,8 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
                                                       prim::kPrimFlatten->name(),
                                                       kFlattenGradOpName,
                                                       prim::kPrimReformat->name(),
+                                                      prim::kPrimTupleToList->name(),
+                                                      prim::kPrimListToTuple->name(),
                                                       prim::kPrimTupleToTensor->name(),
                                                       prim::kPrimScalarToTensor->name(),
                                                       prim::kPrimTensorToTuple->name(),

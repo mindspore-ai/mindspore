@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,18 @@ REG_BPROP_BUILDER("TupleToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(Sequenc
 REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
 REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
 REG_BPROP_BUILDER("TensorToList").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
+
+REG_BPROP_BUILDER("ListToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("TupleToList", {dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("TupleToList").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ListToTuple", {dout});
+  return {dx};
+});
 
 REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
