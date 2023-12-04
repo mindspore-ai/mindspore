@@ -73,7 +73,6 @@ std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKerne
   auto node_type = primitive.base_operator->name();
   // step III - Create Ascend native Kernel
   auto &plugin_factory = kernel::AscendNativeRegistrationFactory::Get();
-  // TODO(nizzan) :: remove stub patch
   if (!plugin_factory.HasKey(node_type)) node_type = "AscendNativeStub";
   if (plugin_factory.HasKey(node_type)) {
     kernel::AscendNativeBaseKernel *ascend_native_op =
@@ -108,7 +107,6 @@ std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKerne
         }
       }
     }
-    // TODO(nizzan) :: remove if
     if (node_type == "AscendNativeStub") {
       ker->set_name(primitive.base_operator->name());
     }

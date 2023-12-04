@@ -59,7 +59,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
     return nullptr;
   }
   param->max_sizes_size = static_cast<int32_t>(max_sizes->size());
-  memcpy(param->max_sizes, max_sizes->data(), max_sizes->size() * sizeof(int32_t));
+  (void)memcpy(param->max_sizes, max_sizes->data(), max_sizes->size() * sizeof(int32_t));
 
   auto aspect_ratios = value->aspect_ratios();
   if (aspect_ratios == nullptr) {
@@ -70,7 +70,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   if (aspect_ratios->size() > MAX_SHAPE_SIZE) {
     MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << MAX_SHAPE_SIZE << ", got "
                   << aspect_ratios->size();
-    free(param);
+    (void)free(param);
     return nullptr;
   }
   param->aspect_ratios_size = static_cast<int32_t>(aspect_ratios->size());
