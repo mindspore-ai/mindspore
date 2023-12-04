@@ -35,6 +35,8 @@ constexpr auto kGradientsFlag = "Gradients";
 const size_t interleaved_size = 2;
 const size_t node_size_two = 2;
 const size_t node_size_three = 3;
+const size_t max_loop_size = 100;
+const int64_t one_thousand = 1000;
 constexpr char kAttrFineGrainedInterleavedIndex[] = "fine_grained_interleaved_index";
 constexpr char kAttrFineGrainedInterleavedBlockIndex[] = "fine_grained_interleaved_block";
 using interleaved_node_pair_vector = std::vector<std::pair<size_t, std::vector<CNodePtr>>>;
@@ -92,7 +94,7 @@ std::unordered_map<int64_t, std::vector<CNodePtr>> ExtractBlockIdCommNode(
     auto block_id = GetValue<int64_t>(cnode->GetPrimalAttr(block_index));
     if (block_index == kAttrFineGrainedInterleavedBlockIndex && cnode->HasPrimalAttr(MICRO)) {
       auto micro_id = GetValue<int64_t>(cnode->GetPrimalAttr(MICRO));
-      block_id = micro_id * 1000 + block_id;
+      block_id = micro_id * one_thousand + block_id;
     }
     result_map[block_id].push_back(cnode);
   }
@@ -218,7 +220,7 @@ CNodePtr GetInputBorderNode(const CNodePtr &node) {
   std::queue<CNodePtr> anf_queue;
   anf_queue.push(node);
   size_t loop_count = 0;
-  while (!anf_queue.empty() && loop_count < 100) {
+  while (!anf_queue.empty() && loop_count < max_loop_size) {
     auto queue_end = anf_queue.front();
     anf_queue.pop();
     for (size_t i = 1; i < queue_end->size(); ++i) {
@@ -239,7 +241,7 @@ CNodePtr GetOutputBorderNode(const FuncGraphManagerPtr &manager, const CNodePtr 
   std::queue<CNodePtr> anf_queue;
   anf_queue.push(node);
   size_t loop_count = 0;
-  while (!anf_queue.empty() && loop_count < 100) {
+  while (!anf_queue.empty() && loop_count < max_loop_size) {
     auto queue_end = anf_queue.front();
     anf_queue.pop();
     auto node_users = manager->node_users()[queue_end];

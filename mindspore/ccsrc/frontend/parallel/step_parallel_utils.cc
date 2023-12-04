@@ -1339,7 +1339,8 @@ bool HandleFuncConcatSlice(const FuncGraphManagerPtr &manager, const std::pair<s
           manager->SetEdge(new_pair.first, new_pair.second, new_concat);
           continue;
         }
-        manager->Replace(new_pair.first, user_func_graph->parameters()[fg_users.second - 2 + input_index[j].second]);
+        manager->Replace(new_pair.first,
+                         user_func_graph->parameters()[fg_users.second - kIndex2 + input_index[j].second]);
       }
     }
   }
