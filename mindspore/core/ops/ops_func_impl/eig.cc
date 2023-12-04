@@ -32,6 +32,11 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
     return;
   }
 
+  if (input_shape.size() < kDefaultRank) {
+    MS_EXCEPTION(ValueError) << "For Eig, x should be at lease 2"
+                             << ", but got a " << input_shape.size() << "-D Tensor.";
+  }
+
   if (input_shape[input_shape.size() - kRowIndex] == abstract::Shape::kShapeDimAny ||
       input_shape[input_shape.size() - kColIndex] == abstract::Shape::kShapeDimAny) {
     return;
