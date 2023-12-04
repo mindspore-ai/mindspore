@@ -33,9 +33,11 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+/**
+ * Model Test
+ */
 @RunWith(JUnit4.class)
 public class ModelTest {
-
     @Test
     public void testBuildByGraphSuccess() {
         System.out.println(Version.version());
@@ -51,7 +53,7 @@ public class ModelTest {
         assertTrue(isBuildSuccess);
         boolean isSetLearningRateSuccess = liteModel.setLearningRate(1.0f);
         assertTrue(isSetLearningRateSuccess);
-        boolean isSetupVirtualBatchSuccess = liteModel.setupVirtualBatch(2,1.0f, 0.5f);
+        boolean isSetupVirtualBatchSuccess = liteModel.setupVirtualBatch(2, 1.0f, 0.5f);
         assertTrue(isSetupVirtualBatchSuccess);
         liteModel.free();
         context.free();
@@ -77,7 +79,7 @@ public class ModelTest {
         Graph g = new Graph();
         assertTrue(g.load(modelFile));
         MSContext context = new MSContext();
-        context.init(1,0);
+        context.init(1, 0);
         context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(g, context, null);
@@ -106,7 +108,7 @@ public class ModelTest {
     }
 
     @Test
-    public void testBuildByBufferSuccess() {
+    public void testBuildByBufferSuccess() throws IOException{
         String fileName = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_tod_infer.ms";
         FileChannel fc = null;
         MappedByteBuffer byteBuffer = null;
@@ -115,6 +117,8 @@ public class ModelTest {
             byteBuffer = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size()).load();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            fc.close();
         }
         assertNotNull(byteBuffer);
         MSContext context = new MSContext();
@@ -190,8 +194,8 @@ public class ModelTest {
         for (String name : liteModel.getOutputTensorNames()) {
             System.out.println("output tensor name:" + name);
         }
-        List<MSTensor> outputTensors = liteModel.getOutputsByNodeName("Default/network-WithLossCell/_backbone-LeNet5" +
-                "/fc3-Dense/MatMul-op118");
+        List<MSTensor> outputTensors = liteModel.getOutputsByNodeName("Default/network-WithLossCell/_backbone-LeNet5"
+                + "/fc3-Dense/MatMul-op118");
         assertEquals(1, outputTensors.size());
         assertEquals(outputTensorName, outputTensors.get(0).tensorName());
         liteModel.free();
@@ -226,7 +230,7 @@ public class ModelTest {
         assertTrue(isSuccess);
         isSuccess = liteModel.export(null, 0, true, null);
         assertFalse(isSuccess);
-        String outputName= "Default/network-WithLossCell/_backbone-LeNet5/conv2-Conv2d/Conv2D-op98";
+        String outputName = "Default/network-WithLossCell/_backbone-LeNet5/conv2-Conv2d/Conv2D-op98";
         List<String> outputTensorNames = new ArrayList<>();
         outputTensorNames.add(outputName);
         isSuccess = liteModel.export("./test.ms", 0, false, outputTensorNames);
@@ -285,7 +289,7 @@ public class ModelTest {
         assertTrue(isSuccess);
         List<MSTensor> weights = liteModel.getFeatureMaps();
         for (MSTensor weight : weights) {
-            if (weight.tensorName().equals("conv1.weight")) {
+            if ("conv1.weight".equals(weight.tensorName())) {
                 float[] weightData = weight.getFloatData();
                 assertEquals(0L, weightData[0], 0.0);
                 break;
@@ -332,7 +336,7 @@ public class ModelTest {
     }
 
     @Test
-    public void testVersion(){
+    public void testVersion() {
         System.out.println(Version.version());
     }
 }
