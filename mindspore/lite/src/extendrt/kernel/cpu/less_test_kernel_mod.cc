@@ -25,14 +25,14 @@ namespace mindspore::kernel {
 const size_t test_input_size = 2;
 const int test_input_shape = 7;
 
-bool LessTestKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool LessTestKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs) {
   MS_LOG(INFO) << "LessTestKernelMod::Launch";
   // test shape 7 value
   MS_ASSERT(inputs.size() == test_input_size);
-  auto x = static_cast<int *>(inputs[0]->addr);
-  auto y = static_cast<int *>(inputs[1]->addr);
-  auto z = static_cast<bool *>(outputs[0]->addr);
+  auto x = static_cast<int *>(inputs[0]->device_ptr());
+  auto y = static_cast<int *>(inputs[1]->device_ptr());
+  auto z = static_cast<bool *>(outputs[0]->device_ptr());
 
   for (int i = 0; i < test_input_shape; i++) {
     if (x[i] < y[i]) {
@@ -49,8 +49,7 @@ bool LessTestKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
   return true;
 }
 
-bool LessTestKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
+bool LessTestKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_LOG(INFO) << "LessTestKernelMod::Init";
   return true;
 }

@@ -44,7 +44,7 @@ CustomAscendKernelMod::~CustomAscendKernelMod() {
 
 bool CustomAscendKernelMod::Finalize() { return AclEnvGuard::Finalize(); }
 
-void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs) {
+void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensor *> &inputs) {
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
     if (inputs[idx] == nullptr) {
       MS_LOG(ERROR) << "Input " << idx << " is invalid.";
@@ -57,39 +57,29 @@ void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorP
   }
 }
 
-AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &base_operator) {
+AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions() {
   auto acl_options_ptr = std::make_shared<AclModelOptions>();
   if (acl_options_ptr == nullptr) {
     MS_LOG(ERROR) << "Acl options make shared failed.";
     return nullptr;
   }
-  auto custom_op = std::dynamic_pointer_cast<ops::Custom>(base_operator);
-  if (custom_op == nullptr) {
-    MS_LOG(ERROR) << "Cast Custom ops failed!";
-    return nullptr;
-  }
-  auto prim = custom_op->GetPrim();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "Get prim from custom op failed.";
-    return nullptr;
-  }
-  auto profiling_path_val = prim->GetAttr(lite::kProfilingPathKey);
+  auto profiling_path_val = primitive_->GetAttr(lite::kProfilingPathKey);
   if (profiling_path_val != nullptr) {
     auto val = GetValue<std::string>(profiling_path_val);
     acl_options_ptr->profiling_path = val;
   }
-  auto dump_path_val = prim->GetAttr(lite::kDumpPathKey);
+  auto dump_path_val = primitive_->GetAttr(lite::kDumpPathKey);
   if (dump_path_val != nullptr) {
     auto val = GetValue<std::string>(dump_path_val);
     acl_options_ptr->dump_path = val;
   }
-  auto inner_calc_workspace_size = prim->GetAttr("inner_calc_workspace_size");
+  auto inner_calc_workspace_size = primitive_->GetAttr("inner_calc_workspace_size");
   if (inner_calc_workspace_size != nullptr) {
     auto val = GetValue<bool>(inner_calc_workspace_size);
     acl_options_ptr->multi_model_sharing_mem_prepare = val;
     is_multi_model_sharing_mem_prepare_ = true;
   }
-  auto inner_sharing_workspace = prim->GetAttr("inner_sharing_workspace");
+  auto inner_sharing_workspace = primitive_->GetAttr("inner_sharing_workspace");
   if (inner_sharing_workspace != nullptr) {
     auto val = GetValue<bool>(inner_sharing_workspace);
     acl_options_ptr->multi_model_sharing_mem = val;
@@ -110,8 +100,10 @@ AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &b
   return acl_options_ptr;
 }
 
-bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool CustomAscendKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  inputs_ = inputs;
+  outputs_ = outputs;
   if (load_model_) {
     MS_LOG(INFO) << "Om has been loaded in custom kernel.";
     return true;
@@ -123,7 +115,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "Custom kernel has empty inputs or outputs, which is invalid.";
     return false;
   }
-  acl_options_ = GenAclOptions(base_operator);
+  acl_options_ = GenAclOptions();
   if (acl_options_ == nullptr) {
     MS_LOG(ERROR) << "Generate acl options failed.";
     return false;
@@ -159,15 +151,14 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CustomAscendKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (!load_model_) {
     MS_LOG(ERROR) << "Load model failed when resize.";
     return lite::RET_ERROR;
   }
 
-  if (KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+  if (KernelMod::Resize(inputs, outputs) != KRET_OK) {
     MS_LOG(WARNING) << "Invalid inputs or output shapes.";
   }
 
@@ -210,7 +201,7 @@ static bool CheckOutputNums(const std::vector<T> &update_info, const std::vector
   return true;
 }
 
-bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensorPtr> &new_inputs) {
+bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensor *> &new_inputs) {
   auto input_shapes = model_infer_->GetInputShape();
   if (input_shapes.size() != new_inputs.size()) {
     MS_LOG(ERROR) << "Invalid new input size " << new_inputs.size() << ", expect input size " << input_shapes.size();
@@ -238,8 +229,8 @@ bool CustomAscendKernelMod::OnNewInputShapes(const std::vector<KernelTensorPtr> 
   return true;
 }
 
-bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &, void *) {
+bool CustomAscendKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                                   const std::vector<KernelTensor *> &, void *stream_ptr) {
   if (!load_model_) {
     MS_LOG(ERROR) << "Init custom ascend kernel has been not ready.";
     return false;

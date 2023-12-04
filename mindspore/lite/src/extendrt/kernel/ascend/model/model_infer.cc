@@ -153,7 +153,7 @@ bool ModelInfer::Load(const void *om_data, size_t om_data_size) {
   return true;
 }
 
-bool ModelInfer::Inference(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
+bool ModelInfer::Inference(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;

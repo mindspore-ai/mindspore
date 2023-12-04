@@ -15,22 +15,20 @@
  */
 #include "src/extendrt/subgraph_kernel.h"
 namespace mindspore::kernel {
-bool SubgraphKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool SubgraphKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   std::vector<tensor::Tensor> in;
   std::vector<tensor::Tensor> out;
   std::map<string, string> compile_options;
   executor_->RunGraph(subgraph_, in, &out, compile_options);
   return true;
 }
-bool SubgraphKernel::Init(const BaseOperatorPtr &opdef, const std::vector<KernelTensorPtr> &inputs,
-                          const std::vector<KernelTensorPtr> &outputs) {
+bool SubgraphKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   std::map<string, string> compile_options;
   return executor_->CompileGraph(subgraph_, compile_options);
 }
-int SubgraphKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs,
-                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+
+int SubgraphKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   return 0;
 }
 }  // namespace mindspore::kernel

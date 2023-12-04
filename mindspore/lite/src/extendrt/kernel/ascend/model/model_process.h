@@ -54,7 +54,7 @@ class ModelProcess {
 
   bool Load(const void *om_data, size_t om_data_size);
   bool UnLoad();
-  bool PredictFromHost(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
+  bool PredictFromHost(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   // override this method to avoid request/reply data copy
   void SetIsDevice(bool is_device) { is_run_on_device_ = is_device; }
@@ -80,14 +80,14 @@ class ModelProcess {
   void DestroyOutputsBuffer();
   bool CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
 
-  bool CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs);
-  bool CheckAndInitOutput(const std::vector<KernelTensorPtr> &outputs);
-  void CheckAndInitDynOutputDeviceBuf(const KernelTensorPtr &output, const AclTensorInfo &output_info,
+  bool CheckAndInitInput(const std::vector<KernelTensor *> &inputs);
+  bool CheckAndInitOutput(const std::vector<KernelTensor *> &outputs);
+  void CheckAndInitDynOutputDeviceBuf(const KernelTensor *output, const AclTensorInfo &output_info,
                                       void **output_device_buffer, size_t *output_buf_size, size_t output_idx);
-  bool CheckInputTensors(const std::vector<KernelTensorPtr> &inputs);
-  bool CheckOutputTensors(const std::vector<KernelTensorPtr> &outputs);
+  bool CheckInputTensors(const std::vector<KernelTensor *> &inputs);
+  bool CheckOutputTensors(const std::vector<KernelTensor *> &outputs);
   bool CheckAndSetDynFlag();
-  bool GetOutputs(const std::vector<KernelTensorPtr> &outputs);
+  bool GetOutputs(const std::vector<KernelTensor *> &outputs);
 
   bool ResetInputSize(const std::vector<ShapeVector> &new_shapes);
   bool ResetOutputSize();
@@ -95,12 +95,12 @@ class ModelProcess {
   bool IsDynamicBatchSize();
   bool IsDynamicImageSize();
   bool IsDynamicDims();
-  bool ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs);
+  bool ResetDynamicOutputTensor(const std::vector<KernelTensor *> &outputs);
   bool ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes);
   void FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info);
-  void FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_info, const std::vector<KernelTensorPtr> &outputs);
+  void FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_info, const std::vector<KernelTensor *> &outputs);
   aclError AclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind);
 
   AclModelOptionsPtr options_;

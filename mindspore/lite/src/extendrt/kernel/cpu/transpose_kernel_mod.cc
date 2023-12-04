@@ -39,24 +39,19 @@ constexpr size_t kIndex7 = 7;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-bool TransposeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool TransposeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                                const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
   launch_func_(this, inputs, outputs);
   return true;
 }
 
-int TransposeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
+int TransposeKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   return kSuccess;
 }
 
-bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_CHECK_TRUE_RET(base_operator == nullptr, false);
-  kernel_name_ = base_operator->name();
+bool TransposeKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
   MS_CHECK_TRUE_RET(inputs[kIndex0] != nullptr && outputs[kIndex0] != nullptr, false);
@@ -125,10 +120,11 @@ bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 }
 
 template <typename T>
-void TransposeKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
+void TransposeKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  transpose_param_.data_num_ = SizeToInt(inputs[0]->size() / sizeof(T));
   int output_shape[SizeToInt(output_shape_.size())];
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = output_shape_[i];

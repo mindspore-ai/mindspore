@@ -235,8 +235,8 @@ class CloudTensorUtils {
     const std::vector<lite::Tensor *> &lite_tensors);
 
   /* lite tensor ---> kernel tensor */
-  static kernel::KernelTensorPtr LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
-  static std::vector<kernel::KernelTensorPtr> LiteTensorToKernelTensorPtrVec(
+  static kernel::KernelTensor *LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor);
+  static std::vector<kernel::KernelTensor *> LiteTensorToKernelTensorPtrVec(
     const std::vector<lite::Tensor *> &lite_tensors);
 };
 

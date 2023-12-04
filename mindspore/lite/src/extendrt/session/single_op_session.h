@@ -20,11 +20,20 @@
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <map>
 #include <unordered_map>
 #include "src/extendrt/infer_session.h"
 #include "mindspore/ccsrc/kernel/framework_utils.h"
 
 namespace mindspore {
+struct LiteKernelArgs {
+  std::vector<kernel::KernelTensor *> inputs;
+  std::vector<kernel::KernelTensor *> outputs;
+  std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;  // dynamic shape kernel may need this map
+  // cppcheck-suppress unusedStructMember
+  constexpr static char key[] = "KernelArgs";
+};
+
 /// \brief Single Op Session implementation, used in Ascend Device Context.
 class SingleOpInferSession : public InferSession {
  public:
@@ -53,7 +62,7 @@ class SingleOpInferSession : public InferSession {
  protected:
   Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
   Status BuildCustomAscendKernel(const CNodePtr &node);
-  std::tuple<kernel::KernelModPtr, kernel::KernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);
+  std::tuple<kernel::KernelModPtr, LiteKernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);
   Status InitInputOutputInfos(const FuncGraphPtr &graph);
   void SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs);
   Status InitInputOutputData(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
@@ -66,7 +75,7 @@ class SingleOpInferSession : public InferSession {
   std::vector<bool> dyn_outshape_;
 
   kernel::KernelModPtr kernel_mod_ = nullptr;
-  kernel::KernelArgs kernel_args_;
+  LiteKernelArgs kernel_args_;
   ConfigInfos config_infos_;
   bool is_multi_model_sharing_mem_prepare_ = false;
 

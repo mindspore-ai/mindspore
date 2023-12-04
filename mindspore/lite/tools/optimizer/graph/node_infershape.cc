@@ -435,7 +435,7 @@ STATUS NodeInferShape::SetCNodeAbstractByConvert(const CNodePtr &cnode, const Ab
     return lite::RET_ERROR;
   }
 
-  std::vector<int64_t> outputs_format(output_size, format);
+  std::vector<int64_t> outputs_format(output_size, static_cast<int64_t>(format));
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";

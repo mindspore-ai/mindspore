@@ -490,9 +490,9 @@ int FetchDataFromAbstract(const AbstractBasePtr &abstract, DataInfo *data_info) 
   }
   auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
-  data_info->data_type_ = type_ptr->type_id();
+  data_info->data_type_ = static_cast<int>(type_ptr->type_id());
   data_info->shape_ = dims;
-  data_info->node_type_ = NodeType_CNode;
+  data_info->node_type_ = static_cast<int>(NodeType_CNode);
   if (type_ptr->type_id() == kObjectTypeTensorType) {
     auto tensor_info = abstract_tensor->GetValueTrack();
     if (tensor_info == nullptr || !utils::isa<tensor::TensorPtr>(tensor_info)) {
