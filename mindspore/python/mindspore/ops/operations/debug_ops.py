@@ -311,8 +311,10 @@ class TensorDump(Primitive):
         new_file = os.path.join(directory, new_filename)
         if not new_file.endswith(npy_suffix):
             new_file += npy_suffix
+        if os.path.exists(new_file):
+            os.chmod(new_file, stat.S_IWUSR)
         np.save(new_file, input_x.asnumpy())
-        os.chmod(new_file, stat.S_IREAD)
+        os.chmod(new_file, stat.S_IRUSR)
         TENSORDUMP_ID += 1
 
 

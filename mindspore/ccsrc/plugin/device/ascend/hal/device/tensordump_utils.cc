@@ -36,7 +36,7 @@ const std::map<aclDataType, TypeId> kTensorDumpAclDataTypeMap = {
   {ACL_INT64, TypeId::kNumberTypeInt64},     {ACL_UINT64, TypeId::kNumberTypeUInt64},
   {ACL_FLOAT16, TypeId::kNumberTypeFloat16}, {ACL_FLOAT, TypeId::kNumberTypeFloat32},
   {ACL_DOUBLE, TypeId::kNumberTypeFloat64},  {ACL_BOOL, TypeId::kNumberTypeBool},
-  {ACL_BF16, TypeId::kNumberTypeBFloat16}};
+};
 
 void SaveTensor2NPY(std::string file_name, mindspore::tensor::TensorPtr tensor_ptr) {
   std::string npy_header = GenerateNpyHeader(tensor_ptr->shape(), tensor_ptr->data_type());
@@ -160,7 +160,9 @@ void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
     aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
 
     auto acl_data = reinterpret_cast<uint8_t *>(acl_addr);
-    MS_EXCEPTION_IF_NULL(acl_data);
+    if (acl_data_size > 0) {
+      MS_EXCEPTION_IF_NULL(acl_data);
+    }
 
     ShapeVector tensor_shape;
     tensor_shape.resize(dim_num);
@@ -179,8 +181,12 @@ void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
     auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, tensor_shape);
     auto file_name = TensorNameToArrayName(tensor_name);
 
-    if (CopyDataToTensor(acl_data, tensor_ptr, acl_data_size)) {
+    if (acl_data_size == 0) {
       file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
+    } else if (CopyDataToTensor(acl_data, tensor_ptr, acl_data_size)) {
+      file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
+    } else {
+      // do nothing
     }
   }
 }
