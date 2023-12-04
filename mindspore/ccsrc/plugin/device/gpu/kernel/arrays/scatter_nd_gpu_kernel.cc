@@ -20,10 +20,14 @@
 
 namespace mindspore {
 namespace kernel {
-#define DTYPE_REGISTER(INDICES, UPDATES, SHAPE, OUTPUT, T, S)                                           \
-  {                                                                                                     \
-    KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
-      &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                                        \
+#define DTYPE_REGISTER(INDICES, UPDATES, SHAPE, OUTPUT, T, S) \
+  {                                                           \
+    KernelAttr()                                              \
+      .AddInputAttr(INDICES)                                  \
+      .AddInputAttr(UPDATES)                                  \
+      .AddInputAttr(kObjectTypeTuple, SHAPE)                  \
+      .AddOutputAttr(OUTPUT),                                 \
+      &ScatterNdGpuKernelMod::LaunchKernel<T, S>              \
   }
 
 const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &ScatterNdGpuKernelMod::GetFuncList()

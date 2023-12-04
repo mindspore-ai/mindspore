@@ -62,7 +62,7 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_, range
+from mindspore.ops.auto_generate import concat_, range, scatter_nd
 from mindspore.ops.operations.manually_defined import tile
 
 tuple_to_tensor_ = TupleToTensor()
@@ -2645,112 +2645,6 @@ def scatter_div(input_x, indices, updates):
          [ 9.  9.  9.]]
     """
     return scatter_div_(input_x, indices, updates)
-
-
-def scatter_nd(indices, updates, shape):
-    r"""
-    Scatters a tensor into a new tensor depending on the specified indices.
-
-    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q`.
-
-    The `shape` is :math:`(s_0, s_1, ..., s_{P-1})`, where :math:`P \ge 1`.
-
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)`, where :math:`Q \ge 2` and :math:`N \le P`.
-
-    The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
-    empty tensor.
-
-    `updates` is a tensor of rank :math:`Q-1+P-N`, and
-    its shape is :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
-
-    If `indices` contains duplicates, the duplicate `updates` are summed.
-
-    The following figure shows the calculation process of inserting two new value matrices into the first dimension
-    with rank-3:
-
-    .. image:: ScatterNd.png
-
-    Args:
-        indices (Tensor): Define the index of scattering in the new tensor with int32 or int64 data type.
-            The rank of `indices` must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): Define the source Tensor to be updated.
-            It has shape `indices.shape[:-1] + shape[indices.shape[-1]:]`.
-        shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
-            `shape` can not be empty, and the elements in `shape` must be greater than or equal to 1.
-
-    Returns:
-        Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If any element of `shape` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
-        ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
-        >>> shape = (4, 4, 4)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> print(output)
-        [[[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]
-         [[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
-        >>> shape = (3, 3)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
-        >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
-        >>> # [
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> # ]
-        >>> # Step 2: Modify the data at the specified location according to the indicators
-        >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
-        >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 0.   0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
-        >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 1.1  0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # The final result is as follows:
-        >>> print(output)
-        [[0. 3.2 0.]
-         [0. 1.1 0.]
-         [0. 0.  0.]]
-    """
-    return scatter_nd_(indices, updates, shape)
-
 
 def scatter_update(input_x, indices, updates):
     r"""

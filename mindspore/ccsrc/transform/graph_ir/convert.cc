@@ -3838,6 +3838,11 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
   }
 
   std::shared_ptr<std::vector<OutHandler>> tuple_items = std::make_shared<std::vector<OutHandler>>();
+  // if the the sequence has only one element which is a scalar, it should be convert to a 1-D Tensor rather than a
+  // 0-D Scalar.
+  if (vec.size() == 1 && !vec[0]->isa<MeTensor>()) {
+    return FAILED;
+  }
   for (size_t i = 0; i < vec.size(); i++) {
     MS_EXCEPTION_IF_NULL(vec[i]);
     GeTensorPtr ge_tensor = nullptr;
