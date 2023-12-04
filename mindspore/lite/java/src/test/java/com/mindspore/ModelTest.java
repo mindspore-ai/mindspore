@@ -298,8 +298,8 @@ public class ModelTest {
 
 
     @Test
-    public void testNewContextInterface(){
-        int val=0;
+    public void testNewContextInterface() {
+        int val = 0;
         MSContext context = new MSContext();
         context.init();
         context.setThreadNum(10);
@@ -307,26 +307,26 @@ public class ModelTest {
         assertEquals(10, val);
         context.setInterOpParallelNum(1);
         val = context.getInterOpParallelNum();
-        assertEquals(1,val);
+        assertEquals(1, val);
         context.setThreadAffinity(2);
         val = context.getThreadAffinityMode();
-        assertEquals(2,val);
-        ArrayList<Integer> core_list = new ArrayList<>();
-        core_list.add(1);
-        core_list.add(2);
-        core_list.add(3);
-        context.setThreadAffinity(core_list);
-        ArrayList<Integer> core_list_ret = context.getThreadAffinityCoreList();
-        assertEquals(core_list, core_list_ret);
+        assertEquals(2, val);
+        ArrayList<Integer> coreList = new ArrayList<>();
+        coreList.add(1);
+        coreList.add(2);
+        coreList.add(3);
+        context.setThreadAffinity(coreList);
+        ArrayList<Integer> coreListRet = context.getThreadAffinityCoreList();
+        assertEquals(coreList, coreListRet);
         context.setEnableParallel(true);
         assertTrue(context.getEnableParallel());
         context.free();
     }
 
     @Test
-    public void testCppNullPointer(){
+    public void testCppNullPointer() {
         MSContext context = new MSContext();
-        context.free();//free before init, output error log.
+        context.free(); // free before init, output error log.
         context.init();
         context.free();
     }
