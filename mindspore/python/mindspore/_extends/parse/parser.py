@@ -115,10 +115,6 @@ _unsupported_python_builtin_type = (
     set, dict, slice, complex, reversed, type,
 )
 
-_hybrid_type = (
-    print, enumerate, zip, map, filter, abs, round, max, min, sum, getattr, hasattr, list, tuple
-)
-
 # Unsupported python builtin type in JIT Fallback.
 _fallback_unsupported_python_builtin_type = (
     compile, eval, exec
@@ -1074,15 +1070,6 @@ class Parser:
         return False
 
     @staticmethod
-    def is_hybrid_type(value):
-        """To check if hybrid type, such as print"""
-        for item in _hybrid_type:
-            if value == item:
-                logger.debug(f"Found hybrid type: '{value}'.")
-                return True
-        return False
-
-    @staticmethod
     def get_convert_object_for_mutable(value):
         """Get the convert object for value which don't support to be converted in C++."""
         # The value may not be supported to do ConvertData such as api 'mutable',
@@ -1103,8 +1090,6 @@ class Parser:
                 return SYNTAX_UNSUPPORTED_NAMESPACE
             if self.is_unsupported_python_builtin_type(value):
                 return SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
-            if self.is_hybrid_type(value):
-                return SYNTAX_HYBRID_TYPE
         return SYNTAX_SUPPORTED
 
     def parse(self):

@@ -1691,19 +1691,13 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   if (namespace_info.size() == global_info_size) {
     constexpr size_t flag_index = 3;
     auto syntax_support = namespace_info[flag_index].cast<int32_t>();
-    if (syntax_support == SYNTAX_HYBRID_TYPE) {
-      // For hybrid type function, such as print, the inputs to the function determine whether the call_cnode is
-      // a graph node or the interpret node. If the inputs contain interpret node (not Tensor), the call_cnode will
-      // be interpretive executived. Otherwise, call_cnode will be a graph node.
-      if (args_context.has_interpret_without_internal) {
-        call_cnode->set_interpret(true);
-        if (name_id == "print") {
-          // Ensure the order of print
-          call_cnode = fallback::ConvertCNodeToPyExecuteForPrim(call_cnode->cast<CNodePtr>(), name_id);
-        } else {
-          call_cnode = HandleInterpret(block, call_cnode, node);
-        }
-      }
+    // For print, the inputs to the function determine whether the call_cnode is
+    // a graph node or the interpret node. If the inputs contain interpret node (not Tensor), the call_cnode will
+    // be interpretive executived. Otherwise, call_cnode will be a graph node.
+    if (name_id == "print" && args_context.has_interpret_without_internal) {
+      call_cnode->set_interpret(true);
+      // Ensure the order of print
+      call_cnode = fallback::ConvertCNodeToPyExecuteForPrim(call_cnode->cast<CNodePtr>(), name_id);
       return call_cnode;
     } else if (syntax_support != SYNTAX_SUPPORTED) {
       call_cnode->set_interpret(true);
