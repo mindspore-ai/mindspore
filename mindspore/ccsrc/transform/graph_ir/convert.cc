@@ -2637,6 +2637,11 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
     int ms_input_idx = ge_input_to_ms_input.at(ge_input_idx) + kIndex1;
     // ge_tensor_idx: the ge input idx of unfold mindspore inputs
     int ge_tensor_idx = ge_tensor_orders[ge_input_idx] + kIndex1;
+    if (ge_tensor_idx >= static_cast<int>(inputs.size())) {
+      MS_LOG(INFO) << "ge tensor index is more than ms inputs size, ge_tensor_idx:" << ge_tensor_idx
+                   << ", input size: " << inputs.size();
+      continue;
+    }
     AnfNodePtr pred = inputs[ge_tensor_idx];
     if (!IsDataInput(node, pred, ge_input_idx)) {
       SetNodeControlInput(node, pred);
