@@ -425,6 +425,6 @@ Status Model::Build(const std::string &model_path, ModelType model_type,
   return Build(StringToChar(model_path), model_type, model_context);
 }
 
-std::string Model::GetModelInfo(const std::string &key) { return CharToString(GetModelInfo(StringToChar(key))); }
+inline std::string Model::GetModelInfo(const std::string &key) { return CharToString(GetModelInfo(StringToChar(key))); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H
