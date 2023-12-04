@@ -575,9 +575,9 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::InferOp(kernel);
-      auto args = kernel->user_data<kernel::KernelArgs>();
-      MS_EXCEPTION_IF_NULL(args);
-      (void)kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map);
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      (void)kernel_mod->Resize(inputs, outputs);
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
