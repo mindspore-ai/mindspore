@@ -18,9 +18,8 @@ package com.mindspore;
 
 import static com.mindspore.config.MindsporeLite.POINTER_DEFAULT_VALUE;
 
-import com.mindspore.config.MSContext;
-import com.mindspore.config.DataType;
 import com.mindspore.config.MindsporeLite;
+import com.mindspore.config.MSContext;
 import com.mindspore.config.TrainCfg;
 
 import java.nio.MappedByteBuffer;
@@ -85,23 +84,23 @@ public class Model {
     /**
      * Build model.
      *
-     * @param buffer          model buffer.
-     * @param modelType       model type.
-     * @param context         model build context.
-     * @param decKey         define the key used to decrypt the ciphertext model. The key length is 16.
-     * @param decMode        define the decryption mode. Options: AES-GCM.
-     * @param croptoLibPath   define the openssl library path.
+     * @param buffer        model buffer.
+     * @param modelType     model type.
+     * @param context       model build context.
+     * @param decKey        define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param decMode       define the decryption mode. Options: AES-GCM.
+     * @param croptoLibPath define the openssl library path.
      * @return model build status.
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] decKey, String decMode,
                          String croptoLibPath) {
         boolean isValid = (context != null && buffer != null && decKey != null && decMode != null
-                           && croptoLibPath != null);
+                && croptoLibPath != null);
         if (!isValid) {
             return false;
         }
         return this.buildByBuffer(modelPtr, buffer, modelType, context.getMSContextPtr(), decKey, decMode,
-                                  croptoLibPath);
+                croptoLibPath);
     }
 
     /**
@@ -123,23 +122,23 @@ public class Model {
     /**
      * Build model.
      *
-     * @param modelPath       model path.
-     * @param modelType       model type.
-     * @param context         model build context.
-     * @param decKey          define the key used to decrypt the ciphertext model. The key length is 16.
-     * @param decMode         define the decryption mode. Options: AES-GCM.
-     * @param croptoLibPath   define the openssl library path.
+     * @param modelPath     model path.
+     * @param modelType     model type.
+     * @param context       model build context.
+     * @param decKey        define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param decMode       define the decryption mode. Options: AES-GCM.
+     * @param croptoLibPath define the openssl library path.
      * @return model build status.
      */
     public boolean build(String modelPath, int modelType, MSContext context, char[] decKey, String decMode,
                          String croptoLibPath) {
         boolean isValid = (context != null && modelPath != null && decKey != null && decMode != null
-                           && croptoLibPath != null);
+                && croptoLibPath != null);
         if (!isValid) {
             return false;
         }
         return this.buildByPath(modelPtr, modelPath, modelType, context.getMSContextPtr(), decKey, decMode,
-                                croptoLibPath);
+                croptoLibPath);
     }
 
     /**
@@ -305,8 +304,7 @@ public class Model {
     /**
      * Load config file.
      *
-     * @param configPath          config file path.
-     *
+     * @param configPath config file path.
      * @return Whether the LoadConfig is successful.
      */
     public boolean loadConfig(String configPath) {
@@ -317,8 +315,7 @@ public class Model {
      * Update config.
      *
      * @param section define the config section.
-     * @param config define the config will be updated.
-     *
+     * @param config  define the config will be updated.
      * @return Whether the updateConfig is successful.
      */
     public boolean updateConfig(String section, HashMap<String, String> config) {
@@ -334,7 +331,8 @@ public class Model {
      * @param outputTensorNames tensor name used for export inference graph.
      * @return Whether the export is successful.
      */
-    public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer, List<String> outputTensorNames) {
+    public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer,
+                          List<String> outputTensorNames) {
         if (fileName == null) {
             return false;
         }
@@ -351,11 +349,11 @@ public class Model {
     /**
      * Export model's weights, which can be used in micro only.
      *
-     * @param weightFile               The path of exported weight file.
-     * @param isInference              Whether to export weights from a reasoning model. Currently, only support`true`.
-     * @param enableFp16               Float-weight is whether to be saved in float16 format.
-     * @param changeableWeightNames    The set the name of these weight tensors, whose shape is changeable.
-     * @return                         Whether to export successfully
+     * @param weightFile            The path of exported weight file.
+     * @param isInference           Whether to export weights from a reasoning model. Currently, only support`true`.
+     * @param enableFp16            Float-weight is whether to be saved in float16 format.
+     * @param changeableWeightNames The set the name of these weight tensors, whose shape is changeable.
+     * @return Whether to export successfully
      */
     public boolean exportWeightsCollaborateWithMicro(String weightFile, boolean isInference,
                                                      boolean enableFp16, List<String> changeableWeightNames) {
@@ -364,7 +362,7 @@ public class Model {
             return false;
         }
         return exportWeightsCollaborateWithMicro(modelPtr, weightFile, isInference, enableFp16,
-                                                 changeableWeightNames.toArray(new String[0]));
+                changeableWeightNames.toArray(new String[0]));
     }
 
     /**
@@ -421,11 +419,11 @@ public class Model {
     /**
      * set learning rate.
      *
-     * @param learning_rate learning rate.
+     * @param learningRate learning rate.
      * @return Whether the set learning rate is successful.
      */
-    public boolean setLearningRate(float learning_rate) {
-        return this.setLearningRate(this.modelPtr, learning_rate);
+    public boolean setLearningRate(float learningRate) {
+        return this.setLearningRate(this.modelPtr, learningRate);
     }
 
     /**

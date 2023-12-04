@@ -30,7 +30,7 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 /**
- * Model Test
+ * MSTensor Test
  *
  * @since 2023.2
  */

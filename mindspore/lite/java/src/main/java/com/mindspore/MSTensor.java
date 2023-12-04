@@ -73,8 +73,8 @@ public class MSTensor {
             LOGGER.severe("input params null.");
             return null;
         }
-        long tensorPtr = createTensorByNative(tensorName, dataType, tensorShape, buffer);
-        return new MSTensor(tensorPtr);
+        long tensorPt = createTensorByNative(tensorName, dataType, tensorShape, buffer);
+        return new MSTensor(tensorPt);
     }
 
     /**
@@ -98,8 +98,8 @@ public class MSTensor {
             LOGGER.severe("input param shape null.");
             return null;
         }
-        long tensorPtr = createTensorByObject(tensorName, dType, shape, obj);
-        return new MSTensor(tensorPtr);
+        long tensorPt = createTensorByObject(tensorName, dType, shape, obj);
+        return new MSTensor(tensorPt);
     }
 
     /**
