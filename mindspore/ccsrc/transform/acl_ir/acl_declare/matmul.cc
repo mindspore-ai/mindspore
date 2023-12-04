@@ -67,6 +67,6 @@ std::string CheckBMMNdSupported(TypeId data_type, const std::vector<ShapeVector>
   return kOpFormat_FRAC_NZ;
 }
 
-REGISTER_ACL_OP(BatchMatMul).OutputSelector(&CheckBMMNdSupported).set_precision_mode(FORCE_FP32);
+REGISTER_ACL_OP(BatchMatMul).OutputSelector(&CheckBMMNdSupported).set_precision_mode(MUST_KEEP_ORIGIN_DTYPE);
 }  // namespace transform
 }  // namespace mindspore
