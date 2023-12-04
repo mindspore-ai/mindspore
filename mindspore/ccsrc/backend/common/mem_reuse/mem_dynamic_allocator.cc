@@ -154,8 +154,20 @@ DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size, bool from_persis
     mem_mng = persistent_mem_;
   }
   MS_EXCEPTION_IF_NULL(mem_mng);
-  const auto &iter = mem_mng->idle_mem_buf_map_.lower_bound(size);
+  auto iter = mem_mng->idle_mem_buf_map_.lower_bound(size);
   if (iter != mem_mng->idle_mem_buf_map_.end()) {
+    if (IsMemoryPoolRecycle()) {
+      // Ensure that the addresses corresponding to the same Tensor for each step are consistent, making the memory pool
+      // recycling function more stable.
+      auto find_size = iter->first;
+      // Can be optimized in the future.
+      auto [lb, ub] = mem_mng->idle_mem_buf_map_.equal_range(find_size);
+      for (auto i = lb; i != ub; ++i) {
+        if (i->second->device_addr_ > iter->second->device_addr_) {
+          iter = i;
+        }
+      }
+    }
     auto mem_buf = iter->second;
     MS_EXCEPTION_IF_NULL(mem_buf);
     if (mem_buf->status_ != DynamicMemBufStatus::kMemBufIdle) {

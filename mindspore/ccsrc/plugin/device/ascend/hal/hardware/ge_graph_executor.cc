@@ -729,7 +729,7 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
-    if (output_node->isa<Parameter>()) {
+    if (output_node->isa<Parameter>() || output_node->isa<ValueNode>()) {
       continue;
     }
     need_alloc_output_cnt++;
