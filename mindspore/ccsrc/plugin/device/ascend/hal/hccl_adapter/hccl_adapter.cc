@@ -517,13 +517,8 @@ HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank
 
 HcclResult HcclAdapter::HcclGetLocalRankId(const std::string &group, uint32_t *local_rank_id) const {
   CheckExcutionMode();
-  if (hccl_mode_ != HcclMode::kGraph) {
-    MS_LOG(ERROR) << "The pynative mode doesn't support get local rank.";
-    return HCCL_E_NOT_SUPPORT;
-  } else {
-    CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
-    return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
-  }
+  CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
+  return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
 }
 
 HcclResult HcclAdapter::HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const {
