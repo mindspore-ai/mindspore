@@ -56,8 +56,8 @@ std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name
     stream_id = AnfAlgo::GetStreamId(node);
   }
   std::string tensor_type = is_input ? ".input." : ".output.";
-  std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
-                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + tensor_type +
+  std::string file_path = dump_path + "/" + op_type + "." + op_name + "." + std::to_string(task_id) + "." +
+                          std::to_string(stream_id) + "." + std::to_string(timestamp) + tensor_type +
                           std::to_string(slot);
   return file_path;
 }
