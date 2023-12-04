@@ -40,8 +40,10 @@ class RealValue : public InferValueOp {
 
  protected:
   SymbolPtr Eval() override;
-  SymbolPtr GenVarByShape(const IListSymbol &shape);
-  SymbolPtr GenListVariables(const ListSymbol &list);
+  SymbolPtr ParseConstValue(const ValuePtr &v);
+  SymbolPtr ParseValueSequence(const ValueSequeuePtr &seq);
+  SymbolPtr GenVarByShape(const IListSymbol &shape, const TypePtr &type_ptr);
+  SymbolPtr GenListVariables(const ListSymbol &list, const TypePtr &type_ptr);
 };
 
 class NormalizeSlice : public InferValueOp {

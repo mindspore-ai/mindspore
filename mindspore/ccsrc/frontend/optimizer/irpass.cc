@@ -67,6 +67,7 @@
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/irpass/grad_partial_transform.h"
+#include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 
 namespace mindspore {
 namespace opt {
@@ -292,6 +293,12 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
   remove_not_recompute_node_ =
     MakeSubstitution(std::make_shared<RemoveNotRecomputeNode>(), "remove_not_recompute_node", IsCNode);
+
+  // Optimize with SymbolEngine
+  elim_shapecalc_of_broadcastargs_ = MakeSubstitution(std::make_shared<ElimShapeCalcOnBroadcastArgsGrad>(),
+                                                      "elim_shapecalc_of_broadcastargs", prim::kPrimReduceSum);
+  elim_not_effective_node_ = MakeSubstitution(std::make_shared<ElimNotEffectiveNode>(), "elim_not_effective", IsCNode);
+  opt_reshape_ = MakeSubstitution(std::make_shared<OptReshape>(), "opt_reshape", prim::kPrimReshape);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

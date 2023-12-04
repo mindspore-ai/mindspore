@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 
 namespace mindspore::graphkernel::symbol {
+constexpr auto kControlFlowOperation = "kControlFlowOperation";
 class SymbolCache {
  public:
   void SetShape(const AnfNodePtr &node, const SymbolPtr &symbol) { node_shape_map_[RealNode(node)] = symbol; }
@@ -110,6 +111,7 @@ class OperationBuilder {
   SymbolPtr GetInputShape(size_t i) const { return RealShape(GetInput(i)); }
   SymbolPtr GetInputValue(size_t i) const { return RealValue(GetInput(i)); }
   SymbolPtr GetAttr(const std::string &attr_name) const;
+  SymbolPtr GetInputOrAttr(size_t index, const std::string &attr_name);
   bool is_building_shape() const { return is_building_shape_; }
 
  protected:

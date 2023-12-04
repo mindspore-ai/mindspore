@@ -49,7 +49,7 @@ class SymbolEngineImpl : public SymbolEngine {
   void PreBuild(bool depend_on_value = false);
   // build symbol engine
   void Build();
-  void BuildSubgraph(const CNodePtr &cnode);
+  void BuildSubgraph(const CNodePtr &cnode) { return BuildSubgraph(cnode, GetCNodeFuncGraph(cnode), 1); }
 
   void BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) override;
   bool Infer(const AbstractBasePtrList &inputs) override;
@@ -68,11 +68,13 @@ class SymbolEngineImpl : public SymbolEngine {
   const SymbolCache &cache() const { return cache_; }
 
  protected:
+  void BuildSubgraph(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index);
   // build subgraph's symbol engine that can refer to maingraph's info.
   void BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine);
   void BuildNodesSymbol(const AnfNodePtrList &nodes);
   void DfsQueryDependStatus(const AnfNodePtr &node, bool depend_on_value);
-  void DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool depend_on_value, const FuncGraphPtr &sub_fg);
+  void DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool depend_on_value, const FuncGraphPtr &sub_fg,
+                                    size_t begin_input_index = 1);
   void DumpCNode(const AnfNodePtr &node, const std::string &id) const;
 
   std::string name_;
@@ -85,6 +87,7 @@ class SymbolEngineImpl : public SymbolEngine {
   std::set<std::pair<AnfNodePtr, bool>> visited_;
   FuncGraphWeakPtr func_graph_;
   bool multi_engine_{false};
+  std::set<FuncGraph *> has_built_;
 };
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_SYMBOL_ENGINE_IMPL_H_

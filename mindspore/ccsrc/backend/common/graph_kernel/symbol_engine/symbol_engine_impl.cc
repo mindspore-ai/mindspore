@@ -28,15 +28,31 @@
 
 namespace mindspore::graphkernel::symbol {
 using ops::builders::DependOn;
+namespace {
+std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
+  auto sub_fg = GetCNodeFuncGraph(cnode);
+  size_t index = kIndex1;
+  if (sub_fg == nullptr && IsPrimitiveCNode(cnode, prim::kPrimPartial)) {
+    auto vnode = cnode->input(kIndex1)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(vnode);
+    sub_fg = vnode->value()->cast<FuncGraphPtr>();
+    MS_EXCEPTION_IF_NULL(sub_fg);
+    index = kIndex2;
+  }
+  return std::make_pair(sub_fg, index);
+}
+}  // namespace
 
 void SymbolEngineImpl::BuildNodesSymbol(const AnfNodePtrList &nodes) {
   for (auto &node : nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (GetCNodeFuncGraph(cnode) != nullptr) {
-      BuildSubgraph(cnode);
+    if (auto fg_with_index = GetFuncGraphFromCNode(cnode); fg_with_index.first != nullptr) {
+      // "call" or "Partial" node
+      BuildSubgraph(cnode, fg_with_index.first, fg_with_index.second);
     } else {
-      auto &depend_on = depend_status_map_[node];
+      // theoretically, it's possible that both shape and value are required for a same node.
+      auto depend_on = depend_status_map_[node];
       if (depend_on.shape) {
         BuildCNodeSymbol(cnode, false);
       }
@@ -54,7 +70,7 @@ void SymbolEngineImpl::Build() {
   visited_.clear();  // the visited is useless
   cache_.InitInputs(func_graph->parameters());
   emitter_ = std::make_unique<OperationEmitter>(&ops_);
-  cnodes_ = TopoSort(func_graph->output(), SuccIncoming,
+  cnodes_ = TopoSort(func_graph->get_return(), SuccIncoming,
                      [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
   BuildNodesSymbol(cnodes_);
   Dump();
@@ -75,7 +91,7 @@ void SymbolEngineImpl::BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEng
   shape_hint.param_inputs.resize(param_num);
   for (size_t i = 0; i < param_num; i++) {
     auto &param = func_graph->parameters()[i];
-    auto &depend_on = depend_status_map_[param];
+    auto depend_on = depend_status_map_[param];
     auto inp_symbol = cache_.GetInput(param);
     if (depend_on.shape) {
       // refer to maingraph, if some inputs have same shape symbols, use same symbols in subgraph.
@@ -90,7 +106,7 @@ void SymbolEngineImpl::BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEng
       cache_.SetValue(param, emitter_->RealValue(inp_symbol));
     }
   }
-  cnodes_ = TopoSort(func_graph->output(), SuccIncoming,
+  cnodes_ = TopoSort(func_graph->get_return(), SuccIncoming,
                      [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
   BuildNodesSymbol(cnodes_);
   Dump();
@@ -100,7 +116,7 @@ void SymbolEngineImpl::PreBuild(bool depend_on_value) {
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "Prebuild " << ToString() << ". depend_on_value=" << std::boolalpha << depend_on_value;
-  (void)DfsQueryDependStatus(func_graph->output(), depend_on_value);
+  (void)DfsQueryDependStatus(func_graph->get_return(), depend_on_value);
 }
 
 void SymbolEngineImpl::DfsQueryDependStatus(const AnfNodePtr &node, bool depend_on_value) {
@@ -110,18 +126,23 @@ void SymbolEngineImpl::DfsQueryDependStatus(const AnfNodePtr &node, bool depend_
   }
   if (depend_on_value) {
     depend_status_map_[node].value = true;
-    MS_LOG(DEBUG) << "The value of " << node->fullname_with_scope() << " is required";
+    MS_LOG(DEBUG) << "The value of " << node->DebugString() << "(" << node->fullname_with_scope() << ") is required";
   } else {
     depend_status_map_[node].shape = true;
-    MS_LOG(DEBUG) << "The shape of " << node->fullname_with_scope() << " is required";
+    MS_LOG(DEBUG) << "The shape of " << node->DebugString() << "(" << node->fullname_with_scope() << ") is required";
   }
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
     return;
   }
-  auto sub_fg = GetCNodeFuncGraph(cnode);
-  if (sub_fg != nullptr) {
-    DfsSubgraphQueryDependStatus(cnode, depend_on_value, sub_fg);
+  if (cnode->input(0)->isa<CNode>()) {
+    // the Call node of control-flow.
+    DfsQueryDependStatus(cnode->input(0), depend_on_value);
+    return;
+  }
+  auto subfg_with_index = GetFuncGraphFromCNode(cnode);
+  if (subfg_with_index.first != nullptr) {
+    DfsSubgraphQueryDependStatus(cnode, depend_on_value, subfg_with_index.first, subfg_with_index.second);
     return;
   }
   auto *info = OperationBuilderRegistry::GetBuildInfo(AnfUtils::GetCNodeName(cnode));
@@ -140,7 +161,7 @@ void SymbolEngineImpl::DfsQueryDependStatus(const AnfNodePtr &node, bool depend_
 }
 
 void SymbolEngineImpl::DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool depend_on_value,
-                                                    const FuncGraphPtr &sub_fg) {
+                                                    const FuncGraphPtr &sub_fg, size_t begin_input_index) {
   SymbolEngineImpl *sub_engine = nullptr;
   if (multi_engine_) {
     // when the node is visited in ahead, use the exist
@@ -159,20 +180,19 @@ void SymbolEngineImpl::DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool 
     // use the unique symbolengine.
     sub_engine = this;
     sub_fg->set_attr(kAttrSymbolEngine, this->cast<SymbolEnginePtr>());
-    DfsQueryDependStatus(sub_fg->output(), depend_on_value);
+    DfsQueryDependStatus(sub_fg->get_return(), depend_on_value);
   }
 
   // visit nodes in main graph according to subgraph's parameters
-  size_t input_index = 1;
   for (auto &param : sub_fg->parameters()) {
     auto depend_on = sub_engine->depend_status_map_[param];
     if (depend_on.shape) {
-      DfsQueryDependStatus(cnode->input(input_index), false);
+      DfsQueryDependStatus(cnode->input(begin_input_index), false);
     }
     if (depend_on.value) {
-      DfsQueryDependStatus(cnode->input(input_index), true);
+      DfsQueryDependStatus(cnode->input(begin_input_index), true);
     }
-    input_index++;
+    begin_input_index++;
   }
 }
 
@@ -299,9 +319,13 @@ void SymbolEngineImpl::QuerySymbolExpr(const AnfNodePtr &node,
   }
 }
 
-void SymbolEngineImpl::BuildSubgraph(const CNodePtr &cnode) {
-  auto sub_fg = GetCNodeFuncGraph(cnode);
+void SymbolEngineImpl::BuildSubgraph(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) {
   MS_EXCEPTION_IF_NULL(sub_fg);
+  if (has_built_.count(sub_fg.get()) != 0) {
+    // in while-block, the funcgraph is called recursively, only build symbolengine once.
+    return;
+  }
+  (void)has_built_.insert(sub_fg.get());
   MS_LOG(DEBUG) << "Build subgraph " << sub_fg->ToString() << " of node " << cnode->fullname_with_scope();
   if (multi_engine_) {
     auto sub_engine_attr = sub_fg->get_attr(kAttrSymbolEngine);
@@ -310,52 +334,71 @@ void SymbolEngineImpl::BuildSubgraph(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(sub_engine);
     sub_engine->BuildWithOuterInfo(cnode, *this);
     if (depend_status_map_[cnode].shape) {
-      cache_.SetShape(cnode, sub_engine->cache_.GetShape(sub_fg->output()));
+      cache_.SetShape(cnode, sub_engine->cache_.GetShape(sub_fg->get_return()));
     }
     if (depend_status_map_[cnode].value) {
-      cache_.SetValue(cnode, sub_engine->cache_.GetValue(sub_fg->output()));
+      cache_.SetValue(cnode, sub_engine->cache_.GetValue(sub_fg->get_return()));
     }
   } else {
     auto param_num = sub_fg->parameters().size();
-    MS_EXCEPTION_IF_CHECK_FAIL(param_num + 1 == cnode->size(), "cnode and parameter size mismatch");
+    MS_EXCEPTION_IF_CHECK_FAIL(param_num + begin_input_index == cnode->size(), "cnode and parameter size mismatch");
     for (size_t i = 0; i < param_num; i++) {
-      cache_.BindNode(sub_fg->parameters()[i], cnode->input(i + 1));
+      if (auto s = cache_.GetShape(cnode->input(i + begin_input_index)); s != nullptr) {
+        cache_.SetShape(sub_fg->parameters()[i], s);
+      }
+      if (auto v = cache_.GetValue(cnode->input(i + begin_input_index)); v != nullptr) {
+        cache_.SetValue(sub_fg->parameters()[i], v);
+      }
     }
-    auto inner_nodes = TopoSort(sub_fg->output(), SuccIncoming,
+    auto inner_nodes = TopoSort(sub_fg->get_return(), SuccIncoming,
                                 [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
     BuildNodesSymbol(inner_nodes);
-    cache_.BindNode(cnode, sub_fg->output());
+    cache_.BindNode(cnode, sub_fg->get_return());
   }
 }
 
 void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) {
-  auto name = AnfUtils::GetCNodeName(cnode);
+  auto name = cnode->input(0)->isa<CNode>() ? kControlFlowOperation : AnfUtils::GetCNodeName(cnode);
   auto builder = OperationBuilderRegistry::GetBuilder(name, emitter_.get(), &cache_);
   MS_EXCEPTION_IF_NULL(builder);
+  auto abstract = (name == kReturnOpName ? cnode->input(1)->abstract() : cnode->abstract());
+  MS_EXCEPTION_IF_NULL(abstract);
   if (infer_value) {
     MS_LOG(DEBUG) << "Build value for node " << cnode->fullname_with_scope() << ".   " << cnode->DebugString();
-    auto v = builder->BuildValue(cnode);
+    SymbolPtr v;
+    try {
+      MS_LOG_TRY_CATCH_SCOPE;
+      v = builder->BuildValue(cnode);
+    } catch (std::exception &) {
+      v = nullptr;
+    }
     if (v == nullptr) {
       MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " does not support BuildValue.";
       support_infer_ = false;
-      v = emitter_->RealValue(InputSymbol::Make(cnode->abstract()));
+      v = emitter_->RealValue(InputSymbol::Make(abstract));
       MS_EXCEPTION_IF_NULL(v);
     }
     MS_LOG(DEBUG) << "Set value for node: " << cnode->fullname_with_scope() << ". symbol: " << v->ToString();
     cache_.SetValue(cnode, v);
   } else {
     MS_LOG(DEBUG) << "Build shape for node " << cnode->fullname_with_scope() << ".   " << cnode->DebugString();
-    if (!cnode->abstract()->GetShape()->IsDynamic()) {
-      auto static_shape = emitter_->RealShape(InputSymbol::Make(cnode->abstract()));
+    if (!abstract->GetShape()->IsDynamic()) {
+      auto static_shape = emitter_->RealShape(InputSymbol::Make(abstract));
       MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " is static shape: " << static_shape->ToString();
       cache_.SetShape(cnode, static_shape);
       return;
     }
-    auto s = builder->BuildShape(cnode);
+    SymbolPtr s;
+    try {
+      MS_LOG_TRY_CATCH_SCOPE;
+      s = builder->BuildShape(cnode);
+    } catch (std::exception &) {
+      s = nullptr;
+    }
     if (s == nullptr) {
       support_infer_ = false;
       MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " does not support BuildShape.";
-      s = emitter_->RealShape(InputSymbol::Make(cnode->abstract()));
+      s = emitter_->RealShape(InputSymbol::Make(abstract));
       MS_EXCEPTION_IF_NULL(s);
     }
     MS_LOG(DEBUG) << "Set shape for node: " << cnode->fullname_with_scope() << ". symbol: " << s->ToString();
@@ -410,8 +453,8 @@ void SymbolEngineImpl::DumpCNode(const AnfNodePtr &node, const std::string &id) 
   if (sub_fg == nullptr) {
     return;
   }
-  auto inner_nodes =
-    TopoSort(sub_fg->output(), SuccIncoming, [](const AnfNodePtr &n) { return n->isa<CNode>() ? FOLLOW : EXCLUDE; });
+  auto inner_nodes = TopoSort(sub_fg->get_return(), SuccIncoming,
+                              [](const AnfNodePtr &n) { return n->isa<CNode>() ? FOLLOW : EXCLUDE; });
   for (size_t j = 0; j < inner_nodes.size(); j++) {
     DumpCNode(inner_nodes[j], id + "_" + std::to_string(j));
   }

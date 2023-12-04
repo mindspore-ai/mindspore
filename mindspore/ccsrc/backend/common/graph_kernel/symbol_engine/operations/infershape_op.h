@@ -207,6 +207,18 @@ class StridedSlice : public InferShapeOp {
   size_t shrink_axis_mask_{0};
   const IListSymbol *out_hint_{nullptr};
 };
+
+class Switch : public InferShapeOp {
+ public:
+  Switch(const SymbolPtr &cond, const SymbolPtr &true_branch, const SymbolPtr &false_branch)
+      : InferShapeOp({cond, true_branch, false_branch}) {}
+  ~Switch() override = default;
+  MS_DECLARE_PARENT(Switch, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+  SymbolPtr ShapeJoin(const SymbolPtr &tb, const SymbolPtr &fb);
+  SymbolPtr ItemJoin(const SymbolPtr &tb, const SymbolPtr &fb);
+};
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_OPERATIONS_INFERSHAPE_OP_H_

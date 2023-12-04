@@ -25,34 +25,92 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops::infervalue {
-SymbolPtr RealValue::GenVarByShape(const IListSymbol &shape) {
+SymbolPtr RealValue::GenVarByShape(const IListSymbol &shape, const TypePtr &type_ptr) {
   if (shape.HasData()) {
     // scalar value
     if (shape.size() == 0) {
+      if (type_ptr->generic_type_id() == kNumberTypeBool) {
+        return BoolSymbol::Make(shared_from_this());
+      }
+      if (type_ptr->generic_type_id() == kNumberTypeFloat) {
+        return FloatSymbol::Make(shared_from_this());
+      }
       return GenVInt();
     }
     if (shape.AllHaveData() && shape.size() == 1) {
-      return GenVIntList(LongToSize(shape.item(0)));
+      SymbolPtrList list(LongToSize(shape.item(0)));
+      if (type_ptr->generic_type_id() == kNumberTypeBool) {
+        std::generate(list.begin(), list.end(), [this]() { return BoolSymbol::Make(shared_from_this()); });
+      } else if (type_ptr->generic_type_id() == kNumberTypeFloat) {
+        std::generate(list.begin(), list.end(), [this]() { return FloatSymbol::Make(shared_from_this()); });
+      } else {
+        std::generate(list.begin(), list.end(), [this]() { return this->GenVInt(); });
+      }
+      return GenList(std::move(list));
     }
   }
   return GenVList();
 }
 
-SymbolPtr RealValue::GenListVariables(const ListSymbol &list) {
+SymbolPtr RealValue::GenListVariables(const ListSymbol &list, const TypePtr &type_ptr) {
   auto ilist = list.as<IListSymbol>();
   if (ilist != nullptr) {
-    return GenVarByShape(*ilist);
+    return GenVarByShape(*ilist, type_ptr);
   }
   if (!list.HasData()) {
     return ListSymbol::Make(shared_from_this());
   }
   SymbolPtrList result(list.size());
-  (void)std::transform(list.symbols().begin(), list.symbols().end(), result.begin(), [this](const SymbolPtr &shape) {
-    auto inner_list = shape->as<ListSymbol>();
-    MS_EXCEPTION_IF_NULL(inner_list);
-    return GenListVariables(*inner_list);
+  auto tup = type_ptr->cast<TuplePtr>();
+  MS_EXCEPTION_IF_NULL(tup);
+  auto inner_type = tup->elements()[0];
+  bool all_int = true;
+  (void)std::transform(list.symbols().begin(), list.symbols().end(), result.begin(),
+                       [this, inner_type, &all_int](const SymbolPtr &shape) {
+                         auto inner_list = shape->as<ListSymbol>();
+                         MS_EXCEPTION_IF_NULL(inner_list);
+                         auto ret = GenListVariables(*inner_list, inner_type);
+                         all_int = all_int && ret->is<IntSymbol>();
+                         return ret;
+                       });
+  return all_int ? IListSymbol::Make(std::move(result)) : ListSymbol::Make(std::move(result));
+}
+
+SymbolPtr RealValue::ParseValueSequence(const ValueSequeuePtr &seq) {
+  SymbolPtrList result(seq->size());
+  bool all_int = true;
+  (void)std::transform(seq->value().begin(), seq->value().end(), result.begin(), [&all_int, this](const ValuePtr &v) {
+    all_int = all_int && v->isa<IntegerImm>();
+    return ParseConstValue(v);
   });
-  return ListSymbol::Make(std::move(result));
+  return all_int ? IListSymbol::Make(std::move(result)) : ListSymbol::Make(std::move(result));
+}
+
+SymbolPtr RealValue::ParseConstValue(const ValuePtr &v) {
+  if (v->isa<ValueSequence>()) {
+    return ParseValueSequence(v->cast<ValueSequeuePtr>());
+  }
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor_value = CheckAndConvertUtils::CheckTensorIntValue(v->ToString(), v, "RealValue");
+    auto tensor = v->cast<tensor::TensorPtr>();
+    return tensor->shape().empty() ? GenInt(tensor_value[0]) : FromShape(tensor_value, true);
+  }
+  if (v->isa<IntegerImm>()) {
+    return v->isa<Int64Imm>() ? GenInt(GetValue<int64_t>(v)) : GenInt(static_cast<int64_t>(GetValue<int32_t>(v)));
+  }
+  if (v->isa<BoolImm>()) {
+    return BoolSymbol::Make(GetValue<bool>(v), shared_from_this());
+  }
+  if (v->isa<FloatImm>()) {
+    return FloatSymbol::Make((v->isa<FP64Imm>() ? GetValue<double>(v) : static_cast<double>(GetValue<float>(v))),
+                             shared_from_this());
+  }
+  if (v->isa<StringImm>()) {
+    return StrSymbol::Make(GetValue<std::string>(v), shared_from_this());
+  }
+  MS_LOG(EXCEPTION)
+    << "Value should be one of {ValueSequence, Tensor, IntegerImm, BoolImm, FloatImm, StringImm}, but got "
+    << v->ToString();
 }
 
 SymbolPtr RealValue::Eval() {
@@ -61,20 +119,10 @@ SymbolPtr RealValue::Eval() {
     OperationEmitter e;
     auto list = e.RealShape(input(0))->as_sptr<ListSymbol>();
     MS_EXCEPTION_IF_NULL(list);
-    return GenListVariables(*list);
+    auto type_ptr = input_as<InputSymbol>(0)->abstract()->BuildType();
+    return GenListVariables(*list, type_ptr);
   }
-  if (v->isa<ValueSequence>()) {
-    return FromShape(GetValue<std::vector<int64_t>>(v), true);
-  }
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor_value = CheckAndConvertUtils::CheckTensorIntValue(v->ToString(), v, "RealValue");
-    auto tensor = v->cast<tensor::TensorPtr>();
-    return tensor->shape().empty() ? GenInt(tensor_value[0]) : FromShape(tensor_value, true);
-  }
-  if (v->isa<IntegerImm>()) {
-    return GenInt(GetValue<int64_t>(v));
-  }
-  MS_LOG(EXCEPTION) << "Value should be one of {ValueSequence, Tensor, Integer}, but got " << v->ToString();
+  return ParseConstValue(v);
 }
 
 SymbolPtr NormalizeSlice::Eval() {

@@ -20,7 +20,7 @@
 
 namespace mindspore::graphkernel::symbol {
 // symbol to ShapeVector
-ShapeVector ToShape(const Symbol *symbol);
+BACKEND_EXPORT ShapeVector ToShape(const Symbol *symbol);
 inline ShapeVector ToShape(const SymbolPtr &symbol) { return ToShape(symbol.get()); }
 
 // get int value from symbol
