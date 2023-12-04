@@ -53,6 +53,7 @@ int CustomCoder::Prepare(CoderContext *const context) {
     if (tensor->category() == lite::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensor)) {
         auto buff = allocator_->Malloc(kNumberTypeUInt8, tensor->Size(), kOfflinePackWeight);
+        MS_CHECK_PTR(buff);
         auto ret = memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
         if (ret != EOK) {
           MS_LOG(ERROR) << "memcpy_s failed: " << ret;
