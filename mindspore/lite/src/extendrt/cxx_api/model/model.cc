@@ -468,7 +468,7 @@ Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack 
 std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
   std::vector<char> ret;
   if (CharToString(key) != lite::KModelUserInfo) {
-    MS_LOG(WARNING) << "Unsupported key";
+    MS_LOG(WARNING) << "Unsupported key, only user info is supported.";
     return ret;
   }
   if (impl_ == nullptr) {
