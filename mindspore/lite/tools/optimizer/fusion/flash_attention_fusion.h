@@ -22,6 +22,7 @@
 #include <vector>
 #include <unordered_map>
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
+#include "tools/optimizer/common/gllo_utils.h"
 namespace mindspore {
 namespace opt {
 /*
@@ -64,11 +65,16 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                  const AnfNodePtr &atten_mask, int64_t num_heads, float scale_value,
                                                  int64_t num_key_value_heads) const;
-
+  CNodePtr CreateFlashAttentionNodeForMsSD21(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                             const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForMsSDXL(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                             const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForVideoComposer(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                                    const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForSD(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const;
-  CNodePtr CreateFlashAttentionNodeForPg(const std::string &pattern_name, const FuncGraphPtr &func_graph,
-                                         const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForPanGu(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                            const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV1(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                      const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV2(const std::string &pattern_name, const FuncGraphPtr &func_graph,
@@ -89,9 +95,16 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                         const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
                                         const CNodePtr &attention_mask_mul) const;
 
+  CNodePtr CreateFACNodeWithoutAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                         const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
+                                         const CNodePtr &attention_mask_mul) const;
+
+  const VectorRef DefineFlashAttentionPatternForMsSD21() const;
+  const VectorRef DefineFlashAttentionPatternForVideoComposer() const;
+  const VectorRef DefineFlashAttentionPatternForMsSDXL() const;
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
   const VectorRef DefineFlashAttentionPatternForSDBSH() const;
-  const VectorRef DefineFlashAttentionPatternForPg() const;
+  const VectorRef DefineFlashAttentionPatternForPanGu() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV1() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV2() const;
   const VectorRef DefineFlashAttentionPatternForBaiChuan() const;
