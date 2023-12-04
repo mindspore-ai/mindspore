@@ -15,15 +15,8 @@
  */
 
 #include "tools/optimizer/graph/args_to_attr_pass.h"
-#include "mindspore/core/ops/lite_ops.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/node_util.h"
-#include "tools/common/tensor_util.h"
-#include "nnacl/op_base.h"
 #include "src/common/log_util.h"
-#include "ops/op_utils.h"
-#include "tools/optimizer/graph/decrease_transpose_algo.h"
 #include "ops/primitive_c.h"
 #include "ops/base_operator.h"
 #include "ops/op_def.h"

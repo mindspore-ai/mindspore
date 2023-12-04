@@ -100,7 +100,7 @@ Status GeUtils::AdaptGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return kCoreFailed;
   }
-  if (lite::AdapteSpatialNode(func_graph, manager) != lite::RET_OK) {
+  if (lite::AdapteMuitiOutputNode(func_graph, manager) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adapter spatial node failed.";
     return kCoreFailed;
   }

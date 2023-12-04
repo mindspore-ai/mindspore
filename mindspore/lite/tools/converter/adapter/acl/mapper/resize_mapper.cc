@@ -95,11 +95,13 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   if (coordinate_transformation_mode_ptr != nullptr &&
       GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::HALF_PIXEL) {
     dst_prim->set_attr("half_pixel_centers", MakeValue(true));
+    dst_prim->set_attr("align_corners", MakeValue(false));
   }
   if (coordinate_transformation_mode_ptr != nullptr &&
       GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::ALIGN_CORNERS) {
     dst_prim->set_attr("align_corners", MakeValue(true));
     dst_prim->set_attr("coordinate_transformation_mode", MakeValue("align_corners"));
+    dst_prim->set_attr("half_pixel_centers", MakeValue(false));
   }
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);

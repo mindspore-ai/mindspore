@@ -23,6 +23,7 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "ops/mat_mul.h"
 #include "ops/batch_matmul.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
@@ -30,6 +31,7 @@
 
 namespace mindspore {
 using mindspore::ops::kNameBatchMatMul;
+using mindspore::ops::kNameMatMul;
 namespace lite {
 namespace {
 constexpr size_t kInputSizeWithoutBias = 3;  // primitive, x1, x2
@@ -88,8 +90,7 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   PrimitiveCPtr dst_prim = nullptr;
   if (shape_vector.size() == DIMENSION_2D) {
-    ops::MatMul mat_mul;
-    dst_prim = mat_mul.GetPrim();
+    dst_prim = std::make_shared<acl::MatMulV2>();
     value_node->set_value(dst_prim);
   } else if (cnode->size() == kInputSizeWithoutBias) {
     ops::BatchMatMul mat_mul;
@@ -147,25 +148,15 @@ STATUS MatMulFusionMapper::QuantMapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
 
-  ops::MatMul mat_mul;
   auto dst_prim = std::make_shared<acl::BatchMatMulV2>();
-  auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
-  auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
-
-  if (transpose_a != nullptr) {
-    dst_prim->AddAttr("transpose_x1", transpose_a);
-  }
-  if (transpose_b != nullptr) {
-    dst_prim->AddAttr("transpose_x2", transpose_b);
-    if (GetValue<bool>(transpose_b)) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " transpose_b dont support true.";
-      return RET_ERROR;
-    }
-  }
+  dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   return RET_OK;
 }
 
+// Graph_ir mapped MatMul to MatlMulV2 in old version, which has now been corrected.
+// Lite MatlMul with bias or quantized should be mappered to MatlMulV2 for anf_graph, and mappered to MatlMulV2 for GE.
+REGISTER_PRIMITIVE_MAPPER(kNameMatMul, MatMulFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameMatMulFusion, MatMulFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameBatchMatMul, MatMulFusionMapper)
 }  // namespace lite

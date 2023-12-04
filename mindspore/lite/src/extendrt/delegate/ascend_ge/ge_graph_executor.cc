@@ -52,6 +52,7 @@
 #include "mindspore/lite/tools/common/custom_ascend_utils.h"
 #include "inc/ops/array_ops.h"
 #include "inc/ops/elewise_calculation_ops.h"
+#include "mindspore/lite/tools/optimizer/graph/attr_to_args_pass.h"
 
 namespace mindspore {
 namespace {
@@ -970,6 +971,18 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
   }
 
   opt::UpdateManager(anf_graph);
+
+  // Convert mindir attributes to inputs because of dynamic_shape operator.
+  // For the transformed operators, the GE adapter only supports inputs but not attributes.
+  auto args_to_attr_pass = std::make_shared<opt::AttrToArgsPass>();
+  if (args_to_attr_pass == nullptr) {
+    MS_LOG(ERROR) << "create AttrToArgsPass failed";
+    return nullptr;
+  }
+  if (!args_to_attr_pass->Run(anf_graph)) {
+    MS_LOG(ERROR) << "convert args to attr pass failed";
+    return nullptr;
+  }
 
   transform::DfGraphPtr df_graph = nullptr;
   auto func_type = anf_graph->get_attr(kAttrFuncType);

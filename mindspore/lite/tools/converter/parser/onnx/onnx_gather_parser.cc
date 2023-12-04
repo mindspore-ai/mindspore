@@ -26,11 +26,11 @@ PrimitiveCPtr OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, const 
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-  int32_t axis = 0;
+  int64_t axis = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      axis = static_cast<int32_t>(onnx_node_attr.i());
+      axis = static_cast<int64_t>(onnx_node_attr.i());
     }
   }
   (void)prim_c->AddAttr("axis", MakeValue(axis));
