@@ -46,7 +46,7 @@ int ConvertQuantParam(const api::SharedPtr<mindspore::ops::FakeQuantParam> &fake
   }
   quant_params->resize(scale.size());
   for (size_t i = 0; i < scale.size(); i++) {
-    quant_param.inited = True;
+    quant_param.inited = true;
     quant_param.scale = scale[i];
     quant_param.zeroPoint = zp[i];
     (*quant_params)[i] = quant_param;
@@ -69,7 +69,7 @@ int ConvertNodesQuantParam(const std::vector<std::shared_ptr<AnfNode>> &nodes,
       }
     }
     if (!quants.empty()) {
-      quant_params->insert({i, quants});
+      quant_params->emplace(std::make_pair(i, quants));
     }
   }
   return lite::RET_OK;
@@ -295,7 +295,7 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
   GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto &graph : all_func_graphs) {
     auto manager = graph->manager();
-    MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
+    MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
     auto node_list = TopoSort(graph->get_return());
     int status = lite::RET_OK;
     bool success_flag = true;
