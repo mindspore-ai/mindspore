@@ -26,6 +26,7 @@
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
+#include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "kernel/graph_kernel_info.h"
 #include "backend/common/pass/insert_type_transform_op.h"
 
@@ -144,6 +145,8 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   std::vector<TypeId> graph_input_type;
   std::vector<std::string> graph_output_format;
   std::vector<TypeId> graph_output_type;
+  std::vector<kernel::KernelObjectType> graph_input_obj_type;
+  std::vector<kernel::KernelObjectType> graph_output_obj_type;
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = GetCNodeFuncGraph(node);
@@ -172,6 +175,7 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
     graph_output_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
     graph_output_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
   }
+  opt::GenerateKernelObjectTypeForNewCNode(cnode, &graph_input_obj_type, &graph_output_obj_type);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
   graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
@@ -180,7 +184,8 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   graph_info_builder.SetInputsDeviceType(graph_input_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
-
+  graph_info_builder.SetInputsKernelObjectType(graph_input_obj_type);
+  graph_info_builder.SetOutputsKernelObjectType(graph_output_obj_type);
   auto graph_selected_info = graph_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, node.get());
 }
@@ -263,8 +268,23 @@ void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
 
 void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
+  auto ori_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(ori_cnode);
+  auto cnode = ori_cnode;
+  bool need_convert = NeedConvertInputAndAttr(cnode);
+  if (need_convert) {
+    // convert attr to input for selecting kernel, but not changed the original node.
+    // the original cnode will be modified in the pass ConvertAttrToInput of postprocess.
+    cnode = node->func_graph()->NewCNode(ori_cnode->inputs());
+    cnode->CloneCNodeInfo(ori_cnode);
+    auto p = GetCNodePrimitive(ori_cnode);
+    MS_EXCEPTION_IF_NULL(p);
+    cnode->set_input(0, NewValueNode(p->Clone()));
+    cnode->input(0)->set_abstract(ori_cnode->input(0)->abstract());
+    cnode->input(0)->set_kernel_info(ori_cnode->input(0)->kernel_info_ptr());
+    need_convert = ConvertAttrToInput::Process(cnode);
+  }
+
   if (GetTargetFromContext() == kAscendDevice) {
     auto kernel_info = cnode->kernel_info_ptr();
     if (kernel_info == nullptr) {
@@ -284,6 +304,11 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
     if (kernel_info_setter != nullptr) {
       kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
     }
+  }
+
+  if (need_convert) {
+    ori_cnode->set_kernel_info(cnode->kernel_info_ptr());
+    ResetKernelInfoInputs(ori_cnode);
   }
 }
 
