@@ -211,7 +211,10 @@ CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &scrip
   parse::PyObjectWrapperPtr global_dict_wrapper = std::make_shared<parse::InterpretedObject>(global_dict_obj);
   auto global_dict_node = NewValueNode(global_dict_wrapper);
   auto node = fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
-  node->set_debug_info(debug_info);
+  if (debug_info != nullptr) {
+    node->set_debug_info(debug_info);
+  }
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(node);
   return node;
 }
 
@@ -224,7 +227,9 @@ CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string
   auto global_dict_node = NewValueNode(global_dict_wrapper);
   auto node =
     fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
-  node->set_debug_info(debug_info);
+  if (debug_info != nullptr) {
+    node->set_debug_info(debug_info);
+  }
   InterpretNodeRecorder::GetInstance().PushPyInterpretNode(node);
   return node;
 }
@@ -753,9 +758,7 @@ AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePt
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(fg);
   const std::unordered_map<std::string, std::string> internal_attr_map = {
-    {"__ms_iter__", "tuple"},
-    {"__ms_next__", "__import__('mindspore').common._utils._jit_fallback_next_func"},
-    {"__ms_hasnext__", "__import__('mindspore').common._utils._jit_fallback_has_next_func"}};
+    {"__ms_next__", "__import__('mindspore').common._utils._jit_fallback_next_func"}};
   auto iter = internal_attr_map.find(name);
   if (iter == internal_attr_map.end()) {
     return ConvertCNodeToPyInterpretForPrim(cnode, "getattr");

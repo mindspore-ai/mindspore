@@ -58,24 +58,3 @@ def test_dict_fromkeys_with_variable_2():
 
     ret = foo(mutable(2))
     assert ret == {"1": 2, "2": 2, "3": 2}
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_dict_ms_next():
-    """
-    Feature: dict __ms_next__.
-    Description: support dict __ms_next__.
-    Expectation: No exception.
-    """
-    @jit
-    def foo(x, y):
-        m = {"a": x, "b": y, "c": 3}
-        _, a = m.__ms_next__
-        _, b = a.__ms_next__
-        return a, b
-
-    ret1, ret2 = foo(Tensor([1]), Tensor([2]))
-    assert ret1 == {"b": Tensor([2]), "c": 3}
-    assert ret2 == {"c": 3}

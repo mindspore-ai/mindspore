@@ -161,6 +161,16 @@ void RegCompositeOpsGroup(const py::module *m) {
   (void)py::class_<StarredUnpackMerge, MetaFuncGraph, std::shared_ptr<StarredUnpackMerge>>(*m, "StarredUnpackMerge_")
     .def(py::init<std::string &>());
 
+  // Reg IterConverter
+  (void)py::class_<IterConverter, MetaFuncGraph, std::shared_ptr<IterConverter>>(*m, "IterConverter_")
+    .def(py::init<std::string &>());
+
+  // Reg HasNext
+  (void)py::class_<HasNext, MetaFuncGraph, std::shared_ptr<HasNext>>(*m, "HasNext_").def(py::init<std::string &>());
+
+  // Reg Next
+  (void)py::class_<Next, MetaFuncGraph, std::shared_ptr<Next>>(*m, "Next_").def(py::init<std::string &>());
+
   // Reg VmapGeneralPreprocess
   (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
     *m, "VmapGeneralPreprocess_")

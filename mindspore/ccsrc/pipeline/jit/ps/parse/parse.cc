@@ -3212,7 +3212,11 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   top_block->AddPrevBlock(block);
   // Handle iter attribute.
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
-  AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
+  AnfNodePtr origin_iter_anf_node = ParseExprNode(block, iter_node);
+  MS_EXCEPTION_IF_NULL(origin_iter_anf_node);
+  AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
+  MS_EXCEPTION_IF_NULL(op_iter);
+  AnfNodePtr iter_anf_node = block->func_graph()->NewCNodeInOrder({op_iter, origin_iter_anf_node});
   MS_EXCEPTION_IF_NULL(iter_anf_node);
 
   // Create header graph.
@@ -3378,7 +3382,11 @@ FunctionBlockPtr Parser::ParseDictCompIter(const FunctionBlockPtr &block, const 
   top_block->AddPrevBlock(block);
   // Handle iter attribute.
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
-  AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
+  AnfNodePtr origin_iter_anf_node = ParseExprNode(block, iter_node);
+  MS_EXCEPTION_IF_NULL(origin_iter_anf_node);
+  AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
+  MS_EXCEPTION_IF_NULL(op_iter);
+  AnfNodePtr iter_anf_node = block->func_graph()->NewCNodeInOrder({op_iter, origin_iter_anf_node});
   MS_EXCEPTION_IF_NULL(iter_anf_node);
 
   // Create header graph.

@@ -547,46 +547,19 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
-    {kObjectTypeString,
-     {
-       {"__ms_iter__", prim::kPrimidentity},            // P.Identity
-       {"__ms_next__", std::string("str_next")},        // C.str_next
-       {"__ms_hasnext__", std::string("str_hasnext")},  // C.array_hasnext
-     }},
-    {kObjectTypeTuple,
-     {
-       {"__ms_iter__", prim::kPrimidentity},              // P.Identity
-       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
-       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-     }},
-    {kObjectTypeList,
-     {
-       {"__ms_iter__", prim::kPrimidentity},             // P.Identity
-       {"__ms_next__", std::string("list_next")},        // C.list_next
-       {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
-     }},
-    {kObjectTypeDictionary,
-     {
-       {"__ms_iter__", prim::kPrimDictGetKeys},          // P.DictGetKeys
-       {"__ms_next__", std::string("dict_next")},        // C.dict_next
-       {"__ms_hasnext__", std::string("dict_hasnext")},  // C.dict_hasnext
-     }},
     {kObjectTypeTensorType,
      {
-       {"shape", prim::kPrimShape},                       // C.shape_
-       {"dtype", prim::kPrimDType},                       // C.dtype_
-       {"size", std::string("size_")},                    // C.size_
-       {"ndim", std::string("ndim_")},                    // C.ndim_
-       {"H", std::string("H")},                           // C.H
-       {"T", std::string("T_")},                          // C.T_
-       {"itemsize", std::string("itemsize_")},            // C.itemsize_
-       {"nbytes", std::string("nbytes_")},                // C.nbytes_
-       {"strides", std::string("strides_")},              // C.strides_
-       {"mH", std::string("adjoint")},                    // C.adjoint
-       {"mT", std::string("mT")},                         // C.mT_
-       {"__ms_iter__", prim::kPrimidentity},              // C.array_iter
-       {"__ms_next__", std::string("array_next")},        // C.array_next
-       {"__ms_hasnext__", std::string("array_hasnext")},  // C.array_hasnext
+       {"shape", prim::kPrimShape},             // C.shape_
+       {"dtype", prim::kPrimDType},             // C.dtype_
+       {"size", std::string("size_")},          // C.size_
+       {"ndim", std::string("ndim_")},          // C.ndim_
+       {"H", std::string("H")},                 // C.H
+       {"T", std::string("T_")},                // C.T_
+       {"itemsize", std::string("itemsize_")},  // C.itemsize_
+       {"nbytes", std::string("nbytes_")},      // C.nbytes_
+       {"strides", std::string("strides_")},    // C.strides_
+       {"mH", std::string("adjoint")},          // C.adjoint
+       {"mT", std::string("mT")},               // C.mT_
      }},
     {kObjectTypeRowTensorType,
      {
