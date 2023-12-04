@@ -145,7 +145,7 @@ public class MSContext {
     }
 
     /**
-     * set the number of threads at runtime. 
+     * set the number of threads at runtime.
      * If you haven't init context before, it will do nothing.
      *
      * @param threadNum the number of threads at runtime.
@@ -159,7 +159,7 @@ public class MSContext {
     }
 
     /**
-     * get the current thread number setting. 
+     * get the current thread number setting.
      * If you haven't init context, it will return {@value  ERROR_VALUE}.
      *
      * @return The current thread number setting.
@@ -175,7 +175,7 @@ public class MSContext {
     }
 
     /**
-     * set the parallel number of operators at runtime. 
+     * set the parallel number of operators at runtime.
      * If you haven't init context before, it will do nothing.
      *
      * @param parallelNum parallelNum the parallel number of operators at runtime.
@@ -189,7 +189,7 @@ public class MSContext {
     }
 
     /**
-     * get the current operators parallel number setting. 
+     * get the current operators parallel number setting.
      * If you haven't init context, it will return {@value  ERROR_VALUE}.
      *
      * @return The current operators parallel number setting.
@@ -205,7 +205,7 @@ public class MSContext {
     }
 
     /**
-     * set the thread affinity to CPU cores. 
+     * set the thread affinity to CPU cores.
      * If you haven't init context before, it will do nothing.
      *
      * @param mode: 0: no affinities, 1: big cores first, 2: little cores first
@@ -220,7 +220,7 @@ public class MSContext {
 
 
     /**
-     * get the thread affinity of CPU cores. 
+     * get the thread affinity of CPU cores.
      * If you haven't init context, it will return {@value  ERROR_VALUE}.
      *
      * @return Thread affinity to CPU cores. 0: no affinities, 1: big cores first, 2: little cores first
@@ -236,7 +236,7 @@ public class MSContext {
     }
 
     /**
-     * set the thread lists to CPU cores. 
+     * set the thread lists to CPU cores.
      * If coreList and mode are set by setThreadAffinity at the same time, the coreList is effective, but the
      * mode is not effective.
      * If you haven't init context before, it will do nothing.
@@ -257,7 +257,7 @@ public class MSContext {
     }
 
     /**
-     * get the thread lists of CPU cores. 
+     * get the thread lists of CPU cores.
      * If you haven't init context, it will return {@value  ERROR_VALUE}.
      *
      * @return An {@code ArrayList<Integer>} of thread core lists.
@@ -274,7 +274,7 @@ public class MSContext {
     }
 
     /**
-     * set the status whether to perform model inference or training in parallel. 
+     * set the status whether to perform model inference or training in parallel.
      * If you haven't init context before, it will do nothing.
      *
      * @param isParallel: true, parallel; false, not in parallel.
@@ -288,7 +288,7 @@ public class MSContext {
     }
 
     /**
-     * get the status whether to perform model inference or training in parallel. 
+     * get the status whether to perform model inference or training in parallel.
      * If you haven't init context, it will also return false.
      *
      * @return boolean value that indicates whether in parallel.

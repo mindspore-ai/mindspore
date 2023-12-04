@@ -60,11 +60,11 @@ public class TrainCfg {
     /**
      * Init train config specified loss name.
      *
-     * @param loss_name loss name used for split inference and train part.
+     * @param lossName loss name used for split inference and train part.
      * @return init status.
      */
-    public boolean init(String loss_name) {
-        this.trainCfgPtr = createTrainCfg(loss_name, 0, false);
+    public boolean init(String lossName) {
+        this.trainCfgPtr = createTrainCfg(lossName, 0, false);
         return this.trainCfgPtr != POINTER_DEFAULT_VALUE;
     }
 
