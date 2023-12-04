@@ -142,7 +142,8 @@ int ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float *
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
 
-  BroadcastMul(dy, x2_data, tile_data0, tile_data1, dx1, dy_size, arithmeticParameter_);  // broadcast directly to dx1
+  (void)BroadcastMul(dy, x2_data, tile_data0, tile_data1, dx1, dy_size,
+                     arithmeticParameter_);  // broadcast directly to dx1
   return RET_OK;
 }
 
