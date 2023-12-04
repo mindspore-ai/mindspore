@@ -61,7 +61,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
     return nullptr;
   }
   param->op_parameter_.destroy_func_ = DestroySplitParameter;
-  memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
+  (void)memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
   if (split_sizes_vector_ != nullptr && split_sizes_vector_->size() <= static_cast<uint32_t>(param->num_split_)) {
     int i = 0;
