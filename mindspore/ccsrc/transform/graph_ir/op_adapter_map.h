@@ -495,6 +495,9 @@ constexpr const char kNameEnvironDestroyAll[] = "EnvironDestroyAll";
 constexpr const char kNameEnvironGet[] = "EnvironGet";
 constexpr const char kNameEnvironSet[] = "EnvironSet";
 constexpr const char kNameNanToNum[] = "NanToNum";
+constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
+constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
+constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
 
 class OpAdapterDesc;
 
