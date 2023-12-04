@@ -366,6 +366,71 @@ TEST_F(KernelExecutorTest, TestConcat) {
                                  0.0001));
 }
 
+TEST_F(KernelExecutorTest, TestConv2D) {
+  auto op = std::make_shared<ops::Conv2D>();
+  const int batch = 10;
+  const int in_hw = 32;
+  const int out_hw = 30;
+  const int channel = 32;
+  const int kernel_size = 3;
+  op->set_out_channel(channel);
+  op->set_kernel_size({kernel_size, kernel_size});
+  op->set_stride({1, 1});
+  op->set_dilation({1, 1});
+  op->set_group(1);
+  std::vector<float> input_data(batch * in_hw * in_hw * channel, 1);
+  std::vector<mindspore::MSTensor> inputs;
+  std::vector<mindspore::MSTensor> outputs;
+  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {batch, in_hw, in_hw, channel},
+                            reinterpret_cast<void *>(input_data.data()),
+                            batch * in_hw * in_hw * channel * sizeof(float));
+  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32,
+                             {channel, kernel_size, kernel_size, channel}, reinterpret_cast<void *>(input_data.data()),
+                             channel * kernel_size * kernel_size * channel * sizeof(float));
+  input.SetFormat(mindspore::Format::NHWC);
+  weight.SetFormat(mindspore::Format::NHWC);
+  inputs.emplace_back(input);
+  inputs.emplace_back(weight);
+
+  ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
+  ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
+  std::vector<int64_t> shape{batch, out_hw, out_hw, channel};
+  ASSERT_EQ(outputs[0].Shape(), shape);
+}
+
+TEST_F(KernelExecutorTest, TestConv2DTranspose) {
+  auto op = std::make_shared<ops::Conv2DTranspose>();
+  const int batch = 10;
+  const int in_hw = 30;
+  const int out_hw = 32;
+  const int channel = 32;
+  const int kernel_size = 3;
+  op->set_in_channel(channel);
+  op->set_out_channel(channel);
+  op->set_kernel_size({kernel_size, kernel_size});
+  op->set_stride({1, 1});
+  op->set_dilation({1, 1});
+  op->set_group(1);
+  std::vector<float> input_data(batch * in_hw * in_hw * channel, 1);
+  std::vector<mindspore::MSTensor> inputs;
+  std::vector<mindspore::MSTensor> outputs;
+  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {batch, in_hw, in_hw, channel},
+                            reinterpret_cast<void *>(input_data.data()),
+                            batch * in_hw * in_hw * channel * sizeof(float));
+  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32,
+                             {channel, kernel_size, kernel_size, channel}, reinterpret_cast<void *>(input_data.data()),
+                             channel * kernel_size * kernel_size * channel * sizeof(float));
+  input.SetFormat(mindspore::Format::NHWC);
+  weight.SetFormat(mindspore::Format::NHWC);
+  inputs.emplace_back(input);
+  inputs.emplace_back(weight);
+
+  ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
+  ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
+  std::vector<int64_t> shape{batch, out_hw, out_hw, channel};
+  ASSERT_EQ(outputs[0].Shape(), shape);
+}
+
 TEST_F(KernelExecutorTest, TestDiv) {
   auto op = std::make_shared<ops::Div>();
   std::vector<float> input_data{-4, 5, 6};
