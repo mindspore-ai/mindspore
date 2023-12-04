@@ -92,8 +92,8 @@ int PoolingGradCPUKernel::DoExecute(int task_id) {
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
       auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
-      (void)MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
-                           output_ptr + task_id * stride * in_batch_size, count, pool_param, &compute_);
+      MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
+                     output_ptr + task_id * stride * in_batch_size, count, pool_param, &compute_);
     } else {
       input_ptr = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
       AvgPoolingGrad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
