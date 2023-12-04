@@ -270,11 +270,8 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
 }
 
 void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (common::GetEnv("MS_DEV_FORCE_ACL") != "1") {
-    if (std::any_of(output_formats.begin(), output_formats.end(),
-                    [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); })) {
-      common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
-    }
+  if (common::GetEnv("MS_DEV_FORCE_ACL") != "1" && AclHelper::NeedIdentityFlag(output_formats)) {
+    common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
   }
 }
 
@@ -702,6 +699,11 @@ bool AclHelper::IsNopNode(const CNodePtr &node) {
                                                       prim::kPrimFlattenGrad->name()};
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   return (nop_nodes.find(op_name) != nop_nodes.end());
+}
+
+bool AclHelper::NeedIdentityFlag(const std::vector<std::string> &formats) {
+  return std::any_of(formats.begin(), formats.end(),
+                     [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); });
 }
 }  // namespace transform
 }  // namespace mindspore
