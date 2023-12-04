@@ -35,7 +35,9 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${real_call_args}]() {
   const auto &workspace_device_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(gpu_kernel, device_context, op_name());
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
   // Do kernel launch
-  if (!gpu_kernel->Launch(inputs_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, nullptr)) {
+  auto &stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!gpu_kernel->Launch(inputs_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, stream)) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name();
   }
   MS_LOG(DEBUG) << "Launch end";
