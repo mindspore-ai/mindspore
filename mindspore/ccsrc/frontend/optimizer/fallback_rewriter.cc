@@ -354,7 +354,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
+    if (!allow_fallback_runtime || (!is_dict_output_ && !has_dict_inplace_)) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
     return nullptr;
