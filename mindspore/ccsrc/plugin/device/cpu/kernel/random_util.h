@@ -70,7 +70,8 @@ class SinglePhiloxRandom {
     return group_random_[group_random_idx_++];
   }
   uint64_t GenUint64() {
-    uint32_t lo = GenUint32(), hi = GenUint32();
+    uint32_t lo = GenUint32();
+    uint32_t hi = GenUint32();
     return lo | static_cast<uint64_t>(hi) << 32;
   }
   float GenFloat() {
@@ -78,7 +79,8 @@ class SinglePhiloxRandom {
     return Uint32ToFloat(u0);
   }
   double GenDouble() {
-    uint32_t lo = GenUint32(), hi = GenUint32();
+    uint32_t lo = GenUint32();
+    uint32_t hi = GenUint32();
     return Uint64ToDouble(lo, hi);
   }
 
