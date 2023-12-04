@@ -126,6 +126,11 @@ int InsertScaleForActivation(const FuncGraphPtr &func_graph, const CNodePtr &cno
     }
     scale_ratio = opt::BuildFloatVecParameterNode(func_graph, smooth_scales_fp32, cnode_name + "_scales");
   }
+  ShapeVector shape_vector;
+  shape_vector.push_back(1);
+  shape_vector.push_back(smooth_scales.size());
+  auto shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(shape_vector));
+  scale_ratio->abstract()->set_shape(shape_ptr);
   // Insert scale node
   InsertQuantNodeManager insert_manager;
   auto mul_cnode = insert_manager.NewMulNode(func_graph, cnode->input(kInputIndex + kPrimOffset), scale_ratio);
@@ -154,24 +159,29 @@ int InsertShiftForActivation(const FuncGraphPtr &func_graph, const CNodePtr &cno
     for (size_t i = 0; i < smooth_shift.size(); ++i) {
       shift_fp16[i] = static_cast<float16>(-smooth_shift[i]);
     }
-    shift_node = opt::BuildFloat16VecParameterNode(func_graph, shift_fp16, cnode_name + "_scales");
+    shift_node = opt::BuildFloat16VecParameterNode(func_graph, shift_fp16, cnode_name + "_shift");
   } else {
     std::vector<float> shift_fp32(smooth_shift.size());
     for (size_t i = 0; i < smooth_shift.size(); ++i) {
       shift_fp32[i] = -smooth_shift[i];
     }
-    shift_node = opt::BuildFloatVecParameterNode(func_graph, shift_fp32, cnode_name + "_scales");
+    shift_node = opt::BuildFloatVecParameterNode(func_graph, shift_fp32, cnode_name + "_shift");
   }
+  ShapeVector shape_vector;
+  shape_vector.push_back(1);
+  shape_vector.push_back(smooth_shift.size());
+  auto shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(shape_vector));
+  shift_node->abstract()->set_shape(shape_ptr);
   // Insert scale node
   InsertQuantNodeManager insert_manager;
-  auto mul_cnode = insert_manager.NewAddNode(func_graph, cnode->input(kInputIndex + kPrimOffset), shift_node);
-  CHECK_NULL_RETURN(mul_cnode);
+  auto add_cnode = insert_manager.NewAddNode(func_graph, cnode->input(kInputIndex + kPrimOffset), shift_node);
+  CHECK_NULL_RETURN(add_cnode);
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
   }
   CHECK_NULL_RETURN(manager);
-  manager->SetEdge(cnode, kInputIndex + kPrimOffset, mul_cnode);
+  manager->SetEdge(cnode, kInputIndex + kPrimOffset, add_cnode);
   return RET_OK;
 }
 

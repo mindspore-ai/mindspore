@@ -53,7 +53,7 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
 #endif
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather,
                                                             prim::kPrimMicroStepAllGather};
-static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend,
+static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend, prim::kPrimQuant,
                                                             std::make_shared<Primitive>("AscendAntiQuant")};
 // clang-format on
 

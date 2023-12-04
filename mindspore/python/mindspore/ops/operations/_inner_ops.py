@@ -102,6 +102,7 @@ class Quant(PrimitiveWithInfer):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.round_mode = validator.check_string(round_mode, ["Round", "Floor", "Ceil", "Trunc"],
                                                  "round_mode", self.name)
+        self.add_prim_attr("dst_type", mstype.int8)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -109,7 +110,7 @@ class Quant(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_subclass("input_x", x_type, mstype.tensor_type, self.name)
         validator.check_type_name("input_x", x_type, [mstype.float16, mstype.float32], self.name)
-        return mstype.int8
+        return self.get_attr_dict()['dst_type']
 
 
 class Lamb(PrimitiveWithInfer):
