@@ -172,17 +172,20 @@ class KVCacheImpl(TilingHelper):
             bs_idx = core_idx * self.each_core_bs_num + each_core_bs_idx
             # because we fused bs * num_head, we need get the real bs_idx
             valid_idx.set_as(index_ub[bs_idx // self.num_head])
-            dst_offset = bs_idx * dst_bs_stride + valid_idx * self.size_per_head
-            src_offset = each_core_bs_idx * src_bs_stride
-            if burst_len < 65536:
-                self.tik_inst.data_move(self.out_gm[dst_offset], cur_ub[src_offset], 0, 1, burst_len, 0, 0)
-            else:
-                nburst = 1
-                each_burst_len = burst_len
-                while each_burst_len > 65535:
-                    nburst += 1
-                    each_burst_len = burst_len // nburst
-                self.tik_inst.data_move(self.out_gm[dst_offset], cur_ub[src_offset], 0, nburst, each_burst_len, 0, 0)
+            with self.tik_inst.if_scope(valid_idx >= 0):
+                dst_offset = bs_idx * dst_bs_stride + valid_idx * self.size_per_head
+                src_offset = each_core_bs_idx * src_bs_stride
+                if burst_len < 65536:
+                    self.tik_inst.data_move(self.out_gm[dst_offset], cur_ub[src_offset],
+                                            0, 1, burst_len, 0, 0)
+                else:
+                    nburst = 1
+                    each_burst_len = burst_len
+                    while each_burst_len > 65535:
+                        nburst += 1
+                        each_burst_len = burst_len // nburst
+                    self.tik_inst.data_move(self.out_gm[dst_offset], cur_ub[src_offset], 0,
+                                            nburst, each_burst_len, 0, 0)
 
     # 'pylint: disable=too-many-arguments
     def compute_each_core(self, core_idx, core_bs_num):
