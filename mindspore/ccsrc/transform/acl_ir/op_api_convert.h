@@ -20,6 +20,7 @@
 #include <dlfcn.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -523,5 +524,46 @@ void ReleaseConvertTypes(const Tuple &t) {
   static constexpr auto size = std::tuple_size<Tuple>::value;
   CallRelease(t, std::make_index_sequence<size>{});
 }
+
+// return a Scalar with the input type
+#define MAKE_SCALAR(num, typeid, out)                                       \
+  switch (typeid) {                                                         \
+    case kNumberTypeFloat32: {                                              \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeFloat16: {                                              \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeFloat64: {                                              \
+      out = std::make_shared<FP64Imm>(static_cast<double>(num));            \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt8: {                                                 \
+      out = std::make_shared<Int8Imm>(static_cast<int8_t>(num));            \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt16: {                                                \
+      out = std::make_shared<Int16Imm>(static_cast<int16_t>(num));          \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt32: {                                                \
+      out = std::make_shared<Int32Imm>(static_cast<int>(num));              \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt64: {                                                \
+      out = std::make_shared<Int64Imm>(static_cast<int64_t>(num));          \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeBool: {                                                 \
+      out = std::make_shared<BoolImm>(static_cast<bool>(num));              \
+      break;                                                                \
+    }                                                                       \
+    default: {                                                              \
+      MS_LOG(EXCEPTION) << "Not support typeid " << TypeIdToString(typeid); \
+    }                                                                       \
+  }
+
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CONVERT_H_
