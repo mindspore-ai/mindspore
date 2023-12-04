@@ -62,6 +62,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/remove_tensor_to_scalar_or_tuple_ops.h"
 
 namespace mindspore {
 namespace opt {
@@ -79,6 +80,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
+  opt_ge_pm->AddPass(std::make_shared<opt::RemoveTensorToScalarOrTupleOps>());
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
