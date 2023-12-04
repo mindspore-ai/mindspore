@@ -26,6 +26,16 @@ namespace mindspore {
 namespace opt {
 namespace {
 static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
+  {"ArgMin",
+   {
+     "axis",
+     "output_type",
+   }},
+  {"ArgMaxV2",
+   {
+     "axis",
+     "output_type",
+   }},
   {"AvgPool",
    {
      "kernel_size",
@@ -72,6 +82,11 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
   {"ConcatV2",
    {
      "axis",
+   }},
+  {"CumSum",
+   {
+     "exclusive",
+     "reverse",
    }},
   {"ReduceAll",
    {
