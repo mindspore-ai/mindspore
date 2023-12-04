@@ -21,9 +21,10 @@ import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
-from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils
+from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
 from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
+from gen_aclnn_implement import gen_aclnn_kernel
 
 
 def get_op_name(operator_name, class_def):
@@ -740,6 +741,10 @@ namespace kernel {{
         Ascend = dispatch.get("Ascend")
         if Ascend is not None:  # KernelMod is provided by yaml, don't auto generate it.
             continue
+        _, _, none_tensor_exist = get_dtypes(operator_data)
+        if none_tensor_exist:
+            gen_aclnn_kernel(operator_name, auto=True)
+            continue
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         op_class = operator_data.get("class")
         if op_class and op_class.get("name") is not None:
@@ -747,7 +752,7 @@ namespace kernel {{
         inputs_outputs_num = len(operator_data.get("args")) + len(operator_data.get("returns"))
         aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
         reg_code += f"""
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num})"""
+MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num});"""
     reg_code += f"""
 }}  // namespace kernel
 }}  // namespace mindspore
@@ -760,7 +765,7 @@ def generate_aclnn_reg_file(work_path, yaml_str):
     Generate nnacl kernelmod register
     """
     tmp_register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/tmp_aclnn_kernel_register.cc'
-    register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/auto_aclnn_kernel_register.cc'
+    register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_kernel_register_auto.cc'
     reg_code = generate_aclnn_reg_code(yaml_str)
     with open(tmp_register_file, 'w') as reg_file:
         reg_file.write(cc_license_str + reg_code)

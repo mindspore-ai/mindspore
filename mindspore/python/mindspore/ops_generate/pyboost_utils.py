@@ -15,6 +15,7 @@
 """pyboost utils."""
 
 import os
+import logging
 from gen_utils import safe_load_yaml
 
 
@@ -266,6 +267,41 @@ def is_pyboost_enable(operator_data):
         if enable:
             return True
     return False
+
+
+def convert_types(inputs):
+    '''convert type to acl type'''
+    inputs_dtypes = {}
+    flag = False
+    for i in inputs:
+        inputs_dtypes[i] = inputs.get(i).get('dtype')
+        if inputs_dtypes[i] != 'tensor':
+            flag = True
+        if 'tuple' in inputs_dtypes[i]:
+            data_type = inputs_dtypes[i].split('[')[1].strip(']')
+            if  data_type == 'tensor':
+                logging.info("Not support tuple[tensor] input.")
+            elif data_type == 'int':
+                inputs_dtypes[i] = 'transform::aclIntArray *'
+            elif data_type == 'float':
+                inputs_dtypes[i] = 'transform::aclFloatArray *'
+            elif data_type == 'bool':
+                inputs_dtypes[i] = 'transform::aclBoolArray *'
+            else:
+                logging.warning("Not support tuple[%s]] input.", data_type)
+        if inputs_dtypes[i] == 'Number':
+            inputs_dtypes[i] = 'transform::aclScalar *'
+    return inputs_dtypes, flag
+
+
+def get_dtypes(op_yaml):
+    """get op inputs and outputs dtypes"""
+    inputs = op_yaml.get('args')
+    outputs = op_yaml.get('returns')
+    inputs_dtypes, flag_in = convert_types(inputs)
+    outputs_dtypes, flag_out = convert_types(outputs)
+    none_tensor_exist = (flag_in or flag_out)
+    return inputs_dtypes, outputs_dtypes, none_tensor_exist
 
 
 class AclnnUtils:
