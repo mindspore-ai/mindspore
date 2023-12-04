@@ -111,7 +111,8 @@ class FlashAttention(Cell):
         scaling_constant = math.sqrt(head_dim)
         if scaling_constant == 0:
             raise ValueError("the scaling constant must not be 0.")
-        self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "Ascend910"
+        self.dropout_rate = dropout_rate
+        self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "ascend910"
         if self.is_910A:
             self.scale_factor = Tensor([1. / math.sqrt(scaling_constant)], dtype=mstype.float16)
             self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
@@ -126,6 +127,10 @@ class FlashAttention(Cell):
                 high_precision=high_precision
             )
             self.flash_attention.add_prim_attr("primitive_target", "Ascend")
+            fa_strategies = ((dp, mp, 1, 1),
+                             (dp, mp, 1, 1),
+                             (dp, mp, 1, 1))
+            self.shard(fa_strategies)
         else:
             if alibi:
                 raise ValueError(f"When soc_version is not Ascend910A, alibi must be False")
@@ -170,46 +175,49 @@ class FlashAttention(Cell):
                                   such as MatMul. Default: None.
         :return:
         """
-        if in_strategy is None:
-            # default: dp=1, mp=1, construct inputs only contain query, key, value
-            in_strategy = (
-                (1, 1, 1, 1),
-                (1, 1, 1, 1),
-                (1, 1, 1, 1),
-            )
-        self.flash_attention.shard(in_strategy)
-        dp = in_strategy[0][0]
-        mp = in_strategy[0][1]
-        self.flash_attention.add_prim_attr("dev_matrix_shape", [dp, mp, 1, 1])
-        inputs_tensor_map = [
-            [3, 2, 1, 0],
-            [3, 2, 1, 0],
-            [3, 2, 1, 0],
-        ]
-        if self.have_attention_mask_batch:
-            inputs_tensor_map.append([3, 1, 0])
+        if self.is_910A:
+            if in_strategy is None:
+                # default: dp=1, mp=1, construct inputs only contain query, key, value
+                in_strategy = (
+                    (1, 1, 1, 1),
+                    (1, 1, 1, 1),
+                    (1, 1, 1, 1),
+                )
+            self.flash_attention.shard(in_strategy)
+            dp = in_strategy[0][0]
+            mp = in_strategy[0][1]
+            self.flash_attention.add_prim_attr("dev_matrix_shape", [dp, mp, 1, 1])
+            inputs_tensor_map = [
+                [3, 2, 1, 0],
+                [3, 2, 1, 0],
+                [3, 2, 1, 0],
+            ]
+            if self.have_attention_mask_batch:
+                inputs_tensor_map.append([3, 1, 0])
+            else:
+                inputs_tensor_map.append([-1, 1, 0])
+
+            input_empty_args_num = 2
+            # dropout_mask
+            if self.dropout_rate > 1e-5:
+                input_empty_args_num -= 1
+                inputs_tensor_map.append([3, 2, 1, 0])
+
+            if self.alibi:
+                input_empty_args_num -= 1
+                inputs_tensor_map.append([3, 2, 1, 0])
+
+            self.flash_attention.add_prim_attr("inputs_tensor_map", inputs_tensor_map)
+
+            self.flash_attention.add_prim_attr("outputs_tensor_map", [
+                [3, 2, 1, 0],  # O
+                [3, 2, 1],  # L
+                [3, 2, 1]  # M
+            ])
+            self.flash_attention.add_prim_attr("as_loss_divisor", 0)
+            self.flash_attention.add_prim_attr("empty_mirror_ops", input_empty_args_num)
         else:
-            inputs_tensor_map.append([-1, 1, 0])
-
-        input_empty_args_num = 2
-        # dropout_mask
-        if self.dropout_rate > 1e-5:
-            input_empty_args_num -= 1
-            inputs_tensor_map.append([3, 2, 1, 0])
-
-        if self.alibi:
-            input_empty_args_num -= 1
-            inputs_tensor_map.append([3, 2, 1, 0])
-
-        self.flash_attention.add_prim_attr("inputs_tensor_map", inputs_tensor_map)
-
-        self.flash_attention.add_prim_attr("outputs_tensor_map", [
-            [3, 2, 1, 0],  # O
-            [3, 2, 1],  # L
-            [3, 2, 1]  # M
-        ])
-        self.flash_attention.add_prim_attr("as_loss_divisor", 0)
-        self.flash_attention.add_prim_attr("empty_mirror_ops", input_empty_args_num)
+            self.flash_attention.shard(in_strategy)
 
     def construct(self, query, key, value, attn_mask=None, alibi_mask=None):
         """FlashAttention forward
