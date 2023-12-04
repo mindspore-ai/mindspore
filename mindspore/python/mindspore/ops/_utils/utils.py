@@ -82,6 +82,7 @@ def dim_not_equal(dim1, dim2):
     """Compare dim in shape"""
     return dim1 != dim2 and dim1 >= 0 and dim2 >= 0
 
+
 def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
     validator.check_value_type("shape", x_shp, [tuple, list], prim_name)

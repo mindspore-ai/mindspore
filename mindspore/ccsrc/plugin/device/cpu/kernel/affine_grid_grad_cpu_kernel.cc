@@ -88,7 +88,8 @@ void AffineGridGradCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::Addre
 
   int64_t H = x_size_data[kXSizeH3D];
   int64_t W = x_size_data[kXSizeW3D];
-  Eigen::VectorXf vecX, vecY;
+  Eigen::VectorXf vecX;
+  Eigen::VectorXf vecY;
   (void)vecX.setZero(W, 1);
   (void)vecY.setZero(H, 1);
   if (W != 1) {
@@ -183,7 +184,9 @@ void AffineGridGradCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::Addre
   int64_t H = x_size_data[kXSizeH4D];
   int64_t W = x_size_data[kXSizeW4D];
 
-  Eigen::VectorXf vecX, vecY, vecZ;
+  Eigen::VectorXf vecX;
+  Eigen::VectorXf vecY;
+  Eigen::VectorXf vecZ;
   (void)vecX.setZero(W, 1);
   (void)vecY.setZero(H, 1);
   (void)vecZ.setZero(D, 1);

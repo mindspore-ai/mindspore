@@ -97,7 +97,8 @@ void CTCLossV2CpuKernelMod::LossCompute(const S *log_probs_p, S *log_alpha_p, co
     S log_a1 = log_alpha_p[log_alpha_it(batch, 0, s)];
     for (int64_t t = 1; t < input_length; t++) {
       S log_max = log_a1;
-      S log_a2, log_a3;
+      S log_a2;
+      S log_a3;
       if (s > 0) {
         log_a2 = log_alpha_p[log_alpha_it(batch, t - 1, s - 1)];
         log_max = std::max(log_a2, log_max);

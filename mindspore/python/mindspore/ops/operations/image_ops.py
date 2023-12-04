@@ -248,6 +248,7 @@ class ExtractGlimpse(Primitive):
     """
     @prim_attr_register
     def __init__(self, centered=True, normalized=True, uniform_noise=True, noise="uniform"):
+        super().__init__(name="ExtractGlimpse")
         self.init_prim_io_names(inputs=['x', 'size', 'offsets'], outputs=['output'])
         self.centered = centered
         self.normalized = normalized
@@ -359,6 +360,7 @@ class CropAndResize(Primitive):
     @prim_attr_register
     def __init__(self, method="bilinear", extrapolation_value=0.0):
         """Initialize CropAndResize"""
+        super().__init__(name="CropAndResize")
         self.init_prim_io_names(inputs=['x', 'boxes', 'box_index', 'crop_size'], outputs=['y'])
         validator.check_value_type("method", method, [str], self.name)
         validator.check_string(method, ["bilinear", "nearest", "bilinear_v2"], "method", self.name)

@@ -102,7 +102,8 @@ void ComputeGrad(const scalar_t *log_probs, const NdTensorIterator<kDim3> &log_p
     for (int64_t s = 2 * target_length; s >= 0; s--) {
       scalar_t lb1 = log_beta[log_beta_it(b, t + 1, s)];
       scalar_t lbmax = lb1;
-      scalar_t lb2, lb3;
+      scalar_t lb2;
+      scalar_t lb3;
       auto current_target_prime = get_target_prime(targets, tg_batch_offset, s, blank_);
       if (s < target_mul * target_length) {
         lb2 = log_beta[log_beta_it(b, t + 1, s + 1)];

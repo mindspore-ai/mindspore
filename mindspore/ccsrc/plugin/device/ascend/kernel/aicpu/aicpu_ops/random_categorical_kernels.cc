@@ -159,7 +159,8 @@ uint32_t RandomCategoricalKernel::DoComputeForEachType(T input_type, S output_ty
 }
 
 uint32_t RandomCategoricalKernel::ParseKernelParam() {
-  clock_t start, end;
+  clock_t start;
+  clock_t end;
   start = clock();
 
   // start random categorical

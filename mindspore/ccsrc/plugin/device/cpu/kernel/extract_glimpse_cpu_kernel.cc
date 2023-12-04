@@ -147,7 +147,8 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   uint64_t image_height = static_cast<uint64_t>(input_shape_[1]);
   uint64_t image_width = static_cast<uint64_t>(input_shape_[kInputIndex3]);
   uint64_t channels = static_cast<uint64_t>(input_shape_[kInputIndex4]);
-  uint64_t g_height = static_cast<uint64_t>(ss_data[0]), g_width = static_cast<uint64_t>(ss_data[1]);
+  uint64_t g_height = static_cast<uint64_t>(ss_data[0]);
+  uint64_t g_width = static_cast<uint64_t>(ss_data[1]);
   uint64_t size1 = image_width * image_height * channels;
   uint64_t size2 = image_width * channels;
   uint64_t size3 = g_height * g_width * channels;
@@ -162,8 +163,10 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       float y = loc.second;
       auto task = [&](int64_t st, int64_t ed) {
         for (int64_t v = st; v < ed; v++) {
-          int64_t j = v / static_cast<int64_t>(g_width), k = v % static_cast<int64_t>(g_width);
-          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j), b = static_cast<uint64_t>(FloatToLong(y) + k);
+          int64_t j = v / static_cast<int64_t>(g_width);
+          int64_t k = v % static_cast<int64_t>(g_width);
+          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j);
+          uint64_t b = static_cast<uint64_t>(FloatToLong(y) + k);
           uint64_t pos_y = i * size3 + static_cast<int64_t>(j) * size4 + static_cast<int64_t>(k) * channels;
           if (a >= image_height || b >= image_width) {
             for (uint64_t u = 0; u < channels; u++) {
@@ -190,8 +193,10 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         float x = loc.first;
         float y = loc.second;
         for (uint64_t v = 0; v < g_size; v++) {
-          int64_t j = static_cast<int64_t>(v / g_width), k = static_cast<int64_t>(v % g_width);
-          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j), b = static_cast<uint64_t>(FloatToLong(y) + k);
+          int64_t j = static_cast<int64_t>(v / g_width);
+          int64_t k = static_cast<int64_t>(v % g_width);
+          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j);
+          uint64_t b = static_cast<uint64_t>(FloatToLong(y) + k);
           uint64_t pos_y = i * size3 + static_cast<int64_t>(j) * size4 + static_cast<int64_t>(k) * channels;
           if (a >= image_height || b >= image_width) {
             for (uint64_t u = 0; u < channels; u++) {
