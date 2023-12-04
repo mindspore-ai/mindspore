@@ -287,8 +287,10 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
 void TensorPrintStdOut(const acltdtChannelHandle *) {
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
+  int wait_us = 100;           // wait 100us for receive data
+  int receive_timeout = 2000;  // wait time of 2000 ms when there is no data
   while (true) {
-    usleep(100);
+    usleep(wait_us);
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -302,11 +304,11 @@ void TensorPrintStdOut(const acltdtChannelHandle *) {
 
         if (acl_handle == nullptr) {
           ret = -1;
-          MS_LOG(WARNING) << "acl_handle is nullptr or has destroyed.";
+          MS_LOG(INFO) << "acl_handle is nullptr or has destroyed.";
           break;
         }
         // 2000 ms timeout
-        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 2000);
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, receive_timeout);
       }
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         break;
@@ -341,8 +343,10 @@ void TensorPrintOut2File(const acltdtChannelHandle *, const std::string &print_f
 
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
+  int wait_us = 100;           // wait 100us for receive data
+  int receive_timeout = 2000;  // wait time of 2000 ms when there is no data
   while (true) {
-    usleep(100);
+    usleep(wait_us);
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -360,7 +364,7 @@ void TensorPrintOut2File(const acltdtChannelHandle *, const std::string &print_f
           break;
         }
         // 2000 ms timeout
-        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 2000);
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, receive_timeout);
       }
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         break;
