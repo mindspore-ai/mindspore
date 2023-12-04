@@ -158,7 +158,9 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
                                << " should have at least one output, but got 0."
                                << trace::DumpSourceLines(all_to_all_v);
   }
-  std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), all_to_all_v};
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(static_cast<int64_t>(concat_dim)));
+  std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), all_to_all_v,
+                                          axis_node};
   auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
   auto single_shape = common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
@@ -171,8 +173,6 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   single_shape[concat_idx] *= split_count;
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)},
                                               {single_shape}, concat.get());
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(concat_dim), concat);
   return concat;
 }
 

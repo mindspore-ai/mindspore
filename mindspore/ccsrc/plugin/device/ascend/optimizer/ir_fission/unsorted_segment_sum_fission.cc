@@ -38,6 +38,8 @@ CNodePtr UnsortedSegmentSumFission::CreateConcatD(const FuncGraphPtr &graph, con
   for (size_t i = 0; i < pad_dim_size; ++i) {
     concat_inputs.push_back(x_input);
   }
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(static_cast<int64_t>(shape.size() - 1)));
+  concat_inputs.push_back(axis_node);
   auto concat = NewCNode(concat_inputs, graph);
   MS_EXCEPTION_IF_NULL(concat);
   concat->set_scope(sum->scope());
@@ -45,8 +47,8 @@ CNodePtr UnsortedSegmentSumFission::CreateConcatD(const FuncGraphPtr &graph, con
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(sum, 0)}, {shape},
                                               concat.get());
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(shape.size() - 1)), concat);
-  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(pad_dim_size)}), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes,
+                               MakeValue(std::vector<int64_t>{SizeToLong(pad_dim_size), (int64_t)-1}), concat);
   return concat;
 }
 
