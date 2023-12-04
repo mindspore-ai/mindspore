@@ -2,6 +2,44 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I7R3R5] 修复昇腾平台ResNet-50网络精度劣化问题。
+- [#I8A9RH] 修复昇腾平台DBNet（ResNet-50）网络精度劣化问题。
+- [#I8B8IW] 修复多维Tensor赋值越界导致段错误的问题。
+- [#I8J0F4] 修复多维Tensor扩展维度在动态图执行失败的问题。
+- [#I87P3P] 修复昇腾平台二次训练编译缓存加载失败的问题。
+- [#I86GP9] 修复昇腾平台UNet3D网络推理精度劣化问题。
+- [#I89B4K] 修复Windows平台动态图动态rank执行卡住的问题。
+- [#I8CX0C] 修复昇腾平台上动态图混合精度模式下偶现失败的问题。
+- [#I8BGCF] 修复昇腾平台AIRNet网络动态图模式下执行出现段错误的问题。
+- [#I8L5DS] 修复昇腾平台ResNet-50图像分割网络动态图执行慢的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+yufan, dingcheng, lvzhangcheng, zhunaipan, fangwenyi, weiyang, changzherui, chujinjin, zangqingxiang, yuchaojie, wuweikang, tanghuikang, xiaoyao, huangbinjian, zhoupeichen, chenfei_mindspore, hedongdong, wangnan, zhengzuohe, yanghaoran, zouliqin, luoyang, liuchongmin, lujiale, machenggui, wangcong, lixiangyi, wangting, huangyong
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I88055] 修复MindSpore Lite推理gridsample算子format设置错误的问题。
+- [#I8D80Y] 修复MindSpore Lite推理单算子调用流程资源释放异常的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+zhanghaibo, wangsiyuan, yefeng, wangshaocong, chenjianping
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.0 Release Notes
 
 ### 主要特性和增强
