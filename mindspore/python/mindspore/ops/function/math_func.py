@@ -13356,9 +13356,10 @@ def take(input, indices, axis=None, mode='clip'):
             the flattened input tensor is used. Default: ``None`` .
         mode (str, optional): Support ``'raise'``, ``'wrap'``, ``'clip'``.
 
-            - ``raise``: Raises an error;
+            - ``raise``: When any value of `indices` exceeds the index range of `input` , an error will be thrown.
 
-            - ``wrap``: Wraps around;
+            - ``wrap``: When any value of `indices` exceeds the index range of `input` , the element will be retrieved
+              from the beginning of `input` again.
 
             - ``clip``: Clips to the range. ``'clip'`` mode means that all indices that are
               too large are replaced by the index that addresses the last element
