@@ -70,7 +70,7 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_->device_context_key().device_name_) {
+  if (IsEnableRefMode() && device_name_in_address != device_context_->device_context_key().device_name_) {
     MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
                       << ", type name in context:" << device_context_->device_context_key().device_name_;
   }
