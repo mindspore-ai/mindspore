@@ -197,7 +197,8 @@ void InsertInterleavedNodesDepend(const FuncGraphManagerPtr &manager,
 }
 
 void InsertDependBetweenInterleavedNodes(const FuncGraphManagerPtr &manager,
-                                         const interleaved_node_pair_vector &micro_interleaved_node_list) {
+                                         const interleaved_node_pair_vector &micro_interleaved_node_list,
+                                         bool add_second_depend = false) {
   for (size_t i = 0; i + 1 < micro_interleaved_node_list.size(); ++i) {
     auto comm_node_list = micro_interleaved_node_list[i].second;
     auto next_comm_node_list = micro_interleaved_node_list[i + 1].second;
@@ -208,9 +209,20 @@ void InsertDependBetweenInterleavedNodes(const FuncGraphManagerPtr &manager,
     std::vector<AnfNodePtr> depend1_inputs{NewValueNode(prim::kPrimDepend), next_comm_node_a_input_node, comm_node_b};
     auto depend_node1 = comm_node_b->func_graph()->NewCNode(depend1_inputs);
     depend_node1->set_abstract(next_comm_node_a_input_node->abstract()->Clone());
-    depend_node1->AddAttr("micro_interleaved_comm_depend", MakeValue(true));
+    depend_node1->AddAttr("micro_interleaved_comm_depend1", MakeValue(true));
     MS_EXCEPTION_IF_NULL(depend_node1);
     manager->Replace(next_comm_node_a_input_node, depend_node1);
+    if (!add_second_depend) {
+      return;
+    }
+    // comm_node_a -> comm_node_b
+    auto comm_node_a = comm_node_list[0];
+    auto comm_node_b_input_node = comm_node_b->input(1)->cast<CNodePtr>();
+    std::vector<AnfNodePtr> depend2_inputs{NewValueNode(prim::kPrimDepend), comm_node_b_input_node, comm_node_a};
+    auto depend_node2 = comm_node_a->func_graph()->NewCNode(depend2_inputs);
+    depend_node2->set_abstract(comm_node_b_input_node->abstract()->Clone());
+    depend_node2->AddAttr("micro_interleaved_comm_depend2", MakeValue(true));
+    manager->Replace(comm_node_b_input_node, depend_node2);
   }
 }
 
@@ -329,7 +341,7 @@ void MicroInterleavedOrderControlProcess(const FuncGraphManagerPtr &manager,
   // find the fp_begin node
   InsertDependForBegin(manager, micro_interleaved_forward_node_list);
   InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
-  InsertDependBetweenInterleavedNodes(manager, micro_interleaved_forward_node_list);
+  InsertDependBetweenInterleavedNodes(manager, micro_interleaved_forward_node_list, true);
   InsertDependForEnd(manager, micro_interleaved_forward_node_list);
   InsertDependForBegin(manager, micro_interleaved_backward_node_list);
   InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
