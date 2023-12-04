@@ -2,6 +2,44 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I7R3R5] Fixed the problem that the network precision of the ResNet-50 on the Ascend platform deteriorates.
+- [#I8A9RH] Fixed an issue where the DBNet(ResNet-50) network precision on the Ascend platform deteriorates.
+- [#I8B8IW] Fixed the segment error caused by out-of-bounds multi-dimensional tensor assignment.
+- [#I8J0F4] Fixed an issue where the multidimensional Tensor extension dimension fails to be executed in the dynamic graph.
+- [#I87P3P] Fixed an issue where the compilation cache fails to be loaded during secondary training on the Ascend platform.
+- [#I86GP9] Fixed an issue where the UNet3D network inference precision deteriorates on the Ascend platform.
+- [#I89B4K] Fixed an issue where the dynamic rank execution of dynamic graphs on the Windows platform is suspended.
+- [#I8CX0C] Fixed an issue where dynamic images occasionally fail in mixed precision mode on the Ascend platform.
+- [#I8BGCF] Fixed an issue where a segment error occurs when the command is executed in dynamic diagram mode of the AirNet network on the Ascend platform.
+- [#I8L5DS] Fixed an issue where the ResNet-50 image segmentation network dynamic image is executed slowly on the Ascend platform.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+yufan, dingcheng, lvzhangcheng, zhunaipan, fangwenyi, weiyang, changzherui, chujinjin, zangqingxiang, yuchaojie, wuweikang, tanghuikang, xiaoyao, huangbinjian, zhoupeichen, chenfei_mindspore, hedongdong, wangnan, zhengzuohe, yanghaoran, zouliqin, luoyang, liuchongmin, lujiale, machenggui, wangcong, lixiangyi, wangting, huangyong
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I88055] Fixed a function issue caused by incorrect format setting of the gridsample operator in MindSpore Lite inference.
+- [#I8D80Y] The MindSpore Lite inference single-operator invoking process resources are not released and exits abnormally.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+zhanghaibo, wangsiyuan, wangshaocong, chenjianping
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.0 Release Notes
 
 ### Major Features and Improvements
