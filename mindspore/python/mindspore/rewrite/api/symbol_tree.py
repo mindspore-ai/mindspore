@@ -95,11 +95,11 @@ class SymbolTree:
         - Parsing loop statements is not currently supported.
         - Parsing decorator syntax is not currently supported.
         - Parsing class variable syntax is not currently supported. If class variable uses external data,
-            the network after rewrite may be missing data.
+          the network after rewrite may be missing data.
         - Parsing local classes and embedded classes is not currently supported, that is, the definition
-            of classes need to be placed on the outermost layer.
+          of classes need to be placed on the outermost layer.
         - Parsing closure syntax is not currently supported, that is, the definition of out-of-class
-            functions need to be placed at the outermost layer.
+          functions need to be placed at the outermost layer.
         - Parsing lambda expression syntax is not currently supported.
 
         For statements that do not support parsing, rewrite will generate nodes of type `NodeType.Python`
