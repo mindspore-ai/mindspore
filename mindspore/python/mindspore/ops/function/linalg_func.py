@@ -28,9 +28,11 @@ from mindspore._c_expression import Tensor as Tensor_
 from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
-
 __all__ = ['cond', 'eig', 'eigvals', 'geqrf', 'svd', 'pinv', 'qr']
 
+dtype_ = P.DType()
+geqrf_ = P.Geqrf()
+slice_ = P.Slice()
 
 def cond(A, p=None):
     r"""
@@ -203,8 +205,7 @@ def geqrf(input):
         >>> print(tau)
         [1.8944271 0.       ]
     """
-    geqrf_ops = _get_cache_prim(P.Geqrf)()
-    return geqrf_ops(input)
+    return geqrf_(input)
 
 
 def svd(input, full_matrices=False, compute_uv=True):
@@ -332,7 +333,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     x_shape = F.shape(x)
     if len(x_shape) < 2:
         raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
-    x_dtype = _get_cache_prim(P.DType)()(x)
+    x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
     _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
 
@@ -422,7 +423,7 @@ def _narrow(x, axis, start, length):
     begins[axis] = start
     sizes = list(x.shape)
     sizes[axis] = length
-    return P.Slice()(x, begins, sizes)
+    return slice_(x, begins, sizes)
 
 
 def _nd_transpose(a):
