@@ -22,14 +22,6 @@ thread_local int g_hash_offset = 0;
 
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
-void GatherInfo(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
-  auto tensor = tensor_and_trans.first;
-  auto trans = tensor_and_trans.second;
-  GatherInfo(tensor);
-  // trans
-  MemcpyToBuf(&trans, 1);
-}
-
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr) {
     return;
@@ -67,6 +59,14 @@ void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
 
+void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  GatherInfo(tensor);
+  // trans
+  MemcpyToBuf(&trans, 1);
+}
+
 void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
     return;
@@ -97,15 +97,12 @@ void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
   auto storage_info = tensor->storage_info();
   if (storage_info != nullptr) {
     // strides
-    MemcpyToBuf(",", 1);
     MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
 
     // offset
-    MemcpyToBuf(",", 1);
     MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
 
     // origin shape
-    MemcpyToBuf(",", 1);
     MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
 
@@ -127,10 +124,6 @@ void GatherInfo(const std::vector<TensorPtr> &tensors) {
     GatherInfo(tensor);
   }
 }
-
-void GatherInfo(const std::vector<int64_t> &values) { MemcpyToBuf(values.data(), values.size() * sizeof(int64_t)); }
-
-void GatherInfo(const std::vector<float> &values) { MemcpyToBuf(values.data(), values.size() * sizeof(int64_t)); }
 
 void GatherInfo(const ScalarPtr &scalar) {
   MS_EXCEPTION_IF_NULL(scalar);

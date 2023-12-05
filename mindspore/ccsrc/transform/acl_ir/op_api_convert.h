@@ -366,8 +366,24 @@ inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
   if (int_array.empty()) {
     MS_LOG(ERROR) << "int array is empty!";
   }
-  static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-  return aclCreateIntArray(int_array.data(), int_array.size());
+  static OpApiTensorConverter converter;
+  return converter.CreateIntArray(int_array);
+}
+
+inline aclFloatArray *ConvertType(const std::vector<float> &float_array) {
+  if (float_array.empty()) {
+    MS_LOG(ERROR) << "float array is empty!";
+  }
+  static OpApiTensorConverter converter;
+  return converter.CreateFloatArray(float_array);
+}
+
+inline aclBoolArray *ConvertType(const std::vector<uint8_t> &bool_array) {
+  if (bool_array.empty()) {
+    MS_LOG(ERROR) << "bool array is empty!";
+  }
+  static OpApiTensorConverter converter;
+  return converter.CreateBoolArray(bool_array);
 }
 
 inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {
@@ -395,7 +411,7 @@ inline aclTensorList *ConvertType(const std::vector<mindspore::kernel::KernelTen
 inline aclScalar *ConvertType(const ScalarPtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   aclScalar *acl_scalar;
-  OpApiTensorConverter converter;
+  static OpApiTensorConverter converter;
   if (value->isa<BoolImm>()) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
@@ -414,6 +430,8 @@ inline aclDataType ConvertType(const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(type);
   return AclConverter::ConvertType(type->type_id());
 }
+
+inline aclDataType ConvertType(TypeId type_id) { return AclConverter::ConvertType(type_id); }
 
 inline const char *ConvertType(const std::string &value) { return value.c_str(); }
 
@@ -434,7 +452,7 @@ T ConvertKernelTensor(mindspore::kernel::KernelTensor *tensor) {
 }
 
 template <>
-inline aclScalar *ConvertKernelTensor<aclScalar *>(mindspore::kernel::KernelTensor *tensor) {
+inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto value_ptr = tensor->GetValueTrack();
   if (!value_ptr || !value_ptr->isa<Scalar>()) {
@@ -442,28 +460,31 @@ inline aclScalar *ConvertKernelTensor<aclScalar *>(mindspore::kernel::KernelTens
   }
   auto scalar_ptr = value_ptr->cast<ScalarPtr>();
   MS_EXCEPTION_IF_NULL(scalar_ptr);
-  return ConvertType(scalar_ptr);
+  return scalar_ptr;
 }
 
 template <>
-inline aclIntArray *ConvertKernelTensor<aclIntArray *>(mindspore::kernel::KernelTensor *tensor) {
+inline std::vector<int64_t> ConvertKernelTensor<std::vector<int64_t>>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  OpApiTensorConverter converter;
-  return converter.CreateIntArray(tensor->GetValueWithCheck<std::vector<int64_t>>());
+  return tensor->GetValueWithCheck<std::vector<int64_t>>();
 }
 
 template <>
-inline aclFloatArray *ConvertKernelTensor<aclFloatArray *>(mindspore::kernel::KernelTensor *tensor) {
+inline std::vector<float> ConvertKernelTensor<std::vector<float>>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  OpApiTensorConverter converter;
-  return converter.CreateFloatArray(tensor->GetValueWithCheck<std::vector<float>>());
+  return tensor->GetValueWithCheck<std::vector<float>>();
 }
 
 template <>
-inline aclBoolArray *ConvertKernelTensor<aclBoolArray *>(mindspore::kernel::KernelTensor *tensor) {
+inline std::vector<uint8_t> ConvertKernelTensor<std::vector<uint8_t>>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  OpApiTensorConverter converter;
-  return converter.CreateBoolArray(tensor->GetValueWithCheck<std::vector<uint8_t>>());
+  return tensor->GetValueWithCheck<std::vector<uint8_t>>();
+}
+
+template <>
+inline TypeId ConvertKernelTensor<TypeId>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->dtype_id();
 }
 
 inline void Release(aclTensor *p) {
