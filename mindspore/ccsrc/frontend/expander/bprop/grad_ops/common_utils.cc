@@ -523,16 +523,22 @@ DEF_PURE_SHAPE_CALC(reduce_shape_shapecalc)
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
     auto r_shape = ReduceShape(x_shape, axis_value);
-    return {r_shape};
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
   });
 NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims) {
   auto grad = dout;
+  auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
   if (!keep_dims) {
-    auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
     grad = ib->Reshape(grad, ib->TensorToTuple(calc_res[0]));
+  }
+  auto tile_scaling = calc_res[1];
+  if (tile_scaling->isa<ValueNode>() || IsDynamic(x->shape())) {
+    return ib->Tile(grad, tile_scaling);
   }
   return ib->BroadcastTo(grad, x);
 }
