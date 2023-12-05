@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,9 +26,15 @@ from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
-from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.common.api import _function_forbid_reuse
 
+
+cast_ = P.Cast()
+log_ = P.Log()
+real_div_ = P.RealDiv()
+reshape_ = P.Reshape()
+shape_ = P.Shape()
+top_k_ = P.TopK()
 
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
@@ -872,7 +878,6 @@ def rand(*size, dtype=None, seed=None):
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand')
     rand_op = P.UniformReal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -920,7 +925,6 @@ def rand_like(input, seed=None, *, dtype=None):
     if dtype not in mstype.float_type:
         raise ValueError(f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand_like')
     rand_op = P.UniformReal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -965,7 +969,6 @@ def randn(*size, dtype=None, seed=None):
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'randn', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn')
     rand_op = P.StandardNormal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1013,7 +1016,6 @@ def randn_like(input, seed=None, *, dtype=None):
     if dtype not in mstype.float_type:
         raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
-    cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn_like')
     rand_op = P.StandardNormal(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1067,7 +1069,6 @@ def randint(low, high, size, seed=None, *, dtype=None):
     if not isinstance(high, int) or isinstance(high, bool):
         raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     seed1, seed2 = _get_seed(seed, 'randint')
-    cast_ = P.Cast()
     rand_op = P.UniformInt(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     low_ = Tensor(low, mstype.int32)
@@ -1125,7 +1126,6 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
-    cast_ = P.Cast()
     low_ = Tensor(low, mstype.int32)
     high_ = Tensor(high, mstype.int32)
     size_ = Tensor(size, mstype.int32)
@@ -1277,35 +1277,30 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> # [[0 0 0 0 0 0 0 0 1 0]
         >>> #  [1 1 1 1 1 0 1 1 1 1]]
     """
-    shape = _get_cache_prim(P.Shape)()
-    reshape = _get_cache_prim(P.Reshape)()
-
     def _check_valid_dim(dim, name):
         if dim not in (1, 2):
             raise ValueError(f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
 
-    _check_valid_dim(len(shape(input)), "multinomial")
+    _check_valid_dim(len(shape_(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
-        if shape(input)[-1] < num_samples:
+        if shape_(input)[-1] < num_samples:
             const_utils.raise_value_error(f"For 'multinomial', the 'num_samples' must be less than "
                                           f"the last dimension of input without 'replacement', "
                                           f"but got 'num_samples': {num_samples} and "
                                           f"'replacement': {replacement}")
         n_dist = 1
-        if len(shape(input)) > 1:
-            n_dist = shape(input)[-2]
+        if len(shape_(input)) > 1:
+            n_dist = shape_(input)[-2]
         random_uniform_real = P.UniformReal(seed1, seed2)
         random_cache_op = _set_prim_op_user_data(random_uniform_real, "random_cache", False)
-        random_uniform = random_cache_op((n_dist * shape(input)[-1],))
+        random_uniform = random_cache_op((n_dist * shape_(input)[-1],))
         if n_dist != 1:
-            random_uniform = reshape(random_uniform, (n_dist, shape(input)[-1]))
-        real_div = _get_cache_prim(P.RealDiv)()
-        log = _get_cache_prim(P.Log)()
-        top_k = _get_cache_prim(P.TopK)()
+            random_uniform = reshape_(random_uniform, (n_dist, shape_(input)[-1]))
 
-        vals = real_div(log(random_uniform), input + 1e-6)
-        _, indices = top_k(vals, num_samples)
+
+        vals = real_div_(log_(random_uniform), input + 1e-6)
+        _, indices = top_k_(vals, num_samples)
         return indices
     random_nomial = P.Multinomial(seed1, seed2)
     random_nomial = _set_prim_op_user_data(random_nomial, "random_cache", False)

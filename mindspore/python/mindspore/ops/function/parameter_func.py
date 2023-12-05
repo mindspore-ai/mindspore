@@ -20,6 +20,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 
 
 assign_sub_ = P.AssignSub()
+assign_add_ = P.AssignAdd()
 
 
 def assign_sub(variable, value):
@@ -67,9 +68,6 @@ def assign_sub(variable, value):
         [-99]
     """
     return assign_sub_(variable, value)
-
-
-assign_add_ = P.AssignAdd()
 
 
 def assign_add(variable, value):
