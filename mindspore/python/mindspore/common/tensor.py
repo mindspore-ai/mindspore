@@ -643,6 +643,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [[1 3]
             [2 4]]
         """
+        if self.ndim <= 1:
+            return self
         return self.transpose()
 
     @staticmethod
