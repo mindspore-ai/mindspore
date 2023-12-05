@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 
 #include <string>
+#include <vector>
 #include "transform/acl_ir/op_api_convert.h"
 
 namespace mindspore::transform {
@@ -44,17 +45,36 @@ inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
 }
 
 void GatherInfo(mindspore::kernel::KernelTensor *);
+void GatherInfo(const mindspore::tensor::TensorPtr &);
+void GatherInfo(const std::vector<TensorPtr> &);
+
+template <typename T>
+void GatherInfo(const std::vector<T> &values) {
+  MemcpyToBuf(values.data(), values.size() * sizeof(T));
+}
+
+void GatherInfo(const ScalarPtr &);
+void GatherInfo(const TypePtr &);
+template <typename T>
+void GatherInfo(const T &value) {
+  MemcpyToBuf(&value, sizeof(T));
+}
 void GatherInfo(const string &);
+void GatherInfo(const std::optional<string> &);
+void GatherInfo(const std::optional<TensorPtr> &);
+void GatherInfo(const std::optional<ScalarPtr> &);
+void GatherInfo(const std::optional<TypePtr> &);
+template <typename T>
+void GatherInfo(std::optional<T> value) {
+  if (value.has_value()) {
+    GatherInfo(value.value());
+  }
+}
 void GatherInfo();
 
 template <std::size_t N>
 void GatherInfo(const std::array<bool, N> &value) {
   MemcpyToBuf(value.data(), static_cast<int64_t>(value.size() * sizeof(bool)));
-}
-
-template <typename T>
-void GatherInfo(const T &value) {
-  MemcpyToBuf(&value, sizeof(T));
 }
 
 template <typename T, typename... Args>
