@@ -42,6 +42,7 @@
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "transform/acl_ir/op_api_util.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
@@ -222,6 +223,9 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
   auto output_num = AnfUtils::GetOutputTensorNum(kernel);
   if (kernel_type == ACL_KERNEL) {
     transform::AclHelper::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
+                                                  &output_reshape_types);
+  } else if (kernel_type == OPAPI_KERNEL) {
+    transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
                                                   &output_reshape_types);
   } else {
     auto cand_format = GetValidFormat(input_num, output_num);
