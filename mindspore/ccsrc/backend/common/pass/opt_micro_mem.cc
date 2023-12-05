@@ -33,7 +33,7 @@ constexpr char MICRO[] = "micro";
 bool NeedProcess() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const bool is_enable_ge = (context->backend_policy() == "ge");
+  const bool is_enable_ge = (context->backend_policy() == "ge");
   const auto no_cell_reuse = context->CellReuseLevel() == CellReuseLevel::kNoCellReuse;
   if (!is_enable_ge || no_cell_reuse) {
     return false;
@@ -95,8 +95,9 @@ bool OptGraphMicroMem(const FuncGraphPtr &graph) {
       continue;
     }
 
-    sort(tuple_inputs.begin(), tuple_inputs.end(),
-         [](const CNodePtr &a, const CNodePtr &b) { return a->GetPrimalAttr(MICRO) > b->GetPrimalAttr(MICRO); });
+    sort(tuple_inputs.begin(), tuple_inputs.end(), [](const CNodePtr &a, const CNodePtr &b) {
+      return GetValue<int64_t>(a->GetPrimalAttr(MICRO)) > GetValue<int64_t>(b->GetPrimalAttr(MICRO));
+    });
 
     manager->SetEdge(cnode, kIndex2, tuple_inputs[0]);
   }
