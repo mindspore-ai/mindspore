@@ -207,16 +207,16 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_lazy_inline = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (enable_lazy_inline) {
-    MS_LOG(EXCEPTION) << "CPU does not support the lazy_inline feature, "
-                      << "please do not mark @lazy_inline in cell's __init__ func.";
-  }
   if (kernel_graph->is_from_single_op()) {
     SetOperatorInfo(kernel_graph);
     SingleOpGraphOptimize(kernel_graph);
     UpdateKernelRefInfo(kernel_graph);
   } else {
+    auto enable_lazy_inline = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+    if (enable_lazy_inline) {
+      MS_LOG(EXCEPTION) << "CPU does not support the lazy_inline feature, "
+                        << "please do not mark @lazy_inline in cell's __init__ func.";
+    }
     // The passes in this function must be before ops select: SetOperatorInfo()
     OptimizeMindIR(kernel_graph);
     // Update Graph Dynamic Shape Attr.
