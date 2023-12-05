@@ -117,7 +117,9 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
 const std::map<std::string, std::vector<std::pair<std::string, TypeId>>> kTransAttrDTypeMap = {
   {kResizeBilinearOpName, {{"size", kNumberTypeInt32}}},
   {kSpaceToBatchNDOpName, {{"block_shape", kNumberTypeInt32}}},
-  {kBatchToSpaceNDOpName, {{"block_shape", kNumberTypeInt32}}}};
+  {kBatchToSpaceNDOpName, {{"block_shape", kNumberTypeInt32}}},
+  {kSplitVOpName, {{"split_dim", kNumberTypeInt32}}},
+  {kSplitVDOpName, {{"split_dim", kNumberTypeInt32}}}};
 
 bool IsValidConversion(TypeId src_type, TypeId dst_type) {
   if (src_type == dst_type) {
