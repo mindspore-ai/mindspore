@@ -95,9 +95,6 @@ struct KernelArgs {
   constexpr static char key[] = "KernelArgs";
 };
 BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
-BACKEND_EXPORT KernelArgs AbstractArgsFromDeviceAddress(
-  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &abstract);
 BACKEND_EXPORT std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
 BACKEND_EXPORT void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
 

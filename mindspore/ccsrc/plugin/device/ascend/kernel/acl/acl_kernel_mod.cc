@@ -256,9 +256,6 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
                                << output_device_formats.size() << " and type's size:" << output_device_types.size();
   }
 
-  if (primitive_ == nullptr && op_ != nullptr) {
-    primitive_ = op_->GetPrim();
-  }
   auto in_def_flag =
     primitive_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_, true);
   input_params_.resize(input_device_formats.size());

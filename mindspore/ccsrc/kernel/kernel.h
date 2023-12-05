@@ -604,10 +604,8 @@ enum class KernelModType {
   KernelMod,
   GpuKernelMod,
   NativeGpuKernelMod,
-  DeprecatedNativeGpuKernelMod,
   CpuKernelMod,
   NativeCpuKernelMod,
-  DeprecatedNativeCpuKernelMod,
   HostKernelMod,
   DynamicAkgCpuKernelMod,
 };
@@ -673,36 +671,12 @@ class BACKEND_EXPORT KernelMod {
   const std::string &kernel_name() const { return kernel_name_; }
 
   // =======================Old interface, will deleted after all kernel modified used new interface=================
-  explicit KernelMod(const BaseOperatorPtr &op) : op_(op) {}
-  // Initialization for the kernel mod.
-  inline bool Init_(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs) {
-    this->op_ = op;
-    inputs_ = inputs;
-    outputs_ = outputs;
-    return Init(op, inputs, outputs);
-  }
-  inline std::vector<KernelTensorPtr> &GetInputs() { return inputs_; }
-  inline std::vector<KernelTensorPtr> &GetOutputs() { return outputs_; }
-
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     return true;
   }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
-  // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
-  // routine after infer shape.
-  virtual int Resize(
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
-  virtual int Resize(
-    const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
-  // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
-  std::vector<KernelTensorPtr> RetrieveOutputShape() {
-    SyncOutputShape();
-    return outputs_;
-  }
 
   virtual void set_unique_name(const std::string &unique_name) {
     MS_LOG(EXCEPTION) << "Call the method which doesn't implement";
@@ -730,22 +704,12 @@ class BACKEND_EXPORT KernelMod {
   virtual bool Finalize() { return true; }
 
  protected:
-  virtual bool Init(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs) {
-    return true;
-  }
-  virtual int Resize(
-    const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
   bool IsValidShape(const ShapeVector &shape) const {
     if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; })) {
       return false;
     }
     return true;
   }
-  // some kernels' output shape can only get from its computing result, this routine is for getting output shape and
-  // setting into outputs_.
-  virtual void SyncOutputShape() {}
 
  protected:
   // ===========================New member==========================================================
@@ -761,9 +725,6 @@ class BACKEND_EXPORT KernelMod {
 
   // =======================Old member, will deleted after all kernel modified used new interface=================
   int32_t task_id_ = -1;
-  BaseOperatorPtr op_;
-  std::vector<KernelTensorPtr> inputs_;
-  std::vector<KernelTensorPtr> outputs_;
   bool use_kernel_tensor_{false};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;

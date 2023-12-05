@@ -45,43 +45,6 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
 }
 }  // namespace
 
-int DeprecatedNativeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto cnode = kernel_node_.lock();
-  if (cnode == nullptr) {
-    MS_LOG(ERROR) << "kernel_node_ is not a cnode.";
-    return KRET_RESIZE_FAILED;
-  }
-
-  MS_LOG(DEBUG) << "Update Args: " << cnode->fullname_with_scope();
-  DestroyResource();
-  ResetResource();
-  if (!Init(cnode)) {
-    return KRET_RESIZE_FAILED;
-  }
-  return KRET_OK;
-}
-
-void DeprecatedNativeGpuKernelMod::SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
-  MS_EXCEPTION_IF_NULL(apply_kernel);
-  auto kernel_attrs = GetOpSupport();
-  if (kernel_attrs.empty()) {
-    return;
-  }
-
-  auto index = GetMatchKernelAttrIdxWithException(apply_kernel, kernel_attrs);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(kernel_build_Info);
-  const auto &matched_kernel_attr = kernel_attrs[index];
-  if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
-    kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
-  }
-}
-
 bool NativeGpuKernelMod::GpuCheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr) {
   return kernel::Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->CheckSupport(kernel_name, kernel_attr);
 }

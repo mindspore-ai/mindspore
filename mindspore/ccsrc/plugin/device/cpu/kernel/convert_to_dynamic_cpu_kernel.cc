@@ -55,10 +55,6 @@ int ConvertToDynamicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
 
   (void)output_size_list_.emplace_back(tensor_size);
 
-  outputs_.clear();
-  for (const auto &kernel_tensor : inputs) {
-    (void)outputs_.emplace_back(std::make_shared<KernelTensor>(*kernel_tensor));
-  }
   return static_cast<int>(ret);
 }
 

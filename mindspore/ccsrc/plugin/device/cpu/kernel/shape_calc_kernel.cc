@@ -26,6 +26,7 @@ bool ShapeCalcCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   if (primitive_->HasAttr(kOutputRealTuple)) {
     is_dynamic_len_out_ = true;
   }
+  inputs_size_ = inputs.size();
   return true;
 }
 
@@ -88,7 +89,7 @@ std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
 }
 
 std::vector<size_t> ShapeCalcCpuKernelMod::GetLaunchIgnoredInputAddressIdx() const {
-  std::vector<size_t> ignored_idx(inputs_.size());
+  std::vector<size_t> ignored_idx(inputs_size_);
   std::iota(ignored_idx.begin(), ignored_idx.end(), kIndex0);
   return ignored_idx;
 }

@@ -436,41 +436,24 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
                                  << "] failed";
     }
 
-    // This branch would be removed When KernelMode rectification is complete
-    auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
-    if (discard_cpu_kernel_mod != nullptr) {
-      auto args = kernel::AbstractArgsFromCNode(node);
-      // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-      // we will put this tensor in args.inputs.data_.
-      auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-      kernel::SetInputsByConstInputs(node, &inputs_tensor_map);
-      kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs, true);
-
-      kernel::SetArgsToCNode(node, args);
-      discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
-      discard_cpu_kernel_mod->Init(node);
-      AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, node.get());
-    } else {
-      auto kernel_attrs = cpu_kernel->GetOpSupport();
-      kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
-      auto thread_pool = kernel::GetActorMgrInnerThreadPool();
-      cpu_kernel->SetThreadPool(thread_pool);
-      std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
-      std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(node);
-      auto ret =
-        cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(node), input_kernel_tensors, output_kernel_tensors);
-      if (!ret) {
-        MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
-      }
-      if (kernel::CheckResizeCondition(node)) {
-        if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
-          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
-                                     << "] resize failed.";
-        }
-      }
-
-      AnfAlgo::SetKernelMod(cpu_kernel, node.get());
+    auto kernel_attrs = cpu_kernel->GetOpSupport();
+    kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
+    auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+    cpu_kernel->SetThreadPool(thread_pool);
+    std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+    std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(node);
+    auto ret = cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(node), input_kernel_tensors, output_kernel_tensors);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
     }
+    if (kernel::CheckResizeCondition(node)) {
+      if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
+                                   << "] resize failed.";
+      }
+    }
+
+    AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
