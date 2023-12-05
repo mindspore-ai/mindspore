@@ -35,7 +35,6 @@
 #include "ops/random_op_name.h"
 #include "ops/sequence_op_name.h"
 #include "ops/sparse_op_name.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
 namespace opt {

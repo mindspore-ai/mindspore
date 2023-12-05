@@ -15,12 +15,12 @@
  */
 #include "transform/acl_ir/op_api_util.h"
 #include <unordered_map>
-#include "runtime/dev.h"
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "acl/acl_base.h"
 
 namespace mindspore::transform {
 namespace {
@@ -44,13 +44,10 @@ uint8_t KeepOriginDType() {
   static std::string version = "";
   static uint8_t need_keep_dtype = 0;
   if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
+    const char *soc_name_c = aclrtGetSocName();
+    if (soc_name_c != nullptr) {
+      version = soc_name_c;
     }
-    version = soc_version;
     if (version.find(k910BKey) != std::string::npos || version.find(k310BKey) != std::string::npos ||
         version.find(k910CKey) != std::string::npos) {
       need_keep_dtype = 1;

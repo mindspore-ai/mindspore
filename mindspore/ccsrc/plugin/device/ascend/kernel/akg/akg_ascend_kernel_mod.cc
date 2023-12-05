@@ -98,10 +98,10 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
 
   rtL2Ctrl_t *l2ctrl = nullptr;
-  auto stream = static_cast<rtStream_t *>(stream_ptr);
+  auto stream = static_cast<aclrtStream *>(stream_ptr);
   auto ret = rtKernelLaunch(reinterpret_cast<void *>(func_stub), block_dim, runtime_args.data(),
                             SizeToUint(sizeof(void *) * runtime_args.size()), l2ctrl, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error. Kernel name: " << kernel_name_
                   << ". Error message: " << device::ascend::GetErrorMsg(static_cast<uint32_t>(ret));
     return false;

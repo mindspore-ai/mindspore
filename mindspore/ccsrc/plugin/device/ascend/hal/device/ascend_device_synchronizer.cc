@@ -35,7 +35,7 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;
   }
@@ -59,7 +59,7 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;
   }

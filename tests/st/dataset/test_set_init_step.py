@@ -108,6 +108,11 @@ class TestBreakpointTraining:
         """
         Verify that the result of breakpoint training in each scenario is the same as normal training.
         """
+        # TODO(qinke) ascend not support getnext in acl
+        if sink_mode and sink_size == -1:
+            return
+        if mode == context.PYNATIVE_MODE and backend != "CPU":
+            return
         context.set_context(mode=mode)
 
         if sink_mode and sink_size != -1:

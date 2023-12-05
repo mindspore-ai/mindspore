@@ -40,7 +40,7 @@ bool SendKernel::Init(const AnfNodePtr &anf_node) {
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
 
   if (common::AnfAlgo::HasNodeAttr(kAttrRecordEvent, anf_node->cast<CNodePtr>())) {
-    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrRecordEvent)));
+    event_ = reinterpret_cast<aclrtEvent>(GetValue<uintptr_t>(primitive->GetAttr(kAttrRecordEvent)));
   }
   MS_LOG(INFO) << "send op event id:" << event_id_;
   return true;

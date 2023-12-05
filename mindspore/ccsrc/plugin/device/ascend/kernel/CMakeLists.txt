@@ -38,7 +38,6 @@ endif()
 file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "acl/*.cc"
         "host/*.cc"
-        "aicpu/*.cc"
         "hccl/*.cc"
         "opapi/*.cc"
         "pyboost/*.cc"

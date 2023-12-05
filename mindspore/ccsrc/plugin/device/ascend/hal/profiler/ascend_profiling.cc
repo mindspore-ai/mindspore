@@ -201,28 +201,6 @@ void AscendProfiler::Finalize() {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }
 }
-
-void AscendProfiler::MsprofInitProfiler() const {
-  if (ProfilingManager::GetInstance().IsMsprofiling()) {
-    auto ret = ProfilingManager::GetInstance().ProfRegisterCtrlCallback();
-    if (!ret) {
-      MS_LOG(ERROR) << "Call ProfRegisterCtrlCallback failed, the ret = " << ret << ".";
-    }
-    auto prof_ret = MsprofInit(MSPROF_CTRL_INIT_DYNA, nullptr, 0);
-    if (prof_ret > 0) {
-      MS_LOG(ERROR) << "Call MsprofInit failed, the prof_ret = " << prof_ret << ".";
-    }
-  }
-}
-
-void AscendProfiler::MsprofStopProfiler() const {
-  if (ProfilingManager::GetInstance().IsMsprofiling()) {
-    auto ret = MsprofFinalize();
-    if (ret > 0) {
-      MS_LOG(ERROR) << "Call MsprofFinalize failed, the ret = " << ret << ".";
-    }
-  }
-}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

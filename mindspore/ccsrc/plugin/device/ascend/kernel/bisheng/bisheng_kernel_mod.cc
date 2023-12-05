@@ -19,7 +19,6 @@
 #include <dlfcn.h>
 #include <sys/wait.h>
 #include <fstream>
-#include "runtime/kernel.h"
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/debug/common.h"
@@ -157,13 +156,13 @@ std::vector<TaskInfoPtr> BiShengKernelMod::GenTask(const std::vector<AddressPtr>
   rtDevBinary_t binary = {RT_DEV_BINARY_MAGIC_ELF, 0, static_cast<void *>(device_o.data()), device_o.size()};
   void *dev_binary_handle = nullptr;
   auto rt_ret = rtDevBinaryRegister(&binary, &dev_binary_handle);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtDevBinaryRegister failed, error code: " << rt_ret;
   }
   const auto &binary_func = FunctionName();
   rt_ret = rtFunctionRegister(dev_binary_handle, reinterpret_cast<void *>(kBiShengStartAddr), binary_func.c_str(),
                               binary_func.c_str(), 0);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtFunctionRegister failed, error code: " << rt_ret;
   }
   kBiShengStartAddr += 1;

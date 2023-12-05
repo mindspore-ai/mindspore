@@ -36,7 +36,7 @@ class SendKernel : public RtKernel {
 
  private:
   uint32_t event_id_{0};
-  rtEvent_t event_{nullptr};
+  aclrtEvent event_{nullptr};
 };
 
 MS_REG_RTKERNEL(streamsend, SendKernel);

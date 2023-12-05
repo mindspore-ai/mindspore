@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
-#include "runtime/rt.h"
-#include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "acl/acl.h"
 #if defined(RT_MEMORY_P2PDMA)
@@ -81,7 +79,7 @@ void AscendDmaHandle::InitDmaMem() {
     MS_LOG(EXCEPTION) << "rtMemGetInfo failed:" << ret;
   }
   ret = rtMalloc(&dargs_, hbm_alloc_size_, RT_MEMORY_P2PDMA, app_module_id);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMalloc failed:" << ret;
   }
   ret = aclrtMemset(dargs_, hbm_alloc_size_, 0x44, hbm_alloc_size_);

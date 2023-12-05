@@ -38,16 +38,8 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
-  virtual void InitCore() {}
-  bool LoadData(const session::KernelGraph &graph) override;
-  virtual bool LoadDataCore() { return true; }
-  void GenKernelEvents(const session::KernelGraph &graph) override;
-  virtual void GenKernelEventsCore(const session::KernelGraph &graph) {}
   bool RunDynamicKernelAsync(const session::KernelGraph &graph) override;
   bool RunTask(const session::KernelGraph &graph);
-  virtual bool RunTaskCore(const session::KernelGraph &graph) { return true; }
-  bool Load(const session::KernelGraph &graph, bool is_task_sink) override;
-  virtual bool LoadCore(const session::KernelGraph &graph, bool is_task_sink) { return true; }
   bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
   void ClearGraphRuntimeResource(uint32_t graph_id) override;
   void ClearGlobalIdleMem() override;
@@ -68,19 +60,11 @@ class AscendKernelRuntime : public KernelRuntime {
   std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
-  void *GetModelStream(uint32_t graph_id) const override;
-  virtual void *GetModelStreamCore(uint32_t graph_id) const { return nullptr; }
   void *GetKernelStream(const AnfNodePtr &kernel) const override;
   // add for MindRT
   void ReleaseDeviceRes() override;
-  uint64_t GetMsUsedHbmSize() const;
-  void SetReuseCommunicationAddress(const session::KernelGraph &graph);
+  uint64_t GetMsUsedHbmSize() const override;
   void SetRtDevice(uint32_t device_id);
-  virtual void UnloadModelCore(uint32_t graph_id = UINT32_MAX) {}
-  void RegTaskFailCallback(bool is_release = false);
-  virtual bool CheckAndUnloadModelInAdvance(uint32_t model_id) { return true; }
-  virtual void KernelLaunchProfilingCore(const std::string &kernel_name) {}
-  virtual aclrtExceptionInfoCallback GetCallBackFunc() { return nullptr; }
 
  protected:
   static void TaskExceptionCallback(aclrtExceptionInfo *task_fail_info);
@@ -89,8 +73,6 @@ class AscendKernelRuntime : public KernelRuntime {
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const KernelWithIndex &node_index) const override;
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
-
-  void KernelLaunchProfiling(const std::string &kernel_name) override;
   inline static const session::KernelGraph *current_graph_ = nullptr;
 
  private:
@@ -104,7 +86,6 @@ class AscendKernelRuntime : public KernelRuntime {
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
   std::set<uint32_t> initialized_device_set_{};
-  AscendKernelRuntime *runtime_core_{nullptr};
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);

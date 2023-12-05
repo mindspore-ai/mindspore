@@ -19,15 +19,9 @@
 #include <utility>
 #include <string>
 #include <ios>
-#include <fstream>
 #include "acl/acl_rt.h"
-#include "acl/acl.h"
-#include "runtime/kernel.h"
-#include "runtime/mem.h"
-#include "runtime/context.h"
 #include "include/common/utils/utils.h"
 #include "utils/file_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -214,7 +208,7 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     return false;
   }
 
-  rtError_t status;
+  aclError status;
   std::vector<CustAicpuSoBuf> v_cust_so;
   for (const auto &it_so : it->second) {
     if (it_so.second->loaded()) {
@@ -227,14 +221,14 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     void *d_so_name = nullptr;
 
     status = aclrtMalloc(&d_aicpu_data, aicpu_data_length, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
-    if (status != RT_ERROR_NONE) {
+    if (status != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, size:" << aicpu_data_length << ", ret = 0x" << status;
       return false;
     }
     allocated_mem->emplace_back(d_aicpu_data);
 
     status = aclrtMalloc(&d_so_name, so_name.size(), ACL_MEM_TYPE_HIGH_BAND_WIDTH);
-    if (status != RT_ERROR_NONE) {
+    if (status != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, size:" << so_name.size() << ", ret = 0x" << status;
       return false;
     }
@@ -270,7 +264,7 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
   void *args = nullptr;
   uint32_t args_size = sizeof(CustAicpuSoBuf) * v_cust_so.size();
   status = aclrtMalloc(&args, args_size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
-  if (status != RT_ERROR_NONE) {
+  if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMalloc failed, size:" << args_size << ", ret = 0x" << status;
     return false;
   }
@@ -320,7 +314,7 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
     return true;
   }
 
-  rtStream_t stream = nullptr;
+  aclrtStream stream = nullptr;
   status = aclrtCreateStream(&stream);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtStreamCreate failed, ret = 0x" << status;
@@ -331,7 +325,7 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   std::string load_event(kBatchLoadBuf);
   status = rtCpuKernelLaunch(nullptr, load_event.c_str(), 1, reinterpret_cast<void *>(&batch_args),
                              sizeof(BatchLoadOpFromBufArgs), nullptr, stream);
-  if (status != RT_ERROR_NONE) {
+  if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtCpuKernelLaunch failed, ret = 0x" << status;
     return false;
   }

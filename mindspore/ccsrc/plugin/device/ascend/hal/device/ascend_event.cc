@@ -18,8 +18,6 @@
 
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
-#include "runtime/event.h"
-#include "runtime/stream.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::device::ascend {

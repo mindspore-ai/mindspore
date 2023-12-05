@@ -481,6 +481,7 @@ constexpr const char kNameGridSampler3DGrad[] = "GridSampler3DGrad";
 constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 constexpr const char kNameIm2col[] = "Im2col";
+constexpr const char kNameCol2Im[] = "Col2Im";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
 constexpr const char kNameFFN[] = "FFN";
 constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";

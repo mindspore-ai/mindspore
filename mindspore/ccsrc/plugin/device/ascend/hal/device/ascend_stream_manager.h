@@ -21,8 +21,7 @@
 #include <vector>
 #include <mutex>
 #include "utils/hash_map.h"
-#include "runtime/event.h"
-#include "runtime/stream.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
@@ -40,9 +39,9 @@ class AscendStreamMng {
 
   uint32_t ApplyNewEvent() { return cur_event_num_++; }
 
-  rtEvent_t ApplyRtEvent();
-  rtEvent_t ApplyRtEventWithFlag(uint32_t flag);
-  uint32_t GetRtEventId(const rtEvent_t &event) const;
+  aclrtEvent ApplyRtEvent();
+  aclrtEvent ApplyRtEventWithFlag(uint32_t flag);
+  uint32_t GetRtEventId(const aclrtEvent &event) const;
   void DestroyAllRtEvents();
 
   void DeleteEvent();
@@ -55,15 +54,15 @@ class AscendStreamMng {
 
   uint32_t cur_event_num() const { return cur_event_num_; }
 
-  void CreateStream(rtStream_t *stream, int32_t priority = 0);
+  void CreateStream(aclrtStream *stream, int32_t priority = 0);
   void CreateStream(size_t *stream_id, int32_t priority = 0);
-  void CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority = 0);
+  void CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority = 0);
   void CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority = 0);
   bool DestroyStream(size_t stream_id);
   bool DestroyAllStreams();
-  rtStream_t GetStream(size_t stream_id) const;
+  aclrtStream GetStream(size_t stream_id) const;
   bool SyncStream(size_t stream_id) const;
-  bool SyncStream(rtStream_t stream) const;
+  bool SyncStream(aclrtStream stream) const;
   bool SyncAllStreams() const;
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
@@ -81,7 +80,7 @@ class AscendStreamMng {
 
   // all gpu CUDA streams including default_stream_.
   std::vector<void *> streams_;
-  std::vector<rtEvent_t> events_{};
+  std::vector<aclrtEvent> events_{};
 };
 }  // namespace ascend
 }  // namespace device

@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "utils/ms_context.h"
-#include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
@@ -149,12 +148,12 @@ size_t AscendMemoryManager::GetAvailableMemSize() {
 void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
     auto ret_rt_memcpy = aclrtMemcpy(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpy failed.";
     }
   } else {
     auto ret_rt_memcpy = aclrtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
     if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {

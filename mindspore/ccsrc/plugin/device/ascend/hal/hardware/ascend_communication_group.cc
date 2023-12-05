@@ -18,7 +18,6 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "runtime/rt.h"
 #include "acl/acl_rt.h"
 #include "acl/acl.h"
 
