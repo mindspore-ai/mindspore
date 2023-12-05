@@ -247,9 +247,9 @@ public class Model {
      * @return input tensor.
      */
     public MSTensor getInputByTensorName(String tensorName) {
-        List<MSTensor> inputTensors = this.getInputs();
-        for (int i = 0; i < inputTensors.size(); i++) {
-            MSTensor tensor = inputTensors.get(i);
+        List<MSTensor> inputs = this.getInputs();
+        for (int i = 0; i < inputs.size(); i++) {
+            MSTensor tensor = inputs.get(i);
             if (tensor.tensorName().equals(tensorName)) {
                 return tensor;
             }

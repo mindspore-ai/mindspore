@@ -18,7 +18,6 @@ package com.mindspore;
 
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.RunnerConfig;
-import com.mindspore.config.DataType;
 
 import java.util.ArrayList;
 import java.util.List;
