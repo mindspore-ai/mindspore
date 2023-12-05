@@ -77,6 +77,25 @@ class ProfilerInfo:
         ProfilerInfo._profiler_info_dict.update(info)
 
     @staticmethod
+    def set_export_start_time(start_time):
+        """Set the export start time."""
+        info = dict()
+        info["export_start_time"] = start_time
+        ProfilerInfo._profiler_info_dict.update(info)
+
+    @staticmethod
+    def set_export_end_time(end_time):
+        """Set the export end time."""
+        info = dict()
+        info["export_end_time"] = end_time
+        ProfilerInfo._profiler_info_dict.update(info)
+
+    @staticmethod
+    def set_export_flag(flag):
+        """Set the graph id list."""
+        ProfilerInfo._profiler_info_dict["all_export"] = flag
+
+    @staticmethod
     def set_graph_ids(graph_ids):
         """Set the graph id list."""
         ProfilerInfo._profiler_info_dict["graph_ids"] = graph_ids
