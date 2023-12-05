@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -113,6 +114,8 @@ def test_basic_gpu():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_basic()
     test_empty_graph()
+    del os.environ["GRAPH_OP_RUN"]
