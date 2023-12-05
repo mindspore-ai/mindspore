@@ -37,27 +37,4 @@ void SymbolVisitor::Visit(Symbol *ptr) {
       MS_LOG(WARNING) << "This type of symbol " << ptr->type_name() << " haven't implemented visit ";
   }
 }
-
-void SymbolVisitor::Visit(ops::Operation *ptr) {
-  switch (ptr->tid()) {
-    SYMBOL_DISPATCH(ops::ScalarAdd)
-    SYMBOL_DISPATCH(ops::ScalarSub)
-    SYMBOL_DISPATCH(ops::ScalarMul)
-    SYMBOL_DISPATCH(ops::ScalarDiv)
-    SYMBOL_DISPATCH(ops::ScalarMin)
-    SYMBOL_DISPATCH(ops::ScalarMax)
-
-    SYMBOL_DISPATCH(ops::infershape::RealShape)
-    SYMBOL_DISPATCH(ops::infershape::BinElemwise)
-    SYMBOL_DISPATCH(ops::infershape::Reduce)
-    SYMBOL_DISPATCH(ops::infershape::Reshape)
-    SYMBOL_DISPATCH(ops::infershape::Transpose)
-    SYMBOL_DISPATCH(ops::infershape::MatMul)
-
-    SYMBOL_DISPATCH(ops::infervalue::RealValue)
-    default:
-      MS_LOG(WARNING) << "This type of operation " << ptr->name() << " haven't implemented visit ";
-  }
-}
-
 }  // namespace mindspore::graphkernel::symbol
