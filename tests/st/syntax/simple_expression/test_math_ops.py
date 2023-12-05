@@ -44,16 +44,12 @@ def test_number_add_number():
     Description: test add operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 0.1
-        input_y = -3.2
-        result1 = input_x + input_y
-        add_net = Add()
-        result2 = add_net(input_x, input_y)
-        expect = -3.1
-        assert result1 == expect
-        assert result2 == expect
-    assert "Failed calling Add with" in str(err.value)
+    input_x = 0.1
+    input_y = -3.2
+    result1 = input_x + input_y
+    add_net = Add()
+    result2 = add_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -498,21 +494,12 @@ def test_number_mul_number():
     Description: test mul operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 4.91
-        input_y = 0.16
-        result1 = input_x * input_y
-        mul_net = Mul()
-        result2 = mul_net(input_x, input_y)
-        expect = 0.7856
-        diff1 = result1 - expect
-        diff2 = result2 - expect
-        error = 1.0e-6
-        assert np.all(diff1 < error)
-        assert np.all(-diff1 < error)
-        assert np.all(diff2 < error)
-        assert np.all(-diff2 < error)
-    assert "Failed calling Mul with" in str(err.value)
+    input_x = 4.91
+    input_y = 0.16
+    result1 = input_x * input_y
+    mul_net = Mul()
+    result2 = mul_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.0001, 0.0001)
 
 
 @pytest.mark.level1
@@ -599,16 +586,13 @@ def test_number_div_number():
     Description: test div operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 4
-        input_y = -1
-        result1 = input_x / input_y
-        div_net = Div()
-        result2 = div_net(input_x, input_y)
-        expect = -4
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "Failed calling Div with" in str(err.value)
+    input_x = 4
+    input_y = -1
+    result1 = input_x / input_y
+    div_net = Div()
+    result2 = div_net(input_x, input_y)
+    assert np.allclose(result1, result2.asnumpy(), 0.00001, 0.00001)
+
 
 
 @pytest.mark.level1
@@ -649,8 +633,8 @@ def test_tensor_div_number():
     div_net = Div()
     result2 = div_net(input_x, input_y)
     expect = Tensor(np.array([[1, 1], [1.5, 1.5]]))
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -670,8 +654,8 @@ def test_number_div_tensor():
     div_net = Div()
     result2 = div_net(input_x, input_y)
     expect = Tensor(np.array([[1, 1], [0.5, 0.5]])).astype(np.float32)
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 class Mod(nn.Cell):
@@ -836,8 +820,8 @@ def test_number_pow_tensor():
     pow_net = Pow()
     result2 = pow_net(input_x, input_y)
     expect = Tensor(np.array([[9, 9], [81, 81]])).astype(np.float32)
-    assert np.all(result1.asnumpy() == expect.asnumpy())
-    assert np.all(result2.asnumpy() == expect.asnumpy())
+    assert np.allclose(result1.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
+    assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
 class FloorDiv(nn.Cell):
@@ -861,16 +845,12 @@ def test_number_floordiv_number():
     Description: test floordiv operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 2
-        input_y = 5
-        result1 = input_x // input_y
-        floordiv_net = FloorDiv()
-        result2 = floordiv_net(input_x, input_y)
-        expect = 0
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "Failed calling FloorDiv with" in str(err.value)
+    input_x = 2
+    input_y = 5
+    result1 = input_x // input_y
+    floordiv_net = FloorDiv()
+    result2 = floordiv_net(input_x, input_y)
+    assert result2.asnumpy() == result1
 
 
 @pytest.mark.level1
@@ -957,16 +937,12 @@ def test_number_floormod_number():
     Description: test floormod operator.
     Expectation: No exception
     """
-    with pytest.raises(TypeError) as err:
-        input_x = 2
-        input_y = 5
-        result1 = input_x % input_y
-        floormod_net = FloorMod()
-        result2 = floormod_net(input_x, input_y)
-        expect = 2
-        assert np.all(result1 == expect)
-        assert np.all(result2 == expect)
-    assert "Failed calling FloorMod with" in str(err.value)
+    input_x = 2
+    input_y = 5
+    result1 = input_x % input_y
+    floormod_net = FloorMod()
+    result2 = floormod_net(input_x, input_y)
+    assert result1 == result2
 
 
 @pytest.mark.level1

@@ -34,9 +34,6 @@ class CastOperation : public CastBaseOperation {
 
  private:
   bool IsValueTypeInvalid(const ValuePtr &v) const;
-  void GetDstType(const FrontendOpRunInfoPtr &op_run_info,
-                  const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                  mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const;
   void SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info) const;
   ValuePtr DoParamMixPrecisionCastTuple(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast,
                                         const ValueSequencePtr &value_seq, const std::string &op_name,

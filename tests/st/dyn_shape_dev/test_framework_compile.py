@@ -123,7 +123,7 @@ def test_pow_type_cast():
     """
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowNet()
-    out = net(ms.Tensor(1), 2)
+    out = net(1, 2)
 
 
 @pytest.mark.level0
@@ -140,7 +140,7 @@ def test_pow_create_instance_type_cast():
     """
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowCreateInstanceNet()
-    out = net(1.0, ms.Tensor(2))
+    out = net(1.0, 2)
 
 
 class LSTM(nn.Cell):

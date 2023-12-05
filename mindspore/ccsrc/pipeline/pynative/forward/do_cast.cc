@@ -111,57 +111,6 @@ bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
          !v->isa<BoolImm>();
 }
 
-void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
-                               const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                               mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  constexpr size_t index_size = 2;
-  for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
-    const auto &type = it->first;
-    const auto &indexes = it->second;
-    if (type == SignatureEnumDType::kDTypeEmptyDefaultValue || indexes.size() < index_size) {
-      continue;
-    }
-    size_t priority = 0;
-    TypeId max_type = TypeId::kTypeUnknown;
-    bool has_scalar_float32 = false;
-    bool has_scalar_int64 = false;
-    bool has_tensor_int8 = false;
-    // Find the maximum priority of the same dtype
-    for (size_t index : indexes) {
-      if (index >= op_run_info->none_init_inputs_num) {
-        MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of none_init_inputs_num "
-                          << op_run_info->none_init_inputs_num;
-      }
-      const auto &v = op_run_info->op_grad_info->input_value[index];
-      if (v->isa<FloatImm>()) {
-        has_scalar_float32 = true;
-      }
-      if (!v->isa<BoolImm>() && v->isa<IntegerImm>()) {
-        has_scalar_int64 = true;
-      }
-      if (v->isa<tensor::Tensor>()) {
-        auto arg = v->cast<tensor::TensorPtr>();
-        TypeId arg_type_id = arg->data_type();
-        auto type_priority = prim::type_map.find(arg_type_id);
-        if (type_priority == prim::type_map.end()) {
-          continue;
-        }
-        if (arg_type_id == kNumberTypeInt8) {
-          has_tensor_int8 = true;
-        }
-        if (type_priority->second > priority) {
-          max_type = type_priority->first;
-          priority = type_priority->second;
-        }
-      }
-    }
-    max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
-    MS_EXCEPTION_IF_NULL(dst_type);
-    (void)dst_type->emplace(std::make_pair(type, max_type));
-  }
-}
-
 ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v,
                                      const TypeId &type_id) const {
   MS_EXCEPTION_IF_NULL(v);
@@ -204,6 +153,12 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
   if (dst_value != nullptr) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
+    return dst_value;
+  }
+  if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::Tensor>()) {
+    MS_LOG(DEBUG) << "Source value: " << v->ToString();
+    dst_value = TensorToDstDtypeValue(v, type_id);
+    MS_LOG(DEBUG) << "Cast to value: " << dst_value->ToString() << "without dispatching cast op";
     return dst_value;
   }
   // When step 1 does not work, creating a cast op to get destination data type value.

@@ -12,7 +12,7 @@ py::object ${func_name}(const py::args &args) {
     auto node = stub::MakeTopNode(top_type);
     GilReleaseWithCheck release_gil;
     op_run_info->stub_output = node.second;
-
+    op_run_info->source_type = converter.source_type();
     DispatchOp(
       std::make_shared<FrontendTask>(
         [${op_args}](const FrontendOpRunInfoPtr &op_run_info) {

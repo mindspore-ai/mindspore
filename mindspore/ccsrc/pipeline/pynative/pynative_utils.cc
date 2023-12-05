@@ -919,14 +919,14 @@ inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_input
 }
 
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
-                         std::vector<ValuePtr> *input_values, const FrontendOpRunInfoPtr &op_run_info) {
-  if (op_inputs.size() != op_def->args_.size()) {
+                         const FrontendOpRunInfoPtr &op_run_info) {
+  size_t input_size = op_inputs.size();
+  if (input_size != op_def->args_.size()) {
     MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
                       << " but got " << op_inputs.size() << ".";
   }
-
+  (void)op_run_info->op_grad_info->input_value.resize(input_size);
   parse::OpDefConvertFunc convert_func;
-  size_t hit_signature_cast_num = 0;
   for (size_t i = 0; i < op_def->args_.size(); i++) {
     auto const &op_arg = op_def->args_[i];
     op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
@@ -935,23 +935,8 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     MS_EXCEPTION_IF_NULL(convert_func);
     value = convert_func(op_inputs[i]);
     if (value != nullptr) {
-      input_values->emplace_back(value);
+      op_run_info->op_grad_info->input_value[i] = value;
       continue;
-    }
-
-    // for ops those have signature cast, the Number value must be convert to Tensor with the other arg's dtype
-    // e.g: for Add(Tensor(1.0, dtype=ms.float16), 4.1), 4.1 is casted into a Tensor whose dtype is ms.float16
-    // init arg has no signature
-    if (!op_arg.as_init_arg_) {
-      value = ConvertBySignature(op_inputs[i], op_run_info, i);
-      if (value != nullptr) {
-        // 'value' is a Scalar and will be convert to Tensor in the following step(SetImplicitCast)
-        MS_LOG(DEBUG) << "Convert arg " << i << " with type " << op_inputs[i].get_type()
-                      << " to Number by signature cast, its value is: " << value->ToString();
-        input_values->emplace_back(value);
-        hit_signature_cast_num++;
-        continue;
-      }
     }
 
     // type cast has lower priority then signature cast
@@ -961,6 +946,8 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
         MS_EXCEPTION_IF_NULL(convert_func);
         value = convert_func(op_inputs[i]);
         if (value != nullptr) {
+          op_run_info->op_grad_info->input_value[i] = value;
+          op_run_info->source_type[i] = cast_dtype;
           break;
         }
       }
@@ -969,11 +956,6 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     if (value == nullptr) {
       PrintTypeError(op_def, op_inputs);
     }
-    input_values->emplace_back(value);
-  }
-
-  if (hit_signature_cast_num == op_run_info->none_init_inputs_num) {
-    PrintTypeError(op_def, op_inputs);
   }
 }
 
@@ -981,7 +963,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
   op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
-
+  op_run_info->source_type.resize(op_run_info->input_size);
   auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
   if (op_def == nullptr) {
     op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
@@ -991,7 +973,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
     }
   } else {
     op_run_info->none_init_inputs_num = 0;
-    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value, op_run_info);
+    ParseOpInputByOpDef(op_def, op_inputs, stub, op_run_info);
   }
   PrepareOpGradInfo(op_run_info);
 }

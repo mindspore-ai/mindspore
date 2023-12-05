@@ -58,11 +58,15 @@ class Converter {
   std::optional<StringImmPtr> ToStringOptional(size_t i);
   TypePtr ToDtype(size_t i);
   std::optional<TypePtr> ToDtypeOptional(size_t i);
+  ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t i);
+  const std::vector<ops::OP_DTYPE> &source_type() const { return source_type_; }
 
  private:
   void ThrowException(size_t i);
   ops::OpDefPtr op_def_;
   py::list *python_args_;
+  // If op not type cast, source_type is default type: DT_BEGIN, if op type cast, source_type is origin type.
+  std::vector<ops::OP_DTYPE> source_type_;
 };
 }  // namespace pynative
 }  // namespace mindspore

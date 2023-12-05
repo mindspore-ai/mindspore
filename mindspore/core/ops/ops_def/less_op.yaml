@@ -3,10 +3,10 @@ less:
   args:
     x:
       dtype: tensor
-      #type_cast: number, bool
+      type_cast: number, bool
     y:
       dtype: tensor
-      #type_cast: number, bool
+      type_cast: number, bool
   args_signature:
       dtype_group: (x, y)
   returns:
