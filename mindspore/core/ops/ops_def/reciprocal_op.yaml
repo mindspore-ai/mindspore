@@ -8,3 +8,5 @@ reciprocal:
             dtype: tensor
     function:
         name: reciprocal_
+    dispatch:
+        enable: True

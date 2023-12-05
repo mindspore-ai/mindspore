@@ -17,6 +17,7 @@
 #include <complex>
 #include <memory>
 #include "ops/ops_frontend_func_impl.h"
+#include "ops/ops_func_impl/eltwise_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,7 +51,7 @@ BaseShapePtr LogFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr LogFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return input_args[kIndex0]->GetType()->Clone();
+  return EltwiseSpeicalIntegerInferType(primitive, input_args);
 }
 
 class LogFrontendFuncImpl : public OpFrontendFuncImpl {

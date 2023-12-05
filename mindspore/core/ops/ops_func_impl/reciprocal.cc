@@ -18,6 +18,8 @@
 #include <complex>
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/ops_func_impl/reciprocal.h"
+#include "ops/ops_func_impl/eltwise_arithmetic.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::ops {
 BaseShapePtr ReciprocalFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -29,9 +31,13 @@ BaseShapePtr ReciprocalFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr ReciprocalFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type->Clone();
+  // temporary code for aclnnLog，need to be deleted when aclnnReciprocal is done
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    return EltwiseSpeicalIntegerInferType(primitive, input_args);
+  }
+  return input_args[kIndex0]->GetType()->Clone();
 }
 
 template <typename T>
