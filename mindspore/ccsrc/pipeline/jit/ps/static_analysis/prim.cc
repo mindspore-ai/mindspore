@@ -132,41 +132,67 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg 
   return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
 }
 
-void DoTypeConversionWithOpDef(AnalysisEnginePtr engine, const PrimitivePtr &prim, std::vector<AnfNodePtr> *params_list,
-                               AbstractBasePtrList *args_abs_list, const AnfNodeConfigPtr &out_conf) {
+AnfNodePtrList DoTypeConversionForPrimitiveInputs(const PrimitivePtr &prim, const AnfNodePtrList &params_list,
+                                                  const FuncGraphPtr &fg, const AnalysisEnginePtr &engine,
+                                                  const AnfNodeConfigPtr &out_conf) {
   auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr || ContainsAbstractAny(*args_abs_list)) {
-    return;
+  if (op_def == nullptr) {
+    return params_list;
   }
-  auto params_size = params_list->size();
-  if (params_size != args_abs_list->size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Op: " << prim->name()
-                               << " abstract size should equal to inputs size, but abstract size "
-                               << args_abs_list->size() << ", inputs size " << params_size;
-  }
+  auto params_size = params_list.size();
   if (op_def->args_.size() < params_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Op: " << prim->name() << " OpArg size should less than inputs size, but OpArg size "
-                               << op_def->args_.size() << ", inputs size " << params_size;
+    MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], inputs size should be less than or equal to "
+                               << op_def->args_.size() << ", but got " << params_size << ".";
   }
+
+  AnfNodePtrList op_inputs;
   for (size_t i = 0; i < params_size; i++) {
-    auto input = (*params_list)[i];
+    auto input = params_list[i];
     auto op_arg = op_def->args_[i];
     if (op_arg.as_init_arg_) {
-      MS_LOG(INTERNAL_EXCEPTION) << op_arg.arg_name_ << " of " << prim->name()
+      MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], " << op_arg.arg_name_
                                  << " is an initialization argument and it does not need type conversion here. "
                                  << "Please check if the number of inputs is correct.";
     }
-    auto new_input =
-      GetNodeAfterTypeConversion(prim->name(), input, op_arg, (*args_abs_list)[i], out_conf->node()->func_graph());
-    if (new_input != input) {
-      AnfNodeConfigPtr input_conf = engine->MakeConfig(new_input, out_conf->context(), out_conf->func_graph());
-      MS_EXCEPTION_IF_NULL(input_conf);
-      const auto &eval_result = input_conf->ObtainEvalResult();
-      MS_EXCEPTION_IF_NULL(eval_result);
-      (*params_list)[i] = new_input;
-      (*args_abs_list)[i] = eval_result->abstract();
-    }
+    AnfNodeConfigPtr input_conf = engine->MakeConfig(input, out_conf->context(), out_conf->func_graph());
+    MS_EXCEPTION_IF_NULL(input_conf);
+    const auto &eval_result = input_conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    auto abs = eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto new_input = GetNodeAfterTypeConversion(prim->name(), input, op_arg, abs, fg);
+    (void)op_inputs.emplace_back(new_input);
   }
+  return op_inputs;
+}
+
+CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
+                                                           const AbstractBasePtrList &args_abs_list,
+                                                           const AnalysisEnginePtr &engine,
+                                                           const AnfNodeConfigPtr &out_conf) {
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_cnode = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  auto fg = out_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  const auto &out_node_inputs = out_cnode->inputs();
+  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_abs_list.size()) {
+    MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
+                      << args_abs_list.size() << ", inputs size " << out_node_inputs.size();
+  }
+
+  // Handle primitive signatures.
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  auto op_inputs = prim::GetNewInputsBySignatures(fg, prim_->ToString(), func, args_abs_list, args_inputs);
+  // Do type conversion for primitive inputs.
+  if (func->isa<Primitive>() && !ContainsAbstractAny(args_abs_list)) {
+    op_inputs = DoTypeConversionForPrimitiveInputs(func->cast<PrimitivePtr>(), op_inputs, fg, engine, out_conf);
+  }
+  AnfNodePtrList new_inputs{NewValueNode(func)};
+  (void)std::copy(op_inputs.begin(), op_inputs.end(), std::back_inserter(new_inputs));
+  return fg->NewCNodeInOrder(new_inputs);
 }
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -177,17 +203,6 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(do_signature);
   auto &func = do_signature->function();
   MS_EXCEPTION_IF_NULL(func);
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
-  }
-  auto out_cnode = dyn_cast<CNode>(out_conf->node());
-  MS_EXCEPTION_IF_NULL(out_cnode);
-  const auto &out_node_inputs = out_cnode->inputs();
-  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
-    MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
-                      << args_conf_list.size() << ", inputs size " << out_node_inputs.size();
-  }
-  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
 
   AbstractBasePtrList args_abs_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
@@ -199,8 +214,6 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                        });
   if (func->isa<Primitive>()) {
     auto do_signature_func = func->cast<PrimitivePtr>();
-    // Type implicit conversion.
-    DoTypeConversionWithOpDef(engine, do_signature_func, &args_inputs, &args_abs_list, out_conf);
     if (do_signature_func->name() == kIsInstanceOpName) {
       // Handle for DDE.
       for (size_t i = 0; i < args_abs_list.size(); ++i) {
@@ -223,22 +236,22 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     }
   }
 
-  AnfNodePtr new_node = nullptr;
+  CNodePtr new_cnode = nullptr;
   ScopePtr scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
   if (bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
-    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_abs_list, args_inputs);
+    new_cnode = GenerateNewNodeBySignatures(func, args_abs_list, engine, out_conf);
   } else {
-    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_abs_list, args_inputs);
+    new_cnode = GenerateNewNodeBySignatures(func, args_abs_list, engine, out_conf);
   }
   // Update new CNode info.
-  auto new_cnode = dyn_cast<CNode>(new_node);
-  MS_EXCEPTION_IF_NULL(new_cnode);
+  auto out_cnode = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_cnode);
   new_cnode->CloneCNodeInfo(out_cnode);
 
   // Do forward with old config and new config.
-  AnfNodeConfigPtr new_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+  AnfNodeConfigPtr new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
@@ -2498,33 +2511,24 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   }
   // Get init args and call args of primitive.
   if (cnode->size() != args_abs_list.size() + 1) {
-    MS_LOG(INTERNAL_EXCEPTION)
-      << "For Operator[" << prim_name
-      << "], the number of cnode inputs should be equal to the number of its abstract plus one '"
-      << args_abs_list.size() + 1 << "', but got '" << cnode->size() << "'.\nnode: " << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim_name << "], the number of cnode inputs should be "
+                               << args_abs_list.size() + 1 << ", but got " << cnode->size()
+                               << ".\nnode: " << cnode->DebugString();
   }
-  std::vector<AnfNodePtr> origin_call_arg_nodes;
-  std::vector<AnfNodePtr> origin_init_arg_nodes;
-  AbstractBasePtrList origin_call_abs_list;
-  AbstractBasePtrList origin_init_abs_list;
-  std::vector<AnfNodePtr> cnode_inputs = cnode->inputs();
-  auto given_init_size = do_trans_prim_func->given_init_size();
-  (void)std::copy(cnode_inputs.begin() + 1, cnode_inputs.end() - given_init_size,
-                  std::back_inserter(origin_call_arg_nodes));
-  (void)std::copy(cnode_inputs.begin() + cnode_inputs.size() - given_init_size, cnode_inputs.end(),
-                  std::back_inserter(origin_init_arg_nodes));
-  (void)std::copy(args_abs_list.begin(), args_abs_list.end() - given_init_size,
-                  std::back_inserter(origin_call_abs_list));
-  (void)std::copy(args_abs_list.begin() + args_abs_list.size() - given_init_size, args_abs_list.end(),
-                  std::back_inserter(origin_init_abs_list));
-  auto prim_input_nodes = GenerateNewPrimitiveArgs(op_def, origin_call_arg_nodes, origin_call_abs_list, fg, false);
+  AnfNodePtrList cnode_inputs = cnode->inputs();
+  size_t init_args_size = do_trans_prim_func->given_init_size();
+  // Handle init args.
+  AnfNodePtrList origin_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
+  AbstractBasePtrList origin_init_abs_list(args_abs_list.begin() + args_abs_list.size() - init_args_size,
+                                           args_abs_list.end());
   auto prim_init_arg_nodes = GenerateNewPrimitiveArgs(op_def, origin_init_arg_nodes, origin_init_abs_list, fg, true);
-
-  // Handle primitive labels.
-  AddLabelsToPrimitiveFunction(prim_func);
-  // Handle signatures for primitive inputs.
-  AbstractBasePtrList prim_input_abs_list;
-  (void)std::transform(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(prim_input_abs_list),
+  // Handle call args.
+  AnfNodePtrList origin_call_arg_nodes(cnode_inputs.begin() + 1, cnode_inputs.end() - init_args_size);
+  AbstractBasePtrList origin_call_abs_list(args_abs_list.begin(), args_abs_list.end() - init_args_size);
+  auto sign_input_nodes =
+    prim::GetNewInputsBySignatures(fg, prim_name, prim_func, origin_call_abs_list, origin_call_arg_nodes);
+  AbstractBasePtrList sign_abs_list;
+  (void)std::transform(sign_input_nodes.begin(), sign_input_nodes.end(), std::back_inserter(sign_abs_list),
                        [&engine, &out_conf](const AnfNodePtr &node) -> AbstractBasePtr {
                          AnfNodeConfigPtr config =
                            engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
@@ -2533,9 +2537,13 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
                          MS_EXCEPTION_IF_NULL(eval_result);
                          return eval_result->abstract();
                        });
-  std::vector<AnfNodePtr> op_inputs =
-    prim::GetNewInputsBySignatures(fg, prim_func->name(), prim_func, prim_input_abs_list, prim_input_nodes);
+  auto prim_input_nodes = GenerateNewPrimitiveArgs(op_def, sign_input_nodes, sign_abs_list, fg, false);
+
+  // Handle primitive labels.
+  AddLabelsToPrimitiveFunction(prim_func);
   // Append init args after inputs of node.
+  std::vector<AnfNodePtr> op_inputs{NewValueNode(prim_func)};
+  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(op_inputs));
   (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(op_inputs));
   // Create new node.
   auto new_cnode = fg->NewCNodeInOrder(op_inputs);

@@ -240,9 +240,9 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
     if ((arg_value->isa<TensorType>()) && arg_type_id == it->second) {
       continue;
     }
-    MS_LOG(DEBUG) << "Do cast for inputs [" << i << "]: " << (*op_inputs)[i + 1]->ToString() << " from " << arg_type_id
+    MS_LOG(DEBUG) << "Do cast for inputs [" << i << "]: " << (*op_inputs)[i]->ToString() << " from " << arg_type_id
                   << " to " << it->second << ".";
-    (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
+    (*op_inputs)[i] = DoCast((*op_inputs)[i], it->second, graph);
   }
 }
 
@@ -307,7 +307,6 @@ std::vector<AnfNodePtr> GetNewInputsBySignatures(const FuncGraphPtr &func_graph,
   std::vector<AnfNodePtr> op_inputs;
   std::set<size_t> write_indices;
   std::vector<TypePtr> input_types;
-  op_inputs.push_back(NewValueNode(function));
   auto cast_type = GetMixedPrecisionTargetType(func_graph);
   // Assume, the write input of op is always the first input. We check if any write op,
   // and add cast op on other inputs to keep the same type with assigned parameter.
@@ -355,7 +354,9 @@ std::vector<AnfNodePtr> GetNewInputsBySignatures(const FuncGraphPtr &func_graph,
 
 AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_abs_list, const AnfNodePtrList &old_node_inputs) {
-  auto op_inputs = GetNewInputsBySignatures(func_graph, func_name, function, args_abs_list, old_node_inputs);
+  auto new_inputs = GetNewInputsBySignatures(func_graph, func_name, function, args_abs_list, old_node_inputs);
+  AnfNodePtrList op_inputs{NewValueNode(function)};
+  (void)std::copy(new_inputs.begin(), new_inputs.end(), std::back_inserter(op_inputs));
   return func_graph->NewCNodeInOrder(op_inputs);
 }
 
