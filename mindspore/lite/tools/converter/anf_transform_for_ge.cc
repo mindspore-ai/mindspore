@@ -41,6 +41,7 @@
 #include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_assign_fusion.h"
+#include "tools/optimizer/fusion/decoder_kv_cache_slice_fusion.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
@@ -71,6 +72,10 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
     fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrAssignFusion>());
+  }
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "DecoderKVCache") != plugin_custom_ops.end()) {
+    MS_LOG(INFO) << "using DecoderKVCache";
+    fusions.push_back(std::make_shared<opt::DecoderKVCacheSliceFusion>());
   } else {
     MS_LOG(INFO) << "custom op fusion not used.";
   }
