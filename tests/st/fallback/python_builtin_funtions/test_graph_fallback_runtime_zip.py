@@ -15,6 +15,7 @@
 
 import pytest
 import numpy as np
+from collections import Iterator
 from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -43,7 +44,7 @@ def test_fallback_runtime_zip_numpy():
     assert out[1] == (2, 20)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -62,10 +63,10 @@ def test_fallback_runtime_zip_asnumpy():
 
     x = Tensor(np.array([10, 20]))
     out = foo(x)
-    assert out == ((10, 10), (20, 20))
+    assert isinstance(out, Iterator)
+    assert str(type(out)) == "<class 'zip'>"
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -136,6 +137,11 @@ def test_fallback_runtime_zip_string():
     assert out == 3
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_runtime_zip_dict():
     """
     Feature: JIT Fallback
