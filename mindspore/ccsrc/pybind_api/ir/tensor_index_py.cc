@@ -1320,7 +1320,11 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
     std::vector<int64_t> end_info(data_shape);
     std::vector<int64_t> step_info(data_shape.size(), 1);
     std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
-
+    if (start >= stop) {
+      (void)data_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kJustReturn));
+      return py::make_tuple(py::str("view"), py::tuple(), py::tuple(), VectorToPyTuple(data_transfer_types),
+                            py::tuple());
+    }
     if (slice_info.start() != 0 || slice_info.step() != 1 || slice_info.stop() != end_info[0]) {
       begin_info[0] = slice_info.start();
       end_info[0] = slice_info.stop();

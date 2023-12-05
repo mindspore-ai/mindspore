@@ -193,7 +193,7 @@ def test_setitem_mul_by_scalar():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -206,6 +206,8 @@ def test_setitem_by_slice():
         x[-3:1] = 3
         x[-10:3:2] = 4
         x[5:0:3] = 5
+        x[5:0] = 2
+        x[0:-1] = 0
         x[5:5:5] = 6
         x[-1:2] = 7
         x[1:0:-1] = 8
