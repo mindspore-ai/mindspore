@@ -37,9 +37,13 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *>
   x_dtype_ = inputs[kZero]->dtype_id();
   argmax_dtype_ = inputs[kTwo]->dtype_id();
 
-  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kKSize), "no attribute ksize");
+  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKSize));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kStrides), "no attribute strides");
   strides_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kPads), "no attribute pads");
   pads_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kDilation), "no attribute dilation");
   dilation_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
