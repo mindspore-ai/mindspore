@@ -22,6 +22,7 @@
 #include "ops/ascend_op_name.h"
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
+#include "ops/comparison_ops.h"
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/nn_optimizer_ops.h"
@@ -521,6 +522,7 @@ INPUT_MAP(Equal) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Equal) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Equal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Equal, kNameEqual, ADPT_DESC(Equal))
+REG_ADPT_DESC(ScalarEq, prim::kPrimScalarEq->name(), ADPT_DESC(Equal))
 
 // ApproximateEqual
 INPUT_MAP(ApproximateEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -559,6 +561,7 @@ INPUT_MAP(LogicalNot) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogicalNot) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogicalNot) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogicalNot, kNameLogicalNot, ADPT_DESC(LogicalNot))
+REG_ADPT_DESC(BoolNot, prim::kPrimBoolNot->name(), ADPT_DESC(LogicalNot))
 
 // Greater
 INPUT_MAP(Greater) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
