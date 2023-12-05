@@ -97,9 +97,6 @@ class MindPage:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
         """
         if not category_field or not isinstance(category_field, str):
             raise ParamTypeError('category_fields', 'str')
@@ -111,6 +108,17 @@ class MindPage:
     def read_category_info(self):
         """
         Return category information when data is grouped by indicated category field.
+
+        The result is similar to the following, where `key` represents the index field and `categories` represent
+        statistical information for the index.
+
+        .. code-block::
+
+            {"categories":[{"count":1,"id":0,"name":"0.jpg"},
+                           {"count":1,"id":1,"name":"1.jpg"},
+                           {"count":1,"id":2,"name":"2.jpg"},
+                           {"count":1,"id":3,"name":"3.jpg"}],
+             "key":"file_name_0"}
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .

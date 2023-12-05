@@ -106,9 +106,6 @@ class MnistToMR:
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MnistToMR` .
 
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
         Raises:
             ParamTypeError: If index field is invalid.
             MRMOpenError: If failed to open MindRecord file.
@@ -123,7 +120,6 @@ class MnistToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
     def _extract_images(self, filename):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
@@ -175,7 +171,7 @@ class MnistToMR:
         Execute transformation from Mnist train part to MindRecord.
 
         Returns:
-            MSRStatus, whether successfully written into MindRecord.
+            SUCCESS or FAILED.
         """
         t0_total = time.time()
 
@@ -209,21 +205,21 @@ class MnistToMR:
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer_train.commit()
+        self.writer_train.commit()
 
         t1_total = time.time()
         logger.info("--------------------------------------------")
         logger.info("Total time [train]: {}".format(t1_total - t0_total))
         logger.info("--------------------------------------------")
 
-        return ret
+        return 0
 
     def _transform_test(self):
         """
         Execute transformation from Mnist test part to MindRecord.
 
         Returns:
-            MSRStatus, whether Mnist is successfully transformed to MindRecord.
+            SUCCESS or FAILED.
         """
         t0_total = time.time()
 
@@ -258,11 +254,11 @@ class MnistToMR:
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer_test.commit()
+        self.writer_test.commit()
 
         t1_total = time.time()
         logger.info("--------------------------------------------")
         logger.info("Total time [test]: {}".format(t1_total - t0_total))
         logger.info("--------------------------------------------")
 
-        return ret
+        return 0

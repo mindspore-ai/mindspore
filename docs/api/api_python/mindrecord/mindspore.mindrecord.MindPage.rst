@@ -34,6 +34,14 @@
         返回：
             list[str]，category字段。
 
+    .. py:method:: category_field
+        :setter:
+
+        设置用于数据分组的category字段。
+
+        .. note::
+            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
+
 
     .. py:method:: read_at_page_by_id(category_id, page, num_row)
 
@@ -73,6 +81,16 @@
     .. py:method:: read_category_info()
 
         当数据按指定的category字段进行分组时，返回category信息。
+
+        返回结果类似如下，其中 `key` 表示索引字段名，`categories` 代表针对索引的统计信息。
+
+        .. code-block::
+
+            {"categories":[{"count":1,"id":0,"name":"0.jpg"},
+                           {"count":1,"id":1,"name":"1.jpg"},
+                           {"count":1,"id":2,"name":"2.jpg"},
+                           {"count":1,"id":3,"name":"3.jpg"}],
+             "key":"file_name_0"}
 
         .. note::
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。

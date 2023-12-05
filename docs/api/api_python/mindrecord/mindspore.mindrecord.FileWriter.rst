@@ -26,9 +26,6 @@
         参数：
             - **index_fields** (list[str]) - schema中的字段。
 
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
         异常：
             - **ParamTypeError** - 索引字段无效。
             - **MRMDefineIndexError** - 索引字段不是Primitive类型。
@@ -84,9 +81,6 @@
             - **content** (dict) - schema内容的字典。
             - **desc** (str，可选) - schema的描述。默认值： ``None`` 。
 
-        返回：
-            int，schema ID。
-
         异常：
             - **MRMInvalidSchemaError** - schema无效。
             - **MRMBuildSchemaError** - 构建schema失败。
@@ -98,9 +92,6 @@
 
         .. note::
             请参考 :class:`mindspore.mindrecord.FileWriter` 类的样例代码。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED。
 
         异常：
             - **MRMOpenError** - 打开MindRecord文件失败。
@@ -133,10 +124,7 @@
         header越大，MindRecord文件可以存储更多的元信息。如果header大于默认大小（16MB），需要调用本函数来设置合适的大小。
 
         参数：
-            - **header_size** (int) - header大小，可设置范围为16*1024(16KB)到128*1024*1024(128MB)。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED。
+            - **header_size** (int) - header大小，单位：字节，可设置范围为16*1024(16KB)到128*1024*1024(128MB)。
 
         异常：
             - **MRMInvalidHeaderSizeError** - 设置header大小失败。
@@ -147,10 +135,7 @@
         page越大，page可以存储更多的数据。如果单个样本大于默认大小（32MB），需要调用本函数来设置合适的大小。
 
         参数：
-            - **page_size** (int) - page大小，可设置范围为32*1024(32KB)到256*1024*1024(256MB)。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED。
+            - **page_size** (int) - page大小，单位：字节，可设置范围为32*1024(32KB)到256*1024*1024(256MB)。
 
         异常：
             - **MRMInvalidPageSizeError** - 设置page大小失败。
@@ -165,9 +150,6 @@
         参数：
             - **raw_data** (list[dict]) - 用户自定义数据的列表。
             - **parallel_writer** (bool，可选) - 如果为 ``True`` ，则并行写入用户自定义数据。默认值： ``False`` 。
-
-        返回：
-            MSRStatus，SUCCESS或FAILED。
 
         异常：
             - **ParamTypeError** - 索引字段无效。

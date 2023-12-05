@@ -24,7 +24,7 @@ from mindspore import log as logger
 from .cifar10 import Cifar10
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
-from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
+from ..shardutils import check_filename, ExceptionThread, SUCCESS
 
 try:
     cv_import = import_module("cv2")
@@ -99,10 +99,8 @@ class Cifar10ToMR:
         data_list = _construct_raw_data(images, labels)
         test_data_list = _construct_raw_data(test_images, test_labels)
 
-        if _generate_mindrecord(self.destination, data_list, fields, "img_train") != SUCCESS:
-            return FAILED
-        if _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test") != SUCCESS:
-            return FAILED
+        _generate_mindrecord(self.destination, data_list, fields, "img_train")
+        _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
         return SUCCESS
 
     def transform(self, fields=None):
@@ -115,9 +113,6 @@ class Cifar10ToMR:
         Args:
             fields (list[str], optional): A list of index fields. Default: ``None`` . For index field settings,
                 please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -134,7 +129,6 @@ class Cifar10ToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
 
 def _construct_raw_data(images, labels):
@@ -175,7 +169,7 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        MSRStatus, SUCCESS or FAILED.
+        SUCCESS or FAILED.
     """
 
     schema = {"id": {"type": "int64"}, "label": {"type": "int64"},
@@ -188,4 +182,4 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
     if fields and isinstance(fields, list):
         writer.add_index(fields)
     writer.write_raw_data(raw_data)
-    return writer.commit()
+    writer.commit()
