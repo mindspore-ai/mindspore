@@ -308,19 +308,18 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   // If obj is nn.CellList, convert it to sequence.
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
-  if (is_celllist) {
-    for (size_t it = 0; it < list.size(); ++it) {
-      ValuePtr out = nullptr;
-      bool success = ConvertData(list[it], &out, use_signature);
-      if (!success) {
-        return nullptr;
-      }
-      value_list.push_back(out);
+  for (const auto &element : list) {
+    bool to_interpret = !is_celllist && py::isinstance<Cell>(element) && !py::hasattr(element, "__cell_as_list__");
+    if (to_interpret) {
+      value_list.push_back(std::make_shared<parse::InterpretedObject>(element));
+      continue;
     }
-  } else {
-    for (size_t it = 0; it < list.size(); ++it) {
-      value_list.push_back(std::make_shared<parse::InterpretedObject>(list[it]));
+    ValuePtr out = nullptr;
+    bool success = ConvertData(element, &out, use_signature);
+    if (!success) {
+      return nullptr;
     }
+    value_list.push_back(out);
   }
   return std::make_shared<ValueTuple>(value_list);
 }
