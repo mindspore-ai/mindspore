@@ -58,9 +58,7 @@ class Node:
 
         A node is corresponding to source code like:
 
-        .. code-block::
-
-            `targets` = self.`name`(*`args`, **`kwargs`)
+        ``targets = self.name(*args, **kwargs)``
 
         Args:
             cell (Cell): Cell-operator of this forward-layer.
