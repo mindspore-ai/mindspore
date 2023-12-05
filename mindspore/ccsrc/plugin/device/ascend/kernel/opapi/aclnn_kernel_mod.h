@@ -136,7 +136,6 @@ using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
     }                                                                                                       \
     bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,    \
                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                    \
-      MS_LOG(ERROR) << "aclnn launch " << op_type;                                                          \
       this->ParseGenExecutor(GenExecutor(inputs, outputs));                                                 \
       this->RunOp(stream_ptr, workspace);                                                                   \
       return true;                                                                                          \
