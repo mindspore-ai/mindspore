@@ -447,7 +447,6 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
   }
   auto context = MsContext::GetInstance();
   const auto graph_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-
   if (graph_reuse) {
     CellReuseProcess(manager, kAttrFineGrainedInterleavedBlockIndex);
     return;
