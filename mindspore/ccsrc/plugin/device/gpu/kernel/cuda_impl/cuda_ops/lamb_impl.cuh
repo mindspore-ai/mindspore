@@ -21,8 +21,7 @@ template <typename T>
 CUDA_LIB_EXPORT cudaError_t ApplyLambEraly(const size_t size, T *variable, T *m, T *v, const float *beta1,
                                            const float *beta2, const float *epsilon, const float *decay,
                                            const int32_t *global_step, const T *gradient, float *update,
-                                           float *var_float, float *grad_float, float *g_hat_var,
-                                           cudaStream_t cuda_stream);
+                                           float *var_float, float *grad_float, cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t ApplyLambLater(const size_t size, T *variable, const float *lr, const float *update,
