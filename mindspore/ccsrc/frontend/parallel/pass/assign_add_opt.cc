@@ -83,8 +83,8 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   }
   concat1->set_abstract(matmul_dw_node_front_input_node1_abstract->Clone());
   concat2->set_abstract(matmul_dw_node_front_input_node2_abstract->Clone());
-  matmul_dw_node_front_input_node1_input_shape[size_t(axis1)] *= matmul_dw_nodes.size();
-  matmul_dw_node_front_input_node2_input_shape[size_t(axis2)] *= matmul_dw_nodes.size();
+  matmul_dw_node_front_input_node1_input_shape[size_t(axis1)] *= SizeToLong(matmul_dw_nodes.size());
+  matmul_dw_node_front_input_node2_input_shape[size_t(axis2)] *= SizeToLong(matmul_dw_nodes.size());
   auto concat1_shape_value = std::make_shared<abstract::Shape>(matmul_dw_node_front_input_node1_input_shape);
   concat1->abstract()->set_shape(concat1_shape_value);
   auto concat2_shape_value = std::make_shared<abstract::Shape>(matmul_dw_node_front_input_node2_input_shape);
