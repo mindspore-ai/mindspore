@@ -1592,7 +1592,10 @@ void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string 
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     return;
   }
@@ -1609,7 +1612,10 @@ FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std:
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     return nullptr;
   }
@@ -1888,7 +1894,10 @@ void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::strin
                                   char *key) {
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
   }
@@ -2226,12 +2235,15 @@ void ClearResPart2() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     DeviceContext *device_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
+    // unregister external allocator, before clear stream and graphrunner
+    device_context->GetDeprecatedInterface()->UnregisterExternalAllocator();
     // clear runtime resource after clear graph when ge
     MS_LOG(INFO) << "Start clear kernel runtime...";
     device::KernelRuntimeManager::Instance().ClearRuntimeResource();
