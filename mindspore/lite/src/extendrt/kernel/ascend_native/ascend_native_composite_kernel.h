@@ -28,8 +28,6 @@
 namespace mindspore::kernel {
 class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
  public:
-  // AscendNativeCompositeKernel = delete;
-
   AscendNativeCompositeKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
                               InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}

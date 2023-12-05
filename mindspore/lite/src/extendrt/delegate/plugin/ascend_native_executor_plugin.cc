@@ -36,7 +36,7 @@ AscendNativeExecutorPlugin::~AscendNativeExecutorPlugin() {
 }
 
 AscendNativeExecutorPlugin &AscendNativeExecutorPlugin::GetInstance() {
-  static AscendNativeExecutorPlugin instance;
+  static AscendNativeExecutorPlugin instance{};
   return instance;
 }
 
