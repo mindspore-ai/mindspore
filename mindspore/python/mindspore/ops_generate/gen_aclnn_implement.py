@@ -49,7 +49,7 @@ namespace kernel {{
 
 class {kernelmod_name} : public AclnnKernelMod {{
  public:
-  explicit {kernelmod_name}() : AclnnKernelMod(std::move("{aclnn_name}")) {{}}
+  {kernelmod_name}() : AclnnKernelMod(std::move("{aclnn_name}")) {{}}
   ~{kernelmod_name}() = default;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
