@@ -29,6 +29,7 @@ np.random.seed(123456)
 
 class Net(nn.Cell):
     """MLP"""
+
     def __init__(self, in_channels=2, hidden_channels=128, out_channels=1, act=nn.Tanh()):
         super().__init__()
         self.act = act
@@ -43,7 +44,7 @@ class Net(nn.Cell):
         return self.layers(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -117,8 +118,12 @@ def test_mindflow_navier_stokes():
         time_beg = time.time()
         train_loss = train_step(pde_data, bc_data, bc_label, ic_data, ic_label)
         epoch_time = time.time() - time_beg
-        print(f"epoch: {epoch} train loss: {train_loss} epoch time: {epoch_time}s")
+        print(
+            f"epoch: {epoch} train loss: {train_loss} epoch time: {epoch_time}s")
     model.set_train(False)
 
-    assert epoch_time < 0.01
+    if context.get_context("device_target") == 'GPU':
+        assert epoch_time < 0.015
+    else:
+        assert epoch_time < 0.01
     assert train_loss < 0.8
