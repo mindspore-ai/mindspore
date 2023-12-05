@@ -425,6 +425,7 @@ Status OperatorInfo::InferTensorInfo() {
     }
     TensorInfo input_tensor_info(input_layout);
     inputs_tensor_info_.push_back(input_tensor_info);
+    ++real_input_index;
   }
 
   for (size_t i = 0; i < outputs_tensor_map_.size(); ++i) {

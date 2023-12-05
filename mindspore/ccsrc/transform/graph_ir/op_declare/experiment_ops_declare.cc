@@ -65,8 +65,8 @@ REG_ADPT_DESC(BlendFaceBgPartOne, kNameBlendFaceBgPartOne, ADPT_DESC(BlendFaceBg
 
 // FlashAttentionScore
 INPUT_MAP(FlashAttentionScore) = {
-  {1, INPUT_DESC(query)},     {2, INPUT_DESC(key)},        {3, INPUT_DESC(value)},        {4, INPUT_DESC(atten_mask)},
-  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(real_shift)}, {7, INPUT_DESC(padding_mask)}, {8, INPUT_DESC(prefix)},
+  {1, INPUT_DESC(query)},     {2, INPUT_DESC(key)},          {3, INPUT_DESC(value)},      {4, INPUT_DESC(real_shift)},
+  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(padding_mask)}, {7, INPUT_DESC(atten_mask)}, {8, INPUT_DESC(prefix)},
 };
 ATTR_MAP(FlashAttentionScore) = {
   {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
@@ -78,18 +78,19 @@ ATTR_MAP(FlashAttentionScore) = {
   {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
   {"sparse_mode", ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
 };
-OUTPUT_MAP(FlashAttentionScore) = {
-  {0, OUTPUT_DESC(attention_out)}, {1, OUTPUT_DESC(softmax_max)}, {2, OUTPUT_DESC(softmax_sum)}};
+OUTPUT_MAP(FlashAttentionScore) = {{0, OUTPUT_DESC(softmax_max)},
+                                   {1, OUTPUT_DESC(softmax_sum)},
+                                   {2, OUTPUT_DESC(softmax_out)},
+                                   {3, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(FlashAttentionScore, kNameFlashAttentionScore, ADPT_DESC(FlashAttentionScore))
 
 // FlashAttentionScoreGrad
-INPUT_MAP(FlashAttentionScoreGrad) = {{1, INPUT_DESC(query)},         {2, INPUT_DESC(key)},
-                                      {3, INPUT_DESC(value)},         {4, INPUT_DESC(atten_mask)},
-                                      {5, INPUT_DESC(attention_in)},  {6, INPUT_DESC(softmax_max)},
-                                      {7, INPUT_DESC(softmax_sum)},   {8, INPUT_DESC(dy)},
-                                      {9, INPUT_DESC(drop_mask)},     {10, INPUT_DESC(pse_shift)},
-                                      {11, INPUT_DESC(padding_mask)}, {12, INPUT_DESC(softmax_in)},
-                                      {13, INPUT_DESC(prefix)}};
+INPUT_MAP(FlashAttentionScoreGrad) = {
+  {1, INPUT_DESC(query)},        {2, INPUT_DESC(key)},         {3, INPUT_DESC(value)},
+  {4, INPUT_DESC(dy)},           {5, INPUT_DESC(pse_shift)},   {6, INPUT_DESC(drop_mask)},
+  {7, INPUT_DESC(padding_mask)}, {8, INPUT_DESC(atten_mask)},  {9, INPUT_DESC(softmax_max)},
+  {10, INPUT_DESC(softmax_sum)}, {11, INPUT_DESC(softmax_in)}, {12, INPUT_DESC(attention_in)},
+  {13, INPUT_DESC(prefix)}};
 ATTR_MAP(FlashAttentionScoreGrad) = {
   {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
   {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
@@ -100,6 +101,7 @@ ATTR_MAP(FlashAttentionScoreGrad) = {
   {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
   {"sparse_mode", ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
 };
-OUTPUT_MAP(FlashAttentionScoreGrad) = {{0, OUTPUT_DESC(dq)}, {1, OUTPUT_DESC(dk)}, {2, OUTPUT_DESC(dv)}};
+OUTPUT_MAP(FlashAttentionScoreGrad) = {
+  {0, OUTPUT_DESC(dq)}, {1, OUTPUT_DESC(dk)}, {2, OUTPUT_DESC(dv)}, {3, OUTPUT_DESC(dpse)}};
 REG_ADPT_DESC(FlashAttentionScoreGrad, kNameFlashAttentionScoreGrad, ADPT_DESC(FlashAttentionScoreGrad))
 }  // namespace mindspore::transform

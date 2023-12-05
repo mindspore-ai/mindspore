@@ -15,6 +15,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor
+import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops.composite import GradOperation
@@ -24,7 +25,7 @@ from mindspore.ops.operations.nn_ops import FlashAttentionScore
 class FlashAttentionScoreCell(nn.Cell):
     def __init__(self, head_num, input_layout):
         super(FlashAttentionScoreCell, self).__init__()
-        self.fa_op = FlashAttentionScore(head_num=head_num, input_layout=input_layout)
+        self.fa_op = FlashAttentionScore(head_num=head_num, input_layout=input_layout, keep_prob=0.9)
 
     def construct(self, *inputs):
         return self.fa_op(*inputs)
@@ -41,23 +42,22 @@ class Grad(nn.Cell):
         return gout
 
 
-def generate_inputs(B, N, S, D, input_layout, use_mqa=False):
-    N_Q = N
-    N_KV = 1 if use_mqa else N
+def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype):
     if input_layout == "BSH":
-        H_Q = N_Q * D
-        H_KV = N_KV * D
-        query = Tensor(np.ones((B, S, H_Q), dtype=np.float16))
-        key = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
-        value = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
+        query = Tensor(np.ones((B, S1, N1 * D)), dtype=dtype)
+        key = Tensor(np.ones((B, S2, N2 * D)), dtype=dtype)
+        value = Tensor(np.ones((B, S2, N2 * D)), dtype=dtype)
     elif input_layout == "BNSD":
-        query = Tensor(np.ones((B, N_Q, S, D), dtype=np.float16))
-        key = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
-        value = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
+        query = Tensor(np.ones((B, N1, S1, D)), dtype=dtype)
+        key = Tensor(np.ones((B, N2, S2, D)), dtype=dtype)
+        value = Tensor(np.ones((B, N2, S2, D)), dtype=dtype)
     else:
         raise ValueError(f"input_layout is invalid.")
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
-    return query, key, value, attn_mask
+    real_shift = Tensor(np.ones((B, N1, 1, S2)), dtype=dtype)
+    drop_mask = Tensor(np.ones((B, N1, S1, S2 // 8)), dtype=mstype.uint8)
+    attn_mask = Tensor(np.ones((B, 1, S1, S2)), dtype=mstype.uint8)
+    prefix = Tensor(np.ones((B,)), dtype=mstype.int64)
+    return query, key, value, real_shift, drop_mask, attn_mask, prefix
 
 
 @pytest.mark.level1
@@ -72,17 +72,18 @@ def test_flash_attention_score_fwd_bwd(input_layout):
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     B = 1
-    N = 4
-    S = 1024
+    N1 = 4
+    N2 = 4
+    S1 = 1024
+    S2 = 1024
     D = 128
-    query, key, value, attn_mask = generate_inputs(B, N, S, D, input_layout)
-    drop_mask = None
-    real_shift = None
+    dtype = mstype.float16
+    query, key, value, real_shift, drop_mask, attn_mask, prefix = \
+        generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype)
     padding_mask = None
-    prefix = None
-    net_with_grad = Grad(FlashAttentionScoreCell(N, input_layout))
+    net_with_grad = Grad(FlashAttentionScoreCell(N1, input_layout))
 
-    dq, dk, dv, _ = net_with_grad(query, key, value, attn_mask, drop_mask, real_shift, padding_mask, prefix)
+    dq, dk, dv, _, _, _, _ = net_with_grad(query, key, value, real_shift, drop_mask, padding_mask, attn_mask, prefix)
 
     assert dq.shape == query.shape
     assert dk.shape == key.shape

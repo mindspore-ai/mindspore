@@ -51,13 +51,13 @@ class FlashAttention(Cell):
             Default 1.
         mp(int): model parallel.
             Default 1.
-        high_precision(bool): This mode has higher precision but some performance loss.
+        high_precision(bool): This mode has higher precision but some performance loss. Only take effect on Ascend910A.
             Default False.
         have_attention_mask_batch(bool): indicates whether attention_mask contains the batch dimension.
             Default True
         alibi(bool): This parameter indicates whether the flashattention supports the Alibi.
             Default: False
-        use_mqa(bool): Using MHA if True, only take effect under 910B. Default: False.
+        use_mqa(bool): Using MQA if True, only take effect under 910B. Default: False.
 
 
     Inputs:
@@ -113,13 +113,14 @@ class FlashAttention(Cell):
             raise ValueError("the scaling constant must not be 0.")
         self.dropout_rate = dropout_rate
         self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "ascend910"
+        self.alibi = alibi
+        self.have_attention_mask_batch = have_attention_mask_batch
+
         if self.is_910A:
             self.scale_factor = Tensor([1. / math.sqrt(scaling_constant)], dtype=mstype.float16)
-            self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
             self.ones = ops.Ones()
             self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
-            self.have_attention_mask_batch = have_attention_mask_batch
-            self.alibi = alibi
+            self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
             self.flash_attention = get_flash_attention(
                 prev_block_num=prev_block_num,
                 next_block_num=next_block_num,
@@ -132,8 +133,6 @@ class FlashAttention(Cell):
                              (dp, mp, 1, 1))
             self.shard(fa_strategies)
         else:
-            if alibi:
-                raise ValueError(f"When soc_version is not Ascend910A, alibi must be False")
             self.transpose_4d_pre = ops.Transpose().shard(((dp, mp, 1, 1),))
             self.transpose_4d_post = ops.Transpose().shard(((dp, 1, mp, 1),))
             self.reshape = ops.Reshape()
@@ -143,20 +142,23 @@ class FlashAttention(Cell):
             if use_mqa:
                 fa_strategies = ((dp, mp, 1, 1),
                                  (dp, 1, 1, 1),
-                                 (dp, 1, 1, 1),
                                  (dp, 1, 1, 1))
             else:
                 fa_strategies = ((dp, mp, 1, 1),
                                  (dp, mp, 1, 1),
-                                 (dp, mp, 1, 1),
-                                 (dp, 1, 1, 1))
+                                 (dp, mp, 1, 1))
+            if self.alibi:
+                self.alibi_rescale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
+                self.alibi_rescale_factor = Tensor([scaling_constant], dtype=mstype.float16)
+                fa_strategies += ((dp, mp, 1, 1),)
             if dropout_rate > 1e-5:
                 fa_strategies += ((dp, mp, 1, 1),)
+            fa_strategies += ((dp, 1, 1, 1),)
             self.flash_attention = FlashAttentionScore(head_num=head_num, pre_tokens=prev_block_num,
                                                        next_tokens=next_block_num,
                                                        keep_prob=1 - dropout_rate,
                                                        scale_value=1. / scaling_constant,
-                                                       inner_precise=0 if high_precision else 1,
+                                                       inner_precise=0,
                                                        input_layout="BNSD").shard(fa_strategies)
 
         self.dropout_rate = dropout_rate
@@ -263,14 +265,17 @@ class FlashAttention(Cell):
                                               (bsz, head_num, seq_len, seq_len // 8))
             else:
                 drop_mask_bits = None
+            if self.alibi:
+                alibi_mask = self.alibi_rescale_mul(alibi_mask, self.cast(self.alibi_rescale_factor, alibi_mask.dtype))
             # (B, S, S) -> (B, 1, S, S)
-            attn_mask = self.cast(self.reshape(attn_mask, (bsz, 1, seq_len, seq_len)), mstype.uint8)
-            output, _, _ = self.flash_attention(query,
-                                                key,
-                                                value,
-                                                attn_mask,
-                                                drop_mask_bits,
-                                                None,
-                                                None,
-                                                None)
+            if self.have_attention_mask_batch:
+                attn_mask = self.cast(self.reshape(attn_mask, (bsz, 1, seq_len, seq_len)), mstype.uint8)
+            _, _, _, output = self.flash_attention(query,
+                                                   key,
+                                                   value,
+                                                   alibi_mask,
+                                                   drop_mask_bits,
+                                                   None,
+                                                   attn_mask,
+                                                   None)
         return output

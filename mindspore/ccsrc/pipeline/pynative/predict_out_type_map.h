@@ -286,8 +286,8 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"scalar_lt", kTypeNone},
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
-                                                       {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"FlashAttentionScore", kTupleTensor4},
+                                                       {"FlashAttentionScoreGrad", kTupleTensor4},
                                                        {"PromptFlashAttention", kTupleTensor1}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);

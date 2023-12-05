@@ -32,13 +32,13 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-constexpr size_t kInputQueryBatchDimBSH = 0;
-constexpr size_t kInputQuerySeqDimBSH = 1;
-constexpr size_t kInputQueryHiddenDimBSH = 2;
-constexpr size_t kInputQueryBatchDimBNSD = 0;
-constexpr size_t kInputQueryHeadNumDimBNSD = 1;
-constexpr size_t kInputQuerySeqDimBNSD = 2;
-constexpr size_t kInputQueryHeadSizeDimBNSD = 3;
+constexpr size_t kInputQKVBatchDimBSH = 0;
+constexpr size_t kInputQKVSeqDimBSH = 1;
+constexpr size_t kInputQKVHiddenDimBSH = 2;
+constexpr size_t kInputQKVBatchDimBNSD = 0;
+constexpr size_t kInputQKVHeadNumDimBNSD = 1;
+constexpr size_t kInputQKVSeqDimBNSD = 2;
+constexpr size_t kInputQKVHeadSizeDimBNSD = 3;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
 int64_t SEED_NUM = 1;
@@ -194,24 +194,182 @@ std::vector<Operator> FlashAttentionScoreInfo::GetDropoutGenMaskReplaceOp(const 
   return replace_ops;
 }
 
+void FlashAttentionScoreInfo::InitIsInputPassed() {
+  is_input_passed_.resize(input_value_.size());
+  for (size_t i = 0; i < input_value_.size(); ++i) {
+    is_input_passed_[i] = (input_value_[i] == nullptr || !input_value_[i]->isa<None>());
+  }
+}
+
+size_t FlashAttentionScoreInfo::GetStrategyRealIndex(size_t index) {
+  if (index >= is_input_passed_.size() || !is_input_passed_[index]) {
+    MS_LOG(INTERNAL_EXCEPTION) << name_ << ": GetStrategyRealIndex failed, index is " << index;
+  }
+  auto real_index = -1;
+  for (size_t i = 0; i <= index; ++i) {
+    if (is_input_passed_[i]) {
+      ++real_index;
+    }
+  }
+  return real_index;
+}
+
+void FlashAttentionScoreInfo::InitExpectedStrategies() {
+  expect_strategies_ = Strategies(ops::kFlashAttentionScoreInputsNum);
+  if (input_layout_ == kInputLayoutBSH) {
+    expect_strategies_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_split_num_, s1_split_num_, n1_split_num_};
+    expect_strategies_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_split_num_, 1, n2_split_num_};
+    expect_strategies_[ops::kFlashAttentionScoreInputValueIndex] = {batch_split_num_, 1, n2_split_num_};
+  } else {
+    expect_strategies_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_split_num_, n1_split_num_, s1_split_num_, 1};
+    expect_strategies_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_split_num_, n2_split_num_, 1, 1};
+    expect_strategies_[ops::kFlashAttentionScoreInputValueIndex] = {batch_split_num_, n2_split_num_, 1, 1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    int64_t real_shift_s1_split_num = real_shift_have_s1_dim_ ? s1_split_num_ : 1;
+    expect_strategies_[ops::kFlashAttentionScoreInputRealShiftIndex] = {batch_split_num_, n1_split_num_,
+                                                                        real_shift_s1_split_num, 1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    expect_strategies_[ops::kFlashAttentionScoreInputDropMaskIndex] = {batch_split_num_, n1_split_num_, s1_split_num_,
+                                                                       1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPaddingMaskIndex]) {
+    expect_strategies_[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    if (attn_mask_shape.size() == kSizeTwo) {
+      // attn_mask_shape: (S1, S2)
+      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_, 1};
+    } else if (attn_mask_shape.size() == kSizeFour) {
+      // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
+      auto attn_mask_n1_split_num = attn_mask_shape[kIndex1] == 1 ? 1 : n1_split_num_;
+      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_split_num_, attn_mask_n1_split_num,
+                                                                         s1_split_num_, 1};
+    }
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
+    expect_strategies_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_split_num_};
+  }
+  expect_strategies_.erase(std::remove(expect_strategies_.begin(), expect_strategies_.end(), Shape{}),
+                           expect_strategies_.end());
+}
+
+void FlashAttentionScoreInfo::InitInputsTensorMap() {
+  inputs_tensor_map_ = std::vector<Shape>(ops::kFlashAttentionScoreInputsNum);
+  int64_t kv_head_num_map = kv_split_ ? dev_matrix_n1_dim_ : -1;
+  if (input_layout_ == kInputLayoutBSH) {
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputQueryIndex] = {dev_matrix_batch_dim_, dev_matrix_s1_dim_,
+                                                                    dev_matrix_n1_dim_};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputKeyIndex] = {dev_matrix_batch_dim_, -1, kv_head_num_map};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, -1, kv_head_num_map};
+
+  } else {
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputQueryIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_,
+                                                                    dev_matrix_s1_dim_, -1};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputKeyIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1, -1};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1, -1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    auto real_shift_s1_map = real_shift_have_s1_dim_ ? dev_matrix_s1_dim_ : -1;
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputRealShiftIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_,
+                                                                        real_shift_s1_map, -1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputDropMaskIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_,
+                                                                       dev_matrix_s1_dim_, -1};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPaddingMaskIndex]) {
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    if (attn_mask_shape.size() == kSizeTwo) {
+      // attn_mask_shape: (S1, S2)
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_s1_dim_, -1};
+    } else if (attn_mask_shape.size() == kSizeFour) {
+      // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
+      auto attn_mask_n1_map = attn_mask_shape[kIndex1] == 1 ? -1 : dev_matrix_n1_dim_;
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_batch_dim_, attn_mask_n1_map,
+                                                                         dev_matrix_s1_dim_, -1};
+    }
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputPrefixIndex] = {dev_matrix_batch_dim_};
+  }
+  inputs_tensor_map_.erase(std::remove(inputs_tensor_map_.begin(), inputs_tensor_map_.end(), Shape{}),
+                           inputs_tensor_map_.end());
+}
+
+void FlashAttentionScoreInfo::InitSplittableInputs() {
+  splittable_inputs_ = std::vector<Shape>(ops::kFlashAttentionScoreInputsNum);
+  int64_t batch_group = 3;
+  int64_t s1_group = 2;
+  int64_t n1_group = 1;
+  int64_t n2_group = kv_split_ ? n1_group : 0;
+  if (input_layout_ == kInputLayoutBSH) {
+    splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, s1_group, n1_group};
+    splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, 0, n2_group};
+    splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, 0, n2_group};
+
+  } else {
+    splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, n1_group, s1_group, 0};
+    splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, n2_group, 0, 0};
+    splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, n2_group, 0, 0};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    auto real_shift_s1_group = real_shift_have_s1_dim_ ? s1_group : 0;
+    splittable_inputs_[ops::kFlashAttentionScoreInputRealShiftIndex] = {batch_group, n1_group, real_shift_s1_group, 0};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    splittable_inputs_[ops::kFlashAttentionScoreInputDropMaskIndex] = {batch_group, n1_group, s1_group, 0};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPaddingMaskIndex]) {
+    splittable_inputs_[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    if (attn_mask_shape.size() == kSizeTwo) {
+      // attn_mask_shape: (S1, S2)
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_group, -1};
+    } else if (attn_mask_shape.size() == kSizeFour) {
+      // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
+      auto attn_mask_n1_group = attn_mask_shape[kIndex1] == 1 ? 0 : n1_group;
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, s1_group, 1};
+    }
+    splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {1, 0, 0, 0};
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
+    splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_group};
+  }
+  splittable_inputs_.erase(std::remove(splittable_inputs_.begin(), splittable_inputs_.end(), Shape{}),
+                           splittable_inputs_.end());
+}
+
 Status FlashAttentionScoreInfo::GetAttrs() {
+  InitIsInputPassed();
   head_num_ = GetIntAttr(kAttrHeadNum);
   keep_prob_ = GetFloatAttr(kAttrKeepProb);
-  has_drop_mask_input_ = !common::IsFloatEqual(keep_prob_, 1.0);
+  has_drop_mask_input_ = is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex];
   input_layout_ = GetStringAttr(kAttrInputLayout);
   if (input_layout_ == kInputLayoutBSH) {
-    auto q_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQueryHiddenDimBSH];
-    auto k_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQueryHiddenDimBSH];
+    auto q_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVHiddenDimBSH];
+    auto k_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVHiddenDimBSH];
     kv_split_ = q_hidden_size != k_hidden_size * head_num_;
   } else if (input_layout_ == kInputLayoutBNSD) {
-    auto k_head_num = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQueryHeadNumDimBNSD];
+    auto k_head_num = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVHeadNumDimBNSD];
     kv_split_ = k_head_num != 1;
   } else {
     MS_LOG(ERROR) << name_ << ": The attribute 'input_layout' must be either " << kInputLayoutBSH << " or "
                   << kInputLayoutBNSD << ", but got " << input_layout_;
     return FAILED;
   }
-
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    auto real_shift_s1_dim =
+      inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputRealShiftIndex)).at(kIndex3);
+    real_shift_have_s1_dim_ = real_shift_s1_dim > 1;
+  }
   return SUCCESS;
 }
 
@@ -228,81 +386,76 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << ") must be same.";
     return FAILED;
   }
-  if (kv_split_ && query_strategy != key_strategy) {
-    MS_LOG(ERROR) << name_ << ": The in_strategy both of 'query'( " << query_strategy << ") and 'key'" << key_strategy
-                  << ") must be same.";
-    return FAILED;
-  }
+  int64_t s2_split_num;
   if (input_layout_ == kInputLayoutBSH) {
-    if (query_strategy[kInputQuerySeqDimBSH] != 1) {
-      MS_LOG(ERROR) << name_
-                    << ": The S-Dimention of input 'query' cannot be split, but got strategy: " << query_strategy;
+    if (head_num_ % query_strategy[kInputQKVHiddenDimBSH] != 0) {
+      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQKVHiddenDimBSH << "] must be 0, but got "
+                    << head_num_ << "(head_num) and " << query_strategy[kInputQKVHiddenDimBSH] << "(query_strategy["
+                    << kInputQKVHiddenDimBSH << "])";
       return FAILED;
     }
-    if (head_num_ % query_strategy[kInputQueryHiddenDimBSH] != 0) {
-      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQueryHiddenDimBSH << "] must be 0, but got "
-                    << head_num_ << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy["
-                    << kInputQueryHiddenDimBSH << "])";
-      return FAILED;
-    }
-    if (!kv_split_ && key_strategy[kInputQueryHiddenDimBSH] != 1) {
+    if (!kv_split_ && key_strategy[kInputQKVHiddenDimBSH] != 1) {
       MS_LOG(ERROR) << name_ << ": Under the MQA，the hidden-dim of input 'key' cannot be split.";
       return FAILED;
     }
-    dp_ = query_strategy[kInputQueryBatchDimBSH];
-    mp_ = query_strategy[kInputQueryHiddenDimBSH];
+    batch_split_num_ = query_strategy[kInputQKVBatchDimBSH];
+    n1_split_num_ = query_strategy[kInputQKVHiddenDimBSH];
+    s1_split_num_ = query_strategy[kInputQKVSeqDimBSH];
+    n2_split_num_ = key_strategy[kInputQKVHiddenDimBSH];
+    s2_split_num = key_strategy[kInputQKVSeqDimBSH];
   } else {
-    if (query_strategy[kInputQuerySeqDimBNSD] != 1) {
-      MS_LOG(ERROR) << name_
-                    << ": The S-Dimention of input 'query' cannot be split, but got strategy: " << query_strategy;
+    if (head_num_ % query_strategy[kInputQKVHeadNumDimBNSD] != 0) {
+      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQKVHeadNumDimBNSD << "] must be 0, but got "
+                    << head_num_ << "(head_num) and " << query_strategy[kInputQKVHeadNumDimBNSD] << "(query_strategy["
+                    << kInputQKVHeadNumDimBNSD << "])";
       return FAILED;
     }
-    if (head_num_ % query_strategy[kInputQueryHeadNumDimBNSD] != 0) {
-      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQueryHeadNumDimBNSD << "] must be 0, but got "
-                    << head_num_ << "(head_num) and " << query_strategy[kInputQueryHeadNumDimBNSD] << "(query_strategy["
-                    << kInputQueryHeadNumDimBNSD << "])";
-      return FAILED;
-    }
-    dp_ = query_strategy[kInputQueryBatchDimBNSD];
-    mp_ = query_strategy[kInputQueryHeadNumDimBNSD];
+    batch_split_num_ = query_strategy[kInputQKVBatchDimBNSD];
+    n1_split_num_ = query_strategy[kInputQKVHeadNumDimBNSD];
+    s1_split_num_ = query_strategy[kInputQKVSeqDimBNSD];
+    n2_split_num_ = key_strategy[kInputQKVHeadNumDimBNSD];
+    s2_split_num = key_strategy[kInputQKVSeqDimBNSD];
   }
-  if (has_drop_mask_input_) {
-    Shape expect_drop_mask_strategy{dp_, mp_, 1, 1};
-    auto drop_mask_strategy = strategies[ops::kFlashAttentionScoreInputDropMaskIndex];
-    if (drop_mask_strategy != expect_drop_mask_strategy) {
-      MS_LOG(ERROR) << name_ << ": The in_strategy for 'drop_mask' must be " << expect_drop_mask_strategy
-                    << ", but got " << drop_mask_strategy;
-      return FAILED;
-    }
+  if (s2_split_num != 1) {
+    MS_LOG(ERROR) << name_ << ": The S-Dimention of input 'key' cannot be split, but got the strategy of key is "
+                  << key_strategy;
+    return FAILED;
   }
+  if (kv_split_ && n1_split_num_ != n2_split_num_) {
+    MS_LOG(ERROR) << name_ << ": The split num of N1-dim and N2-dim must be equal if N2 > 1, but got " << n1_split_num_
+                  << " and " << n2_split_num_;
+  }
+
+  InitExpectedStrategies();
+  if (strategies != expect_strategies_) {
+    MS_LOG(ERROR) << name_ << ": The input strategy must be " << expect_strategies_ << ", but got " << strategies;
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 
 Status FlashAttentionScoreInfo::InferDevMatrixShape() {
-  dev_matrix_shape_ = {dp_, mp_};
+  if (input_layout_ == kInputLayoutBSH) {
+    dev_matrix_shape_ = {batch_split_num_, s1_split_num_, n1_split_num_};
+    dev_matrix_batch_dim_ = 2;
+    dev_matrix_s1_dim_ = 1;
+    dev_matrix_n1_dim_ = 0;
+  } else {
+    dev_matrix_shape_ = {batch_split_num_, n1_split_num_, s1_split_num_};
+    dev_matrix_batch_dim_ = 2;
+    dev_matrix_n1_dim_ = 1;
+    dev_matrix_s1_dim_ = 0;
+  }
   return SUCCESS;
 }
 
 Status FlashAttentionScoreInfo::InferTensorMap() {
-  int64_t head_num_map = kv_split_ ? 0 : -1;
-  if (input_layout_ == kInputLayoutBSH) {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});             // query
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // key
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // value
-  } else {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});             // query
-    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // key
-    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // value
-  }
-  (void)inputs_tensor_map_.emplace_back(Shape{1, -1, -1, -1});  // attn_mask
-  // drop_mask
-  if (has_drop_mask_input_) {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});
-  }
-
-  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);  // attention_out
-  outputs_tensor_map_.push_back({1, 0, -1, -1});         // softmax_max
-  outputs_tensor_map_.push_back({1, 0, -1, -1});         // softmax_sum
+  InitInputsTensorMap();
+  outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_max
+  outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_sum
+  outputs_tensor_map_.push_back({-1});                                                                 // softmax_out
+  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);                                                // attention_out
   return SUCCESS;
 }
 
@@ -311,7 +464,7 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     auto clone_prim = prim->Clone();
     MS_EXCEPTION_IF_NULL(prim);
-    clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
+    clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / n1_split_num_));
     cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
 
     // If DropoutGenMask -> Reshape -> FlashAttentionScore, replace its.
@@ -349,27 +502,9 @@ Status FlashAttentionScoreInfo::InferAsLossDivisor() {
 }
 
 std::vector<StrategyPtr> FlashAttentionScoreInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape splitable_query;
-  Shape splitable_key;
-  Shape splitable_value;
-  int64_t head_num_splitable = kv_split_ ? 2 : 0;
-  if (input_layout_ == kInputLayoutBSH) {
-    splitable_query = {1, 0, head_num_splitable};
-    splitable_key = {1, 0, head_num_splitable};
-    splitable_value = {1, 0, head_num_splitable};
-  } else {
-    splitable_query = {1, head_num_splitable, 0, head_num_splitable};
-    splitable_key = {1, head_num_splitable, 0, head_num_splitable};
-    splitable_value = {1, head_num_splitable, 0, head_num_splitable};
-  }
-  Shape splitable_attn_mask{1, 0, 0, 0};
-  Shapes splitable_inputs = {splitable_query, splitable_key, splitable_value, splitable_attn_mask};
-  if (has_drop_mask_input_) {
-    (void)splitable_inputs.emplace_back(Shape{1, 2, 0, 0});
-  }
-
+  InitSplittableInputs();
   std::vector<StrategyPtr> sp_vector;
-  if (GenerateStrategiesForDependentInputs(stage_id, inputs_shape_, splitable_inputs, &sp_vector) != SUCCESS) {
+  if (GenerateStrategiesForDependentInputs(stage_id, inputs_shape_, splittable_inputs_, &sp_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Generate strategies for dependent inputs() failed.";
   }
   if (sp_vector.empty()) {
@@ -379,13 +514,7 @@ std::vector<StrategyPtr> FlashAttentionScoreInfo::GenerateOpStrategies(int64_t s
 }
 
 void FlashAttentionScoreInfo::ReComputeBatchSplitFlagList() {
-  split_flag_list_[ops::kFlashAttentionScoreInputQueryIndex] = true;
-  split_flag_list_[ops::kFlashAttentionScoreInputKeyIndex] = true;
-  split_flag_list_[ops::kFlashAttentionScoreInputValueIndex] = true;
-  split_flag_list_[ops::kFlashAttentionScoreInputAttnMaskIndex] = true;
-  if (has_drop_mask_input_) {
-    split_flag_list_[ops::kFlashAttentionScoreInputDropMaskIndex] = has_drop_mask_input_;
-  }
+  split_flag_list_ = std::vector<bool>(inputs_shape_.size(), true);
 }
 
 Status FlashAttentionScoreInfo::InferMirrorOps() {
@@ -396,9 +525,14 @@ Status FlashAttentionScoreInfo::InferMirrorOps() {
   if (mirror_ops_.empty()) {
     return SUCCESS;
   }
-  for (size_t i = mirror_ops_.size(); i < ops::kFlashAttentionScoreInputsNum; ++i) {
-    // Push empty mirror op for nums
-    (void)mirror_ops_.emplace_back(OperatorVector());
+  // Insert empty OperatorInfo for optional input
+  size_t cur_index = 0;
+  std::vector<OperatorVector> real_mirror_ops(input_value_.size(), OperatorVector());
+  for (size_t i = 0; i < input_value_.size(); ++i) {
+    if (is_input_passed_[i]) {
+      real_mirror_ops[i] = mirror_ops_[cur_index++];
+    }
+    mirror_ops_ = real_mirror_ops;
   }
   return SUCCESS;
 }

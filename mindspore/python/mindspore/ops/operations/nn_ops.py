@@ -11417,41 +11417,50 @@ class FlashAttentionScore(Primitive):
     .. warning::
         This is an experimental API that is subject to change or deletion.
     B -- Batch size
-    S -- Sequence length
-    H -- Hidden size
-    N -- Num heads
-    D -- Dim size
+    S1 -- Sequence length of query
+    S2 -- Sequence length of key and value
+    N1 -- Num heads of query
+    N2 -- Num heads of key and value, and N2 must be a factor of N1
+    D -- head size
+    H1 -- Hidden size of query, which equals to N1 * D
+    H2 -- Hidden size of key and value, which equals to N2 * D
     Args:
-        head_num (int): The number of the heads.
+        head_num (int): The head num of query.
         keep_prob (float): The keep probability of dropout. Default: 1.0.
         scale_value (float): The scale value. Default: 1.0.
         pre_tokens (int): Previous tokens. Default: 65536.
         next_tokens (int): Next tokens. Default: 65536.
         inner_precise (int): Specify the execution mode, where 0 indicates high precision mode and 1 indicates high
-        performance mode. Default: 0.
+        performance mode. Only support 0 currently. Default: 0.
         input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "BNSD"].
         Default: "BSH".
         sparse_mode (int): Default 0.
 
     Inputs:
-        - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
-          Input tensor of shape :math:`(B, S, H)`.
-        - **key** (Tensor) - The key tensor with data must be in [float16, float32, bfloat16].
-          Input tensor of shape :math:`(B, S, H)`.
-        - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
-          Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8.
-          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
-          Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
-        - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
+        - **query** (Tensor[float16, float32, bfloat16]) - The query tensor.
+          Input tensor of shape :math:`(B, S1, H1)` or `(B, N1, S1, D)`.
+        - **key** (Tensor[float16, float32, bfloat16]) - The key tensor.
+          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
+        - **value** (Tensor[float16, float32, bfloat16]) - The value tensor.
+          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
+        - **real_shift** (Tensor[float16, float32, bfloat16], None) - The position embedding code.
+          Input tensor of shape :math: `(B, N1, S1, S2)` or `(B, N1, 1, S2)`.
+        - **drop_mask** (Tensor[uint8], None) - The dropout mask tensor.
+          Input tensor of shape :math:`(B, N1, S1, S2 // 8) or None`.
         - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
-        - **prefix** (None) - Not implemented yet.
+        - **attn_mask** (Tensor[uint8], None) - The attention mask tensor.
+          For each element, 0 indicates retention and 1 indicates discard.
+          Input tensor of shape :math:`(B, N1, S1, S2)`, `(B, 1, S1, S2)` or `(S1, S2)`.
+        - **prefix** (Tensor[int64], None) - Not implemented yet.
+          Input tensor of shape :math:`(B,)`.
 
     Outputs:
-        - **attention_out** (Tensor) - (B, S, H)
-        - **softmax_max** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
-        - **softmax_sum** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
+        - **softmax_max** (Tensor[float32]) - (B, N1, S1, 8)
+        - **softmax_sum** (Tensor[float32]) - (B, N1, S1, 8)
+        - **softmax_out** (Tensor[float32]) - Useless output, ignore it. Output tensor of shape : `()`
+        - **attention_out** (Tensor[float16, float32, bfloat16]) - The output of attention, its shape, and data type
+          are the same as the query.
+
     Supported Platforms:
         ``Ascend``
     """
@@ -11469,14 +11478,14 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        if inner_precise not in [0, 1]:
-            raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
+        if inner_precise not in [0]:
+            raise ValueError(f"Attribute 'inner_precise' must be 0, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         if input_layout not in ["BSH", "BNSD"]:
             raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
-            outputs=['attention_out', 'softmax_max', 'softmax_sum'])
+            inputs=['query', 'key', 'value', 'real_shift', 'drop_mask', 'padding_mask', 'attn_mask', 'prefix'],
+            outputs=['softmax_max', 'softmax_sum', 'softmax_out', 'attention_out'])
 
 
 class RmsNorm(Primitive):
