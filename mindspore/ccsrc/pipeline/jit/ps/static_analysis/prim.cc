@@ -2420,6 +2420,19 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   }
 }
 
+void AddSignaturesToPrimitiveFunction(const PrimitivePtr &prim_func) {
+  // Set primitive signatures.
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::tuple prim_signatures =
+    python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, prim_func->name());
+  std::vector<Signature> signatures;
+  for (const auto &sign : prim_signatures) {
+    (void)signatures.emplace_back(sign.cast<Signature>());
+  }
+  prim_func->set_signatures(signatures);
+  prim_func->set_has_signature(!signatures.empty());
+}
+
 ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
   py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
   if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
@@ -2585,15 +2598,36 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
     MS_LOG(INTERNAL_EXCEPTION) << "DoTransPrimitiveFunction only supports Primitive with OpDef, but got " << prim_name
                                << ".";
   }
-  // Get init args and call args of primitive.
   if (cnode->size() != args_abs_list.size() + 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim_name << "], the number of cnode inputs should be "
                                << args_abs_list.size() + 1 << ", but got " << cnode->size()
                                << ".\nnode: " << cnode->DebugString();
   }
-  AnfNodePtrList cnode_inputs = cnode->inputs();
-  size_t init_args_size = do_trans_prim_func->given_init_size();
+  // Handle primitive labels.
+  AddLabelsToPrimitiveFunction(prim_func);
+  // Handle primitive signatures.
+  AddSignaturesToPrimitiveFunction(prim_func);
+  // Get init args size.
+  size_t init_args_size = 0;
+  if (do_trans_prim_func->has_given_init_size()) {
+    // Might need to handle default arguments.
+    init_args_size = do_trans_prim_func->given_init_size();
+  } else {
+    // All call args and init args should have been provided.
+    size_t op_args_size = op_def->args_.size();
+    if (op_args_size != args_abs_list.size()) {
+      MS_LOG(EXCEPTION) << "For Primitive Function '" << prim_name << "', the number of inputs should be "
+                        << op_args_size << ", but got " << args_abs_list.size()
+                        << ". Please check inputs of the operator.";
+    }
+    for (size_t i = 0; i < op_args_size; i++) {
+      if (op_def->args_[i].as_init_arg_) {
+        ++init_args_size;
+      }
+    }
+  }
   // Handle init args.
+  AnfNodePtrList cnode_inputs = cnode->inputs();
   AnfNodePtrList origin_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
   AbstractBasePtrList origin_init_abs_list(args_abs_list.begin() + args_abs_list.size() - init_args_size,
                                            args_abs_list.end());
@@ -3647,22 +3681,10 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
                                                         const AnfNodeConfigPtr &out_conf) const {
     // Create Primitive instance with variable arguments.
     auto prim_func = std::make_shared<Primitive>(cls_name);
-    // Handle primitive signatures.
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::tuple prim_signatures = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, cls_obj);
-    std::vector<Signature> signatures;
-    for (const auto &sign : prim_signatures) {
-      (void)signatures.emplace_back(sign.cast<Signature>());
-    }
-    prim_func->set_signatures(signatures);
-    prim_func->set_has_signature(!signatures.empty());
-
-    AbstractBasePtrList partial_args_abs_list;
+    auto do_trans_prim_func = std::make_shared<prim::DoTransPrimitiveFunction>(prim_func);
     // Ignore the first input which is ClassType.
-    for (size_t i = 1; i < args_abs_list.size(); i++) {
-      (void)partial_args_abs_list.emplace_back(args_abs_list[i]);
-    }
-    auto do_trans_prim_func = std::make_shared<prim::DoTransPrimitiveFunction>(prim_func, partial_args_abs_list.size());
+    AbstractBasePtrList partial_args_abs_list(args_abs_list.begin() + 1, args_abs_list.end());
+    do_trans_prim_func->set_given_init_size(partial_args_abs_list.size());
     auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(do_trans_prim_func);
     auto ret_val =
       std::make_shared<abstract::PartialAbstractClosure>(func_ptr, partial_args_abs_list, out_conf->node());

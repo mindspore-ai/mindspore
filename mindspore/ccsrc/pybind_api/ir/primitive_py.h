@@ -194,7 +194,7 @@ class PrimitiveFunctionAdapter {
   PrimitiveFunctionAdapter() = default;
   void set_attached_primitive_function(const PrimitivePtr &prim_func) { attached_primitive_function_ = prim_func; }
   PrimitivePtr attached_primitive_function() { return attached_primitive_function_.lock(); }
-  py::object name() { return py::str(attached_primitive_function_.lock()->name()); }
+  virtual std::string name() { return py::str(attached_primitive_function_.lock()->name()).cast<std::string>(); }
   py::object has_label(const std::string &label) {
     return py::bool_(attached_primitive_function_.lock()->HasAttr(label));
   }
