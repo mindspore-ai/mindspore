@@ -279,6 +279,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
   size_t alloc_mem_size = CalMemBlockAllocSize(size, from_persistent_mem, need_recycle);
   MS_LOG(DEBUG) << "CalMemBlockAllocSize return : " << size << ", alloc_mem_size : " << alloc_mem_size;
   if (alloc_mem_size == 0) {
+    if (auto device_addr = FindAvailableMemBuf(size, !from_persistent_mem)) {
+      return device_addr;
+    }
     if (IsEnableEagerFree()) {
       is_trigger_eager_free_ = true;
       return AddMemBlockAndMemBufByEagerFree(size, from_persistent_mem);
