@@ -100,6 +100,7 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
   MS_LOG(INFO) << "ReceiveData begin channel_name: " << channel_name;
+  int receive_timeout = 2000;  // wait time of 2000 ms when there is no data
   while (true) {
     if (g_atomic_summary > 0) {
       break;
@@ -111,7 +112,7 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, 2000);
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, receive_timeout);
       ChannelType channel_type{ChannelType::kMbuf};
       std::map<std::string, TDTInfo>::iterator iter = tdt_infos.find(channel_name);
       if (iter != tdt_infos.end()) {
@@ -264,7 +265,8 @@ void TensorSummaryUtils::DestroyTDTSummaryThread() {
   std::map<std::string, TDTInfo> tdt_infos = TDTTensorUtils::GetInstance().tdt_infos;
   // total timeout 10s
   int timeout = 1000000;  // 1s
-  while (i < 10 && g_atomic_summary < static_cast<int>(tdt_infos.size()) + 1) {
+  int num_times = 10;     // sleep up to 10 times
+  while (i < num_times && g_atomic_summary < static_cast<int>(tdt_infos.size()) + 1) {
     usleep(timeout);
     i++;
   }
