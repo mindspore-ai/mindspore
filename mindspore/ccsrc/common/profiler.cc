@@ -85,6 +85,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   // Inner event.
   {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
   {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
+  {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
   // PyNative events
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},

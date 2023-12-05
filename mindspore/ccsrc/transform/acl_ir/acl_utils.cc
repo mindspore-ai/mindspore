@@ -25,6 +25,7 @@
 #include "utils/file_utils.h"
 #include "acl/acl.h"
 #include "acl/acl_mdl.h"
+#include "include/common/profiler.h"
 
 namespace {
 /*
@@ -390,6 +391,8 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl syncsteam failed, op_type_:" << op_type_;
     }
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunchInner,
+                                       "aclopCompileAndExecuteV2", true);
     ret = aclopCompileAndExecuteV2(const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
                                    const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
                                    const_cast<aclDataBuffer **>(acl_param_.input_buffer.data()), GetNumRealOutputs(),
@@ -400,6 +403,8 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
       MS_LOG(EXCEPTION) << "Acl compile and execute failed, op_type_:" << op_type_;
     }
   } else {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunchInner,
+                                       "aclopCompileAndExecute", true);
     bool ret = aclopCompileAndExecute(const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
                                       acl_param_.input_desc.data(), acl_param_.input_buffer.data(), GetNumRealOutputs(),
                                       acl_param_.output_desc.data(), acl_param_.output_buffer.data(), acl_param_.attr,

@@ -34,8 +34,6 @@ bool ReshapeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   auto status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
                                  inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {

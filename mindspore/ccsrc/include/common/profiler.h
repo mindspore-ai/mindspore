@@ -74,6 +74,7 @@ enum class ProfilerEvent {
   // Inner event is not counted in the total time.
   kKernelInferInner,
   kKernelInferDataSync,
+  kKernelLaunchInner,
 
   // PyNative Pipeline
   kPyNativeFrontendTask,
