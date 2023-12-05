@@ -22,6 +22,14 @@ thread_local int g_hash_offset = 0;
 
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
+void GatherInfo(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  GatherInfo(tensor);
+  // trans
+  MemcpyToBuf(&trans, 1);
+}
+
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr) {
     return;
