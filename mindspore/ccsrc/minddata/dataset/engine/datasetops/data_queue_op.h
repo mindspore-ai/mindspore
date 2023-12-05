@@ -42,7 +42,7 @@ using DATA_INFO = std::vector<std::pair<DataType, TensorShape>>;
 using DATA_INFO_QUEUE = Queue<DATA_INFO>;
 using mindspore::device::DataQueueItem;
 using mindspore::device::DataQueueStatus;
-constexpr int32_t kTimeOutMilliSeconds = 25000;
+constexpr int32_t kTimeOutMilliSeconds = 60000;
 const int kDataInfoQueueCapacity = 128;
 
 class DataQueueOp : public PipelineOp {

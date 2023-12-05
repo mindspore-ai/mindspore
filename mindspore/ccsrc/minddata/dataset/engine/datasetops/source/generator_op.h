@@ -38,7 +38,7 @@ namespace dataset {
 #pragma GCC visibility push(hidden)
 #endif
 
-constexpr int32_t kGetItemTimeOutMilliSeconds = 25000;
+constexpr int32_t kGetItemTimeOutMilliSeconds = 60000;
 
 class GeneratorOp : public PipelineOp, public RandomAccessOp {
  public:
