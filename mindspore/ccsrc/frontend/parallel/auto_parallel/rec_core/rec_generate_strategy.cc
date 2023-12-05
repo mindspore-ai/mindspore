@@ -83,6 +83,10 @@ size_t FindIndexOfOperatorIncoming(const std::vector<std::shared_ptr<OperatorInf
       break;
     }
   }
+  if (incoming_op_index != SIZE_MAX &&
+      ops.at(incoming_op_index)->name().find(VIRTUALDATASETINFO) != std::string::npos) {
+    return SIZE_MAX;
+  }
   return incoming_op_index;
 }
 
