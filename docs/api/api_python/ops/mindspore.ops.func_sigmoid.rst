@@ -11,6 +11,11 @@ mindspore.ops.sigmoid
 
     其中， :math:`input_i` 是input的一个元素。
 
+    Sigmoid函数图：
+
+    .. image:: ../images/Sigmoid.png
+        :align: center
+
     参数：
         - **input** (Tensor) - 任意维度的Tensor，数据类型为float16、float32、float64、complex64或complex128。
 

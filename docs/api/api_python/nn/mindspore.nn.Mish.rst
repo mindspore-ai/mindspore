@@ -9,6 +9,6 @@ mindspore.nn.Mish
 
     Mish函数图：
 
-    .. image:: images/Mish.png
+    .. image:: ../images/Mish.png
         :align: center
 

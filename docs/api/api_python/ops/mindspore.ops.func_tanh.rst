@@ -10,6 +10,11 @@
 
     其中 :math:`x_i` 是输入Tensor的元素。
 
+    Tanh函数图：
+
+    .. image:: ../images/Tanh.png
+        :align: center
+
     参数：
         - **input** (Tensor) - Tanh的输入。
 

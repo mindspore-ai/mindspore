@@ -7,7 +7,7 @@ mindspore.nn.Softsign
 
     Softsign函数图：
 
-    .. image:: images/Softsign.png
+    .. image:: ../images/Softsign.png
         :align: center
 
     更多参考详见 :func:`mindspore.ops.softsign`。

@@ -10,6 +10,11 @@
 
     返回 :math:`\min(\max(0,x), 6)` 元素的值。
 
+    ReLU6函数图：
+
+    .. image:: ../images/ReLU6.png
+        :align: center
+
     参数：
         - **x** (Tensor) - 输入Tensor。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16、float32。
 

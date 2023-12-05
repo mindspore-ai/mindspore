@@ -19,7 +19,7 @@ mindspore.nn.PReLU
 
     PReLU函数图：
 
-    .. image:: images/PReLU.png
+    .. image:: ../images/PReLU.png
         :align: center
 
     参数：

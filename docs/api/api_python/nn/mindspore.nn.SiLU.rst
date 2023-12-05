@@ -19,7 +19,7 @@ mindspore.nn.SiLU
 
     SiLU函数图：
 
-    .. image:: images/SiLU.png
+    .. image:: ../images/SiLU.png
         :align: center
 
     输入：

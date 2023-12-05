@@ -72,7 +72,7 @@ class CELU(Cell):
 
     CELU Activation Function Graph:
 
-    .. image:: images/CELU.png
+    .. image:: ../images/CELU.png
         :align: center
 
     Args:
@@ -343,7 +343,7 @@ class ELU(Cell):
 
     ELU Activation Function Graph:
 
-    .. image:: images/ELU.png
+    .. image:: ../images/ELU.png
         :align: center
 
     Args:
@@ -399,7 +399,7 @@ class ReLU(Cell):
 
     ReLU Activation Function Graph:
 
-    .. image:: images/ReLU.png
+    .. image:: ../images/ReLU.png
         :align: center
 
     Inputs:
@@ -449,7 +449,7 @@ class ReLU6(Cell):
 
     ReLU6 Activation Function Graph:
 
-    .. image:: images/ReLU6.png
+    .. image:: ../images/ReLU6.png
         :align: center
 
     Inputs:
@@ -502,7 +502,7 @@ class LeakyReLU(Cell):
 
     LeakyReLU Activation Function Graph:
 
-    .. image:: images/LeakyReLU.png
+    .. image:: ../images/LeakyReLU.png
         :align: center
 
     Args:
@@ -621,7 +621,7 @@ class SeLU(Cell):
 
     SeLU Activation Function Graph:
 
-    .. image:: images/SeLU.png
+    .. image:: ../images/SeLU.png
         :align: center
 
     Refer to :func:`mindspore.ops.selu` for more details.
@@ -666,7 +666,7 @@ class SiLU(Cell):
 
     SiLU Activation Function Graph:
 
-    .. image:: images/SiLU.png
+    .. image:: ../images/SiLU.png
         :align: center
 
     Inputs:
@@ -714,7 +714,7 @@ class Tanh(Cell):
 
     Tanh Activation Function Graph:
 
-    .. image:: images/Tanh.png
+    .. image:: ../images/Tanh.png
         :align: center
 
     Inputs:
@@ -807,7 +807,7 @@ class Hardtanh(Cell):
 
     Hardtanh Activation Function Graph:
 
-    .. image:: images/Hardtanh.png
+    .. image:: ../images/Hardtanh.png
         :align: center
 
     Note:
@@ -873,7 +873,7 @@ class GELU(Cell):
 
     GELU Activation Function Graph:
 
-    .. image:: images/GELU.png
+    .. image:: ../images/GELU.png
         :align: center
 
     Args:
@@ -946,7 +946,7 @@ class FastGelu(Cell):
 
     FastGelu Activation Function Graph:
 
-    .. image:: images/FastGelu.png
+    .. image:: ../images/FastGelu.png
         :align: center
 
     Inputs:
@@ -997,7 +997,7 @@ class Sigmoid(Cell):
 
     Sigmoid Activation Function Graph:
 
-    .. image:: images/Sigmoid.png
+    .. image:: ../images/Sigmoid.png
         :align: center
 
     Inputs:
@@ -1040,7 +1040,7 @@ class Softsign(Cell):
 
     Softsign Activation Function Graph:
 
-    .. image:: images/Softsign.png
+    .. image:: ../images/Softsign.png
         :align: center
 
     Refer to :func:`mindspore.ops.softsign` for more details.
@@ -1086,7 +1086,7 @@ class PReLU(Cell):
 
     PReLU Activation Function Graph:
 
-    .. image:: images/PReLU.png
+    .. image:: ../images/PReLU.png
         :align: center
 
     Args:
@@ -1173,7 +1173,7 @@ class HSwish(Cell):
 
     HSwish Activation Function Graph:
 
-    .. image:: images/HSwish.png
+    .. image:: ../images/HSwish.png
         :align: center
 
     Inputs:
@@ -1220,7 +1220,7 @@ class HSigmoid(Cell):
 
     HSigmoid Activation Function Graph:
 
-    .. image:: images/HSigmoid.png
+    .. image:: ../images/HSigmoid.png
         :align: center
 
     Inputs:
@@ -1268,7 +1268,7 @@ class LogSigmoid(Cell):
 
     LogSigmoid Activation Function Graph:
 
-    .. image:: images/LogSigmoid.png
+    .. image:: ../images/LogSigmoid.png
         :align: center
 
     Inputs:
@@ -1364,7 +1364,7 @@ class SoftShrink(Cell):
 
     SoftShrink Activation Function Graph:
 
-    .. image:: images/Softshrink.png
+    .. image:: ../images/Softshrink.png
         :align: center
 
     Args:
@@ -1424,7 +1424,7 @@ class HShrink(Cell):
 
     HShrink Activation Function Graph:
 
-    .. image:: images/HShrink.png
+    .. image:: ../images/HShrink.png
         :align: center
 
     Args:
@@ -1522,7 +1522,7 @@ class Mish(Cell):
 
     Mish Activation Function Graph:
 
-    .. image:: images/Mish.png
+    .. image:: ../images/Mish.png
         :align: center
 
     Supported Platforms:
