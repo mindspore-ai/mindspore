@@ -148,18 +148,6 @@ void OptCodeHub::DelOptTarget(OptOptionPtr option, OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
-      for (auto &vCode : codeSet_) {
-        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code](const auto &item) {
-          if (item == code) {
-            return true;
-          } else {
-            return false;
-          }
-        });
-        if (its != vCode.second.end()) {
-          vCode.second.erase(its);
-        }
-      }
       break;
     }
   }
@@ -173,18 +161,6 @@ void OptCodeHub::DelOptTarget(OptCodePtr code) {
       if (item.second.size() == 0) {
         codeMap_.erase(item.first);
       }
-      for (auto &vCode : codeSet_) {
-        auto its = std::find_if(vCode.second.begin(), vCode.second.end(), [&code, this](const auto &item) {
-          if (item == code) {
-            return true;
-          } else {
-            return false;
-          }
-        });
-        if (its != vCode.second.end()) {
-          vCode.second.erase(its);
-        }
-      }
       break;
     }
   }
@@ -196,14 +172,27 @@ std::vector<OptCodeSet> OptCodeHub::GetAllOptTarget() {
   return ret;
 }
 
-void OptCodeHub::Register(std::string key, OptCodePtr code) { codeSet_[key].push_back(code); }
+using OptCodeWPtr = std::weak_ptr<OptCode>;
+using OptCodeWSet = std::vector<OptCodeWPtr>;
+static std::map<std::string, OptCodeWSet> code_set;
 
-OptCodeSet OptCodeHub::Get(std::string key) {
-  if (codeSet_.find(key) != codeSet_.end()) {
-    return codeSet_[key];
-  } else {
-    return {};
+void OptCodeHub::Register(std::string key, OptCodePtr code) { code_set[key].emplace_back(code); }
+OptCodePtr OptCodeHub::Filter(std::string key, OptCodeFilterFunc filter) {
+  if (code_set.find(key) != code_set.end()) {
+    OptCodeWSet &codes = code_set[key];
+    for (size_t idx = 0; idx < codes.size();) {
+      OptCodePtr ptr = codes[idx].lock();
+      if (ptr != nullptr) {
+        if (filter(ptr)) {
+          return ptr;
+        }
+        idx++;
+      } else {
+        codes.erase(codes.begin() + idx);
+      }
+    }
   }
+  return nullptr;
 }
 }  // namespace graph
 }  // namespace jit

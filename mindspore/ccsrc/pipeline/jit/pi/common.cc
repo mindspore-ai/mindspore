@@ -627,30 +627,30 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
     auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
     FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
     std::string key = GraphToString(ms_func_graph);
-    auto vCode = jcr->codehub->Get(key);
-    bool bFind = false;
-    for (auto code : vCode) {
+    auto pcode = OptCodeHub::Filter(key, [jcr, graph_executor, ms_func_graph](OptCodePtr code) {
       FuncGraphPtr func_graph = graph_executor->GetFuncGraph(code->GetPhase());
       FuncGraphPairMapEquiv equiv_graph;
       NodeMapEquiv equiv_node;
       if (func_graph != nullptr && Isomorphic(ms_func_graph, func_graph, &equiv_graph, &equiv_node)) {
-        if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
-          std::ostringstream graph_buffer;
-          DumpIR(graph_buffer, ms_func_graph);
-          std::cout << "Graph Duplicated:" << std::endl;
-          std::cout << "  Graph:" << graph_buffer.str() << std::endl;
-          std::cout << "  Bytecode:" << std::endl;
-          Utils::DisFuncObject(reinterpret_cast<PyObject *>(frame->f_code));
-        }
-        // find duplicate graph and reuse it
-        code->Copy(jcr->code);
-        bFind = true;
-        break;
+        return true;
+      } else {
+        return false;
       }
-    }
-    if (!bFind) {
+    });
+    if (pcode != nullptr) {
+      if (jcr->conf->GetBoolConfig(GraphJitConfig::kPrintReuseGraph)) {
+        std::ostringstream graph_buffer;
+        DumpIR(graph_buffer, ms_func_graph);
+        std::cout << "Graph Duplicated:" << std::endl;
+        std::cout << "  Graph:" << graph_buffer.str() << std::endl;
+        std::cout << "  Bytecode:" << std::endl;
+        Utils::DisFuncObject(reinterpret_cast<PyObject *>(frame->f_code));
+      }
+      // find duplicate graph and reuse it
+      pcode->Copy(jcr->code);
+    } else {
       // current graph is a new one and register it
-      jcr->codehub->Register(key, jcr->code);
+      OptCodeHub::Register(key, jcr->code);
     }
   }
 
