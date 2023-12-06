@@ -293,6 +293,7 @@ def test_stack_restore(param):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('c', [(1, 2), [1, 2], "12", {'a': 1, 'b': 2}, Tensor([[1], [2]])])
+@pytest.mark.skip(reason="pijit will change unpack to subscr for dict but it does not support index for key")
 def test_unpack(c):
     """
     Feature:
