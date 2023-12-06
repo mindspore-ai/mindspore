@@ -15,9 +15,10 @@
 """
 common functions
 """
+import logging
 import os
-import stat
 from typing import Dict, Tuple
+import importlib
 
 import numpy as np
 
@@ -118,7 +119,10 @@ class CommonFunc:
         cfg.is_fp16 = args.is_fp16
         cfg.is_int8 = args.is_int8
         cfg.is_enable_tensorrt = args.is_enable_tensorrt
-        tmp_func = lambda x: None if x is None else cls.get_tensor_shapes(x)
+        def tmp_func(x):
+            if x is None:
+                return None
+            return cls.get_tensor_shapes(x)
         cfg.tensorrt_optim_input_shape = tmp_func(args.tensorrt_optim_input_shape)
         cfg.tensorrt_min_input_shape = tmp_func(args.tensorrt_min_input_shape)
         cfg.tensorrt_max_input_shape = tmp_func(args.tensorrt_max_input_shape)
@@ -139,10 +143,15 @@ class CommonFunc:
 
         for shapes in shape_list:
             name, shape = shapes.split(':')
-            shape = tuple([int(i) for i in shape.split(',')])
+            shape = [int(i) for i in shape.split(',')]
             input_tensor_shape[name] = shape
 
         return input_tensor_shape
+
+    @staticmethod
+    def import_module(module_name, file_path=None):
+        """import module functions"""
+        return importlib.import_module(module_name, package=file_path)
 
     @staticmethod
     def get_input_data_map_from_file(input_data_file):
@@ -157,7 +166,7 @@ class CommonFunc:
             if not isinstance(infos, tuple):
                 raise ValueError('input info shall contain tensor shape and tensor dtype')
             shape, dtype = infos
-            np_dtype = getattr(NumpyDtype, dtype).value
+            np_dtype = getattr(NumpyDtype, dtype.upper()).value
             tensor_data = np.random.rand(*shape).astype(np_dtype)
             np_data_map[tensor_name] = tensor_data
 
@@ -168,15 +177,13 @@ class CommonFunc:
                                      output_tensor):
         """save output tensor as benchmark type text"""
         for key, value in output_tensor.items():
-            save_path = f'{save_dir}_{key}.txt'
+            save_path = f'{save_dir}_{"".join(key.split("/"))}.txt'
             shape = value.shape
             shape_str = ''
             for val in shape:
-                shape_str += f'{val} '
+                shape_str = shape_str.join(f'{val} ')
             dim = len(shape)
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            modes = stat.S_IWUSR | stat.S_IRUSR
-            with os.fdopen(os.open(save_path, flags, modes), 'a') as fi:
+            with open(save_path, 'w', encoding='utf-8') as fi:
                 fi.write(f'{key} {dim} {shape_str}\n')
                 np.savetxt(fi, value.flatten(), newline=' ')
 
@@ -185,6 +192,16 @@ class CommonFunc:
         """init tensorflow config"""
         cfg = TFConfig()
         return cfg
+
+    @staticmethod
+    def logging_level(level):
+        if level == 0:
+            return logging.DEBUG
+        if level == 1:
+            return logging.INFO
+        if level == 2:
+            return logging.WARNING
+        return logging.ERROR
 
     @staticmethod
     def parse_dtype_infos(dtype_infos):
