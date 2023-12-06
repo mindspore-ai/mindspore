@@ -1527,7 +1527,7 @@ def test_list_inplace_with_empty_list_3():
     assert id(ret) == id(empty_global_list_3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
