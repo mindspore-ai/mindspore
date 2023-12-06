@@ -4600,9 +4600,9 @@ def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
         raise ValueError("init, dtype and shape must have values at the same time.")
 
     if input_data is not None:
-        if isinstance(input_data, np.ndarray) and input_data.ndim > 1 and input_data.size == 0:
+        if isinstance(input_data, np.ndarray) and input_data.ndim >= 1 and input_data.size == 0:
             raise ValueError("input_data can not contain zero dimension.")
-        if isinstance(input_data, (tuple, list)) and np.array(input_data).ndim > 1 \
+        if isinstance(input_data, (tuple, list)) and np.array(input_data).ndim >= 1 \
                 and np.array(input_data).size == 0:
             raise ValueError("input_data can not contain zero dimension.")
 

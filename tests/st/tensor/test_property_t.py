@@ -44,10 +44,6 @@ def test_tensor_t(mode):
     output = net(x)
     expect_output = [[1, 2], [2, 3], [3, 4]]
     assert np.allclose(output.asnumpy(), expect_output)
-    x1 = Tensor([])
-    output1 = net(x1)
-    expect_output1 = np.array([])
-    assert np.allclose(output1.asnumpy(), expect_output1)
     x2 = Tensor(1)
     output2 = net(x2)
     expect_output2 = np.array(1)

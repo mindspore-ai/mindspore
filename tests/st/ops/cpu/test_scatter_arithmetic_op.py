@@ -472,21 +472,6 @@ def test_scatter_div_small_float32_use_locking_false():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_scatter_div_empty_input():
-    """
-    Feature: test ScatterDiv empty input.
-    Description: input shape has 0.
-    Expectation: no error.
-    """
-    input_x = Parameter(Tensor([], mindspore.float32), name="input_x")
-    indices = Tensor([], mindspore.int64)
-    updates = Tensor([], mindspore.float32)
-    _ = P.ScatterDiv()(input_x, indices, updates)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_scatter_div_output_int16():
     """
     Feature: test ScatterDiv output and input_x same value.
@@ -732,21 +717,6 @@ def test_scatter_update_small_float32_use_locking_false():
     expected = np.array([[6., 7., 8.],
                          [9., 10., 11.]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_scatter_update_empty_input():
-    """
-    Feature: test ScatterUpdate empty input.
-    Description: input shape has 0.
-    Expectation: no error.
-    """
-    input_x = Parameter(Tensor([], mindspore.float32), name="input_x")
-    indices = Tensor(np.arange(0, 20, 1).reshape((2, 1, 2, 5)), mindspore.int64)
-    updates = Tensor(np.random.randint(-32768, 32767, (2, 1, 2, 5)), mindspore.float32)
-    _ = P.ScatterUpdate()(input_x, indices, updates)
 
 
 class TestScatterAddNetDynamic(nn.Cell):

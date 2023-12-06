@@ -970,7 +970,10 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     if isinstance(shape, int):
         shape = tuple([shape])
     elif isinstance(shape, list):
-        shape = Tensor(shape, dtype=mstype.int64)
+        if not shape:
+            shape = Tensor_(shape, dtype=mstype.int64)
+        else:
+            shape = Tensor(shape, dtype=mstype.int64)
     elif isinstance(shape, Tensor) and shape.ndim == 0 and shape.size == 1:
         shape = shape.reshape(1)
     output = fillv2_(shape, value)
@@ -1045,7 +1048,10 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     if isinstance(size, int):
         size = tuple([size])
     elif isinstance(size, list):
-        size = Tensor(size, dtype=mstype.int64)
+        if not size:
+            size = Tensor_(size, dtype=mstype.int64)
+        else:
+            size = Tensor(size, dtype=mstype.int64)
     elif isinstance(size, Tensor) and size.ndim == 0 and size.size == 1:
         size = size.reshape(1)
     output = fillv2_(size, value)

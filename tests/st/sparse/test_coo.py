@@ -51,33 +51,6 @@ def test_make_coo():
     compare_coo(coo3, coo2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_make_coo_empty():
-    """
-    Feature: Test COOTensor Constructor in Graph and PyNative.
-    Description: Test COOTensor(indices, values, shape) and COOTensor(COOTensor)
-    Expectation: Success.
-    """
-    indices = Tensor([], dtype=mstype.int32)
-    values = Tensor([], dtype=mstype.float32)
-    dense_shape = (3, 4)
-
-    def test_pynative():
-        return COOTensor(indices, values, dense_shape)
-    test_graph = jit(test_pynative)
-
-    coo1 = test_pynative()
-    coo2 = test_graph()
-    compare_coo(coo1, coo2)
-    coo3 = COOTensor(coo_tensor=coo2)
-    compare_coo(coo3, coo2)
-
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

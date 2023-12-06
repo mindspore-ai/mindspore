@@ -930,7 +930,6 @@ def test_tensor_assign_exception():
     Ta4d = Tensor(a.reshape(1, 3, 4, 5), dtype=mstype.float32)
     Ta4d_ck = Tensor(ck.reshape(1, 3, 4, 5), dtype=mstype.float32)
     Tb = Tensor([1, 3], dtype=mstype.float32)
-    Tc = Tensor([], dtype=mstype.float32)
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     tck = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     # Error for A[Slice] = Number
@@ -939,9 +938,6 @@ def test_tensor_assign_exception():
     #     net_e2(t, 2)
 
     # Error for A[Tuple(Slice...)] = Tensor
-    # 1. A[Tuple(Slice...)] = U, U is empty
-    with pytest.raises(ValueError):
-        net(Ta, Tc, Tck)
     # 2. A[Tuple(Slice...)] = U, U.size error
     with pytest.raises(ValueError):
         net(Ta, Tb, Tck)
@@ -953,9 +949,6 @@ def test_tensor_assign_exception():
     # 1. A[Slice] = U,  u.size is error
     with pytest.raises(ValueError):
         net2(t, Tb, tck)
-    # 2. A[Slice] = U, U is empty
-    with pytest.raises(ValueError):
-        net2(t, Tc, tck)
     # 3. A[Slice] = U, U.size error
     with pytest.raises(ValueError):
         net2(t, Tb, tck)
@@ -970,8 +963,6 @@ def test_tensor_assign_exception():
     # 1. A[Number] = U, U is a Tensor, u.size not match
     with pytest.raises(ValueError):
         net(Ta, Tb, Tck)
-    with pytest.raises(ValueError):
-        net(Ta, Tc, Tck)
     # 2. A[Number] = U, the number index error
     with pytest.raises(IndexError):
         net(Ta4d, b, Ta4d_ck)
@@ -979,8 +970,6 @@ def test_tensor_assign_exception():
     # Error for A[(n,m)] = scalar/Tensor
     # 1. A[(n,m)] = U, U is a tensor. u.size not match
     net = TensorAssignWithTupleInteger()
-    with pytest.raises(ValueError):
-        net(Ta, Tc, Tck)
     with pytest.raises(ValueError):
         net(Ta, Tb, Tck)
     # 2. A[(n,m)] = U, the number index error
@@ -1002,14 +991,11 @@ def test_tensor_assign_exception_2():
     Ta = Tensor(a, dtype=mstype.float32)
     Ta4d = Tensor(a.reshape(1, 3, 4, 5), dtype=mstype.float32)
     Tb = Tensor([1, 3], dtype=mstype.float32)
-    Tc = Tensor([], dtype=mstype.float32)
 
     # Error for  A[...] = U or A[1:, ...] = u
     # 1. A[...] = scalar/tensor
     net = TensorAssignWithEllipsis()
     net(Ta, Ta4d)
-    with pytest.raises(ValueError):
-        net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
     # 2. A[::, 1:, ...] = scalar/tensor

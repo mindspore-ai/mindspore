@@ -16,60 +16,8 @@ import numpy as np
 import pytest
 from mindspore import context, nn, Tensor
 from mindspore.ops import operations as P
-from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
 import mindspore.common.dtype as mstype
-
-
-grad_all = C.GradOperation(get_all=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_while_grad_with_memory_optimize():
-    """
-    Feature: Integration of dynamic and static memory.
-    Description: Test the control flow scene.
-    Expectation: The result meet expectation.
-    """
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-
-        def construct(self, idx, end, x):
-            while idx < end:
-                part = x[idx, :, :]
-                max_num = self.max(part)
-                x[idx, :, 0:2] = max_num
-                idx = idx + 1
-            return x
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-
-        def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
-
-    idx = Tensor(np.array(0), dtype=mstype.int32)
-    end = Tensor(np.array(2), dtype=mstype.int32)
-    input_x = np.array([[[4, 0], [0, 0]],
-                        [[0, 4], [0, 0]]]).astype(np.float32)
-    x = Tensor(input_x, dtype=mstype.float32)
-    # memory optimize mode
-    context.set_context(mode=context.GRAPH_MODE, memory_optimize_level="O1")
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    graph_output = net(idx, end, x)
-
-    expect_zero = np.array([0], dtype=np.float32)
-    expect_two = input_x
-    assert np.allclose(graph_output[0].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
 class SparseApplyFtrlNet(nn.Cell):

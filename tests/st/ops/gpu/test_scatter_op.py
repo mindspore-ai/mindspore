@@ -123,22 +123,6 @@ def test_scatter_update_output():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_update_empty_input():
-    """
-    Feature: test ScatterUpdate empty input.
-    Description: input shape has 0.
-    Expectation: no error.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_x = Parameter(Tensor([], mindspore.float32), name="input_x")
-    indices = Tensor(np.arange(0, 20, 1).reshape((2, 1, 2, 5)), mindspore.int64)
-    updates = Tensor(np.random.randint(-32768, 32767, (2, 1, 2, 5)), mindspore.float32)
-    _ = P.ScatterUpdate()(input_x, indices, updates)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_scatter_div_0d():
     """
     Feature: test ScatterDiv 0d input.
