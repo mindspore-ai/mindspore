@@ -65,15 +65,17 @@ from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
+from ..ops.operations import Cast
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
                      "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
-                     "Bool": mstype.bool_, "str": mstype.string}
+                     "Bool": mstype.bool_, "str": mstype.string, "BFloat16": mstype.bfloat16}
 
 tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UInt16": np.uint16,
                      "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
-                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_, "str": "U"}
+                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_, "str": "U",
+                     "BFloat16": np.float32}
 
 np_type_convert = {"int32": np.int32, "float32": np.float32, "float16": np.float16, "float64": np.float64}
 
@@ -91,6 +93,8 @@ PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 ENCRYPT_BLOCK_SIZE = 64 * 1024
 INT_64_MAX = 9223372036854775807
 
+cpu_cast = Cast().set_device("CPU")
+
 
 def _special_process_par(par, new_par):
     """
@@ -107,7 +111,11 @@ def _special_process_par(par, new_par):
         if new_par.data.shape[par_shape_len + i] != 1:
             return False
 
-    new_val = new_par.data.asnumpy()
+    if new_par.data.dtype == mstype.bfloat16:
+        new_val = cpu_cast(new_par.data, mstype.float32).asnumpy()
+    else:
+        new_val = new_par.data.asnumpy()
+
     new_val = new_val.reshape(par.data.shape)
     par.set_data(Tensor(new_val, par.data.dtype))
     return True
@@ -128,7 +136,10 @@ def _update_param(param, new_param, strict_load):
 
         if param.data.dtype != new_param.data.dtype:
             if _type_convert(param, new_param, strict_load):
-                new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
+                if new_param.data.dtype == mstype.bfloat16:
+                    new_tensor = cpu_cast(new_param.data, param.data.dtype)
+                else:
+                    new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
                 param.set_data(new_tensor, param.sliced)
                 return
 
@@ -231,9 +242,15 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                         continue
                     if value[0] == "offload_parameter":
                         new_value = value[1:]
-                        new_value[2] = value[3].asnumpy().reshape(-1)
+                        if value[3].dtype == mstype.bfloat16:
+                            new_value[2] = cpu_cast(value[3], mstype.float32).asnumpy().reshape(-1)
+                        else:
+                            new_value[2] = value[3].asnumpy().reshape(-1)
                         _write_parameter_data(name, new_value, f, enc_key, plain_data)
                         _offload_if_config(value[3])
+                        continue
+                    if value[0] == "BFloat16_tensor":
+                        _write_bfloat16_data(name, value, f, enc_key, plain_data)
                         continue
                     if isinstance(value[2], Tensor):
                         _write_hugeparameter(name, value, f)
@@ -267,6 +284,21 @@ def _write_random_seed(name, value, f):
     param_tensor.tensor_type = "random_op"
     param_tensor.tensor_content = value
     f.write(checkpoint_list.SerializeToString())
+
+
+def _write_bfloat16_data(name, value, f, enc_key, plain_data):
+    """Write bfloat16 data into protobuf file"""
+    checkpoint_list = Checkpoint()
+    param_value = checkpoint_list.value.add()
+    param_value.tag = name
+    param_tensor = param_value.tensor
+    param_tensor.dims.extend(value[1])
+    param_tensor.tensor_type = value[2]
+    param_tensor.tensor_content = value[3].get_bytes()
+    if enc_key is None:
+        f.write(checkpoint_list.SerializeToString())
+    else:
+        plain_data.write(checkpoint_list.SerializeToString())
 
 
 def _write_parameter_data(name, value, f, enc_key, plain_data):
@@ -447,6 +479,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 elif param["data"][0] == "offload_parameter":
                     data_list[key].append("offload_parameter")
                     _save_param_list_data(data_list, key, param)
+                elif param["data"][0] == "BFloat16_tensor":
+                    data_list[key].append("BFloat16_tensor")
+                    _save_param_list_data(data_list, key, param)
+                    continue
 
             if isinstance(param["data"], str):
                 data_list[key].append([0])
@@ -456,6 +492,15 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             else:
                 if isinstance(param["data"], Parameter):
                     param["data"].init_data()
+                if isinstance(param["data"], Tensor) and param["data"].dtype == mstype.bfloat16:
+                    data_list[key].append("BFloat16_tensor")
+                    dims = []
+                    for dim in param["data"].shape:
+                        dims.append(dim)
+                    data_list[key].append(dims)
+                    data_list[key].append("BFloat16")
+                    data_list[key].append(cpu_cast(param["data"], mstype.float32))
+                    continue
                 dims = []
                 if param['data'].shape == ():
                     dims.append(0)
@@ -465,7 +510,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 data_list[key].append(dims)
                 tensor_type = str(param["data"].dtype)
                 data_list[key].append(tensor_type)
-                data = param["data"].asnumpy().reshape(-1)
+                if param["data"].dtype == mstype.bfloat16:
+                    data = cpu_cast(param["data"], mstype.float32).asnumpy().reshape(-1)
+                else:
+                    data = param["data"].asnumpy().reshape(-1)
                 data_list[key].append(data)
 
     if async_save:
@@ -570,6 +618,12 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
             param_data.append(param_tensor)
             param_data.append(param_tensor.shape)
             param_data.append(str(param_tensor.dtype))
+            param_data.append(value.key)
+        elif value.data.dtype == mstype.bfloat16:
+            param_data = ["BFloat16_tensor"]
+            param_data.append(cpu_cast(value.data, mstype.float32))
+            param_data.append(value.data.shape)
+            param_data.append("BFloat16")
             param_data.append(value.key)
         else:
             param_data = Tensor(value.data.asnumpy())
@@ -1065,6 +1119,13 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             if data_type == 'str':
                 str_length = int(len(data) / 4)
                 np_type = np_type + str(str_length)
+            if data_type == "BFloat16":
+                dims = element.tensor.dims
+                param_data = np.frombuffer(data, np_type)
+                param_data = param_data.reshape(list(dims))
+                parameter = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                parameter_dict[element.tag] = parameter
+                continue
             element_data = np.frombuffer(data, np_type)
             param_data_list.append(element_data)
             if (element_id == len(checkpoint_list.value) - 1) or \
@@ -2324,7 +2385,12 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     layerwise_parallel = sliced_parameters[0].layerwise_parallel
     requires_grad = sliced_parameters[0].requires_grad
-    sliced_data = [parameter.data.asnumpy() for parameter in sliced_parameters]
+    sliced_data = []
+    for parameter in sliced_parameters:
+        if parameter.data.dtype == mstype.bfloat16:
+            sliced_data.append(cpu_cast(parameter.data, mstype.float32).asnumpy())
+        else:
+            sliced_data.append(parameter.data.asnumpy())
 
     if not strategy:
         merged_tensor = Tensor(np.concatenate(sliced_data))
@@ -2530,7 +2596,11 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                 param_index = list(set(param_index))
                 param_index.sort()
                 for rank_num in param_index:
-                    param_stride.append(param_total_dict[param.name][rank_num].data.asnumpy())
+                    if param_total_dict[param.name][rank_num].data.dtype == mstype.bfloat16:
+                        param_stride.append(
+                            cpu_cast(param_total_dict[param.name][rank_num].data, mstype.float32).asnumpy())
+                    else:
+                        param_stride.append(param_total_dict[param.name][rank_num].data.asnumpy())
 
                 sliced_param = Parameter(Tensor(np.concatenate(param_stride)), name=param.name)
             else:
@@ -2545,7 +2615,10 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             split_param = _merge_and_split(sliced_params, _param_unique_strategy, predict_strategy)
         opt_shard_group = predict_strategy[param.name][5] if predict_strategy else None
         if opt_shard_group:
-            data = split_param.data.asnumpy()
+            if split_param.data.dtype == mstype.bfloat16:
+                data = cpu_cast(split_param.data, mstype.float32).asnumpy()
+            else:
+                data = split_param.data.asnumpy()
             rank = get_rank(opt_shard_group)
             size = get_group_size(opt_shard_group)
             try:
@@ -2656,7 +2729,7 @@ def _calculation_net_size(net):
     data_total = 0
     net_dict = net.parameters_dict()
     for name in net_dict:
-        data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
+        data_total += sys.getsizeof(net_dict[name].data.get_bytes()) / 1024
 
     return data_total
 
