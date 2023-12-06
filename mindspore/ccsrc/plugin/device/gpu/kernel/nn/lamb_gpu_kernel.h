@@ -48,12 +48,10 @@ constexpr size_t kGradIndex = 9;
 constexpr size_t kUpdateIndex = 0;
 constexpr size_t kVarFloatIndex = 1;
 constexpr size_t kGradFloatIndex = 2;
-constexpr size_t kGHatValIndex = 3;
-constexpr size_t kTrustRatioIndex = 4;
-constexpr size_t kReduceWorkspaceIndex = 5;
-constexpr size_t kWNormIndex = 6;
-constexpr size_t kGNormIndex = 7;
-constexpr size_t kGHatNormIndex = 8;
+constexpr size_t kTrustRatioIndex = 3;
+constexpr size_t kReduceWorkspaceIndex = 4;
+constexpr size_t kWNormIndex = 5;
+constexpr size_t kUpdateNormIndex = 6;
 
 template <typename T>
 class LambGpuKernelMod : public NativeGpuKernelMod {
@@ -81,14 +79,12 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     float *update = GetDeviceAddress<float>(workspaces, kUpdateIndex);
     float *var_float = GetDeviceAddress<float>(workspaces, kVarFloatIndex);
     float *grad_float = GetDeviceAddress<float>(workspaces, kGradFloatIndex);
-    float *g_hat_var = GetDeviceAddress<float>(workspaces, kGHatValIndex);
 
-    auto status =
-      ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
-                     update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step,
+                                 gradient, update, var_float, grad_float, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, kernel_name_);
     float trust_ratio{0};
-    CalcTrustRatio(workspaces, var_float, grad_float, g_hat_var, stream_ptr, &trust_ratio);
+    CalcTrustRatio(workspaces, var_float, update, stream_ptr, &trust_ratio);
 
     float *trust_ratio_ptr = GetDeviceAddress<float>(workspaces, kTrustRatioIndex);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
@@ -173,7 +169,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.push_back(update_size_);
     workspace_size_list_.push_back(var_float_size_);
     workspace_size_list_.push_back(grad_float_size_);
-    workspace_size_list_.push_back(g_hat_val_size_);
     workspace_size_list_.push_back(trust_ratio_size_);
     size_t workspace_size{0};
     // Init workspace size for gradient tensor reduce sum calculate.
@@ -183,9 +178,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       "For " + kernel_name_ + " cudnnGetReductionWorkspaceSize failed.");
     workspace_size_list_.emplace_back(workspace_size);
 
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(output_descriptor_, &reduce_output_size_),
-                                        "For " + kernel_name_ + " cudnnGetTensorSizeInBytes failed.");
-    workspace_size_list_.emplace_back(reduce_output_size_);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(output_descriptor_, &reduce_output_size_),
                                         "For " + kernel_name_ + " cudnnGetTensorSizeInBytes failed.");
     workspace_size_list_.emplace_back(reduce_output_size_);
@@ -248,7 +240,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     update_size_ = sizeof(float);
     var_float_size_ = sizeof(float);
     grad_float_size_ = sizeof(float);
-    g_hat_val_size_ = sizeof(float);
     trust_ratio_size_ = sizeof(float);
   }
 
@@ -260,7 +251,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       update_size_ *= variable_shape[i];
       var_float_size_ *= variable_shape[i];
       grad_float_size_ *= variable_shape[i];
-      g_hat_val_size_ *= variable_shape[i];
     }
 
     for (size_t i = 0; i < m_shape.size(); i++) {
@@ -276,25 +266,20 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void CalcTrustRatio(const std::vector<AddressPtr> &workspaces, float *var_float, float *grad_float, float *g_hat_var,
-                      void *stream_ptr, float *trust_ratio) {
-    if (var_float == nullptr || grad_float == nullptr || g_hat_var == nullptr) {
-      MS_LOG(EXCEPTION) << "var_float or grad_float or g_hat_var is null";
+  void CalcTrustRatio(const std::vector<AddressPtr> &workspaces, float *var_float, float *update, void *stream_ptr,
+                      float *trust_ratio) {
+    if (var_float == nullptr || update == nullptr) {
+      MS_LOG(EXCEPTION) << "var_float or update is null";
     }
 
     float *w_norm_ptr = nullptr;
-    float *g_norm_ptr = nullptr;
-    float *g_hat_norm_ptr = nullptr;
+    float *update_norm_ptr = GetDeviceAddress<float>(workspaces, kUpdateNormIndex);
 
     if (is_all_match_) {
       w_norm_ptr = var_float;
-      g_norm_ptr = grad_float;
-      g_hat_norm_ptr = g_hat_var;
     } else {
       float *reduce_workspace_addr = GetPossiblyNullDeviceAddress<float>(workspaces, kReduceWorkspaceIndex);
       w_norm_ptr = GetDeviceAddress<float>(workspaces, kWNormIndex);
-      g_norm_ptr = GetDeviceAddress<float>(workspaces, kGNormIndex);
-      g_hat_norm_ptr = GetDeviceAddress<float>(workspaces, kGHatNormIndex);
 
       // Calc sum of square
       constexpr float alpha = 1;
@@ -307,41 +292,27 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, reduce_workspace_addr,
-                          workspace_size_list_[kReduceWorkspaceIndex], &alpha, input_descriptor_, grad_float, &beta,
-                          output_descriptor_, g_norm_ptr),
-        "For " + kernel_name_ + " cudnnReduceTensor for 'grad_float' failed");
-
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, reduce_workspace_addr,
-                          workspace_size_list_[kReduceWorkspaceIndex], &alpha, input_descriptor_, g_hat_var, &beta,
-                          output_descriptor_, g_hat_norm_ptr),
-        "For " + kernel_name_ + " cudnnReduceTensor for 'g_hat_var' failed");
+                          workspace_size_list_[kReduceWorkspaceIndex], &alpha, input_descriptor_, update, &beta,
+                          output_descriptor_, update_norm_ptr),
+        "For " + kernel_name_ + " cudnnReduceTensor for 'update' failed");
     }
 
     float w_norm = 0;
-    float g_norm = 0;
-    float g_norm_hat = 0;
+    float g_norm_tf = 0;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&w_norm, w_norm_ptr, reduce_output_size_, cudaMemcpyDeviceToHost,
                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
                                        "For " + kernel_name_ + " cudaMemcpyAsync w_square_sum failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&g_norm, g_norm_ptr, reduce_output_size_, cudaMemcpyDeviceToHost,
-                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                       "For " + kernel_name_ + " cudaMemcpyAsync g_square_sum failed.");
+
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&g_norm_hat, g_hat_norm_ptr, reduce_output_size_, cudaMemcpyDeviceToHost,
+      cudaMemcpyAsync(&g_norm_tf, update_norm_ptr, reduce_output_size_, cudaMemcpyDeviceToHost,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "For " + kernel_name_ + " cudaMemcpyAsync g_hat_square_sum failed.");
+      "For " + kernel_name_ + " cudaMemcpyAsync update_norm_ptr failed.");
     if (cudaStreamQuery(reinterpret_cast<cudaStream_t>(stream_ptr)) != cudaSuccess) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
                                          "For '" << kernel_name_ << "', cuda Stream Sync Failed.");
     }
 
-    *trust_ratio = w_norm > 0 ? (g_norm_hat > 0 ? (w_norm / g_norm_hat) : 1) : 1;
-    if (*trust_ratio < 0 || std::isnan(*trust_ratio)) {
-      *trust_ratio = 0;
-    } else if (*trust_ratio > ten) {
-      *trust_ratio = ten;
-    }
+    *trust_ratio = w_norm > 0 ? (g_norm_tf > 0 ? (w_norm / g_norm_tf) : 1) : 1;
   }
 
   void InitShapeInfo(const ShapeVector &input_shape, const ShapeVector &output_shape) {
@@ -399,7 +370,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
   size_t update_size_{0};
   size_t var_float_size_{0};
   size_t grad_float_size_{0};
-  size_t g_hat_val_size_{0};
   size_t trust_ratio_size_{0};
   size_t reduce_output_size_{0};
   bool is_null_input_{false};
