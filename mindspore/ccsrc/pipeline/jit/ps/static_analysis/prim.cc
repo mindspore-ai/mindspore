@@ -2861,14 +2861,16 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       converted = true;
     } else {
       converted = parse::ConvertData(obj, &converted_val, true);
-      if (converted_val->isa<FuncGraph>()) {
-        converted_val = std::make_shared<parse::InterpretedObject>(obj);
-      }
     }
     if (!converted) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
     }
     MS_EXCEPTION_IF_NULL(converted_val);
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    AddManagerForFuncGraphValue(converted_val, mng);
     if (converted_val->isa<tensor::Tensor>() && HasConstArgAttr(obj)) {
       MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
                       << " which is not used for network input argument should not be set const.";
@@ -2884,6 +2886,35 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
     return infer_result;
+  }
+
+  void AddManagerForFuncGraphValue(const ValuePtr &val, const FuncGraphManagerPtr &mng) const {
+    // mng has been checked before using.
+    MS_EXCEPTION_IF_NULL(val);
+    if (val->isa<ValueSequence>()) {
+      auto val_seq = val->cast<ValueSequencePtr>();
+      const auto &values = val_seq->value();
+      std::for_each(values.begin(), values.end(),
+                    [this, &mng](const ValuePtr &e) { AddManagerForFuncGraphValue(e, mng); });
+      return;
+    }
+    if (val->isa<ValueDictionary>()) {
+      auto val_dict = val->cast<ValueDictionaryPtr>();
+      const auto &values = val_dict->value();
+      std::for_each(values.begin(), values.end(), [this, &mng](const std::pair<ValuePtr, ValuePtr> &pair) {
+        // Key for value dictionary can not have function graph.
+        AddManagerForFuncGraphValue(pair.second, mng);
+      });
+      return;
+    }
+    if (val->isa<FuncGraph>()) {
+      auto val_fg = val->cast<FuncGraphPtr>();
+      if (val_fg->manager() == nullptr) {
+        mng->AddFuncGraph(val_fg);
+        val_fg->set_manager(mng);
+      }
+    }
+    return;
   }
 
   void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
