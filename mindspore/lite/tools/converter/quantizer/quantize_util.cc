@@ -545,6 +545,9 @@ int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<in
     return GetDeConvPreferredDim(primitive, dims);
   } else if (primitive->name() == ops::kNameGather) {
     return GetGatherPreferredDim(cnode);
+  } else if (primitive->name() == "FFN") {
+    // For FFN MatMul, transpose is false
+    return dims.size() - 1;
   }
   // The first index.
   return 0;
