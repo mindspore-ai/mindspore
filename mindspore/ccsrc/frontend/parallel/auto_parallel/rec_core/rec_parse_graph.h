@@ -185,6 +185,9 @@ const std::map<std::string, OperatorType> DictOpType{
   {"Concat", OperatorType::kRecElmWiseOp},
   {"Tile", OperatorType::kRecElmWiseOp},
   {MASKED_FILL, OperatorType::kRecElmWiseOp},
+  {FILLV2, OperatorType::kRecElmWiseOp},
+  {SCATTER_UPDATE, OperatorType::kRecElmWiseOp},
+  {KV_CACHE_MGR, OperatorType::kRecElmWiseOp},
   {GATHERD, OperatorType::kRecBatchParallel}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);

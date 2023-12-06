@@ -586,6 +586,7 @@ constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
 constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
+constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
