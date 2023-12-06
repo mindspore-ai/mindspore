@@ -305,6 +305,8 @@ inline int64_t PadModeStringToInt(const std::string &pad) {
     return static_cast<int64_t>(1);
   } else if (pad_mode == "PAD") {
     return static_cast<int64_t>(0);
+  } else if (pad_mode == "CALCULATED") {
+    return static_cast<int64_t>(0);
   } else {
     MS_LOG(EXCEPTION) << "Got an invalid pad_mode string: " << pad_mode << ".";
   }

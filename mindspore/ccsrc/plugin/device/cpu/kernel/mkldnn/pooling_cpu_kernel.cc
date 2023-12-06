@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <functional>
 #include "ops/conv_pool_op_name.h"
+#include "kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,8 +50,7 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
     strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
     pad_mode_ = static_cast<mindspore::PadMode>(
       ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
-    format_ = static_cast<mindspore::Format>(
-      ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
+    format_ = GetFormatFromStrToEnum(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT)));
   }
 
   if (KernelMod::primitive_->HasAttr(CEIL_MODE)) {
