@@ -108,7 +108,9 @@ static size_t GetFillIndex(char **input_name, size_t input_size, const HI_CHAR *
       char *post = strrchr(input_name[i], '_');
       if (post && (!strcmp(post + 1, "pre") || !strcmp(post + 1, "post"))) {
         HI_U32 prefix_len = (HI_U32)(post - input_name[i]);
-        if (prefix_len >= kNNIEMaxNameLen) return input_size;
+        if (prefix_len >= kNNIEMaxNameLen) {
+          return input_size;
+        }
         strncpy(prefix, input_name[i], prefix_len);
         prefix[prefix_len] = '\0';
         if (strncmp(prefix, name, prefix_len) == 0) {

@@ -34,10 +34,11 @@ class MatMulFP32Coder final : public MatMulFP32BaseCoder {
 
   int DoCode(CoderContext *const context) override;
 
+  int ReSize() override;
+
  private:
   int InitShapeA();
   int InitShapeB();
-  int ReSize() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_MATMUL_FP32_CODER_H_
