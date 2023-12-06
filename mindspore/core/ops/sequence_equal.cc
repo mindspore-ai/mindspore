@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "ops/tuple_equal.h"
 #include "utils/check_convert_utils.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,7 +43,30 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
       x_abs->GetValue()->ContainsValueAny() || y_abs->GetValue()->ContainsValueAny()) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
-  return std::make_shared<abstract::AbstractScalar>(*x_abs->GetValue() == *y_abs->GetValue());
+  auto x_ptr = x_abs->GetValue();
+  auto y_ptr = y_abs->GetValue();
+  if (x_ptr->isa<ValueSequence>() && y_ptr->isa<ValueSequence>()) {
+    auto x_sequence = x_ptr->cast<ValueSequencePtr>()->value();
+    auto y_sequence = y_ptr->cast<ValueSequencePtr>()->value();
+    if (x_sequence.size() != y_sequence.size()) {
+      return std::make_shared<abstract::AbstractScalar>(false);
+    }
+    for (size_t i = 0; i < x_sequence.size(); i++) {
+      MS_EXCEPTION_IF_NULL(x_sequence[i]);
+      MS_EXCEPTION_IF_NULL(y_sequence[i]);
+      if (x_sequence[i]->isa<tensor::Tensor>() && y_sequence[i]->isa<tensor::Tensor>()) {
+        if (!x_sequence[i]->cast<tensor::TensorPtr>()->ValueEqual(*y_sequence[i]->cast<tensor::TensorPtr>())) {
+          return std::make_shared<abstract::AbstractScalar>(false);
+        }
+      } else {
+        if (!(*x_sequence[i] == *y_sequence[i])) {
+          return std::make_shared<abstract::AbstractScalar>(false);
+        }
+      }
+    }
+    return std::make_shared<abstract::AbstractScalar>(true);
+  }
+  return std::make_shared<abstract::AbstractScalar>(false);
 }
 
 class SequenceEqualInfer : public abstract::OpInferBase {
