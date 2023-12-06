@@ -30,7 +30,7 @@ int HighAccuracyRsqrtCPUKernel::Prepare() {
 int HighAccuracyRsqrtCPUKernel::ReSize() { return RET_OK; }
 
 int HighAccuracyRsqrtCPUKernel::Run() {
-  int elements_num = in_tensors_.at(0)->ElementsNum();
+  int elements_num = static_cast<int>(in_tensors_.at(0)->ElementsNum());
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
     float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
     float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
