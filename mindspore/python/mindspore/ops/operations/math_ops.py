@@ -2633,6 +2633,7 @@ class Logit(Primitive):
     @prim_attr_register
     def __init__(self, eps=-1.0):
         """Initialize Exp"""
+        super().__init__(name="Logit")
         self.add_prim_attr("eps", eps)
         validator.check_value_type("eps", eps, [float], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -2794,6 +2795,7 @@ class Einsum(Primitive):
 
     @prim_attr_register
     def __init__(self, equation):
+        super().__init__(name="Einsum")
         if not isinstance(equation, str):
             raise TypeError("the equation must be str!")
         seg_equation = equation.split("->")
@@ -2937,7 +2939,7 @@ class Histogram(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, bins=100, min=0.0, max=0.0):  # pylint: disable=redefined-builtin
+    def __init__(self, bins=100, min=0.0, max=0.0):
         """Initialize Histogram."""
         super().__init__(name="Histogram")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
