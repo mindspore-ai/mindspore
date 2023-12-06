@@ -22,6 +22,9 @@ from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from .._primitive_cache import _get_cache_prim
 
+check_valid_ = P.CheckValid()
+dtype_ = P.DType()
+
 
 def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
                         wh_ratio_clip=0.016):
@@ -156,8 +159,25 @@ def check_valid(bboxes, img_metas):
         >>> print(output)
         [ True False False]
     """
-    check_valid_op = _get_cache_prim(P.CheckValid)()
-    return check_valid_op(bboxes, img_metas)
+    return check_valid_(bboxes, img_metas)
+
+
+def _crop_and_resize_check(image, boxes, box_indices, crop_size):
+    """Check crop and resize input"""
+    if not isinstance(image, (Tensor, Tensor_)):
+        raise TypeError("For crop_and_resize, the input image must be a tensor")
+    if not isinstance(boxes, (Tensor, Tensor_)):
+        raise TypeError("For crop_and_resize, the input boxes must be a tensor")
+    if not isinstance(box_indices, (Tensor, Tensor_)):
+        raise TypeError("For crop_and_resize, the input box_indices must be a tensor")
+    if not isinstance(crop_size, tuple):
+        raise TypeError("For crop_and_resize, the input crop_size must be a tuple, but got {}".format(type(crop_size)))
+    if len(crop_size) != 2:
+        raise ValueError("For crop_and_resize, the crop_size's length must be 2, bot got {}".format(len(crop_size)))
+    if not isinstance(crop_size[0], int) or not isinstance(crop_size[1], int):
+        raise TypeError("For crop_and_resize, the crop_size's value must be int.")
+    if crop_size[0] <= 0 or crop_size[1] <= 0:
+        raise ValueError("For crop_and_resize, the crop_size's value must be positive.")
 
 
 def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
@@ -234,26 +254,12 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         >>> print(output.shape)
          (5, 24, 24, 3)
     """
-    if not isinstance(image, (Tensor, Tensor_)):
-        raise TypeError("For crop_and_resize, the input image must be a tensor")
-    if not isinstance(boxes, (Tensor, Tensor_)):
-        raise TypeError("For crop_and_resize, the input boxes must be a tensor")
-    if not isinstance(box_indices, (Tensor, Tensor_)):
-        raise TypeError("For crop_and_resize, the input box_indices must be a tensor")
-    if not isinstance(crop_size, tuple):
-        raise TypeError("For crop_and_resize, the input crop_size must be a tuple, but got {}".format(type(crop_size)))
-    if len(crop_size) != 2:
-        raise ValueError("For crop_and_resize, the crop_size's length must be 2, bot got {}".format(len(crop_size)))
-    if not isinstance(crop_size[0], int) or not isinstance(crop_size[1], int):
-        raise TypeError("For crop_and_resize, the crop_size's value must be int.")
-    if crop_size[0] <= 0 or crop_size[1] <= 0:
-        raise ValueError("For crop_and_resize, the crop_size's value must be positive.")
-
+    _crop_and_resize_check(image, boxes, box_indices, crop_size)
     image_shape = image.shape
     if len(image_shape) != 4:
         raise ValueError(
             "For crop_and_resize, the input image must be 4D Tensor, but got is {}D".format(len(image_shape)))
-    boxes_dtype = _get_cache_prim(P.DType)()(boxes)
+    boxes_dtype = dtype_(boxes)
     if boxes_dtype not in [mstype.float32]:
         raise TypeError(
             "For crop_and_resize, the input boxes must be {}, but got {}".format(mstype.float32, boxes_dtype))
@@ -261,7 +267,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
     if len(boxes_shape) != 2 or boxes_shape[-1] != 4:
         raise ValueError("For crop_and_resize, the input boxes must be 2D and the second-dim must be 4, "
                          "but got {}".format(boxes_shape))
-    box_indices_dtype = _get_cache_prim(P.DType)()(box_indices)
+    box_indices_dtype = dtype_(box_indices)
     if box_indices_dtype not in [mstype.int32]:
         raise TypeError(
             "For crop_and_resize, the input box_indices must be {}, but got {}".format(mstype.int32, box_indices_dtype))

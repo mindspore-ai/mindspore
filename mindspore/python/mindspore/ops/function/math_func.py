@@ -104,123 +104,137 @@ def get_x_shape(x_shape):
 # Public Operation Functions.
 #####################################
 absolute_ = P.Abs()
-tensor_ceil = P.Ceil()
-tensor_add = P.Add()
+cast_ = P.Cast()
 neg_tensor = P.Neg()
-tensor_sub = P.Sub()
-tensor_mul = P.Mul()
+not_equal_ = P.NotEqual()
+tensor_add = P.Add()
+tensor_ceil = P.Ceil()
 tensor_div = P.RealDiv()
-tensor_floordiv = P.FloorDiv()
-floordiv = tensor_floordiv
-xdivy_ = P.Xdivy()
-tensor_pow = P.Pow()
-pows = tensor_pow
-tensor_mod = P.FloorMod()
-floormod = tensor_mod
 tensor_exp = P.Exp()
 tensor_expm1 = P.Expm1()
-tensor_lt = P.Less()
-tensor_le = P.LessEqual()
-tensor_gt = P.Greater()
+tensor_floordiv = P.FloorDiv()
+floordiv = tensor_floordiv
 tensor_ge = P.GreaterEqual()
+tensor_gt = P.Greater()
+tensor_le = P.LessEqual()
+tensor_lt = P.Less()
+tensor_mod = P.FloorMod()
+floormod = tensor_mod
+tensor_mul = P.Mul()
+tensor_pow = P.Pow()
+pows = tensor_pow
+tensor_sub = P.Sub()
 transpose_ = P.Transpose()
-not_equal_ = P.NotEqual()
-cast_ = P.Cast()
+xdivy_ = P.Xdivy()
 
 #####################################
 # Private Operation Functions.
 #####################################
+accumulate_ = P.AccumulateNV2()
+acos_ = P.ACos()
+acosh_ = P.Acosh()
 addcdiv_ = P.Addcdiv()
 addcuml_ = P.Addcmul()
 addn_ = P.AddN()
 angle_ = Angle()
-log_ = P.Log()
-floor_ = P.Floor()
-logical_not_ = P.LogicalNot()
-logical_or_ = P.LogicalOr()
-logical_and_ = P.LogicalAnd()
-cos_ = P.Cos()
-tan_ = P.Tan()
 asin_ = P.Asin()
-polar_ = Polar()
-acos_ = P.ACos()
-atan_ = P.Atan()
-atan2_ = P.Atan2()
-cosh_ = P.Cosh()
-tanh_ = P.Tanh()
 asinh_ = P.Asinh()
-acosh_ = P.Acosh()
+atan2_ = P.Atan2()
+atan_ = P.Atan()
 atanh_ = P.Atanh()
+batch_matmul_ = P.BatchMatMul()
+bessel_i0_ = BesselI0()
+bessel_i0e_ = P.BesselI0e()
+bessel_i1_ = BesselI1()
+bessel_i1e_ = P.BesselI1e()
+bessel_j0_ = BesselJ0()
+bessel_j1_ = BesselJ1()
+bessel_k0_ = BesselK0()
+bessel_k0e_ = BesselK0e()
+bessel_k1_ = BesselK1()
+bessel_k1e_ = BesselK1e()
+bessel_y0_ = BesselY0()
+bessel_y1_ = BesselY1()
 bitwise_and_ = P.BitwiseAnd()
 bitwise_or_ = P.BitwiseOr()
 bitwise_xor_ = P.BitwiseXor()
-inv_ = P.math_ops.Inv()
-invert_ = P.Invert()
+conj_ = P.Conj()
+cos_ = P.Cos()
+cosh_ = P.Cosh()
+cumprod_ = P.CumProd()
+cumsum_ = P.CumSum()
+cumulative_logsumexp_ = CumulativeLogsumexp()
+digamma_ = P.Digamma()
+div_ = P.Div()
+dtype_ = P.DType()
+eps_ = P.Eps()
+equal_ = P.Equal()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
-bessel_j1_ = BesselJ1()
-bessel_j0_ = BesselJ0()
-bessel_i0_ = BesselI0()
-bessel_i0e_ = P.BesselI0e()
-bessel_k0_ = BesselK0()
-bessel_k0e_ = BesselK0e()
-bessel_y0_ = BesselY0()
-bessel_y1_ = BesselY1()
-bessel_i1_ = BesselI1()
-bessel_i1e_ = P.BesselI1e()
-bessel_k1_ = BesselK1()
-bessel_k1e_ = BesselK1e()
-equal_ = P.Equal()
-isfinite_ = P.IsFinite()
-isnan_ = P.IsNan()
-maximum_ = P.Maximum()
-lerp_ = P.Lerp()
-tensor_round_ = P.Round()
-linspace_ = P.LinSpace()
-matrix_exp_ = MatrixExp()
+erfinv_ = P.Erfinv()
 exp2_ = P.Pow()
+expand_dims_ = P.ExpandDims()
+fill_v2_ = P.FillV2()
+floor_ = P.Floor()
+gcd_ = Gcd()
+igamma_ = Igamma()
+igammac_ = Igammac()
+imag_ = P.Imag()
+inv_ = P.math_ops.Inv()
+invert_ = P.Invert()
+isfinite_ = P.IsFinite()
+isinf_ = P.IsInf()
+isnan_ = P.IsNan()
+lcm_ = Lcm()
+lerp_ = P.Lerp()
+lgamma_ = P.Lgamma()
+linspace_ = P.LinSpace()
+log1p_ = P.Log1p()
+log_ = P.Log()
+log_matrix_determinant_ = P.LogMatrixDeterminant()
+logical_and_ = P.LogicalAnd()
+logical_not_ = P.LogicalNot()
+logical_or_ = P.LogicalOr()
+logical_xor_ = P.LogicalXor()
+lu_solve_ = LuSolve()
+lu_unpack_ = LuUnpack()
+matmul_ = P.MatMul()
+matrix_determinant_ = P.MatrixDeterminant()
+matrix_exp_ = MatrixExp()
+matrix_inverse_ = P.MatrixInverse()
+maximum_ = P.Maximum()
+mod_ = P.Mod()
+nextafter_ = P.NextAfter()
+ones_ = P.Ones()
+polar_ = Polar()
+poly_gamma_ = P.Polygamma()
+rank_ = P.Rank()
+reciprocal_ = P.Reciprocal()
+reduce_sum_ = P.ReduceSum()
+reshape_ = P.Reshape()
+rsqrt_ = P.Rsqrt()
+select_ = P.Select()
+slice_ = P.Slice()
+size_ = P.Size()
+scalar_cast_ = P.ScalarCast()
+scalar_to_tensor_ = P.ScalarToTensor()
+shape_ = P.Shape()
+sign_ = P.Sign()
+sparse_segment_mean_ = SparseSegmentMean()
+sqrt_ = P.Sqrt()
+square_ = P.Square()
+tan_ = P.Tan()
+tanh_ = P.Tanh()
+tensor_round_ = P.Round()
+tile_ = P.Tile()
+tile_size_ = TileSize()
+trace_ = P.Trace()
 trunc_ = P.Trunc()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
-sparse_segment_mean_ = SparseSegmentMean()
-lu_unpack_ = LuUnpack()
 xlogy_ = P.Xlogy()
-square_ = P.Square()
-sqrt_ = P.Sqrt()
-cumsum_ = P.CumSum()
-shape_ = P.Shape()
-reshape_ = P.Reshape()
-dtype_ = P.DType()
-eps_ = P.Eps()
-rank_ = P.Rank()
-expand_dims_ = P.ExpandDims()
-sign_ = P.Sign()
-nextafter_ = P.NextAfter()
-matrix_inverse_ = P.MatrixInverse()
-matrix_determinant_ = P.MatrixDeterminant()
-log_matrix_determinant_ = P.LogMatrixDeterminant()
-trace_ = P.Trace()
-rsqrt_ = P.Rsqrt()
-reciprocal_ = P.Reciprocal()
-tile_ = P.Tile()
-batch_matmul_ = P.BatchMatMul()
-fill_v2_ = P.FillV2()
-imag_ = P.Imag()
-log1p_ = P.Log1p()
-accumulate_ = P.AccumulateNV2()
-conj_ = P.Conj()
-erfinv_ = P.Erfinv()
-cumprod_ = P.CumProd()
-lgamma_ = P.Lgamma()
-digamma_ = P.Digamma()
-poly_gamma_ = P.Polygamma()
-isinf_ = P.IsInf()
 zeros_ = P.Zeros()
-ones_ = P.Ones()
-logical_xor_ = P.LogicalXor()
 zeta_ = P.Zeta()
-div_ = P.Div()
-matmul_ = P.MatMul()
 
 
 #####################################
@@ -476,14 +490,14 @@ def bincount(input, weights=None, minlength=0):
     if max(input.astype(mstype.float32)) > minlength - 1:
         length = (max(input.astype(mstype.float32)) + 1).astype(mstype.int32)
     else:
-        length = P.Cast()(minlength, mstype.int32)
+        length = cast_(minlength, mstype.int32)
     idx = F.arange(length).expand_dims(-1)
     idx_mapping = equal(input, idx)
     if weights is not None:
         if input.shape != weights.shape:
             raise ValueError('for bincount `input` and `weights` must have the same length')
         idx_mapping *= weights
-    return P.ReduceSum()(idx_mapping.astype(mstype.float32), 1).ravel()
+    return reduce_sum_(idx_mapping.astype(mstype.float32), 1).ravel()
 
 
 def bucketize(input, boundaries, *, right=False):
@@ -3675,7 +3689,6 @@ def lu_solve(b, LU_data, LU_pivots):
          [-1.4000001]
          [ 0.6      ]]
     """
-    lu_solve_ = _get_cache_prim(LuSolve)()
     out = lu_solve_(b, LU_data, LU_pivots)
     return out
 
@@ -4447,7 +4460,7 @@ def approximate_equal(x, y, tolerance=1e-5):
         >>> print(output)
         [ True  False  False]
     """
-    return P.ApproximateEqual(tolerance)(x, y)
+    return _get_cache_prim(P.ApproximateEqual)(tolerance)(x, y)
 
 
 def isfinite(x):
@@ -6082,9 +6095,8 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addmv")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
-        scalar_cast = P.ScalarCast()
-        alpha = scalar_cast(alpha, mstype.int32)
-        beta = scalar_cast(beta, mstype.int32)
+        alpha = scalar_cast_(alpha, mstype.int32)
+        beta = scalar_cast_(beta, mstype.int32)
     out = beta * input + alpha * mv(mat, vec)
     return out
 
@@ -6179,17 +6191,15 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addr")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addr")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
-        scalar_cast = P.ScalarCast()
-        alpha = scalar_cast(alpha, mstype.int32)
-        beta = scalar_cast(beta, mstype.int32)
-    matmul_op = P.MatMul()
+        alpha = scalar_cast_(alpha, mstype.int32)
+        beta = scalar_cast_(beta, mstype.int32)
 
     length_vec1 = get_x_shape(vec1.shape)
     vec1 = reshape_(vec1, (length_vec1[0], 1))
     length_vec2 = get_x_shape(vec2.shape)
     vec2 = reshape_(vec2, (1, length_vec2[0]))
 
-    out = beta * x + alpha * matmul_op(vec1, vec2)
+    out = beta * x + alpha * matmul_(vec1, vec2)
     return out
 
 
@@ -6223,8 +6233,6 @@ def lcm(input, other):
         >>> print(y)
         [14 24 36]
     """
-
-    lcm_ = _get_cache_prim(Lcm)()
     return lcm_(input, other)
 
 
@@ -6306,8 +6314,6 @@ def gcd(input, other):
         >>> print(y)
         [7 2 3]
     """
-
-    gcd_ = _get_cache_prim(Gcd)()
     return gcd_(input, other)
 
 
@@ -6675,8 +6681,7 @@ def frac(x):
         >>> print(output)
         [ 0.      0.1992 -0.5   ]
     """
-    frac_op = P.Mod()
-    return frac_op(x, 1)
+    return mod_(x, 1)
 
 
 #####################################
@@ -7021,7 +7026,7 @@ def dstack(inputs):
         trans_inputs += (tensor,)
     if not trans_inputs:
         raise ValueError("For 'dstack', at least one tensor is needed to concatenate.")
-    return P.Concat(2)(trans_inputs)
+    return _get_cache_prim(P.Concat)(2)(trans_inputs)
 
 
 @_primexpr
@@ -7278,9 +7283,9 @@ def cartesian_prod(*inputs):
         >>> print(len(out))
         60
     """
-    meshgrid = P.Meshgrid(indexing="ij")
+    meshgrid = _get_cache_prim(P.Meshgrid)(indexing="ij")
     meshgrid_output = meshgrid(inputs)
-    stack = P.Stack(axis=-1)
+    stack = _get_cache_prim(P.Stack)(axis=-1)
     stack_output = stack(meshgrid_output)
     return reshape_(stack_output, (-1, len(inputs)))
 
@@ -7336,9 +7341,9 @@ def atleast_3d(inputs):
         if ndim == 0:
             return reshape_(arr, (1, 1, 1))
         if ndim == 1:
-            return reshape_(arr, (1, P.Size()(arr), 1))
+            return reshape_(arr, (1, size_(arr), 1))
         if ndim == 2:
-            return reshape_(arr, P.Shape()(arr) + (1,))
+            return reshape_(arr, shape_(arr) + (1,))
         return arr
 
     if isinstance(inputs, Tensor):
@@ -7430,7 +7435,7 @@ def vstack(inputs):
             msg = f"For 'vstack', Tensor is required, but got {type(tensor)}"
             raise TypeError(msg)
         if tensor.ndim <= 1:
-            shape = P.Shape()(tensor)
+            shape = shape_(tensor)
             if isinstance(shape, int):
                 shape = (shape,)
             ndim_diff = 2 - len(shape)
@@ -7440,7 +7445,7 @@ def vstack(inputs):
         trans_tup += (tensor,)
     if not trans_tup:
         raise ValueError("For 'vstack', need at least one tensor to concatenate.")
-    out = P.Concat(0)(trans_tup)
+    out = _get_cache_prim(P.Concat)(0)(trans_tup)
     return out
 
 
@@ -7636,7 +7641,7 @@ def copysign(x, other):
         """Broadcasts x from current shape to shape"""
         ndim_to = len(shape)
         x = _expand(x, ndim_to)
-        return _broadcast_to(x, P.Shape()(x), shape, ndim_to)
+        return _broadcast_to(x, shape_(x), shape, ndim_to)
 
     if not isinstance(x, Tensor):
         raise TypeError("Tensor is expected, but got " + f"{type(x)}")
@@ -7647,7 +7652,7 @@ def copysign(x, other):
 
     if not isinstance(other, Tensor):
         other = _type_convert(Tensor, other)
-    other = _broadcast_to_shape(other, P.Shape()(x))
+    other = _broadcast_to_shape(other, shape_(x))
 
     if _check_same_type(dtype_(x), mstype.bool_):
         raise TypeError("copysign does not accept dtype bool.")
@@ -7667,9 +7672,9 @@ def copysign(x, other):
         if x.dtype in (mstype.float16, mstype.float32, mstype.float64)
         else x.astype("float32")
     )
-    pos_tensor = P.Abs()(x_float)
-    less_zero = P.Less()(other, 0)
-    return P.Select()(less_zero, neg_tensor(pos_tensor), pos_tensor)
+    pos_tensor = absolute_(x_float)
+    less_zero = tensor_lt(other, 0)
+    return select_(less_zero, neg_tensor(pos_tensor), pos_tensor)
 
 
 def hann_window(window_length, periodic=True, *, dtype=None):
@@ -7729,7 +7734,7 @@ def hann_window(window_length, periodic=True, *, dtype=None):
     w = 0.5 - 0.5 * np.cos(2 * math.pi / (window_length - 1) * n)
 
     if dtype is not None:
-        w = P.Cast()(w, dtype)
+        w = cast_(w, dtype)
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
@@ -7780,8 +7785,7 @@ def logcumsumexp(input, axis):
         raise TypeError(
             f"For 'logcumsumexp', 'axis' must be int type, but got {type(axis)}"
         )
-    logcumsumexp_ = _get_cache_prim(CumulativeLogsumexp)()
-    return logcumsumexp_(input, Tensor(axis))
+    return cumulative_logsumexp_(input, Tensor(axis))
 
 
 def logsumexp(input, axis, keep_dims=False):
@@ -8963,11 +8967,9 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         _check_int_range(dim, -len(logits.shape),
                          len(logits.shape), 'dim', "gumbel_softmax")
 
-    const_op = _get_cache_prim(P.ScalarToTensor)()
-
     sample_shape = shape_(logits)
-    uniform = C.uniform(sample_shape, const_op(
-        0.0, mstype.float32), const_op(1.0, mstype.float32))
+    uniform = C.uniform(sample_shape, scalar_to_tensor_(
+        0.0, mstype.float32), scalar_to_tensor_(1.0, mstype.float32))
     uniform = cast_(uniform, logits_dtype)
     gumbel = neg_tensor(log_(neg_tensor(log_(uniform))))
     gumbel = (logits + gumbel) / tau
@@ -9050,7 +9052,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
         beta * np.sqrt(1 - ((n - alpha) / alpha) ** 2.0)
     ) / np.i0(float(beta))
     if dtype is not None:
-        w = P.Cast()(w, dtype)
+        w = cast_(w, dtype)
     out = Tensor(w[:-1]) if periodic else Tensor(w)
     return out
 
@@ -9255,8 +9257,7 @@ def _expand(x, ndim):
 
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
-    tile_size_op = _get_cache_prim(TileSize)()
-    size = tile_size_op(shape_cur, shape_to, ndim_to)
+    size = tile_size_(shape_cur, shape_to, ndim_to)
     F.stop_gradient(size)
     return tile_(x, size)
 
@@ -10321,8 +10322,8 @@ def _check_dim_in_range(dim, ndim):
 
 
 def dotrapezoid(y, dx, dim):
-    y_left = select_(y, dim, 0)
-    y_right = select_(y, dim, -1)
+    y_left = _select(y, dim, 0)
+    y_right = _select(y, dim, -1)
     y_sum = y.sum(dim)
     return (y_sum - (y_left + y_right) * 0.5) * dx
 
@@ -10332,10 +10333,10 @@ def dotrapezoid_tensor(y, dx, dim):
     y_start_dim_left = tuple(y_start_dim_left)
     y_start_dim_right = [0 for _ in range(y.ndim - dim - 1)]
     y_start_dim_right = tuple(y_start_dim_right)
-    y_slice_size = _tuple_setitem(P.Shape()(y), dim, P.Shape()(y)[dim] - 1)
-    y_slice_left = P.Slice()(y, y_start_dim_left + (0,) + y_start_dim_right, y_slice_size)
-    y_slice_right = P.Slice()(y, y_start_dim_left + (1,) + y_start_dim_right, y_slice_size)
-    return (P.Add()(y_slice_left, y_slice_right) * dx).sum(dim) / 2.
+    y_slice_size = _tuple_setitem(shape_(y), dim, shape_(y)[dim] - 1)
+    y_slice_left = slice_(y, y_start_dim_left + (0,) + y_start_dim_right, y_slice_size)
+    y_slice_right = slice_(y, y_start_dim_left + (1,) + y_start_dim_right, y_slice_size)
+    return (tensor_add(y_slice_left, y_slice_right) * dx).sum(dim) / 2.
 
 
 def add_padding_to_shape(curr_shape, target_n_dim):
@@ -10368,8 +10369,8 @@ def trapezoid_tensor(y, x, dim):
         x_start_dim_right = [0 for _ in range(x.ndim - dim - 1)]
         x_start_dim_right = tuple(x_start_dim_right)
         x_slice_size = _tuple_setitem(x.shape, dim, x.shape[dim] - 1)
-        x_left = P.Slice()(x, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
-        x_right = P.Slice()(x, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
+        x_left = slice_(x, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
+        x_right = slice_(x, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
         dx = x_right - x_left
         new_sizes = add_padding_to_shape(dx.shape, y.ndim)
         dx = dx.view(tuple(new_sizes))
@@ -10387,8 +10388,8 @@ def trapezoid_tensor(y, x, dim):
     x_start_dim_right = [0 for _ in range(x_viewed.ndim - dim - 1)]
     x_start_dim_right = tuple(x_start_dim_right)
     x_slice_size = _tuple_setitem(x_viewed.shape, dim, x_viewed.shape[dim] - 1)
-    x_left = P.Slice()(x_viewed, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
-    x_right = P.Slice()(x_viewed, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
+    x_left = slice_(x_viewed, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
+    x_right = slice_(x_viewed, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
     dx = x_right - x_left
     return dotrapezoid_tensor(y, dx, dim)
 
@@ -10407,12 +10408,12 @@ def get(ts, depth, dim, index, r):
         return get(item, depth + 1, dim, index, r)
 
 
-def select_(feat, dim, index):
+def _select(feat, dim, index):
     select_shape = feat.shape
     select_shape = list(select_shape)
     select_shape[dim] = 1
     new_shape = feat.shape[:dim] + feat.shape[dim + 1:]
-    indexes = P.Ones()(tuple(select_shape), mstype.int32) * (index)
+    indexes = ones_(tuple(select_shape), mstype.int32) * (index)
     return feat.gather_elements(dim, indexes).reshape(new_shape)
 
 
@@ -10471,14 +10472,14 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
     if not isinstance(dim, int):
         raise TypeError(f"For `trapz`, the input `dim` must be int, but get {type(dim)}.")
     if not _check_is_float(y.dtype):
-        y = P.Cast()(y, mstype.float32)
+        y = cast_(y, mstype.float32)
     _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
     if x is None:
         return trapezoid(y, dx, dim)
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError(f"For `trapz`, the input `x` must be Tensor, but get {type(x)}.")
-    x = P.Cast()(x, mstype.float32)
+    x = cast_(x, mstype.float32)
     return trapezoid_tensor(y, x, dim)
 
 
@@ -11083,8 +11084,7 @@ def igamma(input, other):
         >>> print(output)
         [0.593994 0.35276785 0.21486944 0.13337152]
     """
-    igamma_op = _get_cache_prim(Igamma)()
-    return igamma_op(input, other)
+    return igamma_(input, other)
 
 
 def igammac(input, other):
@@ -11134,8 +11134,7 @@ def igammac(input, other):
         >>> print (output)
         [0.40600586 0.6472318 0.7851304 0.8666283]
     """
-    igammac_op = _get_cache_prim(Igammac)()
-    return igammac_op(input, other)
+    return igammac_(input, other)
 
 
 def lgamma(input):
@@ -11599,7 +11598,7 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
     diag_plane = (dsize, dsize)
     output_shape_trans = batch_shape + diag_plane
     output = zeros(output_shape_trans, input.dtype)
-    k = P.Cast()(offset, mstype.int32)
+    k = cast_(offset, mstype.int32)
     output = matrix_set_diag_op(output, input, k)
     dim = 0
     perm = ()
@@ -11912,13 +11911,13 @@ def _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes):
         if input_sizes[value] > ret_shape[i]:
             start_index = [0] * input_dim
             input_sizes[value] = ret_shape[i]
-            input = P.Slice()(input, start_index, input_sizes)
+            input = slice_(input, start_index, input_sizes)
 
     if must_copy:
         paddings = np.reshape(paddings, (input_dim, 2)).tolist()
         paddings.reverse()
         paddings = (*paddings,)
-        input = P.Pad(paddings)(input)
+        input = _get_cache_prim(P.Pad)(paddings)(input)
 
     return input
 
