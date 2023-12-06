@@ -956,6 +956,10 @@ void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNo
     MS_LOG(DEBUG) << output_node->DebugString() << "'s output data's placement is host";
     size_t size = ge_output->GetSize();
     void *mem = res_manager->AllocateMemory(size);
+    if (mem == nullptr) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed, memory size:" << size
+                        << ", output_node: " << output_node->ToString();
+    }
     output_addr->set_from_mem_pool(true);
     output_addr->set_ptr(mem);
     auto *ascend_addr = dynamic_cast<AscendDeviceAddress *>(output_addr.get());
@@ -1079,7 +1083,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   if (is_dynamic_shape) {
     transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
     if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
+      MS_LOG(EXCEPTION) << "Exec graph " << graph_name << " failed";
     }
     MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
   }
