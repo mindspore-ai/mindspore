@@ -392,7 +392,7 @@ template <size_t Ndim>
 class NdTensorIterator {
  public:
   template <typename... Indexes>
-  NdTensorIterator(int64_t first_dim, Indexes... rest_dims)
+  explicit NdTensorIterator(int64_t first_dim, Indexes... rest_dims)
       : dims_{{first_dim, rest_dims...}}, size_{(first_dim * ... * rest_dims)} {
     static_assert(sizeof...(rest_dims) + 1 == Ndim, "Input dimensions should match Ndim");
   }

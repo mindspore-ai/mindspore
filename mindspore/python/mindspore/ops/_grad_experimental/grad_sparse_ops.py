@@ -358,10 +358,10 @@ def get_bprop_ragged_tensor_to_sparse(self):
                 split.append(zeros_like(i))
             all_d = (split, ragged_values_grad)
             return all_d
-        split = ()  # pylint: disable=W0643
+        split_ = ()
         for i in enumerate(rt_nested_splits):
-            split = split + (zeros_like(i),)  # pylint: disable=W0643
-        all_d = (split, ragged_values_grad)
+            split_ = split_ + (zeros_like(i),)
+        all_d = (split_, ragged_values_grad)
         return all_d
 
     return bprop
