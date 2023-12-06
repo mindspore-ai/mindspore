@@ -1552,7 +1552,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
             - incremental (bool): export MindIR incrementally.
 
             - custom_func (function): Functions for custom defined export policies. This function will be used to
-              customize the model during network export. Default: ``None`` .
+              customize the model during network export. Currently only support for files with mindir format. The
+              function only accepts one input representing the proto object of the mindir file. Default: ``None`` .
 
     Examples:
         >>> import mindspore as ms
@@ -1650,7 +1651,7 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     if "obf_config" in kwargs and file_format != "MINDIR":
         raise ValueError(f"Dynamic obfuscation only support for MindIR format, but got {file_format} format.")
     if "custom_func" in kwargs and file_format != "MINDIR":
-        raise ValueError(f"Currently only support custom_func for MIndIR format, but got {file_format} format.")
+        raise ValueError(f"Currently only support custom_func for MindIR format, but got {file_format} format.")
     if file_format == 'AIR':
         _save_air(net, file_name, *inputs, **kwargs)
     elif file_format == 'ONNX':
