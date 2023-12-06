@@ -35,6 +35,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/binary_ops_gpu_kernel.cc"                 "whitespace/indent"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc"                            "readability/braces"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/lp_norm_cpu_kernel.cc"                         "build/include"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/linear_sum_assignment_cpu_kernel.cc"           "whitespace/indent"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
