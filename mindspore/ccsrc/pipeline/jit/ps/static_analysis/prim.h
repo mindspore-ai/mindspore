@@ -157,6 +157,8 @@ class DoSignatureEvaluator final : public Evaluator {
 
  private:
   PrimitivePtr prim_;
+  CNodePtr GenerateNewNodeBySignatures(const ValuePtr &func, const AbstractBasePtrList &args_abs_list,
+                                       const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &out_conf);
 };
 
 class UnpackGraphEvaluator final : public Evaluator {
