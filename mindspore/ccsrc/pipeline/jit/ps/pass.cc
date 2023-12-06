@@ -556,7 +556,8 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
                                                irpass.value_based_eliminate_,
-                                               irpass.parallel_virtual_node_},
+                                               irpass.parallel_virtual_node_,
+                                               irpass.const_output_eliminate_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.row_tensor_eliminate_,
