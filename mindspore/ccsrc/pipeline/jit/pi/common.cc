@@ -696,9 +696,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   }
 
   // If no change to the bytecode in pynative mode, no need to guard parameters in pynative mode
-  if (c->code->GetNativeFunc() != nullptr || !c->code->GetGuard()->IsEmpty()) {
-    GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
-  }
+  GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
   CollectTraceBack(c, c->code->GetPythonCode(), c->code->GetNativeFunc() != nullptr);
 
   MS_LOG(DEBUG) << "---compile " << origin_code_name << " successful---";
