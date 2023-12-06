@@ -17,7 +17,6 @@
 #include "src/common/quant_utils.h"
 #include <functional>
 #include <map>
-#include <cfloat>
 
 namespace mindspore {
 namespace lite {
