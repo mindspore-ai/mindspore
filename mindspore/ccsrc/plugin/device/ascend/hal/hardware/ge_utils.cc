@@ -133,10 +133,10 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
   }
 }
 
-bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
+bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
-  transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
+  transform::GenFakeGraph(anf_graph->ToString(), converter);
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;

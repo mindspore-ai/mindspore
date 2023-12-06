@@ -174,7 +174,8 @@ class DfGraphConvertor {
   }
 
   DfGraphConvertor &ConvertAllNode();
-  DfGraphConvertor &GenFakeComputeGraph(const std::string &name);
+  void GenFakeGraph(const std::string &name);
+  std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const ParameterPtr &para);
   DfGraphConvertor &BuildGraph(const std::string &name);
   DfGraphConvertor &InitParam(const TensorOrderMap &tensors);
   DfGraphConvertor &GenerateCheckpointGraph();
