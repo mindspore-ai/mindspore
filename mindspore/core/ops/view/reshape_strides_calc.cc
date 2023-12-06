@@ -17,6 +17,8 @@
 #include "ops/view/reshape_strides_calc.h"
 #include <vector>
 #include <memory>
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 constexpr size_t kReshapeInputsNum = 2;
@@ -74,6 +76,9 @@ TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector
   }
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
+  auto input_type = input_tensor->Dtype();
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_complex_and_bool,
+                                             prim->name());
   auto ori_storage_info = input_tensor->storage_info();
   if (ori_storage_info != nullptr && !ori_storage_info->is_contiguous) {
     return {};
@@ -83,4 +88,6 @@ TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector
 
   return ReshapeCalcImpl(prim, input_tensor, shape);
 }
+
+REG_VIEW_STRIDES_CALC_FUN(Reshape, ReshapeCalc);
 }  // namespace mindspore::ops

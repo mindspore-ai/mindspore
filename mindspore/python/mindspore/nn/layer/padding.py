@@ -208,24 +208,11 @@ class _ConstantPadNd(Cell):
             raise TypeError(msg)
 
         self.value = value
-        self.padding = _swap_to_ms_padding_order(padding)
-        self._name = name
+        self.padding = padding
 
     def construct(self, x):
         """Construct the pad net."""
-        input_shape = x.shape
-        padding = _check(input_shape, self.padding, self._name)
-        new_padding, start, end = _get_new_padding(padding)
-        mask = ops.OnesLike()(x)
-        output = ops.Pad(new_padding)(x)
-        mask = ops.Pad(new_padding)(mask)
-        ones = ops.OnesLike()(output)
-        value = ops.fill(output.dtype, output.shape, self.value)
-        output = ops.Add()(ops.Mul()(mask, output), ops.Mul()(ops.Sub()(ones, mask), value))
-        slice_op = ops.Slice()
-        begin, size = _get_begin_size(output.shape, start, end)
-        output = slice_op(output, begin, size)
-        return output
+        return ops.pad(x, padding=self.padding, mode='constant', value=self.value)
 
 
 class ConstantPad1d(_ConstantPadNd):
