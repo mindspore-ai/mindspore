@@ -215,7 +215,12 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   if (result == nullptr) {
     MS_LOG(INFO) << node->ToString()
                  << " can't be inferred shape. It will keep the previous value with danger. Prim: " << prim->ToString();
-    result = node->abstract()->Clone();
+    if (node->abstract() == nullptr) {
+      MS_LOG(WARNING) << "The abstract of the node: " << node->ToString()
+                      << " is nullptr. And it can't be inferred shape. Prim: " << prim->ToString();
+    } else {
+      result = node->abstract()->Clone();
+    }
   }
   SaveNodeInferResult(node, result);
 }
