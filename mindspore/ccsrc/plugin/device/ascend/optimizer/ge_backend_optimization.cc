@@ -126,7 +126,6 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
-  opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
   opt_acl_pm->AddPass(std::make_shared<opt::SyncBnSplit>());
   opt_acl_pm->AddPass(std::make_shared<opt::SyncBnGradSplit>());
