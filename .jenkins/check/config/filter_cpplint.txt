@@ -37,6 +37,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/lp_norm_cpu_kernel.cc"                         "build/include"
 "mindspore/mindspore/ccsrc/backend/operator/"                                                      "whitespace/braces"
 "mindspore/mindspore/ccsrc/pybind_api/ir/dtype_py.cc"                                              "whitespace/line_length"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/linear_sum_assignment_cpu_kernel.cc"           "whitespace/indent"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

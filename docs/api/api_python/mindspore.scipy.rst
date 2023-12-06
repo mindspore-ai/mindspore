@@ -37,3 +37,4 @@ mindspore.scipy.optimize
 
     mindspore.scipy.optimize.line_search
     mindspore.scipy.optimize.minimize
+    mindspore.scipy.optimize.linear_sum_assignment

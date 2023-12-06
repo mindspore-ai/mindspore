@@ -105,6 +105,7 @@ cust_op_lists = [
     "lowerbound",
     "lusolve",
     "luunpackgrad",
+    "linearsumassignment",
     "maskedselectgrad",
     "matrixdeterminant",
     "matrixexp",
