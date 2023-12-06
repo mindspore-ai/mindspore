@@ -99,7 +99,8 @@ int DynBatchOrDynImage(const mindspore::ProfileConfigs &profile, size_t dynamic_
 std::string CombineDynamicImageString(const struct mindspore::ProfileConfigs &profile, size_t dynamic_input) {
   ShapeVector shape = profile.input_infos[dynamic_input].input_shape;
   std::string ret = "";
-  size_t first_dim = kIndex0, second_dim = kIndex0;
+  size_t first_dim = kIndex0;
+  size_t second_dim = kIndex0;
   if (shape[kIndex1] == kdynDim && shape[kIndex2] == kdynDim) {
     first_dim = kIndex1;
     second_dim = kIndex2;
@@ -215,7 +216,11 @@ void ConfigFileParser::SetVariableParams(const std::shared_ptr<mindspore::Conver
   auto it = ascend_map.find("inputs_to_variable");
   if (it != ascend_map.end()) {
     std::vector<std::string> inputs_to_variables = mindspore::lite::SplitStringToVector(it->second, ',');
-    ProcessVariableParam(inputs_to_variables, inputs_variable_index_);
+    auto ret = ProcessVariableParam(inputs_to_variables, inputs_variable_index_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "process input variable param failed";
+      return;
+    }
     if (CheckVariableParm(inputs_variable_index_) != RET_OK) {
       MS_LOG(ERROR) << "Check input variable param failed";
       return;
@@ -224,7 +229,11 @@ void ConfigFileParser::SetVariableParams(const std::shared_ptr<mindspore::Conver
   auto output_it = ascend_map.find("outputs_to_variable");
   if (output_it != ascend_map.end()) {
     std::vector<std::string> outputs_to_variables = mindspore::lite::SplitStringToVector(output_it->second, ',');
-    ProcessVariableParam(outputs_to_variables, outputs_variable_index_);
+    auto ret = ProcessVariableParam(outputs_to_variables, outputs_variable_index_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "process input variable param failed";
+      return;
+    }
     if (CheckVariableParm(outputs_variable_index_) != RET_OK) {
       MS_LOG(ERROR) << "Check output variable param failed";
       return;
@@ -254,7 +263,7 @@ int ConfigFileParser::ProcessVariableParam(const std::vector<std::string> &varia
       return RET_ERROR;
     }
     for (int64_t i = min_index; i <= max_index; ++i) {
-      variable_index.emplace_back(i);
+      (void)variable_index.emplace_back(i);
     }
   }
   return RET_OK;
