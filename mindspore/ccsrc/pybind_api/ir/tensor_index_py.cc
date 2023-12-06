@@ -1242,8 +1242,8 @@ std::pair<ValuePtr, bool> GetStubTensorValue(const py::handle &obj) {
   return std::make_pair(stub, is_pack_node);
 }
 
-std::pair<ValuePtr, bool> SqueezeRDataValue(TensorPtr tensor, const py::handle &py_value, ValuePtr rdata_value,
-                                            bool is_pack_node) {
+std::pair<ValuePtr, bool> SqueezeRDataValue(const TensorPtr &tensor, const py::handle &py_value,
+                                            const ValuePtr &rdata_value, bool is_pack_node) {
   auto rdata_shape = tensor->shape();
   if (rdata_shape.size() >= 1 && (rdata_shape.at(0) > 1 || rdata_shape.size() > 1)) {
     MS_EXCEPTION(ValueError)
@@ -1252,7 +1252,10 @@ std::pair<ValuePtr, bool> SqueezeRDataValue(TensorPtr tensor, const py::handle &
   } else if (rdata_shape.size() == 1 && rdata_shape.at(0) == 1) {
     auto new_value = py::cast<py::list>(py_value);
     auto first_value = new_value[0];
-    return GetStubTensorValue(first_value);
+    std::pair<ValuePtr, bool> result = IsStubTensor(first_value)
+                                         ? GetStubTensorValue(first_value)
+                                         : std::make_pair(first_value.cast<tensor::TensorPtr>(), is_pack_node);
+    return result;
   }
   return std::make_pair(rdata_value, is_pack_node);
 }
