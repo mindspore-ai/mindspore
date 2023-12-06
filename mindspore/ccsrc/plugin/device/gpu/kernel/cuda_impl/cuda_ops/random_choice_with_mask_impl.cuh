@@ -23,17 +23,16 @@
 #define MAX_DIMENSION 5
 
 template <typename T, typename S, typename K>
-CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMaskSmall(int input_size, uint64_t seed, uint64_t seed_offset, int count,
-                                                         K *input, S *output_index, K *output_mask,
-                                                         cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMaskSmall(int input_size, int seedc, int count, K *input,
+                                                         S *output_index, K *output_mask, cudaStream_t stream);
 
 template <typename T, typename S>
 CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size, const int &d1,
                                                     const int &d2, const int &d3, const int &d4, const int &d5,
-                                                    const uint64_t &seed, const uint64_t &seed_offset, const int &count,
-                                                    const T *input, S *output_index, T *output_mask, S *index_buff,
-                                                    S *mask_buff, S *rank_buff, S *Tnum_buff, S *tmp_buff,
-                                                    curandState *globalState, cudaStream_t stream);
+                                                    const int &seedc, const int &count, const T *input, S *output_index,
+                                                    T *output_mask, S *index_buff, S *mask_buff, S *rank_buff,
+                                                    S *Tnum_buff, S *tmp_buff, curandState *globalState,
+                                                    cudaStream_t stream);
 
 CUDA_LIB_EXPORT int RcwmRoundUpPower2(int v);
 

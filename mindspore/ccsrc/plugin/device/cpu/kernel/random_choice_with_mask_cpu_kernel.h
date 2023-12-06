@@ -50,7 +50,9 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
   int32_t count_{0};
   std::vector<int32_t> dims_;
   size_t input_shape_size_{0};
-  std::default_random_engine rng_;
+  size_t seed_{0};
+  size_t seed2_{0};
+  std::mt19937 generator_;
 
   size_t batch_rank_{0};
   size_t batch_size_{1};
