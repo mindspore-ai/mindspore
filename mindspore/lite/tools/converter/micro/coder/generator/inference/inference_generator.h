@@ -29,8 +29,6 @@ class InferenceGenerator : public Generator {
 
  protected:
   void CodeNetExecuteFunc(std::ofstream &ofs) override;
-
- private:
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 };

@@ -32,13 +32,11 @@ class TrainGenerator : public Generator {
 
  protected:
   void CodeNetExecuteFunc(std::ofstream &ofs) override;
-
- private:
-  void CodeTrainAndEvalFunc(std::ofstream &ofs);
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 
  private:
+  void CodeTrainAndEvalFunc(std::ofstream &ofs);
   std::vector<std::pair<std::string, bool>> code_blocks_with_flag_;  // <code block, is op only in train mode>
 };
 }  // namespace mindspore::lite::micro
