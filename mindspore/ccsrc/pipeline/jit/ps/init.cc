@@ -175,6 +175,7 @@ PYBIND11_MODULE(_c_expression, m) {
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
 
   // Class Pipeline interface
+  MS_LOG(INFO) << "Start GraphExecutorPy...";
   (void)py::class_<GraphExecutorPy, std::shared_ptr<GraphExecutorPy>>(m, "GraphExecutor_")
     .def_static("get_instance", &GraphExecutorPy::GetInstance, "Executor get_instance.")
     .def("__call__", &GraphExecutorPy::Run, py::arg("args"), py::arg("phase") = py::str(""), "Executor run function.")
@@ -266,7 +267,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<TensorTransform, std::shared_ptr<TensorTransform>>(m, "TensorTransform")
     .def_static("get_instance", &TensorTransform::GetInstance, "Get tensor_transform instance.")
     .def("transform_tensor_sharding", &TensorTransform::TransformOperators, "Transform the tensor sharding.");
-
+  MS_LOG(INFO) << "Start ParallelContext...";
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")
     .def("get_device_num", &ParallelContext::device_num, "Get device num.")
@@ -374,7 +375,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_ops_strategy_json_config", &ParallelContext::set_ops_strategy_json_config,
          "Set ops strategy save&load config.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
-
+  MS_LOG(INFO) << "Start CostModelContext...";
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
     .def_static("get_instance", &CostModelContext::GetInstance, "Get cost_model context instance.")
     .def("set_device_memory_capacity", &CostModelContext::set_device_memory_capacity,
@@ -476,7 +477,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.")
     .def("reset_cost_model", &CostModelContext::ResetCostModel, "Reset the CostModelContext.")
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
-
+  MS_LOG(INFO) << "Start OffloadContext...";
   (void)py::class_<OffloadContext, std::shared_ptr<OffloadContext>>(m, "OffloadContext")
     .def_static("get_instance", &OffloadContext::GetInstance, "Get offload context instance.")
     .def("set_offload_param", &OffloadContext::set_offload_param, "Set the param for offload destination, cpu or disk.")
@@ -510,9 +511,11 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("hbm_ratio", &OffloadContext::hbm_ratio, "Get the hbm usage ratio of offload strategy");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
+    MS_LOG(INFO) << "Start register...";
     mindspore::MsContext::GetInstance()->RegisterCheckEnv(nullptr);
     mindspore::MsContext::GetInstance()->RegisterSetEnv(nullptr);
 #ifndef ENABLE_SECURITY
+    MS_LOG(INFO) << "Start mindspore.profiler...";
     try {
       py::module profiler = py::module::import("mindspore.profiler").attr("EnvProfiler")();
       (void)profiler.attr("analyse")();
@@ -520,7 +523,7 @@ PYBIND11_MODULE(_c_expression, m) {
       MS_LOG(ERROR) << "Failed to parse profiler data." << e.what();
     }
 #endif
-
+    MS_LOG(INFO) << "Start EmbeddingCacheScheduler...";
 #if defined(__linux__) && defined(WITH_BACKEND)
     mindspore::runtime::EmbeddingCacheScheduler::GetInstance().Finalize(
       !mindspore::distributed::cluster_exit_with_exception());
