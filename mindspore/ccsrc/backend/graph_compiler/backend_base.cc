@@ -957,8 +957,16 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
   }
 }
 
-void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
-  auto dispatch_contiguous_task = [this](const tensor::TensorPtr &t) {
+void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.device_contexts_.empty()) {
+    MS_LOG(EXCEPTION) << "Device context is empty.";
+  }
+
+  auto device_context = graph_compiler_info.device_contexts_[0];
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+
+  auto dispatch_contiguous_task = [stream_id, this](const tensor::TensorPtr &t) {
     MS_EXCEPTION_IF_NULL(t);
     if (t->storage_info() == nullptr) {
       return;
@@ -966,7 +974,8 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
 
     GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
-    RunContiguousTask(t, false);
+
+    RunContiguousTask(t, stream_id, false);
   };
 
   for (const auto &arg : args) {
@@ -995,7 +1004,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
 
 void MindRTBackendBase::WaitMultiStream(const GraphCompilerInfo &graph_compiler_info) {
   for (auto device_context : graph_compiler_info.device_contexts_) {
-    if (device_context->device_res_manager_->multi_stream_used()) {
+    if (device_context->device_res_manager_->single_op_multi_stream_enable()) {
       device_context->device_res_manager_->SyncNotDefaultStreams();
     }
   }
@@ -1025,7 +1034,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   // For pynative and graph mix execution.
-  ContiguousArgs(args);
+  ContiguousArgs(args, graph_compiler_info);
   WaitTaskFinish();
   WaitMultiStream(graph_compiler_info);
 

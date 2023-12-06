@@ -73,6 +73,13 @@ bool GPUKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call SyncStream error.";
     return false;
   }
+
+  // Sync all stream except stream_.
+  std::set<CudaDeviceStream> except_streams{stream_};
+  if (!GPUDeviceManager::GetInstance().SyncExceptStreamsInList(except_streams)) {
+    MS_LOG(ERROR) << "Sync not default streams error.";
+    return false;
+  }
   return true;
 }
 

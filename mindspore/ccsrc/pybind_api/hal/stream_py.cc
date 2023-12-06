@@ -38,7 +38,7 @@ StreamPy::StreamPy(int priority) {
   device_ctx_ = GetDeviceCtx();
   device_ctx_->device_res_manager_->CreateStreamWithPriority(&stream_id_, priority);
   MS_LOG(DEBUG) << "stream_id:" << stream_id_ << ", priority:" << priority;
-  device_ctx_->device_res_manager_->SetMultiStreamUsed(true);
+  device_ctx_->device_res_manager_->set_single_op_multi_stream_enable(true);
 }
 
 StreamPy::StreamPy(int priority, int stream_id) {

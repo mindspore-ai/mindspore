@@ -220,6 +220,21 @@ bool GPUDeviceManager::SyncNotDefaultStreams() const {
   return res;
 }
 
+bool GPUDeviceManager::SyncExceptStreamsInList(const std::set<CudaDeviceStream> &except_streams) const {
+  bool res = true;
+  for (size_t i = 0; i < gpu_streams_.size(); i++) {
+    if (except_streams.count(gpu_streams_[i]) > 0) {
+      MS_LOG(DEBUG) << "Stream id:" << i << " is been synchronized.";
+      continue;
+    }
+    if (!SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for gpu stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
 bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {
   return CudaDriver::CopyDeviceMemToHost(dst, src, size);
 }

@@ -32,7 +32,7 @@ void EventPy::CreateEvent(const StreamPyPtr &stream) {
   MS_EXCEPTION_IF_NULL(stream);
   MS_LOG(DEBUG) << "enable_timing:" << enable_timing_ << ", blocking:" << blocking_;
   event_ = stream->device_ctx()->device_res_manager_->CreateEventWithFlag(enable_timing_, blocking_);
-  is_created_ = (event_ != nullptr);
+  is_created_ = true;
 }
 
 void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
@@ -85,6 +85,12 @@ void EventPy::Wait(const StreamPyPtr &stream) {
     return;
   }
 
+  if (event_ == nullptr) {
+    // event_ is nullptr in cpu
+    MS_LOG(DEBUG) << "Event is nullptr, no need to wait.";
+    return;
+  }
+
   DispatchWaitEventTask(stream);
 }
 
@@ -94,16 +100,29 @@ void EventPy::Synchronize() {
     return;
   }
 
+  if (event_ == nullptr) {
+    // event_ is nullptr in cpu
+    MS_LOG(DEBUG) << "Event is nullptr, no need to Sync.";
+    return;
+  }
+
   runtime::OpExecutor::GetInstance().WaitAll();
   event_->SyncEvent();
 }
 
 float EventPy::ElapsedTime(const EventPyPtr &other_event) {
   MS_EXCEPTION_IF_NULL(other_event);
-  if (event_ == nullptr || other_event->event() == nullptr) {
-    MS_LOG(EXCEPTION) << "event_ or other_event has not been recorded yet, event is null:" << (event_ == nullptr)
-                      << "other_event is null:" << (other_event->event() == nullptr);
+
+  if (!is_created_ || !other_event->is_created()) {
+    MS_LOG(EXCEPTION) << "event_ or other_event has not been recorded yet, event is created:" << is_created_
+                      << "other_event is created:" << other_event->is_created();
   }
+
+  if (event_ == nullptr || other_event->event() == nullptr) {
+    MS_LOG(DEBUG) << "event_ or other_event is nullptr, event:" << event_ << " other_event:" << other_event->event();
+    return 0;
+  }
+
   runtime::OpExecutor::GetInstance().WaitAll();
   float elapsed_time = 0;
   event_->ElapsedTime(&elapsed_time, other_event->event().get());
@@ -113,6 +132,12 @@ float EventPy::ElapsedTime(const EventPyPtr &other_event) {
 bool EventPy::Query() {
   if (!is_created_) {
     MS_LOG(DEBUG) << "Event has not been created yet.";
+    return true;
+  }
+
+  if (event_ == nullptr) {
+    // event_ is nullptr when device is cpu
+    MS_LOG(DEBUG) << "Event is nullptr, no need to Sync.";
     return true;
   }
 
@@ -126,7 +151,8 @@ bool EventPy::Query() {
 
 std::string EventPy::ToStringRepr() const {
   std::ostringstream buf;
-  buf << "Event(enable_timing=" << enable_timing_ << ", blocking:" << blocking_ << ", event:" << event_.get() << ")";
+  buf << "Event(enable_timing=" << enable_timing_ << ", blocking:" << blocking_ << ", is_created:" << is_created_
+      << ", event:" << event_.get() << ")";
   return buf.str();
 }
 

@@ -18,8 +18,6 @@ from mindspore import Tensor, ops
 import mindspore as ms
 import numpy as np
 
-context.set_context(mode=context.PYNATIVE_MODE)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -31,6 +29,8 @@ def test_hal_event_elapsed_time():
     Description: Test hal.event.elapsed_time.
     Expectation: hal.event.elapsed_time performs as expected.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
     start = ms.hal.Event(enable_timing=True)
     end = ms.hal.Event(enable_timing=True)
     start.record()
@@ -55,6 +55,8 @@ def test_hal_event_wait():
     Description: Test hal.event.wait.
     Expectation: hal.device.wait as expected.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
     s1 = ms.hal.Stream()
     s2 = ms.hal.Stream()
 
@@ -81,6 +83,8 @@ def test_hal_event_sync():
     Description: Test hal.device.sync.
     Expectation: hal.device.sync as expected.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
     s1 = ms.hal.Stream()
     s2 = ms.hal.Stream()
 

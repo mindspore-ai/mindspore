@@ -339,8 +339,10 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
 bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                          const device::DeviceAddressPtrList &input_addr_list,
                                          const TensorStorageInfoPtrList &input_storage_list,
-                                         const device::DeviceAddressPtrList &output_addr_list) const {
-  auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+                                         const device::DeviceAddressPtrList &output_addr_list,
+                                         const size_t &stream_id) const {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
 
   auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
                                                                     input_storage_list, output_addr_list, stream);

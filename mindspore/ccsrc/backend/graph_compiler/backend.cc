@@ -1134,12 +1134,14 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
 void MindRTBackend::RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
                                                const device::DeviceAddressPtrList &input_addr_list,
                                                const TensorStorageInfoPtrList &input_storage_list,
-                                               const device::DeviceAddressPtrList &output_addr_list) {
+                                               const device::DeviceAddressPtrList &output_addr_list,
+                                               const size_t &stream_id) {
   static auto kernel_task_func =
-    [](const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-       const TensorStorageInfoPtrList &input_storage_list, const device::DeviceAddressPtrList &output_addr_list,
-       DeviceContext *device_context) {
-      runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+    [stream_id](const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+                const TensorStorageInfoPtrList &input_storage_list,
+                const device::DeviceAddressPtrList &output_addr_list, DeviceContext *device_context) {
+      runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list,
+                                stream_id);
     };
 
   auto kernel_task = std::make_shared<pynative::KernelDeviceTask>(
@@ -1191,19 +1193,21 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
                  });
 
   if (enable_async) {
-    RunViewKernelTaskAsyncImpl(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+    RunViewKernelTaskAsyncImpl(task_type, device_context, input_addr_list, input_storage_list, output_addr_list,
+                               base_op_run_info.stream_id);
   } else {
     WaitTaskFinish();
-    runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+    runtime::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list, output_addr_list,
+                              base_op_run_info.stream_id);
   }
 }
 
-void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) {
+void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async) {
   MS_EXCEPTION_IF_NULL(tensor);
 
   auto old_storage_info = tensor->storage_info();
   auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  auto new_device_address = RunContiguousTaskByAddress(old_device_address, old_storage_info, enable_async);
+  auto new_device_address = RunContiguousTaskByAddress(old_device_address, old_storage_info, stream_id, enable_async);
   MS_EXCEPTION_IF_NULL(new_device_address);
 
   tensor->set_device_address(new_device_address);
@@ -1212,7 +1216,7 @@ void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, bool enab
 
 device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
                                                                    const TensorStorageInfoPtr &old_storage_info,
-                                                                   bool enable_async) {
+                                                                   const size_t &stream_id, bool enable_async) {
   MS_EXCEPTION_IF_NULL(old_device_address);
   MS_EXCEPTION_IF_NULL(old_storage_info);
 
@@ -1238,11 +1242,11 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
 
   if (enable_async) {
     RunViewKernelTaskAsyncImpl(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
-                               {old_storage_info}, {new_device_address});
+                               {old_storage_info}, {new_device_address}, stream_id);
   } else {
     WaitTaskFinish();
     runtime::LaunchKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
-                              {old_storage_info}, {new_device_address});
+                              {old_storage_info}, {new_device_address}, stream_id);
   }
   return new_device_address;
 }

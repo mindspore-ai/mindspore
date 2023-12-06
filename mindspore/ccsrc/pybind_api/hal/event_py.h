@@ -53,6 +53,8 @@ class EventPy {
 
   std::string ToStringRepr() const;
 
+  bool is_created() const { return is_created_; }
+
  private:
   // Lazy init, event will be created when event is recording.
   void CreateEvent(const StreamPyPtr &stream);

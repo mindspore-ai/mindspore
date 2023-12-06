@@ -569,6 +569,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetContextForce();
+  std::set<rtStream_t> except_streams;
   if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
@@ -576,6 +577,7 @@ bool AscendKernelRuntime::SyncStream() {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
+    (void)except_streams.insert(stream_);
   }
   if (communication_stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
@@ -584,6 +586,13 @@ bool AscendKernelRuntime::SyncStream() {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
+    (void)except_streams.insert(communication_stream_);
+  }
+
+  // Sync all stream except stream_ and communication_stream_.
+  if (!AscendStreamMng::GetInstance().SyncExceptStreamsInList(except_streams)) {
+    MS_LOG(ERROR) << "Sync except streams failed.";
+    return false;
   }
   return true;
 }

@@ -139,9 +139,11 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
   new_device_address->set_device_shape(old_storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-        pynative::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {old_storage_info}, {new_device_address})) {
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK,
+                                                                   {old_device_address}, {old_storage_info},
+                                                                   {new_device_address}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
   }
   return new_device_address;

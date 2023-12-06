@@ -913,10 +913,12 @@ bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pr
   return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
 }
 
-bool GPUDeviceResManager::multi_stream_used() const { return GPUDeviceManager::GetInstance().multi_stream_used(); }
+bool GPUDeviceResManager::single_op_multi_stream_enable() const {
+  return GPUDeviceManager::GetInstance().single_op_multi_stream_enable();
+}
 
-void GPUDeviceResManager::SetMultiStreamUsed(bool multi_stream_used) {
-  return GPUDeviceManager::GetInstance().SetMultiStreamUsed(multi_stream_used);
+void GPUDeviceResManager::set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+  return GPUDeviceManager::GetInstance().set_single_op_multi_stream_enable(single_op_multi_stream_enable);
 }
 
 void *GPUDeviceResManager::GetStream(size_t stream_id) const {
@@ -992,8 +994,9 @@ DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool
 bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
                                           const TensorStorageInfoPtrList &input_storage_list,
-                                          const device::DeviceAddressPtrList &output_addr_list) const {
-  auto stream = GPUDeviceManager::GetInstance().default_stream();
+                                          const device::DeviceAddressPtrList &output_addr_list,
+                                          const size_t &stream_id) const {
+  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
   auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,

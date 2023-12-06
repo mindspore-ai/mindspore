@@ -1076,11 +1076,11 @@ void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const O
 void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
                       const device::DeviceAddressPtrList &input_addr_list,
                       const TensorStorageInfoPtrList &input_storage_list,
-                      const device::DeviceAddressPtrList &output_addr_list) {
+                      const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start, task_type:" << task_type;
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(task_type, input_addr_list, input_storage_list,
-                                                                   output_addr_list)) {
+                                                                   output_addr_list, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "End";

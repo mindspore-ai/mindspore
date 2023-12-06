@@ -217,8 +217,8 @@ class BACKEND_EXPORT DeviceResManager {
   // is executed. Otherwise, out-of-order occurs. Therefore this flag is added.
   // This solution is a temporary solution, this flag will be removed after multi-stream is
   // supported in graph mode.
-  virtual bool multi_stream_used() const { return false; }
-  virtual void SetMultiStreamUsed(bool multi_stream_used) {}
+  virtual bool single_op_multi_stream_enable() const { return false; }
+  virtual void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {}
 
   // Get the stream pointer by stream_id.
   virtual void *GetStream(size_t stream_id) const { return nullptr; };
@@ -335,7 +335,7 @@ class BACKEND_EXPORT KernelExecutor {
   virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                  const device::DeviceAddressPtrList &input_addr_list,
                                  const TensorStorageInfoPtrList &input_storage_list,
-                                 const device::DeviceAddressPtrList &output_addr_list) const {
+                                 const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const {
     return false;
   };
 

@@ -238,10 +238,12 @@ bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pri
   return true;
 }
 
-bool GeDeviceResManager::multi_stream_used() const { return AscendStreamMng::GetInstance().multi_stream_used(); }
+bool GeDeviceResManager::single_op_multi_stream_enable() const {
+  return AscendStreamMng::GetInstance().single_op_multi_stream_enable();
+}
 
-void GeDeviceResManager::SetMultiStreamUsed(bool multi_stream_used) {
-  return AscendStreamMng::GetInstance().SetMultiStreamUsed(multi_stream_used);
+void GeDeviceResManager::set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+  return AscendStreamMng::GetInstance().set_single_op_multi_stream_enable(single_op_multi_stream_enable);
 }
 
 void *GeDeviceResManager::GetStream(size_t stream_id) const {

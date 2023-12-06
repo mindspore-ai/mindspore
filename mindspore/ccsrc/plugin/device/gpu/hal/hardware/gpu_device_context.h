@@ -67,8 +67,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   bool LoadCollectiveCommLib() override;
 
-  bool multi_stream_used() const override;
-  void SetMultiStreamUsed(bool multi_stream_used) override;
+  bool single_op_multi_stream_enable() const override;
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
 
  protected:
   // Relevant function to allocate and free device memory of raw ptr.
@@ -109,7 +109,7 @@ class GPUKernelExecutor : public KernelExecutor {
 
   bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all

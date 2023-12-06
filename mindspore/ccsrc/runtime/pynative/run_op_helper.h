@@ -35,6 +35,6 @@ std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendO
 void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
                       const device::DeviceAddressPtrList &input_addr_list,
                       const TensorStorageInfoPtrList &input_storage_list,
-                      const device::DeviceAddressPtrList &output_addr_list);
+                      const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id);
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_

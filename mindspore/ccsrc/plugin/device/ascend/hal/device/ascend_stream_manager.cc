@@ -223,6 +223,21 @@ bool AscendStreamMng::SyncNotDefaultStreams() const {
   return res;
 }
 
+bool AscendStreamMng::SyncExceptStreamsInList(const std::set<rtStream_t> &except_streams) const {
+  bool res = true;
+  for (size_t i = 0; i < streams_.size(); i++) {
+    if (except_streams.count(streams_[i]) > 0) {
+      MS_LOG(DEBUG) << "Stream id:" << i << " is been synchronized.";
+      continue;
+    }
+    if (!SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for ascend stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
 bool AscendStreamMng::QueryStream(size_t stream_id) {
   if (stream_id >= streams_.size()) {
     MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";

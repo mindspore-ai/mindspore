@@ -107,8 +107,8 @@ class GeDeviceResManager : public DeviceResManager {
 
   DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
 
-  bool multi_stream_used() const override;
-  void SetMultiStreamUsed(bool multi_stream_used) override;
+  bool single_op_multi_stream_enable() const override;
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
 
  private:
   friend class GeGraphExecutor;

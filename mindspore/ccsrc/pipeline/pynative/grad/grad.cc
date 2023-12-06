@@ -1729,7 +1729,8 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
     op_run_info->stub_output->SetValue(op_run_info->real_out);
   }
   top_cell()->GetOpInfo(op_run_info);
-  UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out);
+  UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
+                                             op_run_info->base_op_run_info.stream_id);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
   CheckBpropCutNode(top_cell(), op_run_info->op_grad_info->op_prim);
@@ -1786,7 +1787,8 @@ void GradExecutor::DoGraphGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   top_cell()->set_need_do_final_opt(true);
 }
 
-void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const {
+void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,
+                                                              const size_t &stream_id) const {
   const auto &pre_top_cell = GetAlreadyRunTopCell(top_cell()->already_run_cell_id());
   // The shape of the last two steps is the same, and the pre_top_cell is not empty.
   // But if dynamic shape is enabled at this point, you still need to execute SaveTensorIdWithOpInfo.
@@ -1804,7 +1806,7 @@ void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string 
 
   // Not first run top cell, do update
   MS_LOG(DEBUG) << "Update top cell forward output tensor info " << op_info;
-  UpdateForwardOutputTensorInfo(op_info, v, pre_top_cell->replace_info());
+  UpdateForwardOutputTensorInfo(op_info, v, pre_top_cell->replace_info(), stream_id);
 }
 
 AnfNodePtr GradExecutor::GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const {

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <set>
 #include <mutex>
 #include "utils/hash_map.h"
 #include "acl/acl_rt.h"
@@ -65,6 +66,8 @@ class AscendStreamMng {
   bool SyncStream(aclrtStream stream) const;
   bool SyncAllStreams() const;
   bool SyncNotDefaultStreams() const;
+  // Sync all streams except the streams in except_streams.
+  bool SyncExceptStreamsInList(const std::set<rtStream_t> &except_streams) const;
   bool QueryStream(size_t stream_id);
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
@@ -74,8 +77,10 @@ class AscendStreamMng {
 
   size_t default_stream_id() const { return default_stream_id_; }
 
-  bool multi_stream_used() const { return multi_stream_used_; }
-  void SetMultiStreamUsed(bool multi_stream_used) { multi_stream_used_ = multi_stream_used; }
+  bool single_op_multi_stream_enable() const { return single_op_multi_stream_enable_; }
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+    single_op_multi_stream_enable_ = single_op_multi_stream_enable;
+  }
 
  private:
   // Count streams and events number in task sink scenario
@@ -98,7 +103,7 @@ class AscendStreamMng {
   // Default stream. We consider the first stream created as default stream.
   void *default_stream_{nullptr};
   size_t default_stream_id_{0};
-  bool multi_stream_used_{false};
+  bool single_op_multi_stream_enable_{false};
 };
 }  // namespace ascend
 }  // namespace device

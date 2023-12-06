@@ -379,7 +379,8 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
   // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "jit actual output value: " << op_run_info->real_out->ToString();
   grad_executor->top_cell()->GetOpInfo(op_run_info);
-  grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out);
+  grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
+                                                            op_run_info->base_op_run_info.stream_id);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of jit func graph.
   if (!added_v_is_empty) {
@@ -387,11 +388,13 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
       // If jit is not control flow, the jit is executed by actor under dynamic shape, and valuenode
       // will be updated
       if (!compile_info_.is_control_flow_) {
-        UpdateJitlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+        UpdateJitlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v,
+                                                op_run_info->base_op_run_info.stream_id);
       }
     } else {
       // Static shape will run by replace
-      grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+      grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v,
+                                                                op_run_info->base_op_run_info.stream_id);
     }
   }
 
@@ -406,7 +409,8 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
                                                    node_info);
 }
 
-void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) {
+void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,
+                                                  const size_t &stream_id) {
   const auto it = graph_phase_with_replace_info_.find(graph_phase_);
   if (it == graph_phase_with_replace_info_.end()) {
     MS_LOG(DEBUG) << "Jit " << graph_phase_ << " run firstly";
@@ -416,7 +420,7 @@ void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, co
   }
   // Not first run
   MS_LOG(DEBUG) << "Update jit forward output tensor info " << op_info;
-  UpdateForwardOutputTensorInfo(op_info, v, it->second);
+  UpdateForwardOutputTensorInfo(op_info, v, it->second, stream_id);
 }
 
 void Jit::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {

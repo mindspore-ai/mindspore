@@ -104,7 +104,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   virtual void WaitTaskFinish() const {}
   virtual void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                    const VectorRef &args, VectorRef *outputs) {}
-  virtual void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) {}
+  virtual void RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async) {}
 
  protected:
   // Convert the nodes which are not supported in the backend.
@@ -143,7 +143,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
   void UpdateGraphCompilerInfo(const ActorInfo &actor_info);
 
-  void ContiguousArgs(const VectorRef &args);
+  void ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info);
 
   // Wait multi stream finish.
   void WaitMultiStream(const GraphCompilerInfo &graph_compiler_info);
