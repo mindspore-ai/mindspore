@@ -52,28 +52,6 @@ constexpr size_t kAclnnOpSelect = 0;
 constexpr size_t kAclOpSelect = 1;
 constexpr size_t kHcclOpSelect = 2;
 constexpr size_t kHostOpSelect = 3;
-static const HashMap<::ge::DataType, std::string> kGeTypeToString = {{::ge::DataType::DT_BOOL, "bool"},
-                                                                     {::ge::DataType::DT_INT8, "int8"},
-                                                                     {::ge::DataType::DT_INT16, "int16"},
-                                                                     {::ge::DataType::DT_INT32, "int32"},
-                                                                     {::ge::DataType::DT_INT64, "int64"},
-                                                                     {::ge::DataType::DT_UINT8, "uint8"},
-                                                                     {::ge::DataType::DT_UINT16, "uint16"},
-                                                                     {::ge::DataType::DT_UINT32, "uint32"},
-                                                                     {::ge::DataType::DT_UINT64, "uint64"},
-                                                                     {::ge::DataType::DT_FLOAT16, "float16"},
-                                                                     {::ge::DataType::DT_FLOAT, "float"},
-                                                                     {::ge::DataType::DT_DOUBLE, "double"},
-                                                                     {::ge::DataType::DT_STRING, "string"},
-                                                                     {::ge::DataType::DT_COMPLEX64, "complex64"},
-                                                                     {::ge::DataType::DT_COMPLEX128, "complex128"},
-                                                                     {::ge::DataType::DT_BF16, "bf16"}};
-std::string ConvertGeTypeToString(::ge::DataType type) {
-  if (kGeTypeToString.count(type) != 0) {
-    return kGeTypeToString.at(type);
-  }
-  return "";
-}
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
@@ -319,7 +297,10 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       for (auto [index, dtypes] : input_supported_dtypes) {
         ss << "InputDesc [" << index << "] support {";
         for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
+          std::string dtype_str = transform::ge_dtype_str_map.find(dtype) == transform::ge_dtype_str_map.end()
+                                    ? ""
+                                    : transform::ge_dtype_str_map[dtype];
+          ss << dtype_str << ",";
         }
         ss << "}" << std::endl;
       }
@@ -327,7 +308,10 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       for (auto [index, dtypes] : output_supported_dtypes) {
         ss << "OutputDesc [" << index << "] support {";
         for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
+          std::string dtype_str = transform::ge_dtype_str_map.find(dtype) == transform::ge_dtype_str_map.end()
+                                    ? ""
+                                    : transform::ge_dtype_str_map[dtype];
+          ss << dtype_str << ",";
         }
         ss << "}" << std::endl;
       }

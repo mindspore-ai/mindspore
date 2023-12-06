@@ -71,6 +71,12 @@ class GeGraphExecutor : public GraphExecutor {
   std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
   GeDeviceResManager *ResManager() const;
   void RunInitGraph(const std::string &graph_name);
+  void AddRefCorrespondPairs(const KernelGraphPtr &graph,
+                             const std::vector<std::pair<uint32_t, uint32_t>> &io_indexes) const;
+  bool BuildGraph(const KernelGraphPtr &graph, const transform::TensorOrderMap &tensor_order_map);
+  DeviceAddressPtr CreateOutputDeviceAddress(const KernelGraphPtr &kernel_graph,
+                                             const KernelWithIndex &output_with_index,
+                                             size_t need_alloc_output_cnt) const;
 
   mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
   mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;
