@@ -196,7 +196,7 @@ int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::stri
   if (tensor_data_type == static_cast<int>(kObjectTypeString)) {
     strings_data.push_back(line);
     for (size_t i = 1; i < shape_size; i++) {
-      getline(in_file_stream, line);
+      (void)getline(in_file_stream, line);
       strings_data.push_back(line);
     }
   } else {

@@ -62,7 +62,7 @@ OpParameter *PopulatePriorBoxOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
   param->aspect_ratios_size = static_cast<int32_t>(aspect_ratios.size());
-  memcpy(param->aspect_ratios, aspect_ratios.data(), aspect_ratios.size() * sizeof(float));
+  (void)memcpy(param->aspect_ratios, aspect_ratios.data(), aspect_ratios.size() * sizeof(float));
 
   auto variances = op->get_variances();
   if (variances.size() != COMM_SHAPE_SIZE) {
@@ -70,7 +70,7 @@ OpParameter *PopulatePriorBoxOpParameter(const BaseOperatorPtr &base_operator) {
     free(param);
     return nullptr;
   }
-  memcpy(param->variances, variances.data(), COMM_SHAPE_SIZE * sizeof(float));
+  (void)memcpy(param->variances, variances.data(), COMM_SHAPE_SIZE * sizeof(float));
   param->flip = op->get_flip();
   param->clip = op->get_clip();
   param->offset = op->get_offset();

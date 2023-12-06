@@ -42,9 +42,9 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   virtual int RunImpl(int task_id);
   int InitTmpBuffer();
+  int MallocWeightBiasData() override;
 
  private:
-  int MallocWeightBiasData() override;
   void PackWeight() override;
   void FreeTmpBuffer() {
     if (output_data_ != nullptr && oc_res_ != 0) {

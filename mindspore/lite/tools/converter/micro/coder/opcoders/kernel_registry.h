@@ -39,7 +39,7 @@ class KernelRegistry {
 
   bool CheckRegistered(schema::PrimitiveType op);
 
-  bool HasKernelRegistered();
+  bool HasKernelRegistered() const;
 
   std::string GenKernelInterface(const char *func, const char *param);
 
