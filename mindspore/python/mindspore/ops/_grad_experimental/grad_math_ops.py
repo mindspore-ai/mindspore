@@ -650,16 +650,16 @@ def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     norm_ = None
     if inverse is False:
         if norm == "forward":
-            norm_ = 1 / _fft_rank_offset(norm_shape, rank)
+            norm_ = 1.0 / _fft_rank_offset(norm_shape, rank)
         elif norm == "backward":
-            norm_ = 1 * _fft_rank_offset(norm_shape, rank)
+            norm_ = 1.0 * _fft_rank_offset(norm_shape, rank)
         elif norm == "ortho":
             norm_ = 1.0
     else:
         if norm == "forward":
-            norm_ = 1 * _fft_rank_offset(norm_shape, rank)
+            norm_ = 1.0 * _fft_rank_offset(norm_shape, rank)
         elif norm == "backward":
-            norm_ = 1 / _fft_rank_offset(norm_shape, rank)
+            norm_ = 1.0 / _fft_rank_offset(norm_shape, rank)
         elif norm == "ortho":
             norm_ = 1.0
     return norm_

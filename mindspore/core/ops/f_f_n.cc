@@ -118,7 +118,7 @@ class FFNInfer : public abstract::OpInferBase {
     auto get_dim = [](const ShapeVector &shape, int64_t org_dim) {
       auto dim = org_dim;
       if (dim < 0) {
-        dim += shape.size();
+        dim += static_cast<int64_t>(shape.size());
       }
       MS_EXCEPTION_IF_CHECK_FAIL(
         dim < SizeToLong(shape.size()),
