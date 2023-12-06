@@ -27,14 +27,15 @@ class PromptFlashAttention(nn.Cell):
         self.fa_op = P.PromptFlashAttention(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
                                             num_key_value_heads, sparse_mode)
 
-    def construct(self, query, key, value, attn_mask):
-        return self.fa_op(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
+    def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv):
+        return self.fa_op(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, None, None, None,
+                          None, None, None)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_prompt_flash_attention__bsh_fwd():
+def test_prompt_flash_attention_bsh_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
     Description: test case for PromptFlashAttention.
@@ -50,14 +51,14 @@ def test_prompt_flash_attention__bsh_fwd():
     value = Tensor(np.ones((B, S, H), dtype=np.float16))
     attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
     net = PromptFlashAttention(N)
-    attention_out = net(query, key, value, attn_mask)
+    attention_out = net(query, key, value, attn_mask, [S, S], [S, 128])
     assert attention_out[0].shape == (B, S, H)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_prompt_flash_attention__bnsd_fwd():
+def test_prompt_flash_attention_bnsd_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
     Description: test case for PromptFlashAttention.
@@ -74,5 +75,29 @@ def test_prompt_flash_attention__bnsd_fwd():
     value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
     net = PromptFlashAttention(N, input_layout='BNSD')
-    attention_out = net(query, key, value, attn_mask)
+    attention_out = net(query, key, value, attn_mask, [S], [S])
+    assert attention_out[0].shape == (B, N, S, D)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_prompt_flash_attention_bnsd_mod2_fwd():
+    """
+    Feature: test PromptFlashAttention forward in Graph modes.
+    Description: test case for PromptFlashAttention.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    B = 1
+    N = 16
+    S = 256
+    D = 16
+
+    query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+    key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+    value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+    attn_mask = Tensor(np.ones((2048, 2048), dtype=np.float16))
+    net = PromptFlashAttention(N, input_layout='BNSD', sparse_mode=2)
+    attention_out = net(query, key, value, attn_mask, [S], [S])
     assert attention_out[0].shape == (B, N, S, D)

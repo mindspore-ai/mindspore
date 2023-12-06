@@ -103,15 +103,6 @@ void CheckOptinalInputShape(const PrimitivePtr &primitive, const std::vector<Abs
                         << " dont match any of expect shape: " << expect_mask_shapes;
     }
   }
-
-  auto padding_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kPromptFlashAttentionInputPaddingMaskIndex]->BuildShape())[kShape];
-  if (!padding_mask_shape.empty() && !IsDynamicRank(padding_mask_shape)) {
-    if (!CheckTenSorShape(padding_mask_shape, expect_mask_shapes)) {
-      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], padding_mask shape:  " << padding_mask_shape
-                        << " dont match any of expect shape: " << expect_mask_shapes;
-    }
-  }
 }
 
 abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
@@ -242,7 +233,7 @@ class MIND_API AGPromptFlashAttentionInfer : public abstract::OpInferBase {
     return PromptFlashAttentionInfer(engine, primitive, input_args);
   }
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {5, 6}; }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {4, 5}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(PromptFlashAttention, prim::kPrimPromptFlashAttention, AGPromptFlashAttentionInfer,

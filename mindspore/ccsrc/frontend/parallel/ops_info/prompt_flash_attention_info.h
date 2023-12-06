@@ -63,9 +63,9 @@ class PromptFlashAttentionInfo : public OperatorInfo {
   bool CheckStrategy(int64_t strategy, int64_t true_value, const std::string &dim_name, const std::string &input_name);
   void GenerateExpectStrategies();
   std::vector<Shape> expect_strategies;
-  std::vector<Shape> optinal_tensor_map = {{}, {}, {}, {1, -1, -1, -1}, {1, -1, -1, -1}, {1}, {1}, {}, {}, {}, {}, {}};
-  std::vector<Shape> optinal_op_strategies = {{},  {},  {},  {1, 0, 0, 0}, {1, 0, 0, 0}, {1},
-                                              {1}, {0}, {0}, {0},          {0},          {0}};
+  std::vector<Shape> optinal_tensor_map = {{}, {}, {}, {1, -1, -1, -1}, {1}, {1}, {1, -1, -1, -1}, {}, {}, {}, {}, {}};
+  std::vector<Shape> optinal_op_strategies = {{},           {},  {},  {1, 0, 0, 0}, {1}, {1},
+                                              {1, 0, 0, 0}, {0}, {0}, {0},          {0}, {0}};
   void SetOptinalInputs();
 };
 }  // namespace parallel
