@@ -364,7 +364,7 @@ class PatternEngine:
                 continue
             if cur_node.get_node_type() == NodeType.Tree:
                 subtree = TreeNodeHelper.get_sub_tree(cur_node)
-                self.apply(subtree)
+                _ = self.apply(subtree)
                 visited.append(cur_node)
                 queue.extend(cur_node.get_users())
                 continue

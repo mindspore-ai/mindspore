@@ -76,7 +76,7 @@ bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     perm.emplace_back(static_cast<int64_t>(addr[i]));
   }
   for (auto p : perm) {
-    p = (p >= 0) ? p : (perm.size() + p);
+    p = (p >= 0) ? p : (static_cast<int64_t>(perm.size()) + p);
     if (p < 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm.size() << ", "
                         << (perm.size() - 1) << "], but got " << perm;
@@ -150,7 +150,7 @@ int TransposeKernelMod::DoTranspose(const T *in_data, T *out_data, const int *ou
   const int *perm = transpose_param->perm_;
   const int *strides = transpose_param->strides_;
   const int *out_strides = transpose_param->out_strides_;
-  int data_size = transpose_param->data_num_ * sizeof(T);
+  size_t data_size = transpose_param->data_num_ * sizeof(T);
   int num_axes = transpose_param->num_axes_;
   bool needTranspose = false;
   for (size_t i = 1; i < (unsigned int)num_axes; ++i) {

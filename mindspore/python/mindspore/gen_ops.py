@@ -120,7 +120,7 @@ def generate_py_primitive(yaml_data):
                 assign_str += arg_name
             args_assign.append(assign_str)
 
-        args_assign = '\n'.join(assign for assign in args_assign)
+        args_assign = '\n'.join([assign for assign in args_assign])
         primitive_code = f"""
 class {class_name}(Primitive):
     def __init__(self, {', '.join(init_args_with_default)}):

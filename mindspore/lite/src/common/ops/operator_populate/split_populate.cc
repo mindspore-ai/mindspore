@@ -64,7 +64,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
   param->op_parameter_.destroy_func_ = DestroySplitSizes;
-  memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
+  (void)memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
 
   auto split_sizes_vector = GetAttrWithDefault<std::vector<int64_t>>(base_operator, kSizeSplits, {0});
   if (split_sizes_vector.size() <= static_cast<uint32_t>(param->num_split_)) {

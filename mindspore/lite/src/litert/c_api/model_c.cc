@@ -47,8 +47,6 @@ class ModelC {
   Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
   void ResetTensorData(std::vector<void *> old_data, std::vector<lite::Tensor *> tensors);
   LiteTensorImpl *TensorToTensorImpl(mindspore::lite::Tensor *tensor);
-
- private:
   std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<const ContextC> context_ = nullptr;
   std::map<mindspore::lite::Tensor *, LiteTensorImpl *> tensor_map_;
@@ -130,8 +128,8 @@ Status ModelC::Resize(const std::vector<LiteTensorImpl *> &inputs, const std::ve
   size_t shape_num = shapes.size();
   std::vector<std::vector<int32_t>> inner_shapes(shape_num);
   for (size_t i = 0; i < shape_num; i++) {
-    std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(inner_shapes[i]),
-                   [](int64_t value) { return static_cast<int32_t>(value); });
+    (void)std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(inner_shapes[i]),
+                         [](int64_t value) { return static_cast<int32_t>(value); });
   }
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Session implement is null.";
@@ -184,8 +182,8 @@ Status ModelC::Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorH
 
     if (real_input->data_type() == kObjectTypeString) {
       std::vector<int32_t> shape;
-      std::transform(user_input->Shape().begin(), user_input->Shape().end(), std::back_inserter(shape),
-                     [](int64_t value) { return static_cast<int32_t>(value); });
+      (void)std::transform(user_input->Shape().begin(), user_input->Shape().end(), std::back_inserter(shape),
+                           [](int64_t value) { return static_cast<int32_t>(value); });
       real_input->set_shape(shape);
       real_input->set_data(user_input->MutableData());
     } else {
@@ -230,12 +228,12 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
       std::vector<MSTensorHandle> op_outputs;
       size_t op_input_num = before_inputs.size();
       for (size_t i = 0; i < op_input_num; i++) {
-        inputs_impl.emplace_back(before_inputs[i]);
+        (void)inputs_impl.emplace_back(before_inputs[i]);
         op_inputs.push_back(&(inputs_impl.back()));
       }
       size_t op_output_num = before_outputs.size();
       for (size_t i = 0; i < op_output_num; i++) {
-        outputs_impl.emplace_back(before_outputs[i]);
+        (void)outputs_impl.emplace_back(before_outputs[i]);
         op_outputs.push_back(&(outputs_impl.back()));
       }
       const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
@@ -255,12 +253,12 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
       std::vector<MSTensorHandle> op_outputs;
       size_t op_input_num = after_inputs.size();
       for (size_t i = 0; i < op_input_num; i++) {
-        inputs_impl.emplace_back(after_inputs[i]);
+        (void)inputs_impl.emplace_back(after_inputs[i]);
         op_inputs.push_back(&(inputs_impl.back()));
       }
       size_t op_output_num = after_outputs.size();
       for (size_t i = 0; i < op_output_num; i++) {
-        outputs_impl.emplace_back(after_outputs[i]);
+        (void)outputs_impl.emplace_back(after_outputs[i]);
         op_outputs.push_back(&(outputs_impl.back()));
       }
       const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
@@ -301,8 +299,8 @@ LiteTensorImpl **ModelC::GetInputs(size_t *input_num) {
     inputs_.reserve(*input_num);
   }
   inputs_.clear();
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_),
-                 [&](lite::Tensor *input) { return TensorToTensorImpl(input); });
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_),
+                       [&](lite::Tensor *input) { return TensorToTensorImpl(input); });
   return inputs_.data();
 }
 
@@ -317,10 +315,10 @@ LiteTensorImpl **ModelC::GetOutputs(size_t *output_num) {
     outputs_.reserve(*output_num);
   }
   outputs_.clear();
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_),
-                 [&](std::unordered_map<std::string, mindspore::lite::Tensor *>::value_type iter) {
-                   return TensorToTensorImpl(iter.second);
-                 });
+  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_),
+                       [&](std::unordered_map<std::string, mindspore::lite::Tensor *>::value_type iter) {
+                         return TensorToTensorImpl(iter.second);
+                       });
   return outputs_.data();
 }
 }  // namespace mindspore
@@ -391,8 +389,8 @@ MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MS
     return kMSStatusLiteNullptr;
   }
   std::vector<mindspore::LiteTensorImpl *> vec_inputs;
-  std::transform(inputs.handle_list, inputs.handle_list + inputs.handle_num, std::back_inserter(vec_inputs),
-                 [](MSTensorHandle value) { return static_cast<mindspore::LiteTensorImpl *>(value); });
+  (void)std::transform(inputs.handle_list, inputs.handle_list + inputs.handle_num, std::back_inserter(vec_inputs),
+                       [](MSTensorHandle value) { return static_cast<mindspore::LiteTensorImpl *>(value); });
   std::vector<std::vector<int64_t>> vec_dims;
   for (size_t i = 0; i < shape_info_num; i++) {
     std::vector<int64_t> shape(shape_infos[i].shape, shape_infos[i].shape + shape_infos[i].shape_num);
