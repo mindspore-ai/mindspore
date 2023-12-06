@@ -5,6 +5,7 @@ one_hot:
             dtype: tensor
         depth:
             dtype: int
+            type_cast: tensor
         on_value:
             dtype: tensor
         off_value:

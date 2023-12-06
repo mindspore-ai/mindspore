@@ -1306,11 +1306,14 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
     MS_LOG(INFO) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
     return nullptr;
   }
-  if (tensor->data_type() != kNumberTypeInt64) {
+  if (tensor->data_type() == kNumberTypeInt64) {
+    return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
+  } else if (tensor->data_type() == kNumberTypeInt32) {
+    return std::make_shared<Int64Imm>(static_cast<int32_t *>(GetTensorDataPtr(tensor))[0]);
+  } else {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
     return nullptr;
   }
-  return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
 }
 
 ValuePtr ConvertTensorToFloat(const py::object &obj) {

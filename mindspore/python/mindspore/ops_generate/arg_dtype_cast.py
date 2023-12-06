@@ -213,6 +213,8 @@ def do_type_cast(data, dst_type):
             return list_to_tensor(data, dst_type)
     elif is_number(dst_type):
         if isinstance(data, Tensor):
+            if dst_type == PY_DT_INT:
+                data = ops.cast(data, ms.int64)
             ret = TensorToScalar()(data)
             return ret
     raise TypeError("Type conversion failed.")
