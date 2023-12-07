@@ -48,12 +48,12 @@ from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
 from mindspore.common.api import _pynative_executor
 from mindspore.profiler.parser.ascend_msprof_exporter import AscendMsprofExporter
-from mindspore.profiler.parser.ascend_msprof_generator import AscendMsprofDataGenerator
+from mindspore.profiler.parser.ascend_msprof_generator import AscendMsprofDataGenerator, AscendMsprofDataGeneratorOld
 from mindspore.profiler.parser.ascend_fpbp_generator import AscendFPBPGenerator
 from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
 from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
-from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
+from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator, AscendHCCLGeneratorOld
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -273,17 +273,21 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
-def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
+def _ascend_graph_msprof_generator(source_path):
+    """Executing the msprof export mode."""
     try:
+        ProfilerInfo.set_export_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         msprof_exporter = AscendMsprofExporter(source_path)
-        msprof_exporter.export(model_iteration_dict)
+        flag = msprof_exporter.export()
+        ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        return flag
+
     except ProfilerException as err:
         logger.warning(err.message)
-    finally:
-        pass
+        return False
 
 
-def _ascend_graph_msprof_analyse(source_path):
+def _ascend_graph_msprof_analyse(source_path, flag):
     """
     Ascend graph model msprof data analyse.
 
@@ -294,7 +298,10 @@ def _ascend_graph_msprof_analyse(source_path):
     df_op_statistic = []
     df_step_trace = []
     try:
-        msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
+        if flag:
+            msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
+        else:
+            msprof_analyser = AscendMsprofDataGeneratorOld(os.path.join(source_path, 'summary'))
         df_op_summary, df_op_statistic, df_step_trace = msprof_analyser.parse()
     except ProfilerException as err:
         logger.warning(err.message)
@@ -450,7 +457,6 @@ class Profiler:
         self._sync_enable = True
         self._stop_time = 0
         self._dynamic_status = False
-        self._model_iteration_dict = None
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         if self._msprof_enable:
@@ -598,7 +604,7 @@ class Profiler:
         """
         self._analyse(offline_path=offline_path)
 
-    def _analyse(self, offline_path=None, model_iteration_dict=None):
+    def _analyse(self, offline_path=None):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -606,12 +612,21 @@ class Profiler:
             offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
-            model_iteration_dict: Dictionary with model id as the key and iteration id as the value, Default: ``None``.
         """
-        self._model_iteration_dict = model_iteration_dict
+        self._init_profiler_info()
+        self._is_support_step_info_collect()
+        parallel_mode = get_auto_parallel_context("parallel_mode")
+        stage_num = get_auto_parallel_context("pipeline_stages")
+
+        ProfilerInfo.set_parallel_info(parallel_mode, stage_num)
+        ProfilerInfo.set_rank_size(self._rank_size)
+        ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         if offline_path:
             if self._is_offline_parser():
+                ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
                 self._ascend_graph_analyse()
+                ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                ProfilerInfo.save(self._output_path)
             _offline_parse(offline_path)
             return
         if self._msprof_enable:
@@ -645,15 +660,7 @@ class Profiler:
                 logger.warning("The parameter 'profile_framework' is not support for CPU, so there no host_info"
                                " directory in the output path.")
         logger.info("Profiling: all the data have been analyzed.")
-        self._init_profiler_info()
-        self._is_support_step_info_collect()
-        parallel_mode = get_auto_parallel_context("parallel_mode")
-        stage_num = get_auto_parallel_context("pipeline_stages")
-
-        ProfilerInfo.set_parallel_info(parallel_mode, stage_num)
         ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        ProfilerInfo.set_rank_size(self._rank_size)
-        ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         ProfilerInfo.save(self._output_path)
 
     def start(self):
@@ -785,6 +792,8 @@ class Profiler:
 
             self._stop_time = int(time.time() * 10000000)
         ProfilerInfo.set_profiling_stop_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        self._init_profiler_info()
+        ProfilerInfo.save(self._output_path)
         logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _profiler_init(self, kwargs):
@@ -1195,7 +1204,7 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_graph_hccl_analyse(self, source_path):
+    def _ascend_graph_hccl_analyse(self, source_path, steptrace, flag):
         """Analyse hccl profiler info."""
         if not self._profile_communication:
             return
@@ -1209,8 +1218,10 @@ class Profiler:
 
             hccl_raw_path = os.path.join(self._output_path, f'hccl_raw_{dev_id}.csv')
             hccl_raw_path = validate_and_normalize_path(hccl_raw_path)
-
-            hccl_analyse = AscendHCCLGenerator(os.path.join(source_path, 'timeline'))
+            if flag:
+                hccl_analyse = AscendHCCLGenerator(os.path.join(source_path, 'timeline'), steptrace)
+            else:
+                hccl_analyse = AscendHCCLGeneratorOld(os.path.join(source_path, 'timeline'))
             hccl_analyse.parse()
             hccl_analyse.write(hccl_raw_path)
 
@@ -1252,8 +1263,12 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
-            _ascend_graph_msprof_generator(source_path, self._model_iteration_dict)
-            op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
+            flag = _ascend_graph_msprof_generator(source_path)
+            if not flag:
+                logger.warning('Current driver package not support all export mode, use single export mode, '
+                               'this may lead to performance degradation. Suggest upgrading the driver package.')
+            ProfilerInfo.set_export_flag(flag)
+            op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path, flag)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
             self._ascend_timeline_analyse(op_summary, steptrace)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
@@ -1264,7 +1279,7 @@ class Profiler:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
-            self._ascend_graph_hccl_analyse(source_path)
+            self._ascend_graph_hccl_analyse(source_path, steptrace, flag)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
 
@@ -1459,6 +1474,9 @@ class Profiler:
             job_id = self._ascend_job_id.rstrip('/').split('/')[-1]
             if job_id.startswith('PROF'):
                 device_dir = [dir for dir in os.listdir(self._ascend_job_id) if dir.startswith('device')]
+                info_file_path = get_file_path(os.path.join(self._ascend_job_id, device_dir[0]), "info.json")
+                training_rank_id, _ = self._parse_info_json(info_file_path)
+                self._rank_id = int(training_rank_id)
                 return os.path.join(job_id, device_dir[0])
             return job_id
 
@@ -1489,8 +1507,8 @@ class Profiler:
                                "profiler will ignore this job dir.", job_dir)
                 continue
 
-            _, training_device_id = self._parse_info_json(info_file_path)
             job_start_time = self._parse_start_log(start_file_path)
+            _, training_device_id = self._parse_info_json(info_file_path)
 
             if self._dev_id != training_device_id:
                 logger.debug("Find profiling find job path %s, but not current training device id. "
