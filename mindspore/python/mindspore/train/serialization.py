@@ -1806,7 +1806,7 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
     data_file_name = os.path.join(dirname, external_local)
     f, parameter_size, offset = _get_data_file(is_encrypt, kwargs, data_file_name)
     try:
-        round = 0
+        round_ = 0
         names = []
         for param_proto in model.graph.parameter:
             name = param_proto.name[param_proto.name.find(":") + 1:]
@@ -1834,8 +1834,8 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
             offset += (data_length + append_size)
             write_data = _encrypt_data(is_encrypt, write_data, kwargs)
             f.write(write_data)
-            round += 1
-            logger.debug(f"writing {round}th split data, name:{name}")
+            round_ += 1
+            logger.debug(f"writing {round_}th split data, name:{name}")
 
         graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
         if os.path.exists(graph_file_name):

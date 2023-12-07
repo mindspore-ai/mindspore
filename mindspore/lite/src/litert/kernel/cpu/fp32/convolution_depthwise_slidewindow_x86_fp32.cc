@@ -209,7 +209,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::MallocWeightBiasData() {
       MS_LOG(ERROR) << "Malloc bias_data buffer failed.";
       return RET_NULL_PTR;
     }
-    memset(bias_data_, 0, bias_size * sizeof(float));
+    (void)memset(bias_data_, 0, bias_size * sizeof(float));
   }
   return RET_OK;
 }

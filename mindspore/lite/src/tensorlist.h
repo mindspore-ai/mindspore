@@ -115,7 +115,7 @@ class TensorList : public Tensor {
 
   int CheckTensorListParam();
 
-  bool IsCompatibleShape(const std::vector<int> &shape);
+  bool IsCompatibleShape(const std::vector<int> &shape) const;
 
   bool IsCompatibleShape(const Tensor *src);
 

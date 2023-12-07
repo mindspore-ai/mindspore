@@ -195,7 +195,7 @@ Tensor *TensorList::GetTensor(int index) {
   return this->tensors_[index];
 }
 
-bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
+bool TensorList::IsCompatibleShape(const std::vector<int> &shape) const {
   if (this->tensors_.empty() && this->tensor_list_c_.element_shape_size_ == 0) {
     return true;
   }

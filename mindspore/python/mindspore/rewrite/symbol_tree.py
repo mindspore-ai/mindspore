@@ -818,7 +818,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         for node in new_nodes:
             self.insert_node(node, base_node, False, node_manager, True)
             base_node = node
-        self.erase_node(old_node)
+        _ = self.erase_node(old_node)
         return new_nodes[-1]
 
     def set_node_arg(self, node: Union[Node, str], index: int, arg: Union[ScopedValue, str]):

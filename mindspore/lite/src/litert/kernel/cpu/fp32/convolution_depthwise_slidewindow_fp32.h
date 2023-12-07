@@ -36,12 +36,12 @@ class ConvolutionDepthwiseSWCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int DoExecute(int task_id);
+  int MallocWeightBiasData() override;
+  void PackWeight() override;
 
  private:
   int InitPackedInputOutput();
   void FreePackedInputOutput();
-  int MallocWeightBiasData() override;
-  void PackWeight() override;
   SlidingWindowParam *sliding_ = nullptr;
   float *packed_input_ = nullptr;
   float *packed_output_ = nullptr;
