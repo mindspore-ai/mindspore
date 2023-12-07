@@ -674,15 +674,15 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
-        The new axis is created at dimension `axis`.
+        The new axis is created at dimension `axis`. On Ascend, if `on_value` is Int64 dtype, `indices` must be
+        Int64 dtype.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64.
         depth(int): A scalar defining the depth of the one-hot dimension.
         on_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] = i`.
-            Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
-            bool, complex64, complex128. Default: ``1`` .
+            Data type must be int32, int64, float16 or float32. Default: ``1`` .
         off_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] != i`.
             Has the same data type as `on_value`. Default: ``0`` .
         axis(int, optional): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
@@ -691,11 +691,13 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
             Default: ``-1`` .
 
     Returns:
-        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
+            and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, ndim].
         ValueError: If `depth` is less than 0.
