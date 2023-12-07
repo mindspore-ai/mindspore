@@ -16,7 +16,8 @@ import numpy as np
 from tests.st.control.cases_register import case_register
 
 import mindspore.nn as nn
-from mindspore import context
+import mindspore
+from mindspore import context, jit
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import ParameterTuple
@@ -167,3 +168,56 @@ def test_single_if():
     loaded_net = nn.GraphCell(graph)
     outputs_after_load = loaded_net(x, y)
     assert origin_out == outputs_after_load
+
+
+@case_register.level1
+@case_register.target_gpu
+@case_register.target_ascend
+def test_jit_net():
+    """
+    Feature: export jit function.
+    Description: export jit function
+    Expectation: Correct result and no exception.
+    """
+    class Net(nn.Cell):
+        """
+        Net1
+        """
+
+        def __init__(self):
+            super(Net, self).__init__()
+            self.conv2d = P.Conv2D(out_channel=32, kernel_size=3, data_format="NHWC")
+            self.weight = Tensor(np.ones([32, 3, 3, 32]), mindspore.float32)
+            self.one = Tensor(np.ones([1, 1, 1, 1]), mindspore.float32)
+
+        @jit
+        def fun(self, x):
+            """
+            自定义方法
+            """
+            x = self.conv2d(x, self.weight)
+            return x
+
+        def construct(self, x):
+            """
+            construct
+            """
+            x = self.fun(x)
+            x += Tensor(np.ones([1, 1, 1, 1]), mindspore.float32)
+            return x
+
+    input_x = Tensor(np.ones([10, 32, 32, 32]).astype(np.float32), mindspore.float32)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    origin_out = net(input_x)
+    file_name = "jit_net"
+    export(net, input_x, file_name=file_name, file_format='MINDIR')
+    mindir_name = file_name + ".mindir"
+    assert os.path.exists(mindir_name)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(input_x)
+    if not np.allclose(origin_out.asnumpy(), outputs_after_load.asnumpy(), 0.0001, 0.0001):
+        assert False
+    assert True
