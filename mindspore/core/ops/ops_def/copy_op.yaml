@@ -1,0 +1,13 @@
+#operator copy
+copy:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: CopyAscend
+    GPU: CopyGPU
+    CPU: CopyCPU
