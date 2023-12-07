@@ -200,3 +200,6 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/" "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/" "readability/casting"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/" "readability/namespace"
+
+# dump md5
+"mindspore/mindspore/ccsrc/debug/" "runtime/references"

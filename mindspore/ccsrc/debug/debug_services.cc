@@ -36,6 +36,7 @@
 #include "include/common/utils/anfalgo.h"
 #endif
 #include "debug/utils.h"
+#include "debug/md5.h"
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
@@ -212,13 +213,16 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
     TensorStat empty_tensor_stat_data;
     return empty_tensor_stat_data;
   }
+  std::string input_data(tensor->GetDataPtr(), tensor->GetByteSize());
+  MD5 code(input_data);
+  std::string md5 = code.Get_MD5_Code();
   base_summary_ptr->TensorStatistics(tensor->GetType());
   TensorStat tensor_stat_data(tensor->GetByteSize(), tensor->GetType(), tensor->GetShape(), base_summary_ptr->is_bool(),
                               base_summary_ptr->max_value(), base_summary_ptr->min_value(),
                               base_summary_ptr->avg_value(), base_summary_ptr->count(),
                               base_summary_ptr->neg_zero_count(), base_summary_ptr->pos_zero_count(),
                               base_summary_ptr->nan_count(), base_summary_ptr->neg_inf_count(),
-                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count());
+                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count(), md5);
 
   return tensor_stat_data;
 }
