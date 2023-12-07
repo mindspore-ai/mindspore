@@ -125,6 +125,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
+  opt_acl_pm->AddPass(std::make_shared<opt::AddParallelGroupIdAttr>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -163,7 +164,6 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<AddParallelGroupIdAttr>());
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

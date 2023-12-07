@@ -47,6 +47,9 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
   std::list<CNodePtr> orders = func_graph->GetOrderedCnodes();
   std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
   for (const auto &cnode : origin_nodes_topological) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimReturn)) {
+      continue;
+    }
     auto prim = GetCNodePrimitive(cnode);
 
     GroupId group_id = GroupId::UNKNOWN;
@@ -83,7 +86,7 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "Successfully add _parallel_group_id: " << parallel_group_id
                  << " to node: " << cnode->fullname_with_scope();
   }
-  return true;
+  return false;
 }
 }  // namespace opt
 }  // namespace mindspore
