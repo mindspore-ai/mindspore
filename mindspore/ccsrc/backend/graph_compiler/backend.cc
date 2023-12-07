@@ -1038,10 +1038,9 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!single_op_cache_hit) {
-    op_executor.PushOpBuildTask(std::make_shared<pynative::DeviceOpBuildTask>(run_op_context, std::move(promise)));
-  } else {
-    promise.set_value(true);
+    CompileSingleOpGraph(graph, op_compiler_info->device_context_);
   }
+  promise.set_value(true);
   auto run_task = std::make_shared<pynative::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); },
     std::move(future));

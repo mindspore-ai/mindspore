@@ -1,5 +1,6 @@
 py::object ${func_name}(const py::args &args) {
   #ifndef ENABLE_TEST
+    MS_LOG(DEBUG) << "Run ${func_name} start";
     runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
     auto op_run_info = PyNativeAlgo::PyBoost::Init(args);
     static Converter converter(&ops::${op_def_name});
@@ -15,6 +16,7 @@ py::object ${func_name}(const py::args &args) {
     DispatchOp(
       std::make_shared<FrontendTask>(
         [${op_args}](const FrontendOpRunInfoPtr &op_run_info) {
+          MS_LOG(DEBUG) << "Run frontend task ${func_name} start";
           // stub tensor to tensor.
           ${convert_stub}
 
@@ -36,11 +38,12 @@ py::object ${func_name}(const py::args &args) {
             op->DoGrad();
           }
 
-          MS_LOG(DEBUG) << "Dispatch ${func_name} end";
+          MS_LOG(DEBUG) << "Run frontend task ${func_name} end";
         },
         op_run_info
       )
     );
+    MS_LOG(DEBUG) << "Run ${func_name} end";
     return node.first;
   #else
     return PyNativeAlgo::PyBoost::RunPyFunction(args);

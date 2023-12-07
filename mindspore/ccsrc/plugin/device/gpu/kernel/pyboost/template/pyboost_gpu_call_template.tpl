@@ -1,5 +1,4 @@
 MS_LOG(DEBUG) << op_name() << " call start";
-
 InferOutput(${call_args});
 
 ${value_tuple_convert}
@@ -15,7 +14,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${real_call_args}]() {
   ${malloc_inputs}
   ${inplace_process}
   // Create device address for outputs
-  const auto &outputs_device_address = PyBoostUtils::CreateOutputDeviceAddress(device_context, op->output_abs(), outputs, op->device_sync_promises());
+  const auto &outputs_device_address = PyBoostUtils::CreateOutputDeviceAddress(device_context, op->output_abs(), outputs);
   const auto &outputs_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(outputs_device_address);
   // KernelMod init
   auto &cache_helper = kernel::KernelModCache::GetInstance();

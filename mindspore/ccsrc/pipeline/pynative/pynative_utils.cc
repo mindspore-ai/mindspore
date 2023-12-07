@@ -1518,9 +1518,17 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 
 void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
   auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
-  forward_executor->frontend_queue()->Push(task);
-  if (!forward_executor->enable_async()) {
-    forward_executor->frontend_queue()->Wait();
+  // TODO(caifubi): enable cpu/gpu async.
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (sync || device == kGPUDevice || device == kCPUDevice || mode == mindspore::kGraphMode) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+    task->Run();
+  } else {
+    forward_executor->frontend_queue()->Push(task);
   }
 }
 }  // namespace pynative

@@ -819,13 +819,8 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   auto addr = tensor->device_address();
   if (addr != nullptr) {
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(addr);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (device_address->GetPtr() != nullptr) {
-      MS_LOG(DEBUG) << "Input tensor already have address " << device_address.get() << " and device Ptr "
-                    << device_address->GetPtr();
-      return;
-    }
+    MS_LOG(DEBUG) << "Already have device address of tensor " << tensor->id();
+    return;
   }
 
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
@@ -838,16 +833,32 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   MS_EXCEPTION_IF_NULL(device_address);
   device_address->set_from_persistent_mem(tensor->is_parameter());
   tensor->set_device_address(device_address);
+  MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
+                << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type();
+}
 
+void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address->GetPtr() != nullptr) {
+    return;
+  }
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(), format)) {
+  auto tensor_size = LongToSize(tensor->data().nbytes());
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(),
+                                        device_address->format())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
-  MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
-                << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type() << ", dev ptr "
-                << device_address->GetPtr();
+}
+
+void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
+                                        const std::optional<tensor::TensorPtr> &val) {
+  if (!val.has_value()) {
+    return;
+  }
+  MallocForInput(device_context, val.value());
 }
 
 void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
@@ -974,47 +985,22 @@ void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     tensor->set_device_address(device_address);
-
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate memory failed";
-    }
     MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
-                  << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type() << ", dev ptr "
-                  << device_address->GetPtr();
+                  << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type();
   }
 }
 
-void DeviceAddressUtils::CreateOutputTensorAddress(
-  DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs,
-  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
-  MS_EXCEPTION_IF_NULL(device_context);
-  size_t out_size = outputs.size();
-  if (out_size != device_sync_promises.size()) {
-    MS_LOG(EXCEPTION) << "Output size out_size " << out_size << " not equal to promise size "
-                      << device_sync_promises.size();
-  }
-  for (size_t i = 0; i < out_size; ++i) {
-    auto tensor = outputs[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto tensor_size = LongToSize(tensor->data().nbytes());
-    const auto &device_format = GetFormatByTensorShape(device_context, tensor->shape());
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-      nullptr, tensor_size, device_format, tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-
-    MS_EXCEPTION_IF_NULL(device_address);
-    MS_EXCEPTION_IF_NULL(device_sync_promises[i]);
-    device_sync_promises[i]->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
-
+void DeviceAddressUtils::MallocForOutputs(DeviceContext *device_context,
+                                          const std::vector<tensor::TensorPtr> &outputs) {
+  for (const auto &output : outputs) {
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());
+    if (device_address->GetPtr() != nullptr) {
+      // ref output
+      return;
+    }
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate memory failed";
     }
-    MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
-                  << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type() << ", dev ptr "
-                  << device_address->GetPtr();
   }
 }
 

@@ -49,8 +49,6 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
-  static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                                 std::vector<pynative::DeviceAddressPromisePtr> *device_sync_promises);
   static void CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
                                  std::vector<tensor::TensorPtr> *outputs);
 
@@ -60,6 +58,11 @@ class BACKEND_EXPORT PyBoostUtils {
     size_t index = 0;
     auto add_index = [&index]() { return index++; };
     (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, add_index(), args), ...);
+  }
+
+  template <typename... T>
+  static void MallocOpInputs(DeviceContext *device_context, const T &... args) {
+    (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
   }
 
   // Create input device address with kernel tensor
@@ -97,18 +100,16 @@ class BACKEND_EXPORT PyBoostUtils {
   static void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
     runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs);
   }
-  static void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
-                               const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
-    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs, device_sync_promises);
+
+  // Create output tensor device address without kernel tensor
+  static void MallocOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
+    runtime::DeviceAddressUtils::MallocForOutputs(device_context, outputs);
   }
 
   // Create output tensor device address with kernel tensor
   static device::DeviceAddressPtrList CreateOutputDeviceAddress(DeviceContext *device_context,
                                                                 const abstract::AbstractBasePtr &abs,
                                                                 const std::vector<TensorPtr> &outputs);
-  static device::DeviceAddressPtrList CreateOutputDeviceAddress(
-    DeviceContext *device_context, const abstract::AbstractBasePtr &abs, const std::vector<TensorPtr> &outputs,
-    const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises);
 
   // Create workspace device address with kernel tensor
   static std::vector<kernel::KernelTensor *> GetKernelTensorFromAddress(

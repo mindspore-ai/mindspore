@@ -45,8 +45,7 @@ class ForwardExecutor {
       : cast_operation_(std::make_shared<CastOperation>()),
         pyboost_cast_operation_(std::make_shared<PyBoostCastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
-        frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)),
-        backend_queue_(std::make_shared<AsyncQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)) {}
+        frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)) {}
   ~ForwardExecutor() = default;
 
   void Init();
@@ -97,10 +96,7 @@ class ForwardExecutor {
   bool is_jit_compiling() const { return is_jit_compiling_; }
 
   const AsyncQueuePtr &frontend_queue() const { return frontend_queue_; }
-  void WorkerJoin() {
-    frontend_queue_->WorkerJoin();
-    backend_queue_->WorkerJoin();
-  }
+  void WorkerJoin() { frontend_queue_->WorkerJoin(); }
   void ClearForwardTask();
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
@@ -184,7 +180,6 @@ class ForwardExecutor {
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   AsyncQueuePtr frontend_queue_;
-  AsyncQueuePtr backend_queue_;
   mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
 };
 }  // namespace pynative
