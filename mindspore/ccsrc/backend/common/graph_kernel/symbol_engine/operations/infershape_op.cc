@@ -550,9 +550,10 @@ SymbolPtr BiasAddGrad::Eval() {
     return GenVIntList(1);
   }
   DoNotEvalOnRun();
-  std::string fmt = input_as<StrSymbol>(1)->value();
+  Format fmt = static_cast<Format>(input_as<IntSymbol>(1)->value());
   MS_EXCEPTION_IF_CHECK_FAIL(x->size() >= 2, "input rank of BiasAddGrad should be >= 2. symbol x: " + x->ToString());
-  return GenList({fmt.back() == 'C' ? x->symbols().back() : x->symbols()[1]});
+  // return the axis length of "C".
+  return GenList({fmt == Format::NCHW ? x->symbols()[1] : x->symbols().back()});
 }
 
 SymbolPtr LayerNorm::Eval() {
@@ -720,6 +721,59 @@ SymbolPtr StridedSlice::ComputeInferShape(const ListSymbol *x_shape, const IList
     (void)res_shape.emplace_back(std::move(slicing_len));
   }
   return ResultIntList(std::move(res_shape));
+}
+
+SymbolPtr Switch::ItemJoin(const SymbolPtr &tb, const SymbolPtr &fb) { return tb->EqualsTo(fb) ? tb : GenVInt(); }
+
+SymbolPtr Switch::ShapeJoin(const SymbolPtr &tb, const SymbolPtr &fb) {
+  if (tb->EqualsTo(fb)) {
+    return tb;
+  }
+  if (tb->is<IListSymbol>()) {
+    if (!fb->is<IListSymbol>()) {
+      return DynamicSymbol::Make(shared_from_this());
+    }
+  } else if (tb->is<ListSymbol>()) {
+    if (!fb->is<ListSymbol>() || fb->is<IListSymbol>()) {
+      return DynamicSymbol::Make(shared_from_this());
+    }
+  } else if (tb->is<IntSymbol>()) {
+    if (!fb->is<IntSymbol>()) {
+      return DynamicSymbol::Make(shared_from_this());
+    }
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "The Switch operation only support List or Int symbol, but got " << tb->ToString();
+  }
+
+  if (auto tb_list = tb->as<ListSymbol>(); tb_list != nullptr) {
+    auto fb_list = fb->as<ListSymbol>();
+    MS_EXCEPTION_IF_NULL(fb_list);
+    bool is_int_list = tb->is<IListSymbol>();
+    if (tb_list->size() != fb_list->size()) {
+      return is_int_list ? GenVList() : ListSymbol::Make(shared_from_this());
+    }
+    SymbolPtrList result(tb_list->size());
+    (void)std::transform(tb_list->symbols().begin(), tb_list->symbols().end(), fb_list->symbols().begin(),
+                         result.begin(), [this](const SymbolPtr &t, const SymbolPtr &f) { return ShapeJoin(t, f); });
+    return is_int_list ? GenList(std::move(result)) : ListSymbol::Make(std::move(result));
+  } else {
+    return ItemJoin(tb, fb);
+  }
+}
+
+SymbolPtr Switch::Eval() {
+  auto cond = input_as<BoolSymbol>(kIndex0);
+  auto tb = input(kIndex1);
+  auto fb = input(kIndex2);
+  if (cond->HasData()) {
+    DoNotEvalOnRun();
+    return cond->value() ? tb : fb;
+  }
+  if (tb->EqualsTo(fb)) {
+    DoNotEvalOnRun();
+    return tb;
+  }
+  return ShapeJoin(tb, fb);
 }
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

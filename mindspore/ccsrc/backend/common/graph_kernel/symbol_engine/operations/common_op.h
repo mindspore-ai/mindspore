@@ -97,6 +97,16 @@ class ScalarMin : public ScalarOp {
   void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::min(AsInt(input(0)), AsInt(input(1)))); }
   void UpdateMathInfo() override;
 };
+
+class ScalarEQ : public Operation {
+ public:
+  ScalarEQ(const SymbolPtr &a, const SymbolPtr &b) : Operation({a, b}) {}
+  ~ScalarEQ() override = default;
+  MS_DECLARE_PARENT(ScalarEQ, Operation)
+ protected:
+  SymbolPtr Eval() override;
+  void EvalOnRun() override { output_as<BoolSymbol>()->SetValue(AsInt(input(0)) == AsInt(input(1))); }
+};
 }  // namespace ops
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_OPERATIONS_COMMON_OP_H_

@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include "base/base.h"
+#include "include/backend/visible.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
 #include "backend/common/graph_kernel/symbol_engine/math_info.h"
@@ -40,7 +41,7 @@ using OpPtr = std::shared_ptr<ops::Operation>;
 using OpPtrList = std::vector<OpPtr>;
 using OpWeakPtr = std::weak_ptr<ops::Operation>;
 
-class Symbol : public Base {
+class BACKEND_EXPORT Symbol : public Base {
  public:
   explicit Symbol(const OpPtr &op = nullptr) : operation_(op) {}
   ~Symbol() override = default;
@@ -103,14 +104,17 @@ class Symbol : public Base {
   mutable size_t id_{0};
 };
 
-class DynamicSymbol : public Symbol {
+class BACKEND_EXPORT DynamicSymbol : public Symbol {
  public:
   using Symbol::Symbol;
   ~DynamicSymbol() override = default;
   MS_DECLARE_PARENT(DynamicSymbol, Symbol)
+  inline static std::shared_ptr<DynamicSymbol> Make(const OpPtr &op = nullptr) {
+    return std::make_shared<DynamicSymbol>(op);
+  }
   bool operator==(const Symbol &s) const override { return (this == &s) || ((symbol_ != nullptr) && (*symbol_ == s)); }
   bool HasData() const override { return symbol_ != nullptr; }
-  std::string ToString() const override { return symbol_ == nullptr ? sid() : "D" + symbol_->ToString(); }
+  std::string ToString() const override { return symbol_ == nullptr ? "DYN-" + sid() : symbol_->ToString(); }
   std::string ToExpr() const override { return symbol_ == nullptr ? sid() : symbol_->ToExpr(); }
   const SymbolPtr &symbol() const { return symbol_; }
 
@@ -126,7 +130,7 @@ class DynamicSymbol : public Symbol {
   SymbolPtr symbol_{nullptr};
 };
 
-class InputSymbol : public Symbol {
+class BACKEND_EXPORT InputSymbol : public Symbol {
  public:
   explicit InputSymbol(const AbstractBasePtr &abs) : abstract_(abs) {}
   ~InputSymbol() override = default;
@@ -147,7 +151,7 @@ class InputSymbol : public Symbol {
 using InputSymbolPtr = std::shared_ptr<InputSymbol>;
 using InputSymbolPtrList = std::vector<InputSymbolPtr>;
 
-class ScalarSymbol : public Symbol {
+class BACKEND_EXPORT ScalarSymbol : public Symbol {
  public:
   explicit ScalarSymbol(bool is_const, bool has_data, const OpPtr &op)
       : Symbol(op), is_const_(is_const), has_data_(has_data) {}
@@ -175,7 +179,7 @@ class ScalarSymbol : public Symbol {
 };
 
 #define DECLARE_SCALAR_CLASS(cls, vtype)                                                                    \
-  class cls : public ScalarSymbol {                                                                         \
+  class BACKEND_EXPORT cls : public ScalarSymbol {                                                          \
    public:                                                                                                  \
     using ScalarSymbol::ScalarSymbol;                                                                       \
     ~cls() override = default;                                                                              \
@@ -215,7 +219,7 @@ DECLARE_SCALAR_CLASS(FloatSymbol, double);
 DECLARE_SCALAR_CLASS(StrSymbol, std::string);
 #undef DECLARE_SCALAR_CLASS
 
-class IntSymbol : public ScalarSymbol, public MathInfo {
+class BACKEND_EXPORT IntSymbol : public ScalarSymbol, public MathInfo {
  public:
   using ScalarSymbol::ScalarSymbol;
   ~IntSymbol() override = default;
@@ -247,7 +251,7 @@ class IntSymbol : public ScalarSymbol, public MathInfo {
 std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post,
                             bool expr = false);
 
-class ListSymbol : public Symbol {
+class BACKEND_EXPORT ListSymbol : public Symbol {
  public:
   using SPtr = std::shared_ptr<ListSymbol>;
   ListSymbol(const SymbolPtrList &slist, const OpPtr &op) : Symbol(op), symbols_(slist) {}
@@ -270,7 +274,10 @@ class ListSymbol : public Symbol {
 
   bool operator==(const Symbol &s) const override;
   std::string ToString() const override {
-    return SymbolListToStr(symbols_, (is_dyn_len_ ? "L[" : "L("), (is_dyn_len_ ? "]" : ")"));
+    if (!has_data_) {
+      return "[DynLen]";
+    }
+    return SymbolListToStr(symbols_, "[", "]");
   }
   std::string ToExpr() const override { return SymbolListToStr(symbols_, "[", "]", true); }
 
@@ -311,7 +318,7 @@ class ListSymbol : public Symbol {
 using ListSymbolPtr = std::shared_ptr<ListSymbol>;
 
 // IntList symbol
-class IListSymbol : public ListSymbol {
+class BACKEND_EXPORT IListSymbol : public ListSymbol {
  public:
   using SPtr = std::shared_ptr<IListSymbol>;
   using ListSymbol::ListSymbol;
@@ -336,7 +343,10 @@ class IListSymbol : public ListSymbol {
   }
 
   std::string ToString() const override {
-    return SymbolListToStr(symbols_, (is_dyn_len_ ? "[" : "("), (is_dyn_len_ ? "]" : ")"));
+    if (!has_data_) {
+      return "(DynRank)";
+    }
+    return SymbolListToStr(symbols_, "(", ")");
   }
 };
 }  // namespace mindspore::graphkernel::symbol

@@ -227,5 +227,15 @@ void ScalarMin::UpdateMathInfo() {
   output_as<IntSymbol>()->SetRange(std::min(lhs->range_min(), rhs->range_min()),
                                    std::min(lhs->range_max(), rhs->range_max()));
 }
+
+SymbolPtr ScalarEQ::Eval() {
+  // only eval on Building
+  auto lhs = input_as<IntSymbol>(0);
+  auto rhs = input_as<IntSymbol>(1);
+  if (lhs->HasData() && rhs->HasData()) {
+    return BoolSymbol::Make(lhs->value() == rhs->value());
+  }
+  return (*lhs == *rhs) ? BoolSymbol::Make(true) : BoolSymbol::Make(shared_from_this());
+}
 }  // namespace ops
 }  // namespace mindspore::graphkernel::symbol

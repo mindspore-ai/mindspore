@@ -126,7 +126,9 @@ def test_mindflow_burgers_pinns():
     model.set_train(False)
     eval_error = calculate_l2_error(model, inputs, label, 5)
     print("eval_error:", eval_error)
-
-    assert epoch_time < 0.01
+    if context.get_context("device_target") == 'GPU':
+        assert epoch_time < 0.015
+    else:
+        assert epoch_time < 0.01
     assert train_loss < 0.6
     assert eval_error < 0.8

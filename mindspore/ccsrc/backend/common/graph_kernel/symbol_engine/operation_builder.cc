@@ -21,6 +21,7 @@
 #include "ops/shape_calc.h"
 #include "ops/math_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/common_op.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
@@ -55,15 +56,14 @@ SymbolPtr OperationBuilder::RealShape(const AnfNodePtr &node) const {
   if (smbl != nullptr) {
     return smbl;
   }
-  auto real_node = cache_->RealNode(node);
   InputSymbolPtr inp_symbol = nullptr;
-  if (real_node->isa<Parameter>()) {
+  if (node->isa<Parameter>()) {
     inp_symbol = cache_->GetInput(node);
-  } else {
-    if (real_node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "The shape of " << real_node->DebugString() << " does not exist in symbol cache.";
-    }
-    inp_symbol = InputSymbol::Make(real_node->abstract());
+  }
+  if (inp_symbol == nullptr) {
+    MS_EXCEPTION_IF_NULL(node->abstract());
+    inp_symbol = InputSymbol::Make(node->abstract());
+    MS_EXCEPTION_IF_NULL(inp_symbol);
   }
   smbl = Emit(std::make_shared<infershape::RealShape>(inp_symbol));
   cache_->SetShape(node, smbl);
@@ -75,15 +75,14 @@ SymbolPtr OperationBuilder::RealValue(const AnfNodePtr &node) const {
   if (smbl != nullptr) {
     return smbl;
   }
-  auto real_node = cache_->RealNode(node);
   InputSymbolPtr inp_symbol = nullptr;
-  if (real_node->isa<Parameter>()) {
+  if (node->isa<Parameter>()) {
     inp_symbol = cache_->GetInput(node);
-  } else {
-    if (real_node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "The value of " << real_node->DebugString() << " does not exist in symbol cache.";
-    }
-    inp_symbol = InputSymbol::Make(real_node->abstract());
+  }
+  if (inp_symbol == nullptr) {
+    MS_EXCEPTION_IF_NULL(node->abstract());
+    inp_symbol = InputSymbol::Make(node->abstract());
+    MS_EXCEPTION_IF_NULL(inp_symbol);
   }
   smbl = Emit(std::make_shared<infervalue::RealValue>(inp_symbol));
   cache_->SetValue(node, smbl);
@@ -111,6 +110,13 @@ SymbolPtr OperationBuilder::GetAttr(const std::string &attr_name) const {
     return IListSymbol::FromShape(GetValue<std::vector<int64_t>>(attr), true);
   }
   MS_LOG(EXCEPTION) << "Only support {bool, int, float, string, int-list} attr, but got " << attr->ToString();
+}
+
+SymbolPtr OperationBuilder::GetInputOrAttr(size_t index, const std::string &attr_name) {
+  if (cnode_->size() > index) {
+    return GetInputValue(index);
+  }
+  return GetAttr(attr_name);
 }
 namespace {
 template <int IDX>
@@ -143,12 +149,12 @@ SymbolPtr AddnShape(OperationBuilder *b) {
 }
 
 SymbolPtr ReduceShape(OperationBuilder *b) {
-  auto input = b->GetInputShape(1);
-  auto axis = b->GetInputValue(2);
-  auto keep_dims = b->GetAttr(kAttrKeepDims);
+  auto input = b->GetInputShape(kIndex1);
+  auto axis = b->GetInputValue(kIndex2);
+  auto keep_dims = b->GetInputOrAttr(kIndex3, kAttrKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dims);
   // the skip_mode only exists in ReduceSum
-  auto skip_mode = b->GetAttr(kAttrSkipMode);
+  auto skip_mode = b->GetInputOrAttr(kIndex4, kAttrSkipMode);
   if (skip_mode == nullptr) {
     skip_mode = BoolSymbol::Make(false);
   }
@@ -179,10 +185,13 @@ SymbolPtr BinShapeValue(OperationBuilder *b) {
 inline const std::initializer_list<DependOn> kDependShapeValue = {DependOn::kShape, DependOn::kValue};
 
 SymbolPtr BiasAddGradShape(OperationBuilder *b) {
-  auto x = b->GetInputShape(1);
-  auto fmt = b->GetAttr("format");
-  if (fmt != nullptr) {
-    fmt = StrSymbol::Make("NCHW");
+  auto x = b->GetInputShape(kIndex1);
+  auto fmt = b->GetInputOrAttr(kIndex2, "format");
+  if (fmt == nullptr) {
+    fmt = IntSymbol::Make(0);
+  } else if (fmt->is<StrSymbol>()) {
+    auto fmt_str = fmt->as<StrSymbol>()->value();
+    fmt = IntSymbol::Make(fmt_str == "NCHW" ? 0 : 1);
   }
   return b->Emit(std::make_shared<infershape::BiasAddGrad>(x, fmt));
 }
@@ -222,28 +231,68 @@ SymbolPtr TupleToTensor(OperationBuilder *b) {
   return IListSymbol::Make(list_symbol->symbols());
 }
 
+// only support IntList value for shape calculation
 SymbolPtr ConcatValue(OperationBuilder *b) {
   SymbolPtrList result;
-  result.reserve(b->cnode()->size());
-  for (size_t i = 1; i < b->cnode()->size(); i++) {
-    // only support IntList value for shape calculation
-    auto v = b->GetInputValue(i)->as_sptr<IListSymbol>();
-    if (v != nullptr) {
-      (void)result.insert(result.end(), v->symbols().begin(), v->symbols().end());
-    } else {
+  if (b->cnode()->size() == kDim3) {
+    if (!b->cnode()->input(kIndex1)->abstract()->isa<abstract::AbstractSequence>()) {
       return nullptr;
+    }
+    // inputs of Concat is a tuple.
+    auto inputs = b->GetInputValue(kIndex1)->as_sptr<ListSymbol>();
+    if (inputs == nullptr) {
+      return nullptr;
+    }
+    result.reserve(inputs->size());
+    for (auto &inp : inputs->symbols()) {
+      if (auto ilist = inp->as<IListSymbol>(); ilist != nullptr) {
+        (void)result.insert(result.end(), ilist->symbols().begin(), ilist->symbols().end());
+      } else if (auto ints = inp->as<IntSymbol>(); ints != nullptr) {
+        (void)result.emplace_back(inp);
+      } else {
+        return nullptr;
+      }
+    }
+  } else {
+    // inputs of Concat are spread, and the last input is "axis".
+    result.reserve(b->cnode()->size());
+    for (size_t i = 1; i + 1 < b->cnode()->size(); i++) {
+      auto v = b->GetInputValue(i)->as_sptr<IListSymbol>();
+      if (v != nullptr) {
+        (void)result.insert(result.end(), v->symbols().begin(), v->symbols().end());
+      } else {
+        return nullptr;
+      }
     }
   }
   return IListSymbol::Make(std::move(result));
 }
 
+// only support IntList value for shape calculation
 SymbolPtr StackValue(OperationBuilder *b) {
-  SymbolPtrList result(b->cnode()->size() - 1);
-  for (size_t i = 1; i < b->cnode()->size(); i++) {
-    result[i - 1] = b->GetInputValue(i);
-    // only support IntList value for shape calculation
-    if (!result[i - 1]->is<IntSymbol>()) {
+  SymbolPtrList result;
+  if (b->cnode()->size() == kDim2) {
+    if (!b->cnode()->input(kIndex1)->abstract()->isa<abstract::AbstractSequence>()) {
       return nullptr;
+    }
+    // inputs of Stack is a tuple.
+    auto inputs = b->GetInputValue(kIndex1)->as_sptr<ListSymbol>();
+    if (inputs == nullptr) {
+      return nullptr;
+    }
+    if (std::any_of(inputs->symbols().begin(), inputs->symbols().end(),
+                    [](const SymbolPtr &s) { return !s->is<IntSymbol>(); })) {
+      return nullptr;
+    }
+    return IListSymbol::Make(inputs->symbols());
+  } else {
+    // inputs of Stack is spread.
+    result.resize(b->cnode()->size() - 1);
+    for (size_t i = 1; i < b->cnode()->size(); i++) {
+      result[i - 1] = b->GetInputValue(i);
+      if (!result[i - 1]->is<IntSymbol>()) {
+        return nullptr;
+      }
     }
   }
   return IListSymbol::Make(std::move(result));
@@ -360,7 +409,7 @@ REG_OP_SYMBOL_BUILDER("SoftmaxGrad").SetShapeFunc(TransparentShape<2>);
 REG_OP_SYMBOL_BUILDER("LogSoftmax").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("LogSoftmaxGrad").SetShapeFunc(TransparentShape<2>);
 REG_OP_SYMBOL_BUILDER("BiasAdd").SetShapeDepend({DependOn::kShape, DependOn::kNone}).SetShapeFunc(TransparentShape<1>);
-REG_OP_SYMBOL_BUILDER("BiasAddGrad").SetShapeFunc(BiasAddGradShape);
+REG_OP_SYMBOL_BUILDER("BiasAddGrad").SetShapeDepend(kDependShapeValue).SetShapeFunc(BiasAddGradShape);
 REG_OP_SYMBOL_BUILDER("AddN").SetShapeFunc(AddnShape);
 REG_OP_SYMBOL_BUILDER("Pow").SetShapeFunc(BinElemwiseShape);
 REG_OP_SYMBOL_BUILDER("Add").SetShapeFunc(BinElemwiseShape);
@@ -381,9 +430,15 @@ REG_OP_SYMBOL_BUILDER("LogicalAnd").SetShapeFunc(BinElemwiseShape);
 REG_OP_SYMBOL_BUILDER("LogicalOr").SetShapeFunc(BinElemwiseShape);
 REG_OP_SYMBOL_BUILDER("LogicalNot").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Select").SetShapeFunc(TransparentShape<1>);  // 3 inputs' shape should be same for Select
-REG_OP_SYMBOL_BUILDER("ReduceSum").SetShapeDepend(kDependShapeValue).SetShapeFunc(ReduceShape);
-REG_OP_SYMBOL_BUILDER("ReduceMax").SetShapeDepend(kDependShapeValue).SetShapeFunc(ReduceShape);
-REG_OP_SYMBOL_BUILDER("ReduceMin").SetShapeDepend(kDependShapeValue).SetShapeFunc(ReduceShape);
+REG_OP_SYMBOL_BUILDER("ReduceSum")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue})
+  .SetShapeFunc(ReduceShape);
+REG_OP_SYMBOL_BUILDER("ReduceMax")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
+  .SetShapeFunc(ReduceShape);
+REG_OP_SYMBOL_BUILDER("ReduceMin")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
+  .SetShapeFunc(ReduceShape);
 REG_OP_SYMBOL_BUILDER("Reshape").SetShapeDepend(kDependShapeValue).SetShapeFunc(BinShapeValue<infershape::Reshape>);
 REG_OP_SYMBOL_BUILDER("Transpose").SetShapeDepend(kDependShapeValue).SetShapeFunc(BinShapeValue<infershape::Transpose>);
 REG_OP_SYMBOL_BUILDER("Tile").SetShapeDepend(kDependShapeValue);
@@ -409,10 +464,10 @@ REG_OP_SYMBOL_BUILDER("Assign").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("OnesLike").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Tril").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("LayerNorm")
-  .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone})
+  .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone, DependOn::kValue})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto x = b->GetInputShape(kIndex1);
-    auto begin_axis = b->GetAttr(kAttrBeginNormAxis);
+    auto begin_axis = b->GetInputOrAttr(kIndex4, kAttrBeginNormAxis);
     MS_EXCEPTION_IF_NULL(begin_axis);
     return b->Emit(std::make_shared<infershape::LayerNorm>(x, begin_axis));
   });
@@ -425,6 +480,7 @@ REG_OP_SYMBOL_BUILDER("LayerNormGrad")
   });
 REG_OP_SYMBOL_BUILDER("TensorShape").SetValueDepend({DependOn::kShape}).SetValueFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Shape").SetValueDepend({DependOn::kShape}).SetValueFunc(TransparentShape<1>);
+REG_OP_SYMBOL_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("ShapeCalc")
   .SetValueDepend([](const CNodePtr &cnode) -> std::vector<DependOn> {
     auto p = GetCNodePrimitive(cnode);
@@ -443,25 +499,31 @@ REG_OP_SYMBOL_BUILDER("ScalarMul").SetValueFunc([](OperationBuilder *b) -> Symbo
   auto y = b->GetInputValue(kIndex2);
   return b->Emit(std::make_shared<ScalarMul>(x, y));
 });
+REG_OP_SYMBOL_BUILDER("scalar_eq").SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
+  auto x = b->GetInputValue(kIndex1);
+  auto y = b->GetInputValue(kIndex2);
+  return b->Emit(std::make_shared<ScalarEQ>(x, y));
+});
 REG_OP_SYMBOL_BUILDER("StridedSlice")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(StridedSliceShape)
   .SetValueFunc(StridedSliceValue);
 REG_OP_SYMBOL_BUILDER("Gather")
-  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue})
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto params = b->GetInputShape(kIndex1);
     auto indices = b->GetInputShape(kIndex2);
     auto axis = b->GetInputValue(kIndex3);
-    auto batch_dims = b->GetAttr(kAttrBatchDims);
+    auto batch_dims = b->GetInputOrAttr(kIndex4, kAttrBatchDims);
     return b->Emit(std::make_shared<ops::infershape::Gather>(params, indices, axis, batch_dims));
   });
 REG_OP_SYMBOL_BUILDER("OneHot")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kNone, DependOn::kNone})
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kNone, DependOn::kNone, DependOn::kValue})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto indices = b->GetInputShape(kIndex1);
     auto depth = b->GetInputValue(kIndex2);
-    auto axis = b->GetAttr(kAttrAxis);
+    auto axis = b->GetInputOrAttr(kIndex5, kAttrAxis);
+    MS_EXCEPTION_IF_NULL(axis);
     return b->Emit(std::make_shared<ops::infershape::OneHot>(indices, depth, axis));
   });
 REG_OP_SYMBOL_BUILDER("Concat").SetValueFunc(ConcatValue);
@@ -472,7 +534,8 @@ REG_OP_SYMBOL_BUILDER("NormalizeSlice")
 REG_OP_SYMBOL_BUILDER("FillV2").SetShapeDepend({DependOn::kValue, DependOn::kNone}).SetShapeFunc(TransparentValue<1>);
 
 // virtual nodes
-REG_OP_SYMBOL_BUILDER("MakeTuple").SetShapeFunc(MakeTuple);
+REG_OP_SYMBOL_BUILDER("make_list").SetShapeFunc(MakeTuple).SetValueFunc(MakeTuple);
+REG_OP_SYMBOL_BUILDER("MakeTuple").SetShapeFunc(MakeTuple).SetValueFunc(MakeTuple);
 REG_OP_SYMBOL_BUILDER("RealMakeTuple").SetShapeFunc(MakeTuple).SetValueFunc(MakeTuple);
 REG_OP_SYMBOL_BUILDER("TupleToTensor").SetValueDepend({DependOn::kValue, DependOn::kNone}).SetValueFunc(TupleToTensor);
 REG_OP_SYMBOL_BUILDER("TensorToTuple").SetValueFunc(TransparentValue<1>);
@@ -482,6 +545,27 @@ REG_OP_SYMBOL_BUILDER("RealTupleGetItem").SetShapeFunc(TupleGetItem).SetValueFun
 REG_OP_SYMBOL_BUILDER("Depend").SetShapeFunc(TransparentShape<1>).SetValueFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("Load").SetShapeFunc(TransparentShape<1>).SetValueFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("UpdateState").SetShapeFunc(TransparentShape<1>).SetValueFunc(TransparentValue<1>);
+REG_OP_SYMBOL_BUILDER("Return").SetShapeFunc(TransparentShape<1>).SetValueFunc(TransparentValue<1>);
+REG_OP_SYMBOL_BUILDER("Switch").SetValueFunc([](OperationBuilder *b) -> SymbolPtr { return IntSymbol::Make(); });
+REG_OP_SYMBOL_BUILDER(kControlFlowOperation)
+  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto switch_node = b->cnode()->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_node);
+    auto cond = b->RealValue(switch_node->input(kIndex1));
+    auto true_branch = b->RealShape(switch_node->input(kIndex2));
+    auto false_branch = b->RealShape(switch_node->input(kIndex3));
+    return b->Emit(std::make_shared<ops::infershape::Switch>(cond, true_branch, false_branch));
+  })
+  .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto switch_node = b->cnode()->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_node);
+    auto cond = b->RealValue(switch_node->input(kIndex1))->as_sptr<BoolSymbol>();
+    // buildvalue for control flow only support constant folding.
+    if (cond != nullptr && cond->HasData()) {
+      return cond->value() ? b->RealValue(switch_node->input(kIndex2)) : b->RealValue(switch_node->input(kIndex3));
+    }
+    return nullptr;
+  });
 }  // namespace
 }  // namespace ops::builders
 }  // namespace mindspore::graphkernel::symbol
