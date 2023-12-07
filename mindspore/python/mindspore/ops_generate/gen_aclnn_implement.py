@@ -96,7 +96,8 @@ namespace kernel {{
         input_name = "inputs[kIndex" + str(idx) + "], "
         dtype = input_dtypes.get(n)
         if dtype != 'tensor':
-            input_templete += "auto {} = transform::ConvertKernelTensor<{}>(inputs[kIndex{}]);".format(n, dtype, idx)
+            input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(inputs[kIndex{}]);\n".format(
+                n, dtype, idx)
             input_name = n + ", "
         if dtype == 'tuple[tensor]' and auto_gen == "_auto_gen":
             raise NotImplementedError(tuple_tensor_not_supported)
@@ -106,7 +107,8 @@ namespace kernel {{
         output_name = "outputs[kIndex" + str(idx) + "], "
         dtype = output_dtypes.get(n)
         if dtype != 'tensor':
-            input_templete += "auto {} = transform::ConvertKernelTensor<{}>(outputs[kIndex{}]);".format(n, dtype, idx)
+            input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(outputs[kIndex{}]);\n".format(
+                n, dtype, idx)
             output_name = n + ", "
         if dtype == 'tuple[tensor]' and auto_gen == "_auto_gen":
             raise NotImplementedError(tuple_tensor_not_supported)

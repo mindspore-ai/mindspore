@@ -289,7 +289,7 @@ def convert_types(inputs):
                 inputs_dtypes[i] = 'transform::aclBoolArray *'
             else:
                 logging.warning("Not support tuple[%s]] input.", data_type)
-        if inputs_dtypes[i] == 'Number':
+        if inputs_dtypes[i] == 'number':
             inputs_dtypes[i] = 'transform::aclScalar *'
     return inputs_dtypes, flag
 
