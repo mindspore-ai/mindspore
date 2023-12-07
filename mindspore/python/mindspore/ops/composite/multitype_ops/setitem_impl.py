@@ -23,6 +23,7 @@ from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.common import Tensor
 from mindspore.ops.composite.base import _dict_setitem
+from mindspore.ops.operations._sequence_ops import TensorToScalar
 from ...operations._sequence_ops import SequenceSliceSetItem
 
 DOC_URL = "https://mindspore.cn/search/en?inputValue=Index%20value%20assignment"
@@ -102,6 +103,23 @@ def _list_setitem_with_tensor(data, number_index, value):
     Outputs:
         list, type is the same as the element type of data.
     """
+    return F.list_setitem(data, number_index, value)
+
+
+@setitem.register("List", "Tensor", "Tensor")
+def _list_setitem_with_tensor_index(data, tensor_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type list.
+        tensor_index (Tensor): Index of data.
+        value (Tensor): Value given.
+
+    Outputs:
+        list, type is the same as the element type of data.
+    """
+    number_index = TensorToScalar()(tensor_index)
     return F.list_setitem(data, number_index, value)
 
 
