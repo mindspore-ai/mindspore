@@ -592,42 +592,16 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   }
 }
 
-void GetInputNameAndType(const KernelGraphPtr &kernel_graph, bool use_compile_cache, InputNameAndType *input_names) {
-  MS_EXCEPTION_IF_NULL(input_names);
-  if (use_compile_cache) {
-    auto params = kernel_graph->parameters();
-    for (const auto &it : params) {
-      auto para = it->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(para);
-      auto abs = it->abstract();
-      if (HasAbstractMonad(para) || abs->isa<abstract::AbstractSequence>()) {
-        continue;
-      }
-      bool is_ref = para->has_default() ? true : false;
-      input_names->emplace_back(para->name(), is_ref);
-    }
-  } else if (kernel_graph->user_data<transform::InputDataList>() != nullptr) {
-    auto input_data_list = kernel_graph->user_data<transform::InputDataList>();
-    for (const auto &op : input_data_list->input_datas) {
-      auto name = op->GetName();
-      if (auto data = std::dynamic_pointer_cast<Data>(op); data != nullptr) {
-        input_names->emplace_back(name, false);
-      } else if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
-        input_names->emplace_back(name, true);
-      } else {
-        MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
-      }
-    }
-  }
-}
-
-void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph, bool use_compile_cache) {
+void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
   MS_LOG(INFO) << "Start BuildInputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
   std::vector<std::pair<AnfNodePtr, size_t>> need_update_input;
   InputNameAndType input_names;
-  GetInputNameAndType(kernel_graph, use_compile_cache, &input_names);
+  auto input_name_list = kernel_graph->user_data<transform::InputNameList>();
+  if (input_name_list) {
+    input_names = input_name_list->input_names;
+  }
   if (input_names.empty()) {
     MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
     input_datas_[kernel_graph] = {ge_inputs, need_update_input};
@@ -849,7 +823,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   }
   AllocParameterMemory(graph);
   AllocOutputMemory(graph);
-  BuildInputDataGeTensor(graph, use_compile_cache);
+  BuildInputDataGeTensor(graph);
   BuildOutputDataGeTensor(graph);
   EnableGraphInputZeroCopy(graph);
   EnableGraphOutputZeroCopy(graph);
@@ -866,12 +840,11 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   // cppcheck-suppress unreadVariable
   ContextReset reset_context(device_context_);
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kg);
   if (IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);
   } else {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-    MS_EXCEPTION_IF_NULL(kg);
     std::map<std::string, ShapeVector> origin_shape;
     const auto &tensor_order_map = GetParams(graph, &origin_shape);
     auto &compile_cache_context = CompileCacheContext::GetInstance();

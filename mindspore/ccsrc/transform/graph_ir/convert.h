@@ -50,6 +50,7 @@ class BaseOpAdapter;
 using HcomBroadcast = ::ge::op::HcomBroadcast;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
+using InputNameAndType = std::vector<std::pair<std::string, bool>>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
 enum class RefModeFlag {
@@ -61,9 +62,9 @@ enum class RefModeFlag {
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 constexpr char kGraphNeedIteration[] = "graph_need_iteration";
 
-struct InputDataList {
-  std::vector<OperatorPtr> input_datas;
-  constexpr static char key[] = "RefDataList";
+struct InputNameList {
+  InputNameAndType input_names;
+  constexpr static char key[] = "InputNameList";
 };
 
 class GeOpConvertor {
@@ -175,7 +176,7 @@ class DfGraphConvertor {
 
   DfGraphConvertor &ConvertAllNode();
   void GenFakeGraph(const std::string &name);
-  std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const ParameterPtr &para);
+  void SetupInputFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, InputNameAndType *input_names);
   DfGraphConvertor &BuildGraph(const std::string &name);
   DfGraphConvertor &InitParam(const TensorOrderMap &tensors);
   DfGraphConvertor &GenerateCheckpointGraph();
@@ -261,7 +262,7 @@ class DfGraphConvertor {
   void AddGraphConstInput(const OperatorPtr &op);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
-  void SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas);
+  void SetGraphInputs(std::vector<Operator> *inputs, InputNameAndType *input_names);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
 
