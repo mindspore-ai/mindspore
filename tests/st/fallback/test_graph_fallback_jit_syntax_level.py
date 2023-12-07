@@ -112,14 +112,14 @@ def test_custom_class_in_cell():
     assert net1(x) == 4
 
     # JitConfig will override the jit_syntax_level of ms.context.
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         net2 = Net()
         net2.set_jit_config(jit_config_compatible)
         net2(x)
 
     # Environment variable 'MS_DEV_JIT_SYNTAX_LEVEL' has the highest priority.
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         net3 = Net()
         net3.set_jit_config(jit_config_lax)
         net3(x)
@@ -157,13 +157,13 @@ def test_custom_class_in_function():
     assert func1(x) == 4
 
     # JitConfig will override the jit_syntax_level of ms.context.
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         func2 = ms.jit(fn=func, jit_config=jit_config_compatible)
         func2(x)
 
     # Environment variable 'MS_DEV_JIT_SYNTAX_LEVEL' has the highest priority.
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         func3 = ms.jit(fn=func, jit_config=jit_config_lax)
         func3(x)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
