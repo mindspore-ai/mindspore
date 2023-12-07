@@ -1242,7 +1242,6 @@ class Bucketize(Primitive):
     @prim_attr_register
     def __init__(self, boundaries):
         """Initialize Bucketize"""
-        super().__init__(name="Bucketize")
         validator.check_value_type("boundaries", boundaries, [list], self.name)
         for index, one_boundaries in enumerate(boundaries):
             validator.check_value_type('boundaries[%d]' % index, one_boundaries, [float], self.name)
@@ -1537,9 +1536,8 @@ class LpNorm(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, axis, p=2, keep_dims=False, epsilon=1e-12):
+    def __init__(self, axis=(), p=2, keep_dims=False, epsilon=1e-12):
         """Initialize LpNorm"""
-        super().__init__("LpNorm")
         validator.check_value_type("p", p, [int], self.name)
         validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
@@ -2097,7 +2095,6 @@ class InplaceIndexAdd(Primitive):
     @prim_attr_register
     def __init__(self, axis):
         """Initialize InplaceIndexAdd"""
-        super().__init__(name="InplaceIndexAdd")
         self.init_prim_io_names(inputs=['var', 'indices', 'updates'], outputs=['var'])
         self.axis = axis
         validator.check_value_type('axis', axis, [int], self.name)
@@ -2633,7 +2630,6 @@ class Logit(Primitive):
     @prim_attr_register
     def __init__(self, eps=-1.0):
         """Initialize Exp"""
-        super().__init__(name="Logit")
         self.add_prim_attr("eps", eps)
         validator.check_value_type("eps", eps, [float], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -2687,7 +2683,6 @@ class ReduceStd(Primitive):
     @prim_attr_register
     def __init__(self, axis=(), unbiased=True, keep_dims=False):
         """Initialize ReduceStd """
-        super().__init__(name="ReduceStd")
         validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         validator.check_value_type("unbiased", unbiased, [bool], self.name)
         validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
@@ -2795,7 +2790,6 @@ class Einsum(Primitive):
 
     @prim_attr_register
     def __init__(self, equation):
-        super().__init__(name="Einsum")
         if not isinstance(equation, str):
             raise TypeError("the equation must be str!")
         seg_equation = equation.split("->")
@@ -2860,7 +2854,6 @@ class Diagonal(Primitive):
     @prim_attr_register
     def __init__(self, offset=0, dim1=0, dim2=1):
         """Initialize Diagonal"""
-        super().__init__(name="Diagonal")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_is_int(offset, "offset", self.name)
         validator.check_is_int(dim1, "dim1", self.name)
@@ -2941,7 +2934,6 @@ class Histogram(Primitive):
     @prim_attr_register
     def __init__(self, bins=100, min=0.0, max=0.0):
         """Initialize Histogram."""
-        super().__init__(name="Histogram")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("bins", bins, [int], self.name)
         validator.check_value_type("min", min, [float], self.name)
@@ -2989,7 +2981,6 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
         """Initialize HistogramFixedWidth."""
-        super().__init__(name="HistogramFixedWidth")
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, validator.GE, "nbins", self.name)
         valid_values = ['int32']

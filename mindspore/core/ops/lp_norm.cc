@@ -62,7 +62,11 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
     (void)CheckAndConvertUtils::CheckInteger("axis size", SizeToLong(axis.size()), kEqual, input_rank + 1, prim_name);
     return std::make_shared<abstract::Shape>(input_shape);
   } else {
-    CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeNeither, {0, input_rank + 1}, prim_name);
+    CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
+  }
+  if (axis.size() == 0) {
+    auto output_shape_ = ShapeVector{};
+    return std::make_shared<abstract::Shape>(output_shape_);
   }
   for (int64_t &axi : axis) {
     CheckAndConvertUtils::CheckInRange("axis value", axi, kIncludeLeft, {-input_rank, input_rank}, prim_name);
