@@ -162,9 +162,10 @@ bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::v
   }
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
-    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], strict)) {
-      MS_LOG(DEBUG) << "required dtype:" << kernel_attr.GetInputAttr(i).dtype
-                    << ", actual input dtype:" << input_types[i];
+    auto is_tuple = (kernel_attr.GetInputAttr(i).object_type == kObjectTypeTuple);
+    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], (strict || is_tuple))) {
+      MS_LOG(DEBUG) << i << " required dtype:" << TypeIdToString(kernel_attr.GetInputAttr(i).dtype)
+                    << ", actual input dtype:" << TypeIdToString(input_types[i]) << ", strict " << strict;
       return false;
     }
   }

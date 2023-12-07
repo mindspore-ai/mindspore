@@ -530,8 +530,19 @@ scalar_usub = ScalarUsub()
 
 
 class BatchNorm(Primitive):
-    """
-    BatchNorm.
+    r"""
+    .. code-block::
+
+        prim = ops.BatchNorm(is_training, epsilon, momentum, data_format)
+        out = prim(input_x, scale, bias, mean, variance)
+
+    is equivalent to
+
+    .. code-block::
+
+        ops.batch_norm_(input_x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format)
+
+    Refer to :func:`mindspore.ops.batch_norm_` for more details.
     """
     __mindspore_signature__ = (sig.make_sig('input_x', dtype=sig.sig_dtype.T1),
                                sig.make_sig('scale',
