@@ -925,7 +925,7 @@ class AfterOptARewriter : public BaseRewriter {
         const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
         if (tensor_val != nullptr) {
           const auto &tensor_type = tensor_val->element()->BuildType();
-          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
+          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_val->BuildType());
           const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
           MS_EXCEPTION_IF_NULL(tensor_shape);
           fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
