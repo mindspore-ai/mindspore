@@ -192,9 +192,9 @@ int AscendNativeMatmulKernel::Run() {
   }
 #endif
   ascend_native::MatmulAi(transpose_a_, transpose_b_, in_tensors_[0]->device_data(), in_tensors_[1]->device_data(),
-                           out_tensors_[0]->device_data(), nullptr, tile_data_d_, tile_data_h_,
-                           const_cast<void *>(get_sys_workspace()), is_bmm, extra_d_, const_cast<void *>(stream_),
-                           const_cast<void *>(acl_ctx_));
+                          out_tensors_[0]->device_data(), nullptr, tile_data_d_, tile_data_h_,
+                          const_cast<void *>(get_sys_workspace()), is_bmm, extra_d_, const_cast<void *>(stream_),
+                          const_cast<void *>(acl_ctx_));
   return kSuccess;
 }
 
