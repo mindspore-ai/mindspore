@@ -20,6 +20,7 @@ from mindspore import log as logger
 from mindspore.mindrecord import Cifar100ToMR
 from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import SUCCESS
+from mindspore.mindrecord import set_enc_key, set_hash_mode
 
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
 
@@ -60,6 +61,22 @@ def test_cifar100_to_mindrecord(fixture_file):
     assert os.path.exists(file_name + "_test")
     read(file_name)
 
+def test_cifar100_to_mindrecord_wich_encrypt_and_hash(fixture_file):
+    """
+    Feature: Cifar100ToMR
+    Description: test encrypt and hash check for Cifar100ToMR
+    Expectation: SUCCESS
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    set_enc_key("qwertyuiop[]asdf")
+    set_hash_mode("sha3_384")
+    cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, file_name)
+    cifar100_transformer.transform(['fine_label', 'coarse_label'])
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + "_test")
+    read(file_name)
+    set_enc_key(None)
+    set_hash_mode(None)
 
 def read(file_name):
     """test file reader"""
