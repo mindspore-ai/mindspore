@@ -30,6 +30,7 @@ class Process(mp.Process): # pylint: disable=function-redefined
     Trigger fork callbacks by overriding native multiprocessing methods.
     """
     _child_at_fork_func = None
+
     def run(self):
         """
         Trigger child_at_fork callback function after fork by overriding
