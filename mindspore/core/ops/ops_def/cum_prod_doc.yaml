@@ -1,4 +1,4 @@
-cumprod:
+cum_prod:
     description: |
         Computes the cumulative product of the tensor x along axis.
         For example, if input is a vector of size N, the result will also be a vector of size N, with elements.

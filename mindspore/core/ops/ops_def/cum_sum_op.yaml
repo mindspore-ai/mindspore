@@ -1,4 +1,4 @@
-#operator cumsum
+#operator cum_sum
 cum_sum:
   args:
     x:
