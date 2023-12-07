@@ -966,7 +966,9 @@ SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &manager, const
     if (output_num > 1) {
       for (size_t j = 0; j < output_num; j++) {
         ShapeVector shape = common::AnfAlgo::GetOutputInferShape(cnode, j);
-        if (shape.size() <= 0) continue;
+        if (shape.size() <= 0) {
+          continue;
+        }
 
         const TypeId type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
         if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeFunction) continue;

@@ -32,6 +32,8 @@
 namespace mindspore {
 namespace parallel {
 
+constexpr float kRecursionFactor = 2.0;
+
 double GetMatMulMaxCostIn(const Graph::NodeType &op) {
   auto cost_ptr = std::make_shared<CostMatMul>();
   return cost_ptr->GetMaxCostIn(op.apply);
@@ -144,18 +146,18 @@ StrategyRec MatMulStrategyRec(Graph::NodeType node,
                               const std::shared_ptr<Graph> &graph, const bool isTraining) {
   if (graph->dyn_shape_tmp_fix) {
     if (node.param_name.find(".projection.weight") != std::string::npos) {
-      node.apply.str.inputTensor[0].str_w /= 2.0;
-      node.apply.str.inputTensor[1].str_h /= 2.0;
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
       return node.apply.str;
     }
     if (node.param_name.find(".mapping.weight") != std::string::npos) {
-      node.apply.str.inputTensor[1].str_w /= 2.0;
-      node.apply.str.outputTensor.str_w /= 2.0;
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
       return node.apply.str;
     }
     if (node.param_name.find(".attention.dense2.weight") != std::string::npos) {
-      node.apply.str.inputTensor[1].str_w /= 2.0;
-      node.apply.str.outputTensor.str_w /= 2.0;
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
       return node.apply.str;
     }
   }
@@ -169,13 +171,13 @@ StrategyRec BatchMatMulStrategyRec(Graph::NodeType node,
                                    const std::shared_ptr<Graph> &graph, const bool isTraining) {
   if (graph->dyn_shape_tmp_fix) {
     if (node.param_name.find(".projection.weight") != std::string::npos) {
-      node.apply.str.inputTensor[0].str_w /= 2.0;
-      node.apply.str.inputTensor[1].str_h /= 2.0;
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
       return node.apply.str;
     }
     if (node.param_name.find(".mapping.weight") != std::string::npos) {
-      node.apply.str.inputTensor[1].str_w /= 2.0;
-      node.apply.str.outputTensor.str_w /= 2.0;
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
       return node.apply.str;
     }
 
@@ -212,13 +214,13 @@ StrategyRec BatchMatMulStrategyRec(Graph::NodeType node,
       }
     }
     if (projection_bias_bmm) {
-      node.apply.str.inputTensor[0].str_w /= 2.0;
-      node.apply.str.inputTensor[1].str_h /= 2.0;
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
       return node.apply.str;
     }
     if (mapping_bias_bmm) {
-      node.apply.str.inputTensor[1].str_w /= 2.0;
-      node.apply.str.outputTensor.str_w /= 2.0;
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
       return node.apply.str;
     }
   }

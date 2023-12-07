@@ -1213,7 +1213,7 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
       continue;
     }
     if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
-      size_t input_index = node_pair.second;
+      size_t input_index = IntToSize(node_pair.second);
       size_t real_input_index = input_index;
       for (size_t i = 1; i < input_index; i++) {  // skip None inputs
         if (IsValueNode<None>(cnode->input(i))) {

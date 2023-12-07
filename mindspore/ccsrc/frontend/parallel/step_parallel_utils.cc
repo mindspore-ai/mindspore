@@ -1481,6 +1481,7 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
       continue;
     } else if (IsPrimitiveCNode(inputs[index], prim::kPrimShape)) {
       auto shape_op_cnode = dyn_cast_ptr<CNode>(inputs[index]);
+      MS_EXCEPTION_IF_NULL(shape_op_cnode);
       auto dst_shape = GetNodeShape(shape_op_cnode->input(1));
       (void)input_value.emplace_back(MakeValue(dst_shape[0]));
       MS_LOG(INFO) << "The prim is " << prim->name() << ", the input index is " << index - 1
