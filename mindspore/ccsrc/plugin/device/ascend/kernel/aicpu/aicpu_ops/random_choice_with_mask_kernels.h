@@ -28,6 +28,8 @@ class RandomChoiceWithMaskKernel : public KernelBase {
 
  protected:
   int64_t count_target_;
+  int64_t seed_;
+  int64_t seed2_;
   std::vector<int64_t> dims_;
   uint32_t DoCompute() override;
   uint32_t ParseKernelParam() override;
