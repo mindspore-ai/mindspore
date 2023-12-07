@@ -19,6 +19,11 @@ mindspore.ops.selu
 
     更多详细信息，请参见 `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_ 。
 
+    SeLU函数图：
+
+    .. image:: ../images/SeLU.png
+        :align: center
+
     参数：
         - **input_x** (Tensor) - 任意维度的Tensor，数据类型为int8、int32、float16、float32、float64（仅CPU、GPU）。
 

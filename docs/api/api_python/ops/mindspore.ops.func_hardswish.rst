@@ -12,6 +12,11 @@ mindspore.ops.hardswish
 
     其中， :math:`x_i` 是输入的元素。
 
+    HSwish函数图：
+
+    .. image:: ../images/HSwish.png
+        :align: center
+
     参数：
         - **x** (Tensor) - 用于计算Hard Swish的Tensor。
 

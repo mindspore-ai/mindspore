@@ -2537,6 +2537,11 @@ def tanh(input):
 
     where :math:`x_i` is an element of the input Tensor.
 
+    Tanh Activation Function Graph:
+
+    .. image:: ../images/Tanh.png
+        :align: center
+
     Args:
         input (Tensor): Input of Tanh.
 

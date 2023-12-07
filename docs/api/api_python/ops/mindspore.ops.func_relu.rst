@@ -13,6 +13,11 @@ mindspore.ops.relu
     .. note::
         一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
 
+    ReLU激活函数图：
+
+    .. image:: ../images/ReLU.png
+        :align: center
+
     参数：
         - **input** (Tensor) - 输入Tensor，其数据类型为数值型。
 

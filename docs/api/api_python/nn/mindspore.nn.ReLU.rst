@@ -16,7 +16,7 @@ mindspore.nn.ReLU
 
     ReLU激活函数图：
 
-    .. image:: images/ReLU.png
+    .. image:: ../images/ReLU.png
         :align: center
 
     输入：

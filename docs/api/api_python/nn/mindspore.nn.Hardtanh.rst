@@ -16,7 +16,7 @@ mindspore.nn.Hardtanh
 
     Hardtanh函数图：
 
-    .. image:: images/Hardtanh.png
+    .. image:: ../images/Hardtanh.png
         :align: center
 
     .. note::

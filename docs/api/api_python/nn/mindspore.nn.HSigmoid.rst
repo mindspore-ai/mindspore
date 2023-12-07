@@ -12,7 +12,7 @@ mindspore.nn.HSigmoid
 
     HSigmoid函数图：
 
-    .. image:: images/HSigmoid.png
+    .. image:: ../images/HSigmoid.png
         :align: center
 
     输入：

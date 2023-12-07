@@ -7,7 +7,7 @@ mindspore.nn.SeLU
 
     SeLU函数图：
 
-    .. image:: images/SeLU.png
+    .. image:: ../images/SeLU.png
         :align: center
 
     更多参考详见 :func:`mindspore.ops.selu`。

@@ -12,7 +12,7 @@ mindspore.nn.HSwish
 
     HSwish函数图：
 
-    .. image:: images/HSwish.png
+    .. image:: ../images/HSwish.png
         :align: center
 
     输入：

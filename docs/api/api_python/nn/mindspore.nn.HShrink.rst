@@ -15,7 +15,7 @@ mindspore.nn.HShrink
 
     HShrink函数图：
 
-    .. image:: images/HShrink.png
+    .. image:: ../images/HShrink.png
         :align: center
 
     参数：

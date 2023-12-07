@@ -12,6 +12,11 @@ mindspore.ops.hardsigmoid
 
     其中，:math:`x_i` 是输入Tensor的一个元素。
 
+    HSigmoid函数图：
+
+    .. image:: ../images/HSigmoid.png
+        :align: center
+
     参数：
         - **input** (Tensor) - 输入Tensor。
 

@@ -1334,6 +1334,11 @@ def celu(x, alpha=1.0):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
+    CELU Activation Function Graph:
+
+    .. image:: ../images/CELU.png
+        :align: center
+
     Args:
         x (Tensor): The input of celu with data type of float16 or float32.
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
@@ -1556,6 +1561,11 @@ def fast_gelu(x):
         \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
 
     where :math:`x` is the element of the input.
+
+    FastGelu Activation Function Graph:
+
+    .. image:: ../images/FastGelu.png
+        :align: center
 
     Args:
         x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.
@@ -1922,6 +1932,11 @@ def hardshrink(x, lambd=0.5):
         0, & \text{ otherwise }
         \end{cases}
 
+    HShrink Activation Function Graph:
+
+    .. image:: ../images/HShrink.png
+        :align: center
+
     Args:
         x (Tensor): The input of Hard Shrink with data type of float16 or float32.
         lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula.
@@ -2151,6 +2166,11 @@ def hardswish(x):
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6}
 
     where :math:`x_i` is an element of the input Tensor.
+
+    HSwish Activation Function Graph:
+
+    .. image:: ../images/HSwish.png
+        :align: center
 
     Args:
         x (Tensor): The input to compute the Hard Swish.
@@ -2576,6 +2596,11 @@ def softsign(x):
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
+    Softsign Activation Function Graph:
+
+    .. image:: ../images/Softsign.png
+        :align: center
+
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
             additional dimensions, with float16 or float32 data type.
@@ -2765,6 +2790,11 @@ def softshrink(x, lambd=0.5):
         0, & \text{ otherwise }
         \end{cases}
 
+    SoftShrink Activation Function Graph:
+
+    .. image:: ../images/Softshrink.png
+        :align: center
+
     Args:
         x (Tensor): The input of soft shrink with data type of float16 or float32.
         lambd (float): The :math:`\lambda` must be no less than zero. Default: ``0.5`` .
@@ -2867,6 +2897,11 @@ def silu(x):
 
     where :math:`x_i` is an element of the x.
 
+    SiLU Activation Function Graph:
+
+    .. image:: ../images/SiLU.png
+        :align: center
+
     For more details, please refer to :class:`mindspore.nn.SiLU`.
 
     Supported Platforms:
@@ -2904,6 +2939,11 @@ def selu(input_x):
 
     See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
 
+    SeLU Activation Function Graph:
+
+    .. image:: ../images/SeLU.png
+        :align: center
+
     Args:
         input_x (Tensor): Tensor of any dimension, the data type is float16 or float32.
 
@@ -2938,6 +2978,11 @@ def sigmoid(input):
         \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
 
     where :math:`input_i` is an element of the input.
+
+    Sigmoid Activation Function Graph:
+
+    .. image:: ../images/Sigmoid.png
+        :align: center
 
     Args:
         input (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
@@ -2974,6 +3019,11 @@ def logsigmoid(x):
         \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
     where :math:`x_{i}` is the element of the input.
+
+    LogSigmoid Activation Function Graph:
+
+    .. image:: ../images/LogSigmoid.png
+        :align: center
 
     Args:
         x (Tensor): The input of LogSigmoid with data type of float16 or float32.
@@ -3460,6 +3510,11 @@ def relu(input):
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
         output one more Mask.
 
+    ReLU Activation Function Graph:
+
+    .. image:: ../images/ReLU.png
+        :align: center
+
     Args:
         input (Tensor): Input Tensor of numeric types.
 
@@ -3496,6 +3551,11 @@ def relu6(x):
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
+
+    ReLU6 Activation Function Graph:
+
+    .. image:: ../images/ReLU6.png
+        :align: center
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)`,
@@ -4104,6 +4164,11 @@ def leaky_relu(input, alpha=0.2):
     For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
     <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
 
+    LeakyReLU Activation Function Graph:
+
+    .. image:: ../images/LeakyReLU.png
+        :align: center
+
     Args:
         input (Tensor): The input of leaky_relu is a Tensor of any dimension.
         alpha (Union[int, float]): Slope of the activation function when the element of `input` is less than 0.
@@ -4241,6 +4306,11 @@ def mish(x):
 
     See more details in `A Self Regularized Non-Monotonic Neural Activation Function
     <https://arxiv.org/abs/1908.08681>`_.
+
+    Mish Activation Function Graph:
+
+    .. image:: ../images/Mish.png
+        :align: center
 
     Args:
         x (Tensor): The input Tensor.
@@ -5450,6 +5520,11 @@ def hardsigmoid(input):
 
     where :math:`x_i` is an element of the input Tensor.
 
+    HSigmoid Activation Function Graph:
+
+    .. image:: ../images/HSigmoid.png
+        :align: center
+
     Args:
         input (Tensor): The input Tensor.
 
@@ -5488,6 +5563,11 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
         \end{cases}
 
     Linear region range :math:`[min\_val, max\_val]` can be adjusted using `min_val` and `max_val`.
+
+    Hardtanh Activation Function Graph:
+
+    .. image:: ../images/Hardtanh.png
+        :align: center
 
     Args:
         input (Tensor): Input Tensor.
@@ -6449,6 +6529,11 @@ def elu(input_x, alpha=1.0):
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_ .
 
+    ELU Activation Function Graph:
+
+    .. image:: ../images/ELU.png
+        :align: center
+
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
         alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
@@ -6498,6 +6583,11 @@ def gelu(input_x, approximate='none'):
 
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
+
+    GELU Activation Function Graph:
+
+    .. image:: ../images/GELU.png
+        :align: center
 
     Args:
         input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.

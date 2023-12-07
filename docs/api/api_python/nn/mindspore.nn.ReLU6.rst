@@ -12,7 +12,7 @@ mindspore.nn.ReLU6
 
     ReLU6函数图：
 
-    .. image:: images/ReLU6.png
+    .. image:: ../images/ReLU6.png
         :align: center
 
     输入：

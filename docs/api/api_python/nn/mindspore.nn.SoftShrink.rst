@@ -15,7 +15,7 @@ mindspore.nn.SoftShrink
 
     SoftShrink函数图：
 
-    .. image:: images/Softshrink.png
+    .. image:: ../images/Softshrink.png
         :align: center
 
     参数：

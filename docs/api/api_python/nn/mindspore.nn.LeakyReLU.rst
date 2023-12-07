@@ -17,7 +17,7 @@ mindspore.nn.LeakyReLU
 
     LeakyReLU函数图：
 
-    .. image:: images/LeakyReLU.png
+    .. image:: ../images/LeakyReLU.png
         :align: center
 
     参数：

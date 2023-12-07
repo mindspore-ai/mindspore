@@ -13,6 +13,11 @@ prelu:
         Note:
             Scalar or 1-D Tensor is not supported on Ascend.
 
+        PReLU Activation Function Graph:
+
+        .. image:: ../images/PReLU.png
+            :align: center
+
         Args:
             x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
             The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.

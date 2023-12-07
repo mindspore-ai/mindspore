@@ -15,7 +15,7 @@ mindspore.nn.Sigmoid
 
     Sigmoid函数图：
 
-    .. image:: images/Sigmoid.png
+    .. image:: ../images/Sigmoid.png
         :align: center
 
     输入：

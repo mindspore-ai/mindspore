@@ -14,7 +14,7 @@ mindspore.nn.LogSigmoid
 
     LogSigmoid函数图：
 
-    .. image:: images/LogSigmoid.png
+    .. image:: ../images/LogSigmoid.png
         :align: center
 
     输入：

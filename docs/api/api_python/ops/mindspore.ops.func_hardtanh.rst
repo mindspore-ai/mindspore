@@ -14,6 +14,11 @@ mindspore.ops.hardtanh
 
     线性区域范围 :math:`[min\_val, max\_val]` 可以使用 `min_val` 和 `max_val` 进行调整。
 
+    Hardtanh函数图：
+
+    .. image:: ../images/Hardtanh.png
+        :align: center
+
     参数：
         - **input** (Tensor) - 输入Tensor。
         - **min_val** (Union[int, float]，可选) - 线性区域范围的最小值。默认值： ``-1.0`` 。

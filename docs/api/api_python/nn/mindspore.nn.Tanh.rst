@@ -14,7 +14,7 @@ mindspore.nn.Tanh
 
     Tanh函数图：
 
-    .. image:: images/Tanh.png
+    .. image:: ../images/Tanh.png
         :align: center
 
     输入：
