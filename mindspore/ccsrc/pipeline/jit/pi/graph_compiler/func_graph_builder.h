@@ -116,6 +116,7 @@ class FuncGraphBuilder : public ir::IRMutator {
   FuncGraphPtr func_graph_;
   FuncGraphManagerPtr func_graph_mgr_;
   int last_line_no_;
+  bool enable_debug_info_{false};
 
   // Store variable's name, variable's node.
   std::map<std::string, AnfNodePtr> assigned_vars_;
