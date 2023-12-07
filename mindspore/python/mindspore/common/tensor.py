@@ -870,7 +870,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(x.item())
             1.2
         """
-        output = tensor_operator_registry.get('item')(self, index)
+
+        if index is not None:
+            output = self.asnumpy().item(index)
+        else:
+            output = self.asnumpy().item()
         return output
 
     def itemset(self, *args):
