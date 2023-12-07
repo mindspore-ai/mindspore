@@ -99,7 +99,7 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
 
   output_shape_.clear();
-  if (axis_.size() == input_shape.size()) {
+  if (axis_.size() == 0 || axis_.size() == input_shape.size()) {
     output_shape_ = {1};
     output_elements_ = 1;
     InitWorkSpaceSizeList();
@@ -110,9 +110,15 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   output_axis_.clear();
   std::vector<size_t> axis;
   int64_t input_rank = SizeToLong(input_shape_.size());
-  (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
-    return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
-  });
+  if (axis_.size() == 0) {
+    for (int64_t i = 0; i < input_rank; ++i) {
+      axis.push_back(i);
+    }
+  } else {
+    (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
+      return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
+    });
+  }
   std::set<size_t> axis_set(axis.begin(), axis.end());
   for (size_t i = 0; i < input_shape_.size(); ++i) {
     if (!axis_set.count(i)) {
