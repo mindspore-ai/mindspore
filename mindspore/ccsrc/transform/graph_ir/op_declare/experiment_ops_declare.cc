@@ -24,9 +24,9 @@ INPUT_MAP(PromptFlashAttention) = {
   {2, INPUT_DESC(key)},
   {3, INPUT_DESC(value)},
   {4, INPUT_DESC(atten_mask)},             // optional input
-  {5, INPUT_DESC(padding_mask)},           // optional input
-  {6, INPUT_DESC(actual_seq_lengths)},     // optional input
-  {7, INPUT_DESC(actual_seq_lengths_kv)},  // optional input
+  {5, INPUT_DESC(actual_seq_lengths)},     // optional input
+  {6, INPUT_DESC(actual_seq_lengths_kv)},  // optional input
+  {7, INPUT_DESC(padding_mask)},           // optional input
   {8, INPUT_DESC(deq_scale1)},             // optional input
   {9, INPUT_DESC(quant_scale1)},           // optional input
   {10, INPUT_DESC(deq_scale2)},            // optional input

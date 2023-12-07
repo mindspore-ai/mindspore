@@ -92,7 +92,7 @@ void PromptFlashAttentionInfo::SetOptinalInputs() {
 }
 
 void PromptFlashAttentionInfo::GenerateExpectStrategies() {
-  expect_strategies = {{}, {}, {}, {dp_, 1, 1, 1}, {dp_, 1, 1, 1}, {dp_}, {dp_}, {}, {}, {}, {}, {}};
+  expect_strategies = {{}, {}, {}, {dp_, 1, 1, 1}, {dp_}, {dp_}, {dp_, 1, 1, 1}, {}, {}, {}, {}, {}};
   if (atten_mask_rank == rank_2) {
     expect_strategies[ops::kPromptFlashAttentionInputAttnMaskIndex] = {1, 1};
   }
@@ -212,7 +212,6 @@ std::vector<StrategyPtr> PromptFlashAttentionInfo::GenerateOpStrategies(int64_t 
     Shape splitable_key{1, 0, 2};
     Shape splitable_value{1, 0, 2};
     splitable_inputs = {splitable_query, splitable_key, splitable_value};
-
   } else if (input_layout_ == "BNSD") {
     Shape splitable_query{1, 2, 0, 0};
     Shape splitable_key{1, 2, 0, 0};
