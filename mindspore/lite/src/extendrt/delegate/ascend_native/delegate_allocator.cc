@@ -18,8 +18,8 @@
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 
 namespace mindspore {
-void *DelegateAllocator::Malloc(size_t size) { return ascend_native::MallocDevice(size, stream_); }
+void *DelegateAllocator::Malloc(size_t size) { return ascend_native::MallocDevice(size, acl_ctx_); }
 
-void DelegateAllocator::Free(void *ptr) { return ascend_native::FreeDevice(ptr, stream_); }
+void DelegateAllocator::Free(void *ptr) { return ascend_native::FreeDevice(ptr, acl_ctx_); }
 
 }  // namespace mindspore

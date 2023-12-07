@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LAYERNORM_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LAYERNORM_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_
+
 namespace mindspore::ascend_native {
-void LayerNormFp32(void *output, void *input, void *gamma, void *beta, uint64_t m, uint64_t n, float epsilon, void *q);
-void LayerNormFp16(void *output, void *input, void *gamma, void *beta, uint64_t m, uint64_t n, float epsilon, void *q);
+void MatmulAi(bool ta, bool tb, void *mat_a, void *mat_b, void *mat_c, void *bias, void *tiling_data_d,
+              void *tiling_data_h, void *ws, bool bmm, void *extra, void *stream, void *ctx);
 }  // namespace mindspore::ascend_native
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LAYERNORM_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_MATMUL_H_

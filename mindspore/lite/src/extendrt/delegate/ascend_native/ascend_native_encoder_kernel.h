@@ -23,17 +23,14 @@
 #include <memory>
 #include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 #include "extendrt/utils/func_graph_utils.h"
-#include "extendrt/delegate/ascend_native/ascend_native_impl/encoder.h"
-#include "extendrt/delegate/ascend_native/ascend_native_impl/query.h"
 
 namespace mindspore::kernel {
 class AscendNativeEncoderKernel : public AscendNativeBaseKernel {
  public:
   AscendNativeEncoderKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                            InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name),
-        driver_input_tensors_(ENCODER_LAST_IDX),
-        driver_output_tensors_(ENCODER_OUTPUT_LAST_IDX) {}
+                            InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                            const void *acl_ctx_)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx_) {}
   virtual ~AscendNativeEncoderKernel() {}
 
   int Prepare() override;
@@ -45,13 +42,8 @@ class AscendNativeEncoderKernel : public AscendNativeBaseKernel {
   int InferShape() override;
 
  private:
-  void build_driver_input_const_tensors();
   int InitEncoderParam();
-  std::vector<int32_t> GetOutputDimensions();
-  ascend_native::EncoderParams param_;
-  std::shared_ptr<ascend_native::AscendNativeEncoder> encoder_driver_;
-  std::vector<void *> driver_input_tensors_;
-  std::vector<void *> driver_output_tensors_;
+  std::vector<int32_t> getOutputDimensions();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_ENCODER_KERNEL_H_
