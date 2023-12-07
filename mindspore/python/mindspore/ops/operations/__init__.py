@@ -63,7 +63,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
                         NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBilinearV2, ExtractGlimpse,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate, ResizeLinear1D, ResizeBicubic)
-from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
+from .inner_ops import (Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
 from .linalg_ops import (Svd, Geqrf)
@@ -135,7 +135,7 @@ from .spectral_ops import (BartlettWindow, BlackmanWindow)
 from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax, DropoutGenMask, Gelu, FastGelu,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
-
+from .manually_defined._inner import ScalarCast
 
 __all__ = [
     'HSVToRGB',

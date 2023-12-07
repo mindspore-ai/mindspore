@@ -1142,12 +1142,10 @@ def _generate_updates_from_tensor(data, index, value, op_type):
     """Generate an updates tensor from a tensor."""
     value = value.astype(data.dtype)
     if F.is_sequence_value_unknown(F.shape(data)) or F.is_sequence_value_unknown(F.shape(index)):
-        data_shape = F.dyn_shape(data)
-        index_shape = F.dyn_shape(index)
-        updates_shape = const_utils.generate_updates_shape(data_shape, index_shape, op_type, True)
+        updates_shape = const_utils.generate_updates_shape(data.shape, index.shape, op_type)
         updates = ops.broadcast_to(value, updates_shape)
         return updates
-    updates_shape = const_utils.generate_updates_shape(data.shape, index.shape, op_type, False)
+    updates_shape = const_utils.generate_updates_shape(data.shape, index.shape, op_type)
     need_broadcast = const_utils.check_two_shapes_need_broadcast(updates_shape, value.shape)
     if need_broadcast:
         return _broadcast(updates_shape, value)

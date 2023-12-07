@@ -16,19 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_SCALAR_CAST_H_
 #define MINDSPORE_CORE_OPS_SCALAR_CAST_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief
-class MIND_API ScalarCast : public BaseOperator {
+class MIND_API ScalarCastFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(ScalarCast);
-  /// \brief Constructor.
-  ScalarCast() : BaseOperator(kScalarCastOpName) { InitIOName({"input_scalar", "dtype"}, {"output_data"}); }
-  /// \brief Init.
-  void Init() const {}
+  ScalarCastFuncImpl() = default;
+  ~ScalarCastFuncImpl() = default;
+
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

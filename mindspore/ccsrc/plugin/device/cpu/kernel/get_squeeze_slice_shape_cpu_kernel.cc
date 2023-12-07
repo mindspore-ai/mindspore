@@ -72,6 +72,7 @@ bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<KernelTens
       not_ellipse_occupy_dims += 1;
     }
   }
+
   std::vector<int64_t> new_data_shape;
   size_t ellipsis_range_size = data_shape.size() - not_ellipse_occupy_dims;
   for (size_t j = 0; j < max_indices_num; j++) {
@@ -83,11 +84,13 @@ bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<KernelTens
       }
     }
   }
+
   for (size_t i = 0; i < data_shape.size(); i++) {
     if (!std::any_of(ini_index.begin(), ini_index.end(), [i](size_t x) { return x == i; })) {
       (void)new_data_shape.emplace_back(data_shape[i]);
     }
   }
+
   CheckCopy(output_addr, sizeof(int64_t) * new_data_shape.size(), new_data_shape.data(),
             sizeof(int64_t) * new_data_shape.size(), kernel_name_);
   return true;
@@ -110,8 +113,9 @@ std::vector<KernelAttr> GetSqueezeSliceShapeCpuKernelMod::GetOpSupport() {
                                        kNumberTypeComplex64, kNumberTypeComplex128};
   (void)std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
                        [](TypeId data_type_id) -> std::pair<KernelAttr, GetSqueezeSliceShapeFunc> {
-                         return {KernelAttr().AddInputAttr(data_type_id).AddOutputAttr(kNumberTypeInt64),
-                                 &GetSqueezeSliceShapeCpuKernelMod::LaunchKernel};
+                         return {
+                           KernelAttr().AddInputAttr(data_type_id).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+                           &GetSqueezeSliceShapeCpuKernelMod::LaunchKernel};
                        });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, GetSqueezeSliceShapeFunc> &item) { return item.first; });

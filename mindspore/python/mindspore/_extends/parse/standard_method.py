@@ -43,6 +43,7 @@ from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
+from ...ops.operations._sequence_ops import TensorToScalar
 from ...ops.primitive import constexpr, _primexpr
 from ...common import dtype as mstype
 from ...ops.operations._sequence_ops import ListAppend, ListInsert, SequenceMax, SequenceMin, \
@@ -2346,7 +2347,8 @@ def bool_func(*data):
         tensor_shape = F.shape(data)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-            return F.scalar_cast(data, mstype.bool_)
+            data = F.cast(data, mstype.bool_)
+            return TensorToScalar()(data)
         raise ValueError("The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
@@ -2383,6 +2385,14 @@ def int_func(*data):
     if not F.isconstant(target):
         if base != 10:
             const_utils.raise_type_error("int() does not support non-constant input when 'base' is specified.")
+        if isinstance(target, Tensor):
+            tensor_shape = F.shape(target)
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
+                target = F.cast(target, mstype.int64)
+                return TensorToScalar()(target)
+            raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
+                             f"while the data's shape is : {tensor_shape}")
         return F.scalar_cast(target, mstype.int64)
     if isinstance(target, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
@@ -2406,7 +2416,15 @@ def float_func(*data):
         return 0.0
     data = data[0]
     if not F.isconstant(data):
-        return F.scalar_cast(data, mstype.float32)
+        if isinstance(data, Tensor):
+            tensor_shape = F.shape(data)
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
+                data = F.cast(data, mstype.float64)
+                return TensorToScalar()(data)
+            raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
+                             f"while the data's shape is: {tensor_shape}")
+        return F.scalar_cast(data, mstype.float64)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "float() does not support sparse tensor input.")

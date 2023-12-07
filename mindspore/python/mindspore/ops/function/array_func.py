@@ -62,7 +62,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy, masked_fill, diagonal
-from mindspore.ops.operations.manually_defined import tile, rank
+from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = P.ArgMaxWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
@@ -91,7 +91,6 @@ rank_ = P.Rank()
 reduce_max_ = P.ReduceMax()
 reduce_min_ = P.ReduceMin()
 reshape_ = P.Reshape()
-scalar_cast_ = P.ScalarCast()
 scalar_to_tensor_ = P.ScalarToTensor()
 scatter_add_ = P.ScatterAdd()
 scatter_div_ = P.ScatterDiv()
@@ -4924,33 +4923,6 @@ def is_nonzero(input):
         raise ValueError(f"For is_nonzero, the numel of input must be 1, but got {input.numel()}.")
     out = ops.squeeze(input)
     return bool(out)
-
-
-def scalar_cast(input_x, input_y):
-    """
-    Casts the input scalar to another type.
-
-    Args:
-        input_x (scalar): The input scalar. Only constant value is allowed.
-        input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
-
-    Returns:
-        Scalar. The type is the same as the python type corresponding to `input_y`.
-
-    Raises:
-        TypeError: If neither `input_x` nor `input_y` is a constant value.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> output = ops.scalar_cast(255.0, mindspore.int32)
-        >>> print(output)
-        255
-    """
-    return scalar_cast_(input_x, input_y)
 
 
 def tensor_scatter_mul(input_x, indices, updates):

@@ -86,7 +86,6 @@ from .array_func import (
     gather_elements,
     gather_nd,
     is_tensor,
-    scalar_cast,
     masked_fill,
     narrow,
     tensor_scatter_add,
@@ -721,6 +720,8 @@ from .other_func import (
     depend,
     partial,
 )
+
+from ..operations.manually_defined import (rank, scalar_cast)
 
 __all__ = []
 __all__.extend(array_func.__all__)
