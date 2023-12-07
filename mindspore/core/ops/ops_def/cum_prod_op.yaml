@@ -1,4 +1,4 @@
-#operator cumprod
+#operator cum_prod
 cum_prod:
   args:
     x:

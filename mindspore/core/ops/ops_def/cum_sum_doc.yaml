@@ -1,4 +1,4 @@
-cumsum:
+cum_sum:
     description: |
         Computes the cumulative sum of input tensor along axis.
 
