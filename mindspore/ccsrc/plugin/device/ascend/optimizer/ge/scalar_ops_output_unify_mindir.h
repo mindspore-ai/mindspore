@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REMOVE_TENSOR_TO_SCALAR_OR_TUPLE_OPS_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REMOVE_TENSOR_TO_SCALAR_OR_TUPLE_OPS_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_SCALAR_OPS_OUTPUT_UNIFY_MINDIR_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_SCALAR_OPS_OUTPUT_UNIFY_MINDIR_H_
 
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class RemoveTensorToScalarOrTupleOps : public PatternProcessPass {
+class ScalarOpsOutputUnifyMindIR : public PatternProcessPass {
  public:
-  explicit RemoveTensorToScalarOrTupleOps(bool multigraph = true)
-      : PatternProcessPass("remove_tensor_to_scalar_or_tuple_ops", multigraph) {
+  explicit ScalarOpsOutputUnifyMindIR(bool multigraph = true)
+      : PatternProcessPass("scalar_ops_output_unify_mindir", multigraph) {
     is_add_ = false;
   }
-  ~RemoveTensorToScalarOrTupleOps() override = default;
+  ~ScalarOpsOutputUnifyMindIR() override = default;
 
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REMOVE_TENSOR_TO_SCALAR_OR_TUPLE_OPS_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_SCALAR_OPS_OUTPUT_UNIFY_MINDIR_H_

@@ -62,6 +62,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/remove_tensor_to_scalar_or_tuple_ops.h"
+#include "plugin/device/ascend/optimizer/ge/scalar_ops_output_unify_mindir.h"
 
 namespace mindspore {
 namespace opt {
@@ -227,6 +228,7 @@ void GEDynamicUnifyMindIR(const FuncGraphPtr &func_graph) {
   }
 #endif
   auto dynamic_unify_mindir_pm = std::make_shared<opt::PassManager>("ge_dynamic_unify_mindir_pm");
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ScalarOpsOutputUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ShapeUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::MakeTupleUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::InputsUnifyMindIR>());

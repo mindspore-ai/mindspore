@@ -132,7 +132,7 @@ CNodePtr ShapeUnifyMindIR::CreateStridedSlice(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(strides_node);
 
   // set abstract
-  ShapeVector tensor_shape = {1};
+  ShapeVector tensor_shape = {};
   auto tensor_shape_ptr = std::make_shared<abstract::Shape>(tensor_shape);
   MS_EXCEPTION_IF_NULL(tensor_shape_ptr);
 
