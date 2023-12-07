@@ -25,6 +25,7 @@ import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
+from mindspore.ops.composite import multitype_ops
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -4408,3 +4409,9 @@ def outer(input, vec2):
     For details, please refer to :func:`mindspore.ops.vec2`.
     """
     return F.outer(input, vec2)
+
+def _getitem(data, index):
+    return multitype_ops.getitem(data, index)
+
+def _setitem(data, index, value):
+    return multitype_ops.setitem(data, index, value)

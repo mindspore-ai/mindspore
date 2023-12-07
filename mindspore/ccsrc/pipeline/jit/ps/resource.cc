@@ -127,16 +127,16 @@ BuiltInTypeMap &GetMethodMap() {
     {kObjectTypeTuple,
      {
        {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
-       {"__getitem__", prim::kPrimTupleGetItem},  // P.tuple_getitem,
-       {"__setitem__", prim::kPrimTupleSetItem},  // P.tuple_setitem,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
        {"count", prim::kPrimSequenceCount},       // P.sequence_count
        {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeList,
      {
        {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
-       {"__getitem__", prim::kPrimListGetItem},   // P.list_getitem,
-       {"__setitem__", prim::kPrimListSetItem},   // P.list_setitem,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
        {"append", std::string("list_append")},    // C.list_append
        {"insert", std::string("list_insert")},    // C.list_insert
        {"pop", std::string("list_pop")},          // C.list_pop
@@ -148,17 +148,17 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeDictionary,
      {
-       {"__len__", prim::kPrimDictLen},               // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},       // P.dict_getitem
-       {"__setitem__", std::string("dict_setitem")},  // C.dict_setitem,
-       {"keys", prim::kPrimDictGetKeys},              // P.dict_getkeys,
-       {"values", prim::kPrimDictGetValues},          // P.dict_getvalues,
-       {"items", prim::kPrimDictItems},               // P.dict_items
-       {"get", std::string("dict_get")},              // C.dict_get
-       {"has_key", std::string("dict_haskey")},       // C.dict_haskey
-       {"clear", std::string("dict_clear")},          // C.dict_clear
-       {"update", std::string("dict_update")},        // C.dict_update
-       {"fromkeys", std::string("dict_fromkeys")}     // C.dict_fromkeys
+       {"__len__", prim::kPrimDictLen},            // P.dict_len
+       {"__getitem__", std::string("_getitem")},   // C.getitem,
+       {"__setitem__", std::string("_setitem")},   // C.setitem,
+       {"keys", prim::kPrimDictGetKeys},           // P.dict_getkeys,
+       {"values", prim::kPrimDictGetValues},       // P.dict_getvalues,
+       {"items", prim::kPrimDictItems},            // P.dict_items
+       {"get", std::string("dict_get")},           // C.dict_get
+       {"has_key", std::string("dict_haskey")},    // C.dict_haskey
+       {"clear", std::string("dict_clear")},       // C.dict_clear
+       {"update", std::string("dict_update")},     // C.dict_update
+       {"fromkeys", std::string("dict_fromkeys")}  // C.dict_fromkeys
      }},
     {kObjectTypeTensorType,
      {
@@ -203,8 +203,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"view", std::string("view")},                                      // C.view
        {"view_as", std::string("view_as")},                                // view_as()
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
-       {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
-       {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
+       {"__getitem__", std::string("_getitem")},                           // C.getitem,
+       {"__setitem__", std::string("_setitem")},                           // C.setitem,
        {"__ms_to_array__", prim::kPrimidentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
