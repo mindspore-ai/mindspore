@@ -177,6 +177,9 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::FunctionNodePtr &node) {
 }
 
 void FuncGraphBuilder::UpdateLocation(const AnfNodePtr &anf_node, const ir::NodePtr &node) {
+  if (!enable_debug_info_) {
+    return;
+  }
   // Refer to Location::Location() for each node: line, column, line_end, column_end, expr_src.
   auto debug_info = node->GetDebugInfo();
   auto line_no = debug_info->GetLineNo();
