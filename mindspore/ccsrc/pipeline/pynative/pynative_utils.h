@@ -147,18 +147,20 @@ struct PyBoost {
     return val;
   }
 
-  template <typename... T>
-  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
+  template <size_t N, typename... T>
+  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info,
+                                      const std::vector<std::vector<size_t>> &same_type_table, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
-    // For auto grad use
     if (op_run_info->op_grad_info->op_prim->name() == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
-    op_run_info->op_grad_info->input_value = TupleToVector(ret, std::make_index_sequence<sizeof...(t)>());
     op_run_info->input_size = sizeof...(t);
-    return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
+    if constexpr (N != 0) {
+      return pyboost_cast_operation->DoImplicitCast<N>(op_run_info, same_type_table, ret);
+    }
+    return ret;
   }
 };
 

@@ -1189,6 +1189,7 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
     op_run_info->base_op_run_info.abstract = op->output_abs();
+    op_run_info->op_grad_info->input_value = op_inputs;
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
