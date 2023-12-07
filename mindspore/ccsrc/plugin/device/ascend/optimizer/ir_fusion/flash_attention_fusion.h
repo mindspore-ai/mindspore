@@ -26,19 +26,46 @@ namespace mindspore {
 namespace opt {
 class FlashAttentionFusion : public PatternProcessPass {
  public:
-  explicit FlashAttentionFusion(bool multigraph = true) : PatternProcessPass("FlashAttentionFusion", multigraph) {}
+  explicit FlashAttentionFusion(const std::string &name = "", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {}
   ~FlashAttentionFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const override;
 
- private:
+ protected:
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                   const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
                                                   float scale_value, int64_t num_key_value_heads) const;
+
+ private:
+  virtual CNodePtr CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                            const EquivPtr &equiv) const = 0;
+  virtual const VectorRef DefineFlashAttentionPattern() const = 0;
+};
+
+class FlashAttentionFusionV1 : public FlashAttentionFusion {
+ public:
+  explicit FlashAttentionFusionV1(bool multigraph = true)
+      : FlashAttentionFusion("FlashAttentionFusionV1", multigraph) {}
+  ~FlashAttentionFusionV1() override = default;
+
+ private:
   CNodePtr CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                    const EquivPtr &equiv) const;
-  const VectorRef DefineFlashAttentionPattern() const;
+                                    const EquivPtr &equiv) const override;
+  const VectorRef DefineFlashAttentionPattern() const override;
+};
+
+class FlashAttentionFusionV2 : public FlashAttentionFusion {
+ public:
+  explicit FlashAttentionFusionV2(bool multigraph = true)
+      : FlashAttentionFusion("FlashAttentionFusionV1", multigraph) {}
+  ~FlashAttentionFusionV2() override = default;
+
+ private:
+  CNodePtr CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                    const EquivPtr &equiv) const override;
+  const VectorRef DefineFlashAttentionPattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

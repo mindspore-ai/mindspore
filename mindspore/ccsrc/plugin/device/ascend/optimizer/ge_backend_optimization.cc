@@ -133,7 +133,8 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
   opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
-  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusion>());
+  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV1>());
+  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV2>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
