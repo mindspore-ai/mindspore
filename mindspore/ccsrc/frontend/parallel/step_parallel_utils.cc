@@ -1321,21 +1321,19 @@ bool HandleFuncConcatSlice(const FuncGraphManagerPtr &manager, const std::pair<s
       new_call_cnode->set_abstract(return_input_cnode->abstract()->Clone());
       manager->Replace(fg_users.first, new_call_cnode);
       // Handle user_func_graph slice cnode
-      auto new_maketuple_cnode = user_func_graph->NewCNode(new_concat_maketuple_inputs);
-      new_maketuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(new_maketuple_abstracts));
-      std::vector<AnfNodePtr> new_concat_inputs{NewValueNode(prim::kPrimConcat), new_maketuple_cnode};
-      auto new_concat = user_func_graph->NewCNode(new_concat_inputs);
-      new_concat->set_abstract(concat_cnode->abstract()->Clone());
-      auto new_concat_prim = GetCNodePrimitive(new_concat);
-      auto old_concat_prim = GetCNodePrimitive(concat_cnode);
-      new_concat_prim->SetAttrs(old_concat_prim->attrs());
-      if (new_concat_prim->HasAttr("fine_grained_interleaved_index")) {
-        new_concat_prim->EraseAttr("fine_grained_interleaved_index");
-      }
-
       for (size_t j = 0; j < func_node_users.size(); ++j) {
         auto new_pair = func_node_users[j];
         if (!input_index[j].first) {
+          auto new_maketuple_cnode = user_func_graph->NewCNode(new_concat_maketuple_inputs);
+          new_maketuple_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(new_maketuple_abstracts));
+          auto old_concat_prim = GetCNodePrimitive(concat_cnode);
+          std::vector<AnfNodePtr> new_concat_inputs{NewValueNode(old_concat_prim->Clone()), new_maketuple_cnode};
+          auto new_concat = user_func_graph->NewCNode(new_concat_inputs);
+          new_concat->set_abstract(concat_cnode->abstract()->Clone());
+          auto new_concat_prim = GetCNodePrimitive(new_concat);
+          if (new_concat_prim->HasAttr("fine_grained_interleaved_index")) {
+            new_concat_prim->EraseAttr("fine_grained_interleaved_index");
+          }
           manager->SetEdge(new_pair.first, new_pair.second, new_concat);
           continue;
         }
