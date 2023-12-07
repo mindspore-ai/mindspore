@@ -14,10 +14,7 @@
 # ============================================================================
 """Operator argument handle function."""
 
-from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
-
-ops_dtype_to_enum = DtypeToEnum()
-
+from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum, StringToEnum
 
 def to_kernel_size(kernel_size):
     """
@@ -131,9 +128,9 @@ def to_3d_paddings(pad):
         return pad
     raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
 
+dtype_to_type_id = DtypeToEnum()
 
-def dtype_to_enum(dtype):
-    """
-    convert mindspore.dtype to enum.
-    """
-    return ops_dtype_to_enum(dtype)
+# string to enum
+# A function for converting str type to enum type are written here,
+# but the backend supports str input, and converting str input to enum input is not necessary.
+str_to_enum = StringToEnum()

@@ -23,7 +23,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/kernel/nllloss.h"
-#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace kernel {
@@ -55,7 +55,7 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
   NLLLossFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NLLLossFunc>> func_list_;
   NLLLossStruct nllloss_param_{};
-  MsPyEnum::Reduction reduction_type_;
+  Reduction reduction_type_;
   int64_t ignore_index_;
 };
 }  // namespace kernel

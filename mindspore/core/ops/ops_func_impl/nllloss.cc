@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include "abstract/dshape.h"
-#include "ops/auto_generate/gen_enum_def.h"
+#include "mindapi/base/types.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -86,15 +86,15 @@ BaseShapePtr NLLLossFuncImpl::InferShape(const PrimitivePtr &primitive,
       std::vector<abstract::BaseShapePtr>{loss_shape_ptr, total_weight_shape_ptr});
   }
 
-  auto reduce_value_enum = static_cast<MsPyEnum::Reduction>(reduction_opt.value());
-  if ((reduce_value_enum == MsPyEnum::Reduction::SUM) || (reduce_value_enum == MsPyEnum::Reduction::MEAN)) {
+  auto reduce_value_enum = static_cast<Reduction>(reduction_opt.value());
+  if ((reduce_value_enum == Reduction::REDUCTION_SUM) || (reduce_value_enum == Reduction::MEAN)) {
     // shape () means 0D tensor.
     auto loss_shape_ptr = std::make_shared<abstract::TensorShape>(loss_shape);
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{loss_shape_ptr, total_weight_shape_ptr});
   }
 
-  if (reduce_value_enum == MsPyEnum::Reduction::NONE) {
+  if (reduce_value_enum == Reduction::NONE) {
     if (logits_shape.size() == DIM_2) {
       loss_shape.push_back(
         std::max({logits_shape[kInputIndex0], labels_shape[kInputIndex0], abstract::Shape::kShapeDimAny}));

@@ -572,7 +572,7 @@ class BatchNorm(Primitive):
         self.is_training = is_training
         self.epsilon = epsilon
         self.momentum = momentum
-        self.data_format = handler.py_format_to_enum(data_format)
+        self.data_format = handler.str_to_enum(data_format)
 
     def __call__(self, *args):
         return super().__call__(*args, self.is_training, self.epsilon,

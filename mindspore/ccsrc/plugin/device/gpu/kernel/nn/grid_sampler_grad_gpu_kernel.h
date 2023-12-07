@@ -24,7 +24,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/ops_func_impl/grid_sampler_2d_grad.h"
 #include "mindspore/core/ops/ops_func_impl/grid_sampler_3d_grad.h"
-#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
+#include "mindspore/core/ops/op_enum.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/grid_sampler_grad_impl.cuh"

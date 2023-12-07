@@ -238,7 +238,7 @@ class GEPadMod {
 class GEReduction {
  public:
   static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> reductions = {"none", "mean", "sum", "add"};
+    static const std::vector<std::string> reductions = {"sum", "mean", "none"};
     if (id < 0 || id >= static_cast<int64_t>(reductions.size())) {
       MS_LOG(EXCEPTION) << "Invalid reduction " << id;
       return "";

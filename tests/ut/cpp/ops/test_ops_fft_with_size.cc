@@ -16,7 +16,7 @@
 
 #include "ops/test_value_utils.h"
 #include "ops/auto_generate/gen_ops_name.h"
-#include "ops/auto_generate/gen_enum_def.h"
+#include "ops/op_enum.h"
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/fft_with_size.h"
 
@@ -42,7 +42,7 @@ TEST_P(TestFFT, dyn_shape) {
   auto signal_ndim = param.signal_ndim == -1 ? Any->ToAbstract() : CreatePyInt(param.signal_ndim)->ToAbstract();
   auto inverse = CreateScalar(param.inverse)->ToAbstract();
   auto real = CreateScalar(param.real)->ToAbstract();
-  auto norm = CreateScalar(static_cast<int64_t>(MsPyEnum::NormMode::BACKWARD))->ToAbstract();
+  auto norm = CreateScalar(static_cast<int64_t>(ops::NormMode::BACKWARD))->ToAbstract();
   auto onesided = CreateScalar(param.onesided)->ToAbstract();
   auto signal_sizes = param.signal_sizes->ToAbstract();
 

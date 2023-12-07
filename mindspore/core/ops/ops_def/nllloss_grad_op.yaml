@@ -15,7 +15,7 @@ nllloss_grad:
             dtype: int
             default: "'mean'"
             prim_init: True
-            arg_handler: reduction_to_enum
+            arg_handler: str_to_enum
         ignore_index:
             dtype: int
             default: -100

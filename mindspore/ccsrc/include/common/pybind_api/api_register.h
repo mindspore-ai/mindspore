@@ -70,6 +70,10 @@ namespace abstract {
 void RegPrimitiveFrontEval();
 }
 #endif
+
+namespace ops {
+void RegOpEnum(py::module *m);
+}  // namespace ops
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_

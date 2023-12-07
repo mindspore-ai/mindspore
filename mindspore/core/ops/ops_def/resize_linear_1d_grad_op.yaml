@@ -9,7 +9,7 @@ resize_linear_1d_grad:
       dtype: int
       default: "'align_corners'"
       prim_init: True
-      arg_handler: coordinate_transformation_mode_to_enum
+      arg_handler: str_to_enum
   returns:
     output:
       dtype: tensor

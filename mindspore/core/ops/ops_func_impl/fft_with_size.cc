@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore {
 namespace ops {

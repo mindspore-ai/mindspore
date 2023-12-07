@@ -9,12 +9,12 @@ grid_sampler_2d:
             dtype: int
             default: "'bilinear'"
             prim_init: True
-            arg_handler: interpolation_mode_to_enum
+            arg_handler: str_to_enum
         padding_mode:
             dtype: int
             default: "'zeros'"
             prim_init: True
-            arg_handler: grid_sampler_padding_mode_to_enum
+            arg_handler: str_to_enum
         align_corners:
             dtype: bool
             default: False

@@ -14,7 +14,7 @@ fft_with_size:
       prim_init: True
     norm:
       dtype: int
-      arg_handler: norm_mode_to_enum
+      arg_handler: str_to_enum
       default: "'backward'"
       prim_init: True
     onesided:

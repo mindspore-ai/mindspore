@@ -53,30 +53,36 @@ cc_license_str = f"""/**
  * limitations under the License.
  */"""
 
+def convert_dtype_str(dtype_str):
+    """
+    Convert dtype str to expression in ops file
+    """
+    return 'DT_' + dtype_str.replace('[', '_').replace(']', '').upper()
+
 
 def get_type_str(type_str):
     """
     Get the unified type str for operator arg dtype.
     """
     # add more type here
-    type_kind_dict = {
-        'int': 'OpDtype.PY_DT_INT',
-        'float': 'OpDtype.PY_DT_FLOAT',
-        'bool': 'OpDtype.PY_DT_BOOL',
-        'number': 'OpDtype.PY_DT_NUMBER',
-        'tuple[int]': 'OpDtype.PY_DT_TUPLE_ANY',
-        'tuple[float]': 'OpDtype.PY_DT_TUPLE_ANY',
-        'tuple[bool]': 'OpDtype.PY_DT_TUPLE_ANY',
-        'tuple[tensor]': 'OpDtype.PY_DT_TUPLE_ANY',
-        'list[int]': 'OpDtype.PY_DT_LIST_ANY',
-        'list[float]': 'OpDtype.PY_DT_LIST_ANY',
-        'list[bool]': 'OpDtype.PY_DT_LIST_ANY',
-        'list[tensor]': 'OpDtype.PY_DT_LIST_ANY',
-        'tensor': 'OpDtype.PY_DT_TENSOR',
-        'type': 'OpDtype.PY_DT_TYPE',
+    type_kind_set = {
+        'int',
+        'float',
+        'bool',
+        'number',
+        'tuple[int]',
+        'tuple[float]',
+        'tuple[bool]',
+        'tuple[tensor]',
+        'list[int]',
+        'list[float]',
+        'list[bool]',
+        'list[tensor]',
+        'tensor',
+        'type',
     }
-    if type_str in type_kind_dict:
-        return type_kind_dict[type_str]
+    if type_str in type_kind_set:
+        return "OpDtype." + convert_dtype_str(type_str)
     raise TypeError(f"""Unsupported type {type_str} for args.""")
 
 
@@ -158,10 +164,10 @@ def get_assign_str_by_type_it(arg_info, arg_name, dtype):
         type_cast_tuple = tuple(ct.strip() for ct in type_cast.split(","))
         assign_str += f'type_it({arg_name}, '
         if len(type_cast_tuple) == 1:
-            assign_str += get_type_str(type_cast_tuple[0]) + '.value, '
+            assign_str += get_type_str(type_cast_tuple[0]) + ', '
         else:
-            assign_str += '(' + ', '.join(get_type_str(ct) + '.value' for ct in type_cast_tuple) + '), '
-        assign_str += get_type_str(dtype) + '.value)'
+            assign_str += '(' + ', '.join(get_type_str(ct) for ct in type_cast_tuple) + '), '
+        assign_str += get_type_str(dtype) + ')'
     else:
         assign_str = arg_name
     return assign_str

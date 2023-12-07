@@ -22,7 +22,7 @@ extract_image_patches:
       dtype: int
       default: "'VALID'"
       prim_init: True
-      arg_handler: pad_mode_to_enum
+      arg_handler: str_to_enum
   returns:
     output:
       dtype: tensor

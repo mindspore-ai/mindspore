@@ -156,6 +156,7 @@ void RegModule(py::module *m) {
   mindspore::abstract::RegPrimitiveFrontEval();
 #endif
   mindspore::expander::RegPackExpanderPy(m);
+  mindspore::ops::RegOpEnum(m);
 }
 
 void RegModuleHelper(py::module *m) {

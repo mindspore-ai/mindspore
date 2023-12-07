@@ -7,7 +7,7 @@ bias_add_grad:
             dtype: int
             default: "'NCHW'"
             prim_init: True
-            arg_handler: py_format_to_enum
+            arg_handler: str_to_enum
     returns:
         output:
             dtype: tensor

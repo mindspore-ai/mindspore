@@ -20,7 +20,6 @@
 #include <string>
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

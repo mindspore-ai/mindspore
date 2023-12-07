@@ -86,7 +86,7 @@ enum Format : int64_t {
   NUM_OF_FORMAT
 };
 
-inline std::string FormatEnumToString(mindspore::Format format) {
+inline const std::vector<std::string> &GetFormatNames() {
   static std::vector<std::string> names = {
     "NCHW",
     "NHWC",
@@ -148,6 +148,11 @@ inline std::string FormatEnumToString(mindspore::Format format) {
     "NYUV_A",
     "NCL",
   };
+  return names;
+}
+
+inline std::string FormatEnumToString(mindspore::Format format) {
+  const auto &names = GetFormatNames();
   if (format == mindspore::Format::DEFAULT_FORMAT) {
     return "DefaultFormat";
   }
