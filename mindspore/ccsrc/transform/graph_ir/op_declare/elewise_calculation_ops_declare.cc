@@ -48,6 +48,7 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
+REG_ADPT_DESC(ScalarAdd, prim::kPrimScalarAdd->name(), ADPT_DESC(Add))
 
 // AddV2
 INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -74,6 +75,7 @@ INPUT_MAP(GreaterEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(GreaterEqual) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GreaterEqual) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GreaterEqual, kNameGreaterEqual, ADPT_DESC(GreaterEqual))
+REG_ADPT_DESC(ScalarGe, prim::kPrimScalarGe->name(), ADPT_DESC(GreaterEqual))
 
 // AssignAdd
 INPUT_MAP(AssignAdd) = {{1, INPUT_DESC(ref)}, {2, INPUT_DESC(value)}};
@@ -129,6 +131,7 @@ INPUT_MAP(Div) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Div) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Div) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Div, kNameDiv, ADPT_DESC(Div))
+REG_ADPT_DESC(ScalarDiv, prim::kPrimScalarDiv->name(), ADPT_DESC(Div))
 
 // TruncateDiv
 INPUT_MAP(TruncateDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -165,6 +168,7 @@ INPUT_MAP(FloorDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(FloorDiv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FloorDiv) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FloorDiv, kNameFloorDiv, ADPT_DESC(FloorDiv))
+REG_ADPT_DESC(ScalarFloorDiv, prim::kPrimScalarFloorDiv->name(), ADPT_DESC(FloorDiv))
 
 // FloorMod
 INPUT_MAP(FloorMod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -256,6 +260,7 @@ INPUT_MAP(Mod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Mod) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Mod) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Mod, kNameMod, ADPT_DESC(Mod))
+REG_ADPT_DESC(ScalarMod, prim::kPrimScalarMod->name(), ADPT_DESC(Mod))
 
 // Exp
 INPUT_MAP(Exp) = {{1, INPUT_DESC(x)}};
@@ -399,6 +404,7 @@ INPUT_MAP(Mul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Mul) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Mul) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Mul, prim::kPrimMul->name(), ADPT_DESC(Mul))
+REG_ADPT_DESC(ScalarMul, prim::kPrimScalarMul->name(), ADPT_DESC(Mul))
 
 // MulNoNan
 INPUT_MAP(MulNoNan) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -431,6 +437,7 @@ INPUT_MAP(Sub) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Sub) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Sub) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sub, prim::kPrimSub->name(), ADPT_DESC(Sub))
+REG_ADPT_DESC(ScalarSub, prim::kPrimScalarSub->name(), ADPT_DESC(Sub))
 
 // Neg
 INPUT_MAP(Neg) = {{1, INPUT_DESC(x)}};
@@ -443,6 +450,7 @@ INPUT_MAP(Less) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Less) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Less) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Less, kNameLess, ADPT_DESC(Less))
+REG_ADPT_DESC(ScalarLt, prim::kPrimScalarLt->name(), ADPT_DESC(Less))
 
 // Rsqrt
 INPUT_MAP(Rsqrt) = {{1, INPUT_DESC(x)}};
@@ -516,6 +524,7 @@ INPUT_MAP(Pow) = {
 ATTR_MAP(Pow) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Pow) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pow, kNamePow, ADPT_DESC(Pow))
+REG_ADPT_DESC(ScalarPow, prim::kPrimScalarPow->name(), ADPT_DESC(Pow))
 
 // PopulationCount
 INPUT_MAP(PopulationCount) = {{1, INPUT_DESC(x)}};
@@ -528,6 +537,7 @@ INPUT_MAP(Equal) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Equal) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Equal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Equal, kNameEqual, ADPT_DESC(Equal))
+REG_ADPT_DESC(ScalarEq, prim::kPrimScalarEq->name(), ADPT_DESC(Equal))
 
 // ApproximateEqual
 INPUT_MAP(ApproximateEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -566,18 +576,21 @@ INPUT_MAP(LogicalNot) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogicalNot) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogicalNot) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogicalNot, kNameLogicalNot, ADPT_DESC(LogicalNot))
+REG_ADPT_DESC(BoolNot, prim::kPrimBoolNot->name(), ADPT_DESC(LogicalNot))
 
 // Greater
 INPUT_MAP(Greater) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Greater) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Greater) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Greater, kNameGreater, ADPT_DESC(Greater))
+REG_ADPT_DESC(ScalarGt, prim::kPrimScalarGt->name(), ADPT_DESC(Greater))
 
 // LessEqual
 INPUT_MAP(LessEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(LessEqual) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LessEqual) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LessEqual, kNameLessEqual, ADPT_DESC(LessEqual))
+REG_ADPT_DESC(ScalarLe, prim::kPrimScalarLe->name(), ADPT_DESC(LessEqual))
 
 // Abs
 INPUT_MAP(Abs) = {{1, INPUT_DESC(x)}};
