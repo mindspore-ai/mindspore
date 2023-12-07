@@ -54,11 +54,11 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   auto maketuple2 = each_graph->NewCNode(maketuple2_inputs);
   maketuple1->set_abstract(std::make_shared<abstract::AbstractTuple>(maketuple1_abs_inputs));
   maketuple2->set_abstract(std::make_shared<abstract::AbstractTuple>(maketuple2_abs_inputs));
-  std::vector<AnfNodePtr> concat1_inputs{NewValueNode(prim::kPrimConcat), maketuple1};
-  std::vector<AnfNodePtr> concat2_inputs{NewValueNode(prim::kPrimConcat), maketuple2};
+  std::vector<AnfNodePtr> concat1_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple1};
+  std::vector<AnfNodePtr> concat2_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple2};
   auto concat1 = each_graph->NewCNode(concat1_inputs);
   auto concat2 = each_graph->NewCNode(concat2_inputs);
-  std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul), concat1, concat2};
+  std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul->Clone()), concat1, concat2};
   auto merged_matmul = each_graph->NewCNode(merged_matmul_inputs);
   // set abstract and attr
   auto matmul_dw_node_front = matmul_dw_nodes.front();
@@ -104,7 +104,7 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   merged_matmul->set_primal_attrs(matmul_dw_node_front->primal_attrs());
   // concat1 -> merged_matmul -> assign_add
   // concat2
-  std::vector<AnfNodePtr> assign_add_inputs{NewValueNode(prim::kPrimAssignAdd), pair.first, merged_matmul};
+  std::vector<AnfNodePtr> assign_add_inputs{NewValueNode(prim::kPrimAssignAdd->Clone()), pair.first, merged_matmul};
   auto assign_add_cnode = each_graph->NewCNode(assign_add_inputs);
   assign_add_cnode->set_abstract(merged_matmul->abstract()->Clone());
   for (const auto &assgin_add_origin_node : pair.second) {
