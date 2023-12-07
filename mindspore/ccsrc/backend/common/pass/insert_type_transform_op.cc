@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
@@ -316,16 +317,14 @@ void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {
 
 abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto found = abstract::GetPrimitiveInferImpl(primitive);
-  if (!found.has_value()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
-  }
-
   std::vector<AbstractBasePtr> input_args;
   (void)std::for_each(input_list.begin(), input_list.end(),
                       [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
-  auto infer_impl = found.value();
-  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
+  auto abs_opt = abstract::TryInferAbstract(primitive, input_args);
+  if (!abs_opt.has_value()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+  }
+  auto abs = abs_opt.value();
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;

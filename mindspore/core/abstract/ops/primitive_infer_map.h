@@ -130,6 +130,9 @@ MS_CORE_API std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const Primiti
                                                                    const AbstractBasePtrList &input_args);
 MS_CORE_API std::optional<ValuePtr> InferValueByFuncImpl(const PrimitivePtr &primitive,
                                                          const AbstractBasePtrList &input_args);
+
+MS_CORE_API std::optional<AbstractBasePtr> TryInferAbstract(const PrimitivePtr &primitive,
+                                                            const AbstractBasePtrList &input_args);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
