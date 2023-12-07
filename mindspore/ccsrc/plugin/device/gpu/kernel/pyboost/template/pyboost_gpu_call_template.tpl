@@ -25,6 +25,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${real_call_args}]() {
     kernel_mod = CreateKernelMod(primitive(), op_name(), op->device_context(),
                                  inputs_kernel_tensors, outputs_kernel_tensors);
   }
+  cache_helper.SetCache(key, kernel_mod);
   const auto &gpu_kernel = std::dynamic_pointer_cast<kernel::NativeGpuKernelMod>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel);
   // KernelMod resize
