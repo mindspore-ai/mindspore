@@ -251,6 +251,7 @@ def test_invalid_db():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     os.remove(file_name + ".db")
     with open(file_name + ".db", 'w') as f:
@@ -296,6 +297,7 @@ def test_read_after_close():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     reader = FileReader(file_name)
     reader.close()
@@ -313,6 +315,7 @@ def test_file_read_after_read():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     reader = FileReader(file_name)
     count = 0

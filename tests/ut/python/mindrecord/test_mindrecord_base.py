@@ -1741,6 +1741,7 @@ def test_filereader_and_check_result(file_name=None, remove_file=True):
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
 
+
 def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, encode=None, enc_mode=None,
                                            hash_mode=None, dec_mode=None):
     """
@@ -1769,7 +1770,6 @@ def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, enc
 
     set_enc_key(encode)
     set_enc_mode(enc_mode)
-    set_dec_mode(dec_mode)
     set_hash_mode(hash_mode)
 
     # single file with encode and hash
@@ -1793,11 +1793,19 @@ def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, enc
 
     if dec_mode is not None:
         set_enc_key(encode)
-        set_enc_mode(dec_mode)
+        set_dec_mode(dec_mode)
 
     # FileReader open the file
     reader = FileReader(file_name)
     assert reader.len() == 50
+
+    # check the .decrypt_mindrecord dir permission
+    if encode is not None:
+        real_path_filename = os.path.realpath(file_name)
+        parent_dir = os.path.dirname(real_path_filename)
+        permission = os.popen("ls -a -l " + parent_dir +
+                              " | grep \".decrypt_mindrecord\" | awk -F \" \" '{print $1;}'").readline()
+        assert permission.startswith("drwx------")
 
     # MindPage open the file
     reader = MindPage(file_name)
@@ -1851,7 +1859,7 @@ def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, enc
     assert row1[0]['label'] == 822
 
     set_enc_key(None)
-    set_enc_mode(None)
+    set_enc_mode()
     set_dec_mode(None)
     set_hash_mode(None)
 
@@ -1906,18 +1914,47 @@ def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
             data_int = int.from_bytes(data, 'big')
             key_int = int.from_bytes(key.encode('utf-8'), 'big')
 
+            data_out = (data_int ^ key_int).to_bytes(len(data), 'big')
+
             # write to the file
-            f_out.write((data_int ^ key_int).to_bytes(len(data), 'big'))
+            f_out.write(int(len(data_out)).to_bytes(length=4, byteorder='big', signed=True))
+            f_out.write(data_out)
 
             current_offset += read_size
+
+    def decrypt(f_in, file_size, f_out, key):
+        current_offset = 0           ## use this to seek file
+        length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
+        while length != 0:
+            # current_offset is the encrypted data
+            current_offset += 4
+            if f_in.seek(current_offset) == -1:
+                f_in.close()
+                raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+
+            data = f_in.read(length)
+            data_int = int.from_bytes(data, 'big')
+            key_int = int.from_bytes(key.encode('utf-8'), 'big')
+            data_out = (data_int ^ key_int).to_bytes(len(data), 'big')
+
+            # write to decrypt file
+            f_out.write(data_out)
+
+            # current_offset is the length of next encrypted data block
+            current_offset += length
+            if f_in.seek(current_offset) == -1:
+                f_in.close()
+                raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+
+            length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
 
     def udf_hash(data, pre_hash):
         cur_hash = hash(data + pre_hash)
         return str(cur_hash).encode('utf-8')
 
-    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", encrypt, None, encrypt)
+    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", encrypt, None, decrypt)
     file_writer_encode_and_integrity_check(file_name, True, None, "AES-CBC", udf_hash, None)
-    file_writer_encode_and_integrity_check(file_name, True, "0123456780abcdef", encrypt, udf_hash, encrypt)
+    file_writer_encode_and_integrity_check(file_name, True, "0123456780abcdef", encrypt, udf_hash, decrypt)
 
 
 def test_file_writer_encode_integrity_check_with_exception(file_name=None, remove_file=True):
@@ -2333,7 +2370,7 @@ def test_file_writer_encode_integrity_check_with_exception(file_name=None, remov
         shutil.rmtree(decrypt_dir)
 
     set_enc_key(None)
-    set_enc_mode(None)
+    set_enc_mode()
     set_dec_mode(None)
     set_hash_mode(None)
 
@@ -2384,7 +2421,7 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
         # FileReader open the file
         reader = FileReader(file_name)
         assert reader.len() == 50
-    assert "Failed to decrypt data, please check if enc_key or enc_mode is valid." in str(err.value)
+    assert "Failed to decrypt data, please check if enc_key and enc_mode / dec_mode is valid." in str(err.value)
 
     ## read with other encode mode
     set_enc_key("zxcvasdfqwerbnm,")
@@ -2393,7 +2430,7 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
         # FileReader open the file
         reader = FileReader(file_name)
         assert reader.len() == 50
-    assert "Failed to decrypt data, please check if enc_key or enc_mode is valid." in str(err.value)
+    assert "Failed to decrypt data, please check if enc_key and enc_mode / dec_mode is valid." in str(err.value)
 
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
@@ -2428,6 +2465,6 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
         shutil.rmtree(decrypt_dir)
 
     set_enc_key(None)
-    set_enc_mode(None)
+    set_enc_mode()
     set_dec_mode(None)
     set_hash_mode(None)

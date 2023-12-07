@@ -467,6 +467,18 @@ class FileWriter:
 
             self._parallel_commit()
 
+        # change file mode first, because encrypt / hash check may failed
+        mindrecord_files = []
+        index_files = []
+        for item in self._paths:
+            if os.path.exists(item):
+                os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
+                mindrecord_files.append(item)
+            index_file = item + ".db"
+            if os.path.exists(index_file):
+                os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
+                index_files.append(index_file)
+
         for item in self._paths:
             if os.path.exists(item):
                 # add the integrity check string
@@ -478,18 +490,6 @@ class FileWriter:
                 if _get_enc_key() is not None:
                     encrypt(item, _get_enc_key(), _get_enc_mode())
                     encrypt(item + ".db", _get_enc_key(), _get_enc_mode())
-
-        # change the file mode to 600
-        mindrecord_files = []
-        index_files = []
-        for item in self._paths:
-            if os.path.exists(item):
-                os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
-                mindrecord_files.append(item)
-            index_file = item + ".db"
-            if os.path.exists(index_file):
-                os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
-                index_files.append(index_file)
 
         logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
             mindrecord_files, index_files))
