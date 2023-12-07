@@ -44,8 +44,6 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
                       << anf_node->fullname_with_scope() << "] failed.";
   }
 
-  kernel_ptr->SetDTypes(opname);
-
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckResizeCondition(cnode)) {
