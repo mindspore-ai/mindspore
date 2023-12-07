@@ -118,14 +118,15 @@ struct DataConvert {
 };
 
 struct PyBoost {
-  static FrontendOpRunInfoPtr Init(const py::args &args);
+  static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
   static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
-  static py::object RunPyFunction(const py::args &args);
+  static PrimitivePtr ConvertPrimitive(const py::object &obj);
+  static py::object RunPyFunction(const PrimitivePtr &prim, const py::args &args);
   template <typename T>
   static ValuePtr OptionalToValue(const std::optional<T> &val) {
     if (!val.has_value()) {
@@ -150,8 +151,7 @@ struct PyBoost {
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     // For auto grad use
-
-    if (op_run_info->base_op_run_info.op_name == kCast) {
+    if (op_run_info->op_grad_info->op_prim->name() == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();

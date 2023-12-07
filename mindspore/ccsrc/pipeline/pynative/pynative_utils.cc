@@ -1123,15 +1123,13 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
-FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
-  if (MS_UNLIKELY(args.size() != kIndex2)) {
-    MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
-                      << ", but got " << args.size();
-  }
+FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &args) {
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
-  PyParser::SetPrim(op_run_info, args[kIndex0]);
+  prim->EnableSharedMutex();
+  op_run_info->op_grad_info->op_prim = prim;
+  op_run_info->base_op_run_info.op_name = prim->name();
   pynative_executor->StoreAsyncStatus(op_run_info);
   forward_executor->InitOpRunInfo(op_run_info);
   return op_run_info;
@@ -1197,19 +1195,26 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   }
 }
 
-py::object PyBoost::RunPyFunction(const py::args &args) {
-  const auto &adapter = args[kIndex0].cast<PrimitivePyAdapterPtr>();
+PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
+  const auto &adapter = obj.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
-    prim = std::make_shared<PrimitivePy>(args[kIndex0]);
+    prim = std::make_shared<PrimitivePy>(obj);
     adapter->set_attached_primitive(prim);
   }
-  py::str prim_name = prim->name();
+  if (!prim->HasPyObj()) {
+    MS_LOG(EXCEPTION) << "Pyobj is empty";
+  }
+  prim->EnableSharedMutex();
+  return prim;
+}
+
+py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::args &args) {
   py::tuple wrap_args(kIndex3);
-  wrap_args[kIndex0] = args[kIndex0];
-  wrap_args[kIndex1] = prim_name;
-  wrap_args[kIndex2] = args[kIndex1];
+  wrap_args[kIndex0] = prim;
+  wrap_args[kIndex1] = prim->name();
+  wrap_args[kIndex2] = args;
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   return pynative_executor->RunOpStub(wrap_args);
 }
@@ -1371,7 +1376,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
     (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
   } else if (v->isa<IntegerImm>()) {
-    if (op_run_info->op_grad_info->op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+    if (op_run_info->base_op_run_info.op_name == prim::kPrimCSRReduceSum->name()) {
       int64_t input = v->cast<Int64ImmPtr>()->value();
       op_run_info->op_grad_info->op_prim->set_attr("axis", MakeValue(input));
       return;

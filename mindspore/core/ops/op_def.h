@@ -70,6 +70,7 @@ struct OpDef {
   std::string name_;
   std::vector<OpInputArg> args_;
   std::vector<OpOutputArg> returns_;
+  std::vector<Signature> signatures_;
   std::unordered_map<std::string, size_t> indexes_;
   OpFuncImpl &func_impl_;
 };

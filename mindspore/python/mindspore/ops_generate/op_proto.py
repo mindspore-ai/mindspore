@@ -16,10 +16,11 @@
 from pyboost_utils import convert_python_func_name_to_c
 
 class Arg:
-    def __init__(self, arg_name, arg_dtype, type_cast, as_init_arg=False, default=-1, inplace=''):
+    def __init__(self, arg_name, arg_dtype, type_cast, is_type_id=False, as_init_arg=False, default=-1, inplace=''):
         self.arg_name = arg_name
         self.arg_dtype = arg_dtype
         self.type_cast = type_cast
+        self.is_type_id = is_type_id
         self.as_init_arg = as_init_arg
         self.default = default
         self.inplace = inplace
@@ -66,6 +67,7 @@ class OpProto:
         args_dict = yaml.get('args')
         op_args = []
         default_str = 'default'
+        is_type_id = False
         for arg_name in args_dict.keys():
             arg_dtype = args_dict[arg_name]['dtype']
             default = None
@@ -76,7 +78,9 @@ class OpProto:
                 as_init_arg = True
             if 'type_cast' in args_dict[arg_name]:
                 type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
-            arg = Arg(arg_name, arg_dtype, type_cast, as_init_arg, default)
+            if 'arg_handler' in args_dict[arg_name] and args_dict[arg_name]['arg_handler'] == 'dtype_to_enum':
+                is_type_id = True
+            arg = Arg(arg_name, arg_dtype, type_cast, is_type_id, as_init_arg, default)
             op_args.append(arg)
         if 'returns' not in yaml.keys():
             raise TypeError("op define need key 'returns'")

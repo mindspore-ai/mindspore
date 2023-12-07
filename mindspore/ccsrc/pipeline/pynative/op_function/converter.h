@@ -56,8 +56,8 @@ class Converter {
   std::optional<ScalarPtr> ToScalarOptional(size_t i);
   StringImmPtr ToString(size_t i);
   std::optional<StringImmPtr> ToStringOptional(size_t i);
-  TypePtr ToDtype(size_t i);
-  std::optional<TypePtr> ToDtypeOptional(size_t i);
+  Int64ImmPtr ToDtype(size_t i);
+  std::optional<Int64ImmPtr> ToDtypeOptional(size_t i);
   ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t i);
   const std::vector<ops::OP_DTYPE> &source_type() const { return source_type_; }
 

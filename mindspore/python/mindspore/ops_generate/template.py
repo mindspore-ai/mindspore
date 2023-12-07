@@ -81,9 +81,36 @@ class CppTemplate:
 NEW_LINE = "\n"
 WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
 
+PYTHON_PRIM_TEMPLATE = CppTemplate("""
+
+class _Pyboost${class_name}Prim(${class_name}Prim_):
+    def __call__(self, ${input_args}):
+        ${process_func}
+        return _convert_stub(super().__call__(${input_args}))
+
+
+${func_name}_ = _Pyboost${class_name}Prim()
+""")
+
+IMPORT_PYBOOST_PRIM_HEADER = f"""
+from mindspore.common._stub_tensor import _convert_stub
+from mindspore.common import dtype as mstype
+from mindspore.ops.auto_generate.gen_arg_handler import *
+"""
+
+IMPORT_PYBOOST_FUNC_HEADER = f"""
+from mindspore.ops.auto_generate.pyboost_inner_prim import *
+
+"""
+
 REGISTER_DEFINE_TEMPLATE = CppTemplate(
-    "  m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");\n")
-REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {\n${register_func}\n}\n")
+    """
+    (void)py::class_<${class_name}PrimAdapter, PrimitiveFunctionAdapter, std::shared_ptr<${class_name}PrimAdapter>>(
+      *m, "${class_name}Prim_")
+      .def(py::init<>())
+      .def("__call__", &${class_name}PrimAdapter::Call, "Call ${class_name} op.");
+    m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");""")
+REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {${register_func}\n}")
 
 PYBOOST_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function.tpl'))
@@ -167,15 +194,33 @@ PYBOOST_CPU_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
                  './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template'
                  '/pyboost_cpu_customize_call_template.tpl'))
 
-PYBOOST_PY_FUNC_HEADEAR = ("""
-from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_def import *
-""")
+PYBOOST_PY_FUNC_IMPORT_HEADEAR = CppTemplate(
+    """from mindspore._c_expression import ${class_name}Prim_\n"""
+)
 
 PYBOOST_PY_FUNC_TEMPLATE = CppTemplate("""
 def ${func_name}(${func_args}):
     r\"\"\"
     ${description}
     \"\"\"
-    ${operator_name}_op = _get_cache_prim(${class_name})(${init_args})
-    return ${operator_name}_op(${input_args})\n\n""")
+    return ${prim_func}_(${input_args})\n\n""")
+
+OP_PROTO_TEMPLATE = CppTemplate("""
+${class_name}FuncImpl g${class_name}FuncImpl;
+OpDef g${class_name} = {
+  /*.name_=*/"${class_name}",
+  /*.args_=*/ {
+    ${input_args}
+  },
+  /* .returns_ = */ {
+    ${return_args} 
+  },
+  /*.signatures_ =*/ {
+    ${signatures}
+  },
+  /*.indexes_ =*/ {
+    ${indexes}
+  },
+  /*.func_impl_=*/g${class_name}FuncImpl,
+};
+""")
