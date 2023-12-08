@@ -109,9 +109,15 @@ int LpNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   // The axis_'s validation has been check in core/ops/lp_norm.cc, just using it.
   std::vector<size_t> axis;
   int64_t input_rank = SizeToLong(input_shape.size());
-  (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
-    return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
-  });
+  if (axis_.size() == 0) {
+    for (int64_t i = 0; i < input_rank; ++i) {
+      axis.push_back(i);
+    }
+  } else {
+    (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
+      return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
+    });
+  }
   std::vector<size_t> output_stride(input_shape.size(), 1);
   for (int i = static_cast<int>(output_stride.size()) - 2; i >= 0; --i) {
     auto size_i = static_cast<size_t>(i);
