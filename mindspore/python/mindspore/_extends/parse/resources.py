@@ -137,7 +137,7 @@ convert_object_map = {
     T.map:          C.Map(),
     T.filter:       M.filter_,
     T.partial:      F.partial,
-    T.zip:          C.zip_operation,
+    T.zip:          M.ms_zip,
     T.enumerate:    M.enumerate_,
     T.isinstance:   Primitive('isinstance'),
     T.max:          M.ms_max,

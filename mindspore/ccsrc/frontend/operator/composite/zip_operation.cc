@@ -53,14 +53,6 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
 
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  for (auto arg : args_abs_list) {
-    if (arg->isa<abstract::AbstractTensor>()) {
-      const auto &build_shape = arg->BuildShape();
-      if (build_shape->IsDimZero()) {
-        MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
-      }
-    }
-  }
 
   bool convert_to_interpret = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &abs) {
     MS_EXCEPTION_IF_NULL(abs);

@@ -2457,6 +2457,18 @@ def tuple_func(*data):
     return ret
 
 
+def ms_zip(*data):
+    """Implementation of `tuple`."""
+    x = ()
+    for i in data:
+        if isinstance(i, Tensor):
+            if len(F.shape(i)) == 0:
+                raise TypeError("Cannot iterate over a scalar tensor.")
+            i = tuple(i)
+        x = x + (i,)
+    return composite.zip_operation(*x)
+
+
 def max_tensor(*data):
     """Get the max of tensor inputs."""
     if len(data) == 1:

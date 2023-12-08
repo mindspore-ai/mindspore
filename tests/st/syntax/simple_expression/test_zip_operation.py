@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 
-from mindspore import Tensor, Parameter, context
+from mindspore import Tensor, Parameter, context, jit
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 import mindspore as ms
@@ -95,3 +95,57 @@ def test_zip_operation_args_type():
     with pytest.raises(TypeError, match="Cannot iterate over a scalar tensor."):
         out = net(x)
         assert np.all(out.asnumpy() == 1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_zip_operation_with_tensor_input():
+    """
+    Feature: Check the type of inputs of ZipOperation.
+    Description: Check whether all inputs in zip is sequeue.
+    Expectation: All inputs in zip must be sequeue.
+    """
+    @jit
+    def foo(x):
+        return tuple(zip(x, x+1))
+
+    ret = foo(Tensor([1, 2, 3]))
+    assert ret == ((Tensor([1]), Tensor([2])), (Tensor([2]), Tensor([3])), (Tensor([3]), Tensor([4])))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_zip_operation_with_tensor_input_2():
+    """
+    Feature: Check the type of inputs of ZipOperation.
+    Description: Check whether all inputs in zip is sequeue.
+    Expectation: All inputs in zip must be sequeue.
+    """
+    @jit
+    def foo(x):
+        return tuple(zip(x, (1, 2, 3)))
+
+    ret = foo(Tensor([1, 2, 3]))
+    assert ret == ((Tensor([1]), 1), (Tensor([2]), 2), (Tensor([3]), 3))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_fallback_zip_with_numpy_and_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test zip in graph mode with numpy and tensor input.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = np.array([1, 2])
+        y = Tensor([10, 20])
+        ret = zip(x, y)
+        return tuple(ret)
+
+    out = foo()
+    assert out == ((1, Tensor([10])), (2, Tensor([20])))
