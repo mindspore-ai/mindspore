@@ -15,12 +15,8 @@
  */
 
 #include "plugin/device/gpu/kernel/pyboost/customize/copy.h"
-#include "kernel/pyboost/py_boost_utils.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "kernel/pyboost/customize/op_common.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
-#include "kernel/kernel_mod_cache.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,66 +24,9 @@ namespace pyboost {
 
 tensor::TensorPtr CopyGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
-  auto input_abs = input_tensor->ToAbstract();
-  auto output_abs = input_abs->Clone();
-  op->set_input_abs({input_abs});
-  op->set_output_abs(output_abs);
-
-  auto input_storage_info = input_tensor->storage_info();
-  std::vector<tensor::TensorPtr> outputs;
-  PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
-  op->set_outputs(outputs);
-
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, input_storage_info]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-
-    // Create device address for inputs
-    const auto &input_addr_list = PyBoostUtils::CreateInputDeviceAddress(device_context, op->input_abs(), input_tensor);
-
-    // Create device address for outputs
-    const auto &output_addr_list = PyBoostUtils::CreateOutputDeviceAddress(device_context, op->output_abs(), outputs);
-
-    if (input_storage_info == nullptr) {
-      const auto &inputs_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(input_addr_list);
-      const auto &outputs_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(output_addr_list);
-      const auto &op_name = kTensorMoveOpName;
-
-      // KernelMod init
-      auto &cache_helper = kernel::KernelModCache::GetInstance();
-      const auto &key = cache_helper.GetKernelModKey(op_name, kGPUDevice, inputs_kernel_tensors);
-      auto kernel_mod = cache_helper.GetKernelMod(key);
-      if (kernel_mod == nullptr) {
-        kernel_mod =
-          CreateKernelMod(op->primitive(), op_name, device_context, inputs_kernel_tensors, outputs_kernel_tensors);
-      }
-      const auto &gpu_kernel = std::dynamic_pointer_cast<kernel::NativeGpuKernelMod>(kernel_mod);
-      MS_EXCEPTION_IF_NULL(gpu_kernel);
-      // KernelMod resize
-      if (gpu_kernel->Resize(inputs_kernel_tensors, outputs_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
-        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << op_name
-                                   << "] resize failed.";
-      }
-      // Get workspace address
-      const auto &workspace_device_address =
-        PyBoostUtils::CreateWorkSpaceDeviceAddress(gpu_kernel, device_context, op_name);
-      const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
-      // Do kernel launch
-      auto &stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
-      MS_EXCEPTION_IF_NULL(stream);
-      if (!gpu_kernel->Launch(inputs_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, stream)) {
-        MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name;
-      }
-    } else {
-      if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-            pynative::KernelTaskType::kCONTIGUOUS_TASK, input_addr_list, {input_storage_info}, output_addr_list)) {
-        MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
-      }
-    }
-
-    MS_LOG(DEBUG) << "Launch end";
-  }));
-  return op->output(0);
+  // No need to get default_stream here, after the multi-stream feature is complete.
+  auto stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
+  return CopyCustomizeCall(op, input_tensor, stream);
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -1,43 +1,46 @@
 MS_LOG(DEBUG) << op_name() << " call start";
 InferOutput(${call_args});
 
-${value_tuple_convert}
-${const_number_convert}
+// Create device address for inputs and outputs
+${create_input_address}
+${inplace_process}
+PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
+
 // Async
 auto op = get_op();
 PyBoostUtils::DispatchRun(
-std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${real_call_args}]() {
+std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args}]() {
   auto device_context = op->device_context();
   const auto &outputs = op->outputs();
 
   // Create device address for inputs
   ${malloc_inputs}
-  ${inplace_process}
-  // Create device address for outputs
-  const auto &outputs_device_address = PyBoostUtils::CreateOutputDeviceAddress(device_context, op->output_abs(), outputs);
-  const auto &outputs_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(outputs_device_address);
+
+  // Malloc for output tensors
+  PyBoostUtils::MallocOpOutputs(device_context, outputs);
+
+  // Get inputs kernel tensors, the not-tensor value will malloc here
+  ${get_inputs_kernel_tensors}
+
+  // Get outputs kernel tensors
+  const auto &output_address_info =
+    PyBoostUtils::GetKernelTensors(device_context, {op->output_abs()}, outputs);
+
   // KernelMod init
-  auto &cache_helper = kernel::KernelModCache::GetInstance();
-  const auto &key = cache_helper.GetKernelModKey(op_name(), "GPU", inputs_kernel_tensors);
-  auto kernel_mod = cache_helper.GetKernelMod(key);
-  if(kernel_mod == nullptr) {
-    kernel_mod = CreateKernelMod(primitive(), op_name(), op->device_context(),
-                                 inputs_kernel_tensors, outputs_kernel_tensors);
-  }
-  cache_helper.SetCache(key, kernel_mod);
-  const auto &gpu_kernel = std::dynamic_pointer_cast<kernel::NativeGpuKernelMod>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(gpu_kernel);
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive(), op_name(), op->device_context(),
+                                                  input_address_info.first, output_address_info.first);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   // KernelMod resize
-  if (gpu_kernel->Resize(inputs_kernel_tensors, outputs_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+  if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << op_name() << "] resize failed.";
   }
   // Get workspace address
-  const auto &workspace_device_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(gpu_kernel, device_context, op_name());
+  const auto &workspace_device_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(kernel_mod, device_context, op_name());
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
   // Do kernel launch
   auto &stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
-  if (!gpu_kernel->Launch(inputs_kernel_tensors, workspace_kernel_tensors, outputs_kernel_tensors, stream)) {
+  if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream)) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name();
   }
   MS_LOG(DEBUG) << "Launch end";

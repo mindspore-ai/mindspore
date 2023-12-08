@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/pyboost/auto_generate/${operator_name}.h"
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_CUSTOMIZE_OP_COMMON_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_CUSTOMIZE_OP_COMMON_H_
+
+#include <vector>
+#include <memory>
+#include "ir/tensor.h"
+#include "ir/value.h"
 #include "runtime/hardware/device_context_manager.h"
-${customize_include}
+#include "kernel/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-${return_type} ${op_name}CPU::Call(${call_args_with_type}) {
-  ${call_impl}
-}
+// Common call for copy op in cpu and gpu.
+tensor::TensorPtr BACKEND_EXPORT CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+                                                   void *stream);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_CUSTOMIZE_OP_COMMON_H_

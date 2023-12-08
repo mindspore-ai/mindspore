@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/pyboost/auto_generate/${operator_name}.h"
-#include "runtime/hardware/device_context_manager.h"
-${customize_include}
+#include "plugin/device/cpu/kernel/pyboost/pyboost_cpu_kernel_extra_func.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "kernel/pyboost/py_boost_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-${return_type} ${op_name}CPU::Call(${call_args_with_type}) {
-  ${call_impl}
+void PyboostCPUKernelExtraFunc::SetThreadPool(const kernel::KernelModPtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+
+  const auto &cpu_kernel = std::dynamic_pointer_cast<kernel::NativeCpuKernelMod>(kernel);
+  MS_EXCEPTION_IF_NULL(cpu_kernel);
+  auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+  cpu_kernel->SetThreadPool(thread_pool);
 }
+
+REG_PYBOOST_KERNEL_EXTRA_FUN(kCPUDevice, PyboostCPUKernelExtraFunc);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
