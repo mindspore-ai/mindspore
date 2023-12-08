@@ -16,7 +16,6 @@
 #include "plugin/device/ascend/kernel/opapi/aclnn/matmul_aclnn_kernel.h"
 #include <vector>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 

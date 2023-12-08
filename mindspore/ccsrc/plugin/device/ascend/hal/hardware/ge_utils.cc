@@ -26,7 +26,6 @@
 #include "abstract/abstract_value.h"
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "runtime/dev.h"
 namespace mindspore {
 namespace device {
 namespace ascend {

@@ -24,7 +24,6 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
-#include "runtime/mem.h"
 #include "acl/acl_rt.h"
 
 namespace mindspore {

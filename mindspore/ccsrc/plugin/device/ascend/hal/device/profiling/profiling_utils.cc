@@ -560,10 +560,6 @@ void ProfilingUtils::InitProfTensorData(const CNodePtr &node, const size_t index
   }
 }
 
-void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) { return; }
-
-void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) { return; }
-
 std::string ProfilingUtils::GetFullScopeName(const std::string &op_name, const bool is_op_name) {
   std::string full_scope_name;
   if (!is_op_name) {

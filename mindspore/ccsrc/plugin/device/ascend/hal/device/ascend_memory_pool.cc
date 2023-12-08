@@ -19,7 +19,6 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 #include "acl/acl_rt.h"

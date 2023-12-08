@@ -441,13 +441,7 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  static const std::set<std::string> excuded_nodes = {kCTCLossOpName, kGetNextOpName, kPadV3OpName, kPadV3GradOpName};
   std::string name = GetCNodeFuncName(cnode);
-  if (excuded_nodes.count(name) != 0) {
-    *err_type = kSpecialOp;
-    return KernelType::UNKNOWN_KERNEL_TYPE;
-  }
-
   if (common::AnfAlgo::IsCommunicationOp(node)) {
     *err_type = kNormalOp;
     return HCCL_KERNEL;

@@ -59,9 +59,6 @@ class ErrorManagerAdapter {
   static std::vector<std::string> traceback_;
 };
 
-bool IsGraphMode();
-bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph);
-std::string GetSocVersion();
 std::string GetAscendPath();
 std::string GetErrorMsg(uint32_t rt_error_code);
 }  // namespace ascend

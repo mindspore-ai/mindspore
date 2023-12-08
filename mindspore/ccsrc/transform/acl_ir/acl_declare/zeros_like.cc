@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/kernel.h"
-#include "kernel/kernel_get_value.h"
-#include "kernel/kash/kernel_pack.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
+
+#include "transform/acl_ir/acl_adapter_info.h"
 
 namespace mindspore {
-namespace kernel {
-
-/*
- * @brief build op and return a callable mod
- */
-KernelModPtr AicpuOpBuild(const AnfNodePtr &anf_node) { return nullptr; }
-
-bool AicpuOpKernelLoad::LaunchAicpuKernelSo() { return true; }
-void AicpuOpKernelLoad::FreeDeviceMemory() {}
-}  // namespace kernel
+namespace transform {
+REGISTER_ACL_OP(ZerosLike).set_extra_supported_datatype({ge::DT_BOOL});
+}  // namespace transform
 }  // namespace mindspore

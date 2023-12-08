@@ -69,9 +69,6 @@ class GeKernelExecutor : public KernelExecutor {
                          const device::DeviceAddressPtrList &output_addr_list) const override;
 
  private:
-  // Launch device aicpu library
-  static void LaunchDeviceLibrary();
-
   // launch
   bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,

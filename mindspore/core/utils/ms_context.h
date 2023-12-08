@@ -38,12 +38,6 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 6,
 };
 
-enum AscendSocVersion {
-  k910AAscendVersion = 0,
-  k910BAscendVersion = 1,
-  kNotAscend = 2,
-};
-
 enum DumpLevel : int {
   kIntroductory = 1,
   kAdvanced,
@@ -76,6 +70,8 @@ const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
 const unsigned int kOpTimeout = 900;
 const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
+constexpr auto kAscendVersion910 = "ascend910";
+constexpr auto kAscendVersion910b = "ascend910b";
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
@@ -280,7 +276,7 @@ class MS_CORE_API MsContext {
 
   mutable std::vector<bool> params_read_status_;
   MsBackendPolicy backend_policy_;
-  AscendSocVersion ascend_soc_version_;
+  std::string ascend_soc_version_;
   bool default_device_target_ = true;
 
   EnvFunc set_env_ = nullptr;

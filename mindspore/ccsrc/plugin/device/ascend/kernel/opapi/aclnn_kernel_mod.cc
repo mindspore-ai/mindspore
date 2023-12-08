@@ -20,7 +20,6 @@
 #include <set>
 #include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "transform/acl_ir/acl_helper.h"
 
 namespace mindspore {

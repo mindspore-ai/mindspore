@@ -31,15 +31,14 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/hardware/ge_utils.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "runtime/config.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
+#include "acl/acl_base.h"
+#include "runtime/config.h"
 
 namespace mindspore {
 namespace device {
@@ -547,8 +546,51 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
-constexpr auto kGeDevice = "GE";
-MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
+MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#ifdef WITH_BACKEND
+namespace {
+void SetContextSocVersion(MsContext *ctx) {
+  const std::map<std::string, std::string> kAscendSocVersions = {
+    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"}};
+  const char *soc_name_c = aclrtGetSocName();
+  if (soc_name_c == nullptr) {
+    MS_LOG(ERROR) << "Get soc name failed.";
+    return;
+  }
+  std::string version(soc_name_c);
+  MS_LOG(INFO) << "The soc version :" << version;
+  auto iter = kAscendSocVersions.find(version);
+  if (iter == kAscendSocVersions.end()) {
+    ctx->set_ascend_soc_version(version);
+  } else {
+    ctx->set_ascend_soc_version(iter->second);
+  }
+}
+}  // namespace
+
+MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  if (ctx->backend_policy() != "ge") {
+    (void)ctx->set_backend_policy("ge");
+  }
+  common::SetEnv("MS_ENABLE_GE", "1");
+  // if format not set, user default format
+  auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
+  if (format_mode.empty()) {
+    common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
+  }
+  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
+  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+  auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
+  if (force_acl.empty() && disable_ref != "1") {
+    common::SetEnv("MS_DEV_FORCE_ACL", "1");
+  }
+  SetContextSocVersion(ctx);
+});
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

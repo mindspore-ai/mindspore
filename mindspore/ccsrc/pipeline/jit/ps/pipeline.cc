@@ -1592,7 +1592,7 @@ void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string 
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
   } catch (const std::exception &) {
     return;
   }
@@ -1609,7 +1609,7 @@ FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std:
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
   } catch (const std::exception &) {
     return nullptr;
   }
@@ -1888,7 +1888,7 @@ void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::strin
                                   char *key) {
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
   } catch (const std::exception &) {
     MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
   }
@@ -2226,7 +2226,8 @@ void ClearResPart2() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
-    DeviceContext *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    DeviceContext *device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, 0});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();

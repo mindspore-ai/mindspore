@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "acl/acl.h"
-#include "runtime/kernel.h"
 #include "utils/dlopen_macro.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
@@ -56,7 +55,7 @@ class AscendGmemAdapter {
   ~AscendGmemAdapter() {
 #ifdef WITH_BACKEND
     for (auto iter = callback_map_.begin(); iter != callback_map_.end();) {
-      rtStream_t stream = iter->first;
+      aclrtStream stream = iter->first;
       iter++;
       RemoveCallbackThread(stream);
     }
@@ -71,8 +70,8 @@ class AscendGmemAdapter {
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) const;
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size) const;
 
-  bool AddCallbackThread(rtStream_t stream);
-  bool RemoveCallbackThread(rtStream_t stream);
+  bool AddCallbackThread(aclrtStream stream);
+  bool RemoveCallbackThread(aclrtStream stream);
 
   uint8_t *MmapMemory(size_t size, void *addr) const;
   bool MunmapMemory(void *addr, const size_t size) const;
@@ -88,7 +87,7 @@ class AscendGmemAdapter {
   // Function for eager free.
   LIB_FUNC(GMEM_FREE_EAGER) free_eager_;
   // Map for call back threads.
-  mindspore::HashMap<rtStream_t, CallbackThreadPtr> callback_map_;
+  mindspore::HashMap<aclrtStream, CallbackThreadPtr> callback_map_;
 };
 }  // namespace ascend
 }  // namespace device

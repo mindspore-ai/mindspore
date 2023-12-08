@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_ASCEND_EVENT_H
 #define MINDSPORE_ASCEND_EVENT_H
 
-#include "runtime/base.h"
 #include "ir/device_event.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore::device::ascend {
 class AscendEvent : public DeviceEvent {
@@ -31,13 +31,13 @@ class AscendEvent : public DeviceEvent {
   bool NeedWait() override;
   void SyncEvent() override;
   void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
-  void set_wait_stream(rtStream_t wait_stream) override { wait_stream_ = wait_stream; }
-  void set_record_stream(rtStream_t record_stream) override { record_stream_ = record_stream; }
+  void set_wait_stream(aclrtStream wait_stream) override { wait_stream_ = wait_stream; }
+  void set_record_stream(aclrtStream record_stream) override { record_stream_ = record_stream; }
 
  protected:
-  rtEvent_t event_{nullptr};
-  rtStream_t wait_stream_{nullptr};
-  rtStream_t record_stream_{nullptr};
+  aclrtEvent event_{nullptr};
+  aclrtStream wait_stream_{nullptr};
+  aclrtStream record_stream_{nullptr};
   bool need_wait_{false};
 };
 

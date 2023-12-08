@@ -16,17 +16,12 @@
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 #include <utility>
 #include <algorithm>
-#include "include/common/utils/parallel_context.h"
 #include "acl/acl_rt.h"
 #include "acl/acl_op_compiler.h"
-#include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
@@ -36,8 +31,6 @@
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "kernel/kernel_build_info.h"
@@ -150,11 +143,6 @@ std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> Que
   if (kernel_type == KernelType::HCCL_KERNEL) {
     kernel::HcclMetadataInfo(cnode, &kernel_info_list);
     return {KernelType::HCCL_KERNEL, kernel_info_list};
-  }
-  kernel::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
-  kernel::AicpuMetadataInfo(cnode, &kernel_info_list);
-  if (!kernel_info_list.empty()) {
-    return {KernelType::AICPU_KERNEL, kernel_info_list};
   }
   kernel::HostMetadataInfo(cnode, &kernel_info_list);
   if (!kernel_info_list.empty()) {
@@ -299,8 +287,6 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::AICPU_KERNEL) {
-      kernel_mod_ptr = kernel::AicpuOpBuild(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HOST_KERNEL) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
@@ -449,15 +435,6 @@ void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   MS_LOG(DEBUG) << "Status record: end create kernel.";
 }
 
-void GeKernelExecutor::LaunchDeviceLibrary() {
-  MS_LOG(DEBUG) << "Status record: start launch device library.";
-  auto ret = mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo();
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Cust aicpu kernel so load failed.";
-  }
-  MS_LOG(DEBUG) << "Status record: end launch device library.";
-}
-
 void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 0);
@@ -495,8 +472,6 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     }
   }
 
-  // load aicpu so
-  LaunchDeviceLibrary();
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 

@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/host/dynamic_shape_kernel.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/mem.h"
