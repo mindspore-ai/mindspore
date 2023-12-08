@@ -81,8 +81,9 @@ TypePtr OneHotFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
     auto on_value_tensor_type = on_value_type->cast<TensorTypePtr>()->element();
     auto indices_tensor_type = indices_type->cast<TensorTypePtr>()->element();
     if (IsIdentidityOrSubclass(on_value_tensor_type, kInt64) && !IsIdentidityOrSubclass(indices_tensor_type, kInt64)) {
-      MS_LOG(EXCEPTION) << "For OneHot on Ascend, if on_value is Int64 dtype, indices must be Int64 dtype, but got "
-                        << indices_type << ".";
+      MS_EXCEPTION(TypeError) << "For OneHot on Ascend, if on_value is Int64 dtype, indices must be Int64 dtype, "
+                                 "but got "
+                              << indices_type << ".";
     }
   }
   return on_value_type->Clone();
