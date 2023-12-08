@@ -92,6 +92,34 @@ int MatrixDiagV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 }
 
 template <typename T>
+bool MatrixDiagV3CpuKernelMod::InitializeDiagonalIndices(const std::vector<kernel::KernelTensor *> &inputs) {
+  auto *k_data = static_cast<int32_t *>(inputs[1]->device_ptr());
+  MS_EXCEPTION_IF_NULL(k_data);
+  size_t k_num = static_cast<size_t>(inputs[1]->size() / sizeof(int32_t));
+  const size_t k_num_max = 2;
+
+  if (k_num == 0 || k_num > k_num_max) {
+    MS_LOG(EXCEPTION) << "For MatrixDiagV3, k must have one or two elements, but received " << k_num << "elements.";
+    return false;
+  }
+
+  lower_diag_index_ = k_data[0];
+  upper_diag_index_ = lower_diag_index_;
+
+  if (k_num == k_num_max) {
+    upper_diag_index_ = k_data[1];
+  }
+
+  if (lower_diag_index_ > upper_diag_index_) {
+    MS_LOG(EXCEPTION) << "For MatrixDiagV3, lower_diag_index must be smaller than upper_diag_index, received "
+                      << lower_diag_index_ << " is larger than " << upper_diag_index_;
+    return false;
+  }
+
+  return true;
+}
+
+template <typename T>
 bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                             const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatrixDiagV3InputsNum, kernel_name_);
@@ -106,21 +134,8 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
   }
   max_diag_len_ = diagonal_shape_[diag_rank - 1];
   // k
-  auto *k_data = static_cast<int32_t *>(inputs[1]->device_ptr());
-  MS_EXCEPTION_IF_NULL(k_data);
-  lower_diag_index_ = k_data[0];
-  upper_diag_index_ = lower_diag_index_;
-  size_t k_num = static_cast<size_t>(inputs[1]->size() / sizeof(int32_t));
-  const size_t k_num_max = 2;
-  if (k_num == 0 || k_num > k_num_max) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, k must have one or two elements, but received " << k_num << "elements.";
-  }
-  if (k_num == k_num_max) {
-    upper_diag_index_ = k_data[1];
-  }
-  if (!(lower_diag_index_ <= upper_diag_index_)) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, lower_diag_index must be smaller than upper_diag_index,received "
-                      << lower_diag_index_ << " is larger than " << upper_diag_index_;
+  if (!InitializeDiagonalIndices<T>(inputs)) {
+    return false;
   }
   const int64_t num_diags = IntToLong(upper_diag_index_) - IntToLong(lower_diag_index_) + 1;
   // num_rows
@@ -167,6 +182,10 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
   diag_elements_in_batch_ = num_diags * max_diag_len_;
   diag_batch_base_index_ = 0 * diag_elements_in_batch_;
   size_t num_element = static_cast<size_t>(outputs[0]->size() / sizeof(T));
+  if (num_rows_ == 0 || num_cols_ == 0) {
+    MS_LOG(ERROR) << "For MatrixDiagV3, num_rows or num_cols is zero, which will lead to division by zero.";
+    return false;
+  }
   num_batches_ = (SizeToLong(num_element)) / (num_rows_ * num_cols_);
 
   return DoLaunch<T>(inputs, outputs);
