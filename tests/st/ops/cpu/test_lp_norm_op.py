@@ -103,6 +103,7 @@ def test_lp_norm_op(data_type):
     output = lp_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -122,6 +123,7 @@ def test_lp_norm_op_high_pow():
     lp_norm = LpNormNet(axis, p, keep_dims)
     output = lp_norm(input_x)
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -166,3 +168,25 @@ def test_lp_norm_dy_shape(data_type):
     context.set_context(mode=context.PYNATIVE_MODE)
     ms_result = lp_norm_net(Tensor(input_x_np))
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize("data_type", [np.float32])
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_lp_norm_op_axis_empty_tuple(data_type, mode):
+    """
+    Feature: Test LpNorm with: aixs=().
+    Description: The input shape need match to output shape.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=mode)
+    input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(data_type))
+    benchmark_output = 14.282857
+    axis = ()
+    p = 2
+    keep_dims = False
+    lp_norm = LpNormNet(axis, p, keep_dims)
+    output = lp_norm(input_x)
+    assert np.allclose(output.asnumpy(), benchmark_output)
