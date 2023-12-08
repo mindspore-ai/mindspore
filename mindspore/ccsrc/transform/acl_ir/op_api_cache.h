@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 #include "transform/acl_ir/op_api_convert.h"
 
 namespace mindspore::transform {
@@ -44,6 +45,7 @@ inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
   g_hash_offset += size_expression;
 }
 
+void GatherInfo(std::pair<mindspore::kernel::KernelTensor *, bool>);
 void GatherInfo(mindspore::kernel::KernelTensor *);
 void GatherInfo(const mindspore::tensor::TensorPtr &);
 void GatherInfo(const std::vector<TensorPtr> &);
