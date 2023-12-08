@@ -27,7 +27,6 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
-#include "runtime/pynative/async/async_queue.h"
 #include "runtime/pynative/async/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/pynative/grad/dynamic_shape.h"

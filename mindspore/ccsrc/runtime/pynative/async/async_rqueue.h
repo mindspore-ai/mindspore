@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_R_QUEUE_H_
+#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_R_QUEUE_H_
 
 #include <queue>
 #include <memory>
@@ -30,8 +30,12 @@
 #include "include/backend/visible.h"
 #include "runtime/pynative/async/task.h"
 
+#include "runtime/pynative/async/ring_queue.h"
+
 namespace mindspore {
 namespace pynative {
+using AsyncTaskPtr = std::shared_ptr<AsyncTask>;
+constexpr auto kQueueCapacity = 1024;
 enum kThreadWaitLevel : int {
   kLevelUnknown = 0,
   kLevelPython,
@@ -40,15 +44,16 @@ enum kThreadWaitLevel : int {
   kLevelBackend,
   kLevelDevice,
 };
+
 // Create a new thread to execute the tasks in the queue sequentially.
-class BACKEND_EXPORT AsyncQueue {
+class BACKEND_EXPORT AsyncRQueue {
  public:
-  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level)
+  explicit AsyncRQueue(std::string name, kThreadWaitLevel wait_level)
       : name_(std::move(name)), wait_level_(wait_level) {}
-  virtual ~AsyncQueue();
+  virtual ~AsyncRQueue();
 
   // Add task to the end of the queue.
-  void Push(const std::shared_ptr<AsyncTask> &task);
+  void Push(const AsyncTaskPtr &task);
 
   // Wait for all async task finish executing.
   void Wait();
@@ -75,8 +80,6 @@ class BACKEND_EXPORT AsyncQueue {
   void SetThreadName() const;
 
   std::unique_ptr<std::thread> worker_{nullptr};
-  std::mutex task_mutex_;
-  std::unique_ptr<std::condition_variable> task_cond_var_{nullptr};
   std::string name_;
   kThreadWaitLevel wait_level_;
   inline static std::unordered_map<std::thread::id, kThreadWaitLevel> thread_id_to_wait_level_;
@@ -85,11 +88,15 @@ class BACKEND_EXPORT AsyncQueue {
  private:
   void ClearTaskWithException();
 
-  std::queue<std::shared_ptr<AsyncTask>> tasks_queque_;
+  // TODO(caifubi): remove this and make AsyncRQueue real lock-free.
   std::set<uint32_t> task_in_queue_;
+
+  std::mutex set_mutex_;
+
+  RingQueue<AsyncTaskPtr, kQueueCapacity> tasks_queue_;
 };
-using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
+using AsyncRQueuePtr = std::shared_ptr<AsyncRQueue>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_R_QUEUE_H_
