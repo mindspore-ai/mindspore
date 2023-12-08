@@ -45,13 +45,14 @@ class MatrixDiagV3CpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
+  bool InitializeDiagonalIndices(const std::vector<kernel::KernelTensor *> &inputs);
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
   using MatrixDiagV3Func = std::function<bool(MatrixDiagV3CpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                                               const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, MatrixDiagV3Func>> func_list_;
   MatrixDiagV3Func kernel_func_;
-
   template <typename T>
   bool DoLaunch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
