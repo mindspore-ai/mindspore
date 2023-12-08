@@ -2275,5 +2275,51 @@ REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     return false_case(ib);
   }
 });
+
+REG_BPROP_BUILDER("Polar").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto input1 = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto grad_conj = ib->Emit("Conj", {dout});
+  auto zeros = ib->ZerosLike(dout);
+  zeros = ib->Cast(zeros, ib->GetDtype(input1));
+  auto ones = ib->OnesLike(dout);
+  ones = ib->Cast(ones, ib->GetDtype(input1));
+  auto i = ib->Complex(zeros, ones);
+  auto grad_abs = ib->Real(ib->Mul(grad_conj, ib->Sign(out)));
+  auto result_mul_1_j = ib->Mul(out, i);
+  auto grad_angle = ib->Real(ib->Mul(grad_conj, result_mul_1_j));
+  return {grad_abs, grad_angle};
+});
+
+REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto diagonals = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  constexpr int64_t kLast2 = -2;
+  constexpr int64_t k2 = 2;
+  auto diag1 = ib->StridedSlice(diagonals, {{kLast2, {1}}});
+  auto diag_shape = ib->GetShape(diagonals);
+  ShapeVector zeros1_shape(diag_shape.begin(), diag_shape.end() - i2);
+  zeros1_shape.push_back(1);
+  auto zeros1 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros1_shape), ib->EmitValue(ib->GetDtype(diagonals))});
+  auto superdiag1 = ib->Concat({ib->StridedSlice(diagonals, {{kLast2, {k2}}, {-1, {1, LLONG_MAX}}}), zeros1}, -1);
+  auto subdiag1 = ib->Concat({zeros1, ib->StridedSlice(diagonals, {{kLast2, {0}}, {-1, {0, -1}}})}, -1);
+  auto diags_transposed = ib->Stack({superdiag1, diag1, subdiag1}, kLast2);
+  auto grad_rhs = ib->Emit("TridiagonalSolve", {diags_transposed, dout}, {{"partial_pivoting", MakeValue<bool>(true)}});
+  auto diag2 = ib->ReduceSum(ib->Mul(grad_rhs, out), {-1});
+  ShapeVector zeros2_shape = ib->GetShape(grad_rhs);
+  if (zeros2_shape.size() > i1) {
+    zeros2_shape[zeros2_shape.size() - i2] = 1;
+  }
+  auto zeros2 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros2_shape), ib->EmitValue(ib->GetDtype(grad_rhs))});
+  auto superdiag2 = ib->ReduceSum(
+    ib->Mul(grad_rhs, ib->Concat({ib->StridedSlice(out, {{kLast2, {1, LLONG_MAX}}}), zeros2}, -k2)), {-1});
+  auto subdiag2 =
+    ib->ReduceSum(ib->Mul(grad_rhs, ib->Concat({zeros2, ib->StridedSlice(out, {{kLast2, {0, -1}}})}, -k2)), {-1});
+  auto a = ib->Stack({superdiag2, diag2, subdiag2}, kLast2);
+  auto grad_diags = ib->Sub(ib->Tensor(0, ib->GetDtype(a)), a);
+  return {grad_diags, grad_rhs};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
