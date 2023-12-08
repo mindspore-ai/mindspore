@@ -100,7 +100,7 @@ class AllGatherInfer : public abstract::OpInferBase {
 
     // The data type check is only migrated from the previous corresponding python code,
     // and need further confirmation is required
-    const std::set<TypePtr> default_target_dtypes = {kInt8, kUInt8, kInt32, kFloat16, kBFloat16, kFloat32};
+    const std::set<TypePtr> default_target_dtypes = {kInt8, kUInt8, kInt32, kInt64, kFloat16, kBFloat16, kFloat32};
     const std::set<TypePtr> target_dtypes = common_valid_types_with_bool;
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);

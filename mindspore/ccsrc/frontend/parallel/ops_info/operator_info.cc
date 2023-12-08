@@ -410,7 +410,14 @@ Status OperatorInfo::InferTensorInfo() {
     return FAILED;
   }
 
+  size_t real_input_index = 0;
   for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
+    // Insert placeholder TensorInfo for optional input
+    while (real_input_index < input_value_.size() && input_value_[real_input_index] != nullptr &&
+           input_value_[real_input_index]->isa<None>()) {
+      (void)inputs_tensor_info_.emplace_back(TensorInfo());
+      ++real_input_index;
+    }
     TensorLayout input_layout;
     if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed, the index is " << i;
