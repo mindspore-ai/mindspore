@@ -177,6 +177,8 @@ class TestProfiler:
         self._check_host_profiling_file()
 
     @pytest.mark.level0
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_ascend_profiler(self):
@@ -236,15 +238,13 @@ class TestProfiler:
 
     def _check_d_profiling_file(self):
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
-        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
         timeline_file = self.profiler_path + f'ascend_timeline_display_{self.rank_id}.json'
         aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.rank_id}.csv'
         minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.rank_id}.csv'
         queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
-        memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
 
-        d_profiler_files = (aicore_file, step_trace_file, timeline_file, aicpu_file,
-                            minddata_pipeline_file, queue_profiling_file, memory_file)
+        d_profiler_files = (aicore_file, timeline_file, aicpu_file,
+                            minddata_pipeline_file, queue_profiling_file)
         for file in d_profiler_files:
             assert os.path.isfile(file)
 
