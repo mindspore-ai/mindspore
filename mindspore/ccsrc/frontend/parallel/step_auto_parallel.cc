@@ -1381,43 +1381,6 @@ void WriteStrategiesBackToAnfGraph(const std::vector<std::shared_ptr<OperatorInf
   }
 }
 
-void TMpInferBatchMatMul(const std::shared_ptr<Graph> &graph, Graph::NodeType *node) {
-  if (node->apply.arguments[0].tensor_shape.shape_c != -1 && node->apply.arguments[1].tensor_shape.shape_c == -1) {
-    auto infer_shape = node->apply.arguments[0].tensor_shape.shape_c;
-    node->apply.arguments[1].tensor_shape.shape_c = infer_shape;
-
-    if (node->node_out.size() == 0) {
-      MS_LOG(EXCEPTION) << "The current BatchMatMul (" << node->name << ") does not have an outgoing node.";
-    }
-    auto &outgoing_node = graph->nodes[node->node_out[0]];
-    if (outgoing_node.apply.arguments[0].tensor_shape.shape_c == node->tensor_parm.tensor_shape.shape_c) {
-      outgoing_node.apply.arguments[0].tensor_shape.shape_c = infer_shape;
-    }
-
-    node->tensor_parm.tensor_shape.shape_c = infer_shape;
-  }
-}
-
-void TmpInferForDynamicShapeInSAPP(const std::shared_ptr<Graph> &graph) {
-  for (size_t index = graph->nodes.size(); index > 0; index--) {
-    auto node = graph->nodes[index - 1];
-    if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
-      TMpInferBatchMatMul(graph, &node);
-    }
-  }
-}
-
-bool HasUserConfiguredStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops) {
-  for (auto op : ops) {
-    auto prim_anf_node = GetValueNode<PrimitivePtr>(op->cnode()->input(0));
-    bool has_user_configured_strategy = prim_anf_node->HasAttr(parallel::IN_STRATEGY);
-    if (has_user_configured_strategy) {
-      return true;
-    }
-  }
-  return false;
-}
-
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, size_t rank_id,
                                  const size_t device_num) {
   bool dyn_shape_tmp_fix = false;
@@ -1446,12 +1409,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   auto ops = entire_costgraph->GetOperators();
-
-  if (dyn_shape_tmp_fix && HasUserConfiguredStrategy(ops)) {
-    MS_LOG(WARNING) << "Now the split strategy will be automatically generated through SAPP, which will overwrite "
-                       "the strategy that has been manually configured by the user.";
-  }
-
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   // Needed by rec_parser 2
   auto param_users_uniqueid_list = entire_costgraph->get_param_users_uniqueid_list();
@@ -1465,12 +1422,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list = std::make_shared<std::vector<std::vector<size_t>>>();
   std::shared_ptr<std::vector<size_t>> index_list = std::make_shared<std::vector<size_t>>();
-  graph = EliminateGraph(graph, eli_list, index_list, dyn_shape_tmp_fix);
+  graph = EliminateGraph(graph, eli_list, index_list);
   graph->dyn_shape_tmp_fix = dyn_shape_tmp_fix;
-
-  if (graph->dyn_shape_tmp_fix) {
-    TmpInferForDynamicShapeInSAPP(graph);
-  }
 
   CalculateRealBatchSize(graph, root);
 

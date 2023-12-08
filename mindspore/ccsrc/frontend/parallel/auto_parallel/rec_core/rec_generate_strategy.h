@@ -119,7 +119,7 @@ Strategies MakeFullBatchStrategy(Graph::NodeType *node, const std::vector<std::s
                                  const size_t iter_ops);
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                           const size_t iter_ops, const bool dyn_shape_tmp_fix);
+                           const size_t iter_ops);
 bool HasStrategy(std::shared_ptr<OperatorInfo> op);
 size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &input_tensor_names, size_t iter_ops);
 std::pair<size_t, size_t> FindIndexOfOperatorOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
