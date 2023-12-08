@@ -552,9 +552,9 @@ PyObject *TypeTrace::Retrieve(PTraceContext context) {
   if (origin_ != NULL) {
     PyObject *pOrigin = origin_->Retrieve(context);
     if (pOrigin != NULL) {
-      Py_DECREF(pOrigin);
-      auto ret = reinterpret_cast<PyObject *>(Py_TYPE(pOrigin));
+      ret = reinterpret_cast<PyObject *>(Py_TYPE(pOrigin));
       Py_INCREF(ret);
+      Py_DECREF(pOrigin);
       return ret;
     }
   }

@@ -430,7 +430,8 @@ static py::object MakeCodeFromCodeGen(CodeGenerator *cg, PyObject *default_globa
 }
 
 // preprocess before compile, split bytecode to sub-function
-static void GraphCapture(JitCompileResults *jcr) {
+// return whether the code should be modified
+static bool GraphCapture(JitCompileResults *jcr) {
   MS_EXCEPTION_IF_NULL(jcr->code);
 
   GraphJitConfig &conf = *jcr->conf;
@@ -467,10 +468,13 @@ static void GraphCapture(JitCompileResults *jcr) {
 
   if (is_graph_break || (cg.IsCodeChanged() && g.GetGraph()->GetStopTraceAt())) {
     // break graph interpret
+    return true;
   } else if (conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
     // config interpret
+    return false;
   } else {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
+    return false;
   }
 }
 
@@ -545,12 +549,21 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   for (int i = 0; f->f_code->co_cell2arg && i < PyTuple_GET_SIZE(f->f_code->co_cellvars); ++i) {
     Py_ssize_t arg = f->f_code->co_cell2arg[i];
     if (arg != CO_CELL_NOT_AN_ARG) {
-      RootTracePtr ptr = std::make_shared<RootTrace>(
-        f->f_localsplus[f->f_code->co_nlocals + i], mindspore::jit::graph::TraceType::Param, f->f_code->co_nlocals + i);
+      auto cell = f->f_localsplus[f->f_code->co_nlocals + i];
+      RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::jit::graph::TraceType::Deref, i);
       guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
       if (detach) {
         ptr->Detach();
       }
+    }
+  }
+  for (int i = 0; i < PyTuple_GET_SIZE(f->f_code->co_freevars); ++i) {
+    Py_ssize_t arg = PyTuple_GET_SIZE(f->f_code->co_cellvars) + i;
+    auto cell = f->f_localsplus[f->f_code->co_nlocals + arg];
+    RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::jit::graph::TraceType::Deref, arg);
+    guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    if (detach) {
+      ptr->Detach();
     }
   }
 }
@@ -669,6 +682,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
 
   // new guard code
   c->code = c->codehub->AddOptTarget(OptOption::CreateOptionByPoint(c));
+  bool code_changed = false;
 
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->origin_frame_));
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
@@ -677,7 +691,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
                                        "PIJitGapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
-    GraphCapture(c);
+    code_changed = GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
@@ -696,7 +710,9 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   }
 
   // If no change to the bytecode in pynative mode, no need to guard parameters in pynative mode
-  GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
+  if (c->code->GetNativeFunc() != nullptr || !c->code->GetGuard()->IsEmpty() || code_changed) {
+    GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
+  }
   CollectTraceBack(c, c->code->GetPythonCode(), c->code->GetNativeFunc() != nullptr);
 
   MS_LOG(DEBUG) << "---compile " << origin_code_name << " successful---";

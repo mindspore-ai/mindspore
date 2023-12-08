@@ -900,22 +900,22 @@ class TensorData : public MetaTensorData {
             OptStrategy::CalcKind::kCalcValue) {
           specialized_ = false;
         }
-        Py_DECREF(stub);
       }
       if (specialized_) {
         pyObj = python_adapter::CallPyObjMethod(pyObj, "stub_sync");
         tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
       } else {
-        auto stub = PyObject_GetAttrString(obj, "stub");
         if (stub != nullptr && stub != Py_None) {
           is_stubtensor_ = true;
-          Py_DECREF(stub);
         } else {
           obj = PyObject_GetAttrString(obj, "tensor");
           pyObj = py::cast<py::object>(obj);
           Py_DECREF(obj);
           tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
         }
+      }
+      if (stub != nullptr && stub != Py_None) {
+        Py_DECREF(stub);
       }
     } else {
       tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
