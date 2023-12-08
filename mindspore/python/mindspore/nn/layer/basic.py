@@ -454,24 +454,8 @@ class Flatten(Cell):
         self.start_dim = start_dim
         self.end_dim = end_dim
 
-    def check_axis_valid(self, axis, ndim):
-        if axis < -ndim or axis >= ndim:
-            raise ValueError("'start_dim' or 'end_dim' out of range.")
-
     def construct(self, x):
-        x_rank = F.rank(x)
-        ndim = x_rank if x_rank != 0 else 1
-        self.check_axis_valid(self.start_dim, ndim)
-        self.check_axis_valid(self.end_dim, ndim)
         return F.flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
-
-
-@_primexpr
-def check_dense_input_shape(x, prim_name=None):
-    """ check the shape of inputs"""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(x) < 2:
-        raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
 
 
 class Identity(Cell):
@@ -621,7 +605,6 @@ class Dense(Cell):
 
     def construct(self, x):
         x_shape = self.shape_op(x)
-        check_dense_input_shape(x_shape, self.cls_name)
         if len(x_shape) != 2:
             x = self.reshape(x, (-1, x_shape[-1]))
         x = self.matmul(x, self.weight)

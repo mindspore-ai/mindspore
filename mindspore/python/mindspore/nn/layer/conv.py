@@ -577,8 +577,6 @@ class Conv1d(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -829,8 +827,6 @@ class Conv3d(_Conv):
         self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         if self.group == 1:
             out = self.conv3d(x, self.weight)
             if self.has_bias:
