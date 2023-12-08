@@ -60,7 +60,7 @@ TypePtr RmsNormInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("gamma", input_args[1]->BuildType());
   auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, output_type});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, kFloat32});
 }
 }  // namespace
 
