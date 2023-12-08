@@ -686,7 +686,17 @@ void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
       MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of primitive " << prim_name << " is "
                         << dyn_input_sizes << ", of which size is empty";
     }
-    num_folded_inputs_ = LongToSize(dyn_input_sizes[0]);
+    // NOTE: attribute kAttrDynInputSizes is a vector<int64_t> with its element value -1 for dynamic input, and number
+    // of foled real inputs for dynamic input. For example a op with 5 inputs, of whicch the input 1 and 2 are dynamic
+    // inputs, the attribute `dyn_input_size` of it may be the value as below:
+    // ms_proto_index : |  0 |  1 |  2 |  3 |  4 |
+    // dyn_input_sizes: | -1 |  2 |  5 | -1 | -1 |
+    std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [this](int64_t num_folded_inputs) {
+      if (num_folded_inputs < 0) {
+        return;
+      }
+      num_folded_inputs_ = num_folded_inputs;
+    });
     num_max_inputs = info->GetNumInputsOfMsOpProto() + num_folded_inputs_ - 1;
   } else if (flags & GeTensorInfo::kMultiDynParam) {
     // initialize dyn_inputs_map_ with number of folded inputs equal to 1
@@ -694,18 +704,11 @@ void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
       if (ge_info.type != Ms2GeParamInfo::DYNAMIC) {
         continue;
       }
-      dyn_inputs_map_[ms_idx] = 1;
-    }
-
-    // suppose number of folded inputs in attribute kAttrDynInputSizes is stored by input index ascendly
-    // NOTE: dyn_inputs_map_ is an ordered map, sort by MindSpore dynamic input index ascendly
-    auto iter = dyn_inputs_map_.begin();
-    for (const auto num_folded_inputs : dyn_input_sizes) {
-      if (iter == dyn_inputs_map_.end()) {
-        break;
+      if (static_cast<int64_t>(dyn_input_sizes.size()) < ms_idx) {
+        MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of primitive " << prim->name() << " is "
+                          << dyn_input_sizes << ", of which size is less than " << ms_idx;
       }
-      iter->second = num_folded_inputs;
-      ++iter;
+      dyn_inputs_map_[ms_idx] = dyn_input_sizes[ms_idx];
     }
 
     // calculate max size
