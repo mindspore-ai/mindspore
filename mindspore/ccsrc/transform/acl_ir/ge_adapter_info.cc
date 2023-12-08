@@ -15,6 +15,7 @@
  */
 
 #include "transform/acl_ir/ge_adapter_info.h"
+#include <algorithm>
 #include <limits>
 #include "include/transform/graph_ir/utils.h"
 #include "transform/graph_ir/transform_util.h"
@@ -85,6 +86,9 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
 
     // input/output: GE(GraphEngine) Index --> MindSpore Index
     idx_ge2ms[ge_idx] = ms_idx;
+    if (is_input) {
+      max_input_ms_proto_idx_ = std::max(max_input_ms_proto_idx_, ms_idx);
+    }
   }
 
   // process dynamic inputs/outputs
@@ -97,6 +101,7 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
     idx_ge2ms[ge_idx] = ms_idx;
     if (is_input) {
       dyn_input_ms_proto_idx_ = ms_idx;
+      max_input_ms_proto_idx_ = std::max(max_input_ms_proto_idx_, ms_idx);
     }
   }
 }

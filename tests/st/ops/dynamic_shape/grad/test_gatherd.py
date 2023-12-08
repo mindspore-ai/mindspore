@@ -31,14 +31,16 @@ class NetGatherD(nn.Cell):
         return self.op(x, dim, index)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_gatherd_dynamic_shape():
     """
     Feature: GatherD Grad DynamicShape.
-    Description: Test case of dynamic shape for GatherD grad operator on GPU.
+    Description: Test case of dynamic shape for GatherD grad operator.
     Expectation: success.
     """
     test_dynamic = TestDynamicGrad(NetGatherD(), skip_convert_out_ids=[0])
