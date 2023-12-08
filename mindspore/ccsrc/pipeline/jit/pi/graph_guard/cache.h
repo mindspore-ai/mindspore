@@ -93,6 +93,7 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
 using OptCodePtr = std::shared_ptr<OptCode>;
 using OptCodeSet = std::vector<OptCodePtr>;
 
+using OptCodeFilterFunc = std::function<bool(OptCodePtr)>;
 /// \brief hub for optimized code based on compilation option
 class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
  public:
@@ -103,12 +104,11 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
   virtual void DelOptTarget(OptOptionPtr option, OptCodePtr code);
   virtual void DelOptTarget(OptCodePtr code);
   virtual std::vector<OptCodeSet> GetAllOptTarget();
-  virtual void Register(std::string key, OptCodePtr code);
-  virtual OptCodeSet Get(std::string key);
+  static void Register(std::string key, OptCodePtr code);
+  static OptCodePtr Filter(std::string key, OptCodeFilterFunc filter);
 
  protected:
   std::map<OptOptionPtr, OptCodeSet> codeMap_;
-  std::map<std::string, OptCodeSet> codeSet_;
 };
 
 using OptCodeHubPtr = std::shared_ptr<OptCodeHub>;
