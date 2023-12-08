@@ -292,7 +292,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
       continue;
     }
     auto src_shape = shape_list[i];
-    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / (transform_op_list[i].second.size() - 1);
+    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / SizeToLong((transform_op_list[i].second.size() - 1));
     auto new_axis = axis;
     auto new_src_shape = src_shape;
     for (int32_t j = axis - 1; j >= 0; --j) {

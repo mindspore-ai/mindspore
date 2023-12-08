@@ -42,7 +42,7 @@ int QuantNodePass::DoWeightQuant(const CNodePtr &cnode) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
-    if (!CanTensorQuantized(cnode, input)) {
+    if (!CanTensorQuantized(input)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantized.";
       continue;
     }
@@ -209,7 +209,6 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
 }
 
 int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
-  auto op_name = cnode->fullname_with_scope();
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(primitive != nullptr, RET_NULL_PTR, "primitive is nullptr.");
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
@@ -261,7 +260,7 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-bool QuantNodePass::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node) {
+bool QuantNodePass::CanTensorQuantized(const AnfNodePtr &input_node) {
   if (input_node == nullptr) {
     MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
     return false;

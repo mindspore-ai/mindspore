@@ -52,7 +52,7 @@ class OperatorPopulateRegistry {
   void InsertOperatorParameterMap(const std::string &name, int type, ParameterPtrGen creator) {
     op_parameters_[name] = std::make_pair(creator, type);
   }
-  ParameterPtrGen GetParameterPtrCreator(const std::string &name) { return CreatePopulatePtr; }
+  ParameterPtrGen GetParameterPtrCreator() const { return CreatePopulatePtr; }
 
   OpParameter *CreatePopulateByOp(const BaseOperatorPtr &base_operator) {
     MS_CHECK_TRUE_RET(base_operator != nullptr, nullptr);
@@ -91,7 +91,7 @@ OpParameter *PopulateOpParameter() {
     MS_LOG(ERROR) << "malloc OpParameter ptr failed";
     return nullptr;
   }
-  memset(op_parameter_ptr, 0, sizeof(T));
+  (void)memset(op_parameter_ptr, 0, sizeof(T));
   return reinterpret_cast<OpParameter *>(op_parameter_ptr);
 }
 
@@ -102,7 +102,7 @@ OpParameter *PopulateOpParameter(const BaseOperatorPtr &base_operator) {
     MS_LOG(ERROR) << "malloc OpParameter ptr failed";
     return nullptr;
   }
-  memset(op_parameter_ptr, 0, sizeof(T));
+  (void)memset(op_parameter_ptr, 0, sizeof(T));
   return reinterpret_cast<OpParameter *>(op_parameter_ptr);
 }
 

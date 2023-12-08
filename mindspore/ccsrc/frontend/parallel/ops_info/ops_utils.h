@@ -54,6 +54,7 @@ constexpr size_t CROP_AND_RESIZE_INPUTS_SIZE = 3;
 constexpr size_t ROI_ALIGN_INPUTS_SIZE = 2;
 constexpr size_t ACTIVATION_ATTR_SIZE = 1;
 constexpr size_t SOFTMAX_ATTR_SIZE = 1;
+constexpr size_t LPNORM_ATTR_SIZE = 4;
 constexpr size_t ACTIVATION_INPUTS_SIZE = 1;
 constexpr size_t ACTIVATION_OUTPUTS_SIZE = 1;
 constexpr size_t EXPANDDIMS_INPUT_SIZE = 2;
@@ -583,8 +584,9 @@ constexpr char LIN_SPACE[] = "LinSpace";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
-constexpr char MOE_FFN[] = "MoeFFN";
+constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
+constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
@@ -617,6 +619,8 @@ constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
 constexpr char INTERLEAVED_NUM[] = "interleave_num";
 constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
 constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
+constexpr char FINE_GRAINED_INTERLEAVED_TAG[] = "fine_grained_interleaved_tag";
+constexpr char FINE_GRAINED_INTERLEAVED_BLOCK[] = "fine_grained_interleaved_block";
 constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
 constexpr char USER_NODE_STAGE[] = "user_node_stage";
 constexpr char NODE_STAGE[] = "node_stage";

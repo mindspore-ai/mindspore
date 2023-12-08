@@ -96,7 +96,8 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
-const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
+                                                       "Ascend910B4"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -205,7 +206,7 @@ AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
     : param_(param),
       fmk_type_(param->fmk_type),
       export_mindir_(param->save_type),
-      user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
+      user_options_cfg_(param->aclModelOptionCfgParam),
       om_parameter_(nullptr),
       custom_node_(nullptr) {
   is_ptq_quant_ = (param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&

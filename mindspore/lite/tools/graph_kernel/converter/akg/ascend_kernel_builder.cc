@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "tools/graph_kernel/converter/akg/ascend_kernel_builder.h"
-#include <vector>
-#include <memory>
-#include <string>
 #include "utils/anf_utils.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
 

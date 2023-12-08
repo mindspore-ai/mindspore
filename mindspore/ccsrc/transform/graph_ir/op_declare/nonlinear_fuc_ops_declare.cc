@@ -258,4 +258,10 @@ ATTR_MAP(HardSigmoidGrad) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
 OUTPUT_MAP(HardSigmoidGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(HSigmoidGrad, prim::kPrimHSigmoidGrad->name(), ADPT_DESC(HardSigmoidGrad))
 REG_ADPT_DESC(HardSigmoidGrad, kHardSigmoidGradOpName, ADPT_DESC(HardSigmoidGrad))
+
+// SiluGrad
+INPUT_MAP(SiluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(SiluGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SiluGrad) = {{0, OUTPUT_DESC(dx)}};
+REG_ADPT_DESC(SiluGrad, prim::kPrimSiLUGrad->name(), ADPT_DESC(SiluGrad))
 }  // namespace mindspore::transform

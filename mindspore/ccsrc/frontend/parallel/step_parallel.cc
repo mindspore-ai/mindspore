@@ -729,6 +729,10 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
       replace_node->set_primal_attrs(node->primal_attrs());
     }
+    replace_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(replace_node->UniqueId()));
+    if (node->HasPrimalAttr(MICRO)) {
+      replace_node->AddPrimalAttr(MICRO, node->GetPrimalAttr(MICRO));
+    }
     replace_node->set_in_forward_flag(true);
     replace_input[0]->set_scope(scope);
     if (replace_op_info_flag && replace_op_info[index].first) {
@@ -1209,7 +1213,14 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
       continue;
     }
     if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
-      return node_pair;
+      size_t input_index = IntToSize(node_pair.second);
+      size_t real_input_index = input_index;
+      for (size_t i = 1; i < input_index; i++) {  // skip None inputs
+        if (IsValueNode<None>(cnode->input(i))) {
+          real_input_index -= 1;
+        }
+      }
+      return {node_pair.first, real_input_index};
     } else {
       auto tmp_pair = FindParallelCareNode(node_pair.first, recursion_num + 1);
       if (tmp_pair.first != nullptr) {
@@ -1717,7 +1728,10 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second;
-      return FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       if (make_tuple_index != -1) {
@@ -3015,6 +3029,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
+  bool merged = MergeConcatSlice(all_nodes, manager);
+  if (merged) {
+    all_nodes = DeepScopedGraphSearch(ret);
+    std::reverse(all_nodes.begin(), all_nodes.end());
+  }
   if (pipeline_stages <= 1 && parallel_mode != kAutoParallel && ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }

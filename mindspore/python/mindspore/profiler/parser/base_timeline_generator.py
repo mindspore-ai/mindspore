@@ -315,7 +315,7 @@ class BaseTimelineGenerator:
         tid_name = timeline_dict['tid']
         sort_index = 0
 
-        if tid_name in self._map_tid_name_to_int.keys():
+        if tid_name in self._map_tid_name_to_int:
             sort_index, tid = self._map_tid_name_to_int.get(tid_name)
         elif tid_name.startswith("Stream"):
             tid = int(tid_name.split("#")[-1])

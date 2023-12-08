@@ -75,9 +75,9 @@ int RemoveExpandedDimsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs) {
-  const auto has_false_val_addr = reinterpret_cast<size_t *>(inputs[kIndex2]->addr);
-  const auto broadcast_shape_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
-  const auto idx_advanced_val_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
+  const auto has_false_val_addr = static_cast<size_t *>(inputs[kIndex2]->addr);
+  const auto broadcast_shape_val_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
+  const auto idx_advanced_val_addr = static_cast<int64_t *>(inputs[kIndex4]->addr);
 
   bool has_false = has_false_val_addr[0] > 0;
   ShapeVector broadcast_shape;
@@ -88,21 +88,21 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
 
   int64_t idx_advanced = idx_advanced_val_addr[0];
-  auto indices_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto new_value_shape_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto new_idx_output_addr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto indices_output_addr = static_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto new_value_shape_output_addr = static_cast<int64_t *>(outputs[kIndex1]->addr);
+  auto new_idx_output_addr = static_cast<int64_t *>(outputs[kIndex2]->addr);
   ShapeVector data_shape = data_shapes_[0];
   ShapeVector value_shape = data_shapes_[1];
   size_t valid_tensor_nums = 0;
   for (size_t i = 0; i < tuple_index_types_.size(); i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + rem_ndim_;
+      valid_tensor_nums = data_shape.size() + LongToSize(rem_ndim_);
       break;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
     }
   }
-  size_t rem_dim = SizeToLong(data_shape.size()) - (valid_tensor_nums - rem_ndim_);
+  size_t rem_dim = data_shape.size() - (valid_tensor_nums - LongToSize(rem_ndim_));
   auto [indices_out, new_value_shape, new_idx_advanced] = ops::RemoveExpandedDims::ConstRemoveExpandedDims(
     has_true_, has_false, has_sequence_, broadcast_shape, rem_dim, value_shape, data_shape, empty_indices_out,
     idx_advanced, tuple_index_types_, rem_ndim_);

@@ -171,14 +171,14 @@ bool GetConstData(const Operator &op, const int64_t const_input_idx, std::vector
   switch (const_dtype) {
     case ge::DT_INT64: {
       size_t count = size / sizeof(int64_t);
-      const int64_t *data_addr = (const int64_t *)(data);
+      const int64_t *data_addr = reinterpret_cast<const int64_t *>(data);
       for (size_t i = 0; i < count; i++) {
         const_values.push_back(*(data_addr + i));
       }
     } break;
     case ge::DT_INT32: {
       size_t count = size / sizeof(int32_t);
-      const int32_t *data_addr = (const int32_t *)(data);
+      const int32_t *data_addr = reinterpret_cast<const int32_t *>(data);
       for (size_t i = 0; i < count; i++) {
         const_values.push_back(*(data_addr + i));
       }
@@ -207,7 +207,7 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
   // case1: input is {-2}， set the output {-2}
   if (input_shape.IsUnknownDimNum()) {
     OP_LOGD(TbeGetName(op).c_str(), "input is {-2}, so output {-2}");
-    std::vector<int64_t> output_shape(1, -2);
+    std::vector<int64_t> output_shape(1, ge::UNKNOWN_DIM_NUM);
     tensordesc_output->SetShape(GeShape(output_shape));
     return true;
   }
@@ -240,10 +240,10 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
     int64_t output_dim_num = UNKNOWN_DIM_VALUE;
     if (!axes_shape.IsUnknownDimNum() && axes_shape.GetDimNum() == 0) {
       OP_LOGD(TbeGetName(op).c_str(), "the axes is scalar, will reduce one dim for input shape");
-      output_dim_num = input_length - 1;
+      output_dim_num = static_cast<int64_t>(input_length - 1);
     }
     if (axes_shape.GetDimNum() == 1 && axes_shape.GetDim(0) == 1) {
-      output_dim_num = input_length - 1;
+      output_dim_num = static_cast<int64_t>(input_length - 1);
       OP_LOGD(TbeGetName(op).c_str(), "the shape of axes is [1], will reduce one dim for input shape");
     }
     int64_t range_min_value = input_shape_range[0].first;

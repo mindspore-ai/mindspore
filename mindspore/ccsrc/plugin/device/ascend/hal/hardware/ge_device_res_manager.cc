@@ -176,7 +176,6 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
     if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
       options["ge.exec.formatMode"] = "1";
     }
-
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }

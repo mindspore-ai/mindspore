@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,79 +31,76 @@
 
 namespace mindspore {
 namespace parallel {
+
+constexpr float kRecursionFactor = 2.0;
+
+double GetMatMulMaxCostIn(const Graph::NodeType &op) {
+  auto cost_ptr = std::make_shared<CostMatMul>();
+  return cost_ptr->GetMaxCostIn(op.apply);
+}
+
+double GetBatchMatMulMaxCostIn(const Graph::NodeType &op) {
+  auto cost_ptr = std::make_shared<CostBatchMatMul>();
+  return cost_ptr->GetMaxCostIn(op);
+}
+
+double GetConvolutionMinCostIn(const Graph::NodeType &op) {
+  auto cost_ptr = std::make_shared<CostConvolution>();
+  return cost_ptr->GetMinCostIn(op);
+}
+
+template <class T>
+double GetMaxCostIn(const Graph::NodeType &) {
+  auto cost_ptr = std::make_shared<T>();
+  return cost_ptr->GetMaxCostIn();
+}
+
+template <class T>
+double GetMinCostIn(const Graph::NodeType &) {
+  auto cost_ptr = std::make_shared<T>();
+  return cost_ptr->GetMinCostIn();
+}
+
+double GetZeroCostIn(const Graph::NodeType &) { return 0.0; }
+
+using CostFunc = std::function<double(const Graph::NodeType &)>;
+
 // Get the target node's weight for sorting.
 double GetWeights(const Graph::NodeType &node) {
+  const std::map<OperatorType, CostFunc> cost_func_map = {
+    {kRecMatMul, GetMatMulMaxCostIn},
+    {kRecBatchMatMul, GetBatchMatMulMaxCostIn},
+    {kRecConvolution, GetConvolutionMinCostIn},
+    {kRecPooling, GetMinCostIn<CostPooling>},
+    {kRecElmWiseOp, GetMinCostIn<CostTensorAdd>},
+    {kRecReLU, GetMinCostIn<CostCommon>},
+    {kRecReshape, GetMinCostIn<CostReshape>},
+    {kRecBiasAdd, GetMinCostIn<CostBiasAdd>},
+    {kRecLog, GetMinCostIn<CostCommon>},
+    {kRecExp, GetMinCostIn<CostCommon>},
+    {kRecAdd, GetMinCostIn<CostCommon>},
+    {kRecSub, GetMinCostIn<CostCommon>},
+    {kRecMul, GetMinCostIn<CostCommon>},
+    {kRecDiv, GetMinCostIn<CostCommon>},
+    {kRecSqueeze, GetMinCostIn<CostCommon>},
+    {kRecCast, GetMinCostIn<CostCommon>},
+    {kRecBatchNorm, GetMaxCostIn<CostBatchParallel>},
+    {kRecOneHot, GetMaxCostIn<CostBatchParallel>},
+    {kRecPReLU, GetMaxCostIn<CostBatchParallel>},
+    {kRecUnsortedSegmentOp, GetMaxCostIn<CostBatchParallel>},
+    {kRecSoftmax, GetMaxCostIn<CostBatchParallel>},
+    {kRecBatchParallel, GetMaxCostIn<CostBatchParallel>},
+    {kRecSparseSoftmaxCrossEntropyWithLogits, GetMaxCostIn<CostBatchParallel>},
+    {kRecSoftmaxCrossEntropyWithLogits, GetMaxCostIn<CostBatchParallel>},
+    {kRecUnknownType, GetZeroCostIn},
+    {kRecVirtual, GetZeroCostIn},
+    {kRecStandAlone, GetZeroCostIn}};
   const OperatorRec &op = node.apply;
-
-  if (op.op_type == OperatorType::kRecMatMul) {
-    // For MatMul
-    auto cost_ptr = std::make_shared<CostMatMul>();
-
-    return cost_ptr->GetMaxCostIn(op);
-  } else if (op.op_type == OperatorType::kRecBatchMatMul) {
-    // For BatchMatMul
-    auto cost_ptr = std::make_shared<CostBatchMatMul>();
-
-    return cost_ptr->GetMaxCostIn(node);
-  } else if (op.op_type == OperatorType::kRecConvolution) {
-    // For Convolution
-    auto cost_ptr = std::make_shared<CostConvolution>();
-
-    return cost_ptr->GetMinCostIn(node);
-  } else if (op.op_type == OperatorType::kRecPooling) {
-    // For Pooling
-    auto cost_ptr = std::make_shared<CostPooling>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecElmWiseOp) {
-    // For TensorAdd
-    auto cost_ptr = std::make_shared<CostTensorAdd>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecReLU) {
-    // For Activation
-    auto cost_ptr = std::make_shared<CostCommon>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecReshape) {
-    // For Reshape
-    auto cost_ptr = std::make_shared<CostReshape>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecBiasAdd) {
-    // For BiasAdd
-    auto cost_ptr = std::make_shared<CostBiasAdd>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecLog || op.op_type == OperatorType::kRecExp ||
-             op.op_type == OperatorType::kRecAdd || op.op_type == OperatorType::kRecSub ||
-             op.op_type == OperatorType::kRecMul || op.op_type == OperatorType::kRecDiv ||
-             op.op_type == OperatorType::kRecSqueeze || op.op_type == OperatorType::kRecCast) {
-    // For element-wise op
-    auto cost_ptr = std::make_shared<CostCommon>();
-
-    return cost_ptr->GetMinCostIn();
-  } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
-             op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecUnsortedSegmentOp ||
-             op.op_type == OperatorType::kRecSoftmax || op.op_type == OperatorType::kRecBatchParallel ||
-             op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
-             op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
-    // For BatchParallel op
-    auto cost_ptr = std::make_shared<CostBatchParallel>();
-
-    return cost_ptr->GetMaxCostIn();
-  } else if (op.op_type == OperatorType::kRecUnknownType) {
-    // For Unknown type
-    return 0.0;
-  } else if (op.op_type == OperatorType::kRecVirtual) {
-    // For Unknown type
-    return 0.0;
-  } else if (op.op_type == OperatorType::kRecStandAlone) {
-    // For StandAlone type
-    return 0.0;
-  } else {
+  const auto &cost_func_iter = cost_func_map.find(op.op_type);
+  if (cost_func_iter == cost_func_map.end()) {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
   }
+  return cost_func_iter->second(node);
 }
 
 // Sort all the nodes by their weights
@@ -139,158 +137,202 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
   return node_index_by_weights;
 }
 
-// Get optimal strategy to partition the target node
-StrategyRec PartitionNode(Graph::NodeType node,
-                          const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                          const std::shared_ptr<Graph> &graph, const bool isTraining) {
-  bool enable_conv_chw_partition = false;
-  MS_EXCEPTION_IF_NULL(graph);
+using StrategyRecFunc = std::function<StrategyRec(
+  Graph::NodeType node, const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+  const std::shared_ptr<Graph> &graph, const bool isTraining)>;
 
-  if (node.apply.op_type == OperatorType::kRecMatMul) {
-    if (graph->dyn_shape_tmp_fix) {
-      if (node.param_name.find(".projection.weight") != std::string::npos) {
-        node.apply.str.inputTensor[0].str_w /= 2.0;
-        node.apply.str.inputTensor[1].str_h /= 2.0;
-        return node.apply.str;
-      }
-      if (node.param_name.find(".mapping.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= 2.0;
-        node.apply.str.outputTensor.str_w /= 2.0;
-        return node.apply.str;
-      }
-      if (node.param_name.find(".attention.dense2.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= 2.0;
-        node.apply.str.outputTensor.str_w /= 2.0;
-        return node.apply.str;
-      }
+StrategyRec MatMulStrategyRec(Graph::NodeType node,
+                              const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                              const std::shared_ptr<Graph> &graph, const bool isTraining) {
+  if (graph->dyn_shape_tmp_fix) {
+    if (node.param_name.find(".projection.weight") != std::string::npos) {
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
+      return node.apply.str;
+    }
+    if (node.param_name.find(".mapping.weight") != std::string::npos) {
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
+      return node.apply.str;
+    }
+    if (node.param_name.find(".attention.dense2.weight") != std::string::npos) {
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
+      return node.apply.str;
+    }
+  }
+  // For MatMul
+  auto cost_ptr = std::make_shared<CostMatMul>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
+}
+
+StrategyRec BatchMatMulStrategyRec(Graph::NodeType node,
+                                   const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                                   const std::shared_ptr<Graph> &graph, const bool isTraining) {
+  if (graph->dyn_shape_tmp_fix) {
+    if (node.param_name.find(".projection.weight") != std::string::npos) {
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
+      return node.apply.str;
+    }
+    if (node.param_name.find(".mapping.weight") != std::string::npos) {
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
+      return node.apply.str;
     }
 
-    // For MatMul
-    auto cost_ptr = std::make_shared<CostMatMul>();
-
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
-  } else if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
-    if (graph->dyn_shape_tmp_fix) {
-      if (node.param_name.find(".projection.weight") != std::string::npos) {
-        node.apply.str.inputTensor[0].str_w /= 2.0;
-        node.apply.str.inputTensor[1].str_h /= 2.0;
-        return node.apply.str;
+    bool same_inputs = false;
+    bool projection_bias_bmm = false;
+    bool mapping_bias_bmm = false;
+    for (size_t idx = 0; idx < node.node_in.size(); idx++) {
+      if (idx == node.node_in.size() - 1) {
+        break;
       }
-      if (node.param_name.find(".mapping.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= 2.0;
-        node.apply.str.outputTensor.str_w /= 2.0;
-        return node.apply.str;
-      }
-
-      bool same_inputs = false;
-      bool projection_bias_bmm = false;
-      bool mapping_bias_bmm = false;
-      for (size_t idx = 0; idx < node.node_in.size(); idx++) {
-        if (idx == node.node_in.size() - 1) {
-          break;
-        }
-        for (size_t idx_bis = idx + 1; idx_bis < node.node_in.size(); idx_bis++) {
-          if (node.node_in[idx] == node.node_in[idx_bis]) {
-            same_inputs = true;
-            break;
-          }
-        }
-        if (same_inputs) {
+      for (size_t idx_bis = idx + 1; idx_bis < node.node_in.size(); idx_bis++) {
+        if (node.node_in[idx] == node.node_in[idx_bis]) {
+          same_inputs = true;
           break;
         }
       }
       if (same_inputs) {
-        return node.apply.str;
-      }
-
-      for (size_t idx = 0; idx < node.node_in.size(); idx++) {
-        auto incoming_node_idx = node.node_in[idx];
-        if (graph->nodes[incoming_node_idx].param_name.find(".projection.bias") != std::string::npos) {
-          projection_bias_bmm = true;
-          break;
-        }
-        if (graph->nodes[incoming_node_idx].param_name.find(".mapping.bias") != std::string::npos) {
-          mapping_bias_bmm = true;
-          break;
-        }
-      }
-      if (projection_bias_bmm) {
-        node.apply.str.inputTensor[0].str_w /= 2.0;
-        node.apply.str.inputTensor[1].str_h /= 2.0;
-        return node.apply.str;
-      }
-      if (mapping_bias_bmm) {
-        node.apply.str.inputTensor[1].str_w /= 2.0;
-        node.apply.str.outputTensor.str_w /= 2.0;
-        return node.apply.str;
+        break;
       }
     }
+    if (same_inputs) {
+      return node.apply.str;
+    }
 
-    // For BatchMatMul
-    auto cost_ptr = std::make_shared<CostBatchMatMul>();
+    for (size_t idx = 0; idx < node.node_in.size(); idx++) {
+      auto incoming_node_idx = node.node_in[idx];
+      if (graph->nodes[incoming_node_idx].param_name.find(".projection.bias") != std::string::npos) {
+        projection_bias_bmm = true;
+        break;
+      }
+      if (graph->nodes[incoming_node_idx].param_name.find(".mapping.bias") != std::string::npos) {
+        mapping_bias_bmm = true;
+        break;
+      }
+    }
+    if (projection_bias_bmm) {
+      node.apply.str.inputTensor[0].str_w /= kRecursionFactor;
+      node.apply.str.inputTensor[1].str_h /= kRecursionFactor;
+      return node.apply.str;
+    }
+    if (mapping_bias_bmm) {
+      node.apply.str.inputTensor[1].str_w /= kRecursionFactor;
+      node.apply.str.outputTensor.str_w /= kRecursionFactor;
+      return node.apply.str;
+    }
+  }
+  auto cost_ptr = std::make_shared<CostBatchMatMul>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
-  } else if (node.apply.op_type == OperatorType::kRecConvolution) {
-    // For Convolution
-    auto cost_ptr = std::make_shared<CostConvolution>();
+StrategyRec ConvolutionStrategyRec(Graph::NodeType node,
+                                   const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                                   const std::shared_ptr<Graph> &graph, const bool isTraining) {
+  const bool enable_conv_chw_partition = false;
+  auto cost_ptr = std::make_shared<CostConvolution>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, enable_conv_chw_partition);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, enable_conv_chw_partition);
-  } else if (node.apply.op_type == OperatorType::kRecPooling) {
-    // For Pooling
-    auto cost_ptr = std::make_shared<CostPooling>();
+StrategyRec PoolingStrategyRec(Graph::NodeType node,
+                               const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                               const std::shared_ptr<Graph> &graph, const bool) {
+  auto cost_ptr = std::make_shared<CostPooling>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecElmWiseOp) {
-    // For TensorAdd
-    auto cost_ptr = std::make_shared<CostTensorAdd>();
+StrategyRec ElmWiseStrategyRec(Graph::NodeType node,
+                               const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                               const std::shared_ptr<Graph> &graph, const bool) {
+  auto cost_ptr = std::make_shared<CostTensorAdd>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecReLU) {
-    // For Activation
-    auto cost_ptr = std::make_shared<CostCommon>();
+StrategyRec CommonStrategyRec(Graph::NodeType node,
+                              const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                              const std::shared_ptr<Graph> &graph, const bool) {
+  auto cost_ptr = std::make_shared<CostCommon>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecReshape) {
-    // For Reshape
-    auto cost_ptr = std::make_shared<CostReshape>();
+StrategyRec ReshapeStrategyRec(Graph::NodeType node, const std::vector<std::pair<std::string, StrategyRec>> &,
+                               const std::shared_ptr<Graph> &, const bool) {
+  auto cost_ptr = std::make_shared<CostReshape>();
+  return cost_ptr->GetOptimalStr(node);
+}
 
-    return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecBiasAdd) {
-    // For BiasAdd
-    auto cost_ptr = std::make_shared<CostBiasAdd>();
+StrategyRec BiasAddStrategyRec(Graph::NodeType node,
+                               const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                               const std::shared_ptr<Graph> &graph, const bool) {
+  auto cost_ptr = std::make_shared<CostBiasAdd>();
+  return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecLog || node.apply.op_type == OperatorType::kRecExp ||
-             node.apply.op_type == OperatorType::kRecAdd || node.apply.op_type == OperatorType::kRecSub ||
-             node.apply.op_type == OperatorType::kRecMul || node.apply.op_type == OperatorType::kRecDiv ||
-             node.apply.op_type == OperatorType::kRecSqueeze || node.apply.op_type == OperatorType::kRecCast) {
-    // For element-wise op
-    auto cost_ptr = std::make_shared<CostCommon>();
+StrategyRec BatchParallelStrategyRec(Graph::NodeType node, const std::vector<std::pair<std::string, StrategyRec>> &,
+                                     const std::shared_ptr<Graph> &, const bool) {
+  auto cost_ptr = std::make_shared<CostBatchParallel>();
+  return cost_ptr->GetOptimalStr(node);
+}
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
-  } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
-             node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
-             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
-             node.apply.op_type == kRecUnsortedSegmentOp || node.apply.op_type == OperatorType::kRecBatchParallel ||
-             node.apply.op_type == OperatorType::kRecVirtual) {
-    // For BatchParallel type
-    auto cost_ptr = std::make_shared<CostBatchParallel>();
-    return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
-    // For SoftmaxCrossEntropyWithLogits type
-    auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
-    return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecUnknownType) {
-    // For Unknown type
-    StrategyRec default_strategy;
-    return default_strategy;
-  } else if (node.apply.op_type == OperatorType::kRecStandAlone) {
-    // For stand_alone type
-    StrategyRec default_strategy;
-    return default_strategy;
-  } else {
+StrategyRec SoftmaxCrossEntropyWithLogitsStrategyRec(Graph::NodeType node,
+                                                     const std::vector<std::pair<std::string, StrategyRec>> &,
+                                                     const std::shared_ptr<Graph> &, const bool) {
+  auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
+  return cost_ptr->GetOptimalStr(node);
+}
+
+StrategyRec UnknownTypeStrategyRec(Graph::NodeType, const std::vector<std::pair<std::string, StrategyRec>> &,
+                                   const std::shared_ptr<Graph> &, const bool) {
+  StrategyRec default_strategy;
+  return default_strategy;
+}
+
+StrategyRec StandAloneStrategyRec(Graph::NodeType, const std::vector<std::pair<std::string, StrategyRec>> &,
+                                  const std::shared_ptr<Graph> &, const bool) {
+  StrategyRec default_strategy;
+  return default_strategy;
+}
+
+// Get optimal strategy to partition the target node
+StrategyRec PartitionNode(Graph::NodeType node,
+                          const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                          const std::shared_ptr<Graph> &graph, const bool isTraining) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const std::map<OperatorType, StrategyRecFunc> strategy_rec_func_map = {
+    {OperatorType::kRecMatMul, MatMulStrategyRec},
+    {OperatorType::kRecBatchMatMul, BatchMatMulStrategyRec},
+    {OperatorType::kRecConvolution, ConvolutionStrategyRec},
+    {OperatorType::kRecPooling, PoolingStrategyRec},
+    {OperatorType::kRecElmWiseOp, ElmWiseStrategyRec},
+    {OperatorType::kRecReLU, CommonStrategyRec},
+    {OperatorType::kRecReshape, ReshapeStrategyRec},
+    {OperatorType::kRecBiasAdd, BiasAddStrategyRec},
+    {OperatorType::kRecLog, CommonStrategyRec},
+    {OperatorType::kRecExp, CommonStrategyRec},
+    {OperatorType::kRecAdd, CommonStrategyRec},
+    {OperatorType::kRecSub, CommonStrategyRec},
+    {OperatorType::kRecMul, CommonStrategyRec},
+    {OperatorType::kRecDiv, CommonStrategyRec},
+    {OperatorType::kRecSqueeze, CommonStrategyRec},
+    {OperatorType::kRecCast, CommonStrategyRec},
+    {OperatorType::kRecBatchNorm, BatchParallelStrategyRec},
+    {OperatorType::kRecOneHot, BatchParallelStrategyRec},
+    {OperatorType::kRecPReLU, BatchParallelStrategyRec},
+    {OperatorType::kRecSoftmax, BatchParallelStrategyRec},
+    {OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits, BatchParallelStrategyRec},
+    {OperatorType::kRecUnsortedSegmentOp, BatchParallelStrategyRec},
+    {OperatorType::kRecBatchParallel, BatchParallelStrategyRec},
+    {OperatorType::kRecVirtual, BatchParallelStrategyRec},
+    {OperatorType::kRecSoftmaxCrossEntropyWithLogits, SoftmaxCrossEntropyWithLogitsStrategyRec},
+    {OperatorType::kRecUnknownType, UnknownTypeStrategyRec},
+    {OperatorType::kRecStandAlone, StandAloneStrategyRec}};
+  const auto &strategy_rec_func_iter = strategy_rec_func_map.find(node.apply.op_type);
+  if (strategy_rec_func_iter == strategy_rec_func_map.end()) {
     MS_LOG(EXCEPTION) << "Failure: Partition Operator failed.";
   }
+  return strategy_rec_func_iter->second(node, node_name_to_strategy, graph, isTraining);
 }
 
 StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str, StrategyRec new_str) {

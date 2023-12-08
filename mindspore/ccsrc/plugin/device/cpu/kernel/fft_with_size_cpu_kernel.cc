@@ -110,14 +110,26 @@ int FFTWithSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 double Getnormalized(int64_t element_num, const std::string &normalized, bool is_reverse) {
   double result = 1.0;
   if (!is_reverse) {
-    if (normalized == "forward") result = 1.0 / element_num;
-    if (normalized == "backward") result = 1.0;
-    if (normalized == "ortho") result = 1.0 / sqrt(static_cast<double>(element_num));
+    if (normalized == "forward") {
+      result = 1.0 / element_num;
+    }
+    if (normalized == "backward") {
+      result = 1.0;
+    }
+    if (normalized == "ortho") {
+      result = 1.0 / sqrt(static_cast<double>(element_num));
+    }
   }
   if (is_reverse) {
-    if (normalized == "forward") result = 1.0 * element_num;
-    if (normalized == "backward") result = 1.0;
-    if (normalized == "ortho") result = 1.0 * sqrt(static_cast<double>(element_num));
+    if (normalized == "forward") {
+      result = 1.0 * element_num;
+    }
+    if (normalized == "backward") {
+      result = 1.0;
+    }
+    if (normalized == "ortho") {
+      result = 1.0 * sqrt(static_cast<double>(element_num));
+    }
   }
   return result;
 }

@@ -19,7 +19,6 @@
 #include "ops/nn_optimizer_op_name.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER(kCPUDevice, SplitModelCpu);
 constexpr size_t kReduceFusionDepth = 20;
 constexpr size_t kBroadcastFusionDepth = 20;
 

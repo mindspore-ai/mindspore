@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 #include "ops/array_ops.h"
 #include "ops/lite_ops.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
@@ -101,7 +101,7 @@ size_t ScalarOpPass::GetInputNodeIndex(const AnfNodePtr &input, const CNodePtr &
 Create a Tensor with type scalar. This pass assumes that the scalar is from TensorShape, which will be integers.
 */
 ValueNodePtr ScalarOpPass::GenerateScalarValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
-                                                     int input_index) {
+                                                     size_t input_index) {
   lite::DataInfo data_info;
   auto ret = lite::FetchConstData(anf_node->cast<CNodePtr>(), input_index, converter::kFmkTypeMs, &data_info, false);
   MS_CHECK_TRUE_RET(ret == lite::RET_OK, nullptr);
@@ -121,7 +121,7 @@ ValueNodePtr ScalarOpPass::GenerateScalarValueTensor(const FuncGraphPtr &func_gr
 }
 
 CNodePtr ScalarOpPass::GenerateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
-                                              int input_index) {
+                                              size_t input_index) {
   auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto scalar_cnode = anf_node->cast<CNodePtr>();
@@ -214,8 +214,8 @@ CNodePtr ScalarOpPass::GenerateTensorShape(const FuncGraphPtr &func_graph, const
 /*
 Create a ValueNode with single scalar as input.
 */
-ValueNodePtr ScalarOpPass::GenerateScalarValueTuple(const FuncGraphPtr &func_graph, int64_t value) {
-  std::vector<int64_t> vec({value});
+ValueNodePtr ScalarOpPass::GenerateScalarValueTuple(const FuncGraphPtr &func_graph, size_t value) {
+  std::vector<int64_t> vec({static_cast<int64_t>(value)});
   auto tuple_value = MakeValue(vec);
   auto tuple_node = NewValueNode(tuple_value);
   tuple_node->set_abstract(tuple_value->ToAbstract());
@@ -224,11 +224,8 @@ ValueNodePtr ScalarOpPass::GenerateScalarValueTuple(const FuncGraphPtr &func_gra
 }
 
 CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &shape_node,
-                                            const AnfNodePtr &tuple_get_node, const FuncGraphManagerPtr &manager) {
+                                            const AnfNodePtr &tuple_get_node) {
   auto begin_index = GetTupleGetItemOutIndex(tuple_get_node->cast<CNodePtr>());
-  MS_CHECK_TRUE_MSG(begin_index >= 0, nullptr, "begin index is less than zero.");
-
-  // set inputs
   auto begin_node = GenerateScalarValueTuple(func_graph, begin_index);
   MS_CHECK_TRUE_MSG(begin_node != nullptr, nullptr, "generate StridedSlice begin node failed.");
   auto end_node = GenerateScalarValueTuple(func_graph, begin_index + kSizeOne);
@@ -309,7 +306,8 @@ STATUS ScalarOpPass::ReplaceScalarOp(const FuncGraphPtr &func_graph, const AnfNo
   for (auto &node_user : node_users) {
     auto post_cnode = node_user.first->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(post_cnode != nullptr, lite::RET_ERROR);
-    manager->SetEdge(post_cnode, GetInputNodeIndex(anf_node, post_cnode) + kSizeOne, tensor_to_scalar);
+    manager->SetEdge(post_cnode, static_cast<int>(GetInputNodeIndex(anf_node, post_cnode) + kSizeOne),
+                     tensor_to_scalar);
   }
 
   return lite::RET_OK;
@@ -346,7 +344,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
       MS_CHECK_TRUE_MSG(ret != RET_ERROR, lite::RET_ERROR, "get datatype from MakeTuple input failed.");
       tuple_type_list.push_back(TypeIdToType(orig_type_id));
 
-      manager->SetEdge(anf_node, i, node);
+      manager->SetEdge(anf_node, static_cast<int>(i), node);
     } else {  // For ValueNode the input type is int32
       auto node = GenerateScalarValueTensor(func_graph, anf_node, i);
       MS_CHECK_TRUE_MSG(node != nullptr, lite::RET_ERROR, "generate ScalarValueTensor node failed.");
@@ -356,7 +354,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
       MS_CHECK_TRUE_MSG(ret != RET_ERROR, lite::RET_ERROR, "get datatype from MakeTuple input failed.");
       tuple_type_list.push_back(TypeIdToType(orig_type_id));
 
-      manager->SetEdge(anf_node, i, node);
+      manager->SetEdge(anf_node, static_cast<int>(i), node);
     }
   }
 
@@ -371,9 +369,9 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
                                    anf_node->cast<CNodePtr>()->fullname_with_scope() + "_concat_make_tuple");
   auto primitive = GetCNodePrimitive(concat_node);
   MS_CHECK_TRUE_RET(primitive != nullptr, lite::RET_ERROR);
-  int64_t num_of_inputs = anf_node->cast<CNodePtr>()->inputs().size() - kSizeOne;
-  primitive->set_attr("N", MakeValue<int64_t>(num_of_inputs));
-  primitive->set_attr("inputNums", MakeValue<int64_t>(num_of_inputs));
+  size_t num_of_inputs = anf_node->cast<CNodePtr>()->inputs().size() - kSizeOne;
+  primitive->set_attr("N", MakeValue<int64_t>(static_cast<int64_t>(num_of_inputs)));
+  primitive->set_attr("inputNums", MakeValue<int64_t>(static_cast<int64_t>(num_of_inputs)));
 
   // The first input type is used as the type for concat (need to add type check)
   TypeId make_tuple_type;
@@ -381,8 +379,9 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
     MS_LOG(ERROR) << "Failed to get " << anf_node->fullname_with_scope() << " output tensor data type.";
     return lite::RET_ERROR;
   }
-  auto concat_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector({num_of_inputs})),
-                                                TypeIdToType(make_tuple_type));
+  auto concat_abstract =
+    abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector({static_cast<int64_t>(num_of_inputs)})),
+                           TypeIdToType(make_tuple_type));
   concat_node->set_abstract(concat_abstract);
 
   // set MakeTuple users' input to concat
@@ -390,7 +389,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
   for (auto &make_tuple_user : make_tuple_users) {
     auto post_cnode = make_tuple_user.first->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(post_cnode != nullptr, lite::RET_ERROR, "MakeTuple user is null.");
-    manager->SetEdge(post_cnode, GetInputNodeIndex(anf_node, post_cnode) + kSizeOne, concat_node);
+    manager->SetEdge(post_cnode, static_cast<int>(GetInputNodeIndex(anf_node, post_cnode) + kSizeOne), concat_node);
   }
 
   return lite::RET_OK;
@@ -419,7 +418,7 @@ STATUS ScalarOpPass::ReplaceShapeTupleGet(const FuncGraphPtr &func_graph, const 
           GenCastNode(func_graph, tensor_shape_node, tensor_shape_node->fullname_with_scope() + "_cast_tensorshape",
                       kNumberTypeInt32, cast_abstract);
       }
-      auto strided_slice_node = GenerateStridedSlice(func_graph, cast_node, tuple_get_node, manager);
+      auto strided_slice_node = GenerateStridedSlice(func_graph, cast_node, tuple_get_node);
       MS_CHECK_TRUE_MSG(strided_slice_node != nullptr, lite::RET_ERROR, "generate StridedSlice node failed.");
 
       CNodePtr tensor_to_scalar = GenerateTensorToScalar(func_graph, strided_slice_node, true);
@@ -429,7 +428,8 @@ STATUS ScalarOpPass::ReplaceShapeTupleGet(const FuncGraphPtr &func_graph, const 
       for (auto &tuple_get_user : tuple_get_users) {
         auto post_cnode = tuple_get_user.first->cast<CNodePtr>();
         MS_CHECK_TRUE_MSG(post_cnode != nullptr, lite::RET_ERROR, "TupleGetItem user is null.");
-        manager->SetEdge(post_cnode, GetInputNodeIndex(tuple_get_node, post_cnode) + kSizeOne, tensor_to_scalar);
+        manager->SetEdge(post_cnode, static_cast<int>(GetInputNodeIndex(tuple_get_node, post_cnode) + kSizeOne),
+                         tensor_to_scalar);
       }
     }
   }
@@ -437,8 +437,7 @@ STATUS ScalarOpPass::ReplaceShapeTupleGet(const FuncGraphPtr &func_graph, const 
   return lite::RET_OK;
 }
 
-STATUS ScalarOpPass::RemoveTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
-                                          const FuncGraphManagerPtr &manager) {
+STATUS ScalarOpPass::RemoveTensorToScalar(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   auto tensor_to_scalar_cnode = anf_node->cast<CNodePtr>();
   auto tensor_to_scalar_users = manager->node_users()[tensor_to_scalar_cnode];
   auto parent_node = tensor_to_scalar_cnode->input(kIndexOne);
@@ -448,7 +447,8 @@ STATUS ScalarOpPass::RemoveTensorToScalar(const FuncGraphPtr &func_graph, const 
       auto child_node_users = manager->node_users()[user_node];
       for (auto &child_node_user : child_node_users) {
         auto child_node = child_node_user.first->cast<CNodePtr>();
-        manager->SetEdge(child_node, GetInputNodeIndex(user_node, child_node) + kSizeOne, parent_node);
+        manager->SetEdge(child_node, static_cast<int>(GetInputNodeIndex(user_node, child_node) + kSizeOne),
+                         parent_node);
       }
     } else {
       std::string prim_name = "";
@@ -541,7 +541,7 @@ STATUS ScalarOpPass::RunRemoveTensorToScalarPass(const FuncGraphPtr &func_graph,
     // Remove TensorToScalar + Cast
     if (CheckPrimitiveType(node, prim::kPrimTensorToScalar)) {
       MS_LOG(DEBUG) << "Found TensorToScalar, start removing...";
-      status = this->RemoveTensorToScalar(func_graph, node, manager);
+      status = this->RemoveTensorToScalar(node, manager);
     }
 
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
@@ -609,7 +609,7 @@ bool ScalarOpPass::Run(const FuncGraphPtr &func_graph) {
   auto status = RunShapeTupleGetPass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
   auto scalar_replace_status = RunScalarOpPass(func_graph, manager);
-  MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
+  MS_CHECK_TRUE_RET(scalar_replace_status != lite::RET_ERROR, false);
   status = RunMakeTuplePass(func_graph, manager);
   MS_CHECK_TRUE_RET(status != lite::RET_ERROR, false);
   status = RunRemoveTensorToScalarPass(func_graph, manager);

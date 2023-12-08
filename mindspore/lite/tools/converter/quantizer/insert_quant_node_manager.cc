@@ -1156,6 +1156,19 @@ CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, cons
     return nullptr;
   }
   cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-" + input_2->fullname_with_scope() + "-Mul");
+  ShapeVector input1_shape;
+  ShapeVector input2_shape;
+  auto ret = opt::FetchShapeFromAbstract(input_1->abstract(), &input1_shape);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch shape from abstract failed.";
+    return nullptr;
+  }
+  ret = opt::FetchShapeFromAbstract(input_2->abstract(), &input2_shape);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch shape from abstract failed.";
+    return nullptr;
+  }
+  MS_LOG(INFO) << cnode->fullname_with_scope() << " shape is " << input1_shape << " " << input2_shape;
   cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
 }
@@ -1235,10 +1248,10 @@ ValueNodePtr InsertQuantNodeManager::NewFSEDecodePrimitive(int dst_type, uint64_
   return NewValueNode(prim);
 }
 
-int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool holder) {
   for (size_t i = 1; i < cnode->size(); i++) {
     if (cnode->input(i)->isa<CNode>() || IsGraphInput(cnode->input(i))) {
-      auto ret = InsertAscendQuantNode(func_graph, cnode, i);
+      auto ret = InsertAscendQuantNode(func_graph, cnode, i, holder);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "InsertAscendQuantNode failed.";
         return ret;
@@ -1249,11 +1262,11 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
 }
 
 int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                  size_t input_index) {
+                                                  size_t input_index, bool holder) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
   auto x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
-  if (x_q_param_origin.empty()) {
+  if (x_q_param_origin.empty() || holder) {
     auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
     CHECK_NULL_RETURN(curr_quant_param_holder);
     auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
@@ -1294,7 +1307,8 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                    bool holder) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
   auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(kPrimIndex));
@@ -1305,8 +1319,13 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
   auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
   CHECK_NULL_RETURN(curr_quant_param_holder);
   auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
+  if (holder && input_quant_param.size() < kMinSize2) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input quant param size is less 2.";
+    return RET_ERROR;
+  }
   auto x_q_param = quant::GetInputNodeQuantParam(cnode, Index0 + kPrimOffset);
-  if (x_q_param.empty()) {
+  if (x_q_param.empty() || holder) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " get X quant param from holder";
     x_q_param = input_quant_param.at(Index0);
   }
   if (x_q_param.size() != kPerTensor) {
@@ -1314,7 +1333,8 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
     return RET_ERROR;
   }
   auto w_q_params = quant::GetInputNodeQuantParam(cnode, Index1 + kPrimOffset);
-  if (w_q_params.empty()) {
+  if (w_q_params.empty() || holder) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " get W quant param from holder";
     w_q_params = input_quant_param.at(Index1);
   }
   if (w_q_params.empty()) {

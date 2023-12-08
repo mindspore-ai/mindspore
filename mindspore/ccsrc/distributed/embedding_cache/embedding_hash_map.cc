@@ -35,10 +35,12 @@ EmbeddingHashMap::EmbeddingHashMap(size_t hash_capacity) : hash_capacity_(hash_c
   ids_to_indices_ = std::make_unique<LRUCache<int, int>>(valid_capacity_);
 }
 
-size_t EmbeddingHashMap::hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
+size_t EmbeddingHashMap::hash_step(const int hash_index) const {
+  return hash_map_elements_[IntToSize(hash_index)].step_;
+}
 
 void EmbeddingHashMap::set_hash_step(const int hash_index, const size_t step) {
-  hash_map_elements_[hash_index].set_step(step);
+  hash_map_elements_[IntToSize(hash_index)].set_step(step);
 }
 
 // Get capacity of hash map.
@@ -85,29 +87,29 @@ int EmbeddingHashMap::GetOrInsertDataUnsafe(const int key) {
 }
 
 int EmbeddingHashMap::InsertDataUnsafe(const int key) {
-  auto hash_index = FindPosUnsafe(key);
+  auto hash_index = FindPosUnsafe();
   if (hash_index == kInvalidIndexValue) {
     MS_LOG(WARNING) << "Insert data unsafe failed as map is full.";
     return hash_index;
   }
 
   ids_to_indices_->Put(key, hash_index);
-  hash_map_elements_[hash_index].set_step(1);
+  hash_map_elements_[hash_index].set_step((size_t)1);
   return hash_index;
 }
 
-int EmbeddingHashMap::FindPosUnsafe(const int key) {
+int EmbeddingHashMap::FindPosUnsafe() {
   if (current_pos_ >= valid_capacity_) {
     return kInvalidIndexValue;
   }
-  return ++current_pos_;
+  return SizeToInt(++current_pos_);
 }
 
 int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
-                                       bool *const need_wait_graph, int *swap_out_id) {
+                                       bool *const /*need_wait_graph*/, int *swap_out_id) {
   if (current_pos_ < valid_capacity_) {
     // Start from index 1.
-    return ++current_pos_;
+    return SizeToInt(++current_pos_);
   }
   if (valid_capacity_ == 0) {
     return kInvalidIndexValue;
@@ -116,7 +118,7 @@ int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_
   *need_swap = true;
   int id = ids_to_indices_->Back().first;
   int index = ids_to_indices_->Back().second;
-  if (hash_map_elements_[index].IsExpired(graph_running_step)) {
+  if (hash_map_elements_[IntToSize(index)].IsExpired(graph_running_step)) {
     std::vector<Element> evicted_elements;
     ids_to_indices_->TryEvict(1, &evicted_elements);
     if (evicted_elements.size() != 1) {

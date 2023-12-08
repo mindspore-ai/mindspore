@@ -16,8 +16,6 @@
 
 #include "include/registry/opencl_runtime_wrapper.h"
 #include <vector>
-#include <numeric>
-#include <utility>
 #include "include/errorcode.h"
 #include "src/litert/kernel/opencl/utils.h"
 #include "src/litert/kernel/gpu/opencl/opencl_allocator.h"

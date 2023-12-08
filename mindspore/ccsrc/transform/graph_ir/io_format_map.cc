@@ -44,7 +44,8 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"AvgPool3DGrad", "NCDHW"},
                                                                             {"Conv3DBackpropFilter", "format"},
                                                                             {"Conv3DBackpropInput", "format"},
-                                                                            {"Conv3DTranspose", "format"}};
+                                                                            {"Conv3DTranspose", "format"},
+                                                                            {"DepthToSpace", "format"}};
 mindspore::HashMap<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
 }  // namespace mindspore

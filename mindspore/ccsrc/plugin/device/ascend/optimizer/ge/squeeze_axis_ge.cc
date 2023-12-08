@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
-#include <memory>
-#include <string>
-#include <vector>
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -58,7 +55,7 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
 
   for (const auto &value : value_sequence) {
     auto axis_data = AnfUtils::GetIntValue(value);
-    auto real_idx = (axis_data < 0) ? axis_data + dim : axis_data;
+    auto real_idx = (axis_data < 0) ? axis_data + static_cast<int64_t>(dim) : axis_data;
     (void)axis.emplace_back(real_idx);
   }
   prim->set_attr(kAttrAxis, MakeValue(axis));

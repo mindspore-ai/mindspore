@@ -70,7 +70,7 @@ std::tuple<int64_t, ShapeVector, int64_t> RemoveExpandedDims::ConstRemoveExpande
   size_t ellipse_position = 0;
   size_t not_ellipse_occupy_dims = 0;
   bool has_ellipsis = false;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
       has_ellipsis = true;
       ellipse_position = i;
@@ -135,7 +135,7 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
     return std::make_shared<abstract::AbstractTuple>(abs_list);
   }
   auto tensor_ptr = has_false_abs->BuildValue()->cast<mindspore::tensor::TensorPtr>();
-  bool has_false = *reinterpret_cast<int64_t *>(tensor_ptr->data_c()) > 0;
+  bool has_false = *static_cast<int64_t *>(tensor_ptr->data_c()) > 0;
   auto idx_advanced = GetValue<int64_t>(idx_advanced_abs->BuildValue());
   ShapeVector broadcast_shape = GetValue<std::vector<int64_t>>(broadcast_shape_abs->BuildValue());
   auto has_true = GetValue<bool>(primitive->GetAttr(kAttrHasTrue));
@@ -145,7 +145,7 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto expand_dims = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsCnt));
   for (size_t i = 0; i < new_tuple_index_types.size(); i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims;
+      valid_tensor_nums = data_shape.size() + static_cast<size_t>(expand_dims);
       break;
     } else if (new_tuple_index_types[i] != kTypeUnknown) {
       valid_tensor_nums += 1;

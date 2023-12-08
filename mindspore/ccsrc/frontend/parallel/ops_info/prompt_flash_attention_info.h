@@ -57,7 +57,16 @@ class PromptFlashAttentionInfo : public OperatorInfo {
   int64_t dp_;
   int64_t mp_;
   size_t expect_strategies_size_;
+  std::vector<bool> optinal_inputs;
+  size_t atten_mask_rank = 0;
+  size_t padding_mask_rank = 0;
   bool CheckStrategy(int64_t strategy, int64_t true_value, const std::string &dim_name, const std::string &input_name);
+  void GenerateExpectStrategies();
+  std::vector<Shape> expect_strategies;
+  std::vector<Shape> optinal_tensor_map = {{}, {}, {}, {1, -1, -1, -1}, {1}, {1}, {1, -1, -1, -1}, {}, {}, {}, {}, {}};
+  std::vector<Shape> optinal_op_strategies = {{},           {},  {},  {1, 0, 0, 0}, {1}, {1},
+                                              {1, 0, 0, 0}, {0}, {0}, {0},          {0}, {0}};
+  void SetOptinalInputs();
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -15,7 +15,6 @@
  */
 
 #include "src/litert/delegate/nnapi/op/pooling_nnapi.h"
-#include <unordered_map>
 #include "src/litert/delegate/nnapi/nnapi_utils.h"
 #include "nnacl/op_base.h"
 

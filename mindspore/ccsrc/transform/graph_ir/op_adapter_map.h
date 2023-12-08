@@ -443,6 +443,7 @@ constexpr const char kNameLoad[] = "Load";
 constexpr const char kNameDepend[] = "Depend";
 constexpr const char kNameReturn[] = "Return";
 constexpr const char kNameIdentity[] = "Identity";
+constexpr const char kNameIdentityN[] = "IdentityN";
 constexpr const char kNameUpdateState[] = "UpdateState";
 constexpr const char kNameTransData[] = "TransData";
 constexpr const char kNameWhere[] = "Where";
@@ -480,7 +481,7 @@ constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
 constexpr const char kNameIm2col[] = "Im2col";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
-constexpr const char kNameMoeFFN[] = "MoeFFN";
+constexpr const char kNameFFN[] = "FFN";
 constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 constexpr const char kNameNonZeroV2[] = "NonZeroV2";
 constexpr const char kNameResize[] = "Resize";
@@ -488,6 +489,10 @@ constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
 constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
 constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
 constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
+constexpr const char kNameNanToNum[] = "NanToNum";
+constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
+constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
+constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
 
 class OpAdapterDesc;
 

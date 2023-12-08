@@ -32,6 +32,7 @@ const size_t kMbufCapacitySize = 128;
 const int32_t kMbufDestroyDelayTime = 500;
 const char PYTHON_MOD_CALLBACK_MODULE[] = "mindspore.train.callback._callback";
 const char PYTHON_FUN_PROCESS_SUMMARY[] = "summary_cb_for_save_op";
+std::atomic<int> g_atomic_summary(0);
 
 const std::map<aclDataType, TypeId> kPrintAclDataTypeMap = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
@@ -90,7 +91,7 @@ acltdtChannelHandle *TDTTensorUtils::CreateChannel(std::string name, ChannelType
   if (acl_handle_ == nullptr) {
     MS_LOG(INFO) << "Mbuf not supported.";
   } else {
-    MS_LOG(INFO) << "For Print ops, select MBUF channel.";
+    MS_LOG(INFO) << "For Summary ops, select MBUF channel.";
   }
   return acl_handle_;
 }
@@ -98,8 +99,12 @@ acltdtChannelHandle *TDTTensorUtils::CreateChannel(std::string name, ChannelType
 void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle *acl_handle) {
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
-
+  MS_LOG(INFO) << "ReceiveData begin channel_name: " << channel_name;
+  int receive_timeout = 2000;  // wait time of 2000 ms when there is no data
   while (true) {
+    if (g_atomic_summary > 0) {
+      break;
+    }
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -107,9 +112,7 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
-
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, receive_timeout);
       ChannelType channel_type{ChannelType::kMbuf};
       std::map<std::string, TDTInfo>::iterator iter = tdt_infos.find(channel_name);
       if (iter != tdt_infos.end()) {
@@ -117,12 +120,11 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
       }
 
       if (channel_type == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
-        MS_LOG(DEBUG) << "queue is empty.";
         break;
       }
 
       if (ret != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "AclHandle failed to receive tensor.ret = " << ret;
+        MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
         break;
       }
       const char *tensor_name = acltdtGetDatasetName(acl_dataset);
@@ -136,15 +138,16 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && ret == ACL_SUCCESS && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Std out: AcltdtDestroyDataset failed.";
       break;
     }
 
-    if (ret != ACL_SUCCESS) {
+    if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
       break;
     }
   }
+  atomic_fetch_add_explicit(&g_atomic_summary, 1, std::memory_order_acq_rel);
   MS_LOG(INFO) << "ReceiveData end channel_name: " << channel_name;
 }
 
@@ -197,7 +200,7 @@ bool TDTTensorUtils::ConvertDataset2Tensor(acltdtDataset *acl_dataset, ChannelTy
 
     auto type_iter = kPrintAclDataTypeMap.find(acl_data_type);
     if (type_iter == kPrintAclDataTypeMap.end()) {
-      MS_LOG(ERROR) << "type of tensor need to print is not support: " << acl_data_type;
+      MS_LOG(ERROR) << "type of tensor need to summary is not support: " << acl_data_type;
       continue;
     }
     auto type_id = type_iter->second;
@@ -210,7 +213,6 @@ bool TDTTensorUtils::ConvertDataset2Tensor(acltdtDataset *acl_dataset, ChannelTy
       summary_value_dict["data"] = print_tensor;
       summary_list.append(summary_value_dict);
       py::bool_ ret = python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_SUMMARY, summary_list);
-
       auto bool_ret = py::cast<bool>(ret);
       if (!bool_ret) {
         MS_LOG(ERROR) << "Python checkpoint return false during callback";
@@ -235,7 +237,7 @@ bool TDTTensorUtils::PrintTensorToString(const char *str_data_ptr, mindspore::te
 
   auto cp_ret = memcpy_s(tensor_data_ptr, dest_size, str_data_ptr, target_size);
   if (cp_ret != EOK) {
-    MS_LOG(ERROR) << "Print op Failed to copy the memory to py::tensor " << cp_ret;
+    MS_LOG(ERROR) << "Summary op Failed to copy the memory to py::tensor " << cp_ret;
     return false;
   }
   return true;
@@ -257,15 +259,21 @@ void TensorSummaryUtils::DestroyTDTSummaryThread() {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     return;
   }
+  MS_LOG(INFO) << "Begin destroy all summary acl channel";
+  atomic_fetch_add_explicit(&g_atomic_summary, 1, std::memory_order_acq_rel);
+  int i = 0;
   std::map<std::string, TDTInfo> tdt_infos = TDTTensorUtils::GetInstance().tdt_infos;
+  // total timeout 10s
+  int timeout = 1000000;  // 1s
+  int num_times = 10;     // sleep up to 10 times
+  while (i < num_times && g_atomic_summary < static_cast<int>(tdt_infos.size()) + 1) {
+    usleep(timeout);
+    i++;
+  }
   for (auto tdt_info : tdt_infos) {
     auto channel_type = tdt_info.second.channel_type;
     MS_LOG(DEBUG) << "begin  destroy channel:" << tdt_info.second.channel_name;
 
-    if (channel_type == ChannelType::kMbuf) {
-      // avoid incorrect execution order in acl function
-      usleep(kMbufDestroyDelayTime);
-    }
     auto acl_handle = tdt_info.second.acl_handle;
     if (acl_handle == nullptr) {
       MS_LOG(INFO) << "The acl handle has been destroyed and the point is nullptr";
@@ -288,7 +296,7 @@ void TensorSummaryUtils::DestroyTDTSummaryThread() {
       MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
       return;
     }
-    MS_LOG(INFO) << "Succeed destroy acl data channel for host queue ";
+    MS_LOG(INFO) << "Succeed destroy acl data channel for host queue channel: " << tdt_info.second.channel_name;
   }
   tdt_infos.clear();
   MS_LOG(INFO) << "Succeed destroy all summary acl channel";

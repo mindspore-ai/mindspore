@@ -247,7 +247,7 @@ class HcclTaskInfo : public TaskInfo {
  public:
   HcclTaskInfo(const std::string &op_name, uint32_t stream_id, const std::string hccl_type, void *input_data_addr,
                void *output_data_addr, void *workspace_addr, int64_t workspace_size, int64_t hccl_stream_num,
-               const std::vector<uint8_t> &private_def, void *ops_kernel_store, int32_t count, int64_t root_id,
+               const std::vector<uint8_t> &private_def, void *ops_kernel_store, int64_t count, int64_t root_id,
                int64_t op_type, int64_t data_type, const std::string &group, bool dump_flag)
       : TaskInfo(op_name, stream_id, TaskInfoType::HCCL, dump_flag),
         hccl_type_(hccl_type),
@@ -273,7 +273,7 @@ class HcclTaskInfo : public TaskInfo {
   int64_t hccl_stream_num() const { return hccl_stream_num_; }
   const std::vector<uint8_t> &private_def() const { return private_def_; }
   void *ops_kernel_store() const { return ops_kernel_store_; }
-  int32_t count() const { return count_; }
+  int64_t count() const { return count_; }
   int64_t root_id() const { return root_id_; }
   uint32_t graph_id() const { return graph_id_; }
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
@@ -316,7 +316,7 @@ class HcclTaskInfo : public TaskInfo {
   int64_t hccl_stream_num_;
   std::vector<uint8_t> private_def_;
   void *ops_kernel_store_;
-  int32_t count_;
+  int64_t count_;
   int64_t root_id_;
   uint32_t graph_id_;
   int64_t op_type_;

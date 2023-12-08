@@ -23,7 +23,7 @@ class BasicOpInferShape : public opt::NodeInferShape {
  public:
   BasicOpInferShape() : opt::NodeInferShape() {}
   ~BasicOpInferShape() = default;
-  void InferShape(const CNodePtr &cnode);
+  void Infer(const CNodePtr &cnode);
 
  private:
   void InferShapeRealKernel(const CNodePtr &cnode);

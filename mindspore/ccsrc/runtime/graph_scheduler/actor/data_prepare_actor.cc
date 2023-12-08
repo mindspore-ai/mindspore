@@ -915,7 +915,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
                       << output_address << ", device address size: " << another_device_tensor->GetSize()
                       << ", device address addr: " << another_device_tensor->GetPtr()
                       << ", node: " << backend_node->fullname_with_scope() << ", graph: " << graph_str
-                      << ", frontnode: " << front_node->DebugString();
+                      << ", frontnode: " << (front_node == nullptr ? "null" : front_node->DebugString());
     }
 
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()

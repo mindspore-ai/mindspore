@@ -235,7 +235,7 @@ class TensorIndex final {
   explicit TensorIndex(const py::ellipsis &) : type_(TensorIndexType::Ellipsis) {}
 
   explicit TensorIndex(int64_t integer) : integer_(integer), type_(TensorIndexType::Integer) {}
-  explicit TensorIndex(int integer) : TensorIndex((int64_t)integer) {}
+  explicit TensorIndex(int integer) : TensorIndex(static_cast<int64_t>(integer)) {}
   explicit TensorIndex(const py::int_ &integer) : TensorIndex(integer.cast<int64_t>()) {}
 
   explicit TensorIndex(bool boolean) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
@@ -569,9 +569,10 @@ class TensorIndex final {
   static TensorIndex UnpackTuple(const T &sequence);
 
   static inline bool UseCopySlice(const std::vector<TensorIndex> &indices, int64_t data_dims) {
-    if (indices.size() >= 2 && data_dims >= 2) {
+    constexpr size_t min_tuple_index_len = 2;
+    if (indices.size() >= min_tuple_index_len && LongToSize(data_dims) >= min_tuple_index_len) {
       bool valid = indices[0].IsInteger() && indices[1].IsSlice() && indices[1].slice().step() == 1;
-      return valid && std::all_of(indices.begin() + 2, indices.end(), [](const TensorIndex &x) {
+      return valid && std::all_of(indices.begin() + min_tuple_index_len, indices.end(), [](const TensorIndex &x) {
                return x.IsSlice() && x.slice().start_init_by_none() && x.slice().stop_init_by_none() &&
                       x.slice().step() == 1;
              });

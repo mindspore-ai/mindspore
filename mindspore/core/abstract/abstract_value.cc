@@ -1606,7 +1606,7 @@ ValuePtr AbstractNamedTuple::RealBuildValue() const {
     MS_EXCEPTION_IF_NULL(key_value);
     key_value_list.push_back(key_value);
   }
-  return std::make_shared<ValueNamedTuple>(type_name_, key_value_list, element_value_list);
+  return std::make_shared<ValueNamedTuple>(sub_class_name_, key_value_list, element_value_list);
 }
 
 TypePtr AbstractSlice::BuildType() const {

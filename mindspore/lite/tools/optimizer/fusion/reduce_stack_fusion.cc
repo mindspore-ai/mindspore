@@ -50,7 +50,7 @@ int ReduceStackFusion::Process(const FuncGraphPtr &func_graph, const CNodePtr &s
   if (!CheckCanFusion(func_graph, stack)) {
     return lite::RET_OK;
   }
-  reduce_prim_->AddAttr(ops::kKeepDims, MakeValue(true));
+  (void)reduce_prim_->AddAttr(ops::kKeepDims, MakeValue(true));
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     MS_LOG(ERROR) << "Manager is a nullptr.";

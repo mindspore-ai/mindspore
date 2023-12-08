@@ -114,7 +114,7 @@ void ExecOrderBuilder::BuildLinkInfo() {
   if (!output->isa<CNode>()) {
     return;
   }
-  to_visit.emplace(output);
+  (void)to_visit.emplace(output);
   auto seen = NewSeenGeneration();
   while (!to_visit.empty()) {
     auto node = to_visit.front();
@@ -137,13 +137,14 @@ void ExecOrderBuilder::BuildLinkInfo() {
       if (input->seen_ == seen || !input->isa<CNode>() || AnfUtils::IsCustomActorNode(input)) {
         continue;
       }
-      to_visit.emplace(input);
+      (void)to_visit.emplace(input);
       input->seen_ = seen;
     }
   }
 }
 
 void ExecOrderBuilder::GetTrivialInputNode(const AnfNodePtr &node, SeenNum seen) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;
   }
@@ -179,7 +180,7 @@ bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr 
 void ExecOrderBuilder::FindIndependentNodes() {
   std::queue<AnfNodePtr> to_visit;
   std::queue<AnfNodePtr> vnode_to_visit;
-  vnode_to_visit.emplace(graph_->get_return());
+  (void)vnode_to_visit.emplace(graph_->get_return());
   bool visit_with_refcount = true;
   auto ms_context = MsContext::GetInstance();
   auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -223,7 +224,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
       }
 
       if (AnfUtils::IsRealKernel(input)) {
-        to_visit.emplace(input);
+        (void)to_visit.emplace(input);
         if (!independent_nodes_.empty() && visit_with_refcount) {
           auto inode = independent_nodes_.top();
           (void)(*node_output_edges_)[input].emplace_back(inode);
@@ -234,7 +235,7 @@ void ExecOrderBuilder::FindIndependentNodes() {
           independent_nodes_.pop();
         }
       } else {
-        vnode_to_visit.emplace(input);
+        (void)vnode_to_visit.emplace(input);
       }
     }
 
@@ -245,7 +246,6 @@ void ExecOrderBuilder::FindIndependentNodes() {
 }
 
 void ExecOrderBuilder::EnqueueReadyNodes(const AnfNodePtr &node, std::deque<AnfNodePtr> *visit_queue, bool comm_first) {
-  MS_EXCEPTION_IF_NULL(visit_queue);
   MS_EXCEPTION_IF_NULL(visit_queue);
   MS_EXCEPTION_IF_NULL(node_output_edges_);
   auto it = node_output_edges_->find(node);

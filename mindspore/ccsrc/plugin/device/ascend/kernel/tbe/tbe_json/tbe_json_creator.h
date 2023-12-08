@@ -94,6 +94,7 @@ class TbeJsonCreator {
   void DeleteDescName(nlohmann::json *desc_jsons) const;
   void AddOpNameForComputeNode(nlohmann::json *kernel_json) const;
   void GenFusionOpName(nlohmann::json *kernel_json, std::string prefix = "");
+  std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t output_index) const;
 
  private:
   std::string json_name_;

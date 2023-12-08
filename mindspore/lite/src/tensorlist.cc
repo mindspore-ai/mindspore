@@ -195,7 +195,7 @@ Tensor *TensorList::GetTensor(int index) {
   return this->tensors_[index];
 }
 
-bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
+bool TensorList::IsCompatibleShape(const std::vector<int> &shape) const {
   if (this->tensors_.empty() && this->tensor_list_c_.element_shape_size_ == 0) {
     return true;
   }
@@ -310,7 +310,7 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, co
   if (result->shape().empty()) {
     return result;
   }
-  result->MallocTensorListData(static_cast<TypeId>(src.tensor_list_c_.tensors_data_type_), tensor_shape);
+  (void)result->MallocTensorListData(static_cast<TypeId>(src.tensor_list_c_.tensors_data_type_), tensor_shape);
   if (copy_data) {
     for (size_t i = 1; i < src.tensors_.size(); ++i) {
       auto ret = Tensor::CopyTensorData(*(src.tensors_[i]), result->tensors_[i]);

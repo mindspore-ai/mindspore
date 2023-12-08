@@ -52,6 +52,7 @@
 #include "mindspore/lite/tools/common/custom_ascend_utils.h"
 #include "inc/ops/array_ops.h"
 #include "inc/ops/elewise_calculation_ops.h"
+#include <nlohmann/json.hpp>
 
 namespace mindspore {
 namespace {
@@ -66,7 +67,7 @@ constexpr auto kUnkonwnSessionId = -1;
 constexpr auto kRefModeNone = "none";
 constexpr auto kRefModeVariable = "variable";
 constexpr auto kRefModeAll = "all";
-
+constexpr float kNumMicrosecondToMillisecond = 1000.0;
 constexpr size_t kAlignRefData = 32;
 
 size_t ALIGN_UP_REF_DATA(size_t size) {
@@ -89,6 +90,23 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   return param;
 }
 #endif
+
+transform::DfGraphPtr GenExampleGraph(const std::string &name) {
+  MS_LOG(INFO) << "Gen fake graph name is " << name;
+  auto graph = std::make_shared<transform::DfGraph>(name);
+  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
+  transform::GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
+  auto data = ge::op::Data("data");
+  data.set_attr_index(0);
+  data.update_input_desc_x(desc_data);
+  data.update_output_desc_y(desc_data);
+  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
+  std::vector<transform::Operator> inputs{data};
+  std::vector<transform::Operator> outputs{add};
+  graph->SetInputs(inputs);
+  graph->SetOutputs(outputs);
+  return graph;
+}
 }  // namespace
 
 std::atomic_uint32_t GeGraphExecutor::global_graph_idx_ = 0;
@@ -136,7 +154,219 @@ GeGraphExecutor::~GeGraphExecutor() {
     }
     ge_session_ = nullptr;
     GeSessionManager::TryReleaseGeSessionContext(session_id_);
+    enable_update_weight_ = false;
+    update_weight_ptr_ = nullptr;
   }
+}
+
+bool GeGraphExecutor::SetGeTensorShape(GeTensor *ge_tensor, ShapeVector shape) {
+  if (!dyn_kv_cache_info_.dynamic_kv_cache) {
+    return true;
+  }
+  auto ge_desc = ge_tensor->GetTensorDesc();
+  ge::Shape ori_ge_shape(shape);
+  ge_desc.Update(ori_ge_shape);
+  ge_tensor->SetTensorDesc(ge_desc);
+  MS_LOG(INFO) << "In SetGeTensorShape update ge shape to :" << shape;
+  return true;
+}
+
+bool GeGraphExecutor::InitInputDeviceTensor(const FuncGraphPtr &anf_graph) {
+  MS_LOG(INFO) << "Call InitInputDeviceTensor start.";
+  auto inputs = anf_graph->get_inputs();
+  inputs_buffer_infos_.resize(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto &input_info = inputs_buffer_infos_[i];
+    auto shape = FuncGraphUtils::GetTensorShape({inputs[i], 0});
+
+    /* set max_batch size and max_seq_len for dyn shape */
+    std::vector<int64_t> new_shape;
+    for (size_t j = 0; j < shape.size(); j++) {
+      if (shape[j] == abstract::Shape::kShapeDimAny) {
+        new_shape.push_back(dyn_kv_cache_info_.max_seq_len_size);
+      } else {
+        new_shape.push_back(shape[j]);
+      }
+    }
+
+    MS_LOG(INFO) << "Init input_" << i << " buffer for ge, change shape: " << shape << " -> " << new_shape;
+    auto dtype = static_cast<TypeId>(FuncGraphUtils::GetTensorDataType({inputs[i], 0}));
+    if (!InitInOutDeviceBuffer("Input " + std::to_string(i), new_shape, dtype, &input_info)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool GeGraphExecutor::UpdateDynamicDimsOption(
+  const std::vector<std::pair<std::string, tensor::TensorPtr>> &ref_data_tensors,
+  std::map<std::string, std::string> *ge_options_ptr) {
+  if (!dyn_kv_cache_info_.dynamic_kv_cache) {
+    MS_LOG(INFO) << "Static ref data.";
+    return true;
+  }
+
+  if (ge_options_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input argument ge_options_ptr cannot be nullptr";
+    return false;
+  }
+  std::string new_dynamic_dims_str;
+  std::vector<std::vector<int64_t>> config_dynamic_dims;
+  if (!GeDynamicUtils::GetDynamicDims(context_, config_infos_, &config_dynamic_dims)) {
+    MS_LOG(ERROR) << "Failed to get dynamic dims from AscendDeviceInfo or config file";
+    return false;
+  }
+  if (config_dynamic_dims.empty()) {
+    MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
+    return true;
+  }
+
+  if (config_dynamic_dims.size() != dyn_kv_cache_info_.dynamic_kv_cache_dims.size()) {
+    MS_LOG(ERROR) << "ge.dynamicDims num:" << config_dynamic_dims.size()
+                  << ", dynamic_kv_cache_dims num: " << dyn_kv_cache_info_.dynamic_kv_cache_dims.size();
+    return true;
+  }
+
+  int i = 0;
+  for (auto input_dims : config_dynamic_dims) {
+    /* set input dynamicDims */
+    for (auto dim : input_dims) {
+      new_dynamic_dims_str += std::to_string(dim) + ",";
+    }
+
+    /* set ref data dynamicDims */
+    auto dyn_ref_dims = dyn_kv_cache_info_.dynamic_kv_cache_dims[i++];
+    int64_t level_count = 0;
+    while (level_count < dyn_kv_cache_info_.dyn_ref_num) {
+      level_count++;
+      for (auto dyn_ref_dim : dyn_ref_dims) {
+        new_dynamic_dims_str += std::to_string(dyn_ref_dim) + ",";
+      }
+    }
+
+    new_dynamic_dims_str.erase(new_dynamic_dims_str.end() - 1);
+    new_dynamic_dims_str += ";";
+  }
+  new_dynamic_dims_str.erase(new_dynamic_dims_str.end() - 1);
+
+  GeDynamicUtils::UpdateGraphDynamicDims(context_, &config_infos_, new_dynamic_dims_str);
+  (*ge_options_ptr)["ge.dynamicDims"] = new_dynamic_dims_str;
+  MS_LOG(INFO) << "Update ge.dynamicDims to " << new_dynamic_dims_str;
+  return true;
+}
+
+void GeGraphExecutor::SetRefShape(std::vector<int64_t> *ref_shape, bool dyn, std::string tensor_name) {
+  if (!dyn_kv_cache_info_.dynamic_kv_cache) {
+    return;
+  }
+
+  if (dyn) {
+    if (dyn_kv_cache_info_.batch_size_dyn) {
+      (*ref_shape)[Index0] = abstract::Shape::kShapeDimAny;
+      MS_LOG(INFO) << "for " << tensor_name << " update batch size to dyn(-1) for ge_option.";
+    }
+    if (dyn_kv_cache_info_.seq_length_dyn) {
+      (*ref_shape)[Index2] = abstract::Shape::kShapeDimAny;
+      MS_LOG(INFO) << "for " << tensor_name << " update seq length size to dyn(-1) for ge_option.";
+    }
+  } else {
+    if (dyn_kv_cache_info_.batch_size_dyn) {
+      (*ref_shape)[Index0] = dyn_kv_cache_info_.real_batch_size;
+      MS_LOG(INFO) << "for " << tensor_name << " update batch size to " << dyn_kv_cache_info_.real_batch_size
+                   << " for ge_option.";
+    }
+    if (dyn_kv_cache_info_.seq_length_dyn) {
+      (*ref_shape)[Index2] = dyn_kv_cache_info_.real_seq_len_size;
+      MS_LOG(INFO) << "for " << tensor_name << " update seq length size to " << dyn_kv_cache_info_.real_seq_len_size
+                   << " for ge_option.";
+    }
+  }
+}
+
+void GeGraphExecutor::UpdateOutputShapeInfo() {
+  if (!dyn_kv_cache_info_.dynamic_kv_cache) {
+    return;
+  }
+  MS_LOG(INFO) << "Update output dtype and shape.";
+  for (size_t i = 0; i < outputs_buffer_infos_.size(); i++) {
+    auto &output_info = outputs_buffer_infos_[i];
+    auto ge_tensor_desc = output_info.ge_tensor.GetTensorDesc();
+    output_info.shape = transform::TransformUtil::ConvertGeShape(ge_tensor_desc.GetShape());
+    output_info.max_size = SizeOf(output_info.shape) * GetDataTypeSize(output_info.dtype);
+    output_info.dtype = transform::TransformUtil::ConvertGeDataType(ge_tensor_desc.GetDataType());
+    output_info.device_addr = output_info.ge_tensor.GetData();
+    MS_LOG(INFO) << "Update output_" << i << " dtype: " << output_info.dtype << ", shape: " << output_info.shape;
+  }
+  return;
+}
+
+void GeGraphExecutor::SetDynamicKVCache() {
+  auto section_it = config_infos_.find(lite::kAscendContextSection);
+  if (section_it == config_infos_.end()) {
+    MS_LOG(INFO) << "no ascend_context info";
+    return;
+  }
+
+  MS_LOG(INFO) << "dynamic_kv_cache info set.";
+  auto &options = section_it->second;
+  auto option_it = options.find("dynamic_kv_cache");
+  if (option_it != options.end()) {
+    MS_LOG(INFO) << "Find [ascend_context] dynamic_kv_cache : " << option_it->second;
+    if (option_it->second == "seq") {
+      dyn_kv_cache_info_.dynamic_kv_cache = true;
+      dyn_kv_cache_info_.seq_length_dyn = true;
+    } else if (option_it->second == "bs") {
+      dyn_kv_cache_info_.dynamic_kv_cache = true;
+      dyn_kv_cache_info_.batch_size_dyn = true;
+    } else if (option_it->second == "both") {
+      dyn_kv_cache_info_.dynamic_kv_cache = true;
+      dyn_kv_cache_info_.seq_length_dyn = true;
+      dyn_kv_cache_info_.batch_size_dyn = true;
+    }
+  } else {
+    dyn_kv_cache_info_.dynamic_kv_cache = false;
+    MS_LOG(INFO) << "no dynamic_kv_cache info";
+    return;
+  }
+
+  MS_LOG(INFO) << "set dyn_kv_cache_info_.dynamic_kv_cache : " << dyn_kv_cache_info_.dynamic_kv_cache;
+  MS_LOG(INFO) << "set dyn_kv_cache_info_.batch_size_dyn  : " << dyn_kv_cache_info_.batch_size_dyn;
+  MS_LOG(INFO) << "set dyn_kv_cache_info_.seq_length_dyn : " << dyn_kv_cache_info_.seq_length_dyn;
+
+  option_it = options.find("dynamic_kv_cache_dims");
+  dyn_kv_cache_info_.dynamic_kv_cache_dims.clear();
+  if (option_it != options.end()) {
+    std::string dyn_ref_dims_str = option_it->second;
+    MS_LOG(INFO) << "Find [ascend_context] dynamic_kv_cache_dims : " << dyn_ref_dims_str;
+    auto dyn_ref_dims = lite::StrSplit(dyn_ref_dims_str, ";");
+    for (auto &item : dyn_ref_dims) {
+      std::vector<int64_t> real_dims;
+      if (!lite::ParseShapeStr(item, &real_dims)) {
+        MS_LOG(ERROR) << "Invalid dyn_ref_dims " << dyn_ref_dims;
+        return;
+      }
+      dyn_kv_cache_info_.dynamic_kv_cache_dims.push_back(real_dims);
+    }
+  }
+  MS_LOG(INFO) << "set   dyn_kv_cache_info_.dynamic_kv_cache_dims : " << dyn_kv_cache_info_.dynamic_kv_cache_dims;
+
+  option_it = options.find("dynamic_kv_cache_num");
+  if (option_it != options.end()) {
+    std::string dynamic_kv_cache_num_str = option_it->second;
+    MS_LOG(INFO) << "Find [ascend_context] dynamic_kv_cache_num : " << dynamic_kv_cache_num_str;
+    dyn_kv_cache_info_.dyn_ref_num = std::stoi(dynamic_kv_cache_num_str);
+  }
+  MS_LOG(INFO) << "set dyn_kv_cache_info_.dyn_ref_num : " << dyn_kv_cache_info_.dyn_ref_num;
+  return;
+}
+
+void GeGraphExecutor::InitRealShapeParam(const std::vector<tensor::Tensor> &inputs) {
+  auto &input_0 = inputs[0];
+  dyn_kv_cache_info_.real_batch_size = input_0.shape_c().at(Index0);
+  MS_LOG(INFO) << "Real batch size : " << dyn_kv_cache_info_.real_batch_size;
+  dyn_kv_cache_info_.real_seq_len_size = input_0.shape_c().at(Index1);
+  MS_LOG(INFO) << "Real seq length size : " << dyn_kv_cache_info_.real_seq_len_size;
+  return;
 }
 
 bool GeGraphExecutor::GetConfigOption(const std::string &section_name, const std::string &option_name,
@@ -205,8 +435,23 @@ bool GeGraphExecutor::Init() {
   std::string model_cache_mode;
   (void)GetConfigOption(lite::kAscendContextSection, lite::kModelCacheMode, &model_cache_mode);
   if (!model_cache_mode.empty()) {
-    cache_mode_ = true;
-    MS_LOG(INFO) << "Set set variable ref mode";
+    cache_mode_ = model_cache_mode;
+    MS_LOG(INFO) << "Set set model cache mode " << model_cache_mode;
+  }
+  std::string variable_weights_list;
+  (void)GetConfigOption(lite::kAscendContextSection, "variable_weights_list", &variable_weights_list);
+  if (!variable_weights_list.empty()) {
+    update_weight_ptr_ = std::make_shared<UpdateWeight>();
+    if (update_weight_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "init update weight ptr failed.";
+      return false;
+    }
+    if (!update_weight_ptr_->ParseUpdateWeightConfig(variable_weights_list)) {
+      MS_LOG(ERROR) << "ParseUpdateWeightConfig failed.";
+      update_weight_ptr_ = nullptr;
+      return false;
+    }
+    enable_update_weight_ = true;
   }
   return true;
 }
@@ -240,7 +485,7 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
 }
 
 bool GeGraphExecutor::SetModelCacheDir(std::map<std::string, std::string> *session_options_ptr) {
-  if (!offline_mode_ && !cache_mode_) {
+  if (!offline_mode_ && cache_mode_.empty()) {
     return true;
   }
   auto &ge_options = *session_options_ptr;
@@ -518,7 +763,7 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
     }
     ShapeVector shape;
     std::transform(it->shape.begin(), it->shape.end(), std::back_inserter(shape), [](auto &dim) { return dim.dim; });
-    MS_LOG(INFO) << "Update shape of input " << i << " to " << shape;
+    MS_LOG(INFO) << "Update shape of input_" << i << " " << para->name() << " to " << shape;
     abstract->set_shape(std::make_shared<abstract::Shape>(shape));
   }
   return true;
@@ -576,6 +821,7 @@ bool GeGraphExecutor::InitMemoryContextManager() {
 }
 
 bool GeGraphExecutor::InitRefDataDeviceTensor() {
+  MS_LOG(INFO) << "InitRefDataDeviceTensor start.";
   if (ref_data_infos_.empty()) {
     MS_LOG(INFO) << "There is not ref data, no need to init ref data device data";
     return true;
@@ -596,7 +842,9 @@ bool GeGraphExecutor::InitRefDataDeviceTensor() {
       item.ge_tensor = ref_it->second.ge_tensor;
       continue;
     }
-    auto desc = transform::TransformUtil::GetGeTensorDesc(tensor->shape_c(), tensor->data_type(), kOpFormat_NCHW);
+    ShapeVector ref_data_shape = tensor->shape_c();
+    SetRefShape(&ref_data_shape, true, item.name);
+    auto desc = transform::TransformUtil::GetGeTensorDesc(ref_data_shape, tensor->data_type(), kOpFormat_NCHW);
     if (desc == nullptr) {
       MS_LOG(ERROR) << "Failed to get Tensor Desc";
       return false;
@@ -786,7 +1034,9 @@ bool GeGraphExecutor::UpdateInputShapeOption(
     shape_map[item.name] = item.shape_str;
   }
   for (auto &item : ref_data_tensors) {
-    shape_map[item.first] = shape_str(item.second->shape_c());
+    ShapeVector ref_dyn_shape = item.second->shape_c();
+    SetRefShape(&ref_dyn_shape, true, item.first);
+    shape_map[item.first] = shape_str(ref_dyn_shape);
   }
   size_t index = 0;
   for (auto &item : shape_map) {
@@ -808,6 +1058,10 @@ bool GeGraphExecutor::InitRefDataContext(const std::vector<std::pair<std::string
     MS_LOG(ERROR) << "Failed to update input shape option";
     return false;
   }
+  if (!UpdateDynamicDimsOption(ref_data_tensors, ge_options_ptr)) {
+    MS_LOG(ERROR) << "Failed to update dynamic dims option";
+    return false;
+  }
   if (!InitRefDataList(ref_data_tensors)) {
     MS_LOG(ERROR) << "Failed to init ref data list";
     return false;
@@ -815,12 +1069,138 @@ bool GeGraphExecutor::InitRefDataContext(const std::vector<std::pair<std::string
   return true;
 }
 
+bool GeGraphExecutor::UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
+  auto time1 = lite::GetTimeUs();
+  uint32_t init_graph_id = init_graph_id_list_[0];
+  MS_LOG(INFO) << "init_graph_id: " << init_graph_id;
+  if (update_weight_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "please init update weight class by build model.";
+    return false;
+  }
+  std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> new_weight_tensors;
+  auto ret = update_weight_ptr_->UpdateConstantTensorData(weights, &new_weight_tensors);
+  if (!ret) {
+    MS_LOG(ERROR) << "update weight failed.";
+    return false;
+  }
+  MS_LOG(DEBUG) << "ExecInitGraph start.";
+  auto time2 = lite::GetTimeUs();
+  MS_LOG(INFO) << "update weight prepare time: " << (time2 - time1) / kNumMicrosecondToMillisecond << " ms";
+
+  // cppcheck-suppress cppcheckError
+  for (size_t i = 0; i < new_weight_tensors.size(); i++) {
+    std::vector<::ge::Tensor> ge_inputs;
+    // cppcheck-suppress cppcheckError
+    for (size_t j = 0; j < new_weight_tensors[i].size(); j++) {
+      auto &input = new_weight_tensors[i][j];
+      auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW, false);
+      if (ge_tensor == nullptr) {
+        MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
+        return false;
+      }
+      ge_inputs.emplace_back(*ge_tensor);
+    }
+    std::vector<::ge::Tensor> ge_outputs;
+    auto ge_status = ge_session_->RunGraph(init_graph_id, ge_inputs, ge_outputs);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Exec init graph failed, graph id " << init_graph_id;
+      return false;
+    }
+  }
+  auto time3 = lite::GetTimeUs();
+  MS_LOG(INFO) << "update weight run init graph time: " << (time3 - time2) / kNumMicrosecondToMillisecond << " ms";
+  return true;
+}
+
+transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr) {
+  if (enable_update_weight_) {
+    MS_LOG(INFO) << "Enable update weight, skip create small ge graph";
+    return nullptr;
+  }
+  if (offline_mode_) {
+    MS_LOG(INFO) << "Offline converter mode, skip create small ge graph";
+    return nullptr;
+  }
+  if (cache_mode_ != "mem_opt" || build_cache_dir_.empty()) {
+    MS_LOG(INFO) << "model_cache_mode " << cache_mode_ << " is not mem_opt or " << kGeGraphCompilerCacheDir
+                 << " is empty, skip create small ge graph";
+    return nullptr;
+  }
+  auto graph_it = ge_options_ptr->find(kGeGraphKey);
+  if (graph_it == ge_options_ptr->end()) {
+    MS_LOG(INFO) << "Cannot find option " << kGeGraphKey << ", skip create small ge graph";
+    return nullptr;
+  }
+  auto graph_key = graph_it->second;
+  auto idx_file_name = build_cache_dir_ + "/" + graph_key + ".idx";
+  std::ifstream ifs(idx_file_name);
+  if (!ifs.good() || !ifs.is_open()) {
+    MS_LOG(INFO) << "model cache idx json not exists, idx file: " << idx_file_name << ", skip create small ge graph";
+    return nullptr;
+  }
+  nlohmann::json dump_cfg_json;
+  try {
+    dump_cfg_json = nlohmann::json::parse(ifs);
+    const std::string cache_file_list = "cache_file_list";
+    const std::string var_desc_file_name = "var_desc_file_name";
+    auto &cache_file_config = dump_cfg_json[cache_file_list];
+    if (cache_file_config == nullptr || cache_file_config[0] == nullptr) {
+      MS_LOG(WARNING) << "model cache idx json content invalid, idx file: " << idx_file_name
+                      << ", skip create small ge graph";
+      return nullptr;
+    }
+    auto &config = cache_file_config[0];
+    if (config[var_desc_file_name] != nullptr) {
+      config.erase(var_desc_file_name);
+      auto new_json_str = dump_cfg_json.dump(4);
+      ifs.close();
+      std::ofstream ofs(idx_file_name, std::ios::out);
+      if (!ofs.is_open()) {
+        MS_LOG(WARNING) << "Failed to open model cache idx file for write, idx file: " << idx_file_name
+                        << ", skip create small ge graph";
+        return nullptr;
+      }
+      ofs << new_json_str;
+      ofs.close();
+#ifndef _MSC_VER
+      chmod(idx_file_name.c_str(), S_IRUSR);
+#endif
+      MS_LOG(INFO) << "Erase option " << var_desc_file_name;
+    }
+    auto df_graph = GenExampleGraph(graph_key);
+    if (df_graph == nullptr) {
+      MS_LOG(WARNING) << "Failed to create small ge graph for graph " << graph_key << ", skip create small ge graph";
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Create small  ge graph for graph " << graph_key;
+    return df_graph;
+  } catch (const std::exception &error) {
+    MS_LOG(WARNING) << "parse model cache idx json failed, idx file: " << idx_file_name
+                    << ", skip create small ge graph";
+    return nullptr;
+  }
+}
+
 transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                                            std::map<std::string, std::string> *ge_options_ptr) {
+  std::vector<std::string> extra_variables_names = {};
+  if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+    auto ret = update_weight_ptr_->CreateAddOpNodeForGraph(anf_graph);
+    if (!ret) {
+      MS_LOG(ERROR) << "CreateAddOpNodeForGraph failed.";
+      return nullptr;
+    }
+    extra_variables_names = update_weight_ptr_->GetVariableParamsName(anf_graph);
+    if (extra_variables_names.empty()) {
+      MS_LOG(WARNING) << "GetVariableParamsName failed.";
+      return nullptr;
+    }
+  }
   transform::TensorOrderMap params_vals;
   GetParams(anf_graph, &params_vals);
 
-  auto converter = std::make_shared<transform::DfGraphConvertor>(anf_graph, "", ref_mode_flag_);
+  MS_LOG(INFO) << "extra_variables_names size: " << extra_variables_names.size();
+  auto converter = std::make_shared<transform::DfGraphConvertor>(anf_graph, "", ref_mode_flag_, extra_variables_names);
   transform::BuildGraph(graph_name_, converter, params_vals);
   auto err_code = transform::ErrCode(converter);
   if (err_code != 0) {
@@ -835,12 +1215,23 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
       return nullptr;
     }
-    init_graph_id_list_.push_back(init_graph_id);
+    if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+      init_graph_id_list_.push_back(init_graph_id);
+    }
     auto init_data_names = converter->GetInitDataNames();
+    if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+      if (!update_weight_ptr_->SetInitDataNames(init_data_names)) {
+        MS_LOG(ERROR) << "set init data name failed.";
+        return nullptr;
+      }
+    }
     // copy init weight to device
     if (!RunGeInitGraph(init_graph_id, init_data_names, params_vals)) {
       MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
       return nullptr;
+    }
+    if (!enable_update_weight_) {
+      ge_session_->RemoveGraph(init_graph_id);
     }
   } else {
     MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
@@ -855,25 +1246,12 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       return nullptr;
     }
   }
+  auto fake_df_graph = CreateFakeGraph(ge_options_ptr);
+  if (fake_df_graph != nullptr) {
+    return fake_df_graph;
+  }
   auto df_graph = transform::GetComputeGraph(converter);
   return df_graph;
-}
-
-transform::DfGraphPtr GenExampleGraph(const std::string &name) {
-  MS_LOG(INFO) << "Gen fake graph name is " << name;
-  auto graph = std::make_shared<transform::DfGraph>(name);
-  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
-  transform::GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
-  auto data = ge::op::Data("data");
-  data.set_attr_index(0);
-  data.update_input_desc_x(desc_data);
-  data.update_output_desc_y(desc_data);
-  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
-  std::vector<transform::Operator> inputs{data};
-  std::vector<transform::Operator> outputs{add};
-  graph->SetInputs(inputs);
-  graph->SetOutputs(outputs);
-  return graph;
 }
 
 bool GeGraphExecutor::CreateGeGraphOffline(const FuncGraphPtr &anf_graph,
@@ -986,6 +1364,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
                                    uint32_t *graph_id) {
   MS_CHECK_TRUE_RET(graph_id != nullptr, false);
   std::map<std::string, std::string> ge_options;
+  SetDynamicKVCache();
   GetGeGraphOptions(anf_graph, &ge_options);
 
   uint32_t compute_graph_id = 0;
@@ -1233,17 +1612,21 @@ bool GeGraphExecutor::InitInputDataTensor(const std::vector<tensor::Tensor> &inp
                  << input.data_type();
     auto tensor_size = input.Size();
     auto &input_info = inputs_buffer_infos_[i];
-    if (input_info.max_size != tensor_size) {
-      MS_LOG(ERROR) << "Input " << i << " data size not match, graph size " << input_info.max_size << ", given size "
+    if (input_info.max_size < tensor_size) {
+      MS_LOG(ERROR) << "Input " << i << " data size invalid, graph size " << input_info.max_size << ", given size "
                     << tensor_size;
       return false;
     }
     if (!memory_manager_->MemcpyHost2Device(input_info.device_addr, input_info.max_size, input.data_c(), tensor_size)) {
       return false;
     }
+    SetGeTensorShape(&input_info.ge_tensor, input.shape_c());
     ge_inputs->push_back(input_info.ge_tensor);
   }
   for (auto &item : ref_data_infos_) {
+    ShapeVector ref_real_shape = transform::TransformUtil::ConvertGeShape(item.ge_tensor.GetTensorDesc().GetShape());
+    SetRefShape(&ref_real_shape, false, item.name);
+    SetGeTensorShape(&item.ge_tensor, ref_real_shape);
     ge_inputs->push_back(item.ge_tensor);
   }
   for (auto &output : outputs_buffer_infos_) {
@@ -1277,15 +1660,9 @@ bool GeGraphExecutor::BuildGraphRefMode(const FuncGraphPtr &anf_graph, uint32_t 
   }
   // ref data input memories have been allocated
   // for input data memory
-  auto inputs = anf_graph->get_inputs();
-  inputs_buffer_infos_.resize(inputs.size());
-  for (size_t i = 0; i < inputs.size(); i++) {
-    auto &input_info = inputs_buffer_infos_[i];
-    auto shape = FuncGraphUtils::GetTensorShape({inputs[i], 0});
-    auto dtype = static_cast<TypeId>(FuncGraphUtils::GetTensorDataType({inputs[i], 0}));
-    if (!InitInOutDeviceBuffer("Input " + std::to_string(i), shape, dtype, &input_info)) {
-      return false;
-    }
+  if (!InitInputDeviceTensor(anf_graph)) {
+    MS_LOG(ERROR) << "Failed to init input data device data";
+    return false;
   }
 
   // for output memory
@@ -1315,17 +1692,27 @@ bool GeGraphExecutor::RunGraphRefMode(uint32_t graph_id, const std::vector<tenso
                                       std::vector<tensor::Tensor> *outputs) {
   std::vector<::ge::Tensor> ge_inputs;
   std::vector<::ge::Tensor> ge_outputs;
+  InitRealShapeParam(inputs);
+
   if (!InitInputDataTensor(inputs, &ge_inputs, &ge_outputs)) {
+    MS_LOG(ERROR) << "Init input tensor failed in run graph.";
     return false;
   }
   auto stream = context_manager_->GetDefaultStream();
   if (!RunGraphWithStreamAsync(graph_id, stream, ge_inputs, &ge_outputs)) {
+    MS_LOG(ERROR) << "Failed in run graph with stream async.";
     return false;
   }
-  return SyncDeviceOutputsToHost(outputs);
+  if (!SyncDeviceOutputsToHost(outputs)) {
+    MS_LOG(ERROR) << "Failed in sync device output to host.";
+    return false;
+  }
+  return true;
 }
 
 bool GeGraphExecutor::SyncDeviceOutputsToHost(std::vector<tensor::Tensor> *outputs) {
+  UpdateOutputShapeInfo();
+
   if (!outputs->empty()) {
     if (outputs->size() != outputs_buffer_infos_.size()) {
       MS_LOG(ERROR) << "Invalid output size, outputs' size " << outputs->size() << "ge tensor size "
@@ -1607,20 +1994,13 @@ bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
     MS_LOG(ERROR) << "Failed to CompileGraph";
     return false;
   }
-  if (init_graph_id_list_.empty()) {
-    MS_LOG(INFO) << "Call GE CompileGraph start";
-    ge::Status ret = ge_session_->CompileGraph(graph_id);
-    if (ret != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
-      return false;
-    }
-    MS_LOG(INFO) << "Call GE CompileGraph end";
-  } else {
-    if (!Warmup(graph, graph_id)) {
-      MS_LOG(ERROR) << "Failed to Warmup";
-      return false;
-    }
+  MS_LOG(INFO) << "Call GE CompileGraph start";
+  ge::Status ret = ge_session_->CompileGraph(graph_id);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
+    return false;
   }
+  MS_LOG(INFO) << "Call GE CompileGraph end";
   if (!CreateAsCustomFuncGraph(graph)) {
     MS_LOG(ERROR) << "Failed to CreateAsCustomFuncGraph";
     return false;

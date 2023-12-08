@@ -226,7 +226,6 @@ class SymbolTree(Observer, Observable, NodeManager):
                 if class_str not in classes:
                     classes.add(node.name)
                     return node
-                return
 
             def visit_Try(self, node: ast.Try) -> Any:
                 if isinstance(node.body[0], (ast.Import, ast.ImportFrom)):
@@ -234,14 +233,12 @@ class SymbolTree(Observer, Observable, NodeManager):
                     if import_str not in imports:
                         imports.add(import_str)
                         return node
-                return
 
             def visit_Import(self, node: ast.Import) -> Any:
                 import_str = astunparse.unparse(node)
                 if import_str not in imports:
                     imports.add(import_str)
                     return node
-                return
 
             def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
                 """
@@ -818,7 +815,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         for node in new_nodes:
             self.insert_node(node, base_node, False, node_manager, True)
             base_node = node
-        self.erase_node(old_node)
+        _ = self.erase_node(old_node)
         return new_nodes[-1]
 
     def set_node_arg(self, node: Union[Node, str], index: int, arg: Union[ScopedValue, str]):

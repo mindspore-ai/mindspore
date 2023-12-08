@@ -84,6 +84,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
 }
 
 std::string GetFusionGroupKey(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr attr_fusion = primitive->GetAttr(kAttrFusion);
@@ -97,15 +98,17 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   if (parallel_context->enable_fold_pipeline()) {
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
     auto prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(prim);
     if (cnode_name == kAllReduceOpName) {
       if (prim->HasAttr(kAttrSegment)) {
         auto segment_info = GetValue<int64_t>(prim->GetAttr(kAttrSegment));
         MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope() << ", instance_name: " << prim->instance_name()
                      << ", segment: " << segment_info;
         fusion = segment_info + 2;
-        prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+        (void)prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
         MS_LOG(INFO) << "Now cnode : " << cnode->fullname_with_scope()
                      << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));
       }
@@ -118,7 +121,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
         if (segment_info != 0) {
           int64_t fusion_interval = 100;
           fusion = segment_info + fusion_interval;
-          prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
+          (void)prim->AddAttr(kAttrFusion, MakeValue(std::make_shared<Int64Imm>(fusion)));
         }
         MS_LOG(INFO) << "Cnode : " << cnode->fullname_with_scope()
                      << ", fusion: " << GetValue<int64_t>(prim->GetAttr(kAttrFusion));
@@ -502,6 +505,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
         auto &users = manager->node_users()[communication_op_node_item];
         for (auto &node : users) {
           auto cnode = node.first->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(cnode);
           if (cnode->HasAttr("comp_comm_scheduling_depend")) {
             MS_LOG(INFO) << "Start EdgeRemove: AllReduce to comp_comm_scheduling_depend";
             if (cnode->size() <= 1 || !common::AnfAlgo::IsCommunicationOp(cnode->input(1))) {

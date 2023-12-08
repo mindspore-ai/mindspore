@@ -31,9 +31,6 @@ class ConvDelegateFP16Coder : public ConvDelegateCoder {
   ~ConvDelegateFP16Coder() override = default;
   int Prepare(CoderContext *const context) override;
   int DoCode(CoderContext *const context) override;
-
- protected:
-  std::unique_ptr<OperatorCoder> conv_coder_ = nullptr;
 };
 
 int SelectOutUnit(const ConvParameter *conv_param);

@@ -36,7 +36,7 @@ class ConvolutionDepthwiseFP16Coder final : public ConvolutionDepthwiseFP32Coder
 
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   void InitCodeOnline(CoderContext *const context) override;
   void CollectFilesForFunc(CoderContext *const context) override;
 };

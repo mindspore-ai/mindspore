@@ -32,13 +32,14 @@ class FullConnectionFP32Coder final : public MatMulFP32BaseCoder {
 
   int Prepare(CoderContext *const context) override;
 
+  int ReSize() override;
+
   int DoCode(CoderContext *const context) override;
 
   ~FullConnectionFP32Coder() override = default;
 
- private:
+ protected:
   int Init() override;
-  int ReSize() override;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_FULL_CONNECTION_FP32_CODER_H_

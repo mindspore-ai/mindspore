@@ -38,7 +38,7 @@ class PReluFusion : public LitePatternProcessPass {
   bool Init() const;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, std::vector<float> *slope) const;
+  bool CheckPattern(const EquivPtr &equiv, std::vector<float> *slope) const;
 
  protected:
   mutable VarPtr input_ = nullptr;

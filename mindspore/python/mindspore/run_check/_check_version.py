@@ -259,7 +259,7 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["7.0"]
+        self.version = ["7.1"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/compiler/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/compiler/version.info"
         hisi_fwk_version = "/usr/local/Ascend/latest/compiler/version.info"
@@ -398,11 +398,13 @@ class AscendEnvChecker(EnvChecker):
 
     def set_env(self):
         curr_path = os.path.abspath(os.path.dirname(__file__))
+        cust_aicpu_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicpu_ops"))
+        cust_aicore_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
         if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
-                                                   curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
+                                                   cust_aicore_path + ":" + cust_aicpu_path
         else:
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_aicore_path + ":" + cust_aicpu_path
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
         AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)

@@ -48,7 +48,7 @@ int LstmNonMindirFp32CPUKernel::InitInputWeightBias() {
   input_bias_ = reinterpret_cast<float *>(
     ms_context_->allocator->Malloc(weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float)));
   MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmNonMindirCPUKernel malloc input_bias_ failed.");
-  memset(input_bias_, 0, weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float));
+  (void)memset(input_bias_, 0, weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float));
   running_buffer_.push_back(input_bias_);
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(kCombinedBiasIndex)->data());
   CHECK_NULL_RETURN(bias_data);
@@ -97,7 +97,7 @@ int LstmNonMindirFp32CPUKernel::InitStateWeightBias() {
   auto bias_pack_size = weight_segment_num_ * lstm_param_->state_col_align_ * sizeof(float);
   state_bias_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(bias_pack_size));
   MS_CHECK_TRUE_MSG(state_bias_ != nullptr, lite::RET_NULL_PTR, "LstmNonMindirCPUKernel malloc state_bias_ failed.");
-  memset(state_bias_, 0, bias_pack_size);
+  (void)memset(state_bias_, 0, bias_pack_size);
   running_buffer_.push_back(state_bias_);
   // if ONNX, secend bias is also present order IOFG
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(kCombinedBiasIndex)->data());

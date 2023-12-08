@@ -165,7 +165,7 @@ inline Status DLSoSym(const std::string &dl_path, void *handle, const std::strin
   return kSuccess;
 }
 
-inline void DLSoClose(void *handle) {
+inline void DLSoClose(void *handle) noexcept {
   if (handle != nullptr) {
     (void)dlclose(handle);
   }

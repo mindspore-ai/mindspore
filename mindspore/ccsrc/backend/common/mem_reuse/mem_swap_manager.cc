@@ -16,8 +16,6 @@
 
 #include "backend/common/mem_reuse/mem_swap_manager.h"
 #include <algorithm>
-#include <set>
-#include <string>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

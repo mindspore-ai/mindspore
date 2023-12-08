@@ -115,6 +115,7 @@ class OperatorCoder {
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
   ShapeInfoContainer *shape_info_container_{nullptr};
   DynamicMemManager *dynamic_mem_manager_{nullptr};
+  int type_{schema::PrimitiveType_NONE};
 
  private:
   size_t node_index_{0};
@@ -124,7 +125,6 @@ class OperatorCoder {
   std::vector<OperatorCoder *> input_ops_;
   std::vector<OperatorCoder *> output_ops_;
   std::vector<Tensor *> initial_parameters_;
-  int type_{schema::PrimitiveType_NONE};
 };
 
 // a template func for normal op_coder creator

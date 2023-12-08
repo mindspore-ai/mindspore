@@ -24,7 +24,6 @@
 #include "tools/converter/micro/coder/config.h"
 #include "tools/converter/micro/coder/opcoders/op_coder_register.h"
 #include "ir/dtype/type_id.h"
-#include "schema/ops_generated.h"
 
 namespace mindspore::lite::micro {
 constexpr char kCustomKernelName[] = "CustomKernel";
@@ -40,7 +39,7 @@ class KernelRegistry {
 
   bool CheckRegistered(schema::PrimitiveType op);
 
-  bool HasKernelRegistered();
+  bool HasKernelRegistered() const;
 
   std::string GenKernelInterface(const char *func, const char *param);
 

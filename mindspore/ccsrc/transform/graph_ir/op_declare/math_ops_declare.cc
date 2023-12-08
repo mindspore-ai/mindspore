@@ -135,6 +135,22 @@ ATTR_MAP(LpNorm) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
 OUTPUT_MAP(LpNorm) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LpNorm, prim::kPrimLpNorm->name(), ADPT_DESC(LpNorm))
 
+// LpNormReduceV2
+INPUT_MAP(LpNormReduceV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LpNormReduceV2) = {{"p", ATTR_DESC(p, AnyTraits<float>())},
+                            {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())},
+                            {"keep_dims", ATTR_DESC(keepdim, AnyTraits<bool>())},
+                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(LpNormReduceV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LpNormReduceV2, prim::kPrimLpNormReduceV2->name(), ADPT_DESC(LpNormReduceV2))
+
+// LpNormUpdateV2
+INPUT_MAP(LpNormUpdateV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LpNormUpdateV2) = {{"p", ATTR_DESC(p, AnyTraits<float>())},
+                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(LpNormUpdateV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LpNormUpdateV2, prim::kPrimLpNormUpdateV2->name(), ADPT_DESC(LpNormUpdateV2))
+
 // Trunc
 INPUT_MAP(Trunc) = {{1, INPUT_DESC(input_x)}};
 ATTR_MAP(Trunc) = EMPTY_ATTR_MAP;

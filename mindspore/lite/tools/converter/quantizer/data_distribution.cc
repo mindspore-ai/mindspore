@@ -19,8 +19,6 @@
 #include <vector>
 #include <utility>
 #include <set>
-#include <cfloat>
-#include <cmath>
 #include "tools/common/statistic_utils.h"
 #include "src/common/utils.h"
 

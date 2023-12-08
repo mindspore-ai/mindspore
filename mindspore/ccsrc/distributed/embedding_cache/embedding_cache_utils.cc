@@ -385,9 +385,9 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItemBatch(const int32_t batch_co
   size_t host_length = (hash_table_info_ptr->host_cache_vocab_size * hash_table_info_ptr->embedding_size) << 2;
   auto &value_shape = value_ptr->shape();
   size_t value_len = 0;
-  std::for_each(value_shape.begin() + 1, value_shape.end(), [&](int n) { value_len += n; });
+  (void)std::for_each(value_shape.begin() + 1, value_shape.end(), [&](int n) { value_len += n; });
   MS_EXCEPTION_IF_NULL(value_ptr->data_ptr());
-  value_len *= value_ptr->data_ptr()->itemsize();
+  value_len *= static_cast<size_t>(value_ptr->data_ptr()->itemsize());
   size_t value_expected_len = value_len * (value_shape[0] + 1);
   MS_EXCEPTION_IF_CHECK_FAIL(value_expected_len <= host_length, "Size of value tensor is overflow.");
 
@@ -403,6 +403,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
                                                      const size_t value_len) {
   // Value type is float, bit num is 2
   const int shift_bit_num = 2;
+  MS_EXCEPTION_IF_NULL(hash_table_info_ptr);
   if (hash_table_info_ptr->embedding_size != (value_len >> shift_bit_num)) {
     MS_LOG(WARNING) << "Hash table info embedding_size : " << hash_table_info_ptr->embedding_size
                     << " is not equal to value_len : " << value_len << ".";
@@ -410,6 +411,7 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
   }
 
   auto key_ptr = std::get<0>(entry.second);
+  MS_EXCEPTION_IF_NULL(key_ptr);
   auto key_data_ptr = key_ptr->data_ptr();
   for (ssize_t i = start; i != end; i++) {
     auto key_data_type = key_ptr->data_type();
@@ -436,12 +438,15 @@ void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<Embed
       break;
     }
 
-    size_t offset = id * value_len;
+    size_t offset = static_cast<size_t>(id) * value_len;
     auto host_address = hash_table_info_ptr->host_address;
-    auto des_ptr = reinterpret_cast<uint8_t *>(host_address);
+    auto des_ptr = AddressOffset(host_address, 0);
     auto value_data_ptr = std::get<1>(entry.second)->data_c();
-    auto src_ptr = reinterpret_cast<uint8_t *>(value_data_ptr);
-    memcpy_s(des_ptr + offset, value_len, src_ptr + i * value_len, value_len);
+    auto src_ptr = AddressOffset(value_data_ptr, 0);
+    auto ret_code = memcpy_s(des_ptr + offset, value_len, src_ptr + i * value_len, value_len);
+    if (ret_code != EOK) {
+      MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret_code;
+    }
   }
 }
 

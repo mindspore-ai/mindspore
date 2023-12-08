@@ -46,6 +46,11 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
 #include "tools/graph_kernel/converter/update_kernel_info.h"
+#include "tools/graph_kernel/converter/mark_ascend_quant_no_fusion.h"
+#include "tools/graph_kernel/converter/split_model_ascend.h"
+#include "tools/graph_kernel/converter/split_model_gpu.h"
+#include "tools/graph_kernel/converter/split_model_cpu.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -64,6 +69,18 @@ class EmptyPass : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override { return false; }
 };
 
+void GraphKernelOptimizer::Init() const {
+  // register call back
+  const CallbackImplRegister callback_reg(
+    [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
+
+  // register split model here to ensure that the correct split model will be invoked
+  // when import mindspore and lite in the same process
+  SPLIT_MODEL_REGISTER(kAscendDevice, inner::SplitModelAscend);
+  SPLIT_MODEL_REGISTER(kGPUDevice, inner::SplitModelGpu);
+  SPLIT_MODEL_REGISTER(kCPUDevice, inner::SplitModelCpu);
+}
+
 GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePreProcess, "preprocess");
 
@@ -78,6 +95,10 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Convert the const parameters to const tensors
   pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1, is_cpu);
+
+  // Prevent AscendQuantOp and AscendAntiQuantOp from been fusied by GraphKernel
+  pm->Add(std::make_shared<MarkAscendQuantNoFusion>(), OptLevel_1, is_ascend);
+
   return pm;
 }
 
@@ -178,11 +199,10 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
     converter_param_ = std::make_shared<ConverterPara>();
     converter_param_->device = "Ascend";
   }
-  const CallbackImplRegister callback_reg(
-    [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
   if (!CheckAkg()) {
     return;
   }
+  Init();
   auto akg_support_backend = CheckSupport();
   auto device = Callback::Instance()->GetTargetFromContext();
   if (akg_support_backend.find(device) == akg_support_backend.end()) {

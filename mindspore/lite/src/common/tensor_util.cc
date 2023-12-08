@@ -102,7 +102,7 @@ int TensorC2Tensor(TensorC *src, Tensor *dst, std::shared_ptr<Allocator> allocat
       dst->set_category(CONST_TENSOR);
       return RET_OK;
     }
-    memcpy(data, src->data_, dst->Size());  // tensor_list
+    (void)memcpy(data, src->data_, dst->Size());  // tensor_list
     dst->set_category(CONST_TENSOR);
   }
   return RET_OK;

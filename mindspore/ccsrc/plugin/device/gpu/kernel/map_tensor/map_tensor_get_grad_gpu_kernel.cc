@@ -15,9 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/map_tensor/map_tensor_get_grad_gpu_kernel.h"
-#include <algorithm>
-#include <functional>
-#include <string>
 #include "mindspore/core/abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"

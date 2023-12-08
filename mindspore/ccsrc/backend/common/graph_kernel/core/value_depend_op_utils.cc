@@ -15,9 +15,6 @@
  */
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
-#include <memory>
-#include <vector>
-
 #include "base/base.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/lite_ops.h"

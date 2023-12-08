@@ -238,13 +238,14 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyOptimizerAssign"""
+        self.var_shape = "var_shape"
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, grad_shape, v_shape, m_shape, var_shape, beta1_shape, sub1_shape,
                     beta2_shape, sub2_shape, eps_shape, steps_shape, use_weight_shape, weight_decay_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, validator.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, validator.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, validator.EQ, self.name)
+        validator.check(self.var_shape, var_shape, "m_shape", m_shape, validator.EQ, self.name)
+        validator.check(self.var_shape, var_shape, "v_shape", v_shape, validator.EQ, self.name)
+        validator.check(self.var_shape, var_shape, "grad_shape", grad_shape, validator.EQ, self.name)
         return m_shape, v_shape, m_shape
 
     def infer_dtype(self, grad_dtype, v_dtype, m_dtype, var_dtype, beta1_dtype, sub1_dtype,
@@ -658,3 +659,25 @@ class ScaleGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ScaleGrad"""
+
+
+class KVCacheMgr(Primitive):
+    """
+    Update past with cur and index along sequence axis.
+
+    Inputs:
+        - **past** (Parameter) - 4-D tensor with shape: :math:`(batch_size, num_head, seq_len, hidden_size)`.
+        - **cur** (Tensor) - 4-D tensor with shape: :math:`(batch_size, num_head, 1, hidden_size)`.
+        - **index** (Tensor) - 1-D tensor with shape: :math:`(batch_size,)`.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `past`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['past', 'cur', 'index'], outputs=['past'])
+        self.add_prim_attr('side_effect_mem', True)

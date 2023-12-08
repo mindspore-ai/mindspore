@@ -15,9 +15,6 @@
  */
 
 #include "transform/acl_ir/ge_adapter_info.h"
-#include <limits>
-#include <utility>
-#include <vector>
 #include "include/transform/graph_ir/utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "graph/operator_factory.h"

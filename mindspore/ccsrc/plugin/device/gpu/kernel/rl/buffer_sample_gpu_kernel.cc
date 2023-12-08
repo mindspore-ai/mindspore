@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/rl/buffer_sample_gpu_kernel.h"
-
-#include <string>
-#include <limits>
-#include <chrono>
-
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/rl/rl_buffer_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"

@@ -101,7 +101,7 @@ OpParameter *PopulateBCEParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc BinaryCrossEntropy Parameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(BinaryCrossEntropyParameter));
+  (void)memset(param, 0, sizeof(BinaryCrossEntropyParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->reduction = value->reduction();
@@ -122,7 +122,7 @@ OpParameter *PopulateBCEGradParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc BinaryCrossEntropyGrad Parameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(BinaryCrossEntropyGradParameter));
+  (void)memset(param, 0, sizeof(BinaryCrossEntropyGradParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->reduction = value->reduction();

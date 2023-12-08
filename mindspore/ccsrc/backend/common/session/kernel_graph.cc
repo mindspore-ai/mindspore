@@ -114,12 +114,12 @@ void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::
       if (device_sync != nullptr) {
         auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
         MS_EXCEPTION_IF_NULL(device_address);
-        device_formats->emplace_back(device_address->format());
-        device_types->emplace_back(device_address->type_id());
+        (void)device_formats->emplace_back(device_address->format());
+        (void)device_types->emplace_back(device_address->type_id());
         continue;
       }
-      device_formats->emplace_back(kOpFormat_DEFAULT);
-      device_types->emplace_back(kTypeUnknown);
+      (void)device_formats->emplace_back(kOpFormat_DEFAULT);
+      (void)device_types->emplace_back(kTypeUnknown);
     }
   }
 }
@@ -168,7 +168,7 @@ std::vector<AnfNodePtr> KernelGraph::outputs() const {
 void KernelGraph::SetNodeOutputEdges() {
   node_output_edges_.clear();
   std::queue<AnfNodePtr> to_visit;
-  to_visit.emplace(get_return());
+  (void)to_visit.emplace(get_return());
   auto seen = NewSeenGeneration();
   while (!to_visit.empty()) {
     auto node = to_visit.front();
@@ -184,7 +184,7 @@ void KernelGraph::SetNodeOutputEdges() {
       if (input->seen_ == seen) {
         continue;
       }
-      to_visit.emplace(input);
+      (void)to_visit.emplace(input);
       input->seen_ = seen;
     }
   }
@@ -199,7 +199,7 @@ void KernelGraph::SetExecOrderByDefault() {
 std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
   std::vector<CNodePtr> re_order;
   if (start_label_ != nullptr) {
-    re_order.emplace_back(start_label_);
+    (void)re_order.emplace_back(start_label_);
   }
   for (auto &node : execution_order_) {
     if (node == start_label_ || node == end_goto_) {
@@ -237,10 +237,10 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
       }
     }
 
-    re_order.emplace_back(node);
+    (void)re_order.emplace_back(node);
   }
   if (end_goto_ != nullptr) {
-    re_order.emplace_back(end_goto_);
+    (void)re_order.emplace_back(end_goto_);
   }
   return re_order;
 }
@@ -565,9 +565,9 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   std::vector<AbstractBasePtr> abstract_list;
   for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {
     auto out = CreatTupleGetItemNode(node, tuple_out_index);
-    make_tuple_inputs_list.emplace_back(out);
+    (void)make_tuple_inputs_list.emplace_back(out);
     MS_EXCEPTION_IF_NULL(out->abstract());
-    abstract_list.emplace_back(out->abstract()->Clone());
+    (void)abstract_list.emplace_back(out->abstract()->Clone());
   }
   auto make_tuple = NewCNode(std::move(make_tuple_inputs_list));
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
@@ -754,7 +754,7 @@ void KernelGraph::SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) {
       out_index = kernel_with_index.second;
     }
     KernelWithIndex real_output{node, out_index};
-    nop_node_output_map_.emplace(real_output, item.first);
+    (void)nop_node_output_map_.emplace(real_output, item.first);
   }
 }
 
@@ -1408,7 +1408,7 @@ void KernelGraph::InferType() {
                           << " for node:" << cnode->fullname_with_scope() << " input index:" << i;
       }
       MS_LOG(DEBUG) << "Add abstract:" << abstract->ToString() << " for input:" << input->DebugString();
-      abstracts.emplace_back(abstract);
+      (void)abstracts.emplace_back(abstract);
     }
 
     // Fetch infer function.

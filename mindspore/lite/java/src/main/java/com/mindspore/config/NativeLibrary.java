@@ -23,9 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * NativeLibrary Class
@@ -113,6 +113,8 @@ public class NativeLibrary {
      * Load library function.
      * If any jni lib is loaded successfully, the function return True.
      * jni lib: mindspore-lite-jni, mindspore-lite-train-jni
+     *
+     * @return
      */
     private static boolean loadLibrary() {
         boolean loadSuccess = false;
@@ -134,10 +136,10 @@ public class NativeLibrary {
     }
 
     private static void loadLib(String libResourceName) {
-        LOGGER.info(String.format(Locale.ENGLISH,"start load libResourceName: %s.", libResourceName));
+        LOGGER.info(String.format(Locale.ENGLISH, "start load libResourceName: %s.", libResourceName));
         final InputStream libResource = NativeLibrary.class.getClassLoader().getResourceAsStream(libResourceName);
         if (libResource == null) {
-            LOGGER.warning(String.format(Locale.ENGLISH,"lib file: %s not exist.", libResourceName));
+            LOGGER.warning(String.format(Locale.ENGLISH, "lib file: %s not exist.", libResourceName));
             return;
         }
         try {
@@ -146,7 +148,7 @@ public class NativeLibrary {
 
             // copy file to tmpFile
             final File tmpFile = new File(tmpDir.getCanonicalPath(), libName);
-            LOGGER.info(String.format(Locale.ENGLISH,"extract %d bytes to %s", copyLib(libResource, tmpFile),
+            LOGGER.info(String.format(Locale.ENGLISH, "extract %d bytes to %s", copyLib(libResource, tmpFile),
                     tmpFile));
             if (("lib" + MINDSPORE_LITE_LIBNAME + ".so").equals(libName)) {
                 extractLib(makeResourceName("lib" + MSPLUGIN_GE_LITERT_LIBNAME + ".so"), tmpDir);
@@ -164,7 +166,7 @@ public class NativeLibrary {
             deleteFile(tmpDir);
         } catch (IOException e) {
             throw new UnsatisfiedLinkError(
-                    String.format(Locale.ENGLISH,"extract library into tmp file (%s) failed.", e));
+                    String.format(Locale.ENGLISH, "extract library into tmp file (%s) failed.", e));
         }
     }
 
@@ -172,7 +174,7 @@ public class NativeLibrary {
         try (FileOutputStream outputStream = new FileOutputStream(tmpFile);) {
             // 1MB
             byte[] buffer = new byte[1 << 20];
-            long byteCnt = 0;
+            long byteCnt = 0L;
             int n = 0;
             while ((n = libResource.read(buffer)) >= 0) {
                 outputStream.write(buffer, 0, n);
@@ -213,8 +215,8 @@ public class NativeLibrary {
     /**
      * get native lib file name, eg. com/mindspore/lite/linux_x86_64/libmindspore-lite.so
      *
-     * @param basename
-     * @return
+     * @param basename        resource base name
+     * @return                resource name
      */
     private static String makeResourceName(String basename) {
         return "com/mindspore/lite/" + String.format("linux_%s/", architecture()) + basename;
@@ -234,10 +236,11 @@ public class NativeLibrary {
             }
             String dependLibName = libResourceName.substring(libResourceName.lastIndexOf("/") + 1);
             final File tmpDependFile = new File(targetDir.getCanonicalPath(), dependLibName);
-            LOGGER.info(String.format("extract %d bytes to %s", copyLib(dependLibRes, tmpDependFile), tmpDependFile));
+            LOGGER.info(String.format(Locale.ENGLISH, "extract %d bytes to %s", copyLib(dependLibRes, tmpDependFile),
+                        tmpDependFile));
             tmpDependFile.deleteOnExit();
         } catch (IOException e) {
-            LOGGER.warning(String.format("extract library into tmp file (%s) failed.", e.toString()));
+            LOGGER.warning(String.format(Locale.ENGLISH, "extract library into tmp file (%s) failed.", e.toString()));
         }
     }
 

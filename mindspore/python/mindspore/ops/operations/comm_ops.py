@@ -94,7 +94,7 @@ class ReduceOp:
 
 def check_collective_target_dtype(data_name, data_dtype, prim_name):
     """Check if data type is valid."""
-    default_target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
+    default_target_dtypes = (mstype.int8, mstype.uint8, mstype.int32, mstype.float16, mstype.bfloat16, mstype.float32)
     gpu_target_dtypes = (mstype.bool_, mstype.int8, mstype.int32, mstype.int64, mstype.uint32, mstype.uint64,
                          mstype.float16, mstype.float32, mstype.float64)
 

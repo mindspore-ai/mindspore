@@ -141,6 +141,8 @@ GVAR_DEF(PrimitivePtr, kPrimInplaceUpdate, std::make_shared<Primitive>("InplaceU
 GVAR_DEF(PrimitivePtr, kPrimInplaceUpdateD, std::make_shared<Primitive>("InplaceUpdateD"));
 GVAR_DEF(PrimitivePtr, kPrimInplaceUpdateV2, std::make_shared<Primitive>("InplaceUpdateV2"));
 GVAR_DEF(PrimitivePtr, kPrimLpNorm, std::make_shared<Primitive>(kLpNormOpName));
+GVAR_DEF(PrimitivePtr, kPrimLpNormReduceV2, std::make_shared<Primitive>(kLpNormReduceV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimLpNormUpdateV2, std::make_shared<Primitive>(kLpNormUpdateV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimInplaceSub, std::make_shared<Primitive>("InplaceSub"));
 GVAR_DEF(PrimitivePtr, kPrimPow, std::make_shared<Primitive>("Pow"));
 GVAR_DEF(PrimitivePtr, kPrimPower, std::make_shared<Primitive>("Power"));

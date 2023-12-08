@@ -17,6 +17,7 @@
 #include "include/api/context.h"
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "src/common/config_file.h"
+#include "src/common/common.h"
 #ifdef ENABLE_OPENSSL
 #include "src/common/decrypt.h"
 #include "src/common/file_utils.h"
@@ -373,6 +374,10 @@ bool Model::CheckModelSupport(DeviceType device_type, ModelType model_type) {
   return ModelImpl::CheckModelSupport(device_type, model_type);
 }
 
+Status Model::UpdateWeights(const std::vector<std::vector<MSTensor>> &new_weights) {
+  return impl_->UpdateWeights(new_weights);
+}
+
 Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;
@@ -458,5 +463,23 @@ Status Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<Train
 Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;
+}
+
+std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
+  std::vector<char> ret;
+  if (CharToString(key) != lite::KModelUserInfo) {
+    MS_LOG(WARNING) << "Unsupported key, only user info is supported.";
+    return ret;
+  }
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return ret;
+  }
+  auto model_info = impl_->GetModelInfo();
+  auto it = model_info.find(CharToString(key));
+  if (it == model_info.end()) {
+    return ret;
+  }
+  return StringToChar(it->second);
 }
 }  // namespace mindspore

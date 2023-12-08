@@ -283,7 +283,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   // Analyze and output profiler data at the step end.
   void EndStep();
 
-  void Clear();
+  void Clear() noexcept;
 
   // The used by ProfilerRecorder to record data.
   bool profiler_enable() const { return profiler_enable_; }

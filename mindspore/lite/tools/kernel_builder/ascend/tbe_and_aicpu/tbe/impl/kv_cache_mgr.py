@@ -80,6 +80,13 @@ def get_loop_info(total_num, each_loop_num):
     return loop_times, last_loop_num
 
 
+def elements_align(index_elements, data_size, align_size):
+    """Get element num align to align_size"""
+    total_size = index_elements * data_size
+    aligned_total_size = (total_size + align_size - 1) // align_size * align_size
+    return aligned_total_size // data_size
+
+
 class TilingHelper:
     """Tiling parameter"""
     def __init__(self, past, cur, index, out, kernel_name="kv_cache_mgr"):
@@ -115,7 +122,10 @@ class TilingHelper:
 
         self.past_elements = functools.reduce(lambda a, b: a * b, self.past_shape)
         self.cur_elements = functools.reduce(lambda a, b: a * b, self.cur_shape)
-        self.index_elements = functools.reduce(lambda a, b: a * b, self.index_shape)
+
+        # The `burst` unit is 32B
+        index_elements = functools.reduce(lambda a, b: a * b, self.index_shape)
+        self.index_elements = elements_align(index_elements, self.int32_size, 32)
 
         # split cur
         self.cur_bs = self.cur_shape[0] * self.cur_shape[1]

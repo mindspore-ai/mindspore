@@ -49,6 +49,22 @@ std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensor
   return MSTensorToMSTensorPtr(outputs);
 }
 
+Status PyModelUpdateWeights(Model *model, const std::vector<std::vector<MSTensorPtr>> &weights) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<std::vector<MSTensor>> new_weights;
+  for (auto &weight : weights) {
+    std::vector<MSTensor> new_weight = MSTensorPtrToMSTensor(weight);
+    new_weights.push_back(new_weight);
+  }
+  if (!model->UpdateWeights(new_weights).IsOk()) {
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 Status PyModelResize(Model *model, const std::vector<MSTensorPtr> &inputs_ptr,
                      const std::vector<std::vector<int64_t>> &new_shapes) {
   if (model == nullptr) {
@@ -90,6 +106,15 @@ std::vector<MSTensorPtr> PyModelGetOutputs(Model *model) {
   return MSTensorToMSTensorPtr(model->GetOutputs());
 }
 
+std::string PyModelGetModelInfo(Model *model, const std::string &key) {
+  std::string empty;
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return empty;
+  }
+  return model->GetModelInfo(key);
+}
+
 void ModelPyBind(const py::module &m) {
   (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
@@ -121,7 +146,10 @@ void ModelPyBind(const py::module &m) {
     .value("kLiteInferInvalid", StatusCode::kLiteInferInvalid)
     .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid)
     .value("kLiteLLMKVCacheNotExist", StatusCode::kLiteLLMKVCacheNotExist)
-    .value("kLiteLLMWaitProcessTimeOut", StatusCode::kLiteLLMWaitProcessTimeOut);
+    .value("kLiteLLMWaitProcessTimeOut", StatusCode::kLiteLLMWaitProcessTimeOut)
+    .value("kLiteLLMRepeatRequest", StatusCode::kLiteLLMRepeatRequest)
+    .value("kLiteLLMRequestAlreadyCompleted", StatusCode::kLiteLLMRequestAlreadyCompleted)
+    .value("kLiteLLMEngineFinalized", StatusCode::kLiteLLMEngineFinalized);
 
   (void)py::class_<Status, std::shared_ptr<Status>>(m, "Status")
     .def(py::init<>())
@@ -148,8 +176,10 @@ void ModelPyBind(const py::module &m) {
     .def("update_config", &PyModelUpdateConfig)
     .def("resize", &PyModelResize)
     .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
+    .def("update_weights", &PyModelUpdateWeights, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelGetInputs)
     .def("get_outputs", &PyModelGetOutputs)
+    .def("get_model_info", &PyModelGetModelInfo)
     .def("get_input_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",

@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <functional>
-#include <utility>
-#include <string>
+
 #include "mindspore/core/abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "include/common/utils/utils.h"

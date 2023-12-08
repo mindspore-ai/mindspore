@@ -204,6 +204,7 @@ mindspore.set_context
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。这是一个实验特性，可能会被更改或者删除。如果您想了解更多详细信息，
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
+          - **exception_dump** (str): 。开启Ascend算子异常dump，提供计算异常时候的输入输出信息。可以为 ``"0"``，``"1"``，``"2"``。为 ``"0"`` 时关闭异常dump；为 ``"1"`` 时dump出AICore和AICPU异常算子输入输出数据；为 ``"2"`` 时dump出AICore异常算子输入数据。默认值： ``"2"``。
           - **op_precision_mode** (str): 算子精度模式配置文件的所在路径。如果您想了解更多详细信息, 请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/r2.2/config/parallel_speed_up.json>`_ 。
             当设置为None时，表示不启用。

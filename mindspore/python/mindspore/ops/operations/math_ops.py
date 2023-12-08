@@ -1536,9 +1536,8 @@ class LpNorm(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, axis, p=2, keep_dims=False, epsilon=1e-12):
+    def __init__(self, axis=(), p=2, keep_dims=False, epsilon=1e-12):
         """Initialize LpNorm"""
-        super().__init__("LpNorm")
         validator.check_value_type("p", p, [int], self.name)
         validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
@@ -2494,6 +2493,7 @@ class Reciprocal(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_value(self, x):
+        """Infer value for Reciprocal"""
         if x is not None:
             x = x.asnumpy()
             out = 1.0 / x
@@ -2551,6 +2551,7 @@ class Pow(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     def infer_value(self, x, power):
+        """infer value for _BinaryOp"""
         if x is not None and power is not None:
             x = x.asnumpy()
             power = power.asnumpy()
@@ -2931,7 +2932,7 @@ class Histogram(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, bins=100, min=0.0, max=0.0):  # pylint: disable=W0622
+    def __init__(self, bins=100, min=0.0, max=0.0):
         """Initialize Histogram."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("bins", bins, [int], self.name)

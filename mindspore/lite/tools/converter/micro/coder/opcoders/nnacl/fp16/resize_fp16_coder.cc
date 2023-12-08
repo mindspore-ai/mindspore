@@ -23,7 +23,6 @@
 #include "coder/opcoders/parallel.h"
 #include "coder/utils/common.h"
 #include "nnacl/fp32/resize_fp32.h"
-#include "base/float16.h"
 
 using mindspore::schema::PrimitiveType_Resize;
 
@@ -43,15 +42,15 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
   nnacl::NNaclFp32Serializer code;
   code.CodeArray("input_shape", input_tensor_->shape().data(), input_tensor_->shape().size(), true);
   code.CodeArray("output_shape", output_tensor_->shape().data(), output_tensor_->shape().size(), true);
-  float16 *x_weights_fp16 = reinterpret_cast<float16 *>(malloc(DataTypeLen() * x_weight_len_));
-  MS_CHECK_PTR_WITH_EXE(x_weights_fp16, free(x_weights_fp16));
+  x_weights_fp16_ = reinterpret_cast<float16 *>(malloc(DataTypeLen() * x_weight_len_));
+  CHECK_MALLOC_RES(x_weights_fp16_, RET_NULL_PTR);
   for (size_t i = 0; i < x_weight_len_; i++) {
-    x_weights_fp16[i] = float16(x_weights_[i]);
+    x_weights_fp16_[i] = float16(x_weights_[i]);
   }
-  float16 *y_weights_fp16 = reinterpret_cast<float16 *>(malloc(DataTypeLen() * y_weight_len_));
-  MS_CHECK_PTR_WITH_EXE(y_weights_fp16, free(y_weights_fp16));
+  y_weights_fp16_ = reinterpret_cast<float16 *>(malloc(DataTypeLen() * y_weight_len_));
+  CHECK_MALLOC_RES(y_weights_fp16_, RET_NULL_PTR);
   for (size_t i = 0; i < y_weight_len_; i++) {
-    y_weights_fp16[i] = float16(y_weights_[i]);
+    y_weights_fp16_[i] = float16(y_weights_[i]);
   }
   int unit = UP_DIV(new_height_, kDefaultThreadNum);
   int h_begin = unit * kDefaultTaskId;
@@ -68,16 +67,16 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
       MS_CHECK_RET_CODE(ret, "memset_s failed");
       ret = memset_s(coordinate_.x_rights_, x_len_ * sizeof(int), 0, x_len_ * sizeof(int));
       MS_CHECK_RET_CODE(ret, "memset_s failed");
-      ret = memset_s(y_weights_fp16, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
+      ret = memset_s(y_weights_fp16_, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
       MS_CHECK_RET_CODE(ret, "memset_s failed");
-      ret = memset_s(x_weights_fp16, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
+      ret = memset_s(x_weights_fp16_, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
       MS_CHECK_RET_CODE(ret, "memset_s failed");
       code.CodeArray("y_bottoms", coordinate_.y_bottoms_, y_len_, true);
       code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
       code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
       code.CodeArray("x_rights", coordinate_.x_rights_, x_len_, true);
-      code.CodeArray("y_weights", y_weights_fp16, y_weight_len_, true);
-      code.CodeArray("x_weights", x_weights_fp16, x_weight_len_, true);
+      code.CodeArray("y_weights", y_weights_fp16_, y_weight_len_, true);
+      code.CodeArray("x_weights", x_weights_fp16_, x_weight_len_, true);
 
       code.CodeFunction("PrepareResizeBilinearFp16", "input_shape", "output_shape", calculate_str_, "(int *)y_bottoms",
                         "(int *)y_tops", "(int *)x_lefts", "(int *)x_rights", "(float16_t *)y_weights",
@@ -100,14 +99,14 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
       MS_CHECK_RET_CODE(ret, "memset_s failed");
       ret = memset_s(coordinate_.x_lefts_, x_len_ * sizeof(int), 0, x_len_ * sizeof(int));
       MS_CHECK_RET_CODE(ret, "memset_s failed");
-      ret = memset_s(y_weights_fp16, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
+      ret = memset_s(y_weights_fp16_, y_weight_len_ * DataTypeLen(), 0, y_weight_len_ * DataTypeLen());
       MS_CHECK_RET_CODE(ret, "memset_s failed");
-      ret = memset_s(x_weights_fp16, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
+      ret = memset_s(x_weights_fp16_, x_weight_len_ * DataTypeLen(), 0, x_weight_len_ * DataTypeLen());
       MS_CHECK_RET_CODE(ret, "memset_s failed");
       code.CodeArray("y_tops", coordinate_.y_tops_, y_len_, true);
       code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
-      code.CodeArray("y_weights", y_weights_fp16, y_weight_len_, true);
-      code.CodeArray("x_weights", x_weights_fp16, x_weight_len_, true);
+      code.CodeArray("y_weights", y_weights_fp16_, y_weight_len_, true);
+      code.CodeArray("x_weights", x_weights_fp16_, x_weight_len_, true);
       auto resize_parameter = reinterpret_cast<ResizeParameter *>(parameter_);
       MS_CHECK_PTR(resize_parameter);
       auto cubic_coeff_str = "(float16_t)" + std::to_string(resize_parameter->cubic_coeff_);

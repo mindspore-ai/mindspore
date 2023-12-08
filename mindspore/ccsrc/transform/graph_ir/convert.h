@@ -23,6 +23,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <utility>
@@ -129,6 +130,8 @@ class DfGraphConvertor {
 
     std::string graph_type = is_kernel_graph_ ? "kernel_graph" : "func_graph";
     std::string graph_name = anf_graph_->ToString();
+    graph_manager_ = Manage(anf_graph_, true);
+    MS_EXCEPTION_IF_NULL(graph_manager_);
     MS_LOG(INFO) << "Create DfGraphConvertor with graph: " << graph_name << "(type: " << graph_type << ")"
                  << ", training: " << training_ << ", dynamic input: " << dynamic_shape_inputs_
                  << ", distribute: " << distribute_;
@@ -260,6 +263,9 @@ class DfGraphConvertor {
   void SetGraphInputs(std::vector<Operator> *inputs);
   void SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
+  void ProcessInputData(vector<Operator> *init_input,
+                        std::unordered_set<std::string> *infer_need_update_parameter_names, const OperatorPtr &param_op,
+                        const string &name, const std::shared_ptr<GeTensorDesc> &desc);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
 
   void ConvertWhileNode(const CNodePtr &node);
@@ -312,8 +318,10 @@ class DfGraphConvertor {
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
   void BuildInitDataGraph(const std::string &name);
   bool IsConstantOp(const OperatorPtr &op) const;
+  void JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const;
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
+  FuncGraphManagerPtr graph_manager_{nullptr};
   RefModeFlag ref_mode_type_ = RefModeFlag::kRefModeNone;
   bool ref_mode_ = false;
   std::vector<std::string> extra_variables_names_;

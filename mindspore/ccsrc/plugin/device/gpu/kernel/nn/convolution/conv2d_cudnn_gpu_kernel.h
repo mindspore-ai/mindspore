@@ -419,7 +419,8 @@ class ConvolutionCudnnGpuKernel : public AbstractConvolutionGpuKernel {
                                         "cudnnSetConvGroupCount failed");
   }
 
-  void SetCudnnPaddingInfo(ConvolutionArgs *conv_args, int *padA, int *strideA, int *dilaA) {
+  void SetCudnnPaddingInfo(ConvolutionArgs *conv_args, int (&padA)[kConv2dDimSize], int (&strideA)[kConv2dDimSize],
+                           int (&dilaA)[kConv2dDimSize]) {
     int dimA[kConv2dInputDimSize];
     int strideAPadded[kConv2dInputDimSize];
     ShapeVector padded_shape;

@@ -34,7 +34,7 @@ class MatMulFP16Coder final : public MatMulFP16BaseCoder {
 
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int InitAShape() override;
   int InitBShape() override;
 };

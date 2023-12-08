@@ -28,7 +28,7 @@ void KernelRegistry::RegisterKernel(schema::PrimitiveType op) { registry_.insert
 
 bool KernelRegistry::CheckRegistered(schema::PrimitiveType op) { return registry_.find(op) != registry_.end(); }
 
-bool KernelRegistry::HasKernelRegistered() { return !registry_.empty(); }
+bool KernelRegistry::HasKernelRegistered() const { return !registry_.empty(); }
 
 std::string KernelRegistry::GenKernelInterface(const char *func, const char *param) {
   return "int " + std::string(func) + "(TensorC *inputs, int input_num, TensorC *outputs, int output_num, " +

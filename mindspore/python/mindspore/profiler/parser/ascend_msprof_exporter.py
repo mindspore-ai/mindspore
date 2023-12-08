@@ -15,6 +15,8 @@
 """msprof PROF data export api file"""
 import os
 import shutil
+import json
+from json import JSONDecodeError
 from collections import defaultdict
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
@@ -49,46 +51,85 @@ class AscendMsprofExporter:
     _op_summary_mark = "op_summary"
     _op_statistic_mark = "op_statistic"
 
-    def __init__(self, source_path, time_out=3000):
+    def __init__(self, source_path, time_out=3600):
         self._time_out = time_out
         self.source_path = source_path
-        self.prof_root_dir = os.path.abspath(os.path.join(self.source_path, os.path.pardir))
+        self.prof_root_dir = os.path.abspath(os.path.join(self.source_path, os.path.pardir))  # PROF*/
 
         self._check_msprof_env()
 
-    def export(self, model_iteration_dict=None):
+    def get_drv_version(self):
+        """Get the drv_version for choosing the export mode."""
+        DRV_VERSION = 467473
+        cmd = ['python',
+               '/usr/local/Ascend/latest/tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py',
+               '-dir', self.prof_root_dir + '/host']
+        result = None
+        try:
+            outs = self._run_cmd(cmd, raise_error=True)
+            if not outs:
+                logger.warning('Check the drvVersion can`t find the result, use single export mode instead.')
+                return False
+            result = json.loads(outs)
+            logger.info('get drv_version result is : %s', result)
+            status = result.get('status', 1)
+            if status == 1:
+                return False
+            drv_version = result.get('data', {}).get('version_info', {}).get('drv_version', 0)
+            if drv_version >= DRV_VERSION:
+                return True
+            return False
+        except RuntimeError as err:
+            logger.warning('Check the drvVersion error, use single-export mode instead. detail : %s', err)
+            return False
+        except JSONDecodeError as err:
+            logger.warning('Check the drvVersion error, use single-export mode instead. detail : %s', err)
+            return False
+        except AttributeError as err:
+            logger.warning('Check the drvVersion error, use single-export mode instead. detail : %s', err)
+            return False
+
+    def export(self):
         """start_time is the time to collect PROF data"""
 
-        if not model_iteration_dict:
+        flag = True  # self.get_drv_version()
+        if not flag:
             model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
 
-        if model_iteration_dict:
-            for model_id, value in model_iteration_dict.items():
-                for iteration_id in value:
-                    msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
-                    self._run_cmd(msprof_export_cmd)
-            self._check_export_files(self.source_path, model_iteration_dict)
+            if model_iteration_dict:
+                for model_id, value in model_iteration_dict.items():
+                    for iteration_id in value:
+                        msprof_export_cmd = self._msprof_command_generator_old(self.prof_root_dir, model_id,
+                                                                               iteration_id)
+                        self._run_cmd(msprof_export_cmd)
+                self._check_export_files_old(self.source_path, model_iteration_dict)
+        else:
+            msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir)
+            self._run_cmd(msprof_export_cmd)
+            self._check_export_files(self.source_path)
+
+        return flag
 
     def _run_cmd(self, cmd, raise_error=True):
         """run shell command"""
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
-            raise RuntimeError(exc)
+            raise RuntimeError(exc) from exc
         try:
             outs, errs = proc.communicate(timeout=self._time_out)
-        except TimeoutExpired:
+        except TimeoutExpired as err:
             proc.kill()
             msg = "The possible cause is that too much data is collected " \
                   "and the export time is too long."
             logger.error(msg)
-            raise TimeoutError(msg)
+            raise TimeoutError(msg) from err
         logger.info(outs)
         if raise_error and errs != "":
             raise RuntimeError(errs)
         return outs
 
-    def _msprof_command_generator(self, output, model_id=None, iter_id=None):
+    def _msprof_command_generator_old(self, output, model_id=None, iter_id=None):
         """msprof export helper"""
         export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
         if isinstance(model_id, int) and model_id >= 0:
@@ -96,6 +137,10 @@ class AscendMsprofExporter:
         if isinstance(iter_id, int) and iter_id >= 0:
             export_cmd.append("--iteration-id={}".format(iter_id))
         return export_cmd
+
+    def _msprof_command_generator(self, output):
+        """msprof export helper"""
+        return [self._msprof_cmd, "--export=on", "--output={}".format(output)]
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""
@@ -143,8 +188,7 @@ class AscendMsprofExporter:
         summary_path = os.path.join(device_path, self._summary_dir)
         timeline_path = os.path.join(device_path, self._timeline_dir)
 
-        msprof_export_cmd = self._msprof_command_generator(prof_path)
-        self._run_cmd(msprof_export_cmd)
+        _ = self._run_cmd(self._msprof_command_generator_old(prof_path))
 
         if not os.path.isdir(summary_path):
             msg = "Path {} is not a existing directory. Make sure there is " \
@@ -158,16 +202,15 @@ class AscendMsprofExporter:
             return None
 
         step_trace = defaultdict(list)
-        with open(step_trace_file, newline='', mode='r') as csvfile:
+        with os.fdopen(os.open(step_trace_file, os.O_RDONLY, 0o600), newline='', mode='r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            header = next(reader)
-            for index, value in enumerate(header):
+            for index, value in enumerate(next(reader)):
                 if value == 'Model ID':
-                    Model_ID = index
+                    model_id = index
                 if value == 'Iteration ID':
-                    Iteration_ID = index
+                    iteration_id = index
             for row in reader:
-                step_trace[int(row[Model_ID])].append(int(row[Iteration_ID]))
+                step_trace[int(row[model_id])].append(int(row[iteration_id]))
 
         if os.path.isdir(summary_path):
             shutil.rmtree(summary_path)
@@ -176,16 +219,15 @@ class AscendMsprofExporter:
 
         return step_trace
 
-    def _check_export_files(self, source_path, step_trace):
+    def _check_export_files_old(self, source_path, step_trace):
         """Check the existence of op_summary & op_statistic files."""
         summary_path = os.path.join(source_path, self._summary_dir)
         if not os.path.isdir(summary_path):
             raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
-        summary_file_list = os.listdir(summary_path)
         op_summary = set()
         op_statistic = set()
 
-        for summary_file in summary_file_list:
+        for summary_file in os.listdir(summary_path):
             if summary_file.startswith(self._op_summary_mark):
                 op_summary.add(summary_file)
             elif summary_file.startswith(self._op_statistic_mark):
@@ -216,4 +258,25 @@ class AscendMsprofExporter:
                     logger.warning("[Profiler]The file {} was not found, " \
                                    "perhaps the original data was not collected.".format(op_statistic_file))
 
+        logger.info("Finish checking files.")
+
+    def _check_export_files(self, source_path):
+        """Check the existence of op_summary & op_statistic files."""
+        summary_path = os.path.join(source_path, self._summary_dir)
+        if not os.path.isdir(summary_path):
+            raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
+        summary_file_list = os.listdir(summary_path)
+        op_summary = set()
+        op_statistic = set()
+
+        for summary_file in summary_file_list:
+            if summary_file.startswith(self._op_summary_mark):
+                op_summary.add(summary_file)
+            elif summary_file.startswith(self._op_statistic_mark):
+                op_statistic.add(summary_file)
+
+        if not op_summary:
+            raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
+        if not op_statistic:
+            raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
         logger.info("Finish checking files.")

@@ -32,6 +32,7 @@
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
 #include "extendrt/delegate/ascend_ge/ge_memory_manager.h"
 #include "extendrt/delegate/ascend_ge/ge_context_manager.h"
+#include "extendrt/delegate/ascend_ge/update_weight.h"
 
 namespace mindspore {
 struct RefDataInfo {
@@ -60,6 +61,18 @@ struct GraphRuntimeInfo {
   std::vector<ShapeVector> output_shapes;
 };
 
+struct DynKVCacheInfo {
+  bool dynamic_kv_cache = false;
+  bool batch_size_dyn = false;
+  bool seq_length_dyn = false;
+  int64_t real_batch_size = -1;
+  int64_t real_seq_len_size = -1;
+  int64_t dyn_ref_num = -1;
+  int64_t max_batch_size = 32;
+  int64_t max_seq_len_size = 4096;
+  std::vector<std::vector<int64_t>> dynamic_kv_cache_dims;
+};
+
 class GeGraphExecutor : public LiteGraphExecutor {
  public:
   GeGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos)
@@ -82,8 +95,11 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool Init();
   bool AoeTuning(const FuncGraphPtr &graph);
   bool OfflineBuildGraph(const FuncGraphPtr &graph);
+  bool UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) override;
 
  private:
+  std::shared_ptr<UpdateWeight> update_weight_ptr_ = nullptr;
+  bool enable_update_weight_ = false;
   const std::shared_ptr<mindspore::Context> context_;
   ConfigInfos config_infos_;
   std::shared_ptr<ge::Session> ge_session_ = nullptr;
@@ -92,7 +108,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::vector<uint32_t> compute_graph_id_list_;
   transform::RefModeFlag ref_mode_flag_ = transform::RefModeFlag::kRefModeNone;
   bool offline_mode_ = false;
-  bool cache_mode_ = false;
+  std::string cache_mode_;
   std::vector<RefDataInfo> ref_data_infos_;
   std::vector<InOutBufferInfo> inputs_buffer_infos_;
   std::vector<InOutBufferInfo> outputs_buffer_infos_;
@@ -152,6 +168,8 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   bool UpdateInputShapeOption(const std::vector<std::pair<std::string, tensor::TensorPtr>> &ref_data_tensors,
                               std::map<std::string, std::string> *ge_options_ptr);
+  bool UpdateDynamicDimsOption(const std::vector<std::pair<std::string, tensor::TensorPtr>> &ref_data_tensors,
+                               std::map<std::string, std::string> *ge_options_ptr);
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();
@@ -165,6 +183,9 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   transform::DfGraphPtr CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                             std::map<std::string, std::string> *ge_options_ptr);
+
+  transform::DfGraphPtr CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr);
+
   bool CreateGeGraphOffline(const FuncGraphPtr &anf_graph, std::map<std::string, std::string> *ge_options_ptr,
                             uint32_t *graph_id);
   bool UpdateGraphInputs(const FuncGraphPtr &graph);
@@ -174,6 +195,14 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool Warmup(const FuncGraphPtr &func_graph, uint32_t graph_id);
   bool SetModelCacheDir(std::map<std::string, std::string> *session_options_ptr);
   bool GetConfigOption(const std::string &section_name, const std::string &option_name, std::string *option_val);
+
+  bool SetGeTensorShape(GeTensor *ge_tensor, ShapeVector shape);
+  void UpdateOutputShapeInfo();
+  void SetDynamicKVCache();
+  void InitRealShapeParam(const std::vector<tensor::Tensor> &inputs);
+  DynKVCacheInfo dyn_kv_cache_info_;
+  void SetRefShape(std::vector<int64_t> *ref_shape, bool dyn, std::string tensor_name);
+  bool InitInputDeviceTensor(const FuncGraphPtr &anf_graph);
 };
 
 struct GeSessionContext {

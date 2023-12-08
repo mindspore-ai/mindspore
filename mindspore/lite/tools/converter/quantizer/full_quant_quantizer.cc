@@ -199,7 +199,7 @@ int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const
     quant_param.zeroPoint = info->GetZeroPoint();
     quant_param.max = info->GetEncodeMax();
     quant_param.min = info->GetEncodeMin();
-    quant_param.numBits = init_param_.bit_num_;
+    quant_param.numBits = static_cast<int32_t>(init_param_.bit_num_);
     quant_param.narrowRange = true;
     quant_param.inited = true;
     quant_param.roundType = 1;
@@ -210,8 +210,7 @@ int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const
   return RET_OK;
 }
 
-int FullQuantQuantizer::QuantNodeCNode(const CNodePtr &cnode, const AnfNodePtr &input_node,
-                                       const std::unique_ptr<DataDistribution> &info) {
+int FullQuantQuantizer::QuantNodeCNode(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info) {
   auto input_cnode = input_node->cast<mindspore::CNodePtr>();
   MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr.");
   auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
@@ -281,7 +280,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     } else if (input_node->isa<mindspore::CNode>()) {
       auto &info = (*inputs_diverg_info)[op_name][i - 1];
-      ret = QuantNodeCNode(cnode, input_node, info);
+      ret = QuantNodeCNode(input_node, info);
       if (ret != RET_NO_CHANGE && ret != RET_OK) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do cnode quant failed.";
         return RET_ERROR;

@@ -297,17 +297,19 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
 size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = node->kernel_info();
-  if (kernel_info) {
+  bool is_valid_cache = false;
+  if (kernel_info != nullptr) {
     auto runtime_cache = kernel_info->runtime_cache();
     if (runtime_cache.runtime_cache().is_valid()) {
       ssize_t output_tensor_num = runtime_cache.runtime_cache().output_tensor_num();
       if (output_tensor_num >= 0) {
         return static_cast<size_t>(output_tensor_num);
       }
+      is_valid_cache = true;
     }
   }
 
-  size_t res;
+  size_t res = 1;
   TypePtr type = node->Type();
   if (type == nullptr) {
     res = 0;
@@ -348,15 +350,10 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
   } else if (NeedJumpMonadOutput(node) && type->isa<MonadType>()) {
     // Some nodes could have monad outputs like RpcRecv. We need to jump these outputs.
     res = 0;
-  } else {
-    res = 1;
   }
 
-  if (kernel_info) {
-    auto runtime_cache = kernel_info->runtime_cache();
-    if (runtime_cache.runtime_cache().is_valid()) {
-      runtime_cache.runtime_cache().set_output_tensor_num(static_cast<ssize_t>(res));
-    }
+  if (is_valid_cache) {
+    kernel_info->runtime_cache().runtime_cache().set_output_tensor_num(static_cast<ssize_t>(res));
   }
   return res;
 }

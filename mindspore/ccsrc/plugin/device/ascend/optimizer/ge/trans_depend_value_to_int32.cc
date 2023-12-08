@@ -21,6 +21,7 @@
 #include <set>
 #include "ops/conv_pool_op_name.h"
 #include "ops/array_op_name.h"
+#include "ops/nn_op_name.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -75,7 +76,8 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   // if node has depend value
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  static const std::set<std::string> kSkipNodeName = {kScatterNdOpName, kAdaptiveAvgPool2DGradOpName};
+  static const std::set<std::string> kSkipNodeName = {kScatterNdOpName, kAdaptiveAvgPool2DGradOpName,
+                                                      kFlashPromptFlashAttentionOpName};
   auto node_name = AnfUtils::GetCNodeName(cnode);
   if (kSkipNodeName.find(node_name) != kSkipNodeName.end()) {
     return nullptr;

@@ -127,8 +127,8 @@ int ArithmeticGradCPUKernel::ArithmeticGradMul(float *dy, int dy_size, float *dx
   auto x2_data = reinterpret_cast<float *>(in_tensors_[kX2Idx]->MutableData());
   CHECK_NULL_RETURN(x1_data);
   CHECK_NULL_RETURN(x2_data);
-  ElementMul(dy, x1_data, dx2, dy_size);
-  ElementMul(dy, x2_data, dx1, dy_size);
+  (void)ElementMul(dy, x1_data, dx2, dy_size);
+  (void)ElementMul(dy, x2_data, dx1, dy_size);
   return RET_OK;
 }
 
@@ -138,11 +138,12 @@ int ArithmeticGradCPUKernel::ArithmeticGradMul1L(float *dy, int dy_size, float *
   auto x2_data = reinterpret_cast<float *>(in_tensors_[kX2Idx]->MutableData());
   CHECK_NULL_RETURN(x1_data);
   CHECK_NULL_RETURN(x2_data);
-  ElementMul(dy, x1_data, tile_data0, dy_size);
+  (void)ElementMul(dy, x1_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
 
-  BroadcastMul(dy, x2_data, tile_data0, tile_data1, dx1, dy_size, arithmeticParameter_);  // broadcast directly to dx1
+  (void)BroadcastMul(dy, x2_data, tile_data0, tile_data1, dx1, dy_size,
+                     arithmeticParameter_);  // broadcast directly to dx1
   return RET_OK;
 }
 
@@ -152,11 +153,12 @@ int ArithmeticGradCPUKernel::ArithmeticGradMul2L(float *dy, int dy_size, float *
   auto x2_data = reinterpret_cast<float *>(in_tensors_[kX2Idx]->MutableData());
   CHECK_NULL_RETURN(x1_data);
   CHECK_NULL_RETURN(x2_data);
-  ElementMul(dy, x2_data, tile_data0, dy_size);
+  (void)ElementMul(dy, x2_data, tile_data0, dy_size);
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx1, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
 
-  BroadcastMul(dy, x1_data, tile_data0, tile_data1, dx2, dy_size, arithmeticParameter_);  // broadcast directly to dx2
+  (void)BroadcastMul(dy, x1_data, tile_data0, tile_data1, dx2, dy_size,
+                     arithmeticParameter_);  // broadcast directly to dx2
   return RET_OK;
 }
 
@@ -166,7 +168,7 @@ int ArithmeticGradCPUKernel::ArithmeticGradDiv(float *dy, int dy_size, float *dx
   auto x2 = reinterpret_cast<float *>(in_tensors_[kX2Idx]->MutableData());
   CHECK_NULL_RETURN(x1);
   CHECK_NULL_RETURN(x2);
-  ElementDiv(dy, x2, dx1, dy_size);
+  (void)ElementDiv(dy, x2, dx1, dy_size);
   ElementMulAndDivNegSquare(dy, x1, x2, dx2, dy_size);
   return RET_OK;
 }
@@ -178,10 +180,10 @@ int ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float *
   CHECK_NULL_RETURN(x1_data);
   CHECK_NULL_RETURN(x2_data);
 
-  ElementMul(x2_data, x2_data, dx2, dx2_size);
-  ElementMul(x1_data, dy, dx1, dy_size);  // use dx1 buffer
-  BroadcastDiv(dx1, dx2, tile_data0, tile_data1, tile_data2, dy_size,
-               arithmeticParameter_);  // broadcast directly to dx1
+  (void)ElementMul(x2_data, x2_data, dx2, dx2_size);
+  (void)ElementMul(x1_data, dy, dx1, dy_size);  // use dx1 buffer
+  (void)BroadcastDiv(dx1, dx2, tile_data0, tile_data1, tile_data2, dy_size,
+                     arithmeticParameter_);  // broadcast directly to dx1
   ReduceSumByAxes(tile_data2, arithmeticParameter_->in_shape0_, dx2, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
   for (int i = 0; i < dx2_size; i++) {
@@ -189,7 +191,8 @@ int ArithmeticGradCPUKernel::ArithmeticGradDiv1L(float *dy, int dy_size, float *
   }
 
   // broadcasting x2
-  BroadcastDiv(dy, x2_data, tile_data0, tile_data1, dx1, dy_size, arithmeticParameter_);  // broadcast directly to dx1
+  (void)BroadcastDiv(dy, x2_data, tile_data0, tile_data1, dx1, dy_size,
+                     arithmeticParameter_);  // broadcast directly to dx1
   return RET_OK;
 }
 
@@ -201,12 +204,13 @@ int ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float *
   CHECK_NULL_RETURN(x2_data);
 
   // dx1 = dy/x2
-  ElementDiv(dy, x2_data, tile_data0, dy_size);  // first multiply into temp
+  (void)ElementDiv(dy, x2_data, tile_data0, dy_size);  // first multiply into temp
   ReduceSumByAxes(tile_data0, arithmeticParameter_->in_shape0_, dx1, arithmeticParameter_->in_shape1_,
                   arithmeticParameter_->ndim_);
 
   // dx2 = -dy*x1/(x2*x2)
-  BroadcastMul(dy, x1_data, tile_data0, tile_data1, tile_data2, dy_size, arithmeticParameter_);  // broadcast numerator
+  (void)BroadcastMul(dy, x1_data, tile_data0, tile_data1, tile_data2, dy_size,
+                     arithmeticParameter_);  // broadcast numerator
   ElementDivNegSquare(tile_data2, x2_data, dx2, dy_size);
   return RET_OK;
 }
@@ -255,9 +259,9 @@ int ArithmeticGradCPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(dx1);
   CHECK_NULL_RETURN(dx2);
 
-  size_t dy_size = in_tensors_.at(kDyIdx)->ElementsNum();
-  size_t dx1_size = out_tensors_.at(kDx1Idx)->ElementsNum();
-  size_t dx2_size = out_tensors_.at(kDx2Idx)->ElementsNum();
+  size_t dy_size = static_cast<size_t>(in_tensors_.at(kDyIdx)->ElementsNum());
+  size_t dx1_size = static_cast<size_t>(out_tensors_.at(kDx1Idx)->ElementsNum());
+  size_t dx2_size = static_cast<size_t>(out_tensors_.at(kDx2Idx)->ElementsNum());
   (this->*arithmetic_grad_)(dy, dy_size, dx1, dx1_size, dx2, dx2_size);
   return RET_OK;
 }

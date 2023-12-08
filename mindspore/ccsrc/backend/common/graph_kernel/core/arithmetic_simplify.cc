@@ -194,7 +194,7 @@ std::string CleanStr(const std::string &s) {
   std::string res = "";
   (void)std::for_each(s.begin(), s.end(), [&res](const char &c) {
     if (c != '[' && c != ']' && c != ' ') {
-      res += c;
+      res.push_back(c);
     }
   });
   return res;
@@ -614,9 +614,9 @@ class RTTPatternTree : public PatternTree {
     auto dim = perm1.size();
     for (size_t i = 0; i < dim; i++) {
       MS_EXCEPTION_IF_CHECK_FAIL(i < perm2.size(), "perm is out of bound");
-      auto index = perm2[i] < 0 ? perm2[i] + dim : perm2[i];
+      size_t index = perm2[i] < 0 ? perm2[i] + static_cast<ShapeValueDType>(dim) : perm2[i];
       MS_EXCEPTION_IF_CHECK_FAIL(index < dim, "perm is out of bound");
-      auto axis = perm1[index] < 0 ? perm1[index] + dim : perm1[index];
+      auto axis = perm1[index] < 0 ? perm1[index] + static_cast<ShapeValueDType>(dim) : perm1[index];
       if (static_cast<size_t>(axis) != i) {
         return false;
       }

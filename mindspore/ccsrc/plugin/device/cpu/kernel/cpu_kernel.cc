@@ -619,7 +619,8 @@ void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const s
   constexpr size_t kIsCloseMaxDim = 10;
   size_t logical_shape[kIsCloseMaxDim];
   size_t physical_shape[kIsCloseMaxDim];
-  size_t size = 0, output_size = 1;
+  size_t size = 0;
+  size_t output_size = 1;
   // Align input shape to output shape by filling one into the outermost dimension.
   std::vector<size_t> input_shape(output_shape.size());
   for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
@@ -629,7 +630,8 @@ void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const s
   // (logical or physical) property.
   for (size_t i = output_shape.size(); i > 0;) {
     size_t stride = 1;
-    bool change = false, is_valid = false;
+    bool change = false;
+    bool is_valid = false;
     while (i > 0 && input_shape[i - 1] == output_shape[i - 1]) {
       stride *= output_shape[i - 1];
       change = is_valid = true;

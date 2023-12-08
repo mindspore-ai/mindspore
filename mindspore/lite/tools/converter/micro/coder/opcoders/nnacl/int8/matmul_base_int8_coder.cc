@@ -289,7 +289,8 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
             "relux_int8.c",
             "matmul_int8_wrapper.c",
           });
-  NNaclInt8Serializer init_code, code;
+  NNaclInt8Serializer init_code;
+  NNaclInt8Serializer code;
   size_t w_buf_size = 0;
   auto filter_tensor_name = MemoryAllocator::GetInstance()->GetRuntimeAddr(filter_tensor_);
   std::string bias_ptr_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);

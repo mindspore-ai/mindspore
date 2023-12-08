@@ -43,10 +43,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
 
   explicit LRUCache(size_t capacity) : Cache<KeyType, ValueType>(capacity) {}
 
-  ~LRUCache() override {
-    elements_.clear();
-    element_keys_to_iters_.clear();
-  }
+  ~LRUCache() override = default;
 
   // Insert an element (key-value pair) into the lru cache.
   // The newly inserted element is considered hot data and will be placed at the head of the linked list, because this
@@ -66,7 +63,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
     }
 
     // The key does not exist in lru cache, insert this new element at the head of list.
-    elements_.emplace_front(key, value);
+    (void)elements_.emplace_front(key, value);
     (void)element_keys_to_iters_.emplace(key, elements_.begin());
   }
 
@@ -122,7 +119,7 @@ class LRUCache : public Cache<KeyType, ValueType> {
 
     while (size() > capacity - reserve_size) {
       const auto &back_element = elements_.back();
-      evicted_elements->emplace_back(back_element.first, back_element.second);
+      (void)evicted_elements->emplace_back(back_element.first, back_element.second);
       (void)element_keys_to_iters_.erase(back_element.first);
       elements_.pop_back();
     }

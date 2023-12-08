@@ -16,8 +16,6 @@
 
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
 #include <cuda.h>
-#include <vector>
-#include <string>
 
 namespace mindspore {
 namespace device {

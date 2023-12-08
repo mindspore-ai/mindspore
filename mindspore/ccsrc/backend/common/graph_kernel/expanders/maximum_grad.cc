@@ -35,13 +35,13 @@ class MaximumGrad : public OpDesc {
       return {FAIL};
     }
     auto tmp_shape = ShapeVector(brodcast_shape.size() - original_shape.size(), 1);
-    tmp_shape.insert(tmp_shape.end(), original_shape.begin(), original_shape.end());
+    (void)tmp_shape.insert(tmp_shape.end(), original_shape.begin(), original_shape.end());
 
     ShapeVector reduce_axis;
     for (size_t i = 0; i < tmp_shape.size(); ++i) {
       if (tmp_shape[i] != brodcast_shape[i]) {
         if (tmp_shape[i] == 1) {
-          reduce_axis.push_back(i);
+          reduce_axis.push_back(SizeToLong(i));
         } else {
           MS_LOG(INFO) << "For MaximumGrad, original_shape " << original_shape << " and brodcast_shape "
                        << brodcast_shape << " can't get reduce axis";

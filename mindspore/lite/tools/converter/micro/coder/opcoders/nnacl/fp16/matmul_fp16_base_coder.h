@@ -39,21 +39,19 @@ class MatMulFP16BaseCoder : public MatMulFP32BaseCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  int InitBufferForBias() override;
   std::string InitBiasData(NNaclFp32Serializer *const init_code, CoderContext *const context, size_t *w_buf);
   std::string InitMatrixA(NNaclFp32Serializer *const code, NNaclFp32Serializer *const init_code,
                           CoderContext *const context, size_t *w_buf);
   std::string InitMatrixB(NNaclFp32Serializer *const code, NNaclFp32Serializer *const init_code,
                           CoderContext *const context, size_t *w_buf);
-  int CollectFilesForTarget(CoderContext *const context) override;
 
  protected:
   virtual int InitAShape() = 0;
   virtual int InitBShape() = 0;
+  int InitBufferForBias() override;
+  void CollectFilesForTarget(CoderContext *const context) override;
   int InitBufferA() override;
   int InitBufferB() override;
-
- protected:
   int a_batch_ = 1;
   int b_batch_ = 1;
 };

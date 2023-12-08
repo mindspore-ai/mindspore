@@ -1954,16 +1954,17 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto drop_mask = ib->GetInput(kIndex4);
   auto pse_shift = ib->GetInput(kIndex5);
   auto padding_mask = ib->GetInput(kIndex6);
-  auto out = ib->GetInput(kIndex7);
+  auto prefix = ib->GetInput(kIndex7);
+  auto out = ib->GetInput(kIndex8);
   auto attention_out = ib->TupleGetItem(out, kIndex0);
   auto softmax_max = ib->TupleGetItem(out, kIndex1);
   auto softmax_sum = ib->TupleGetItem(out, kIndex2);
   auto softmax_out = ib->EmitValue(kNone);
-  auto dout = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex9);
   auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
   auto grad = ib->Emit("FlashAttentionScoreGrad",
                        {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
-                        drop_mask, pse_shift, padding_mask, softmax_out},
+                        drop_mask, pse_shift, padding_mask, softmax_out, prefix},
                        {
                          {"head_num", ib->GetAttr("head_num")},
                          {"keep_prob", ib->GetAttr("keep_prob")},
@@ -1972,6 +1973,7 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
                          {"next_tokens", ib->GetAttr("next_tokens")},
                          {"inner_precise", ib->GetAttr("inner_precise")},
                          {"input_layout", ib->GetAttr("input_layout")},
+                         {"sparse_mode", ib->GetAttr("sparse_mode")},
                        });
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
@@ -1980,7 +1982,23 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_drop_mask = ib->ZerosLike(drop_mask);
   auto g_pse_shift = ib->ZerosLike(pse_shift);
   auto g_padding_mask = ib->ZerosLike(padding_mask);
-  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask};
+  auto g_prefix = ib->ZerosLike(prefix);
+  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
 }));
+
+REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto rstd = ib->TupleGetItem(out, kIndex1);
+  auto dy = ib->TupleGetItem(dout, kIndex0);
+
+  auto grad = ib->Emit("RmsNormGrad", {dy, x, rstd, gamma});
+  auto dx = ib->TupleGetItem(grad, kIndex0);
+  auto dgamma = ib->TupleGetItem(grad, kIndex1);
+  return {dx, dgamma};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

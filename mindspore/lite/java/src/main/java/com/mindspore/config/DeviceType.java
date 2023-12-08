@@ -30,6 +30,8 @@ public class DeviceType {
     // support npu
     public static final int DT_NPU = 2;
 
-    // support ascend
+    /**
+     * Support Ascend device.
+     */
     public static final int DT_ASCEND = 3;
 }

@@ -78,7 +78,7 @@ std::vector<Tensor *> DynamicSession::GetOutTensors(int index) {
   return kernels_[index]->out_tensors();
 }
 
-bool DynamicSession::CheckTensorIsVar(Tensor *tensor) {
+bool DynamicSession::CheckTensorIsVar(const Tensor *tensor) {
   auto category = tensor->category();
   return category != CONST_TENSOR && category != CONST_SCALAR &&
          weights_name_.find(tensor->tensor_name()) == weights_name_.end();

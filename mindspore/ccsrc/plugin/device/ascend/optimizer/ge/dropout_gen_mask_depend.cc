@@ -15,9 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 
-#include <memory>
-#include <vector>
-#include <utility>
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

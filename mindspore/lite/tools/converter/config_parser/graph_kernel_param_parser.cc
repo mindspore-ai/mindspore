@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "tools/converter/config_parser/graph_kernel_param_parser.h"
-#include <fstream>
 namespace mindspore {
 namespace lite {
 STATUS GraphKernelParamParser::ParseGraphKernelCfg(const GraphKernelString &graph_kernel_string,

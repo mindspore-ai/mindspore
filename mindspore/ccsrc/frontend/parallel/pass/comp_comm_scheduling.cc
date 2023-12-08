@@ -29,6 +29,7 @@
 #include "mindspore/ccsrc/frontend/parallel/pass/comp_comm_scheduling.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "mindspore/ccsrc/frontend/parallel/step_parallel.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 #include "mindspore/core/utils/misc.h"
 
 #include "include/backend/optimizer/helper.h"
@@ -588,8 +589,8 @@ SchedulingOutput FastGreedyScheduler::ProcessCore(std::vector<std::shared_ptr<Ta
   size_t count = 0;
   for (const auto &type_to_num : type_to_num_cores_map) {
     const auto &type = type_to_num.first;
-    const auto &num_cores = type_to_num.second;
-    for (int i = 0; i < num_cores; ++i) {
+    const auto &num_cores = IntToSize(type_to_num.second);
+    for (size_t i = 0; i < num_cores; ++i) {
       ProcessingElement new_pe;
       new_pe.id = count + i;
       new_pe.type = type;
@@ -656,7 +657,6 @@ SchedulingOutput FastGreedyScheduler::ProcessCore(std::vector<std::shared_ptr<Ta
 SchedulingOutput FastGreedyScheduler::ProcessSingle(const SchedulingInput &input, const TaskSortFunction &sortPtr,
                                                     bool pe_load_sort, const std::string &graph_name) {
   auto tasks = input.tasks;
-  // auto tasks = GetTestTasks();
   auto type_to_num_cores_map = GetTestPEs();
   SchedulingOutput output{{}, 0};
   // Optional: verify input task graph is a DAG
@@ -910,7 +910,9 @@ void InsertTaskGraph(const std::vector<CNodePtr> &cnode_vec,
   for (size_t i = 0; i < cnode_vec.size(); ++i) {
     for (size_t j = 0; j < cnode_vec[i]->size(); ++j) {
       const auto &input_node = cnode_vec[i]->input(j)->cast<CNodePtr>();
-      if ((*cnode_to_task_map_ptr).count(input_node) == 0) continue;
+      if ((*cnode_to_task_map_ptr).count(input_node) == 0) {
+        continue;
+      }
 
       ((*cnode_to_task_map_ptr)[cnode_vec[i]])->AddParent((*cnode_to_task_map_ptr)[input_node]);
       ((*cnode_to_task_map_ptr)[input_node])->AddChild((*cnode_to_task_map_ptr)[cnode_vec[i]]);
@@ -949,7 +951,9 @@ SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &manager, const
         continue;
       }
       ShapeVector shape = common::AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
-      if (shape.size() <= 0) continue;
+      if (shape.size() <= 0) {
+        continue;
+      }
 
       const TypeId type = common::AnfAlgo::GetOutputInferDataType(kernel_with_index.first, 0);
       if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeFunction) continue;
@@ -962,7 +966,9 @@ SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &manager, const
     if (output_num > 1) {
       for (size_t j = 0; j < output_num; j++) {
         ShapeVector shape = common::AnfAlgo::GetOutputInferShape(cnode, j);
-        if (shape.size() <= 0) continue;
+        if (shape.size() <= 0) {
+          continue;
+        }
 
         const TypeId type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
         if (type == kObjectTypeUMonad || type == kObjectTypeMonad || type == kObjectTypeFunction) continue;
@@ -973,7 +979,9 @@ SchedulingInput ExtractSchedulingInput(const FuncGraphManagerPtr &manager, const
       }
     }
 
-    if (weight < 0) MS_LOG(EXCEPTION) << "Weight < 0, replace by SIZE_MAX";
+    if (weight < 0) {
+      MS_LOG(EXCEPTION) << "Weight < 0, replace by SIZE_MAX";
+    }
 
     task1->AssignWeight(weight);
     MS_LOG(INFO) << "End Assign Weight";

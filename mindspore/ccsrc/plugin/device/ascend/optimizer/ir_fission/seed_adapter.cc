@@ -37,7 +37,7 @@ const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName, kPoissonOpNa
 template <typename T>
 tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor
-  std::vector<int64_t> indices_shape = {1};
+  const std::vector<int64_t> &indices_shape = {1};
   auto type = std::is_same<T, int64_t>::value ? kInt64 : kUInt64;
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt64);
   MS_EXCEPTION_IF_NULL(tensor_type);

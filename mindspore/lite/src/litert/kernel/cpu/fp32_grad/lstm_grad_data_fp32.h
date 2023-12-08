@@ -34,12 +34,11 @@ class LSTMGradDataCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoGrad(int thread_id);
 
  private:
-  int LstmBackpropUnidirectional(bool is_backward, float *w, float *v);
+  void LstmBackpropUnidirectional(bool is_backward, float *w, float *v);
 
-  void ReorderLstmWeightGrad(float *dst, float *src);
+  void ReorderLstmWeightGrad(float *dst, const float *src) const;
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();
@@ -58,7 +57,7 @@ class LSTMGradDataCPUKernel : public LiteKernel {
   int input_size_align_ = 1;
   float *dA_tmp_ = nullptr;
   float *weights_tmp_ = nullptr;
-  float *workspace_ = nullptr;
+  float *lstm_grad_data_workspace_ = nullptr;
 
   int row_tile_ = 0;
   int col_tile_ = 0;

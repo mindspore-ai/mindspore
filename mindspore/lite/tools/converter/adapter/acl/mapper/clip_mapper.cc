@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/adapter/acl/mapper/clip_mapper.h"
-#include <algorithm>
 #include <memory>
 #include <vector>
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"

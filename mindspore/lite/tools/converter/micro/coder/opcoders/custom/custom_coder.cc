@@ -32,7 +32,7 @@ std::map<Tensor *, void *> CustomCoder::const_tensor_map_;
 
 void CustomCoder::Populate(const void *prim) {
   auto op = static_cast<const schema::Primitive *>(prim)->value_as_Custom();
-  type_ = op->type()->str();
+  custom_type_ = op->type()->str();
   for (size_t i = 0; i < op->attr()->size(); ++i) {
     auto attr = op->attr()->Get(i);
     std::string data;
@@ -53,7 +53,12 @@ int CustomCoder::Prepare(CoderContext *const context) {
     if (tensor->category() == lite::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensor)) {
         auto buff = allocator_->Malloc(kNumberTypeUInt8, tensor->Size(), kOfflinePackWeight);
-        memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
+        MS_CHECK_PTR(buff);
+        auto ret = memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+          return RET_ERROR;
+        }
         const_tensor_map_[tensor] = buff;
       }
     }
@@ -106,12 +111,12 @@ int CustomCoder::TransformParams(Serializer *code, std::string var_name) {
   }
 
   (*code) << "\t\tCustomParameter " << var_name << ";\n";
-  if (type_.size() > MAX_STR_LEN) {
-    MS_LOG(ERROR) << "type name is too long: " << type_;
+  if (custom_type_.size() > MAX_STR_LEN) {
+    MS_LOG(ERROR) << "type name is too long: " << custom_type_;
     return RET_ERROR;
   }
   (*code) << "\t\tstrcpy(" << var_name << ".type, "
-          << "\"" << type_ << "\""
+          << "\"" << custom_type_ << "\""
           << ");\n";
   int i = 0;
   for (auto iter = attrs_.begin(); iter != attrs_.end(); ++iter) {

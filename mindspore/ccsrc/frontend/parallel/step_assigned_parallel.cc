@@ -574,6 +574,19 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
   return true;
 }
 
+namespace {
+bool CheckIgnoreNode(const PrimitivePtr &prim, const AnfNodePtr &node) {
+  if ((prim->name() == MAKE_TUPLE) || (prim->name() == MAKE_LIST) || (prim->name() == RECEIVE)) {
+    return true;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimUpdateState) ||
+      IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
 void InitRefMap(const FuncGraphPtr &root) {
   auto manager = root->manager();
   auto node_list = TopoSort(root->get_return());
@@ -585,11 +598,7 @@ void InitRefMap(const FuncGraphPtr &root) {
 
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if ((prim->name() == MAKE_TUPLE) || (prim->name() == MAKE_LIST) || (prim->name() == RECEIVE)) {
-      continue;
-    }
-    if (IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimUpdateState) ||
-        IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    if (CheckIgnoreNode(prim, node)) {
       continue;
     }
     std::vector<AnfNodePtr> all_inputs = cnode->inputs();

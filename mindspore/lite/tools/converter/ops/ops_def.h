@@ -57,6 +57,9 @@ ADD_CONVERTER_ONLY_OP(MVN);
 ADD_CONVERTER_ONLY_OP(RandomUniformLike);
 ADD_CONVERTER_ONLY_OP(Rot90);
 ADD_CONVERTER_ONLY_OP(BlendFaceBgPartOne);
+ADD_CONVERTER_ONLY_OP(SwinAttentionFFN);
+ADD_CONVERTER_ONLY_OP(SwinTransformerLnQKV);
+ADD_CONVERTER_ONLY_OP(SwinAttentionScore);
 }  // namespace lite
 }  // namespace mindspore
 

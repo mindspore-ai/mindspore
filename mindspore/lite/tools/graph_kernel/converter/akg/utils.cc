@@ -69,7 +69,7 @@ std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, c
     }
     std::vector<AnfNodePtr> node_list, input_list, output_list;
     GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
-    graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
+    (void)graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
     auto json_kernel_name = graph_kernel_json_generator.kernel_name();
     if (node_kernel != nullptr) {
       (*node_kernel)[node] = json_kernel_name;
@@ -215,24 +215,6 @@ bool CompileSingleJson(const std::string &json_name) {
     return false;
   }
   return true;
-}
-
-bool RetStatus(const int status) {
-  if (WIFEXITED(status)) {
-    if (WEXITSTATUS(status) == 0) {
-      MS_LOG(INFO) << "compile all pass for subprocess!";
-      return true;
-    } else {
-      MS_LOG(ERROR) << "Some jsons compile fail, please check log!";
-    }
-  } else if (WIFSIGNALED(status)) {
-    MS_LOG(ERROR) << "compile stopped by signal, maybe cost too long time!";
-  } else if (WSTOPSIG(status)) {
-    MS_LOG(ERROR) << "compile process is stopped by others!";
-  } else {
-    MS_LOG(ERROR) << "unknown error in compiling!";
-  }
-  return false;
 }
 
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list) {

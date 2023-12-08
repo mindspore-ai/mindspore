@@ -18,10 +18,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_choice_with_mask_impl.cuh"
 
 // Kernel started from here
-#define L2_RCWM_HELPER(BLOCK, NUM_WARP_Q, NUM_THREAD_Q, IS_DESCEND)                                  \
-  do {                                                                                               \
-    L2Rcwm<T, S, K, NUM_WARP_Q, NUM_THREAD_Q, BLOCK, IS_DESCEND>                                     \
-      <<<1, BLOCK, 0, stream>>>(seed, seed_offset, input_size, input, output_mask, output_index, k); \
+#define L2_RCWM_HELPER(BLOCK, NUM_WARP_Q, NUM_THREAD_Q, IS_DESCEND)                      \
+  do {                                                                                   \
+    L2Rcwm<T, S, K, NUM_WARP_Q, NUM_THREAD_Q, BLOCK, IS_DESCEND>                         \
+      <<<1, BLOCK, 0, stream>>>(seedc, input_size, input, output_mask, output_index, k); \
   } while (0)
 
 #define LEFT_INSERT_THREAD_QUEUE(_k, _v)                                        \
@@ -40,8 +40,7 @@
   } while (0)
 
 template <typename T, typename S, typename K, int warp_queue, int thread_queue, int threads_per_block, bool is_descend>
-__global__ void L2Rcwm(uint64_t seed, uint64_t seed_offset, int input_size, const K *input, K *output_mask,
-                       S *output_index, int k) {
+__global__ void L2Rcwm(int seedc, int input_size, const K *input, K *output_mask, S *output_index, int k) {
   constexpr int kNumWarps = threads_per_block / kWarpSize;
   constexpr T init_K = static_cast<T>(-2.0);
   constexpr S init_V = static_cast<S>(0);
@@ -50,7 +49,7 @@ __global__ void L2Rcwm(uint64_t seed, uint64_t seed_offset, int input_size, cons
   __shared__ S shared_V[kNumWarps * warp_queue];
 
   curandState devState;
-  curand_init(seed, threadIdx.x, seed_offset, &devState);
+  curand_init(seedc, threadIdx.x, 0, &devState);
 
   T threadK[thread_queue];  // NOLINT
   S threadV[thread_queue];  // NOLINT
@@ -124,8 +123,7 @@ __global__ void L2Rcwm(uint64_t seed, uint64_t seed_offset, int input_size, cons
 }
 
 template <typename T, typename S, typename K>
-void RCWMScaleK(uint64_t seed, uint64_t seed_offset, int input_size, K *input, int k, S *output_index, K *output_mask,
-                cudaStream_t stream) {
+void RCWMScaleK(int seedc, int input_size, K *input, int k, S *output_index, K *output_mask, cudaStream_t stream) {
   if (k <= 32) {
     // num-threads-of-block, warp-queue-size, thread-queue-size
     L2_RCWM_HELPER(256, 32, 2, true);
@@ -145,14 +143,11 @@ void RCWMScaleK(uint64_t seed, uint64_t seed_offset, int input_size, K *input, i
 }
 
 template <typename T, typename S, typename K>
-cudaError_t CalRandomChoiceWithMaskSmall(int input_size, uint64_t seed, uint64_t seed_offset, int count, K *input,
-                                         S *output_index, K *output_mask, cudaStream_t stream) {
-  RCWMScaleK<T, S, K>(seed, seed_offset, input_size, input, count, output_index, output_mask, stream);
+cudaError_t CalRandomChoiceWithMaskSmall(int input_size, int seedc, int count, K *input, S *output_index,
+                                         K *output_mask, cudaStream_t stream) {
+  RCWMScaleK<T, S, K>(seedc, input_size, input, count, output_index, output_mask, stream);
   return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMaskSmall<float, int, bool>(int input_size, uint64_t seed,
-                                                                                    uint64_t seed_offset, int count,
-                                                                                    bool *input, int *output_index,
-                                                                                    bool *output_mask,
-                                                                                    cudaStream_t stream);
+template CUDA_LIB_EXPORT cudaError_t CalRandomChoiceWithMaskSmall<float, int, bool>(
+  int input_size, int seedc, int count, bool *input, int *output_index, bool *output_mask, cudaStream_t stream);

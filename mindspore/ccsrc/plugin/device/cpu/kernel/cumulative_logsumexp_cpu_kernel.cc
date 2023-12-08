@@ -124,7 +124,9 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *
           } else {
             output_data[index] = static_cast<t>(temp);
             double a = temp;
-            double b, min, max;
+            double b;
+            double min;
+            double max;
             b = static_cast<double>(input_data[index]);
             min = (a < b) ? a : b;
             max = (a >= b) ? a : b;
@@ -136,7 +138,9 @@ void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *
             temp = static_cast<double>(input_data[index]);
           } else {
             double a = temp;
-            double b, min, max;
+            double b;
+            double min;
+            double max;
             b = static_cast<double>(input_data[index]);
             min = (a < b) ? a : b;
             max = (a >= b) ? a : b;

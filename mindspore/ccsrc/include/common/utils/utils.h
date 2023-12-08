@@ -354,6 +354,9 @@ constexpr auto kAttrGraphSplitGroup = "graph_split_group";
 constexpr const char kAttrNeedAllGather[] = "parallel_optimizer_allgather";
 constexpr const char kAttrNodeCloseFollowing[] = "node_close_following";
 constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
+constexpr char kAttrInputLayout[] = "input_layout";
+constexpr char kAttrKeepProb[] = "keep_prob";
+constexpr char kAttrHeadNum[] = "head_num";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
@@ -415,6 +418,7 @@ const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
 const int kValueNodeTensorMask = 2;
 constexpr auto kNCHWShapeSize = 4;
+const size_t kMaxTensorIndexDimNums = 8;
 
 // define special index in special node
 constexpr auto kDefaultStreamIndex = 0;

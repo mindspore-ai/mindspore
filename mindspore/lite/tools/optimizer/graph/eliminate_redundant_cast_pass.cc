@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 #include "tools/optimizer/graph/eliminate_redundant_cast_pass.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/graph/infershape_pass.h"

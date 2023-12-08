@@ -83,6 +83,10 @@ size_t FindIndexOfOperatorIncoming(const std::vector<std::shared_ptr<OperatorInf
       break;
     }
   }
+  if (incoming_op_index != SIZE_MAX &&
+      ops.at(incoming_op_index)->name().find(VIRTUALDATASETINFO) != std::string::npos) {
+    return SIZE_MAX;
+  }
   return incoming_op_index;
 }
 
@@ -139,6 +143,23 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   } else {
     propagator.GenerateStrategyV1();
   }
+}
+
+Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+  Strategies strategies;
+
+  if (op->outputs_shape().size() == 0) {
+    MS_LOG(EXCEPTION) << op->name() << " output tensor info is empty.";
+  }
+
+  for (size_t i = basic_stra.size(); i < op->outputs_shape()[0].size(); i++) {
+    basic_stra.push_back(1);
+  }
+
+  strategies.push_back(basic_stra);
+  basic_stra.clear();
+  strategies.push_back(basic_stra);
+  return strategies;
 }
 
 Dimensions PrepareMatMulStrategy(Graph::NodeType *node, bool transpose_a, bool transpose_b, size_t iter_op_inputs) {
@@ -1236,6 +1257,7 @@ Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<Ope
 
   auto axis_list = GetAxisList(ops, SizeToLong(incoming_op_index));
   for (auto axis : axis_list) {
+    axis = (axis < 0) ? (strategy.size() + axis) : axis;
     auto it = find(stra_dim_list.begin(), stra_dim_list.end(), axis);
     if (it == stra_dim_list.end()) {
       MS_LOG(EXCEPTION) << "Failure: Can not find dimension indexes in Axis.";
@@ -1440,6 +1462,12 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
 
+  auto type = ops[iter_ops]->type();
+  if (type == FILLV2) {
+    auto stra = PrepareFillV2(ops[iter_ops], basic_stra);
+    return stra;
+  }
+
   Strategies strategies;
   if (basic_stra.size() == 0) {
     for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
@@ -1447,8 +1475,6 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     }
     return strategies;
   }
-
-  auto type = ops[iter_ops]->type();
 
   auto s_ptr = std::make_shared<Dimensions>(basic_stra);
   if (type == BIAS_ADD) {
@@ -2233,6 +2259,9 @@ void RecStrategyPropagator::FixInvalidStra() {
   for (auto &op : ops_) {
     bool modified = false;
     if (!HasStrategy(op)) {
+      continue;
+    }
+    if (op->type() == FILLV2) {
       continue;
     }
     if (graph_->dyn_shape_tmp_fix && (op->type() == ASSIGN || op->type() == ONEHOT)) {

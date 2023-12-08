@@ -901,11 +901,11 @@ void Tensor::ExecuteLazyTask() const {
 
 void Tensor::contiguous() {
   if (storage_info_ != nullptr) {
-    contiguous_callback_(shared_from_base<Tensor>(), nullptr, nullptr);
+    (void)contiguous_callback_(shared_from_base<Tensor>(), nullptr, nullptr);
   }
 }
 
-bool Tensor::is_contiguous() {
+bool Tensor::is_contiguous() const {
   auto storage_info = storage_info_;
   return storage_info == nullptr || storage_info->is_contiguous;
 }

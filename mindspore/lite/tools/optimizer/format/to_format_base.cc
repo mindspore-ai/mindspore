@@ -300,7 +300,9 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather input is nullptr");
   auto abstract = gather_input->abstract();
   MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
-  std::vector<int> gather_indices_n, gather_indices_hw, gather_indices_c;
+  std::vector<int> gather_indices_n;
+  std::vector<int> gather_indices_hw;
+  std::vector<int> gather_indices_c;
   auto value_ptr = MakeValue<int64_t>(NCHW);
   if (perm == kNH2NC) {          // NHWC To NCHW
     gather_indices_n = {0};      // fetch N dimension
@@ -378,7 +380,7 @@ void SetCNodeFormat(const CNodePtr &cnode, mindspore::Format dst_format) {
   if (prim->GetAttr(ops::kFormat) == nullptr && format_value != nullptr) {
     auto format = GetValue<int64_t>(format_value);
     if (format == dst_format) {
-      prim->AddAttr(ops::kFormat, format_value);
+      (void)prim->AddAttr(ops::kFormat, format_value);
     }
   }
   return;

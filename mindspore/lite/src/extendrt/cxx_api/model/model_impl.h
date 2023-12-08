@@ -132,6 +132,13 @@ class ModelImpl {
   /// \return Status.
   Status Predict();
 
+  /// \brief Change the size and or content of weight tensors
+  ///
+  /// \param[in]  A vector where model constant are arranged in sequence
+  ///
+  /// \return Status.
+  Status UpdateWeights(const std::vector<std::vector<MSTensor>> &weights);
+
   /// \brief Inference model witsh pre-process.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
@@ -189,6 +196,9 @@ class ModelImpl {
   std::string GetConfig(const std::string &section, const std::string &key);
 
   static bool CheckModelSupport(DeviceType device_type, ModelType model_type);
+  void SetModelInfo(const std::string &key, const std::string &value) { model_info_[key] = value; }
+
+  std::map<std::string, std::string> GetModelInfo() const { return model_info_; }
 
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
@@ -241,6 +251,7 @@ class ModelImpl {
   std::map<std::string, TypeId> execution_plan_;
   std::recursive_mutex mutex_;
   uint32_t graph_id_ = 0;
+  std::map<std::string, std::string> model_info_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

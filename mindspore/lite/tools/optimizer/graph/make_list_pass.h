@@ -34,7 +34,7 @@ class MakeListPass : public Pass {
   STATUS MakeListToMakeTuple(const FuncGraphPtr &func_graph);
   AnfNodePtr MakeListNodeRewrite(const AnfNodePtr &node);
   ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert);
-  AnfNodePtr ConvertMakeListValueNode(const ValueNodePtr &value_node, const ValuePtr &value);
+  AnfNodePtr ConvertMakeListValueNode(const ValuePtr &value);
   AnfNodePtr ConvertMakeListNode(const AnfNodePtr &node);
   AnfNodePtr ConvertMakeListPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim);
   AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node);

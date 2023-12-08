@@ -18,7 +18,6 @@ package com.mindspore;
 
 import com.mindspore.config.MindsporeLite;
 import com.mindspore.config.RunnerConfig;
-import com.mindspore.config.DataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +68,7 @@ public class ModelParallelRunner {
             rwLock.writeLock().unlock();
             return false;
         }
-        if (modelParallelRunnerPtr != 0L){
+        if (modelParallelRunnerPtr != 0L) {
             rwLock.writeLock().unlock();
             return true;
         }

@@ -57,7 +57,7 @@ int StridedSliceChecker::GetBegin(const CNodePtr &strided_slice, std::vector<int
     return lite::RET_NULL_PTR;
   }
   auto prim = GetCNodePrimitive(strided_slice);
-  MS_CHECK_TRUE_MSG(prim != nullptr, false, "Strided_slice's prim is a nullptr.");
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_NULL_PTR, "Strided_slice's prim is a nullptr.");
   auto begin_mask = prim->GetAttr(ops::kBeginMask) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kBeginMask)) : 0;
   lite::DataInfo data;
   auto ret = GetConstTensor(strided_slice, ops::kInputIndex2, &data);
@@ -83,7 +83,7 @@ int StridedSliceChecker::GetEnd(const CNodePtr &strided_slice, std::vector<int> 
     return lite::RET_NULL_PTR;
   }
   auto prim = GetCNodePrimitive(strided_slice);
-  MS_CHECK_TRUE_MSG(prim != nullptr, false, "Strided_slice's prim is a nullptr.");
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_NULL_PTR, "Strided_slice's prim is a nullptr.");
   auto end_mask = prim->GetAttr(ops::kEndMask) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kEndMask)) : 0;
   lite::DataInfo data;
   auto ret = GetConstTensor(strided_slice, ops::kInputIndex3, &data);

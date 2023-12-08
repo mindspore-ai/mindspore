@@ -18,7 +18,7 @@ static bool VerifyDepthToSpaceInputShape(const Operator &op, const int64_t &bloc
   bool check_format = (data_format == "NCHW" || data_format == "NHWC");
   if (check_format && !IsUnknown(input_dims)) {
     int64_t c_dim = 3;
-    c_dim = data_format == "NHWC" ? 3 : 1;
+    c_dim = data_format == "NHWC" ? c_dim : 1;
     auto mod_res = input_dims[c_dim] % (block_size * block_size);
     if (mod_res != 0) {
       OP_LOGE(TbeGetName(op),
@@ -200,7 +200,7 @@ static graphStatus TransposeCommonInferShape(const std::vector<int64_t> &perm_li
   auto input_dtype = input_desc->GetDataType();
   const GeShape &input_ge_shape = input_desc->MutableShape();
 
-  int64_t input_shape_len = input_ge_shape.GetDimNum();
+  int64_t input_shape_len = static_cast<int64_t>(input_ge_shape.GetDimNum());
 
   PROFILING_PROTO_AFTER_GET_SHAPE_REG();
 

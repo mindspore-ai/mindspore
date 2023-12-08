@@ -64,7 +64,7 @@ inline void *GetOpApiFuncFromLib(void *handler, const char *lib_name, const char
   MS_EXCEPTION_IF_NULL(handler);
   auto func = dlsym(handler, api_name);
   if (func == nullptr) {
-    MS_LOG(WARNING) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
+    MS_LOG(INFO) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
   }
   return func;
 }
@@ -72,7 +72,7 @@ inline void *GetOpApiFuncFromLib(void *handler, const char *lib_name, const char
 inline void *GetOpApiLibHandler(const std::string &lib_path) {
   auto handler = dlopen(lib_path.c_str(), RTLD_LAZY);
   if (handler == nullptr) {
-    MS_LOG(WARNING) << "Dlopen " << lib_path << " failed!" << dlerror();
+    MS_LOG(INFO) << "Dlopen " << lib_path << " failed!" << dlerror();
   }
   return handler;
 }

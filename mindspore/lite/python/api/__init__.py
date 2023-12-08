@@ -28,7 +28,8 @@ from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGro
 from mindspore_lite.tensor import DataType, Format, Tensor
 from mindspore_lite.lite_split import split_network, split_ir
 from mindspore_lite.llm_engine import LLMReq, LLMEngineStatus, LLMRole, LLMEngine
-from mindspore_lite.llm_engine import LLMKVCacheNotExist, LLMWaitProcessTimeOut
+from mindspore_lite.llm_engine import LLMKVCacheNotExist, LLMWaitProcessTimeOut, LLMRepeatRequest
+from mindspore_lite.llm_engine import LLMRequestAlreadyCompleted, LLMEngineFinalized, LLMParamInvalid
 from mindspore_lite import lite_infer
 
 

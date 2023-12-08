@@ -44,7 +44,7 @@ AclPassPlugin::~AclPassPlugin() {
 bool AclPassPlugin::GetPluginSoPath() {
 #if !defined(_WIN32)
   Dl_info dl_info;
-  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  (void)dladdr(reinterpret_cast<void *>(this), &dl_info);
   std::string cur_so_path = dl_info.dli_fname;
   auto pos = cur_so_path.find("libmindspore_converter.so");
   if (pos == std::string::npos) {

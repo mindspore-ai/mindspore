@@ -26,7 +26,7 @@ from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
-from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive,\
+from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, \
     _run_op, _check_contains_variable
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
@@ -167,6 +167,7 @@ class Quant(PrimitiveWithInfer):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
         self.round_mode = validator.check_string(round_mode, ["Round", "Floor", "Ceil", "Trunc"],
                                                  "round_mode", self.name)
+        self.add_prim_attr("dst_type", mstype.int8)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -174,7 +175,7 @@ class Quant(PrimitiveWithInfer):
     def infer_dtype(self, x_type):
         validator.check_subclass("input_x", x_type, mstype.tensor_type, self.name)
         validator.check_type_name("input_x", x_type, [mstype.float16, mstype.float32], self.name)
-        return mstype.int8
+        return self.get_attr_dict()['dst_type']
 
 
 class Lamb(PrimitiveWithInfer):
@@ -491,7 +492,7 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
         self.add_prim_attr("no_eliminate", True)
-        valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
+        valid_type = [mstype.float16, mstype.bfloat16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
         args = {"dtype": dtype}
         validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
@@ -2146,13 +2147,14 @@ class ClipByNorm(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=None):
         """Initialize ClipByNorm"""
+        self.axis_str = 'axis'
         self.axis = () if axis is None else axis
-        validator.check_value_type('axis', self.axis, [int, tuple, list], self.name)
+        validator.check_value_type(self.axis_str, self.axis, [int, tuple, list], self.name)
         axis_check = self.axis if isinstance(self.axis, Iterable) else (self.axis,)
         for i, value in enumerate(axis_check):
             validator.check_value_type('axis[%d]' % i, value, [int], self.name)
-        self.init_attrs['axis'] = self.axis
-        self.add_prim_attr('axis', self.axis)
+        self.init_attrs[self.axis_str] = self.axis
+        self.add_prim_attr(self.axis_str, self.axis)
         self.init_prim_io_names(inputs=['x', 'clip_norm'], outputs=['output'])
 
     def infer_shape(self, x_shape, clip_norm_shape):
@@ -2729,27 +2731,29 @@ class CopyWithSlice(Primitive):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])
 
 
-class MoeFFN(Primitive):
+class FFN(Primitive):
     r"""
-    The MoeFFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
+    The FFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
 
     Args:
         activation (string): The activation type, set to 'fastgelu' or 'gelu'.
-        Only support 'fastgelu' for now. Default: "fastgelu".
+            Only support 'fastgelu' for now. Default: "fastgelu".
+        inner_precise (int): The precise mode, set to 0 for high precision or 1 for high performance.
+            Only support 1 for now. Default: 0.
 
     Inputs:
         - **x** (Tensor) - The input tensor with data type of int8, float16.
           Input tensor of shape :math:`(batch\_size * seq\_length, hidden\_size)`.
+        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
+          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
+        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
+          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **expert_tokens** (Tensor]) - The expert tokens tensor with data type of int64.
           Expert tokens tensor of shape :math:`(16,)`. For example, `(2, 1, 0, .., 9)`
           indicate that the 0th expert deals with 2 tokens, the 1th expert deals with 1 tokens,
           the 2th expert do noting and so on.
-        - **weight1** (Tensor) - The weight1 tensor with data type of float16.
-          Weight1 tensor of shape :math:`(expert\_num, hidden\_size, ffn\_hidden\_size)`.
         - **bias1** (Tensor) - The bias1 tensor with data type of float16.
           Bias1 tensor of shape :math:`(expert\_num, ffn\_hidden\_size)`.
-        - **weight2** (Tensor) - The weight2 tensor with data type of float16.
-          Weight2 tensor of shape :math:`(expert\_num, ffn\_hidden\_size, hidden\_size)`.
         - **bias2** (Tensor) - The bias2 tensor with data type of float16.
           Bias2 tensor of shape :math:`(expert\_num, hidden\_size)`.
         - **scale** (Tensor) - The scale tensor with data type of float16. Not enable now.
@@ -2771,21 +2775,149 @@ class MoeFFN(Primitive):
         >>> h_f = 4 * h
         >>> e = 16
         >>> x = Tensor(np.random.randn(b * s, h).astype(np.float16))
-        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
         >>> w1 = Tensor(np.random.randn(e, h, h_f).astype(np.float16))
-        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> w2 = Tensor(np.random.randn(e, h_f, h).astype(np.float16))
+        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
+        >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> bias2 = Tensor(np.random.randn(e, h).astype(np.float16))
-        >>> moe_ffn = _inner_ops.MoeFFN("fastgelu")
-        >>> output = moe_ffn(x, w1, bias1, w2, bias2)
+        >>> ffn = _inner_ops.FFN("fastgelu", 1)
+        >>> output = ffn(x, w1, w2, expert_tokens, bias1, bias2)
         >>> print(output)
     """
 
     @prim_attr_register
-    def __init__(self, activation):
-        """Initialize MoeFFN."""
-        self.init_prim_io_names(inputs=["x", "expert_tokens", "weight1", "bias1",
-                                        "weight2", "bias2", "scale", "offset", "deq_scale1"
-                                        "deq_scale2"],
+    def __init__(self, activation, inner_precise):
+        """Initialize FFN."""
+        self.init_prim_io_names(inputs=["x", "weight1", "weight2", "expert_tokens", "bias1",
+                                        "bias2", "scale", "offset", "deq_scale1", "deq_scale2"],
                                 outputs=["y"])
-        self.activation = activation
+        cls_name = self.name
+        validator.check_value_type("activation", activation, [str], cls_name)
+        validator.check_value_type("inner_precise", inner_precise, [int], cls_name)
+
+
+class DecoderKVCache(Primitive):
+    r"""
+    The DecoderKVCache is used for decoding the KVCache of transformer network.
+
+    Args:
+        cache (Tensor): The cahe tensor with data type of int8, uint8, int16, uint16, float16, float32 and int32.
+            When seq_len_axis is 2, cache tensor of shape
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, cache tensor of shape
+            :math:`(batch\_size, max\_seq\_length, num_head, hidden\_size)`.
+        update (Tensor]): The tensor which is used to update the cache tensor. Same data type as cache tensor.
+            When seq_len_axis is 2, update tensor of shape
+            :math:`(batch\_size, num_head, update\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, update tensor of shape
+            :math:`(batch\_size, update\_seq\_length, num_head, hidden\_size)`.
+        valid_seq_len (Tensor): The valid_seq_len tensor with data type of int64.
+            Valid_seq_len tensor of shape :math:`(batch\_size)`.
+        batch_index (Tensor): The batch_index tensor with data type of int64.
+            Batch_index tensor of shape :math:`(1)`. Indicate that which batch of cache tensor is going to be update.
+        seq_len_axis (int64): The seq_len_axis indicate which axis is seq_eln, set to '1' or '2'. Default: "2".
+        new_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            New_max_seq_len tensor of shape :math:`(1)`.
+            Indicate that user want to change the shape of cache tensor from
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)` to
+            :math:
+            `(batch\_size * max\_seq\_length / new\_max\_seq\_length, num_head, new\_max\_seq\_length, hidden\_size)`
+            to update the cache tensor. This will not real change the shape of `cache` tensor. Not able for now.
+        cur_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            Cur_max_seq_len tensor of shape :math:`(1)`. Keep the current seq_len of cache tensor. Not abel for now.
+
+    Outputs:
+        With same data type and same shape as `cache` tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> b = 4
+        >>> h = 40
+        >>> max_s = 1024
+        >>> s = 1
+        >>> d = 128
+        >>> cache = Tensor(np.random.randn(b, h, max_s, d).astype(np.float16))
+        >>> update = Tensor(np.random.randn(b, h, s, d).astype(np.float16))
+        >>> valid_seq_len = Tensor(np.random.randn(b).astype(np.int64))
+        >>> batch_index = Tensor(np.random.randn(1).astype(np.int64))
+        >>> new_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> cur_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> decoder_kv_cache = _inner_ops.DecoderKVCache()
+        >>> output = decoder_kv_cache(cache, update, valid_seq_len, batch_index, 2, new_max_seq_len, cur_max_seq_len)
+        >>> print(cache)
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize DecoderKVCache."""
+        self.init_prim_io_names(inputs=["cache", "update", "valid_seq_len", "batch_index", "seq_len_axis",
+                                        "new_max_seq_len", "cur_max_seq_len"],
+                                outputs=["out"])
+        self.add_prim_attr('side_effect_mem', True)
+
+
+class PromptKVCache(Primitive):
+    r"""
+    The PromptKVCache is used for prefill the KVCache of transformer network.
+
+    Args:
+        cache (Tensor): The cahe tensor with data type of int8, uint8, int16, uint16, float16, float32 and int32.
+            When seq_len_axis is 2, cache tensor of shape
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, cache tensor of shape
+            :math:`(batch\_size, max\_seq\_length, num_head, hidden\_size)`.
+        update (Tensor]): The tensor which is used to update the cache tensor. Same data type as cache tensor.
+            When seq_len_axis is 2, update tensor of shape
+            :math:`(batch\_size, num_head, update\_seq\_length, hidden\_size)`.
+            When seq_len_axis is 1, update tensor of shape
+            :math:`(batch\_size, update\_seq\_length, num_head, hidden\_size)`.
+        valid_seq_len (Tensor): The valid_seq_len tensor with data type of int64.
+            Valid_seq_len tensor of shape :math:`(batch\_size)`.
+        batch_index (Tensor): The batch_index tensor with data type of int64.
+            Batch_index tensor of shape :math:`(1)`. Indicate that which batch of cache tensor is going to be update.
+        seq_len_axis (int64): The seq_len_axis indicate which axis is seq_eln, set to '1' or '2'. Default: "2".
+        new_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            New_max_seq_len tensor of shape :math:`(1)`.
+            Indicate that user want to change the shape of cache tensor from
+            :math:`(batch\_size, num_head, max\_seq\_length, hidden\_size)` to
+            :math:
+            `(batch\_size * max\_seq\_length / new\_max\_seq\_length, num_head, new\_max\_seq\_length, hidden\_size)`
+            to update the cache tensor. This will not real change the shape of `cache` tensor. Not able for now.
+        cur_max_seq_len (Tensor): The new_max_seq_len tensor with data type of int64.
+            Cur_max_seq_len tensor of shape :math:`(1)`. Keep the current seq_len of cache tensor. Not abel for now.
+        align_mode (int64): indicate which axis is seq_eln, 0 is 'right', 1 is 'left'. Default: 0.
+
+    Outputs:
+        With same data type and same shape as `cache` tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> b = 4
+        >>> h = 40
+        >>> max_s = 1024
+        >>> s = 256
+        >>> d = 128
+        >>> cache = Tensor(np.random.randn(b, h, max_s, d).astype(np.float16))
+        >>> update = Tensor(np.random.randn(b, h, s, d).astype(np.float16))
+        >>> valid_seq_len = Tensor(np.random.randn(b).astype(np.int64))
+        >>> batch_index = Tensor(np.random.randn(1).astype(np.int64))
+        >>> new_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> cur_max_seq_len = Tensor(np.random.randn(1).astype(np.int64))
+        >>> prompt_kv_cache = _inner_ops.PromptKVCache(0)
+        >>> output = prompt_kv_cache(cache, update, valid_seq_len, batch_index, 2, new_max_seq_len, cur_max_seq_len)
+        >>> print(cache)
+    """
+    @prim_attr_register
+    def __init__(self, padding_mode="right"):
+        """Initialize PromptKVCache."""
+        self.init_prim_io_names(inputs=["cache", "update", "valid_seq_len", "batch_index", "seq_len_axis",
+                                        "new_max_seq_len", "cur_max_seq_len"],
+                                outputs=["out"])
+        self.add_prim_attr('side_effect_mem', True)
+        self.padding_mode = padding_mode

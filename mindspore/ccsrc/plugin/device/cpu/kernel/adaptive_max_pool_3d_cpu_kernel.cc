@@ -210,7 +210,9 @@ void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data,
     auto output_ptr = output_data + b * size_D_ * output_size_T_ * output_size_H_ * output_size_W_;
     auto indice_ptr = indices_data + b * size_D_ * output_size_T_ * output_size_H_ * output_size_W_;
     for (int64_t d = 0; d < size_D_; ++d) {
-      int64_t ot, oh, ow;
+      int64_t ot;
+      int64_t oh;
+      int64_t ow;
       for (ot = start_T; ot < end_T; ++ot) {
         int64_t input_start_T = start_index(ot, output_size_T_, input_size_T_);
         int64_t input_end_T = end_index(ot, output_size_T_, input_size_T_);
@@ -229,7 +231,9 @@ void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data,
                       ot * output_size_H_ * output_size_W_ + oh * output_size_W_ + ow;
             auto indp = indice_ptr + d * output_size_T_ * output_size_H_ * output_size_W_ +
                         ot * output_size_H_ * output_size_W_ + oh * output_size_W_ + ow;
-            int64_t it = 0, ih = 0, iw = 0;
+            int64_t it = 0;
+            int64_t ih = 0;
+            int64_t iw = 0;
             int64_t maxindex = (it + input_start_T) * input_size_H_ * input_size_W_ +
                                (ih + input_start_H) * input_size_W_ + (iw + input_start_W);
             T maxval = *(ip + it * input_stride_T_ + ih * input_stride_H_ + iw * input_stride_W_);

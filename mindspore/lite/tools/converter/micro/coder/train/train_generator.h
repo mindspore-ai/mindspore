@@ -30,13 +30,13 @@ class TrainGenerator : public Generator {
       : Generator(std::move(ctx)), code_blocks_with_flag_(std::move(code_blocks_with_flag)) {}
   ~TrainGenerator() override = default;
 
- private:
-  void CodeTrainAndEvalFunc(std::ofstream &ofs);
+ protected:
   void CodeNetExecuteFunc(std::ofstream &ofs) override;
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 
  private:
+  void CodeTrainAndEvalFunc(std::ofstream &ofs);
   std::vector<std::pair<std::string, bool>> code_blocks_with_flag_;  // <code block, is op only in train mode>
 };
 }  // namespace mindspore::lite::micro

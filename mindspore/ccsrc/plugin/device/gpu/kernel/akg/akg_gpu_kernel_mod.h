@@ -27,6 +27,21 @@
 
 namespace mindspore {
 namespace kernel {
+using std::fstream;
+using std::string;
+using std::vector;
+
+const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
+const int REGISTER_UNIT_IN_WARP = 256;
+const int WARP_SIZE = 32;
+const int WARP_ALLOC_GRAN = 4;
+const int AKG_KERNEL_MOD_BX_IDX = 0;
+const int AKG_KERNEL_MOD_BY_IDX = 1;
+const int AKG_KERNEL_MOD_BZ_IDX = 2;
+const int AKG_KERNEL_MOD_TX_IDX = 3;
+const int AKG_KERNEL_MOD_TY_IDX = 4;
+const int AKG_KERNEL_MOD_TZ_IDX = 5;
+
 struct GpuKernelMeta {
   CUfunction func_addr_;
   CUmodule module_;

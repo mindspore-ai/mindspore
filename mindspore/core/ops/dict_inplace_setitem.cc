@@ -42,6 +42,7 @@ AbstractBasePtr DictInplaceSetItemInfer(const abstract::AnalysisEnginePtr &, con
   constexpr size_t input_len = 3;
   constexpr size_t data_index = 0;
   constexpr size_t key_index = 1;
+  constexpr size_t value_index = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                            prim_name);
   auto data_abs = input_args[data_index];
@@ -66,8 +67,8 @@ AbstractBasePtr DictInplaceSetItemInfer(const abstract::AnalysisEnginePtr &, con
     dict_elems.cbegin(), dict_elems.cend(),
     [&key_value](const abstract::AbstractElementPair &item) { return *key_value == *item.first->BuildValue(); });
 
-  MS_EXCEPTION_IF_NULL(input_args[2]);
-  auto new_ele = std::make_pair(input_args[1], input_args[2]);
+  MS_EXCEPTION_IF_NULL(input_args[value_index]);
+  auto new_ele = std::make_pair(input_args[key_index], input_args[value_index]);
   if (it != dict_elems.end()) {
     int64_t index = it - dict_elems.begin();
     dict_elems[LongToSize(index)] = new_ele;

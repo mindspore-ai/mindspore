@@ -200,9 +200,11 @@ void GatherDInfo::ReComputeBatchSplitFlagList() {
   }
 
   if (dim_ == 0) {
-    MS_LOG(EXCEPTION)
-      << name_
-      << ": Can not generate batch data parallel strategy since the dim is 0, please set others strategy for it";
+    for (size_t i = 0; i < inputs_shape_.size(); ++i) {
+      split_flag_list_[i] = false;
+    }
+    MS_LOG(INFO) << name_ << ": the dim is 0, can not split batch dim";
+    return;
   }
 
   for (size_t i = 0; i < inputs_shape_.size(); ++i) {

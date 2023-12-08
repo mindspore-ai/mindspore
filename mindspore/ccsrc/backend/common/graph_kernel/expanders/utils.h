@@ -85,7 +85,7 @@ class CheckAllFormatsSame : public Validator {
 
 class CheckAttr : public Validator {
  public:
-  CheckAttr(std::initializer_list<std::string> l) : attrs_(std::move(l)) {}
+  explicit CheckAttr(std::initializer_list<std::string> l) : attrs_(std::move(l)) {}
   virtual ~CheckAttr() = default;
   bool Check(const OpDesc &e) override {
     for (auto &a : attrs_) {

@@ -365,7 +365,7 @@ void OptimizationForAnyTypeKernelGraph(const std::shared_ptr<session::KernelGrap
   common_pm->AddPass(std::make_shared<opt::ConvertTupleOutputToMaketuple>());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   optimizer->AddPassManager(common_pm);
-  optimizer->Optimize(kernel_graph);
+  (void)optimizer->Optimize(kernel_graph);
 }
 }  // namespace opt
 }  // namespace mindspore

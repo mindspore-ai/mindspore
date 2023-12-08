@@ -1775,7 +1775,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
 #if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
-      distributed::DataQueueManager::GetInstance().CreateDataQueue(queue_name, size, 128);
+      const size_t capacity = 128;
+      distributed::DataQueueManager::GetInstance().CreateDataQueue(queue_name, size, capacity);
     }
 #endif
 
@@ -2028,50 +2029,51 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
   parallel_context->set_full_batch(true);
   parallel_context->set_group_ckpt_save_file("group_info");
 
-  FuncGraphManagerPtr func_graph_manager = func_graph->manager();
+  for (size_t rank_id_iter = 0; rank_id_iter < device_num; rank_id_iter++) {
+    auto tmp_func_graph = mindspore::BasicClone(func_graph);
+    FuncGraphManagerPtr func_graph_manager = tmp_func_graph->manager();
 
-  MS_LOG(INFO) << "func_graph_manager is not null";
-  if (func_graph_manager == nullptr) {
-    std::vector<FuncGraphPtr> graphs{func_graph};
-    func_graph_manager = std::make_shared<FuncGraphManager>(graphs);
-    func_graph_manager->AddFuncGraph(func_graph);
+    if (func_graph_manager == nullptr) {
+      MS_LOG(INFO) << "func_graph_manager is null";
+      std::vector<FuncGraphPtr> graphs{tmp_func_graph};
+      func_graph_manager = std::make_shared<FuncGraphManager>(graphs);
+      func_graph_manager->AddFuncGraph(tmp_func_graph);
+    }
+
+    auto inputs = tmp_func_graph->get_inputs();
+    for (std::size_t i = 0; i < inputs.size(); i++) {
+      auto input = inputs[i]->abstract();
+      (void)parallel::ExtendInputArgsAbstractShape(input, i);
+    }
+
+    auto res = parallel::StepAssignedParallel(tmp_func_graph, func_graph_manager, device_num, rank_id_iter, sapp);
+    if (!res) {
+      MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
+      return nullptr;
+    }
+    pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+    resource->set_is_load(False);
+    resource->set_manager(func_graph_manager);
+    resource->set_func_graph(tmp_func_graph);
+    // Get the parameters items and add the value to args_abs.
+    auto params = tmp_func_graph->parameters();
+    AbstractBasePtrList args_abs_list;
+    (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
+                         [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+    tmp_func_graph = pipeline::Renormalize(resource, tmp_func_graph, args_abs_list);
+    string renormalize_net_name = "Renomalize_" + std::to_string(rank_id_iter) + ".ir";
+    DumpIR(renormalize_net_name, tmp_func_graph);
+
+    parallel::HandleGroupInfo();
+    string net_save_name = "split_net" + std::to_string(rank_id_iter);
+    MindIRExporter mindir_exporter;
+    res = mindir_exporter.ExportProto(tmp_func_graph, net_save_name, nullptr);
+    if (!res) {
+      MS_LOG(ERROR) << "Export MindIR file failed failed. Please check.";
+      return nullptr;
+    }
   }
-  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-  resource->set_manager(func_graph_manager);
-  resource->set_func_graph(func_graph);
 
-  // Get the parameters items and add the value to args_abs.
-
-  auto inputs = func_graph->get_inputs();
-  for (std::size_t i = 0; i < inputs.size(); i++) {
-    auto input = inputs[i]->abstract();
-    (void)parallel::ExtendInputArgsAbstractShape(input, i);
-  }
-
-  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id, sapp);
-  if (!res) {
-    MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
-    return nullptr;
-  }
-  resource->set_is_load(False);
-  resource->set_manager(func_graph_manager);
-  resource->set_func_graph(func_graph);
-  auto params = func_graph->parameters();
-  AbstractBasePtrList args_abs_list;
-  (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
-                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-  func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
-
-  parallel::HandleGroupInfo();
-  DumpIR("Renormalize.ir", func_graph);
-  MindIRExporter mindir_exporter;
-  res = mindir_exporter.ExportProto(func_graph, "split_net", nullptr);
-  if (!res) {
-    MS_LOG(ERROR) << "Export MindIR file failed failed. Please check.";
-    return nullptr;
-  }
-
-  func_graph = mindir_loader.LoadMindIR("split_net_graph.mindir");
   return func_graph;
 }
 
@@ -2222,6 +2224,8 @@ void ClearResPart2() {
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
+    // unregister external allocator, before clear stream and graphrunner
+    device_context->GetDeprecatedInterface()->UnregisterExternalAllocator();
     // clear runtime resource after clear graph when ge
     MS_LOG(INFO) << "Start clear kernel runtime...";
     device::KernelRuntimeManager::Instance().ClearRuntimeResource();

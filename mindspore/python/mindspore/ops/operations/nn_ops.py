@@ -1990,6 +1990,7 @@ class MaxPoolV1(Primitive):
         self.add_prim_attr("kernel_size", kernel_size_adapted)
         self.add_prim_attr("strides", strides_adapted)
 
+
 class MaxPool3D(Primitive):
     r"""
     Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
@@ -8959,8 +8960,10 @@ class Dilation2D(Primitive):
         self.pad_mode = validator.check_string(pad_mode, ['VALID', 'SAME', 'valid', 'same'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode.upper())
         self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+
         def is_in_range(x):
             return 1 <= x <= 255
+
         if not is_in_range(self.stride[2]) or not is_in_range(self.stride[3]):
             raise ValueError(f'For Dilation2D, size of stride is not supported, '
                              f'stride should be in the range of [1, 255], '
@@ -11328,8 +11331,24 @@ class PromptFlashAttention(Primitive):
     S -- Sequence length
     H -- Hidden size
 
+    Note:
+    is only supported on ascend910B
+
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    Args:
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        sparse_mode (int): Default: 0
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or float32.
@@ -11340,26 +11359,43 @@ class PromptFlashAttention(Primitive):
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
         - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int.
-        - **num_heads**  (int): The number of heads.
-        - **scale_value** (float): The scale value indicating the scale coefficient, which is used as the scalar of
-          Muls in the calculation. Default: 1.0.
-        - **pre_tokens** (int): Previous tokens. Default: 2147483547.
-        - **next_tokens** (int): next tokens.  Default: 0.
-          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
-          indicates that the data blocks in the upper triangle are not involved in the calculation
-        - **input_layout** (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
-        - **num_key_value_heads** (int): head numbers of key/value which are used in GQA algorithm.
-          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
+        - **dep_scale1** (Tensor)
+        - **quant_scale1** (Tensor)
+        - **deq_scale2** (Tensor)
+        - **quant_scale2** (Tensor)
+        - **quant_offset2** (Tensor)
+
 
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
+        Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.ops.operations.nn_ops as P
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+        >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
+        >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
     """
+
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=0):
+                 num_key_value_heads=0, sparse_mode=0):
         """Initialize PromptFlashAttention."""
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)
@@ -11367,7 +11403,10 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"],
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths",
+                                        "actual_seq_lengths_kv", "padding_mask", "deq_scale1", "quant_scale1",
+                                        "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
 
@@ -11389,8 +11428,9 @@ class FlashAttentionScore(Primitive):
         next_tokens (int): Next tokens. Default: 65536.
         inner_precise (int): Specify the execution mode, where 0 indicates high precision mode and 1 indicates high
         performance mode. Default: 0.
-        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
-        Currently, only BSH is supported. Default: "BSH".
+        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "BNSD"].
+        Default: "BSH".
+        sparse_mode (int): Default 0.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
@@ -11399,12 +11439,13 @@ class FlashAttentionScore(Primitive):
           Input tensor of shape :math:`(B, S, H)`.
         - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8 or float16.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
         - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
         - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+        - **prefix** (None) - Not implemented yet.
 
     Outputs:
         - **attention_out** (Tensor) - (B, S, H)
@@ -11416,7 +11457,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
-                 input_layout="BSH"):
+                 input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -11426,11 +11467,49 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        if input_layout not in ["BSH", "BNSD"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
+
+
+class RmsNorm(Primitive):
+    r"""
+    The RmsNorm operator is a normalization operation, and its formula is:
+
+    .. math::
+        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        epsilon (float): prevent division by 0, default value is `1e-6`
+
+    Inputs:
+        - **input_x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
+
+    Outputs:
+        - **y** (Tensor) - Has the same type and shape with `input_x`.
+        - **rstd** (Tensor) - Has the same type with `input_x`, used by gradient calculation.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of "input_x" is not the same with the data type of "gamma"
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-6):
+        """Initialize Dense."""
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])

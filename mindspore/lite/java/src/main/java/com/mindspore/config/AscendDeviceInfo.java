@@ -106,6 +106,8 @@ public class AscendDeviceInfo {
     public AscendDeviceInfo() {}
 
     /**
+     * Get the Ascend device ID.
+     *
      * @return the deviceId
      */
     public int getDeviceID() {
@@ -113,6 +115,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the device type.
+     *
      * @return the deviceType
      */
     public int getDeviceType() {
@@ -120,6 +124,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get Ascend device provider.
+     *
      * @return the provider
      */
     public String getProvider() {
@@ -127,6 +133,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set Ascend device provider.
+     *
      * @param provider the provider to set
      */
     public void setProvider(String provider) {
@@ -134,6 +142,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the Ascend device ID.
+     *
      * @param deviceId the deviceId to set
      */
     public void setDeviceID(int deviceId) {
@@ -141,6 +151,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the logical ID of a distributed model in the cluster.
+     *
      * @return the rankId
      */
     public int getRankID() {
@@ -148,6 +160,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the logical ID of a distributed model in the cluster.
+     *
      * @param rankId the rankId to set
      */
     public void setRankID(int rankId) {
@@ -155,6 +169,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the AIPP configuration file path.
+     *
      * @return the insertOpConfigPath
      */
     public String getInsertOpConfigPath() {
@@ -162,6 +178,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the AIPP configuration file path.
+     *
      * @param insertOpConfigPath AIPP configuration file path.
      */
     public void setInsertOpConfigPath(String insertOpConfigPath) {
@@ -169,6 +187,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the input format of the model.
+     *
      * @return the inputFormat
      */
     public String getInputFormat() {
@@ -176,6 +196,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the input format of the model.
+     *
      * @param inputFormat Optional "NCHW", "NHWC", and "ND".
      */
     public void setInputFormat(String inputFormat) {
@@ -183,6 +205,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the input shape of the model.
+     *
      * @return the inputShape
      */
     public String getInputShape() {
@@ -190,6 +214,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the input shape of the model.
+     *
      * @param inputShape Model input shape. e.g. "input_op_name1:1,2,3,4;input_op_name2:4,3,2,1;"
      */
     public void setInputShape(String inputShape) {
@@ -197,6 +223,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the input shape mapping of the model.
+     *
      * @return the inputShapeMap
      */
     public HashMap<Integer, ArrayList<Integer>> getInputShapeMap() {
@@ -214,6 +242,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the dynamic batch sizes of the model.
+     *
      * @return the dynamicBatchSize
      */
     public ArrayList<Integer> getDynamicBatchSize() {
@@ -230,6 +260,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the dynamic image sizes of the model.
+     *
      * @return the dynamicImageSize
      */
     public String getDynamicImageSize() {
@@ -237,6 +269,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the dynamic image sizes of the model.
+     *
      * @param dynamicImageSize the dynamicImageSize to set
      */
     public void setDynamicImageSize(String dynamicImageSize) {
@@ -244,6 +278,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the output type of the model.
+     *
      * @return the outputType
      */
     public int getOutputType() {
@@ -261,6 +297,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the precision mode of the model.
+     *
      * @return the precisionMode
      */
     public String getPrecisionMode() {
@@ -269,7 +307,7 @@ public class AscendDeviceInfo {
 
     /**
      * Set the precision mode.
-     * 
+     *
      * @param precisionMode Optional "enforce_fp16", "preferred_fp32", "enforce_origin", "enforce_fp32", and
      * "preferred_optimal". "enforce_fp16" is set as default.
      */
@@ -278,6 +316,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Get the operator selection implementation mode of the model.
+     *
      * @return the opSelectImplMode
      */
     public String getOpSelectImplMode() {
@@ -285,6 +325,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the operator selection implementation mode of the model.
+     *
      * @param opSelectImplMode Optional "high_performance" and "high_precision". "high_performace" is set as default.
      */
     public void setOpSelectImplMode(String opSelectImplMode) {
@@ -292,8 +334,8 @@ public class AscendDeviceInfo {
     }
 
     /**
-     * Set fusion switch config file path. Controls which fusion passes to be turned off.
-     * 
+     * Set fusion switch config file path. It controls which fusion passes to be turned off.
+     *
      * @return the fusionSwitchConfigPath
      */
     public String getFusionSwitchConfigPath() {
@@ -301,6 +343,8 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the fusion switch config file path. It controls which fusion passes to be turned off.
+     *
      * @param fusionSwitchConfigPath the fusionSwitchConfigPath to set
      */
     public void setFusionSwitchConfigPath(String fusionSwitchConfigPath) {
@@ -310,7 +354,7 @@ public class AscendDeviceInfo {
     /**
      * Set the buffer optimize mode. Optional "l1_optimize", "l2_optimize", or "off_optimize". "l2_optimize" is set as
      * default.
-     * 
+     *
      * @return the bufferOptimizeMode
      */
     public String getBufferOptimizeMode() {
@@ -318,10 +362,11 @@ public class AscendDeviceInfo {
     }
 
     /**
+     * Set the buffer optimization mode of the model.
+     *
      * @param bufferOptimizeMode the bufferOptimizeMode to set
      */
     public void setBufferOptimizeMode(String bufferOptimizeMode) {
         this.bufferOptimizeMode = bufferOptimizeMode;
     }
-
 }

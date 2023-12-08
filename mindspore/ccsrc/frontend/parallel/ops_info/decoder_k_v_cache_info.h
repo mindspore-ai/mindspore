@@ -14,40 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MOE_F_F_N_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MOE_F_F_N_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DECODER_K_V_CACHE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DECODER_K_V_CACHE_INFO_H_
 
-#include <ir/value.h>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "utils/hash_map.h"
+#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
-class MoeFFNInfo : public OperatorInfo {
+class DecoderKVCacheInfo : public OperatorInfo {
  public:
-  MoeFFNInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationInfoCost>()) {}
-  ~MoeFFNInfo() override = default;
+  DecoderKVCacheInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationInfoCost>()) {}
+  ~DecoderKVCacheInfo() override = default;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override { return {}; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
 
  protected:
-  Status GetAttrs() override { return SUCCESS; };
-  Status InferForwardCommunication() override;
+  Status GetAttrs() override { return SUCCESS; }
+  Status InferForwardCommunication() { return SUCCESS; }
   Status InferTensorMap() override;
   Status InferDevMatrixShape() override;
-
- private:
-  Shape origin_dev_matrix_shape_;
 };
+using DecoderKVCacheInfoPtr = std::shared_ptr<DecoderKVCacheInfo>;
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MOE_F_F_N_INFO_H_
+
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_DECODER_K_V_CACHE_INFO_H_

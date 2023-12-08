@@ -15,9 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 
-#include <memory>
-#include <vector>
-
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

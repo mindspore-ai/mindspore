@@ -38,7 +38,7 @@ class AkgLibraryLoader {
   uint8_t *SectionRuntimeBase(const Elf64_Shdr *section);
   bool DoTextRelocations();
   void *RelocateExtSymbols(size_t symbol_idx, size_t jump_table_idx);
-  std::vector<uint64_t> ParseSection(std::string section_name, bool is_mandatory = false) const;
+  std::vector<uint64_t> ParseSection(const std::string &section_name, bool is_mandatory = false) const;
   uint64_t PageAlign(uint64_t n) const;
   using objhdr = union {
     const Elf64_Ehdr *hdr;

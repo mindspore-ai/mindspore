@@ -27,7 +27,7 @@ class InferenceGenerator : public Generator {
   explicit InferenceGenerator(std::unique_ptr<CoderContext> ctx) : Generator(std::move(ctx)) {}
   ~InferenceGenerator() override = default;
 
- private:
+ protected:
   void CodeNetExecuteFunc(std::ofstream &ofs) override;
   int CodeNetHFile() override;
   int CodeNetCFile() override;

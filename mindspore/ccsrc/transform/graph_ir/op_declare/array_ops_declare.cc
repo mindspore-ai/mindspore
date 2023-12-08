@@ -175,6 +175,7 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityN, kNameIdentityN, ADPT_DESC(IdentityN))
 // TupleGetItem's output may be a tuple when input is a nested tuple
 REG_ADPT_DESC(IdentityNTupleGetItem, kNameTupleGetItem, ADPT_DESC(IdentityN))
 
@@ -345,4 +346,5 @@ INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
 OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
+REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
 }  // namespace mindspore::transform

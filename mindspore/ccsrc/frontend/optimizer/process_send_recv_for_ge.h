@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_FOR_GE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_FOR_GE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_
 
 #include "ir/func_graph.h"
 
@@ -25,4 +25,4 @@ namespace opt {
 void ProcessSendRecvForGE(const FuncGraphPtr &graph);
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_COMM_OP_ATTRS_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_PROCESS_SEND_RECV_FOR_GE_H_

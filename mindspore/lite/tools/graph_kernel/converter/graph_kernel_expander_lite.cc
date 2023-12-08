@@ -15,14 +15,9 @@
  */
 
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
-
-#include <utility>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <string>
 #include <unordered_set>
-
+#include <map>
+#include <algorithm>
 #include "mindspore/core/ops/conv_pool_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
@@ -30,6 +25,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
@@ -110,6 +106,10 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     return nullptr;
   }
   auto fg = GetCNodeFuncGraph(ret);
+  MS_EXCEPTION_IF_NULL(fg);
+  if (IsPrimitiveCNode(fg->output(), prim::kPrimMakeTuple)) {
+    return ret;
+  }
   AnfNodePtrList inputs = ret->cast<CNodePtr>()->inputs();
   inner::LiteGraphPtr litegraph = GkUtils::AnfGraph2LiteGraph(fg);
   auto ops_list = litegraph->GetOrderedNodes();
@@ -126,29 +126,25 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     }
   }
   auto &outputs = litegraph->GetOutputs();
-  std::vector<AnfNodePtr> output_const;
-  for (auto &output : outputs) {
-    if (output->NodeType() == inner::NType::Tensor) {
-      auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
-      auto valuenode = NewValueNode(value);
-      valuenode->set_abstract(value->ToAbstract());
-      output_const.emplace_back(valuenode);
-    }
-  }
-  if (outputs.size() == output_const.size()) {
-    return node->func_graph()->NewCNode(output_const);
-  }
-  bool cannot_expand = std::any_of(ops_list.begin(), ops_list.end(), [&akg_exclude_nodes](const inner::NodePtr &node) {
-    return akg_exclude_nodes.count(std::static_pointer_cast<inner::PrimOp>(node)->op()) > 0;
-  });
-  if (cannot_expand) {
-    return nullptr;
+  if (outputs[0]->NodeType() == inner::NType::Tensor) {
+    auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
+    auto valuenode = NewValueNode(value);
+    valuenode->set_abstract(value->ToAbstract());
+    return valuenode;
   } else {
-    auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
-    (void)ConvertTensorToParameter(new_fg, &inputs);
-    AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
-    (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
-    return node->func_graph()->NewCNode(new_inputs);
+    bool cannot_expand =
+      std::any_of(ops_list.begin(), ops_list.end(), [&akg_exclude_nodes](const inner::NodePtr &node) {
+        return akg_exclude_nodes.count(std::static_pointer_cast<inner::PrimOp>(node)->op()) > 0;
+      });
+    if (cannot_expand) {
+      return nullptr;
+    } else {
+      auto new_fg = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
+      (void)ConvertTensorToParameter(new_fg, &inputs);
+      AnfNodePtrList new_inputs = {NewValueNode(new_fg)};
+      (void)new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
+      return node->func_graph()->NewCNode(new_inputs);
+    }
   }
 }
 
@@ -168,6 +164,45 @@ AnfNodePtr PoolLayoutDeco::Run(const AnfNodePtr &node) {
     }
   }
   return decorated_->Run(cnode);
+}
+
+AnfNodePtr LayerNormDeco::Run(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  if (cb->GetTargetFromContext() != kAscendDevice) {
+    return decorated_->Run(cnode);
+  }
+  cnode = QuickCloneCNode(cnode);
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto x = cnode->input(kIndex1);
+  auto x_type_id = cb->GetOutputType(x, 0);
+  auto x_type = TypeIdToType(x_type_id);
+  for (size_t i = kIndex2; i <= kIndex3; ++i) {
+    auto input_i = cnode->input(i);
+    if (cb->GetOutputType(input_i, 0) != x_type_id) {
+      auto cast_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>("Cast")), input_i});
+      auto abstract = std::make_shared<abstract::AbstractTensor>(x_type, cb->GetOutputShape(input_i, 0));
+      cast_node->set_abstract(abstract);
+      AnfUtils::SetNodeAttr("dst_type", x_type, cast_node);
+      std::vector<std::string> outputs_format{cb->GetOutputFormat(input_i, 0)};
+      SetKernelInfoWithFormatToAnfNode(cast_node, outputs_format);
+      cnode->set_input(i, cast_node);
+    }
+  }
+  auto new_node = decorated_->Run(cnode);
+  if (new_node == nullptr) {
+    return nullptr;
+  }
+  auto new_cnode = new_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  auto expand_fg = GetCNodeFuncGraph(new_node);
+  MS_EXCEPTION_IF_NULL(expand_fg);
+  expand_fg->set_attr("keep_basic", MakeValue(true));
+  expand_fg->set_attr("precision_mode", MakeValue("fp32"));
+  return new_cnode;
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::ConvTuningExpanderOps() {
@@ -287,6 +322,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},
     {prim::kPrimMaxPoolFusion->name(), {PoolLayoutDeco::Creator}},
     {prim::kPrimTile->name(), {{DependValueDeco::GetCreator({1})}, UseInputFormatDeco::Creator}},
+    {prim::kPrimLayerNorm->name(), {LayerNormDeco::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -297,7 +333,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
 
 void GraphKernelExpanderLite::PreProcessAllNode(const CNodePtr &node) {
   if (Callback::Instance()->GetTargetFromContext() == "CPU" && !AnfUtils::IsGraphKernel(node)) {
-    BasicOpInferShape().InferShape(node);
+    BasicOpInferShape().Infer(node);
   }
 }
 }  // namespace mindspore::graphkernel

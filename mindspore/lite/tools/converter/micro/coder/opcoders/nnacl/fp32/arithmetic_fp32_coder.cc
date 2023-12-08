@@ -198,7 +198,7 @@ int ArithmeticFP32Coder::ConstTensorBroadCast(CoderContext *const context) {
   if (!arithmetic_parameter_->broadcasting_) {
     return RET_OK;
   }
-  if (output_tensor_->Size() < 0) {
+  if (static_cast<int>(output_tensor_->Size()) < 0) {
     return RET_OK;
   }
   // need broadcast both input
@@ -393,7 +393,9 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
 }
 
 int ArithmeticFP32Coder::BiasCalc(int task_id, CoderContext *const context, NNaclFp32Serializer *const code) {
-  MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ - 1 >= 0 && arithmetic_parameter_->ndim_ - 1 < 10, RET_ERROR);
+  MS_CHECK_TRUE_RET(static_cast<int>(arithmetic_parameter_->ndim_) - 1 >= 0 &&
+                      static_cast<int>(arithmetic_parameter_->ndim_) - 1 < C10NUM,
+                    RET_ERROR);
   if (support_parallel_) {
     thread_num_ = 1;
   }

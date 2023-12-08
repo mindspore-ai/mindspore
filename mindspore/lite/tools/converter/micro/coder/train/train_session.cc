@@ -44,7 +44,8 @@ int CoderTrainSession::Run(const std::string &model_name) {
   ret = DoCode();
   MS_CHECK_RET_CODE(ret, "do code failed");
 
-  PassArgsToContext(model_name);
+  ret = PassArgsToContext(model_name);
+  MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   MS_LOG(INFO) << "run op coders success";
   return RET_OK;
 }
@@ -133,7 +134,7 @@ int CoderTrainSession::CompileEvalCoders(const std::map<std::string, std::vector
                              [&kernel_name](const OperatorCoder *coder) { return (coder->name() == kernel_name); });
     MS_CHECK_TRUE_MSG(iter != train_op_coders_.end(), RET_ERROR, "can't find output coder in Eval mode.");
     MS_CHECK_TRUE_MSG(*iter != nullptr, RET_ERROR, "find output coder in Eval mode.");
-    (void)FindEvalCoders(*iter);
+    FindEvalCoders(*iter);
   }
   if (eval_op_coders_.empty()) {
     eval_op_coders_ = train_op_coders_;

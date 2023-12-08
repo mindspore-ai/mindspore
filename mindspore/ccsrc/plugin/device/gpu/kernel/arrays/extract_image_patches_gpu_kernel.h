@@ -67,14 +67,15 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
     T *t_input = GetDeviceAddress<T>(workspace, 0);
     T *t_output = GetDeviceAddress<T>(workspace, 1);
 
-    TransposeInfo InInfo, OutInfo;
-    InInfo.input_shape = input_shape_;
-    OutInfo.input_shape = t_output_shape_;
-    InInfo.perm = std::vector<int32_t>{0, 2, 3, 1};
-    OutInfo.perm = std::vector<int32_t>{0, 3, 1, 2};
+    TransposeInfo in_info;
+    TransposeInfo out_info;
+    in_info.input_shape = input_shape_;
+    out_info.input_shape = t_output_shape_;
+    in_info.perm = std::vector<int32_t>{0, 2, 3, 1};
+    out_info.perm = std::vector<int32_t>{0, 3, 1, 2};
 
     auto status1 =
-      CalTranspose<T, true>(input_size_, input, InInfo, t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
+      CalTranspose<T, true>(input_size_, input, in_info, t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
 
     CHECK_CUDA_STATUS(status1, kernel_name_);
     auto status2 = CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_,
@@ -84,7 +85,7 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
                                               t_input, t_output, reinterpret_cast<cudaStream_t>(stream_ptr_));
     CHECK_CUDA_STATUS(status2, kernel_name_);
     auto status3 =
-      CalTranspose<T, true>(output_size_, t_output, OutInfo, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+      CalTranspose<T, true>(output_size_, t_output, out_info, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
 
     CHECK_CUDA_STATUS(status3, kernel_name_);
     return true;

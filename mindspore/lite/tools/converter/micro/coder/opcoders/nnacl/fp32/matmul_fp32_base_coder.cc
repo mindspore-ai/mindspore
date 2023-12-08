@@ -157,7 +157,7 @@ int MatMulFP32BaseCoder::Init() {
 
 int MatMulFP32BaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 
-int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
+void MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp32/pack_fp32.h",
@@ -199,12 +199,12 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
               "dequant_int8_to_fp32_wrapper.c",
             });
   }
-  return RET_OK;
 }
 
 int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
-  NNaclFp32Serializer code, init_code;
+  NNaclFp32Serializer code;
+  NNaclFp32Serializer init_code;
   size_t w_buf_size = 0;
   std::string param_name = "mat_mul_parameter";
   code.CodeStruct(param_name, params_);

@@ -1191,11 +1191,11 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
           ModelDeObfuscate(obf_ratio);
         }
         return status;
-      } else {
-        status = texport.ExportNet(
-          (model_type == MT_TRAIN) ? train_kernels_ : const_fold_kernels_, tensors_, const_output_tensors_,
-          (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_, model_.get(), quant_type);
       }
+      status = texport.ExportNet(
+        (model_type == MT_TRAIN) ? train_kernels_ : const_fold_kernels_, tensors_, const_output_tensors_,
+        (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_, model_.get(), quant_type);
+
     } else {
       status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_, {},
                                  (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
@@ -1220,11 +1220,11 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
     }
   } else {
     status = texport.SaveToBuffer();
-    TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "fail to save to model buffer.");
   }
   if (!FloatCompare(obf_ratio, 1.0)) {
     ModelDeObfuscate(obf_ratio);
   }
+  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "failed to save to file or model buffer.");
   return RET_OK;
 }
 

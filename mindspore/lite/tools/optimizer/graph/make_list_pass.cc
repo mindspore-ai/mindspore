@@ -53,7 +53,7 @@ AnfNodePtr MakeListPass::ConvertListGetItemToTupleGetItem(const CNodePtr &node) 
   constexpr size_t expect_inputs_size = 3;
   if (node->size() != expect_inputs_size) {
     std::string op_name = GetCNodeFuncName(node);
-    MS_LOG(EXCEPTION) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
+    MS_LOG(ERROR) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
     return nullptr;
   }
   constexpr size_t data_index = 1;
@@ -76,7 +76,7 @@ AnfNodePtr MakeListPass::ConvertListSetItemToTupleSetItem(const CNodePtr &node) 
   const size_t expect_inputs_size = 4;
   if (node->size() != expect_inputs_size) {
     std::string op_name = GetCNodeFuncName(node);
-    MS_LOG(EXCEPTION) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
+    MS_LOG(ERROR) << op_name << " should have " << expect_inputs_size << " inputs, but got " << node->size();
     return nullptr;
   }
 
@@ -127,7 +127,7 @@ ValuePtr MakeListPass::ConvertValueSequenceToValueTuple(const ValuePtr &value, s
   return value;
 }
 
-AnfNodePtr MakeListPass::ConvertMakeListValueNode(const ValueNodePtr &value_node, const ValuePtr &value) {
+AnfNodePtr MakeListPass::ConvertMakeListValueNode(const ValuePtr &value) {
   bool need_convert = false;
   auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
   if (need_convert) {
@@ -157,7 +157,7 @@ AnfNodePtr MakeListPass::ConvertMakeListNode(const AnfNodePtr &node) {
       return nullptr;
     }
     // Call value node converter.
-    return ConvertMakeListValueNode(value_node, value);
+    return ConvertMakeListValueNode(value);
   }
   return nullptr;
 }
@@ -281,8 +281,6 @@ STATUS MakeListPass::MakeListToMakeTuple(const FuncGraphPtr &func_graph) {
         add_todo(fg->return_node());
       }
     }
-    TraceGuard trace_guard(std::make_shared<TraceOpt>(node->debug_info()));
-    ScopeGuard scope_guard(node->scope());
     auto new_node = MakeListNodeRewrite(node);
     if (new_node != nullptr) {
       (void)manager->Replace(node, new_node);

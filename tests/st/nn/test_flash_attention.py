@@ -33,7 +33,6 @@ class FlashAttentionNet(nn.Cell):
 
     def construct(self, query, key, value, attention_mask):
         key = self.transpose_key(key, (0, 1, 3, 2))
-        attention_mask = 1.0 - attention_mask
         attention = self.flash_attention(query, key, value, attention_mask)
         return attention
 
@@ -149,8 +148,8 @@ def test_nn_flash_attention_fwd(dtype):
     np.random.seed(1234)
     qv_tensor = Tensor(np.random.uniform(-3, 3, (B, N, S, D)), dtype=dtype)
     k_tensor = Tensor(np.random.uniform(-3, 3, (B, N, D, S)), dtype=dtype)
-    attention_mask = Tensor(np.repeat(np.expand_dims(np.tril(np.ones(shape=(S, S))), 0), B, axis=0), dtype=dtype)
-
+    attention_mask = Tensor(np.repeat(np.expand_dims(1 - np.tril(np.ones(shape=(S, S))), 0),
+                                      B, axis=0), dtype=mstype.uint8)
     sa_net = AttnNet(head_dim=D)
     sa_out = sa_net(qv_tensor, k_tensor, qv_tensor, attention_mask).asnumpy()
     fa_net = FlashAttentionNet(num_heads=N, head_dim=D)

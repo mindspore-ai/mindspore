@@ -42,6 +42,24 @@ from ._pyfunc_registry import add_pyfunc
 if platform.system() != "Windows":
     import fcntl
 
+KEY_ATTR = "attr"
+KEY_NAME = "name"
+INPUT_NAMES = "input_names"
+ATTR_NAMES = "attr_names"
+AUTO_DIFF = "autodiff"
+IMPLY_TYPE = "imply_type"
+FUSION_TYPE = "fusion_type"
+MS_KERNEL_FLAG = "ms_kernel_flag"
+AKG = "AKG"
+TBE = "TBE"
+CUDA = "CUDA"
+AICORE = "AiCore"
+CPU = "CPU"
+GPU = "GPU"
+ASCEND = "Ascend"
+HYBRID_TYPE = "hybrid"
+OP_NAME = "op_name"
+
 
 def _get_cache_path():
     """
@@ -452,10 +470,10 @@ class Custom(ops.PrimitiveWithInfer):
     op_path_in_cache = []  # Save paths for op functions created in the cached.
     custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
-    def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
+    def __init__(self, func, out_shape=None, out_dtype=None, func_type=HYBRID_TYPE, bprop=None, reg_info=None):
         super().__init__("Custom")
 
-        self.supported_targets = ["Ascend", "GPU", "CPU"]
+        self.supported_targets = [ASCEND, GPU, CPU]
         self.supported_func_type = ["hybrid", "akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]
         self.log_prefix = "For '{}', 'func_type': {}, 'func': {}".format(self.name, func_type, func)
         self.func = func
@@ -472,7 +490,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._update_func_info(reg_info)
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
-        if self.func_type == "hybrid":
+        if self.func_type == HYBRID_TYPE:
             self.add_prim_attr("func_compile_attrs", self._func_compile_attrs)
 
         self.add_prim_attr("imply_path", self.imply_path)
@@ -501,7 +519,7 @@ class Custom(ops.PrimitiveWithInfer):
         if func_type == "akg":
             self._set_akg_kernel_type()
 
-        if not self.bprop and self.func_type == "hybrid":
+        if not self.bprop and self.func_type == HYBRID_TYPE:
             self._hybrid_autodiff(func_type)
 
         self.add_prim_attr("func_type", self.func_type)
@@ -576,7 +594,7 @@ class Custom(ops.PrimitiveWithInfer):
         elif "compute" in self.func_source_str:
             self.func_type = "tvm_compute"
         else:
-            self.func_type = "hybrid"
+            self.func_type = HYBRID_TYPE
             self._hybrid_func_analyser()
 
     def _check_julia_func(self):
@@ -632,18 +650,18 @@ class Custom(ops.PrimitiveWithInfer):
 
         elif self.func_type == "julia":
             self._check_julia_func()
-        elif self.func_type == "hybrid":
-            if not hasattr(self.func, "ms_kernel_flag"):
+        elif self.func_type == HYBRID_TYPE:
+            if not hasattr(self.func, MS_KERNEL_FLAG):
                 raise TypeError("{}, 'func' must be a function decorated by kernel".format(self.log_prefix))
             self._is_ms_kernel = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
-            if hasattr(self.func, "ms_kernel_flag"):
+            if hasattr(self.func, MS_KERNEL_FLAG):
                 logger.warning("{}. To have a better user experience, the mode hybrid is suggested "
                                "for the input function with decorator @kernel. "
                                "To enable this mode, set the 'func_type' to be \"hybrid\"".format(self.log_prefix))
         elif self.func_type == "pyfunc":
-            if hasattr(self.func, "ms_kernel_flag"):
+            if hasattr(self.func, MS_KERNEL_FLAG):
                 logger.warning("{}. Now you are using the function with decorator @kernel in the mode pyfunc. "
                                "The kernel will be executed as a native python function, which might lead to "
                                "low efficiency. To accelerate the kernel, set the 'func_type' to be \"hybrid\""
@@ -757,7 +775,7 @@ class Custom(ops.PrimitiveWithInfer):
                     continue
                 if isinstance(reg_info_item, str):
                     reg_info_item = json.loads(reg_info_item)
-                prefix = "_".join([prefix, reg_info_item.get("op_name", "")])
+                prefix = "_".join([prefix, reg_info_item.get(OP_NAME, "")])
             self.uniq_name = prefix + "_" + self.func_name
         else:
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
@@ -767,23 +785,23 @@ class Custom(ops.PrimitiveWithInfer):
         """Update op attrs in reg_info."""
         output_name_list = []
         for _, item in enumerate(reg_info.get("outputs", [])):
-            if isinstance(item, dict) and item.get("name"):
-                output_name_list.append(item.get("name"))
+            if isinstance(item, dict) and item.get(KEY_NAME):
+                output_name_list.append(item.get(KEY_NAME))
         if output_name_list:
             self.add_prim_attr("output_names", output_name_list)
 
-        if isinstance(reg_info.get("op_name"), str):
-            self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
+        if isinstance(reg_info.get(OP_NAME), str):
+            self.add_prim_attr("reg_op_name", reg_info.get(OP_NAME))
 
         if self.func_type == "aicpu":
-            self.uniq_name = reg_info["op_name"]
+            self.uniq_name = reg_info[OP_NAME]
             self.add_prim_attr("uniq_name", self.uniq_name)
 
         if self.func_type in ["aot", "aicpu"]:
-            if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
-                for item in reg_info["attr"]:
+            if reg_info.get(KEY_ATTR) is not None and isinstance(reg_info[KEY_ATTR], list):
+                for item in reg_info[KEY_ATTR]:
                     if isinstance(item, dict) and item.get("value") is not None:
-                        self.add_prim_attr(item["name"], item["value"])
+                        self.add_prim_attr(item[KEY_NAME], item["value"])
 
     def _register_info(self, info):
         """Register reg_info."""
@@ -801,7 +819,7 @@ class Custom(ops.PrimitiveWithInfer):
             if isinstance(reg_info, str):
                 reg_info = json.loads(reg_info)
             if self.fake_output:
-                reg_info["outputs"].append(dict({"index": 0, "name": "y", "param_type": "required"}))
+                reg_info["outputs"].append(dict({"index": 0, KEY_NAME: "y", "param_type": "required"}))
                 new_dtype_format = []
                 for i in reg_info["dtype_format"]:
                     new_dtype_format.append(i + (DataType.I32_Default,))
@@ -873,16 +891,16 @@ class Custom(ops.PrimitiveWithInfer):
                             "'CustomRegOp' to generate the registration information, then pass it to 'reg_info' or "
                             "use 'custom_info_register' to bind it to 'func' if 'func' is a function."
                             .format(self.log_prefix, reg_info, type(reg_info)))
-        reg_info["op_name"] = self.uniq_name
-        reg_info["imply_type"] = self._get_imply_type(reg_info, target)
-        if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
-            reg_info["fusion_type"] = "OPAQUE"
+        reg_info[OP_NAME] = self.uniq_name
+        reg_info[IMPLY_TYPE] = self._get_imply_type(reg_info, target)
+        if not isinstance(reg_info.get(FUSION_TYPE), str) or not reg_info[FUSION_TYPE].strip():
+            reg_info[FUSION_TYPE] = "OPAQUE"
         # Supplement necessary info for TBE if these information is missing in reg_info
-        if reg_info["imply_type"] == "TBE":
-            if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
-                for i, item in enumerate(reg_info["attr"]):
+        if reg_info[IMPLY_TYPE] == TBE:
+            if reg_info.get(KEY_ATTR) is not None and isinstance(reg_info[KEY_ATTR], list):
+                for i, item in enumerate(reg_info[KEY_ATTR]):
                     if isinstance(item, dict) and item.get("value") is None:
-                        reg_info["attr"][i]["value"] = "all"
+                        reg_info[KEY_ATTR][i]["value"] = "all"
             reg_info["async_flag"] = reg_info.get("async_flag", False)
             reg_info["binfile"] = "%s.so" % self.func_name
             reg_info["compute_cost"] = reg_info.get("compute_cost", 10)
@@ -890,8 +908,8 @@ class Custom(ops.PrimitiveWithInfer):
             reg_info["partial_flag"] = reg_info.get("partial_flag", True)
             reg_info["needCheckSupport"] = reg_info.get("need_check_supported", False)
         # Supplement necessary info for AKG if these information is missing in reg_info
-        if reg_info["imply_type"] == "AKG":
-            target_to_processor = {"Ascend": "AiCore", "GPU": "CUDA", "CPU": "CPU"}
+        if reg_info[IMPLY_TYPE] == AKG:
+            target_to_processor = {ASCEND: AICORE, GPU: CUDA, CPU: CPU}
             reg_info["processor"] = reg_info.get("processor", target_to_processor.get(target))
         return reg_info
 
@@ -904,15 +922,15 @@ class Custom(ops.PrimitiveWithInfer):
             # Infer target from reg_info["processor"], reg_info generated from AkgGpuRegOp or AkgAscendRegOp
             #   will have the processor information.
             if target not in self.supported_targets:
-                processor_to_target = {"AiCore": "Ascend", "CUDA": "GPU", "CPU": "CPU"}
+                processor_to_target = {AICORE: ASCEND, CUDA: GPU, CPU: CPU}
                 target = processor_to_target.get(reg_info.get("processor"))
-            # Infer target from reg_info["imply_type"]
+            # Infer target from reg_info[IMPLY_TYPE]
             if target not in self.supported_targets:
-                imply_type_to_target = {"TBE": "Ascend", "GPU": "GPU", "CPU": "CPU"}
-                target = imply_type_to_target.get(reg_info.get("imply_type"))
+                imply_type_to_target = {TBE: ASCEND, GPU: GPU, CPU: CPU}
+                target = imply_type_to_target.get(reg_info.get(IMPLY_TYPE))
         # Infer target from func_type
         if target not in self.supported_targets:
-            func_type_to_target = {"tbe": "Ascend", "pyfunc": "CPU"}
+            func_type_to_target = {"tbe": ASCEND, "pyfunc": CPU}
             target = func_type_to_target.get(self.func_type)
         if target not in self.supported_targets:
             raise ValueError("{}, target set in registration information must be one of {}, but got {}"
@@ -921,14 +939,14 @@ class Custom(ops.PrimitiveWithInfer):
 
     def _get_imply_type(self, reg_info, target):
         """Get imply_typ information."""
-        # Get imply_type from reg_info["imply_type"]
-        if isinstance(reg_info, dict) and isinstance(reg_info.get("imply_type"), str) and \
-                reg_info["imply_type"].strip():
-            return reg_info["imply_type"]
+        # Get imply_type from reg_info[IMPLY_TYPE]
+        if isinstance(reg_info, dict) and isinstance(reg_info.get(IMPLY_TYPE), str) and \
+                reg_info[IMPLY_TYPE].strip():
+            return reg_info[IMPLY_TYPE]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"hybrid": "AKG", "akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "pyfunc": target,
-                                   "julia": target, "aot": "BiSheng" if target == "Ascend" else target}
-        return func_type_to_imply_type.get(self.func_type, "AKG")
+        func_type_to_imply_type = {"hybrid": AKG, "akg": AKG, "tbe": TBE, "aicpu": "AiCPU", "pyfunc": target,
+                                   "julia": target, "aot": "BiSheng" if target == ASCEND else target}
+        return func_type_to_imply_type.get(self.func_type, AKG)
 
     def _save_attr(self, reg_info):
         """Save input_names and attr_names of current func."""
@@ -942,18 +960,18 @@ class Custom(ops.PrimitiveWithInfer):
             return value
 
         tensor_inputs = _get_value_list("inputs")
-        attr = _get_value_list("attr")
+        attr = _get_value_list(KEY_ATTR)
         input_names = []  # include tensor input names and attr input names
         attr_names = []
         pure_input_names = []
         for item in tensor_inputs:
-            if isinstance(item, dict) and item.get("name") is not None:
-                input_names.append(item["name"])
-                pure_input_names.append(item["name"])
+            if isinstance(item, dict) and item.get(KEY_NAME) is not None:
+                input_names.append(item[KEY_NAME])
+                pure_input_names.append(item[KEY_NAME])
         # attr is converted from inputs only when graph mode or when inputs name is also in reg info
         attr_to_input_safe = bool(input_names) or context.get_context("mode") == ms.GRAPH_MODE
         for item in attr:
-            if isinstance(item, dict) and item.get("name") is not None:
+            if isinstance(item, dict) and item.get(KEY_NAME) is not None:
                 # for custom op with function tbe, we always add attrs to inputs as we don't
                 # deal with attr value here and leave them to the backend process to fit the
                 # usual process of tbe op compiling in mindspore
@@ -962,9 +980,9 @@ class Custom(ops.PrimitiveWithInfer):
                 # add attr name to input name only when the value of attr is None in reg info
                 # as we need to get values of attrs from inputs
                 if attr_to_input_safe and (self.func_type == "tbe" or item.get("value", None) is None):
-                    input_names.append(item["name"])
-                attr_names.append(item["name"])
-        cur_attr = {"input_names": input_names, "attr_names": attr_names, "pure_input_names": pure_input_names}
+                    input_names.append(item[KEY_NAME])
+                attr_names.append(item[KEY_NAME])
+        cur_attr = {INPUT_NAMES: input_names, ATTR_NAMES: attr_names, "pure_input_names": pure_input_names}
         # If func does not have attr, save current attr.
         # Else, check if current attr is same as previous saved one.
         prev_attr_names = attr_names
@@ -973,13 +991,13 @@ class Custom(ops.PrimitiveWithInfer):
             if not isinstance(func_attr, dict):
                 setattr(self.func, "func_attr", cur_attr)
             else:
-                prev_attr_names = func_attr.get("attr_names")
+                prev_attr_names = func_attr.get(ATTR_NAMES)
         elif isinstance(self.func, str):
             func_attr = Custom.attr_dict.get(self.func)
             if not isinstance(func_attr, dict):
                 Custom.attr_dict[self.func] = cur_attr
             else:
-                prev_attr_names = func_attr.get("attr_names")
+                prev_attr_names = func_attr.get(ATTR_NAMES)
         if attr_names != prev_attr_names:
             raise ValueError("{}, attr names set in registration information must be the same as previous saved one, "
                              "but got {} vs {}".format(self.log_prefix, attr_names, prev_attr_names))
@@ -988,23 +1006,23 @@ class Custom(ops.PrimitiveWithInfer):
         """Add primitive_target to primitive's attr."""
         registered_targets = self._get_registered_targets()
         if self.func_type == "pyfunc":
-            self.set_device("CPU")
-            if registered_targets and registered_targets != ["CPU"]:
+            self.set_device(CPU)
+            if registered_targets and registered_targets != [CPU]:
                 logger.warning("{}, only supports CPU platform, but got registered target {}. "
                                "We will run it on CPU".format(self.log_prefix, registered_targets))
         elif self.func_type == "aot":
             if len(registered_targets) != 1:
                 logger.info("{}, target will be set according to context.".format(self.log_prefix))
-            elif registered_targets == ["GPU"]:
-                self.set_device("GPU")
-            elif registered_targets == ["CPU"]:
-                self.set_device("CPU")
+            elif registered_targets == [GPU]:
+                self.set_device(GPU)
+            elif registered_targets == [CPU]:
+                self.set_device(CPU)
         elif self.func_type == "julia":
-            self.set_device("CPU")
+            self.set_device(CPU)
             device_target = context.get_context('device_target')
-            if device_target == "CPU":
+            if device_target == CPU:
                 pass
-            elif device_target == "GPU" and registered_targets and registered_targets == ["CPU"]:
+            elif device_target == GPU and registered_targets and registered_targets == [CPU]:
                 logger.warning("{}, only supports CPU platform, but got registered target {}. "
                                "We will run it on CPU".format(self.log_prefix, registered_targets))
             else:
@@ -1027,15 +1045,15 @@ class Custom(ops.PrimitiveWithInfer):
         elif isinstance(self.func, str):
             func_attr = Custom.attr_dict.get(self.func)
         if isinstance(func_attr, dict):
-            _add_prim_attr("input_names")
-            _add_prim_attr("attr_names")
+            _add_prim_attr(INPUT_NAMES)
+            _add_prim_attr(ATTR_NAMES)
             _add_prim_attr("pure_input_names")
         self._add_prim_target()
         if callable(self.func) and callable(self.out_shape):
-            if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == "autodiff":
-                self.add_prim_attr("autodiff", True)
+            if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == AUTO_DIFF:
+                self.add_prim_attr(AUTO_DIFF, True)
         else:
-            self.add_prim_attr("autodiff", False)
+            self.add_prim_attr(AUTO_DIFF, False)
 
     def _hybrid_autodiff(self, input_func_type):
         """generate backward op for a custom hybrid op"""
@@ -1051,7 +1069,7 @@ class Custom(ops.PrimitiveWithInfer):
             def infer_func(*args):
                 return args[:inputs_num]
 
-            setattr(infer_func, "type", "autodiff")
+            setattr(infer_func, "type", AUTO_DIFF)
             op = Custom(func=self.func, out_shape=infer_func, out_dtype=infer_func,
                         func_type=input_func_type, bprop=True)
             self.bprop = grad_func(op)

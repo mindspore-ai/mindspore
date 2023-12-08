@@ -45,11 +45,10 @@ bool AblateReshapeLikeOp::Run(const FuncGraphPtr &func_graph) {
   }
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Do infershape for dynamic-shape model failed.";
-    return ret;
+    return false;
   }
   auto manager = func_graph->manager();
-  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_NULL_PTR,
-                    "FuncGraph's manager is a nullptr, please generate before.");
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "FuncGraph's manager is a nullptr, please generate before.");
   auto node_list = TopoSort(func_graph->get_return());
   for (const auto &node : node_list) {
     MS_CHECK_TRUE_MSG(node != nullptr, false, "find an anfNode is a nullptr.");

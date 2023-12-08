@@ -90,7 +90,8 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::AddressPt
   out_shape.push_back(H);
   out_shape.push_back(W);
   out_shape.push_back(kColNum2);
-  Eigen::VectorXd vecX, vecY;
+  Eigen::VectorXd vecX;
+  Eigen::VectorXd vecY;
   (void)vecX.setZero(static_cast<int64_t>(W), 1);
   (void)vecY.setZero(static_cast<int64_t>(H), 1);
   if (W != 1) {
@@ -162,7 +163,9 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::AddressPt
   out_shape.push_back(H);
   out_shape.push_back(W);
   out_shape.push_back(kColNum3);
-  Eigen::VectorXd vecX, vecY, vecZ;
+  Eigen::VectorXd vecX;
+  Eigen::VectorXd vecY;
+  Eigen::VectorXd vecZ;
   (void)vecX.setZero(static_cast<int64_t>(W), 1);
   (void)vecY.setZero(static_cast<int64_t>(H), 1);
   (void)vecZ.setZero(static_cast<int64_t>(D), 1);

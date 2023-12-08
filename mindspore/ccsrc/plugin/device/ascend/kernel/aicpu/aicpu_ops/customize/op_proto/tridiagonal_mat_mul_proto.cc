@@ -35,10 +35,10 @@ CUST_IMPLEMT_INFERFUNC(TridiagonalMatMul, TridiagonalMatMulInfer) {
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op).c_str(), error_msg);
     return GRAPH_FAILED;
   }
-  int64_t existing_superdiag = superdiag_desc.GetShape().GetDimNum();
-  int64_t existing_maindiag = maindiag_desc.GetShape().GetDimNum();
-  int64_t existing_subdiag = subdiag_desc.GetShape().GetDimNum();
-  int64_t existing_rhs = rhs_desc.GetShape().GetDimNum();
+  int64_t existing_superdiag = static_cast<int64_t>(superdiag_desc.GetShape().GetDimNum());
+  int64_t existing_maindiag = static_cast<int64_t>(maindiag_desc.GetShape().GetDimNum());
+  int64_t existing_subdiag = static_cast<int64_t>(subdiag_desc.GetShape().GetDimNum());
+  int64_t existing_rhs = static_cast<int64_t>(rhs_desc.GetShape().GetDimNum());
   int64_t m_superdiag = superdiag_desc.GetShape().GetDim(existing_superdiag - 1);
   int64_t m_maindiag = maindiag_desc.GetShape().GetDim(existing_maindiag - 1);
   int64_t m_subdiag = subdiag_desc.GetShape().GetDim(existing_subdiag - 1);

@@ -58,8 +58,10 @@ template <typename T>
 bool EpsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->addr);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
   size_t output_size = outputs[0]->size / sizeof(T);
   T min_val = getEpsilon<T>();
   auto task = [this, output, input, min_val](size_t start, size_t end) {

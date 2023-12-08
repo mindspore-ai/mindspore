@@ -15,10 +15,6 @@
  */
 #include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
 
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <functional>
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "plugin/device/cpu/kernel/custom/julia_api.h"

@@ -24,7 +24,6 @@
 #include "coder/opcoders/op_coder_register.h"
 #include "coder/utils/type_cast.h"
 #include "coder/utils/train_utils.h"
-#include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
 #include "src/litert/lite_model.h"
@@ -352,7 +351,7 @@ int CoderGraph::RemoveCast() {
 
   for (size_t i = 0; i < graph->all_nodes_.size(); i++) {
     for (auto tensor_idx : graph->all_nodes_[i]->input_indices_) {
-      tensor_post_ops[tensor_idx].emplace_back(i);
+      (void)tensor_post_ops[tensor_idx].emplace_back(i);
     }
   }
 
@@ -360,7 +359,7 @@ int CoderGraph::RemoveCast() {
 
   for (size_t i = 0; i < graph->all_nodes_.size(); i++) {
     auto node = graph->all_nodes_[i];
-    if (node->node_type_ == mindspore::schema::PrimitiveType_Cast) {
+    if (node->node_type_ == static_cast<int>(mindspore::schema::PrimitiveType_Cast)) {
       auto cast_output_tensor = node->output_indices_.front();
       auto cast_input_tensor = node->input_indices_.front();
       for (const auto &post_op_idx : tensor_post_ops[cast_output_tensor]) {

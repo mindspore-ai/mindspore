@@ -77,14 +77,14 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       status = CalTranspose<T, true>(num_elements_, y, InInfo, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
 
-      status = CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3],
-                                            num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status =
+        CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[kIndex3],
+                                     num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
 
       CHECK_CUDA_STATUS(status, kernel_name_);
 
       status = CalTranspose<T, true>(num_elements_, ws_dx, OutInfo, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
-
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnLRNCrossChannelBackward(handle_, norm_desc_, lrn_mode_, &alpha, y_desc_, y, dy_desc_, dy, x_desc_, x,

@@ -15,9 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/map_tensor/map_tensor_get_gpu_kernel.h"
-#include <functional>
 #include <utility>
-#include <string>
 #include "mindspore/core/abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "include/common/utils/utils.h"

@@ -43,6 +43,8 @@
 #include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
+#include "plugin/device/ascend/optimizer/ge/hcom/insert_tensor_move_for_hccl_op_ge.h"
+#include "plugin/device/ascend/optimizer/ge/hcom/insert_depend_for_all_gather_ge.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
@@ -70,7 +72,9 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
+  opt_ge_pm->AddPass(std::make_shared<opt::InsertTensorMoveForHcclOpGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
+  opt_ge_pm->AddPass(std::make_shared<opt::InsertDependForAllGatherGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::PrintToStringFormatPrint>());

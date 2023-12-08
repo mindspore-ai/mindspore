@@ -18,7 +18,6 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER(kCPUDevice, SplitModelCpu);
 constexpr size_t kReduceFusionDepth = 20;
 constexpr size_t kBroadcastFusionDepth = 20;
 
@@ -47,8 +46,6 @@ class FuseConv : public FusePattern {
     }
     return !fused_areas_.empty();
   }
-
-  FuseType fuse_type_;
 };
 
 void SplitModelCpu::InitFusePatterns() {

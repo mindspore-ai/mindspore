@@ -102,6 +102,17 @@ bool IsFpropReturn(const AnfNodePtr &make_tuple) {
   return IsValueNode<FuncGraph>(cnode->input(fprop_output_size));
 }
 
+AnfNodePtr GetPrimalFromFprop(const FuncGraphPtr &k_fg) {
+  if (!IsPrimitiveCNode(k_fg->output(), prim::kPrimMakeTuple)) {
+    return nullptr;
+  }
+  auto k_fg_outputs = k_fg->output()->cast<CNodePtr>()->inputs();
+  if (k_fg_outputs.size() != 3) {
+    return nullptr;
+  }
+  return k_fg_outputs[kIndex1];
+}
+
 bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &origin_primal,
                       const AnfNodePtr &new_primal, bool recompute_cell,
                       std::unordered_map<AnfNodePtr, AnfNodePtr> *origin_to_new_primal) {
@@ -561,6 +572,14 @@ bool IsNestedRecomputed(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(fg);
   return fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
 }
+
+void SetPrimalAttrs(const CNodePtr &new_primal, const FuncGraphPtr &k_fg) {
+  auto forward_in_k_fg = GetPrimalFromFprop(k_fg);
+  auto forward_cnode_in_k_fg = dyn_cast<CNode>(forward_in_k_fg);
+  if (forward_cnode_in_k_fg != nullptr) {
+    new_primal->set_primal_attrs(forward_cnode_in_k_fg->primal_attrs());
+  }
+}
 }  // namespace
 
 bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
@@ -613,6 +632,9 @@ bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     auto fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     auto new_primal = fg->NewCNodeInOrder(inputs);
+    if (IsValueNode<Primitive>(primal)) {
+      SetPrimalAttrs(new_primal, k_fg);
+    }
     std::unordered_map<AnfNodePtr, AnfNodePtr> origin_to_new_primal;
     bool change = AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell, &origin_to_new_primal);
     changed = change || changed;

@@ -42,6 +42,7 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph());
   auto &sequential_num = context->sequential_num_;
   if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
@@ -75,6 +76,7 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
 
 void AnyTypeKernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(input_control);
   auto &sequential_num = context->sequential_num_;
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control:" << input_control->Name();
   if (std::any_of(
@@ -93,6 +95,7 @@ void AnyTypeKernelActor::RunOpControl(AID *const input_control, OpContext<Device
 }
 
 void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   std::vector<DeviceTensor *> memory_free_list = graph_ouput_device_tensors_;
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter == input_op_datas_.end()) {
@@ -117,6 +120,11 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
   memory_free_lists_.push(memory_free_list);
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
+    if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                    "Invalid device context for any type actor:" + GetAID().Name());
+    }
     auto device_tensor = DeviceTensorStore::GetInstance()
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
@@ -219,6 +227,7 @@ std::string GenerateIDForGraph(const std::vector<DeviceTensor *> &device_tensors
       MS_EXCEPTION_IF_NULL(abstract);
       node->set_abstract(abstract);
     }
+    MS_EXCEPTION_IF_NULL(node->abstract());
     if (node->abstract()->isa<abstract::AbstractSequence>()) {
       auto sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);
@@ -342,12 +351,12 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphInput(OpContext<Devi
       MS_EXCEPTION_IF_NULL(abstract);
       MS_LOG(DEBUG) << "Infer abstract:" << abstract->ToString();
     }
+    MS_EXCEPTION_IF_NULL(abstract);
     if (common::AnfAlgo::IsDynamicSequence(parameter)) {
       MS_LOG(DEBUG) << "Update abstract for parameter:" << parameter->DebugString() << " "
                     << " input device tensor:" << input_device_tensors_[i]
                     << " type:" << input_device_tensors_[i]->type_id();
       const auto &shapes = BaseShapeToShapeVector(abstract->BuildShape());
-      MS_EXCEPTION_IF_NULL(abstract->BuildType());
       std::vector<TypeId> types = std::vector(shapes.size(), GetElementType(abstract));
       common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, parameter);
       continue;
@@ -367,6 +376,7 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphInput(OpContext<Devi
 
 void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph());
   actor_state_ = AnyTypeKernelActorState::kAnyTypeKernelActorSendInput;
   MS_LOG(DEBUG) << "Any type kernel actor:" << GetAID() << " run for graph input.";
   FetchInputDeviceTensor(context);
@@ -509,6 +519,7 @@ void AnyTypeKernelActor::EraseGraphOutput(OpContext<DeviceTensor> *const context
 
 void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph());
   for (auto &internal_parameter_iter : internal_parameters_) {
     auto &node = internal_parameter_iter.first.first;
     size_t index = internal_parameter_iter.first.second;
@@ -520,7 +531,7 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphOutput(OpContext<Dev
                     << " for graph:" << graph()->ToString();
       continue;
     }
-    size_t real_output_index = output_iter - real_output.begin();
+    size_t real_output_index = LongToSize(output_iter - real_output.begin());
     if (real_output_index >= graph_ouput_device_tensors_.size() ||
         graph_ouput_device_tensors_[real_output_index] == nullptr ||
         graph_ouput_device_tensors_[real_output_index]->user_data() == nullptr) {
@@ -572,6 +583,7 @@ void AnyTypeKernelActor::RunForGraphOutput(OpContext<DeviceTensor> *const contex
 }
 
 void AnyTypeKernelActor::Init() {
+  MS_EXCEPTION_IF_NULL(graph());
   MS_LOG(DEBUG) << "actor:" << GetAID() << " init";
   SuperKernelActor::Init();
   memory_alloc_list_.clear();
@@ -614,7 +626,11 @@ void FreeMemory(DeviceTensor *device_tensor) {
 
 void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(graph());
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
+                                                  "Invalid device context for any type actor:" + GetAID().Name());
+  }
   const auto &data_iter = graph_output_op_data_.find(context->sequential_num_);
   if (data_iter != graph_output_op_data_.end()) {
     std::set<DeviceTensor *> clear_device_tensors;
@@ -639,6 +655,7 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
                     << " size:" << graph_output_data->data_->GetSize()
                     << " from device address:" << graph_output_data->data_
                     << " to:" << graph_ouput_device_tensors_[index] << " for actor:" << GetAID();
+      MS_EXCEPTION_IF_NULL(graph_ouput_device_tensors_[index]);
       if (graph_ouput_device_tensors_[index]->GetDeviceType() != graph_output_data->data_->GetDeviceType()) {
         MS_LOG(INFO) << "Different device type for actor:" << GetAID()
                      << " front device address:" << graph_ouput_device_tensors_[index]
@@ -708,14 +725,14 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph());
   if (actor_state_ == AnyTypeKernelActorState::kAnyTypeKernelActorSendOutput) {
-    size_t index = data_arrow->from_output_index_;
+    size_t index = IntToSize(data_arrow->from_output_index_);
     const auto &real_output = common::AnfAlgo::GetAllOutputWithOutMonadAndParameter(graph()->output());
     const auto &output_iter = find(real_output.begin(), real_output.end(), std::make_pair(output_node, index));
     if (output_iter == real_output.end()) {
       MS_LOG(EXCEPTION) << "Invalid output node:" << output_node->DebugString() << " index:" << index
                         << " for graph:" << graph()->ToString();
     }
-    size_t real_output_index = output_iter - real_output.begin();
+    size_t real_output_index = LongToSize(output_iter - real_output.begin());
 
     if (real_output_index >= graph_ouput_device_tensors_.size()) {
       MS_LOG(EXCEPTION) << "Invalid input index:" << real_output_index << " by node:" << output_node->DebugString()
@@ -740,7 +757,7 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
     MS_LOG(EXCEPTION) << "Invalid input node:" << output_node->DebugString()
                       << " front node:" << front_node->DebugString();
   }
-  size_t index = iter - input_nodes.begin();
+  size_t index = LongToSize(iter - input_nodes.begin());
   if (index >= node_device_tensors_.size()) {
     MS_LOG(EXCEPTION) << "Invalid input index:" << index << " by node:" << output_node->DebugString()
                       << " for actor:" << GetAID();

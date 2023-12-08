@@ -24,6 +24,12 @@ from itertools import product
 SUPPORTED_INPUT_NUM = [1, 2, 3, 4, 5, 6, 7]
 SUPPORTED_OUTPUT_NUM = [1, 2, 3, 4, 5]
 SUPPORTED_DEVICE_ARCH = ["ascend910", "ascend310p", "ascend310", "ascend910b"]
+VALUE_ALL = "all"
+VALUE = "value"
+NAME = "name"
+SHAPE = "shape"
+REQUIRED = "required"
+PARAM_TYPE = "paramType"
 
 
 def gen_ops_info():
@@ -33,18 +39,18 @@ def gen_ops_info():
     supported_io_num = list(product(SUPPORTED_INPUT_NUM, SUPPORTED_OUTPUT_NUM))
     for input_num, output_num in supported_io_num:
         op_info = {"attr": {"list": "info_path"},
-                   "attr_info_path": {"paramType": "required", "type": "str", "value": "all"},
-                   "opFile": {"value": "custom"},
-                   "opInterface": {"value": "custom"},
+                   "attr_info_path": {PARAM_TYPE: REQUIRED, "type": "str", VALUE: VALUE_ALL},
+                   "opFile": {VALUE: "custom"},
+                   "opInterface": {VALUE: "custom"},
                    "dynamicFormat": {"flag": "true"}}
         for i in range(input_num):
-            op_info["input" + str(i)] = {"name": "x" + str(i),
-                                         "paramType": "required",
-                                         "shape": "all"}
+            op_info["input" + str(i)] = {NAME: "x" + str(i),
+                                         PARAM_TYPE: REQUIRED,
+                                         SHAPE: VALUE_ALL}
         for i in range(output_num):
-            op_info["output" + str(i)] = {"name": "y" + str(i),
-                                          "paramType": "required",
-                                          "shape": "all"}
+            op_info["output" + str(i)] = {NAME: "y" + str(i),
+                                          PARAM_TYPE: REQUIRED,
+                                          SHAPE: VALUE_ALL}
         op_type = "Fused_x{}_y{}".format(input_num, output_num)
         ops_info[op_type] = op_info
     return ops_info

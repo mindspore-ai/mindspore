@@ -105,10 +105,13 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
   if (input_args.size() > kDynRnnIdx4) {
     int64_t batch_size = x_shape[kDynRnnIdx1];
     auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->BuildShape())[kShape];
+    const int64_t num_one = 1;
     (void)CheckAndConvertUtils::CheckInteger("h_shape", SizeToLong(h_shape.size()), kEqual, kDynamicRnnShapeH, op_name);
-    (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, (int64_t)1, op_name);
-    (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_shape[kDynRnnIdx1], kEqual, (int64_t)batch_size, op_name);
-    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_shape[kDynRnnIdx2], kEqual, (int64_t)hidden_size, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, num_one, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_shape[kDynRnnIdx1], kEqual,
+                                             static_cast<int64_t>(batch_size), op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_shape[kDynRnnIdx2], kEqual,
+                                             static_cast<int64_t>(hidden_size), op_name);
     if (input_args.size() > kDynRnnIdx5) {
       auto c_shape_ptr = input_args[kDynRnnIdx5]->BuildShape();
       auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx5]->BuildShape())[kShape];

@@ -150,8 +150,8 @@ class IrBuilder {
   // meta ops end
  protected:
   EmitterPtr e;
-  const NodePtrList *inputs_ptr_;
-  const HashMap<std::string, ValuePtr> *attrs_ptr_;
+  const NodePtrList *inputs_ptr_{nullptr};
+  const HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
   std::string processor_;
 };
 

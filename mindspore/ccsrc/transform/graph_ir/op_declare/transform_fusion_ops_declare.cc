@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "ops/fusion/flash_attention.h"
+#include "ops/prompt_k_v_cache.h"
 
 namespace mindspore::transform {
 // KVCacheMgr
@@ -26,6 +27,24 @@ ATTR_MAP(KVCacheMgr) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(KVCacheMgr) = {{0, OUTPUT_DESC(past)}};
 REG_ADPT_DESC(KVCacheMgr, "KVCacheMgr", ADPT_DESC(KVCacheMgr))
 
+// DecoderKVCache
+INPUT_MAP(DecoderKvCache) = {{1, INPUT_DESC(cache)},          {2, INPUT_DESC(update)},
+                             {3, INPUT_DESC(valid_seq_len)},  {4, INPUT_DESC(batch_index)},
+                             {5, INPUT_DESC(seq_len_axis)},   {6, INPUT_DESC(new_max_seq_len)},
+                             {7, INPUT_DESC(cur_max_seq_len)}};
+ATTR_MAP(DecoderKvCache) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DecoderKvCache) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(DecoderKvCache, "DecoderKVCache", ADPT_DESC(DecoderKvCache))
+
+// PromptKVCache
+INPUT_MAP(PromptKvCache) = {{1, INPUT_DESC(cache)},          {2, INPUT_DESC(update)},
+                            {3, INPUT_DESC(valid_seq_len)},  {4, INPUT_DESC(batch_index)},
+                            {5, INPUT_DESC(seq_len_axis)},   {6, INPUT_DESC(new_max_seq_len)},
+                            {7, INPUT_DESC(cur_max_seq_len)}};
+ATTR_MAP(PromptKvCache) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(PromptKvCache) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(PromptKvCache, "PromptKVCache", ADPT_DESC(PromptKvCache))
+
 // FlashAttention
 INPUT_MAP(FlashAttention) = {
   {1, INPUT_DESC(q)}, {2, INPUT_DESC(k)}, {3, INPUT_DESC(v)}, {4, INPUT_DESC(attention_mask)}};
@@ -33,12 +52,13 @@ ATTR_MAP(FlashAttention) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FlashAttention) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FlashAttention, ops::kNameFlashAttention, ADPT_DESC(FlashAttention))
 
-// MoeFFN
-INPUT_MAP(MoeFFN) = {{1, INPUT_DESC(x)},          {2, INPUT_DESC(expert_tokens)}, {3, INPUT_DESC(weight1)},
-                     {4, INPUT_DESC(bias1)},      {5, INPUT_DESC(weight2)},       {6, INPUT_DESC(bias2)},
-                     {7, INPUT_DESC(scale)},      {8, INPUT_DESC(offset)},        {9, INPUT_DESC(deq_scale1)},
-                     {10, INPUT_DESC(deq_scale2)}};
-ATTR_MAP(MoeFFN) = {{"activation", ATTR_DESC(activation, AnyTraits<string>())}};
-OUTPUT_MAP(MoeFFN) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MoeFFN, kNameMoeFFN, ADPT_DESC(MoeFFN))
+// FFN
+INPUT_MAP(FFN) = {
+  {1, INPUT_DESC(x)},          {2, INPUT_DESC(weight1)},    {3, INPUT_DESC(weight2)}, {4, INPUT_DESC(expert_tokens)},
+  {5, INPUT_DESC(bias1)},      {6, INPUT_DESC(bias2)},      {7, INPUT_DESC(scale)},   {8, INPUT_DESC(offset)},
+  {9, INPUT_DESC(deq_scale1)}, {10, INPUT_DESC(deq_scale2)}};
+ATTR_MAP(FFN) = {{"activation", ATTR_DESC(activation, AnyTraits<string>())},
+                 {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())}};
+OUTPUT_MAP(FFN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFN, kNameFFN, ADPT_DESC(FFN))
 }  // namespace mindspore::transform

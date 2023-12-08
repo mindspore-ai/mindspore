@@ -331,7 +331,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list, device::DeviceContext *device_context,
                             size_t stream_id) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -431,7 +431,7 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
 #else
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -695,6 +695,7 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
 }
 
 Status MapOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   if (new_row.eoe()) {
@@ -726,6 +727,15 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     }
     i_row = std::move(o_row);
   }
+
+  // Sanity check a row in result_table
+  if (!i_row.empty() && out_columns_.size() != i_row.size()) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid columns, the number of columns returned in 'map' operations should match "
+      "the number of 'output_columns', but got the number of columns returned in 'map' operations: " +
+      std::to_string(i_row.size()) + ", the number of 'output_columns': " + std::to_string(out_columns_.size()) + ".");
+  }
+
   if (in_columns_.size() == out_columns_.size()) {
     // assign transformed tensor back to the original
     for (size_t i = 0; i < to_process_indices_.size(); i++) {

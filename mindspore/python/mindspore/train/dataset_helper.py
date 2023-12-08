@@ -52,6 +52,7 @@ def _dynamic_sink_data(dataset, dataset_iter):
     if hasattr(dataset_iter, "sink_size") and \
        dataset_iter.sink_size == 1 and \
        dataset.get_dataset_size() != 1 and \
+       not hasattr(dataset, "__no_send__") and \
        hasattr(dataset_iter, "sink_count") and \
        dataset_iter.sink_count == 1:
         return True

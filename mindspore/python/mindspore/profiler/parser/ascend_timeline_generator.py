@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """The integrator for integrating parsed profiling files."""
-import os
 
 import numpy as np
 from mindspore import log as logger
@@ -22,7 +21,6 @@ from mindspore.profiler.parser.base_timeline_generator import BaseTimelineGenera
 from mindspore.profiler.parser.container import TimelineContainer
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import CpuTimelineGenerator
 from mindspore.profiler.parser.integrator import DeviceTarget
-from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
@@ -50,16 +48,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self.communication_info_dt = np.dtype(
             [('Op Name', object), ('Stream ID', int), ('Task Start Time', float), ('Task Duration', float),
              ('pid', int)])
-
-    @staticmethod
-    def _get_all_reduce_names(communication_info):
-        names = []
-        for info in communication_info:
-            # all_reduce_name format: stream_stream_id_stream_op_index_opname
-            all_reduce_name = info[0][info[0].rindex('_') + 1:]
-            if all_reduce_name not in names:
-                names.append(all_reduce_name)
-        return names
 
     def init_timeline(self, op_summary, steptrace):
         """
@@ -160,48 +148,18 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._timeline_meta = self._format_meta_data_list
 
         # Update timeline summary info
-        timeline_summary = op_summary[np.isin(op_summary['Task Type'], ['AI_CORE', 'AI_CPU', 'HCCL'])][[
-            'Op Name', 'Stream ID', 'Task Duration']]
+        timeline_summary = op_summary[['Op Name', 'Stream ID', 'Task Duration']]
         self._timeline_summary['total_time'] = np.sum(timeline_summary['Task Duration'])
         self._timeline_summary['num_of_streams'] = int(
             len(np.unique(timeline_summary['Stream ID'], return_counts=True)[0]))
         self._timeline_summary['num_of_ops'] = int(len(np.unique(timeline_summary['Op Name'], return_counts=True)[0]))
         self._timeline_summary['op_exe_times'] = int(len(timeline_summary))
-        self._timeline_summary['max_scope_name_num'] = int(np.max(
-            [len(x) for x in np.char.split(timeline_summary['Op Name'].astype(str), sep='/')]))
+        if self._timeline_summary['op_exe_times'] != 0:
+            self._timeline_summary['max_scope_name_num'] = int(np.max(
+                [len(x) for x in np.char.split(timeline_summary['Op Name'].astype(str), sep='/')]))
+        else:
+            self._timeline_summary['max_scope_name_num'] = 0
         logger.info('Finished adding info into timeline...')
-
-    def init_pynative_timeline(self):
-        """Init timeline for pynative model."""
-        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
-        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
-        if cpu_timeline_list:
-            self._pynative_clock_synchronize(cpu_timeline_list)
-            timeline_list.extend(cpu_timeline_list)
-
-        self._register_op_name(timeline_list)
-        self._timeline_summary['op_exe_times'] = len(timeline_list)
-        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
-        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
-        self._timeline_summary['num_of_ops'] = len(self._op_name_list)
-
-        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        min_cycle_counter = float(timeline_list[0][self._start_time_idx])
-
-        step_timeline = self._pynative_get_step_timeline_list(timeline_list)
-        timeline_list.extend(step_timeline)
-
-        stream_count_dict = {}
-        max_scope_name_num = 0
-        for timeline in timeline_list:
-            self._parse_timeline_data(timeline, min_cycle_counter)
-            self._update_num_of_streams(timeline, stream_count_dict)
-            cur_scope_name_num = len(timeline[self._op_name_idx].split('/')) - 1
-            max_scope_name_num = max(cur_scope_name_num, max_scope_name_num)
-
-        self._timeline_summary['max_scope_name_num'] = max_scope_name_num
-        self._timeline_summary['num_of_streams'] = len(stream_count_dict)
 
     def _parse_timeline_data(self, timeline, min_cycle_counter):
         """Parse timeline data."""
@@ -232,94 +190,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
-
-    def _get_op_timeline(self, communication_info, source_path):
-        """get ai_core and cpu timeline."""
-        all_reduce_names = AscendTimelineGenerator._get_all_reduce_names(communication_info)
-        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data(all_reduce_names)
-        for timeline in timeline_list:
-            timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
-
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._model)
-        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
-        if cpu_timeline_list:
-            self._clock_synchronize_to_device(cpu_timeline_list, source_path)
-            timeline_list.extend(cpu_timeline_list)
-        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
-        self._timeline_summary['op_exe_times'] = len(timeline_list)
-        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
-        return timeline_list
-
-    def _clock_synchronize_to_device(self, timeline_list, source_path):
-        """Synchronize the timestamp from host to device."""
-        host_start_file_path = os.path.join(source_path, f"host_start.log.{self._device_id}")
-        dev_start_file_path = os.path.join(source_path, f"dev_start.log.{self._device_id}")
-        host_monotonic = 0
-        dev_cntvct = 0
-        try:
-            with open(host_start_file_path) as f_obj:
-                lines = f_obj.readlines()
-            for line in lines:
-                info = line.strip().split(':')
-                if len(info) < 2 or info[0] != "clock_monotonic_raw":
-                    continue
-                host_monotonic = int(info[1])
-                break
-
-            with open(dev_start_file_path) as f_obj:
-                lines = f_obj.readlines()
-            for line in lines:
-                info = line.strip().split(':')
-                if len(info) < 2 or info[0] != "cntvct":
-                    continue
-                dev_cntvct = int(info[1])
-                break
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when read dev_start.log: %s', err)
-            raise ProfilerIOException() from err
-        if host_monotonic == 0 or dev_cntvct == 0:
-            logger.error('Error occurred when read host_monotonic or dev_cntvct time')
-
-        factor = {"factor_ns_to_ms": 1e-6, "factor_ten_ns_to_ns": 10, "factor_ms_to_ns": 1e6}
-        for idx, time_item in enumerate(timeline_list):
-            host_time = int(float(time_item[self._start_time_idx]) * factor.get("factor_ms_to_ns"))
-            device_time = dev_cntvct * factor.get("factor_ten_ns_to_ns") + (host_time - host_monotonic)
-            timeline_list[idx][self._start_time_idx] = device_time * factor.get("factor_ns_to_ms")
-
-    def _add_framework_info(self, framework_obj_list):
-        """
-        Add framework info into timeline metadata.
-
-        Args:
-            framework_obj_list (list): The framework metadata.
-        """
-        logger.debug('Start adding framework info into timeline...')
-        # Get the framework info that will be written into timeline.
-        framework_info_dict = {}
-        for framework_obj in framework_obj_list:
-            op_name = framework_obj[0]
-            op_type = framework_obj[1]
-            op_full_name = framework_obj[4]
-            op_info = framework_obj[5]
-            framework_info = {
-                'name': op_name,
-                'args': {
-                    'type': op_type,
-                    'fullname': op_full_name
-                }
-            }
-            framework_info.get('args').update(op_info)
-            framework_info_dict[op_full_name] = framework_info
-
-        # Insert framework info into timeline.
-        for timeline_item in self._timeline_meta:
-            op_full_name = timeline_item.get('name')
-            framework_item = framework_info_dict.get(op_full_name)
-            if framework_item:
-                timeline_item['name'] = framework_item.get('name')
-                timeline_item['args'] = framework_item.get('args')
-        logger.debug('Finished adding framework info into timeline...')
 
     def _produce_two_separated_timeline(self, timeline, op_name):
         """Produce two separated timeline based on op_name."""
@@ -489,52 +359,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 first_list_idx += 1
 
         return intersection_segment_display_list
-
-    def _pynative_get_step_timeline_list(self, timeline_list):
-        """Get step timeline list for pynative model."""
-        step_list = []
-        # The timeline starts with the GetNext op
-        if len(timeline_list) < 2 or 'GetNext' not in timeline_list[0][self._op_name_idx] and \
-                'GetNext' not in timeline_list[1][self._op_name_idx]:
-            return step_list
-        step = [-1, -1]
-        step_num = 0
-        tid = "Steps"
-        for timeline in timeline_list:
-            if 'GetNext' not in timeline[self._op_name_idx]:
-                continue
-            start_time = float(timeline[self._start_time_idx])
-            if step[0] == -1:
-                step[0] = start_time
-            else:
-                step[1] = start_time - step[0]
-                step_num = step_num + 1
-                step_list.append([str(step_num), tid, float(step[0]), step[1]])
-                step = [start_time, -1]
-        if step[0] != -1 and step[1] == -1:
-            step_num = step_num + 1
-            step_list.append([str(step_num), tid, float(step[0]),
-                              float(timeline_list[-1][self._start_time_idx]) - step[0]])
-        return step_list
-
-    def _pynative_clock_synchronize(self, timeline_list):
-        """Synchronize the timestamp from device to host."""
-        start_time_file_path = os.path.join(self._profiling_dir, f"start_time_{self._rank_id}.txt")
-        try:
-            with open(start_time_file_path) as f_obj:
-                lines = f_obj.readlines()
-                # lines[0] stores the host monotonic time of start training.
-                host_monotonic_start_time = int(lines[0].strip().split(':')[-1])
-                # lines[1] stores the gpu time of start training.
-                gpu_start_time = int(lines[1].strip().split(':')[-1])
-        except (IOError, OSError) as err:
-            logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
-        time_diff = gpu_start_time * 1000 - host_monotonic_start_time
-        for idx, time_item in enumerate(timeline_list):
-            timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff
-            timeline_list[idx][self._start_time_idx] = timeline_list[idx][self._start_time_idx] / 1000000
-            timeline_list[idx][self._duration_idx] = timeline_list[idx][self._duration_idx] / 1000
 
     def _set_step_start_and_end_op_name(self, timeline_list):
         """Set the start and end operator full name of each step."""

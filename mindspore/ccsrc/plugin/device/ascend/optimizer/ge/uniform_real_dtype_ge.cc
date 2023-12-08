@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
-#include <memory>
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/nn_ops.h"

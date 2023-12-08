@@ -135,7 +135,7 @@ class Tensor {
     }
     tensor_c_.shape_size_ = shape.size();
     for (size_t i = 0; i < shape.size(); ++i) {
-      tensor_c_.shape_[i] = shape[i];
+      tensor_c_.shape_[i] = static_cast<int>(shape[i]);
     }
   }
 

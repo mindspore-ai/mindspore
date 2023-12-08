@@ -16,7 +16,6 @@
 #include "backend/common/graph_kernel/model/graph_builder.h"
 
 #include <vector>
-#include <memory>
 
 #include "mindapi/base/type_id.h"
 #include "mindapi/base/shape_vector.h"

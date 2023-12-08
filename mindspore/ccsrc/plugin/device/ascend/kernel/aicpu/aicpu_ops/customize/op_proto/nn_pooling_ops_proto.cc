@@ -319,12 +319,12 @@ IMPLEMT_INFERFUNC(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape) {
   int64_t hOut = (inputShape[3] - kernelList[3]) / stridesList[3] + 1;
   int64_t wOut = (inputShape[4] - kernelList[4]) / stridesList[4] + 1;
   int64_t alignedBmLine;
-  alignedBmLine = (wOut * hOut % 16 == 0) ? (wOut * hOut) : (((int64_t)(wOut * hOut / 16) + 1) * 16);
+  alignedBmLine = (wOut * hOut % 16 == 0) ? (wOut * hOut) : ((static_cast<int64_t>(wOut * hOut / 16) + 1) * 16);
   std::vector<int64_t> argShapeVec;
   argShapeVec.push_back(inputShape[0]);
   argShapeVec.push_back(dOut);
   argShapeVec.push_back(inputShape[2] * kernelList[2] * kernelList[3] * kernelList[4]);
-  argShapeVec.push_back((int64_t)(alignedBmLine / 16));
+  argShapeVec.push_back(static_cast<int64_t>(alignedBmLine / 16));
   argShapeVec.push_back(inputShape[5]);
   Shape argmaxShape(argShapeVec);
   argmaxDesc.SetShape(argmaxShape);
@@ -582,7 +582,7 @@ IMPLEMT_INFERFUNC(NthElement, NthElementInfer) {
     }
   }
 
-  int64_t existing = x_shape.GetDimNum();
+  int64_t existing = static_cast<int64_t>(x_shape.GetDimNum());
   int64_t last_input_dim = x_shape.GetDim(existing - 1);
   if ((last_input_dim != ge::UNKNOWN_DIM) && (n_dim != ge::UNKNOWN_DIM) && (last_input_dim <= n_dim)) {
     std::string err_msg =

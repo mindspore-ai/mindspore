@@ -41,7 +41,7 @@ IMPLEMT_COMMON_INFERFUNC(PdistGradInferShape) {
     return GRAPH_FAILED;
   }
   int64_t dim_shape = input_dim[0];
-  int64_t dist_shape = 0.5 * ((dim_shape) * (dim_shape - 1));
+  int64_t dist_shape = ((dim_shape) * (dim_shape - 1)) / 2;
   if ((pdist_dim[0] != dist_shape) || (grad_dim[0] != dist_shape)) {
     OP_LOGE(TbeGetName(op).c_str(),
             "The data number of pdist and grad must "

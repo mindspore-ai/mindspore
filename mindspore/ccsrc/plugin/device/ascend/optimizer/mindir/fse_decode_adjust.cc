@@ -15,10 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/mindir/fse_decode_adjust.h"
 
-#include <vector>
-#include <memory>
-#include <string>
-
 #include "ops/lite_op_name.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "frontend/parallel/ops_info/fillv2_info.h"
+
+#include <functional>
 #include "frontend/parallel/dynamic_creator.h"
 
 namespace mindspore {
@@ -28,12 +30,25 @@ Status FillV2Info::InferAttrs() {
   }
   ResetInputsShape();
   infer_attrs_completed_ = true;
+  fake_inputs_shape_ = inputs_shape_;
+  MS_LOG(INFO) << name_ << ": The origin shape is " << inputs_shape_;
+  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
+    if (inputs_shape_[0][i] == -1) {  // if dynamic shape, replace -1 to 1, this dimension can not be split
+      fake_inputs_shape_[0][i] = 1;
+      is_dynamic_shape_ = true;
+    }
+  }
+
+  if (is_dynamic_shape_) {
+    MS_LOG(INFO) << name_ << ": the fake shape is " << fake_inputs_shape_;
+  }
+
   return SUCCESS;
 }
 
 Status FillV2Info::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+  if (CheckStrategyValue(strategy, fake_inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy " << strategy->ToString();
     return FAILED;
   }
@@ -66,11 +81,11 @@ Status FillV2Info::InferTensorMap() {
 }
 
 std::vector<StrategyPtr> FillV2Info::GenerateOpStrategies(int64_t stage_id) {
-  Shape input0_split(inputs_shape_.at(0).size(), 1);
+  Shape input0_split(fake_inputs_shape_.at(0).size(), 1);
   Shape input1_split;
   Shapes splittable_inputs = {input0_split, input1_split};
   std::vector<StrategyPtr> sp_vector;
-  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+  if (GenerateStrategiesForIndependentInputs(stage_id, fake_inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Generate strategies for independent inputs() failed.";
   }
   if (sp_vector.empty()) {
@@ -79,20 +94,64 @@ std::vector<StrategyPtr> FillV2Info::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+void FillV2Info::ReplaceDynamicInput(const CNodePtr &cnode, const Shape &strategy) {
+  auto dynamic_node = cnode->input(kIndex1);
+  if (!IsPrimitiveCNode(dynamic_node, prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << name_ << "The dynamic input must be MakeTuple cnode, but got "
+                      << dynamic_node->fullname_with_scope();
+    return;
+  }
+
+  auto make_tuple_cnode = dynamic_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+
+  for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+    if (strategy[i - 1] <= 1) {
+      continue;
+    }
+
+    auto input_node = make_tuple_cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto value_node = GetValueNode(input_node);
+    if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+      auto origin_ele = GetValue<int64_t>(value_node);
+      if (origin_ele % strategy[i - 1] != 0) {
+        MS_LOG(EXCEPTION) << name_ << ": the origin shape is " << origin_ele << ", can not be div by shard size "
+                          << strategy[i - 1];
+      }
+      int64_t replace_shape = origin_ele / strategy[i - 1];
+      MS_LOG(INFO) << name_ << ": replace shape from " << origin_ele << " to " << replace_shape << ", the index is "
+                   << (i - 1);
+      auto replace_value_ptr = MakeValue(replace_shape);
+      auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+      make_tuple_cnode->set_input(i, replace_value_node);
+    }
+  }
+}
+
 void FillV2Info::ReplaceNodeInputOrAttrs() {
+  Shape strategy = strategy_->GetInputDim()[0];
+  if (std::accumulate(strategy.cbegin(), strategy.cend(), 1, std::multiplies<int64_t>()) == 1) {
+    return;
+  }
+
   for (auto &cnode : cnodes_) {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto input_shape = inputs_shape_.at(kIndex0);
-    std::vector<Dimensions> stra = strategy_->GetInputDim();
-    for (size_t i = 0; i < stra[0].size(); i++) {
-      input_shape[i] /= stra[0][i];
+    if (!is_dynamic_shape_) {  // static shape
+      auto input_shape = inputs_shape_.at(kIndex0);
+      for (size_t i = 0; i < strategy.size(); i++) {
+        input_shape[i] /= strategy[i];
+      }
+      auto func_graph = cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      auto manager = func_graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      auto val_tensor_node = NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(input_shape)));
+      MS_LOG(INFO) << name_ << ": the new shape is " << input_shape;
+      cnode->set_input(kIndex1, val_tensor_node);
+    } else {  // dynamic shape
+      ReplaceDynamicInput(cnode, strategy);
     }
-    auto func_graph = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto manager = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    auto val_tensor_node = NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(input_shape)));
-    cnode->set_input(kIndex1, val_tensor_node);
   }
 }
 

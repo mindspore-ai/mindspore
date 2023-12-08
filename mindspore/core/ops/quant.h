@@ -13,34 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_MOE_F_F_N_H_
-#define MINDSPORE_CORE_OPS_MOE_F_F_N_H_
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
 
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_QUANT_H_
+#define MINDSPORE_CORE_OPS_QUANT_H_
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMoeFFN = "MoeFFN";
-class MIND_API MoeFFN : public BaseOperator {
+constexpr auto kNameQuant = "Quant";
+class MIND_API Quant : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(MoeFFN);
+  MIND_API_BASE_MEMBER(Quant);
   /// \brief Constructor.
-  MoeFFN() : BaseOperator(kNameMoeFFN) {
-    InitIOName(
-      {"x", "expert_tokens", "weight1", "bias1", "weight2", "bias2", "scale", "offset", "deq_scale1", "deq_scale2"},
-      {"y"});
-  }
+  Quant() : BaseOperator(kNameQuant) { InitIOName({"x"}, {"output"}); }
+  explicit Quant(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr MoeFFNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+
+MIND_API abstract::AbstractBasePtr QuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MOE_F_F_N_H_
+#endif  // MINDSPORE_CORE_OPS_QUANT_H_

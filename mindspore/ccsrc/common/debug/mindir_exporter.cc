@@ -283,8 +283,8 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &root_graph, const std::vect
     return false;
   }
   std::map<std::string, FuncGraphPtr> sorted_graphs;
-  std::for_each(child_graphs.begin(), child_graphs.end(),
-                [&sorted_graphs](const auto &iter) { sorted_graphs[iter->ToString()] = iter; });
+  (void)(std::for_each(child_graphs.begin(), child_graphs.end(),
+                       [&sorted_graphs](const auto &iter) { sorted_graphs[iter->ToString()] = iter; }));
   for (const auto &iter : sorted_graphs) {
     const auto &graph = iter.second;
     if (!BuildNodes(graph, graph_protos_[graph])) {
@@ -1264,6 +1264,30 @@ bool IrExportBuilder::SetAttributeProto(const AnfNodePtr &node, mind_ir::NodePro
   return SetValueToAttributeProto(value, attr_proto);
 }
 
+bool IrExportBuilder::SetTensorTypeToAttributeProto(const ValuePtr &value, mind_ir::TensorProto *tensor_proto) {
+  tensor_proto->set_name("tensor0");
+  auto elem_type = value->cast<TensorTypePtr>()->element();
+  if (elem_type->isa<Int>()) {
+    auto int_value = elem_type->cast<IntPtr>();
+    auto data_type = GetMindirDataBitsIntType(int_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
+  } else if (elem_type->isa<Float>()) {
+    auto float_value = elem_type->cast<FloatPtr>();
+    auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
+  } else {
+    MS_LOG(ERROR) << "Unsupported type " << elem_type->type_name();
+    return false;
+  }
+  return true;
+}
+
 bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
@@ -1297,6 +1321,7 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
   } else if (value->isa<BFloat>()) {
     tensor_proto->set_name("value0");
     auto bfloat_value = value->cast<BFloatPtr>();
+    MS_EXCEPTION_IF_NULL(bfloat_value);
     auto data_type = GetMindirDataBitsBFloatType(bfloat_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;
@@ -1314,26 +1339,7 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     tensor_proto->set_name("value0");
     tensor_proto->set_data_type(mind_ir::TensorProto_DataType_BOOL);
   } else if (value->isa<TensorType>()) {
-    tensor_proto->set_name("tensor0");
-    auto elem_type = value->cast<TensorTypePtr>()->element();
-    if (elem_type->isa<Int>()) {
-      auto int_value = elem_type->cast<IntPtr>();
-      auto data_type = GetMindirDataBitsIntType(int_value->nbits());
-      if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
-        return false;
-      }
-      tensor_proto->set_data_type(data_type);
-    } else if (elem_type->isa<Float>()) {
-      auto float_value = elem_type->cast<FloatPtr>();
-      auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
-      if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
-        return false;
-      }
-      tensor_proto->set_data_type(data_type);
-    } else {
-      MS_LOG(ERROR) << "Unsupported type " << elem_type->type_name();
-      return false;
-    }
+    return SetTensorTypeToAttributeProto(value, tensor_proto);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
   }

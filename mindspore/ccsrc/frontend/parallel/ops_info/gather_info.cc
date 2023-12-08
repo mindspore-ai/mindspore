@@ -970,7 +970,7 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
   OperatorAttrs attrs = {attr_op, attr_group};
   AnfNodePtr reduce_op;
-  if (dynamic_shape_indices_ || axis_split_forward_allreduce_) {
+  if (dynamic_shape_indices_ || axis_split_forward_allreduce_ || is_assigned_parallel_) {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
   } else {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(REDUCE_SCATTER, attrs), mul});
@@ -1067,6 +1067,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       shard_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
       shard_axis_util->set_attrs(attrs_);
       shard_axis_util->set_replace_op_name(replace_op_name_);
+      shard_axis_util->set_assigned_parallel(is_assigned_parallel_);
       break;
     }
     default:
@@ -1098,22 +1099,17 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
     return FAILED;
   }
 
-  auto in_stra = strategy_->GetInputDim();
-  auto param_strategy = in_stra[0];
-  MS_EXCEPTION_IF_ZERO("param_strategy[0]", param_strategy[0]);
-  if (inputs_shape_[1].empty() || (inputs_shape_[1][0] % param_strategy[0] != 0)) {
-    MS_LOG(ERROR) << name_ << ": index_shape[0] can't be divided by param_strategy[0], can not set output strategy";
+  if (axis_ != 0 && batch_dims_ != 0) {
+    MS_LOG(ERROR) << name_ << ": Set output strategy only for axis = 0 and batch_dims = 0, but the axis is " << axis_
+                  << ", the batch_dims is " << batch_dims_;
     return FAILED;
   }
 
   MS_EXCEPTION_IF_NULL(gather_util_);
-  if (gather_util_->gather_mode() != SHARD_AXIS_0_STATIC && gather_util_->gather_mode() != SHARD_BATCH_AND_AXIS) {
-    MS_LOG(ERROR) << name_
-                  << ": Set output strategy only for shard axis 0, and have not dynamic shape, and is not manual split";
-    return FAILED;
-  }
   auto shard_axis_util = std::dynamic_pointer_cast<ShardAxisImpl>(gather_util_);
 
+  auto in_stra = strategy_->GetInputDim();
+  auto param_strategy = in_stra[0];
   auto index_strategy = in_stra[1];
 
   // only for axis == 0
@@ -1124,11 +1120,22 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
 
   auto out_stra = out_strategy->GetInputDim()[0];
   if (out_stra == allreduce_strategy) {
-    shard_axis_util->set_axis_split_forward_allreduce(true);
+    if (shard_axis_util != nullptr) {
+      shard_axis_util->set_axis_split_forward_allreduce(true);
+    }
+
     MS_LOG(INFO) << name_ << ": The output strategy is " << out_stra << ", forward use allreduce";
     return SUCCESS;
   } else if (out_stra == reduce_scatter_strategy) {
-    shard_axis_util->set_axis_split_forward_allreduce(false);
+    if (gather_util_->gather_mode() != SHARD_AXIS_0_STATIC && gather_util_->gather_mode() != SHARD_BATCH_AND_AXIS) {
+      MS_LOG(ERROR) << name_ << ": The output strategy " << out_stra << " for gather mode "
+                    << gather_util_->GatherModeToString() << " is invalid, it must be " << allreduce_strategy;
+      return FAILED;
+    }
+
+    if (shard_axis_util) {
+      shard_axis_util->set_axis_split_forward_allreduce(false);
+    }
     MS_LOG(INFO) << name_ << ": The output strategy is " << out_stra << ", forward use reduce scatter";
     return SUCCESS;
   }

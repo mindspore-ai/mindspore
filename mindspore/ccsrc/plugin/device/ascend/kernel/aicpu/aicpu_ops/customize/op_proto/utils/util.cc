@@ -166,9 +166,9 @@ bool TwoShapeAndRangeBroadcastIntegration(const Operator &op, std::vector<int64_
     range = range_temp;
   }
   if (dimVec.size() != dims.size()) {
-    int dec = dimVec.size() - dims.size();
+    int dec = static_cast<int>(dimVec.size() - dims.size());
     for (int i = 0; i < dec; i++) {
-      dims.insert(dims.begin(), (int64_t)1);
+      dims.insert(dims.begin(), 1);
     }
   }
   for (size_t i = 0; i < dimVec.size(); i++) {
@@ -415,9 +415,9 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 
   // pad 1 for small shape
   if (dimsX.size() != dimsY.size()) {
-    int dec = dimsX.size() - dimsY.size();
+    int dec = static_cast<int>(dimsX.size() - dimsY.size());
     for (int i = 0; i < dec; i++) {
-      dimsY.insert(dimsY.begin(), (int64_t)1);
+      dimsY.insert(dimsY.begin(), static_cast<int64_t>(1));
     }
   }
 
@@ -534,9 +534,9 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 
   // pad 1 for small shape
   if (dimsX.size() != dimsY.size()) {
-    int dec = dimsX.size() - dimsY.size();
+    int dec = static_cast<int>(dimsX.size() - dimsY.size());
     for (int i = 0; i < dec; i++) {
-      dimsY.insert(dimsY.begin(), (int64_t)1);
+      dimsY.insert(dimsY.begin(), static_cast<int64_t>(1));
     }
   }
 
@@ -597,7 +597,8 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 static bool BroadCastShapeToOutShape(const GeShape &shape, GeShape &shape_output) {
   size_t shape_len = shape.GetDimNum();
   size_t shape_y_len = shape_output.GetDimNum();
-  int64_t dim1, dim2;
+  int64_t dim1;
+  int64_t dim2;
 
   if (shape_len > shape_y_len) {
     shape_output.SetDimNum(shape_len);
@@ -746,7 +747,7 @@ static std::vector<int64_t> GetNewAxis4NDC1HWC0(std::size_t ori_shape_len, int64
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) < ori_format_upper.length()) {
@@ -789,7 +790,7 @@ static std::vector<int64_t> GetNewAxis4NC1HWC0(std::size_t ori_shape_len, int64_
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) < ori_format_upper.length()) {
@@ -815,7 +816,7 @@ static std::vector<int64_t> GetNewAxis4FRACTAL_NZ(std::size_t ori_shape_len, int
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += ori_shape_len;
+    non_negative_axis += static_cast<int64_t>(ori_shape_len);
   }
 
   if (static_cast<size_t>(non_negative_axis) >= ori_shape_len) {
@@ -1018,7 +1019,7 @@ template <typename T>
 static std::vector<int64_t> GetConstIntData(const uint8_t *const_data, size_t data_size) {
   size_t size = data_size / sizeof(T);
   std::vector<int64_t> result(size);
-  T *data = (T *)const_data;
+  const T *data = reinterpret_cast<const T *>(const_data);
   for (size_t i = 0; i < size; i++) {
     result[i] = *(data + i);
   }
@@ -1053,18 +1054,20 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
   CHECK(dtype != ge::DT_INT32 && dtype != ge::DT_INT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("not support this type")), return false);
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
     size_t size = const_tensor.GetSize() / sizeof(int32_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back((int32_t)((*(const_data_ptr + i))));
-      OP_LOGD(TbeGetName(op).c_str(), "const data int32 fusion pass ====== %d", (int32_t)(*(const_data_ptr + i)));
+      const_data.push_back(static_cast<int32_t>(*(const_data_ptr + i)));
+      OP_LOGD(TbeGetName(op).c_str(), "const data int32 fusion pass ====== %d",
+              static_cast<int32_t>(*(const_data_ptr + i)));
     }
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
     size_t size = const_tensor.GetSize() / sizeof(int64_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back(((int64_t)(*(const_data_ptr + i))));
-      OP_LOGD(TbeGetName(op).c_str(), "const data int64 fusion pass ====== %ld", (int64_t)(*(const_data_ptr + i)));
+      const_data.push_back((static_cast<int64_t>(*(const_data_ptr + i))));
+      OP_LOGD(TbeGetName(op).c_str(), "const data int64 fusion pass ====== %ld",
+              static_cast<int64_t>(*(const_data_ptr + i)));
     }
   }
   return true;
@@ -1075,12 +1078,12 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
   size_t size = 0;
   CHECK(dtype != ge::DT_UINT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("not support this type")), return false);
-  uint64_t *const_data_ptr = (uint64_t *)const_tensor.GetData();
+  const uint64_t *const_data_ptr = reinterpret_cast<const uint64_t *>(const_tensor.GetData());
   size = const_tensor.GetSize() / sizeof(uint64_t);
   for (size_t i = 0; i < size; ++i) {
-    const_data.push_back((uint64_t)(*(const_data_ptr + i)));
+    const_data.push_back(static_cast<uint64_t>(*(const_data_ptr + i)));
     OP_LOGD(TbeGetName(op).c_str(), "const data uint64 fusion pass, const_data[%lu]",
-            (uint64_t)(*(const_data_ptr + i)));
+            static_cast<uint64_t>(*(const_data_ptr + i)));
   }
   return true;
 }
@@ -1088,23 +1091,23 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
 bool GetConstValue(const Operator &op, const GeTensor *const_tensor, const DataType &dtype,
                    std::vector<int64_t> &const_data) {
   size_t size = const_tensor->GetData().GetSize();
-  void *data_ptr = (void *)const_tensor->GetData().GetData();
+  const void *data_ptr = static_cast<const void *>(const_tensor->GetData().GetData());
   CHECK(data_ptr == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("data is null.")),
         return false);
 
   CHECK(dtype != ge::DT_INT32 && dtype != ge::DT_INT64,
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("const not support this type")), return false);
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = reinterpret_cast<int32_t *>(data_ptr);
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(data_ptr);
     size = size / sizeof(int32_t);
     for (size_t i = 0; i < size; i++) {
-      const_data.push_back((int64_t)((int32_t)((*(const_data_ptr + i)))));
+      const_data.push_back(static_cast<int64_t>(*(const_data_ptr + i)));
     }
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = reinterpret_cast<int64_t *>(data_ptr);
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(data_ptr);
     size = size / sizeof(int64_t);
     for (size_t i = 0; i < size; i++) {
-      const_data.push_back((int64_t)((int64_t)((*(const_data_ptr + i)))));
+      const_data.push_back(static_cast<int64_t>(*(const_data_ptr + i)));
     }
   }
   return true;
@@ -1117,11 +1120,11 @@ bool GetConstValue(const Operator &op, const GeTensorPtr &const_tensor, const Da
 
 bool GetScalerValue(const Operator &op, const Tensor &const_tensor, const DataType &dtype, std::int64_t &const_data) {
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
-    const_data = (int32_t)(*const_data_ptr);
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
+    const_data = static_cast<int64_t>(*const_data_ptr);
   } else if (dtype == ge::DT_INT64) {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
-    const_data = (int64_t)(*const_data_ptr);
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
+    const_data = static_cast<int64_t>(*const_data_ptr);
   } else {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg(ConcatString("not support this type:", dtype)));
     return false;
@@ -1140,7 +1143,8 @@ std::string to_string(const vector<pair<int64_t, int64_t>> &ranges) { return ops
 bool DynamicShapeInfer::CatchFormatAndShape() {
   inputs = op_desc->GetAllInputName();
   outputs = op_desc->GetAllOutputName();
-  GeTensorDescPtr tensor_desc_input, tensor_desc_output;
+  GeTensorDescPtr tensor_desc_input;
+  GeTensorDescPtr tensor_desc_output;
 
   // get and save current input shape&format, and assign origin ones to them
   std::string input_name;
@@ -1186,7 +1190,8 @@ bool DynamicShapeInfer::CatchFormatAndShape() {
 
 bool DynamicShapeInfer::UpdateFormatAndShape() {
   const int64_t opImplType = EN_IMPL_CUSTOM_TBE;
-  GeTensorDescPtr tensor_desc_input, tensor_desc_output;
+  GeTensorDescPtr tensor_desc_input;
+  GeTensorDescPtr tensor_desc_output;
   // assign output's after infershape to origin shape
   for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
     tensor_desc_output = op_desc->MutableOutputDesc(it->first);
@@ -1197,8 +1202,10 @@ bool DynamicShapeInfer::UpdateFormatAndShape() {
   }
 
   // transfer input's origin shape to current shape
-  Format ori_input_format, cur_input_format;
-  GeShape ori_infer_shape, current_shape;
+  Format ori_input_format;
+  Format cur_input_format;
+  GeShape ori_infer_shape;
+  GeShape current_shape;
   std::string input_name;
   for (map<std::string, uint32_t>::iterator it = inputs.begin(); it != inputs.end(); ++it) {
     input_name = it->first;
@@ -1238,8 +1245,10 @@ bool DynamicShapeInfer::UpdateFormatAndShape() {
   }
 
   // transfer output's origin shape to current shape
-  Format ori_output_format, cur_output_format;
-  GeShape ori_infer_out_shape, current_out_shape;
+  Format ori_output_format;
+  Format cur_output_format;
+  GeShape ori_infer_out_shape;
+  GeShape current_out_shape;
   std::string output_name;
   for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
     output_name = it->first;
@@ -1312,7 +1321,7 @@ bool IsUnknownRank(const Operator &op, const std::string &tensor_name, const std
 }
 
 bool IsUnknownRankShape(const std::vector<int64_t> &shape_vec) {
-  if (shape_vec.size() == 1 && shape_vec[0] == -2) {
+  if (shape_vec.size() == 1 && shape_vec[0] == ge::UNKNOWN_DIM_NUM) {
     return true;
   }
   return false;
@@ -1886,7 +1895,7 @@ ge::graphStatus InferElementwiseAxisTypeHelper(const Operator &op, vector<AxisTy
 
   for (size_t idx = 0; idx < excepted_axes.size(); ++idx) {
     if (excepted_axes[idx] < 0) {
-      excepted_axes[idx] = excepted_axes[idx] + dim_num;
+      excepted_axes[idx] = excepted_axes[idx] + static_cast<int64_t>(dim_num);
     }
   }
 

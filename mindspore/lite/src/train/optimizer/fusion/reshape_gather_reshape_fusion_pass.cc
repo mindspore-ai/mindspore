@@ -92,11 +92,9 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   auto &reshape2_node = graph->nodes.at(reshape2_index);
   MS_CHECK_TRUE_MSG(reshape2_node != nullptr, RET_NULL_PTR, "reshape2_node is nullptr");
   if (reshape1_node->inputIndex.size() != opt::kInputSizeTwo ||
-      reshape1_node->outputIndex.size() != opt::kOutputSizeOne ||
       reshape1_node->quantType == schema::QuantType_QUANT_ALL ||
       reshape1_node->quantType == schema::QuantType_QUANT_DYNAMIC ||
       reshape2_node->inputIndex.size() != opt::kInputSizeTwo ||
-      reshape2_node->outputIndex.size() != opt::kOutputSizeOne ||
       reshape2_node->quantType == schema::QuantType_QUANT_ALL ||
       reshape2_node->quantType == schema::QuantType_QUANT_DYNAMIC ||
       gather_node->quantType == schema::QuantType_QUANT_ALL ||
@@ -127,9 +125,7 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   }
   gather_shape0.erase(gather_shape0.begin() + gather_axis);
   (void)gather_shape0.insert(gather_shape0.begin() + gather_axis, gather_shape1.begin(), gather_shape1.end());
-  if (gather_shape0 != old_shape) {
-    return RET_NO_CHANGE;
-  }
+  MS_CHECK_TRUE_RET(gather_shape0 == old_shape, RET_NO_CHANGE);
   gather_node->inputIndex.at(opt::kInputIndexOne) = reshape1_node->inputIndex.at(opt::kInputIndexZero);
   gather_node->outputIndex.at(opt::kOutputIndexZero) = reshape2_node->outputIndex.at(opt::kOutputIndexZero);
   // cannot delete node here, otherwise will destroy order in other pattern's node index

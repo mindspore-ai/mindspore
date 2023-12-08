@@ -79,6 +79,8 @@ class BACKEND_EXPORT OpExecutor {
 
   void WaitAll();
 
+  void WaitForBuild();
+
   // Thread join before the process exit.
   void WorkerJoin();
 
@@ -87,7 +89,6 @@ class BACKEND_EXPORT OpExecutor {
   ~OpExecutor();
   DISABLE_COPY_AND_ASSIGN(OpExecutor);
 
-  void WaitForBuild();
   void WaitForRun();
   void ClearResources();
 

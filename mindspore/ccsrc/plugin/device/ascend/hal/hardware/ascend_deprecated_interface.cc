@@ -168,45 +168,14 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
     // Release GIL before calling into (potentially long-running) C++ code
     ScopedLongRunning release;
     Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-    if (ret != Status::SUCCESS) {
+    if (ret == Status::NOT_FOUND) {
+      MS_LOG(INFO) << "Exec graph:" << run_options.name << "not found, skip.";
+      return;
+    } else if (ret != Status::SUCCESS) {
       MS_LOG(WARNING) << "Exec graph:" << run_options.name << " failed";
       return;
     }
   }
-}
-
-bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
-                                                const std::vector<TypePtr> &types,
-                                                const std::vector<std::vector<int64_t>> &shapes,
-                                                const std::vector<int64_t> &input_indexes, const std::string &phase) {
-  ge_device_context_->Initialize();
-  std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
-    return static_cast<int64_t>(transform::ConvertDataType(i->type_id()));
-  });
-
-  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  ConfigManager::GetInstance().set_iter_num(queue_name, size);
-  ConfigManager::GetInstance().set_dataset_phase(phase);
-
-  DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
-  ConfigManager::GetInstance().set_dataset_param(param);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
-      MS_LOG(ERROR) << "Build dateset graph failed.";
-      return false;
-    }
-
-    GeDeviceResManager::CreateSessionAndGraphRunner();
-
-    MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
-    DoExecNonInputGraph(phase);
-  }
-
-  return true;
 }
 
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, const std::string &phase,
@@ -405,6 +374,24 @@ void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
   }
 }
 
+void AscendDeprecatedInterface::UnregisterExternalAllocator() {
+  if (!IsEnableRefMode()) {
+    return;
+  }
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(INFO) << "The graph_runner is not exist";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(ge_device_context_);
+  MS_EXCEPTION_IF_NULL(ge_device_context_->device_res_manager_);
+  auto ret = transform::UnregisterExternalAllocator(
+    graph_runner, dynamic_cast<GeDeviceResManager *>(ge_device_context_->device_res_manager_.get())->GetStream());
+  if (ret != transform::Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "UnregisterExternalAllocator failed";
+  }
+}
+
 #ifdef WITH_BACKEND
 namespace {
 void SetContextSocVersion(MsContext *ctx) {
@@ -413,7 +400,8 @@ void SetContextSocVersion(MsContext *ctx) {
   const std::map<std::string, std::string> kAscendSocVersions = {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"}};
   // Get default soc version.
   static std::string version;
   if (version.empty()) {

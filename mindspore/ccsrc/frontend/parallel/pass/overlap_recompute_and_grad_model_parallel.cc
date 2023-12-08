@@ -222,11 +222,11 @@ void OverlapRecomputeAndGradModelParallel(const FuncGraphPtr &graph) {
           src_node_no_rely_inputs.begin(), src_node_no_rely_inputs.end(),
           [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
             size_t cnode_iter1 =
-              (size_t)(std::find(origin_nodes_topological.begin(), origin_nodes_topological.end(), cnode1) -
-                       origin_nodes_topological.begin());
+              IntToSize(std::find(origin_nodes_topological.begin(), origin_nodes_topological.end(), cnode1) -
+                        origin_nodes_topological.begin());
             size_t cnode_iter2 =
-              (size_t)(std::find(origin_nodes_topological.begin(), origin_nodes_topological.end(), cnode2) -
-                       origin_nodes_topological.begin());
+              IntToSize(std::find(origin_nodes_topological.begin(), origin_nodes_topological.end(), cnode2) -
+                        origin_nodes_topological.begin());
             cnode_iter1 = IsNotCareCNode(cnode1) ? 0 : cnode_iter1;
             cnode_iter2 = IsNotCareCNode(cnode2) ? 0 : cnode_iter2;
             return cnode_iter1 < cnode_iter2;

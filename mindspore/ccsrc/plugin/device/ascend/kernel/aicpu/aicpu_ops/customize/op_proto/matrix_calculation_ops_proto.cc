@@ -138,7 +138,7 @@ IMPLEMT_COMMON_INFERFUNC(MatrixLogarithmInferShaper) {
   auto x_shape = op.GetInputDescByName("x").GetShape().GetDims();
   Shape input_shape = op.GetInputDescByName("x").GetShape();
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
-  int64_t size_num = op.GetInputDescByName("x").GetShape().GetDimNum();
+  int64_t size_num = static_cast<int64_t>(op.GetInputDescByName("x").GetShape().GetDimNum());
   TensorDesc td = op.GetOutputDescByName("y");
   td.SetShape(ge::Shape(input_shape));
   td.SetDataType(input_dtype);
