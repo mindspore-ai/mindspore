@@ -1946,16 +1946,18 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   if (is_self) {
     obj_name = "self";
     getattr_obj = ast()->obj();
+    AnfNodePtr ret_node;
     AnfNodePtr getattr_node = MakeGetAttrWithInterpret(obj_name, attr_str, getattr_obj, cur_fg);
     // If setattr before, should make the getattr call into PyExecute also.
     if (getattr_node != nullptr) {
-      return getattr_node;
+      ret_node = getattr_node;
       // if processing class value 'self', but did not find setattr before getattr, convert getattr later
     } else {
-      auto ret_node = ProcessAttributeWithClassMember(block, node);
+      ret_node = ProcessAttributeWithClassMember(block, node);
       (void)getattr_nodes_map_["self"][attr_str].emplace_back(ret_node);
-      return ret_node;
     }
+    ret_node->set_user_data<py::object>("__getattr__", std::make_shared<py::object>(getattr_obj));
+    return ret_node;
   }
   // If not self.xx, process the obj, eg: obj.xx
   AnfNodePtr value_node = ParseExprNode(block, value_body);
@@ -2023,11 +2025,12 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     AnfNodePtr getattr_node = MakeGetAttrWithInterpret(obj_name, attr_str, getattr_obj, cur_fg);
     // If setattr before, should make the getattr call into PyExecute also.
     if (getattr_node != nullptr) {
-      return getattr_node;
+      attr_cnode = getattr_node;
     } else {
       // if getting attr from other obj, but did not find setattr before getattr, convert getattr later
       (void)getattr_nodes_map_[GetLocation(value_body)->expr_src()][attr_str].emplace_back(attr_cnode);
     }
+    attr_cnode->set_user_data<py::object>("__getattr__", std::make_shared<py::object>(getattr_obj));
   }
   return attr_cnode;
 }

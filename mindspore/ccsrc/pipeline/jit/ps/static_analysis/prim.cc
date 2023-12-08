@@ -1815,29 +1815,69 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
 EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValuePtr &item_value,
                                                    const AnfNodeConfigPtr &out_conf) {
   const auto &item_str = item_value->cast_ptr<StringImm>();
-  if (item_str == nullptr) {
+  FuncGraphPtr inner_fg = nullptr;
+  py::object overridden_method = py::none();
+  py::object value_obj = py::none();
+  if (item_str != nullptr) {
+    const std::string &item_name = item_str->value();
+    if (node->has_user_data(item_name)) {
+      value_obj = *node->user_data<py::object>(item_name);
+      overridden_method = value_obj.attr("__class__").attr(item_name.c_str());
+    }
+  }
+  bool is_getattr = node->has_user_data("__getattr__");
+  if (is_getattr) {
+    value_obj = *node->user_data<py::object>("__getattr__");
+    try {
+      overridden_method = value_obj.attr("__class__").attr("__getattr__");
+    } catch (const std::exception &e) {
+      MS_LOG(DEBUG) << value_obj << " has no attribute getattr.";
+    }
+  }
+  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(overridden_method)) {
     return nullptr;
   }
-  const std::string &item_name = item_str->value();
-  auto value_obj = *node->user_data<py::object>(item_name);
-  py::object overridden_method = value_obj.attr("__class__").attr(item_name.c_str());
-  auto inner_fg = parse::ParsePythonCode(overridden_method);
+
+  inner_fg = parse::ParsePythonCode(overridden_method);
+  MS_EXCEPTION_IF_NULL(out_conf);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  const auto &inputs = cnode->inputs();
   if (inner_fg == nullptr) {
-    return nullptr;
+    std::vector<AnfNodePtr> new_inputs;
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (i == 1) {
+        const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
+        const auto &value_node = NewValueNode(interpreted_obj);
+        new_inputs.push_back(value_node);
+      } else {
+        new_inputs.push_back(inputs[i]);
+      }
+    }
+    CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+    auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+  AddToManager(eng, inner_fg);
+  if (is_getattr) {
+    std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (i > 0) {
+        new_inputs.push_back(inputs[i]);
+      }
+    }
+    CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+    auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
   std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial)};
   input.push_back(NewValueNode(inner_fg));
-  MS_EXCEPTION_IF_NULL(out_conf);
-  MS_EXCEPTION_IF_NULL(out_conf->node());
-  auto cnode = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
   input.push_back(cnode->input(1));
-  FuncGraphPtr func_graph = out_conf->node()->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_cnode = func_graph->NewCNode(input);
-  auto eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AddToManager(eng, inner_fg);
   auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
 }
@@ -2117,14 +2157,19 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
 
 bool CheckHasOverriddenMethod(AnfNodePtr node, ValuePtr item_value) {
   const auto &item_str = item_value->cast_ptr<StringImm>();
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   if (item_str != nullptr) {
     const std::string &item_name = item_str->value();
     if (node->has_user_data(item_name)) {
       auto value_obj = *node->user_data<py::object>(item_name);
-      py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
       py::bool_ check = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CHECK_ATTRS, value_obj, item_name);
       return py::cast<bool>(check);
     }
+  }
+  if (node->has_user_data("__getattr__")) {
+    auto value_obj = *node->user_data<py::object>("__getattr__");
+    py::bool_ check = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CHECK_ATTRS, value_obj, "__getattr__");
+    return py::cast<bool>(check);
   }
   return false;
 }
