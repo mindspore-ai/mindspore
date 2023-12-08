@@ -168,7 +168,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
         if (index > input_device_tensors_.size()) {
           std::string error_info = "Invalid input index:" + std::to_string(index) + " for index:" + std::to_string(i) +
                                    " total size:" + std::to_string(input_device_tensors_.size()) +
-                                   " for actor:" + GetAID().Name();
+                                   " for gather actor:" + GetAID().Name();
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
         }
         if (input_device_tensors_[index] == nullptr) {
@@ -184,7 +184,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
       (void)gather_input_->device_tensors_.emplace_back(offset++, new_device_tensor);
     } else if (indexes.empty() || indexes[0] >= input_partials_.size()) {
       std::string error_info = "Invalid index num:" + std::to_string(indexes.size()) +
-                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
+                               " for index:" + std::to_string(i) + " for gather actor:" + GetAID().Name();
       MS_LOG(WARNING) << error_info;
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     } else if (input_partials_[indexes[0]] != nullptr) {
@@ -193,7 +193,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
       (void)gather_input_->device_tensors_.emplace_back(offset++, input_device_tensors_[indexes[0]]);
     } else {
       std::string error_info = "Failed to get input for real index:" + std::to_string(indexes[0]) +
-                               " for index:" + std::to_string(i) + " for actor:" + GetAID().Name();
+                               " for index:" + std::to_string(i) + " for gather actor:" + GetAID().Name();
       MS_LOG(WARNING) << error_info;
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }

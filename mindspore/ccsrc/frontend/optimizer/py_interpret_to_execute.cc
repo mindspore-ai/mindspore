@@ -124,11 +124,11 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnzipLocalDict(const
     return std::make_pair(keys, values);
   }
 
-  auto make_dict_node = dict_node->cast_ptr<CNode>();
   if (!IsPrimitiveCNode(dict_node, prim::kPrimMakeDict)) {
     MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict should be a dictionary, but got "
                                << dict_node->DebugString();
   }
+  auto make_dict_node = dict_node->cast_ptr<CNode>();
   constexpr auto kMakeDictKeysInputIndex = 1;
   constexpr auto kMakeDictValueInputIndex = 2;
   auto keys_input = make_dict_node->input(kMakeDictKeysInputIndex);

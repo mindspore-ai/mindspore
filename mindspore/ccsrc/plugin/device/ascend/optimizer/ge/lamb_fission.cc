@@ -153,7 +153,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
 
   auto type_id = (input_node->isa<CNode>()) ? common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0)
                                             : common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-  const auto dim = shape_vec.size();
+  const auto &dim = shape_vec.size();
   int64_t ddim = SizeToLong(dim);
   std::vector<int64_t> axis{0};
   for (int64_t i = 1; i < ddim; ++i) {

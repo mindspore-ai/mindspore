@@ -74,7 +74,7 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
 bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  const auto *input1 = static_cast<int64_t *>(inputs[kIndex1]->addr);
   ShapeVector broadcast_shape;
   ShapeVector final_shape;
   ShapeVector index_tensor_new_shape;
@@ -84,7 +84,7 @@ bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   ShapeVector data_shape = data_shapes_[kIndex0];
   for (size_t i = 0; i < tuple_index_types_.size(); i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims_count_;
+      valid_tensor_nums = data_shape.size() + LongToSize(expand_dims_count_);
       break;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
@@ -107,14 +107,14 @@ bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   for (size_t i = 0; i < out_shapes_.size(); i++) {
     const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
     if (i == kIndex3) {
-      CheckCopy(reinterpret_cast<int64_t *>(outputs[i]->addr), sizeof(int64_t), &fancy_position, sizeof(int64_t),
+      CheckCopy(static_cast<int64_t *>(outputs[i]->addr), sizeof(int64_t), &fancy_position, sizeof(int64_t),
                 kernel_name_);
     } else if (i == kIndex4) {
       if (memset_s(outputs[i]->addr, sizeof(int64_t), 0, sizeof(int64_t)) != EOK) {
         MS_LOG(EXCEPTION) << kernel_name_ << " memset error";
       }
     } else {
-      CheckCopy(reinterpret_cast<int64_t *>(outputs[i]->addr), out_size, out_shapes_[i].data(), out_size, kernel_name_);
+      CheckCopy(static_cast<int64_t *>(outputs[i]->addr), out_size, out_shapes_[i].data(), out_size, kernel_name_);
     }
   }
   return true;

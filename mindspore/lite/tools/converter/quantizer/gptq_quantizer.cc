@@ -39,6 +39,7 @@ GptqQuantizer::~GptqQuantizer() {
 int GptqQuantizer::FilterWeightNode(const FuncGraphPtr &func_graph,
                                     const std::set<PrimitivePtr> support_weight_quant_types,
                                     std::map<std::string, std::unique_ptr<WeightInfo>> *weights) {
+  CHECK_NULL_RETURN(weights);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     // filter matmul op
     if (!CheckNodeInSet(cnode, support_weight_quant_types)) {
@@ -64,6 +65,8 @@ int GptqQuantizer::FilterWeightNode(const FuncGraphPtr &func_graph,
 // extract weight params
 void GptqQuantizer::ExtractWeightParams(schema::MetaGraphT *meta_graph,
                                         std::map<std::string, std::unique_ptr<WeightInfo>> *weights) const {
+  CHECK_NULL_RETURN_VOID(meta_graph);
+  CHECK_NULL_RETURN_VOID(weights);
   for (auto &tensor : meta_graph->allTensors) {
     if (weights->find(tensor->name) == weights->end()) {
       continue;
@@ -115,6 +118,7 @@ bool GptqQuantizer::CheckTensorDtype(const lite::Tensor &input_tensor, const lit
 
 int GptqQuantizer::GetMatMulDeep(const std::vector<int> &weight_dims, const MatMulParameter *op_param,
                                  int input_index) const {
+  CHECK_NULL_RETURN(op_param);
   int last_first_index = static_cast<int>(weight_dims.size()) - 1;
   int last_second_index = static_cast<int>(weight_dims.size()) - 2;
   // input a
@@ -135,6 +139,7 @@ int GptqQuantizer::GetMatMulDeep(const std::vector<int> &weight_dims, const MatM
 }
 
 int GptqQuantizer::DequantWeight(WeightInfo *weight_info, const lite::Tensor *weight_tensor, int prefer_dim) {
+  CHECK_NULL_RETURN(weight_info);
   auto dims = weight_tensor->shape();
   for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
     auto bucket_index = GetBucketIndex(dims, prefer_dim, i);
@@ -270,10 +275,12 @@ int GptqQuantizer::RunKernel() {
     bool transpose = (weight_info->input_index == kWeightIndex);
     if (AddBatch<float>(*input_tensor, hessian_data, deep, batch_num_, transpose) != RET_OK) {
       MS_LOG(ERROR) << "AddBatch failed, tensor name: " << input_tensor->tensor_name();
+      free(hessian_data);
       return false;
     }
     if (weight_info->quant_data != nullptr) {
       MS_LOG(INFO) << "weight already be quantized, tensor name: " << tensor_name;
+      free(hessian_data);
       return true;
     }
     size_t elements_num = static_cast<size_t>(weight_tensor->ElementsNum());
@@ -285,6 +292,7 @@ int GptqQuantizer::RunKernel() {
       std::make_unique<quant::Gptq>(weight_tensor, weight_info.get(), hessian_data, deep, bit_num, transpose, op_param);
     if (quantizer->DoQuantize() != RET_OK) {
       MS_LOG(ERROR) << "FasterQuantizer failed.";
+      free(hessian_data);
       return false;
     }
     // update weights when current block quantization done.
@@ -293,6 +301,7 @@ int GptqQuantizer::RunKernel() {
       WeightDecoder::GetMatMulPreferredDim(kernel->op_parameter(), weight_info->input_index, weight_tensor->shape());
     if (DequantWeight(weight_info.get(), weight_tensor, prefer_dim) != RET_OK) {
       MS_LOG(ERROR) << "DequantWeight failed.";
+      free(hessian_data);
       return false;
     }
     weight_tensor->set_data(weight_info->weight_data, false);

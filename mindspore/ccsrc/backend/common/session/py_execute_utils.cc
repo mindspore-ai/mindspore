@@ -166,6 +166,7 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
 
   const auto &base_type_id = GetTypeIdByAbstract(sub_abstracts[0]);
   const auto &base_shape_vector = GetShapeVectorByAbstract(sub_abstracts[0]);
+
   for (size_t i = 1; i < sub_abstracts.size(); ++i) {
     MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
     if (sub_abstracts[i] == nullptr ||
@@ -191,6 +192,7 @@ size_t GetSizeForAbstract(const abstract::AbstractBasePtr &abstract) {
     const auto &shape = base_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     const auto &shape_vector = shape->shape();
+    MS_EXCEPTION_IF_NULL(tensor_abstract->element());
     const auto &type = tensor_abstract->element()->BuildType();
     return std::accumulate(shape_vector.begin(), shape_vector.end(), GetTypeByte(type), std::multiplies<size_t>());
   }

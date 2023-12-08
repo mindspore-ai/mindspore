@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MATMUL_CPU_KERNEL_FUNC_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MATMUL_CPU_KERNEL_FUNC_H_
 
 #include <vector>
 #include <map>
@@ -26,13 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-struct MatmulSlice {
-  int row_s_ = 0;
-  int row_e_ = 0;
-  int col_s_ = 0;
-  int col_e_ = 0;
-};
-
 class MatMulCpuKernelFunc : public CpuKernelFunc {
  public:
   MatMulCpuKernelFunc() = default;
@@ -68,4 +61,4 @@ class MatMulCpuKernelFunc : public CpuKernelFunc {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MATMUL_CPU_KERNEL_FUNC_H_

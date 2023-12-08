@@ -83,7 +83,7 @@ def _check_lstmcell_init(func):
 
 
 def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''RNN cell function with tanh activation'''
+    """RNN cell function with tanh activation"""
     if b_ih is None:
         igates = P.MatMul(False, True)(inputs, w_ih)
         hgates = P.MatMul(False, True)(hidden, w_hh)
@@ -94,7 +94,7 @@ def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''RNN cell function with relu activation'''
+    """RNN cell function with relu activation"""
     if b_ih is None:
         igates = P.MatMul(False, True)(inputs, w_ih)
         hgates = P.MatMul(False, True)(hidden, w_hh)
@@ -105,7 +105,7 @@ def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''LSTM cell function'''
+    """LSTM cell function"""
     hx, cx = hidden
     if b_ih is None:
         gates = P.MatMul(False, True)(inputs, w_ih) + P.MatMul(False, True)(hx, w_hh)
@@ -125,7 +125,7 @@ def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''GRU cell function'''
+    """GRU cell function"""
     if b_ih is None:
         gi = P.MatMul(False, True)(inputs, w_ih)
         gh = P.MatMul(False, True)(hidden, w_hh)
@@ -144,7 +144,7 @@ def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 class RNNCellBase(Cell):
-    '''Basic class for RNN Cells'''
+    """Basic class for RNN Cells"""
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int,
                  dtype=mstype.float32):
         super().__init__()
