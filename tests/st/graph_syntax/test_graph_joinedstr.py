@@ -150,7 +150,7 @@ def test_joinedstr_dynamic_shape_scalar():
     print("out:", out)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -163,7 +163,7 @@ def test_joinedstr_with_nested_pyinterpret():
     """
     @jit
     def joined_net(x):
-        return f"type(x).__name__"
+        return f"{type(x).__name__}"
 
     input_x = Tensor([1, 2, 3])
     out = joined_net(input_x)
