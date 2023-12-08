@@ -23,26 +23,10 @@ namespace pynative {
 namespace {
 constexpr auto kProfilerNamePyboost = "pyboost";
 }
-DeviceOpBuildTask::~DeviceOpBuildTask() {
-  if (!has_set_value_) {
-    promise_.set_value(false);
-  }
-}
-
-void DeviceOpBuildTask::SetBuildReady(bool build_success) {
-  promise_.set_value(build_success);
-  has_set_value_ = true;
-}
 
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
                                      runtime::ProfilerRecorder::kNoName, false);
-  MS_LOG(DEBUG) << "Wait for build";
-  auto build_status = future_.get();
-  if (!build_status) {
-    MS_LOG(WARNING) << "Op build failed, no need to launch.";
-    return;
-  }
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
 }

@@ -271,12 +271,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   const auto &graph_info = GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
   const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
-  auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != op_compiler_infos_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (op_executor.BuildInQueue(iter->second->graph_id_)) {
-      op_executor.Wait();
-    }
     const auto &op_compiler_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_compiler_info);
     *single_op_cache_hit = true;

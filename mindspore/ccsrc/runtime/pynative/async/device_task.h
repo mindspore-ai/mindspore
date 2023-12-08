@@ -79,14 +79,13 @@ class DeviceOpTask : public AsyncTask {
 class DeviceOpRunTask : public DeviceOpTask {
  public:
   DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
-                  std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func, std::future<bool> future)
-      : DeviceOpTask(std::move(context), kDeviceOpTask), run_func_(std::move(run_func)), future_(std::move(future)) {}
+                  std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func)
+      : DeviceOpTask(std::move(context), kDeviceOpTask), run_func_(std::move(run_func)) {}
   ~DeviceOpRunTask() override = default;
   void Run() override;
 
  private:
   std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func_;
-  std::future<bool> future_;
 };
 
 class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
@@ -98,19 +97,6 @@ class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
 
  private:
   std::function<void()> run_func_;
-};
-
-class DeviceOpBuildTask : public DeviceOpTask {
- public:
-  DeviceOpBuildTask(std::shared_ptr<OpTaskContext> context, std::promise<bool> promise)
-      : DeviceOpTask(std::move(context), kDeviceOpBuildTask), promise_(std::move(promise)), has_set_value_(false) {}
-  ~DeviceOpBuildTask() override;
-  void Run() override {}
-  void SetBuildReady(bool build_success);
-
- private:
-  std::promise<bool> promise_;
-  bool has_set_value_;
 };
 
 class AllocViewMemDeviceTask : public AsyncTask {
