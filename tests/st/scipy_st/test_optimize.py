@@ -199,7 +199,7 @@ def test_bfgs_fixes4594(dtype):
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -339,7 +339,7 @@ def test_line_search(maxiter, func, x, p):
     match_array(msp_res.f_k, osp_res[3], error=5)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -541,7 +541,7 @@ def test_lbfgs_fixes4594(dtype):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
