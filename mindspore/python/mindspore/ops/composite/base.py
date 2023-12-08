@@ -793,10 +793,6 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         return deco
 
     def register_default(self):
-        """
-        Register a default function for jit fallback.
-        """
-
         def deco(fn):
             self.default_func = fn
             return fn
