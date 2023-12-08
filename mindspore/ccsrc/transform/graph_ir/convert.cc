@@ -1805,6 +1805,12 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector
       MS_LOG(INFO) << "add var input " << it->ToString() << ", index " << index;
       auto op = Convert(it);
       MS_EXCEPTION_IF_NULL(op);
+      auto iter = std::find(input_datas->begin(), input_datas->end(), op);
+      if (iter != input_datas->end()) {
+        // two parameters have same ref_key
+        MS_LOG(INFO) << "var input " << it->ToString() << " is already added";
+        continue;
+      }
       UpdateConstOpDesc(it, vars_[name]);
       if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
         (void)ref_data->set_attr_index(index++);
