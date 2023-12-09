@@ -79,7 +79,7 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   } else if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_ZERO) {
     NewOp.tensor_parm = MakeTensor(1, 1, 1, 1);
   } else {
-    MS_LOG(WARNING) << ops[iter_ops]->name() << ": output tensor shape is unexpected.";
+    MS_LOG(ERROR) << ops[iter_ops]->name() << ": output tensor shape is unexpected.";
   }
 
   CompleteOperatorInputs(ops, iter_ops, &NewOp);
@@ -113,7 +113,7 @@ void CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &op
     } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 0) {
       NewTensor->apply.arguments[iter_input_tensors] = MakeTensor(1, 1, 1, 1);
     } else {
-      MS_LOG(WARNING) << ops[iter_ops]->name() << ": input tensor shape is unexpected.";
+      MS_LOG(ERROR) << ops[iter_ops]->name() << ": input tensor shape is unexpected.";
     }
   }
 }
@@ -433,14 +433,11 @@ void Eliminate_Aux_Outgoing(size_t node_index, const std::shared_ptr<Graph> &gra
 
 std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> &index_list,
-                                      const bool dyn_shape_tmp_fix) {
+                                      const std::shared_ptr<std::vector<size_t>> &index_list) {
   MS_EXCEPTION_IF_NULL(graph);
   for (size_t node_index = 0; node_index < graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
-    if (dyn_shape_tmp_fix && type == OperatorType::kRecBatchMatMul) {
-      continue;
-    } else if (EliminateOpType.find(type) != EliminateOpType.end()) {
+    if (EliminateOpType.find(type) != EliminateOpType.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }

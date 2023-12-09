@@ -543,13 +543,11 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
   }
   Dimensions gather_input_0_strategy(gather_input_0_shape.size(), 1);
   size_t num_device = LongToSize(g_device_manager->stage_device_num());
-  if (gather_input_0_shape[dim] % num_device == 0) {
-    size_t cut = 1;
-    while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
-      gather_input_0_shape[dim] /= SIZE_TWO;
-      cut *= SIZE_TWO;
-      gather_input_0_strategy[dim] *= SIZE_TWO;
-    }
+  size_t cut = 1;
+  while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
+    gather_input_0_shape[dim] /= SIZE_TWO;
+    cut *= SIZE_TWO;
+    gather_input_0_strategy[dim] *= SIZE_TWO;
   }
   strategies.push_back(gather_input_0_strategy);
   for (size_t i = 1; i < op->inputs_shape().size(); i++) {
@@ -561,13 +559,7 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
 
 Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   if (dyn_shape_tmp_fix) {
-    Strategies strategies;
-    strategies.push_back(strategy);
-    for (size_t i = 1; i < op->inputs_shape().size(); i++) {
-      Dimensions gather_input_i_strategy(op->inputs_shape()[i].size(), 1);
-      strategies.push_back(gather_input_i_strategy);
-    }
-    return strategies;
+    return GatherForDynamicShape(op, 0);
   }
 
   Strategies strategies;
@@ -875,7 +867,7 @@ void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op) {
 }
 
 Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                           const size_t iter_ops, const bool dyn_shape_tmp_fix) {
+                           const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -887,8 +879,6 @@ Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_
   auto type = ops[iter_ops]->type();
   if (type == MATMUL) {
     return PrepareMatMul(node, ops[iter_ops]);
-  } else if (dyn_shape_tmp_fix && type == BATCH_MATMUL) {
-    return PrepareBatchMatMul(node, ops[iter_ops]);
   } else if (type == LAYER_NORM) {
     return PrepareAxisRelatedStrategy(node, ops, iter_ops);
   } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
@@ -1496,7 +1486,7 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     strategies.push_back(basic_stra);
     return strategies;
   }
-  if (!dyn_shape_tmp_fix && type == BATCH_MATMUL) {
+  if (type == BATCH_MATMUL) {
     return PreparePropagateBatchMatMul(ops[iter_ops], basic_stra);
   }
 
@@ -1826,7 +1816,7 @@ Dimensions RecStrategyPropagator::GetDefaultStrategy(size_t i_op) {
 }
 
 bool StopPropAtOP(std::string op_type) {
-  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS, RESHAPE};
+  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS};
   return stop_at.find(op_type) != stop_at.end();
 }
 
@@ -2199,7 +2189,7 @@ size_t RecStrategyPropagator::CopyMainOperatorsStrategy() {
     Strategies strategies;
     size_t iter_graph = index_list_->at(i_op);
     if (iter_graph != SIZE_MAX && ops_[i_op]->type() != GET_NEXT) {
-      strategies = PrepareStrategy(&graph_->nodes[iter_graph], ops_, i_op, graph_->dyn_shape_tmp_fix);
+      strategies = PrepareStrategy(&graph_->nodes[iter_graph], ops_, i_op);
     }
     if (!strategies.empty()) {
       source_ops_.push_back(i_op);
@@ -2254,10 +2244,6 @@ void RecStrategyPropagator::FixInvalidStra() {
       Dimensions strategies;
       for (size_t iter_op_input_stra = 0; iter_op_input_stra < op->inputs_shape()[iter_op_inputs].size();
            iter_op_input_stra++) {
-        if (graph_->dyn_shape_tmp_fix && op->inputs_shape()[iter_op_inputs][iter_op_input_stra] == -1) {
-          strategies.push_back(old_strategys->GetInputDim()[iter_op_inputs][iter_op_input_stra]);
-          continue;
-        }
         if (op->inputs_shape()[iter_op_inputs][iter_op_input_stra] <
               old_strategys->GetInputDim()[iter_op_inputs][iter_op_input_stra] ||
             op->inputs_shape()[iter_op_inputs][iter_op_input_stra] %

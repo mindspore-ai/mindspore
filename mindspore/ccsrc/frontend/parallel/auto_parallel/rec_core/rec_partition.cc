@@ -149,26 +149,18 @@ StrategyRec PartitionNode(Graph::NodeType node,
   if (node.apply.op_type == OperatorType::kRecMatMul) {
     if (graph->dyn_shape_tmp_fix) {
       if (node.param_name.find(".projection.weight") != std::string::npos) {
-        node.apply.str.inputTensor[0].str_w /= SIZE_TWO;
-        node.apply.str.inputTensor[1].str_h /= SIZE_TWO;
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
         return node.apply.str;
       }
       if (node.param_name.find(".mapping.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= SIZE_TWO;
-        node.apply.str.outputTensor.str_w /= SIZE_TWO;
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
         return node.apply.str;
       }
       if (node.param_name.find(".attention.dense2.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= SIZE_TWO;
-        node.apply.str.outputTensor.str_w /= SIZE_TWO;
-        return node.apply.str;
-      }
-      if (node.param_name.find(".attention_norm.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= SIZE_TWO;
-        node.apply.str.outputTensor.str_w /= SIZE_TWO;
-        return node.apply.str;
-      }
-      if (node.param_name.find(".norm_out.weight") != std::string::npos) {
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
         return node.apply.str;
       }
     }
@@ -180,13 +172,13 @@ StrategyRec PartitionNode(Graph::NodeType node,
   } else if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
     if (graph->dyn_shape_tmp_fix) {
       if (node.param_name.find(".projection.weight") != std::string::npos) {
-        node.apply.str.inputTensor[0].str_w /= SIZE_TWO;
-        node.apply.str.inputTensor[1].str_h /= SIZE_TWO;
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
         return node.apply.str;
       }
       if (node.param_name.find(".mapping.weight") != std::string::npos) {
-        node.apply.str.inputTensor[1].str_w /= SIZE_TWO;
-        node.apply.str.outputTensor.str_w /= SIZE_TWO;
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
         return node.apply.str;
       }
 
@@ -223,13 +215,13 @@ StrategyRec PartitionNode(Graph::NodeType node,
         }
       }
       if (projection_bias_bmm) {
-        node.apply.str.inputTensor[0].str_w /= SIZE_TWO;
-        node.apply.str.inputTensor[1].str_h /= SIZE_TWO;
+        node.apply.str.inputTensor[0].str_w /= 2.0;
+        node.apply.str.inputTensor[1].str_h /= 2.0;
         return node.apply.str;
       }
       if (mapping_bias_bmm) {
-        node.apply.str.inputTensor[1].str_w /= SIZE_TWO;
-        node.apply.str.outputTensor.str_w /= SIZE_TWO;
+        node.apply.str.inputTensor[1].str_w /= 2.0;
+        node.apply.str.outputTensor.str_w /= 2.0;
         return node.apply.str;
       }
     }

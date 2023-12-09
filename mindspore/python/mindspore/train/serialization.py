@@ -776,7 +776,7 @@ def load(file_name, **kwargs):
     return graph
 
 
-def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=True):
+def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=False):
     """
     Auto Split MindIR.
 
