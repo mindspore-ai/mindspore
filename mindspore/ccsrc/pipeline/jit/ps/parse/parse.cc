@@ -2431,6 +2431,22 @@ AnfNodePtr Parser::ParseDictByKeysAndValues(const FunctionBlockPtr &block, const
   return block->func_graph()->NewCNodeInOrder({make_dict_op, keys_tuple, values_tuple});
 }
 
+std::pair<AnfNodePtr, AnfNodePtr> Parser::GetRealKeysValuesFromName(const FunctionBlockPtr &block,
+                                                                    const py::object &node) {
+  MS_EXCEPTION_IF_NULL(block);
+  auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
+  AnfNodePtr dict = block->ReadVariable(name_id);
+  auto keys = block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimDictGetKeys), dict});
+  auto values = block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimDictGetValues), dict});
+  // Using the MakeTuple node, pass the need_unpack tag from the AnfNode to the abstract
+  auto tuple_keys = block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), keys});
+  auto tuple_values = block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), values});
+  constexpr auto need_unpack = "need_unpack";
+  tuple_keys->set_user_data<bool>(need_unpack, std::make_shared<bool>(true));
+  tuple_values->set_user_data<bool>(need_unpack, std::make_shared<bool>(true));
+  return {tuple_keys, tuple_values};
+}
+
 std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> Parser::GetRealKeysValues(const FunctionBlockPtr &block,
                                                                                       const py::object &node) {
   py::list keys = node.attr("keys");
@@ -2448,14 +2464,19 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> Parser::GetRealKeysV
       auto unpack_dict = values[index];
       auto inner_value_node_type =
         AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, unpack_dict)));
-      if (inner_value_node_type != AST_SUB_TYPE_DICT) {
+      if (inner_value_node_type == AST_SUB_TYPE_DICT) {
+        auto [unpack_keys, unpack_values] = GetRealKeysValues(block, unpack_dict);
+        for (size_t i = 0; i < unpack_keys.size(); ++i) {
+          inner_key_nodes.push_back(unpack_keys[i]);
+          inner_value_nodes.push_back(unpack_values[i]);
+        }
+      } else if (inner_value_node_type == AST_SUB_TYPE_NAME) {
+        auto [unpack_key, unpack_value] = GetRealKeysValuesFromName(block, unpack_dict);
+        inner_key_nodes.push_back(unpack_key);
+        inner_value_nodes.push_back(unpack_value);
+      } else {
         MS_LOG(INTERNAL_EXCEPTION) << "The input of dict which need unpack must be dict, but got "
                                    << inner_value_node_type;
-      }
-      auto [unpack_keys, unpack_values] = GetRealKeysValues(block, unpack_dict);
-      for (size_t i = 0; i < unpack_keys.size(); ++i) {
-        inner_key_nodes.push_back(unpack_keys[i]);
-        inner_value_nodes.push_back(unpack_values[i]);
       }
     } else {
       AnfNodePtr key_node = ParseExprNode(block, keys[index]);
