@@ -27,7 +27,7 @@ def update_attr(attr, new_attr):
     """Update new_attr to attr."""
     if attr is None:
         attr = {}
-    elif attr is str:
+    if isinstance(attr, str):
         attr = json.loads(attr)
     if isinstance(attr, dict):
         attr.update(new_attr)

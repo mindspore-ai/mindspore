@@ -64,6 +64,7 @@
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/set_infershape_functor.h"
+#include "backend/common/graph_kernel/recognize_softmax_grad_ext.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
 #ifdef ENABLE_AKG
@@ -94,7 +95,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->Add(std::make_shared<SaveOutputShape>(), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1);
+  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu || is_cpu);
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
@@ -104,6 +105,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
+
+  // Recognize ops that will be fused by GE
+  pm->Add(std::make_shared<RecognizeSoftmaxGradExt>(), OptLevel_1, is_ge);
 
   return pm;
 }
@@ -249,7 +253,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
-  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || is_ascend);
+  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
   return pm;
@@ -282,7 +286,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-  is_ge = (is_ascend && (context_ptr->backend_policy() == "ge"));
+  is_ge = (is_ascend && (context_ptr->backend_policy() == "ge") && kernel_graph->is_graph_run_mode());
   auto cb = Callback::Instance();
   if (is_ge) {
     Callback::RegImpl(std::make_shared<CallbackImplWithInferShape>());
