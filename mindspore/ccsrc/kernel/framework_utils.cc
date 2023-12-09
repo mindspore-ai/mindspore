@@ -185,64 +185,6 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   }
   return std::make_pair(input_tensors, output_tensors);
 }
-
-inline InOutKernelTensors AbstractInOutFromDeviceAddress(
-  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &out_abstract) {
-  MS_EXCEPTION_IF_NULL(out_abstract);
-  // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
-  auto &input_tensors = kernel_mod->GetInputs();
-  size_t input_num = inputs_device_address.size();
-  KernelTensorPtr input_tensor;
-  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    if (input_idx >= input_tensors.size()) {
-      input_tensor = std::make_shared<KernelTensor>();
-      (void)input_tensors.emplace_back(input_tensor);
-    } else {
-      input_tensor = input_tensors[input_idx];
-    }
-    const auto &input_device_address = inputs_device_address[input_idx];
-    if (input_device_address == nullptr) {
-      MS_LOG(WARNING) << "None input create None KernelTensor.";
-      continue;
-    }
-    auto shape = input_device_address->host_shape();
-    auto new_abstract =
-      std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract};
-    input_tensor->SetTensorInfo(tensor_info);
-    input_tensor->SetMetaType(kObjectTypeTensorType);
-  }
-
-  // Makeup output tensors.
-
-  auto &output_tensors = kernel_mod->GetOutputs();
-  size_t output_num = outputs_device_address.size();
-  KernelTensorPtr output_tensor;
-  for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-    if (output_idx >= output_tensors.size()) {
-      output_tensor = std::make_shared<KernelTensor>();
-      (void)output_tensors.emplace_back(output_tensor);
-    } else {
-      output_tensor = output_tensors[output_idx];
-    }
-    AbstractBasePtr new_abstract;
-    const auto &output_device_address = outputs_device_address[output_idx];
-    auto shape = output_device_address->host_shape();
-    if (out_abstract->isa<abstract::AbstractTuple>()) {
-      auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
-      new_abstract = abstract_tuple->elements()[output_idx];
-    } else {
-      new_abstract = out_abstract;
-    }
-    auto kernel_tensor_abstract = std::make_shared<abstract::AbstractTensor>(
-      TypeIdToType(output_device_address->type_id()), new_abstract->BuildShape());
-    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract};
-    output_tensor->SetTensorInfo(tensor_info);
-    output_tensor->SetMetaType(kObjectTypeTensorType);
-  }
-  return std::make_pair(input_tensors, output_tensors);
-}
 }  // namespace
 
 std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
@@ -1048,17 +990,6 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   return args;
 }
 
-KernelArgs AbstractArgsFromDeviceAddress(KernelMod *const kernel_mod,
-                                         const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-                                         const std::vector<device::DeviceAddressPtr> &outputs_device_address,
-                                         const AbstractBasePtr &abstract) {
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto [input_tensors, output_tensors] =
-    AbstractInOutFromDeviceAddress(kernel_mod, inputs_device_address, outputs_device_address, abstract);
-  KernelArgs args = {input_tensors, output_tensors};
-  return args;
-}
-
 BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
@@ -1164,7 +1095,9 @@ void UpdateNodeShape(const CNodePtr &cnode) {
     return;
   }
 
-  auto output_tensor = kernel_mod->RetrieveOutputShape();
+  auto output_tensor = AnfAlgo::GetOrCreateAllOutputKernelTensors(cnode);
+  auto input_tensor = AnfAlgo::GetOrCreateAllInputKernelTensors(cnode);
+  kernel_mod->UpdateOutputShapeAndSize(input_tensor, output_tensor);
   if (output_tensor.empty()) {
     return;
   }

@@ -155,7 +155,7 @@ class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.clear();
     (void)SetProperty(primitive_, inputs, outputs);
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
  protected:

@@ -109,52 +109,33 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
       MS_EXCEPTION_IF_NULL(kernel);
 
-      auto old_gpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeGpuKernelMod>(gpu_kernel_mod);
-      if (old_gpu_kernel_mod) {
-        auto args = kernel::AbstractArgsFromCNode(kernel);
-        // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
-        // we will put this tensor in args.inputs.host_data_.
-        auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
-        kernel::SetInputsByConstInputs(kernel, &inputs_tensor_map);
-        kernel::SetInputsByDependMap(inputs_tensor_map, &args.inputs);
-        kernel::SetArgsToCNode(kernel, args);
-        if (new_factory) {
-          old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
-        }
-        if (!old_gpu_kernel_mod->Init(kernel)) {
-          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
-                                     << kernel->fullname_with_scope() << "] failed.";
-        }
-        session::AnfRuntimeAlgorithm::SetKernelMod(old_gpu_kernel_mod, kernel.get());
-      } else {
-        if (new_factory) {
-          auto kernel_attrs = gpu_kernel_mod->GetOpSupport();
-          SetGpuRefMapToKernelInfo(kernel, kernel_attrs);
-        }
-        auto ms_context = MsContext::GetInstance();
-        MS_EXCEPTION_IF_NULL(ms_context);
-        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-        gpu_kernel_mod->SetDevicedId(device_id);
-        std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
-        std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
-
-        MS_LOG(DEBUG) << "Begin Init kernel: " << kernel->fullname_with_scope();
-        if (!gpu_kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
-                                  output_kernel_tensors)) {
-          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
-                            << kernel->fullname_with_scope() << "] failed.";
-        }
-        MS_LOG(DEBUG) << "End Init kernel: " << kernel->fullname_with_scope();
-        if (kernel::CheckResizeCondition(kernel)) {
-          MS_LOG(DEBUG) << "Begin Resize in compile phase for kernel: " << kernel->fullname_with_scope();
-          if (gpu_kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
-            MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
-                              << "] Resize failed.";
-          }
-          MS_LOG(DEBUG) << "End Resize in compile phase for kernel: " << kernel->fullname_with_scope();
-        }
-        session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
+      if (new_factory) {
+        auto kernel_attrs = gpu_kernel_mod->GetOpSupport();
+        SetGpuRefMapToKernelInfo(kernel, kernel_attrs);
       }
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+      gpu_kernel_mod->SetDevicedId(device_id);
+      std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+
+      MS_LOG(DEBUG) << "Begin Init kernel: " << kernel->fullname_with_scope();
+      if (!gpu_kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
+                                output_kernel_tensors)) {
+        MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
+                          << kernel->fullname_with_scope() << "] failed.";
+      }
+      MS_LOG(DEBUG) << "End Init kernel: " << kernel->fullname_with_scope();
+      if (kernel::CheckResizeCondition(kernel)) {
+        MS_LOG(DEBUG) << "Begin Resize in compile phase for kernel: " << kernel->fullname_with_scope();
+        if (gpu_kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
+                            << "] Resize failed.";
+        }
+        MS_LOG(DEBUG) << "End Resize in compile phase for kernel: " << kernel->fullname_with_scope();
+      }
+      session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
     }
   }
 #ifdef ENABLE_AKG

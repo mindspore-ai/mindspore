@@ -44,6 +44,7 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
  private:
   ShapeArray outs_shape_;
   bool is_dynamic_len_out_{false};
+  size_t inputs_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -71,13 +71,6 @@ class AicpuOpKernelMod : public KernelMod {
     MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module launch interface.";
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module resize interface.";
-  }
-
  protected:
   std::string args_;
   std::string ext_info_;

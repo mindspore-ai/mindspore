@@ -620,17 +620,6 @@ void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
   info.base_->set_shape(base_shape);
 }
 
-int KernelMod::Resize(const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return Resize(this->op_, this->inputs_, this->outputs_, inputsOnHost);
-}
-
-int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  inputs_ = inputs;
-  outputs_ = outputs;
-  return Resize(this->op_, inputs, outputs, inputsOnHost);
-}
-
 int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
@@ -666,70 +655,6 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }
-  return static_cast<int>(ret);
-}
-
-int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                      const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
-  MS_LOG(DEBUG) << "Resize start for operator:" << base_operator->name();
-  auto ret = KRET_OK;
-  workspace_size_list_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  for (size_t idx = 0; idx < inputs.size(); idx++) {
-    auto &input = inputs[idx];
-    size_t tensor_size = 0;
-    MS_EXCEPTION_IF_NULL(input);
-    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
-    auto shape = input->GetShapeVector();
-    if (!IsValidShape(shape)) {
-      MS_LOG(DEBUG) << "input " << idx << " is not valid shape:" << shape << " for op:" << kernel_name_;
-      // early stop if any input shape contains -1/-2, which means input shape is dynamic
-      return KRET_UNKNOWN_SHAPE;
-    } else {
-      tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-      tensor_size = std::max(tensor_size, type_size);
-    }
-    (void)input_size_list_.emplace_back(tensor_size);
-  }
-
-  for (size_t idx = 0; idx < outputs.size(); idx++) {
-    auto &output = outputs[idx];
-    size_t tensor_size = 0;
-    MS_EXCEPTION_IF_NULL(output);
-    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
-    auto shape = output->GetShapeVector();
-    if (!IsValidShape(shape)) {
-      // Note:
-      // If output shape is unknown, the op is a compute-depended op and max_shape should not be empty,
-      // and the output_size_list_ can be set by max_shape
-      auto max_shape = output->GetMaxShape();
-      if (max_shape.empty()) {
-        MS_LOG(DEBUG) << "For " << kernel_name_ << ", the max_shape should not be empty when input shape is known.";
-        ret = KRET_UNKNOWN_OUT_SHAPE;
-      } else {
-        tensor_size = SizeOf(max_shape) * type_size;
-        ret = KRET_UNKNOWN_OUT_SHAPE;
-      }
-    } else {
-      if (shape.empty()) {
-        tensor_size = type_size;
-      } else {
-        auto cur_out_shape_num = SizeOf(shape);
-        tensor_size = cur_out_shape_num * type_size;
-        if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
-          MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the shape of outputs[" << output_size_list_.size()
-                                   << "]: " << shape
-                                   << " is too big, mindspore cannot apply for such a large amount of memory.";
-        }
-      }
-      tensor_size = std::max(tensor_size, type_size);
-    }
-    (void)output_size_list_.emplace_back(tensor_size);
-  }
-  MS_LOG(DEBUG) << "Resize end for operator:" << base_operator->name();
   return static_cast<int>(ret);
 }
 
