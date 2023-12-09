@@ -64,6 +64,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                        const tensor::TensorPtr &tensor);
   static void MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor);
   static void MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val);
+  static void MallocForInput(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors);
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
                                        const std::optional<tensor::TensorPtr> &val);
   template <typename T>
