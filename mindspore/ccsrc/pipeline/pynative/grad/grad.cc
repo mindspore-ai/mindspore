@@ -1956,7 +1956,8 @@ void GradExecutor::WaitBpropTask() const {
   if (bprop_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
     // Wait for the forward tasks finish.
-    runtime::OpExecutor::GetInstance().WaitForBuild();
+    forward()->WaitForwardTask();
+    runtime::OpExecutor::GetInstance().Wait();
     bprop_queue_->Wait();
     assist_queue_->Wait();
     bprop_queue_->CheckException();
