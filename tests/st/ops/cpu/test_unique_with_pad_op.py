@@ -50,7 +50,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_dyn():
@@ -65,7 +65,7 @@ def test_net_dyn():
     dyn_case()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_int32():
@@ -84,7 +84,7 @@ def test_net_int32():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_float32():
@@ -103,7 +103,7 @@ def test_net_float32():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_with_pad_dynamic_shape():
@@ -124,7 +124,7 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_with_pad_vmap():
@@ -152,7 +152,7 @@ def test_unique_with_pad_vmap():
     assert np.allclose(outputs[1].asnumpy(), expect1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_int64():

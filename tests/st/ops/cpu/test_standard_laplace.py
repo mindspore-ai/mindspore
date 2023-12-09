@@ -71,7 +71,7 @@ def test_standard_laplace_op():
     assert output.shape == (130, 120, 141)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_standard_laplace_functional():
@@ -86,7 +86,7 @@ def test_standard_laplace_functional():
     assert output.shape == shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_standard_laplace_dynamic_shape():

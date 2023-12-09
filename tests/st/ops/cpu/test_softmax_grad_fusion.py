@@ -49,7 +49,7 @@ def numpy_func(x, y):
     return res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softmax_grad_fusion():

@@ -24,7 +24,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.00001, 0.00001, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float, np.double])
@@ -46,7 +46,7 @@ def test_stft_real_input(data_type):
     assert np.allclose(out_ms.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("input_data_type", [np.complex64, np.complex128])
@@ -73,7 +73,7 @@ def test_stft_complex_input(input_data_type, win_data_type):
     assert np.allclose(out_ms.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("input_data_type", [np.complex64, np.complex128])

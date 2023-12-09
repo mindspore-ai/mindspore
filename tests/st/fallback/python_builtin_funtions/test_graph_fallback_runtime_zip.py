@@ -66,7 +66,7 @@ def test_fallback_runtime_zip_asnumpy():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,7 +89,7 @@ def test_fallback_runtime_zip_asnumpy_tuple():
     assert out == ((10, 10), (20, 20))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -113,7 +113,7 @@ def test_fallback_runtime_zip_tensor():
     assert out == 30
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

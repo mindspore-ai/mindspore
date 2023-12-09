@@ -74,7 +74,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
         return self.arith_func(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unsorted_segment_max_dynamic_shape():
@@ -96,7 +96,7 @@ def test_unsorted_segment_max_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unsorted_segment_min_dynamic_shape():
@@ -119,7 +119,7 @@ def test_unsorted_segment_min_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unsorted_segment_prod_dynamic_shape():
@@ -178,7 +178,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
@@ -202,7 +202,7 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max'])
@@ -223,7 +223,7 @@ def test_unsorted_segment_arithmetic_error(func):
         net(x, segment_ids)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['sum'])
@@ -398,7 +398,7 @@ def test_vmap2(func):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['sum'])

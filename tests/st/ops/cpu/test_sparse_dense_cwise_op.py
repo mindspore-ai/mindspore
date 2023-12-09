@@ -49,7 +49,7 @@ class SparseDenseCwiseDivNet(nn.Cell):
         return self.op(x1_indices, x1_values, x1_shape, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_dense_add_dyn():
@@ -76,7 +76,7 @@ def test_sparse_dense_add_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_dense_mul_dyn():
@@ -103,7 +103,7 @@ def test_sparse_dense_mul_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.skip(reason="Have issues")

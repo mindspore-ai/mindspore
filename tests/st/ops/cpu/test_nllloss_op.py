@@ -56,7 +56,7 @@ target = Tensor(np.array([1, 0, 4]).astype(np.int32))
 weight = Tensor(np.array([0.2, 0.3, 0.1, 0.15, 0.25]).astype(np_type))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_NLLLoss_none():
@@ -84,7 +84,7 @@ def test_NLLLoss_none():
     assert np.allclose(net(logits, target, weight)[0].asnumpy(), expect_dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_NLLLoss_sum():
@@ -112,7 +112,7 @@ def test_NLLLoss_sum():
     assert np.allclose(net(logits, target, weight)[0].asnumpy(), expect_dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_NLLLoss_mean():

@@ -42,7 +42,7 @@ class TwoTensorsMaximum(Cell):
         return self.max(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_const_scalar_tensor_int():
@@ -63,7 +63,7 @@ def test_maximum_const_scalar_tensor_int():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_not_broadcast_int():
@@ -107,7 +107,7 @@ def test_maximum_two_tensors_broadcast_int():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_broadcast_one_dimension_int():
@@ -151,7 +151,7 @@ def test_maximum_two_tensors_not_broadcast_all_one_dimension_int():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_not_broadcast_float32():
@@ -173,7 +173,7 @@ def test_maximum_two_tensors_not_broadcast_float32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_not_broadcast_float64():
@@ -195,7 +195,7 @@ def test_maximum_two_tensors_not_broadcast_float64():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

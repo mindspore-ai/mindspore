@@ -46,7 +46,7 @@ def test_uniform_double():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_float():
@@ -62,7 +62,7 @@ def test_uniform_float():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_half():
@@ -78,7 +78,7 @@ def test_uniform_half():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_int32_input_error():

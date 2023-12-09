@@ -46,7 +46,7 @@ def run_net(datatype, input_tensors, output_tensors):
     assert output1.dtype == inp1.dtype
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_square_sum_all_dynamic_shape():
@@ -72,7 +72,7 @@ def test_square_sum_all_dynamic_shape():
     assert out_y.asnumpy().shape == expect_out_y_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
@@ -89,7 +89,7 @@ def test_cpu(dtype, input_tensors, output_tensors):
     run_net(dtype, input_tensors, output_tensors)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_exception_dtype_diff():
@@ -106,7 +106,7 @@ def test_cpu_exception_dtype_diff():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_exception_dtype_not_support():
@@ -123,7 +123,7 @@ def test_cpu_exception_dtype_not_support():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_exception_shape_diff():
@@ -140,7 +140,7 @@ def test_cpu_exception_shape_diff():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_float16():

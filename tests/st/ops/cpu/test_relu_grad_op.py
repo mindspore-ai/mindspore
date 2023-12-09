@@ -41,7 +41,7 @@ class NetReluGrad(nn.Cell):
         return self.relu_grad(self.dy, self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_relu_grad():

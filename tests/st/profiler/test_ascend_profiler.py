@@ -97,7 +97,7 @@ class Net1(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -160,7 +160,7 @@ def test_shape():
         assert len(glob.glob(f"{tmpdir}/profiler*/dynamic_shape_*.json")) == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

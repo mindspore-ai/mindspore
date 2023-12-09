@@ -38,7 +38,7 @@ class NetReduceStd(nn.Cell):
         return F.std_mean(indice, axis=self._axis, ddof=False, keepdims=self._keep_dims)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('axis', [None, 0, 1, -1, (-1, 0, 1), (0, 1, 2)])
@@ -76,7 +76,7 @@ class ReduceStdDynamicShapeNet(nn.Cell):
         return F.std_mean(x_unique, ddof=False, keepdims=False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

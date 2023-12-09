@@ -59,7 +59,7 @@ def test_fallback_float():
 
 
 @pytest.mark.skip(reason="ScalarToRawMemory memcpy failed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

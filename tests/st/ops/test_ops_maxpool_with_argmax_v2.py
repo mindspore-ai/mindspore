@@ -96,7 +96,7 @@ def test_dynamic_maxpool_with_argmax_v2(mode):
     assert argmax.shape == (3, 16, 24, 31)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

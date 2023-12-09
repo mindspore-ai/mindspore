@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_topk():
@@ -83,7 +83,7 @@ def test_topk():
     assert np.allclose(ms_output[0].asnumpy(), x_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_top_k_functional():

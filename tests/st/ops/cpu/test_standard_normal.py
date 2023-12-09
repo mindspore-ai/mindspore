@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.stdnormal(self.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
@@ -65,7 +65,7 @@ def test_net():
     assert output.shape == (130, 120, 141)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_standard_normal_functional():

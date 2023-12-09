@@ -31,7 +31,7 @@ class NetZerosLike(nn.Cell):
         return self.zeros_like(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.int32, np.float32, np.float64])

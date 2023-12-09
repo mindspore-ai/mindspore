@@ -35,7 +35,7 @@ class SparseSparseMinimumNet(nn.Cell):
                        x2_shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_sparse_minimum_dynamic_shape():

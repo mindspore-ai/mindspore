@@ -58,7 +58,7 @@ def test_jit_function_run_in_pynative():
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_run_pynative_and_then_run_graph():

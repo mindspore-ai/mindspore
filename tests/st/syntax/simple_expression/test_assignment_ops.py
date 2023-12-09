@@ -488,7 +488,7 @@ def test_number_assigndiv_tensor():
     assert np.all(result.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

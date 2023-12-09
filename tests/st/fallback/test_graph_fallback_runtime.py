@@ -49,7 +49,7 @@ def test_getattr_tensor_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -280,7 +280,7 @@ def test_pyexecute_with_func_graph_input():
 
 
 @pytest.mark.skip('backend not support different type in value tuple')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -348,7 +348,7 @@ class CreateNotDynTensor(nn.Cell):
 
 
 @pytest.mark.skip('ops.shape(x) is constant, not mutable.')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -448,7 +448,7 @@ def test_make_tensor_with_dynamic_shape_dtype():
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

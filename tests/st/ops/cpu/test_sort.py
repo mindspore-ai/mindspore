@@ -198,21 +198,21 @@ def dynamic_sort_3d(descending, nptype):
     np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort1d_float16():
     sort_1d(False, np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort1d_descending_float16():
     sort_1d(True, np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort1d_float32():
@@ -226,7 +226,7 @@ def test_sort1d_descending_float32():
     sort_1d(True, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort3d_float16():
@@ -240,21 +240,21 @@ def test_sort3d_descending_float16():
     sort_3d(True, np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort3d_float32():
     sort_3d(False, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sort3d_descending_float32():
     sort_3d(True, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_dynamic_sort3d_descending_float32():
@@ -266,7 +266,7 @@ def test_cpu_dynamic_sort3d_descending_float32():
     dynamic_sort_3d(True, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

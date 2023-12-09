@@ -55,7 +55,7 @@ def test_multihead_attention_pynative_cpu_gpu(dtype, jit):
     assert q.shape == out[0].shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -137,7 +137,7 @@ def test_transformerencoder_square_input_cpu(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -303,7 +303,7 @@ def test_transformerdecoder_cpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -401,7 +401,7 @@ def test_transformer_gpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

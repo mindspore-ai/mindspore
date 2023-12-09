@@ -45,7 +45,7 @@ class NetGrad(nn.Cell):
         return self.grad(self.forward)(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -68,7 +68,7 @@ def test_size_1_dimension(mode):
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -91,7 +91,7 @@ def test_size_2_dimension(mode):
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -114,7 +114,7 @@ def test_size_3_dimension(mode):
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

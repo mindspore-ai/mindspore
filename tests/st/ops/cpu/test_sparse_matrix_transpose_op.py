@@ -32,7 +32,7 @@ class NetSparseMatrixTranspose(nn.Cell):
                        x_col_indices, x_values)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_enecard
 def test_sparse_matrix_transpose_dyn():

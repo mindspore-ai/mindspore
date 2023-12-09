@@ -37,7 +37,7 @@ class SliceGrad(nn.Cell):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 1, 3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_grad():
@@ -64,7 +64,7 @@ class SliceGrad2(nn.Cell):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 2, 2))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_grad2():
@@ -137,7 +137,7 @@ class StridedSliceGrad(nn.Cell):
         return self.stride_slice(dy, self.shapex, self.begin, self.end, self.stride)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_strided_slice_grad_bool_type():
@@ -155,7 +155,7 @@ def test_strided_slice_grad_bool_type():
     assert (output.asnumpy() == expected_output).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_strided_slice_grad_float32_type():

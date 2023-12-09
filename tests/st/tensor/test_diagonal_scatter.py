@@ -25,7 +25,7 @@ class Net(nn.Cell):
         return x.diagonal_scatter(src, offset=1, dim1=1, dim2=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -30,7 +30,7 @@ class NetSparseTensorToCSRSparseMatrix(nn.Cell):
         return self.op(x_indices, x_values, x_dense_shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_tensor_to_csr_sparse_matrix_dyn():

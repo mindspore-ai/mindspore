@@ -30,7 +30,7 @@ class Net(nn.Cell):
         return self.op(x, value, begin, end, strides)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_dyn():

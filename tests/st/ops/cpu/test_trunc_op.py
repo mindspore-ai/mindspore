@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.trunc(x0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test16_net():
@@ -48,7 +48,7 @@ def test16_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test32_net():
@@ -60,7 +60,7 @@ def test32_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def testint8_net():
@@ -72,7 +72,7 @@ def testint8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def testuint8_net():
@@ -84,7 +84,7 @@ def testuint8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def testint32_net():
@@ -96,7 +96,7 @@ def testint32_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_trunc():
@@ -120,7 +120,7 @@ def test_vmap_trunc():
     assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

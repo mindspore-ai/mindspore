@@ -42,7 +42,7 @@ def sparse_segment_mean_numpy(x, indices, segment_ids):
     return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type, index_type, error', [(np.float32, np.int32, 3), (np.float64, np.int64, 5)])

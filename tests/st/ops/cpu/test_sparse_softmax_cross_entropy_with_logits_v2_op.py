@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.op(logits, labels)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_softmax_cross_entropy_with_logits_v2_dyn():

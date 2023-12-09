@@ -32,7 +32,7 @@ class NetOnesLike(nn.Cell):
         return self.ones_like(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.int32, np.float32, np.float64])
@@ -65,7 +65,7 @@ def test_OnesLike(dtype):
     assert output1.shape == expect1.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_oneslike_cpu_dynamic_shape():

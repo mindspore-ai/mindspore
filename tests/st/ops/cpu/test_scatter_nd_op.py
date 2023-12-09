@@ -140,7 +140,7 @@ def test_scatternd_float64():
     scatternd_negative(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_float32():
@@ -153,7 +153,7 @@ def test_scatternd_float32():
     scatternd_negative(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_float16():
@@ -179,7 +179,7 @@ def test_scatternd_int64():
     scatternd_negative(np.int64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_int32():
@@ -192,7 +192,7 @@ def test_scatternd_int32():
     scatternd_negative(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_int16():
@@ -205,7 +205,7 @@ def test_scatternd_int16():
     scatternd_negative(np.int16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_int8():
@@ -218,7 +218,7 @@ def test_scatternd_int8():
     scatternd_negative(np.int8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint64():
@@ -242,7 +242,7 @@ def test_scatternd_uint32():
     scatternd_positive_uint(np.uint32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint16():
@@ -254,7 +254,7 @@ def test_scatternd_uint16():
     scatternd_positive_uint(np.uint16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_indices_out_of_range():
@@ -266,7 +266,7 @@ def test_scatternd_indices_out_of_range():
     scatternd_indices_out_of_range(np.int16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint8():
@@ -307,7 +307,7 @@ def vmap_1_batch():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_vmap():
@@ -328,7 +328,7 @@ class FunctionalNet(nn.Cell):
         return ops.scatter_nd(indices, update, self.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_functional():
@@ -351,7 +351,7 @@ def test_scatternd_functional():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_functional_pynative():

@@ -38,7 +38,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparseapplyadagradv2op_fp32():
@@ -79,7 +79,7 @@ def test_sparseapplyadagradv2op_fp32():
     assert np.allclose(accum_out.asnumpy(), expect_accum, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparseapplyadagradv2op_update_slot_false():
@@ -100,7 +100,7 @@ def test_sparseapplyadagradv2op_update_slot_false():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparseapplyadagradv2_dtype_not_supported():
@@ -137,7 +137,7 @@ def test_sparseapplyadagradv2_dynamic_shape_support():
         sparse_apply_adagrad_v2(var, accum, gradient, indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_sparseapplyadagradopv2():

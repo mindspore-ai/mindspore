@@ -37,7 +37,7 @@ class StridedSlice(nn.Cell):
         return self.stridedslice(x, (2, 0, 0), (3, 2, 3), (1, 1, 1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice():
@@ -49,7 +49,7 @@ def test_slice():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_vmap():
@@ -66,7 +66,7 @@ def test_slice_vmap():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype",
@@ -88,7 +88,7 @@ def test_slice_functional_with_attr_int32(dtype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype",
@@ -111,7 +111,7 @@ def test_slice_functional_with_attr_int64(dtype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
@@ -133,7 +133,7 @@ def test_slice_functional_with_attr_int32_complex(dtype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])

@@ -32,7 +32,7 @@ class NetSigmoidCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits_dynamic_shape():
@@ -58,7 +58,7 @@ def test_sigmoid_cross_entropy_with_logits_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits():

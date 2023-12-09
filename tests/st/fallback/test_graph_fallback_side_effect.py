@@ -407,7 +407,7 @@ def test_if_after_for_in_if_numpy():
     assert (output.asnumpy() == [3, 4]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -447,7 +447,7 @@ def test_fallback_save_load():
         pass
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -501,7 +501,7 @@ class TransformerNet(nn.Cell):
         return dense_output.asnumpy(), Tensor(np.array([1, 2]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

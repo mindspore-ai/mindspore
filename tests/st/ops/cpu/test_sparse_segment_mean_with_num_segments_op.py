@@ -32,7 +32,7 @@ class NetSparseSegmentMeanWithNumSegments(nn.Cell):
         return self.op(x, indices, segment_ids, num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_segment_mean_with_num_segments_dyn():

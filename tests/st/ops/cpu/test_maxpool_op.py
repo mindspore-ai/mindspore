@@ -50,7 +50,7 @@ class MaxPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool2d_valid():
@@ -84,7 +84,7 @@ def test_maxpool2d_valid():
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maxpool2d_same():
@@ -118,7 +118,7 @@ def test_maxpool2d_same():
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
@@ -164,7 +164,7 @@ def test_maxpool3d_1(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
@@ -210,7 +210,7 @@ def test_maxpool3d_2(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
@@ -253,7 +253,7 @@ def test_maxpool3d_3(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
