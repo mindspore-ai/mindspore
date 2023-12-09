@@ -58,7 +58,7 @@ struct Common {
   static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
   static ValuePtr CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs);
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
-  static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
+  static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
   static std::optional<tensor::TensorPtr> StubNodeToTensorOptional(const std::optional<ValuePtr> &value);
@@ -121,6 +121,7 @@ struct PyBoost {
   static FrontendOpRunInfoPtr Init(const py::args &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
+  static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);

@@ -8,7 +8,7 @@ py::object ${func_name}(const py::args &args) {
     converter.Parse(input_args);
     ${parser_body}
 
-    auto top_type = PredictOutType(op_run_info);
+    static auto top_type = PredictOutType(op_run_info);
     auto node = stub::MakeTopNode(top_type);
     GilReleaseWithCheck release_gil;
     op_run_info->stub_output = node.second;

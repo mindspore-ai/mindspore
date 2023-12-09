@@ -86,9 +86,10 @@ ValueTuplePtr ConvertList(const py::object &obj) {
   if (!py::isinstance<T>(obj)) {
     return nullptr;
   }
-  auto seq = obj.cast<T>();
-  std::vector<ValuePtr> convert;
-  for (size_t i = 0; i < seq.size(); ++i) {
+  auto seq = py::cast<T>(obj);
+  size_t size = seq.size();
+  std::vector<ValuePtr> convert(size);
+  for (size_t i = 0; i < size; ++i) {
     if (!py::isinstance<U>(seq[i])) {
       return {};
     }
@@ -96,9 +97,9 @@ ValueTuplePtr ConvertList(const py::object &obj) {
     if (out == nullptr) {
       return nullptr;
     }
-    (void)convert.emplace_back(out);
+    convert[i] = out;
   }
-  return std::make_shared<ValueTuple>(convert);
+  return std::make_shared<ValueTuple>(std::move(convert));
 }
 }  // namespace
 
@@ -371,9 +372,9 @@ std::optional<TypePtr> Converter::ToDtypeOptional(size_t i) {
 }
 
 void Converter::ThrowException(size_t i) {
-  MS_LOG(EXCEPTION) << "For op " << op_def_->name_ << ", the " << i + 1 << "th arg dtype is not right!"
-                    << " Expect dtype: " << ops::EnumToString(op_def_->args_[i].arg_dtype_)
-                    << ", but got dtype: " << py::str((*python_args_)[i]);
+  MS_EXCEPTION(TypeError) << "For op " << op_def_->name_ << ", the " << i + 1 << "th arg dtype is not right!"
+                          << " Expect dtype: " << ops::EnumToString(op_def_->args_[i].arg_dtype_)
+                          << ", but got dtype: " << py::str((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.

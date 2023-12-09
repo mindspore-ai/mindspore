@@ -33,7 +33,7 @@ namespace py = pybind11;
 
 class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
  public:
-  static std::shared_ptr<PyNativeExecutor> GetInstance() {
+  static const std::shared_ptr<PyNativeExecutor> &GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
     if (executor_ == nullptr) {
       executor_ = std::shared_ptr<PyNativeExecutor>(new (std::nothrow) PyNativeExecutor());
@@ -45,11 +45,11 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   static void Init();
   PyNativeExecutor(const PyNativeExecutor &) = delete;
   PyNativeExecutor &operator=(const PyNativeExecutor &) = delete;
-  inline GradExecutorPtr grad_executor() const {
+  static inline const GradExecutorPtr &grad_executor() {
     MS_EXCEPTION_IF_NULL(grad_executor_);
     return grad_executor_;
   }
-  inline ForwardExecutorPtr forward_executor() const {
+  static inline const ForwardExecutorPtr &forward_executor() {
     MS_EXCEPTION_IF_NULL(forward_executor_);
     return forward_executor_;
   }
