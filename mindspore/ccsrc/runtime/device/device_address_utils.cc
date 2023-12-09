@@ -854,6 +854,13 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
+                                        const std::vector<tensor::TensorPtr> &tensors) {
+  for (const auto &tensor : tensors) {
+    MallocForInput(device_context, tensor);
+  }
+}
+
+void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
                                         const std::optional<tensor::TensorPtr> &val) {
   if (!val.has_value()) {
     return;
