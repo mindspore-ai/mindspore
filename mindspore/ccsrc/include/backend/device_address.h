@@ -154,10 +154,12 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   explicit DeviceAddress(KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
   virtual ~DeviceAddress() {
-    if (!from_mem_pool_ && deleter_ && GetDevicePtr() != nullptr) {
+    if (!from_mem_pool() && deleter_ && GetDevicePtr() != nullptr) {
       deleter_(static_cast<uint8_t *>(GetDevicePtr()));
+      SetDevicePtr(nullptr);
+    } else {
+      kernel_tensor_->ReleaseDeviceRes();
     }
-    SetDevicePtr(nullptr);
   }
 
   // Asynchronously copy host memory to device side.
@@ -176,8 +178,6 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // Get kernel tensor pointer.
   const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
-  // Set kernel tensor pointer.
-  void set_kernel_tensor(const KernelTensorPtr &kernel_tensor) { kernel_tensor_ = kernel_tensor; }
 
   void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
     kernel_tensor_->set_device_synchronizer(device_synchronizer);
@@ -206,8 +206,11 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_padding_type(const std::string &padding_type) { kernel_tensor_->set_padding_type(padding_type); }
   TypeId type_id() const { return kernel_tensor_->dtype_id(); }
   void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
-  bool from_mem_pool() const { return from_mem_pool_; }
-  void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
+  bool from_mem_pool() const { return kernel_tensor_->pointer_ref_count()->from_mem_pool(); }
+  void set_from_mem_pool(bool from_mem_pool) const {
+    kernel_tensor_->pointer_ref_count()->set_from_mem_pool(from_mem_pool);
+  }
+  virtual void set_communication_ptr(uint8_t *communication_ptr) { MS_LOG(EXCEPTION) << "Not implemented error."; }
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
   void set_host_shape(const ShapeVector &shape) { kernel_tensor_->set_host_shape(shape); }
@@ -243,23 +246,38 @@ class DeviceAddress : public mindspore::DeviceSync {
                                        : KernelWithIndex{node_index_.first.lock(), node_index_.second};
   }
 
-  // The related interface of dynamic reference count operation.
-  void set_dynamic_ref_count(int32_t dynamic_ref_conut) { dynamic_ref_count_ = dynamic_ref_conut; }
-  int32_t dynamic_ref_count() const { return dynamic_ref_count_; }
-  void IncreaseDynamicRefCount(const std::string &op_object) {
-    if (dynamic_ref_count_ < INT32_MAX) {
-      (void)++dynamic_ref_count_;
-      MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_
-                    << " for ptr:" << GetDevicePtr();
+  // The related interface of reference count operation.
+  void set_original_ref_count(size_t original_ref_count) const override {
+    kernel_tensor_->pointer_ref_count()->set_original_ref_count(original_ref_count);
+  }
+  size_t original_ref_count() const override { return kernel_tensor_->pointer_ref_count()->original_ref_count(); }
+  void set_ref_count(size_t ref_count) const override { kernel_tensor_->pointer_ref_count()->set_ref_count(ref_count); }
+  size_t ref_count() const override { return kernel_tensor_->pointer_ref_count()->ref_count(); }
+  void ResetRefCount() override { kernel_tensor_->pointer_ref_count()->ResetRefCount(); }
+
+  void IncreaseOriginalRefCount() {
+    if (original_ref_count() < SIZE_MAX) {
+      kernel_tensor_->pointer_ref_count()->IncreaseOriginalRefCount();
     }
   }
-  void DecreaseDynamicRefCount(const std::string &op_object) {
-    if (dynamic_ref_count_ <= 0) {
-      MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
+  void DecreaseOriginalRefCount() {
+    if ((original_ref_count() < SIZE_MAX) && (original_ref_count() > 0)) {
+      kernel_tensor_->pointer_ref_count()->DecreaseOriginalRefCount();
     }
-    (void)--dynamic_ref_count_;
-    MS_LOG(DEBUG) << op_object << " decreases dynamic ref count to:" << dynamic_ref_count_
-                  << " for ptr:" << GetDevicePtr();
+  }
+  void DecreaseRefCount() { kernel_tensor_->pointer_ref_count()->DecreaseRefCount(); }
+
+  // The related interface of dynamic reference count operation.
+  void set_dynamic_ref_count(int32_t dynamic_ref_count) {
+    kernel_tensor_->pointer_ref_count()->set_dynamic_ref_count(dynamic_ref_count);
+  }
+
+  int32_t dynamic_ref_count() const { return kernel_tensor_->pointer_ref_count()->dynamic_ref_count(); }
+  void IncreaseDynamicRefCount(const std::string &op_object) {
+    kernel_tensor_->pointer_ref_count()->IncreaseDynamicRefCount(op_object);
+  }
+  void DecreaseDynamicRefCount(const std::string &op_object) {
+    kernel_tensor_->pointer_ref_count()->DecreaseDynamicRefCount(op_object);
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
@@ -327,13 +345,12 @@ class DeviceAddress : public mindspore::DeviceSync {
       return;
     }
     other->SetDevicePtr(GetDevicePtr());
-    SetDevicePtr(nullptr);
 
-    other->from_mem_pool_ = from_mem_pool_;
+    other->set_from_mem_pool(this->from_mem_pool());
     other->set_deleter(deleter());
     other->set_need_sync_user_data(need_sync_user_data_);
     SetDevicePtr(nullptr);
-    from_mem_pool_ = false;
+    this->set_from_mem_pool(false);
     deleter_ = nullptr;
   }
 
@@ -364,6 +381,12 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool need_sync_user_data() { return need_sync_user_data_; }
   void set_need_sync_user_data(bool need_sync_user_data) { need_sync_user_data_ = need_sync_user_data; }
 
+  const PointerRefCountPtr &pointer_ref_count() const { return kernel_tensor_->pointer_ref_count(); }
+  void set_pointer_ref_count(const PointerRefCountPtr &ptr_ref_cnt) {
+    MS_EXCEPTION_IF_NULL(ptr_ref_cnt);
+    kernel_tensor_->set_pointer_ref_count(ptr_ref_cnt);
+  }
+
  protected:
   KernelTensorPtr kernel_tensor_;
   size_t size() const { return kernel_tensor_->size(); }
@@ -373,8 +396,6 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   void SetTypeId(TypeId type) const { return kernel_tensor_->set_dtype_id(type); }
 
-  mutable bool from_mem_pool_{false};
-  uint8_t *communication_ptr_{nullptr};
   ShapeVector device_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
@@ -387,9 +408,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool is_ptr_persisted_{false};
   // Thread lock for ptr_.
   mutable std::recursive_mutex ptr_mutex_;
-
-  // The device address generated in the control flow scene uses dynamic_ref_count_.
-  std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
 
   bool from_persistent_mem_{false};
   bool need_recycle_{false};

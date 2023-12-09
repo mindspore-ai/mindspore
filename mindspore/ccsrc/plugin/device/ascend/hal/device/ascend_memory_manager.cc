@@ -133,7 +133,7 @@ bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrL
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
     addr_list[i]->SetDevicePtr(device_ptr_list[i]);
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->set_from_mem_pool(true);
   }
   return true;
 }

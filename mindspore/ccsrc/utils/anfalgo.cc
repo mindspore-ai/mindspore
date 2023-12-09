@@ -1962,20 +1962,16 @@ AnfNodePtr AnfAlgo::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> 
 }
 
 bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
-  // There is a problem with the current dynamic shape flow of NopNode, this Type of operator will be optimized by the
-  // back end, output and input share DeviceAddress, also share KernelTensor, and the subsequent operator InferShape
-  // gets the wrong Shape or type. The judgment of NopNode is temporarily disabled.
-  static mindspore::HashSet<std::string> nop_nodes = {};
-  // static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(),
-  //                                                     kExpandDimsOpName,
-  //                                                     prim::kPrimSqueeze->name(),
-  //                                                     prim::kPrimFlatten->name(),
-  //                                                     kFlattenGradOpName,
-  //                                                     prim::kPrimReformat->name(),
-  //                                                     prim::kPrimTupleToTensor->name(),
-  //                                                     prim::kPrimScalarToTensor->name(),
-  //                                                     prim::kPrimTensorToTuple->name(),
-  //                                                     prim::kPrimTensorToScalar->name()};
+  static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(),
+                                                      kExpandDimsOpName,
+                                                      prim::kPrimSqueeze->name(),
+                                                      prim::kPrimFlatten->name(),
+                                                      kFlattenGradOpName,
+                                                      prim::kPrimReformat->name(),
+                                                      prim::kPrimTupleToTensor->name(),
+                                                      prim::kPrimScalarToTensor->name(),
+                                                      prim::kPrimTensorToTuple->name(),
+                                                      prim::kPrimTensorToScalar->name()};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }

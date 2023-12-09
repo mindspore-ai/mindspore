@@ -61,6 +61,8 @@ void TransposeNHWCShape(const ShapeVector *host_shape_vector, ShapeVector *devic
 }
 }  // namespace
 
+KernelTensor::KernelTensor() { ptr_ref_cnt_ = std::make_shared<PointerRefCount>(); }
+
 KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
   if (type) {
     SetType(type);
@@ -76,6 +78,8 @@ KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &t
   // Update size_ at constructing KernelTensor.
   // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
   CalculateMemSize();
+
+  ptr_ref_cnt_ = std::make_shared<PointerRefCount>();
 }
 
 KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
@@ -84,7 +88,7 @@ KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &for
     : host_shape_(host_shape),
       dtype_id_(dtype_id),
       format_(GetFormatFromStrToEnum(format)),
-      device_ptr_(device_ptr),
+      ptr_ref_cnt_(std::make_shared<PointerRefCount>(device_ptr)),
       size_(size),
       device_name_(device_name),
       device_id_(device_id),
@@ -98,7 +102,7 @@ KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &t
   host_shape_ = host_shape;
   dtype_id_ = dtype_id;
   format_ = GetFormatFromStrToEnum(format);
-  device_ptr_ = device_ptr;
+  ptr_ref_cnt_->set_ptr(device_ptr);
   size_ = size;
   device_name_ = device_name;
   device_id_ = device_id;
@@ -120,7 +124,9 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
     other.kernel_tensor_value_ != nullptr ? std::make_shared<KernelTensorValue>(*other.kernel_tensor_value_) : nullptr;
   format_ = other.format_;
   padding_type_ = other.padding_type_;
-  device_ptr_ = other.device_ptr_;
+  // Only copy device pointer, reference count and deleter should be managed by self from initial state.
+  ptr_ref_cnt_ = other.ptr_ref_cnt_ != nullptr ? std::make_shared<PointerRefCount>(other.ptr_ref_cnt_->ptr())
+                                               : std::make_shared<PointerRefCount>();
   size_ = other.size_;
   device_name_ = other.device_name_;
   device_id_ = other.device_id_;
@@ -414,7 +420,8 @@ const std::string &KernelTensor::padding_type() const { return padding_type_; }
 void KernelTensor::set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
 
 bool KernelTensor::SyncDataFromDeviceToHost() const {
-  if (device_ptr_ == nullptr) {
+  void *device_ptr = this->device_ptr();
+  if (device_ptr == nullptr) {
     MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed, size: " << size_;
     return false;
   }
@@ -423,9 +430,9 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   // device pointer in the kernel Tensor.
   if (device_name_ == kCPUDevice) {
     if (!kernel_tensor_value_) {
-      kernel_tensor_value_ = std::make_shared<KernelTensorValue>(device_ptr_, size_, type_);
+      kernel_tensor_value_ = std::make_shared<KernelTensorValue>(device_ptr, size_, type_);
     } else {
-      kernel_tensor_value_->SetDataPtr(device_ptr_);
+      kernel_tensor_value_->SetDataPtr(device_ptr);
       kernel_tensor_value_->Resize(size_);
     }
     return true;
@@ -445,7 +452,7 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   MS_EXCEPTION_IF_NULL(host_ptr);
 
   MS_EXCEPTION_IF_NULL(device_synchronizer_);
-  if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr_, size_, device_name_, device_id_, format_,
+  if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr, size_, device_name_, device_id_, format_,
                                               shape_vector_, stream_id_, user_data_)) {
     MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
   }

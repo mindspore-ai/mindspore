@@ -700,10 +700,12 @@ void DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(const KernelGraphPtr 
       auto prim = common::AnfAlgo::GetCNodePrimitive(group_node);
       MS_EXCEPTION_IF_NULL(prim);
       auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
-      AnfAlgo::SetOutputAddr(device_address, index, group_node.get());
+      auto group_node_device_address = AnfAlgo::GetMutableOutputAddr(group_node, index, false);
+      MS_EXCEPTION_IF_NULL(group_node_device_address);
       // Update the reference count of device address.
       device_address->IncreaseOriginalRefCount();
       device_address->ResetRefCount();
+      group_node_device_address->set_pointer_ref_count(device_address->pointer_ref_count());
     }
   }
 }
@@ -731,7 +733,7 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   // Update the device address flag.
   origin_node_output_addr->UpdateFlag(device::kDeviceAddressFlagRefNode);
 
-  if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+  if (origin_node_output_addr->pointer_ref_count() != cur_node_output_addr->pointer_ref_count()) {
     // Check the device target whether consistent.
     if (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType()) {
       std::string error_info =
@@ -755,12 +757,12 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
     MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
                  << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()
                  << ", index is " << cur_pair.second;
-    AnfAlgo::SetOutputAddr(origin_node_output_addr, cur_pair.second, cur_pair.first.get());
     // Update the reference count of device address.
     cur_node_output_addr->DecreaseOriginalRefCount();
     cur_node_output_addr->ResetRefCount();
     origin_node_output_addr->IncreaseOriginalRefCount();
     origin_node_output_addr->ResetRefCount();
+    cur_node_output_addr->set_pointer_ref_count(origin_node_output_addr->pointer_ref_count());
   } else {
     MS_LOG(DEBUG) << "No need update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
                   << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()
