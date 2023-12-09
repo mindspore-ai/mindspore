@@ -3,7 +3,7 @@ mindspore.ops.silu
 
 .. py:function:: mindspore.ops.silu(x)
 
-    按输入逐元素计算激活函数SiLU（Sigmoid Linear Unit）。该激活函数定义为：
+    按输入逐元素计算激活函数SiLU（Sigmoid Linear Unit）。有时也被称作Swish函数。该激活函数定义为：
 
     .. math::
         \text{SiLU}(x) = x * \sigma(x),
