@@ -1239,6 +1239,7 @@ void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &sel
       select_kernel_build_info->SetInputsKernelObjectType(input_object_types);
     }
     if (!output_object_types.empty() && select_kernel_build_info->GetAllOutputKernelObjectTypes().empty()) {
+      MS_LOG(DEBUG) << "set kernel object type:" << output_object_types << " for node:" << node->fullname_with_scope();
       select_kernel_build_info->SetOutputsKernelObjectType(output_object_types);
     }
   }
@@ -2454,8 +2455,8 @@ abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfN
       (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
        (mindspore::session::AnfRuntimeAlgorithm::GetOutputKernelObjectType(node, 0) ==
         kernel::KernelObjectType::TUPLE))) {
-    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
-                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0), "Cannot get " + std::to_string(index) + " child abstract from " +
+                                               abstract->ToString() + " in node:" + node->fullname_with_scope());
     return abstract;
   }
 

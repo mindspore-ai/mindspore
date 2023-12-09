@@ -1154,21 +1154,48 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNode
 }
 
 kernel::KernelObjectType GetTupleGetItemOutputKernelObjectType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto tuple_get_item = node->cast<CNodePtr>();
   auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(tuple_get_item, 0);
   auto input_node = kernel_with_index.first;
+  MS_EXCEPTION_IF_NULL(input_node);
   auto output_idx = kernel_with_index.second;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
+  MS_LOG(DEBUG) << "GetItem node:" << node->DebugString() << " real node:" << input_node->DebugString()
+                << " index:" << output_idx << " kernel info:" << kernel_info;
   if (kernel_info != nullptr && kernel_info->has_build_info()) {
     auto build_info = kernel_info->select_kernel_build_info();
     const auto &output_kernel_obj_types = build_info->GetAllOutputKernelObjectTypes();
     const auto &output_elements_kernel_obj_types = build_info->GetAllOutputElementsKernelObjectTypes();
+    MS_LOG(DEBUG) << "real node:" << input_node->fullname_with_scope()
+                  << " output kernel object type:" << output_elements_kernel_obj_types
+                  << " size:" << output_elements_kernel_obj_types.size();
     if (output_idx < output_elements_kernel_obj_types.size() && output_kernel_obj_types.size() == 1 &&
         output_kernel_obj_types[0] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      MS_LOG(DEBUG) << "return type:" << output_elements_kernel_obj_types[output_idx];
       return output_elements_kernel_obj_types[output_idx];
+    } else if (output_kernel_obj_types.size() == 1 && output_kernel_obj_types[0] == kernel::KernelObjectType::TUPLE &&
+               input_node->abstract() != nullptr && input_node->abstract()->isa<abstract::AbstractSequence>()) {
+      const auto &sequence_abstract = input_node->abstract()->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abstract);
+      if (sequence_abstract->dynamic_len()) {
+        MS_EXCEPTION_IF_NULL(sequence_abstract->dynamic_len_element_abs());
+        return kernel::TypeIdToKernelObjectType(
+          AnfAlgo::GetAbstractObjectType(sequence_abstract->dynamic_len_element_abs()));
+      } else {
+        if (output_idx < sequence_abstract->size()) {
+          return kernel::TypeIdToKernelObjectType(
+            AnfAlgo::GetAbstractObjectType(sequence_abstract->elements()[output_idx]));
+        } else {
+          MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for abstract:" << sequence_abstract->ToString()
+                            << " in node:" << input_node->fullname_with_scope()
+                            << " real node:" << node->fullname_with_scope();
+        }
+      }
     }
   }
   if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
+    MS_LOG(DEBUG) << "node:" << node->fullname_with_scope() << " abstract:" << node->abstract()->ToString();
     const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
     if (sequence_abs->dynamic_len()) {
@@ -1195,6 +1222,7 @@ void KernelGraph::SetKernelObjectTypesForUnrealNodes() const {
       if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) &&
           (!kernel_info->has_build_info() || AnfAlgo::GetOutputKernelObjectTypes(node).empty())) {
         output_kernel_object_types = {GetTupleGetItemOutputKernelObjectType(node)};
+        MS_LOG(DEBUG) << "node:" << node->DebugString() << " output kernel object type:" << output_kernel_object_types;
         const auto &input_object_types = AnfAlgo::GetAllInputObjectType(node);
         input_kernel_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(input_object_types);
       }

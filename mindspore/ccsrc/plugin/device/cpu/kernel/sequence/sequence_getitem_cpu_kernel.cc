@@ -124,6 +124,11 @@ const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFu
        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>}};
   return func_list;
 }
