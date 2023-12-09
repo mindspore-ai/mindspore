@@ -99,8 +99,6 @@ class MIND_API AGGatherDGradV2Infer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return GatherDGradV2Infer(engine, primitive, input_args);
   }
-
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(GatherDGradV2, prim::kPrimGatherDGradV2, AGGatherDGradV2Infer, false);
