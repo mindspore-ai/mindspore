@@ -153,7 +153,6 @@ std::tuple<kernel::KernelModPtr, LiteKernelArgs> SingleOpInferSession::BuildCust
                                                                       std::make_shared<abstract::Shape>(shape));
     kernel::TensorInfo tensor_info;
     tensor_info.base_ = base;
-    tensor_info.format = mindspore::Format::DEFAULT_FORMAT;
     kernel_tensor->SetTensorInfo(tensor_info);
     return kernel_tensor;
   };
