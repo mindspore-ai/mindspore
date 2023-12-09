@@ -415,7 +415,8 @@ void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, con
   auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
 
-void CheckBpropCutNode(const TopCellInfoPtr &top_cell, PrimitivePtr op_prim) {
+void CheckBpropCutNode(const TopCellInfoPtr &top_cell, const PrimitivePtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_prim);
   if (op_prim->name() == kHookBackwardName || op_prim->name() == kCellBackwardHookName) {
     top_cell->set_has_bprop_cut_op(true);
   }
@@ -1872,8 +1873,8 @@ void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) c
                            std::back_inserter(op_run_info->input_value_id),
                            [](const ValuePtr &value) { return PyNativeAlgo::Common::GetIdByValue(value); });
     }
-    if (op_run_info->out_value_id == "") {
-      op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->op_grad_info->out_value);
+    if (op_run_info->out_value_id.empty()) {
+      op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
     }
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);

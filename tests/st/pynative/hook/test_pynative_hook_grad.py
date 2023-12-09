@@ -20,6 +20,7 @@ import mindspore.ops.operations as P
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import GradOperation
+from mindspore import ops as OP
 from tests.st.pynative.utils import GradOfAllInputs
 
 
@@ -597,3 +598,51 @@ def test_backward_hook_normal():
         grad = grad_op(net)(input_x, input_y)
     assert np.allclose(grad[0].asnumpy(), Tensor(np.array([2, 3, 4, 5])).astype(np.float32).asnumpy(), 0.001, 0.001)
     assert np.allclose(grad[1].asnumpy(), Tensor(np.array([6, 7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
+
+
+class NetWithSaveGrad(nn.Cell):
+    def __init__(self):
+        super(NetWithSaveGrad, self).__init__()
+        self.dense = nn.Dense(3, 2)
+
+    def construct(self, x):
+        x = self.dense(x)
+        hook = OP.HookBackward(hook_wrapper())
+        x = hook(x)
+        return x
+
+
+def hook_wrapper():
+    cnt = 0
+
+    def hook_fn(grad):
+        nonlocal cnt
+        assert cnt == 0
+        cnt = cnt + 1
+    return hook_fn
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hookbackward_should_two_zero():
+    """
+    Feature: Test hook backward feature
+    Description: test hook need reconstruct grad graph
+    Expectation: Success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    data = np.array([0.2, 0.5, 0.2], dtype=np.float32)
+    label = np.array([1, 0], dtype=np.float32)
+
+    net = NetWithSaveGrad()
+    loss_fn = nn.CrossEntropyLoss()
+
+    def forward_fn(data, label):
+        logits = OP.squeeze(net(data))
+        loss = loss_fn(logits, label)
+        return loss, logits
+
+    grad_fn = OP.grad(forward_fn, grad_position=None, weights=net.trainable_params(), has_aux=True)
+    for _ in range(2):
+        _, _ = grad_fn(OP.unsqueeze(Tensor(data), dim=0), Tensor(label))

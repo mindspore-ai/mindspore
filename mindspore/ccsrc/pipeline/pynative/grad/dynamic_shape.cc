@@ -330,7 +330,7 @@ bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const V
   }
 
   const size_t node_idx = top_cell->op_index();
-  bool use_dynamic_shape_process = IsNodeDynamic(top_cell, inputs, node, node_idx);
+  bool use_dynamic_shape_process = top_cell->has_bprop_cut_op() || IsNodeDynamic(top_cell, inputs, node, node_idx);
   top_cell->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
     MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
