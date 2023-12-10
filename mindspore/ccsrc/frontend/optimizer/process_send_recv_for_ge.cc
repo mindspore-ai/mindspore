@@ -42,11 +42,21 @@ std::string GetNotCutEnv() {
 }
 
 bool IsCommOps(const AnfNodePtr &node) {
-  static const PrimitiveSet kCommunicationOpsPrim = {
-    prim::kPrimSend,      prim::kPrimReceive,          prim::kPrimAllReduce,          prim::kPrimReduce,
-    prim::kPrimAllGather, prim::kPrimReduceScatter,    prim::kPrimAllToAll,           prim::kPrimAllSwap,
-    prim::kPrimAllToAllv, prim::kPrimNeighborExchange, prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad,
-    prim::kPrimBarrier};
+  static const PrimitiveSet kCommunicationOpsPrim = {prim::kPrimSend,
+                                                     prim::kPrimReceive,
+                                                     prim::kPrimAllReduce,
+                                                     prim::kPrimReduce,
+                                                     prim::kPrimAllGather,
+                                                     prim::kPrimReduceScatter,
+                                                     prim::kPrimAllToAll,
+                                                     prim::kPrimAllSwap,
+                                                     prim::kPrimAllToAllv,
+                                                     prim::kPrimNeighborExchange,
+                                                     prim::kPrimNeighborExchangeV2,
+                                                     prim::kPrimNeighborExchangeV2Grad,
+                                                     prim::kPrimBarrier,
+                                                     prim::kPrimCollectiveScatter,
+                                                     prim::kPrimCollectiveGather};
   return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim) && GetNotCutEnv() != "2";
 }
 
