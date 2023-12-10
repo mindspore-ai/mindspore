@@ -103,6 +103,7 @@ constexpr auto kAttrNodeInfo = "node_info";
 constexpr auto kAttrNodeName = "node_name";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
+constexpr auto kAttrChannelName = "channel_name";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
 constexpr auto kAttrListStartIndex = "list_start_index";
 constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
@@ -396,6 +397,7 @@ constexpr auto kTensorValueIsEmpty = "tensor_value_is_empty";
 constexpr auto kTensorUserDataIsSensTensor = "is_sens_tensor";
 constexpr auto kFakeTensorPos = "fake_tensor_pos";
 constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
+constexpr auto kChannelNameNpuLog = "_npu_log";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";

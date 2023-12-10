@@ -167,7 +167,9 @@ class AclTensorBufferMaker {
       type_size = GetTypeByte(TypeIdToType(type));
     }
     auto real_size = type_size * size;
-    if (addr == nullptr || real_size == 0) {
+    if (type == kObjectTypeString) {
+      data_buffer_ = aclCreateDataBuffer(addr, size + sizeof(ge::StringHead));
+    } else if (addr == nullptr || real_size == 0) {
       data_buffer_ = aclCreateDataBuffer(nullptr, 0);
     } else {
       data_buffer_ = aclCreateDataBuffer(addr, size);

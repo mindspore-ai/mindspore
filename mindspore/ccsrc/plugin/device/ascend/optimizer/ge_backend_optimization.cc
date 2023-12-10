@@ -83,7 +83,6 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
@@ -121,6 +120,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
+  opt_acl_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
