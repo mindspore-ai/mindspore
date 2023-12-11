@@ -4008,6 +4008,7 @@ class OneHot(Primitive):
 
     Note:
         If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+        On Ascend, if `on_value` is Int64 dtype, `indices` must be Int64 dtype.
 
     Args:
         axis (int): Position to insert the value. e.g. If shape of `indices` is :math:`(N, C)`, and `axis` is -1,
@@ -4018,12 +4019,14 @@ class OneHot(Primitive):
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
           Data type must be int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one-hot dimension.
-        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
+        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`. Data type must be int32, int64,
+          float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
           It has the same data type as `on_value`.
 
     Outputs:
-        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
+        and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
