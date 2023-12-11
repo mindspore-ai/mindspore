@@ -19,8 +19,7 @@
 #include <string>
 #include <memory>
 #include <map>
-#include "runtime/context.h"
-#include "runtime/stream.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 class GeContextManager {
@@ -34,13 +33,13 @@ class GeContextManager {
   bool InitContext(uint32_t device_id);
   bool SetContext();
   void DestroyContext();
-  rtStream_t GetDefaultStream();
-  bool SyncStream(rtStream_t stream) const;
+  aclrtStream GetDefaultStream();
+  bool SyncStream(aclrtStream stream) const;
 
  private:
   uint32_t device_id_ = 0;
-  rtContext_t context_ = nullptr;
-  rtStream_t default_stream_ = nullptr;
+  aclrtContext context_ = nullptr;
+  aclrtStream default_stream_ = nullptr;
   void DestroyDefaultStream();
   bool CreateDefaultStream();
 };
