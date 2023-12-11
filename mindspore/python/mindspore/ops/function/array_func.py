@@ -62,7 +62,7 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_, range, scatter_nd
+from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy
 from mindspore.ops.operations.manually_defined import tile
 
 arg_max_with_value_ = P.ArgMaxWithValue()
@@ -7418,6 +7418,7 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
-    'top_k'
+    'top_k',
+    'deepcopy'
 ]
 __all__.sort()
