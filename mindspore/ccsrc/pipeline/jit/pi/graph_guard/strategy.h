@@ -20,6 +20,7 @@
 #include <vector>
 #include "pipeline/jit/pi/graph_guard/perf.h"
 #include "pipeline/jit/pi/graph_guard/cache.h"
+#include "mindapi/base/shape_vector.h"
 
 using PyObjectArray = std::vector<PyObject *>;
 
@@ -45,6 +46,7 @@ class OptStrategy {
     kCalcCount,
   } CalcKind;
   static CalcKind MakeCalcStrategyByInputs(int bytecode, int opargs, const PyObjectArray &objs);
+  static CalcKind MakeCalcStrategyByShape(const ShapeVector &shape);
 };
 
 }  // namespace graph

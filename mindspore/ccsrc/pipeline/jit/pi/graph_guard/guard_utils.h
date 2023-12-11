@@ -38,6 +38,7 @@ class GuardItem {
   virtual bool Check(PyObject *obj) = 0;
   virtual std::string ToString() = 0;
   virtual void Replace(TracePtr dst, TracePtr src);
+  virtual TracePtr GetTrace();
 
  protected:
   TracePtr var_;
@@ -52,7 +53,10 @@ GuardItemPtr GuardEqual(TracePtr obj, bool needSpecialize = true, int recurseDep
 GuardItemPtr GuardType(TracePtr obj);
 GuardItemPtr GuardId(TracePtr obj);
 GuardItemPtr GuardAttr(TracePtr obj);
+GuardItemPtr GuardRepr(TracePtr obj);
 bool IsPyObjectEqual(PyObject *src, PyObject *dst);
+PyObject *GetMsModule();
+PyObject *GetMsType();
 PyObject *GetMsTensorType();
 
 }  // namespace graph

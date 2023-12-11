@@ -20,6 +20,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/utils/utils.h"
 #include "include/common/utils/stub_tensor.h"
+#include "pipeline/jit/pi/graph_guard/strategy.h"
 
 namespace mindspore {
 namespace jit {
@@ -893,14 +894,19 @@ class TensorData : public MetaTensorData {
     if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
       tensor_ptr = pyObj.cast<mindspore::tensor::MapTensorPtr>();
     } else if (IsStubTensor(pyObj)) {
+      auto stub = PyObject_GetAttrString(obj, "stub");
+      if (stub != nullptr && stub != Py_None) {
+        if (OptStrategy::MakeCalcStrategyByShape(GetStubTensorInfo(py::cast<py::object>(obj)).first) !=
+            OptStrategy::CalcKind::kCalcValue) {
+          specialized_ = false;
+        }
+      }
       if (specialized_) {
         pyObj = python_adapter::CallPyObjMethod(pyObj, "stub_sync");
         tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
       } else {
-        auto stub = PyObject_GetAttrString(obj, "stub");
         if (stub != nullptr && stub != Py_None) {
           is_stubtensor_ = true;
-          Py_DECREF(stub);
         } else {
           obj = PyObject_GetAttrString(obj, "tensor");
           pyObj = py::cast<py::object>(obj);
@@ -908,10 +914,16 @@ class TensorData : public MetaTensorData {
           tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
         }
       }
+      if (stub != nullptr && stub != Py_None) {
+        Py_DECREF(stub);
+      }
     } else {
       tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
     }
     if (tensor_ptr != nullptr) {
+      if (OptStrategy::MakeCalcStrategyByShape(tensor_ptr->shape()) != OptStrategy::CalcKind::kCalcValue) {
+        specialized_ = false;
+      }
       StoreTensor(tensor_ptr);
     } else {
       obj = PyObject_GetAttrString(obj, "stub");
@@ -1548,6 +1560,8 @@ void GuardItem::Replace(TracePtr dst, TracePtr src) {
   }
 }
 
+TracePtr GuardItem::GetTrace() { return var_; }
+
 class EqGuard : public GuardItem {
  public:
   EqGuard(TracePtr obj, bool needSpecialize, int recurseDepth)
@@ -1660,6 +1674,43 @@ class IdGuard : public GuardItem {
   PyObject *refId_;
 };
 
+class ReprGuard : public GuardItem {
+ public:
+  explicit ReprGuard(TracePtr obj) : GuardItem(obj) { refRepr_ = PyObject_Repr(obj->GetObject()); }
+
+  virtual ~ReprGuard() { Py_XDECREF(refRepr_); }
+
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+    bool ret = Check(obj);
+    if (obj != nullptr) {
+      Py_DECREF(obj);
+    }
+    return ret;
+  }
+
+  virtual bool Check(PyObject *obj) {
+    bool ret = false;
+    if (obj == nullptr) {
+      return ret;
+    }
+
+    auto repr = PyObject_Repr(obj);
+    if (PyUnicode_Compare(repr, refRepr_)) {
+      ret = false;
+    } else {
+      ret = true;
+    }
+    Py_XDECREF(repr);
+    return ret;
+  }
+
+  std::string ToString() override { return std::string(PyUnicode_AsUTF8(refRepr_)); }
+
+ protected:
+  PyObject *refRepr_;
+};
+
 class AttrGuard : public GuardItem {
  public:
   explicit AttrGuard(TracePtr pObj) : GuardItem(pObj) {
@@ -1758,6 +1809,8 @@ GuardItemPtr GuardId(TracePtr obj) {
   }
 }
 
+GuardItemPtr GuardRepr(TracePtr obj) { return std::make_shared<ReprGuard>(obj); }
+
 GuardItemPtr GuardAttr(TracePtr obj) {
   if (obj->GetTraceType() != TraceType::Attr) {
     return nullptr;
@@ -1776,6 +1829,7 @@ bool IsPyObjectEqual(PyObject *src, PyObject *dst) {
 }
 
 static PyObject *g_ms_module = nullptr;
+static PyObject *g_ms_type = nullptr;
 static PyObject *g_tensor_type = nullptr;
 
 static bool InitMsModule() {
@@ -1785,11 +1839,34 @@ static bool InitMsModule() {
   return g_ms_module != nullptr && g_ms_module != Py_None;
 }
 
+static bool InitMsType() {
+  if (g_ms_type == NULL) {
+    g_ms_type = PyImport_ImportModule("mindspore.common.dtype");
+  }
+  return g_ms_type != NULL && g_ms_type != Py_None;
+}
+
 static bool InitMsTensor() {
   if (g_tensor_type == nullptr && InitMsModule()) {
     g_tensor_type = PyObject_GetAttrString(g_ms_module, "Tensor");
   }
   return g_tensor_type != nullptr && g_tensor_type != Py_None && PyType_Check(g_tensor_type);
+}
+
+PyObject *GetMsModule() {
+  if (InitMsModule()) {
+    return g_ms_module;
+  } else {
+    return nullptr;
+  }
+}
+
+PyObject *GetMsType() {
+  if (InitMsType()) {
+    return g_ms_type;
+  } else {
+    return nullptr;
+  }
 }
 
 PyObject *GetMsTensorType() {

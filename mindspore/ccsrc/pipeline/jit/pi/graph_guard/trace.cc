@@ -377,9 +377,9 @@ PyObject *ItemTrace::Retrieve(PTraceContext context) {
       } else {
         ret = PyObject_GetItem(pSet, pItem);
       }
-      Py_DECREF(pSet);
-      Py_DECREF(pItem);
     }
+    Py_XDECREF(pSet);
+    Py_XDECREF(pItem);
   }
   Cache(context, ret);
   return ret;
@@ -553,6 +553,9 @@ PyObject *TypeTrace::Retrieve(PTraceContext context) {
     PyObject *pOrigin = origin_->Retrieve(context);
     if (pOrigin != NULL) {
       ret = reinterpret_cast<PyObject *>(Py_TYPE(pOrigin));
+      Py_INCREF(ret);
+      Py_DECREF(pOrigin);
+      return ret;
     }
   }
   Cache(context, ret);
@@ -1414,7 +1417,9 @@ PyObject *OpTrace::Retrieve(PTraceContext context) {
     }
     if (py::isinstance<mindspore::tensor::Tensor>(param)) {
       mindspore::tensor::TensorPtr tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(param);
-      tensor_ptr->data_sync(true);
+      if (OptStrategy::MakeCalcStrategyByShape(tensor_ptr->shape()) == OptStrategy::CalcKind::kCalcValue) {
+        tensor_ptr->data_sync(true);
+      }
     }
     params.push_back(param);
     return params.back() == nullptr;
