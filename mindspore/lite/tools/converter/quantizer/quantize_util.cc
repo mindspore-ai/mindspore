@@ -44,6 +44,9 @@
 #include "ir/anf.h"
 #include "tools/converter/export_model.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "ops/other_ops.h"
+#include "utils/anf_utils.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 
 using std::string;
 using std::vector;
@@ -1124,4 +1127,125 @@ int CalBiasQuantParams(const std::vector<schema::QuantParamT> &active_params,
   }
   return RET_OK;
 }
+
+bool IsAntiQuantModeNodes(const AnfNodePtr &node) {
+  CHECK_NULL_RETURN(node);
+  if (!utils::isa<CNodePtr>(node) || !opt::CheckPrimitiveType(node, prim::kPrimMul)) {
+    MS_LOG(INFO) << "The node is not Mul node";
+    return false;
+  }
+  auto add_node = node->cast<CNodePtr>()->input(kIndexOne);
+  if (!utils::isa<CNodePtr>(add_node) || !opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    MS_LOG(INFO) << "The node is not Add node";
+    return false;
+  }
+  auto ascend_antiquant_node = add_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!utils::isa<CNodePtr>(ascend_antiquant_node) ||
+      !opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimNPUAntiQuant)) {
+    MS_LOG(INFO) << "The node is not AscendAntiquant node";
+    return false;
+  }
+  return true;
+}
+
+STATUS GetScaleZpFromAntiQuantModeNodes(const AnfNodePtr &node, ParameterPtr *scale_param_node,
+                                        ParameterPtr *zp_param_node) {
+  CHECK_NULL_RETURN(node);
+  CHECK_NULL_RETURN(scale_param_node);
+  CHECK_NULL_RETURN(zp_param_node);
+
+  if (!utils::isa<CNodePtr>(node) || !opt::CheckPrimitiveType(node, prim::kPrimMul)) {
+    return RET_ERROR;
+  }
+  auto add_node = node->cast<CNodePtr>()->input(kIndexOne);
+  auto scale_param = node->cast<CNodePtr>()->input(kIndexTwo);
+  if (opt::CheckPrimitiveType(scale_param, prim::kPrimLoad)) {
+    scale_param = scale_param->cast<CNodePtr>()->input(kIndexOne);
+  }
+  *scale_param_node = scale_param->cast<ParameterPtr>();
+  CHECK_NULL_RETURN(*scale_param_node);
+  if (!utils::isa<CNodePtr>(add_node) || !opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    return RET_ERROR;
+  }
+  auto zp_param = add_node->cast<CNodePtr>()->input(kIndexTwo);
+  if (opt::CheckPrimitiveType(zp_param, prim::kPrimLoad)) {
+    zp_param = zp_param->cast<CNodePtr>()->input(kIndexOne);
+  }
+  *zp_param_node = zp_param->cast<ParameterPtr>();
+  CHECK_NULL_RETURN(*zp_param_node);
+  return RET_OK;
+}
+
+STATUS RemoveAntiQuantModeNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int index) {
+  CHECK_NULL_RETURN(func_graph);
+  CHECK_NULL_RETURN(node);
+
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+
+  if (!utils::isa<CNodePtr>(node)) {
+    MS_LOG(ERROR) << "The node : " << node->fullname_with_scope() << ", it is not cnode";
+    return lite::RET_ERROR;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  CHECK_NULL_RETURN(cnode);
+
+  auto mul_node = cnode->input(index);
+
+  if (!utils::isa<CNodePtr>(mul_node) || !opt::CheckPrimitiveType(mul_node, prim::kPrimMul)) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << cnode->fullname_with_scope() << " is not mul node";
+    return RET_OK;
+  }
+  auto add_node = mul_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!opt::CheckPrimitiveType(add_node, prim::kPrimAdd)) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << add_node->fullname_with_scope() << " is not add node";
+    return RET_OK;
+  }
+  auto ascend_antiquant_node = add_node->cast<CNodePtr>()->input(kIndexOne);
+  if (!opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimNPUAntiQuant)) {
+    MS_LOG(WARNING) << "In AntiQuant mode, the node : " << ascend_antiquant_node->fullname_with_scope()
+                    << " is not antiquant node";
+    return RET_OK;
+  }
+
+  manager->Replace(mul_node, ascend_antiquant_node->cast<CNodePtr>()->input(1));
+  return lite::RET_OK;
+}
+
+std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra) {
+  if (stra == nullptr) {
+    return {};
+  }
+
+  auto var = stra->cast<ValueTuplePtr>();
+  if (var == nullptr) {
+    return {};
+  }
+  std::vector<std::vector<int64_t>> strategy;
+  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
+  if (var->size() > 0) {
+    std::vector<ValuePtr> elements = var->value();
+    for (uint64_t index = 0; index < elements.size(); ++index) {
+      std::vector<int64_t> dim;
+      if (elements[index]->isa<ValueSequence>()) {
+        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
+        std::vector<ValuePtr> value_vector = value_tuple->value();
+        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
+                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+        strategy.push_back(dim);
+      } else {
+        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
+      }
+    }
+    if (strategy.empty()) {
+      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
+    }
+  }
+
+  return strategy;
+}
+
 }  // namespace mindspore::lite::quant
