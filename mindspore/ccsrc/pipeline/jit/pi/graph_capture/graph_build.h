@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
@@ -95,6 +96,8 @@ class GraphBuilder {
    */
   void ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame);
 
+  std::pair<PyObject *, ValueNode *> SearchSelfPyObject(PyCodeObject *co);
+  AObject *BuildSuperObject(PyCodeObject *co);
   /**
    * Collect parameters of call stack and set it to frame
    * \param func_info The function of call target
