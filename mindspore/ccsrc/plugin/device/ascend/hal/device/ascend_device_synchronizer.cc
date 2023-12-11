@@ -23,8 +23,9 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, mindspore::Format format,
-                                                const ShapeVector &shape, size_t stream_id,
+bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size,
+                                                const std::string &device_name, uint32_t device_id,
+                                                mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                                                 const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   MS_EXCEPTION_IF_NULL(device_ptr);
@@ -33,6 +34,12 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_ERROR_IF_NULL(stream);
+
+  auto ascend_device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(ascend_device_context);
+  if (!ascend_device_context->device_res_manager_->BindDeviceToCurrentThread(false)) {
+    MS_LOG(WARNING) << "Bind device to current thread failed.";
+  }
 
   auto ret = aclrtMemcpyAsync(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
   if (ret != ACL_ERROR_NONE) {
@@ -47,8 +54,9 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
   return true;
 }
 
-bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, mindspore::Format format,
-                                                const ShapeVector &shape, size_t stream_id,
+bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size,
+                                                const std::string &device_name, uint32_t device_id,
+                                                mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                                                 const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(device_ptr);
   MS_EXCEPTION_IF_NULL(host_ptr);
@@ -57,6 +65,12 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_ERROR_IF_NULL(stream);
+
+  auto ascend_device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(ascend_device_context);
+  if (!ascend_device_context->device_res_manager_->BindDeviceToCurrentThread(false)) {
+    MS_LOG(WARNING) << "Bind device to current thread failed.";
+  }
 
   auto ret = aclrtMemcpyAsync(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
   if (ret != ACL_ERROR_NONE) {
