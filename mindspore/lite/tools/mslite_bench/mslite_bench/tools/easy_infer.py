@@ -35,7 +35,7 @@ class EasyInfer:
     def easy_infer(args, logger=None):
         """model easy infer"""
         if logger is None:
-            logger = InferLogger(args.log_path)
+            logger = InferLogger(args.log_path).logger
         output_data_dir = None
         model_path = args.model_file
         param_path = args.params_file
@@ -43,19 +43,31 @@ class EasyInfer:
         cfg = CommonFunc.get_framework_config(model_path,
                                               args)
         if args.input_data_file is not None:
-            input_data_map = np.load(args.input_data_file, allow_pickle=True).item()
-            output_data_dir = f'{args.input_data_file}.bin'
+            if args.input_data_file.endswith(SaveFileType.NPY.value):
+                input_data_map = np.load(args.input_data_file, allow_pickle=True).item()
+            else:
+                input_data_map = np.fromfile(args.input_data_file)
+            output_data_dir = f'{args.input_data_file}_output'
 
             cfg.input_tensor_shapes = {
                 key: value.shape for key, value in input_data_map.items()
             }
         else:
             input_data_map = CommonFunc.create_numpy_data_map(args)
+            input_data_file = f'{args.model_file}_input'
+            output_data_dir = f'{args.model_file}_output'
+            if args.save_file_type == SaveFileType.NPY.value:
+                np.save(f'{input_data_file}.npy', input_data_map)
+            elif args.save_file_type == SaveFileType.BIN.value:
+                for key, value in input_data_map.items():
+                    value.tofile(f'{input_data_file}_{"".join(key.split("/"))}.bin')
+            else:
+                output_data_dir = None
 
         model_session = InferSessionFactory.create_infer_session(model_path,
                                                                  cfg,
                                                                  params_file=param_path)
-        logger.info('[MODEL INFER] Create model session success')
+        logger.debug('Create model session success')
 
         for _ in range(args.warmup_times):
             outputs = model_session(input_data_map)
@@ -65,9 +77,11 @@ class EasyInfer:
             outputs = model_session(input_data_map)
         end = time.time()
         if args.loop_infer_times != 0:
-            logger.info(f'Model Infer {args.loop_infer_times} times, '
-                        f'Avg infer time is '
-                        f'{round((end - start) / args.loop_infer_times * 1000, 3)} ms')
+            logger.info('Model Infer %s times, '
+                        'Avg infer time is %s ms',
+                        args.loop_infer_times,
+                        round((end - start) / args.loop_infer_times * 1000, 3))
+
         if output_data_dir is not None:
             if args.save_file_type == SaveFileType.NPY.value:
                 np.save(output_data_dir, outputs)
@@ -80,15 +94,12 @@ class EasyInfer:
     def ms_dynamic_input_infer(args, logger=None):
         """conduct dynamic shape mindspore lite model infer"""
         if logger is None:
-            logger = InferLogger(args.log_path)
+            logger = InferLogger(args.log_path).logger
 
         cfg = ModelConfig(device=args.device)
         ms_session = InferSessionFactory.create_infer_session(args.model_path,
                                                               cfg)
         model_inputs = ms_session.get_input()
-
-        logger.info(f'Start Dynamic model infer: {args.model_path},'
-                    f'infer times is {args.dynamic_infer_times}')
 
         for _ in range(args.dynamic_infer_times):
             input_tensor_infos = {}
@@ -102,4 +113,4 @@ class EasyInfer:
             input_tensor_map = CommonFunc.create_numpy_data_map(input_tensor_infos)
             _ = ms_session(input_tensor_map)
 
-        logger.info('All dynamic input passed successfully')
+        logger.debug('All dynamic input passed successfully')
