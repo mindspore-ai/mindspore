@@ -87,7 +87,8 @@ class AscendHCCLGenerator:
         self.steptrace = steptrace
         self.hccl_raw = []
         self.hccl_data_df = np.dtype(
-            [('name', object), ('pid', int), ('tid', int), ('ts', float), ('te', float), ('dur', float), ('ph', object),
+            [('model_id', int), ('iteration_id', int), ('name', object), ('pid', int), ('tid', int), ('ts', float),
+             ('te', float), ('dur', float), ('ph', object),
              ('task_type', object), ('link_info', object), ('transport_type', object), ('size', int), ('tag', object)])
 
     @staticmethod
@@ -203,7 +204,7 @@ class AscendHCCLGenerator:
         target_data = []
         for row in original_data:
             model_id = row.get('args', {}).get('model id')
-            if row.get('ph') == 'X' and model_id:
+            if row.get('ph') == 'X' and model_id is not None:
                 name = row.get('name')
                 pid = row.get('pid')
                 tid = row.get('tid')

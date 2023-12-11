@@ -1167,7 +1167,7 @@ class Profiler:
 
     def _ascend_flops_analyse(self, op_summary):
         """Get op FLOPs from op_summary, write output_op_flops_x.csv."""
-        if len(op_summary.dtype) != 18:
+        if 'vector_fops' not in op_summary.dtype.names and 'cube_fops' not in op_summary.dtype.names:
             logger.warning("[Profiler] Can not found cube fops and vector fops data in the op summary.")
             return
 
