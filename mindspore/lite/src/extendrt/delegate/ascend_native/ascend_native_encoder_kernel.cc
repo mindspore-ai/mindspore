@@ -18,6 +18,11 @@
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "ops/encoder_layer.h"
 
+namespace {
+constexpr size_t NUM_ELEMENT_SIX = 6;
+constexpr size_t NUM_ELEMENT_SEVEN = 7;
+}  // namespace
+
 namespace mindspore::kernel {
 using mindspore::ops::kNameEncoderLayer;
 
@@ -108,8 +113,8 @@ int AscendNativeEncoderKernel::Prepare() {
     param_.embedding_param.set_position_embedding(in_tensors_.at(idx++)->device_data());
   }
 
-  param_.capacity = 0;       // capacity of tokens per expert
-  param_.num_of_tokens = 6;  // total num of tokens (in all batches)
+  param_.capacity = 0;                     // capacity of tokens per expert
+  param_.num_of_tokens = NUM_ELEMENT_SIX;  // total num of tokens (in all batches)
 
   if (param_.is_query_) {
     encoder_driver_ = std::make_shared<ascend_native::AscendNativeQuery>();
@@ -155,14 +160,8 @@ int AscendNativeEncoderKernel::Run() {
   const std::vector<InferTensor *> &inputs = in_tensors();
   if (param_.is_embedding_) {
     driver_input_tensors_.at(ENCODER_INPUT_IDS_IDX) = inputs.at(0)->device_data();
-    // std::cout << "is_device" <<inputs.at(0)->is_device() << " "<< inputs.at(0)->category() << " "<<
-    // inputs.at(0)->category() << " "<< inputs.at(0)->data_type()<< std::endl; std::cout << inputs.at(0)->ToString() <<
-    // std::endl; PrintInt32(driver_input_tensors_.at(ENCODER_INPUT_IDS_IDX),8,const_cast<void*>(stream_));
-    // PrintInt32(in_tensors_[0]->device_data(),8,const_cast<void*>(stream_));
-
   } else {
     driver_input_tensors_.at(ENCODER_INPUT_IDX) = inputs.at(0)->device_data();
-    // PrintInt32(driver_input_tensors_.at(ENCODER_INPUT_IDX),8,const_cast<void*>(stream_));
   }
   if (param_.is_query_) {
     driver_output_tensors_.at(HEAD_OUTPUT_IDX) = out_tensors_.at(0)->device_data();
@@ -186,13 +185,13 @@ int AscendNativeEncoderKernel::Run() {
     if (!inc) {
       int input_ids[6] = {57, 58, 59, 60, 61, 62};
       void *input_ids_tmp = nullptr;
-      ascend_native::CopyHostFp32ToDeviceFp32(input_ids, &input_ids_tmp, 6, const_cast<void *>(stream_));
+      ascend_native::CopyHostFp32ToDeviceFp32(input_ids, &input_ids_tmp, NUM_ELEMENT_SIX, const_cast<void *>(stream_));
       driver_input_tensors_.at(ENCODER_INPUT_IDS_IDX) = input_ids_tmp;
 
       // setup position ids
       int pos_ids[6] = {0, 1, 2, 3, 4, 5};
       void *pos_ids_tmp = nullptr;
-      ascend_native::CopyHostFp32ToDeviceFp32(pos_ids, &pos_ids_tmp, 6, const_cast<void *>(stream_));
+      ascend_native::CopyHostFp32ToDeviceFp32(pos_ids, &pos_ids_tmp, NUM_ELEMENT_SIX, const_cast<void *>(stream_));
       driver_input_tensors_.at(ENCODER_POS_IDS_IDX) = pos_ids_tmp;
       inputs.at(inputs.size() - C2NUM)->set_device_data(pos_ids_tmp);
 
@@ -204,13 +203,14 @@ int AscendNativeEncoderKernel::Run() {
     } else {
       int input_ids[7] = {90, 0, 0, 0, 0, 0};
       void *input_ids_tmp = nullptr;
-      ascend_native::CopyHostFp32ToDeviceFp32(input_ids, &input_ids_tmp, 7, const_cast<void *>(stream_));
+      ascend_native::CopyHostFp32ToDeviceFp32(input_ids, &input_ids_tmp, NUM_ELEMENT_SEVEN,
+                                              const_cast<void *>(stream_));
       driver_input_tensors_.at(ENCODER_INPUT_IDS_IDX) = input_ids_tmp;
 
       // setup position ids
       int pos_ids[7] = {6, 7, 8, 9, 10, 11, 12};
       void *pos_ids_tmp = nullptr;
-      ascend_native::CopyHostFp32ToDeviceFp32(pos_ids, &pos_ids_tmp, 7, const_cast<void *>(stream_));
+      ascend_native::CopyHostFp32ToDeviceFp32(pos_ids, &pos_ids_tmp, NUM_ELEMENT_SEVEN, const_cast<void *>(stream_));
       driver_input_tensors_.at(ENCODER_POS_IDS_IDX) = pos_ids_tmp;
       inputs.at(inputs.size() - C2NUM)->set_device_data(pos_ids_tmp);
 

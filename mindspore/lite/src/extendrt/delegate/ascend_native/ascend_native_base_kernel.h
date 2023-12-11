@@ -28,9 +28,6 @@
 #include "ops/op_name.h"
 
 namespace mindspore {
-namespace common {
-using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
-}  // namespace common
 struct KernelWithIndexAndTensor {
   KernelWithIndexAndTensor() = default;
   KernelWithIndexAndTensor(common::KernelWithIndex kernel_index, kernel::InferTensor *tensor_info)
@@ -67,7 +64,7 @@ class AscendNativeBaseKernel : public BaseKernel {
   void set_stream(const void *stream) { stream_ = stream; }
   const void *get_stream() { return stream_; }
   const std::string get_name() const { return name_; }
-  void set_name(std::string name) { name_ = name; }
+  virtual void set_name(std::string name) { name_ = name; }
   bool InferShapeDone() const override { return true; }
   int InferShape() override { return mindspore::lite::RET_OK; }
   int PreProcess() override { return mindspore::lite::RET_OK; }

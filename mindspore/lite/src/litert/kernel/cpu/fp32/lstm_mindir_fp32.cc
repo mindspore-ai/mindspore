@@ -251,16 +251,16 @@ void LstmMindirFp32CPUKernel::RecordStates(const float *hidden_state, float *cel
                                                        : lstm_param_->batch_ * lstm_param_->hidden_size_;
   auto stride = step * other_output_step;
   auto seq_stride = lstm_param_->seq_len_ * other_output_step;
-  (void)memcpy(states + hidden_stride, hidden_state, hidden_size * sizeof(float));
+  (void)memcpy(states + hidden_stride, hidden_state, static_cast<size_t>(hidden_size * sizeof(float)));
   stride += hidden_seq_stride;
-  (void)memcpy(states + stride, cell_state, state_size * sizeof(float));
+  (void)memcpy(states + stride, cell_state, static_cast<size_t>(state_size * sizeof(float)));
   stride += seq_stride;
-  (void)memcpy(states + stride, input_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, input_gate, static_cast<size_t>(state_size * sizeof(float)));
   stride += seq_stride;
-  (void)memcpy(states + stride, output_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, output_gate, static_cast<size_t>(state_size * sizeof(float)));
   stride += seq_stride;
-  (void)memcpy(states + stride, forget_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, forget_gate, static_cast<size_t>(state_size * sizeof(float)));
   stride += seq_stride;
-  (void)memcpy(states + stride, cell_gate, state_size * sizeof(float));
+  (void)memcpy(states + stride, cell_gate, static_cast<size_t>(state_size * sizeof(float)));
 }
 }  // namespace mindspore::kernel
