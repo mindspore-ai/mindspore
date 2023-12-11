@@ -61,8 +61,13 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   int64_t input_size = std::accumulate(dims_.begin(), dims_.end(), 1, std::multiplies<int64_t>());
   std::vector<int64_t> sample_ids = GetAllSamples(input, input_size);
 
-  std::random_device rd;
-  std::mt19937 g(rd());
+  uint32_t kernel_ret = 0;
+  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_,
+                                                        "RandomChoiceWithMask", &kernel_ret);
+  if (kernel_ret != kAicpuKernelStateSucess) {
+    return kAicpuKernelStateFailed;
+  }
+  std::mt19937 g(rng_seed);
   std::shuffle(sample_ids.begin(), sample_ids.end(), g);
   size_t count = std::min(sample_ids.size(), static_cast<size_t>(count_target_));
 
@@ -80,6 +85,8 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
 uint32_t RandomChoiceWithMaskKernel::ParseKernelParam() {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
   count_target_ = attrs["count"].i();
+  seed_ = static_cast<uint64_t>(attrs["seed"].i());
+  seed2_ = static_cast<uint64_t>(attrs["seed2"].i());
   AICPU_LOGI("This op attr count is %d", count_target_);
 
   if ((count_target_ == 0) && (!unknow_shape_)) {
