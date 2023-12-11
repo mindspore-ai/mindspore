@@ -408,6 +408,8 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
   if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
     output_element_object_types = CalOutputElementObjectTypes(kernel_node, selected_kernel_attr);
   }
+  MS_LOG(DEBUG) << "Set kernel object type:" << output_kernel_object_types
+                << " for node:" << kernel_node->fullname_with_scope();
   SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types,
                                output_element_object_types);
 }

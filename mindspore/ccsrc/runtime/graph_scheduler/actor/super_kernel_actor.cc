@@ -386,19 +386,19 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       }
       continue;
     }
-    if (type_ != KernelTransformType::kSuperKernelActor || node_device_tensor->GetSize() == 0) {
+    MS_EXCEPTION_IF_NULL(input_nodes[i]);
+    const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
+    const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
+    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+    if (type_ != KernelTransformType::kSuperKernelActor || input_nodes[i]->cast<ParameterPtr>()->has_dynamic_shape()) {
       // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
       node_device_tensor->SetSize(input_device_tensor->GetSize());
+      // Update Shape.
+      node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
     }
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
-    // Update Shape.
-    const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
-    const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
-
-    MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
-    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
-    node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
     if (type_ != KernelTransformType::kSuperKernelActor && input_kernel_tensor->GetValueTrack() != nullptr) {
       node_device_kernel_tensor->set_value(input_kernel_tensor->GetValueTrack());
     }

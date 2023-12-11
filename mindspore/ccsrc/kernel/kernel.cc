@@ -129,6 +129,30 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
   device_synchronizer_ = other.device_synchronizer_;
 }
 
+namespace {
+ShapeVector GetShapeVectorByBaseShape(const abstract::BaseShapePtr &base_shape) {
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::NoShape>()) {
+    return {};
+  } else if (base_shape->isa<abstract::Shape>()) {
+    return base_shape->cast<abstract::ShapePtr>()->shape();
+  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    return {-1};
+  } else if (base_shape->isa<abstract::SequenceShape>()) {
+    const auto &sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_shape);
+    if (sequence_shape->size() == 0) {
+      return {0};
+    }
+    ShapeVector shape_vector = {SizeToLong(sequence_shape->size())};
+    const auto &sub_shape_vector = GetShapeVectorByBaseShape(sequence_shape->shape()[0]);
+    shape_vector.insert(shape_vector.end(), sub_shape_vector.begin(), sub_shape_vector.end());
+    return shape_vector;
+  }
+  MS_LOG(EXCEPTION) << "Invalid shape:" << base_shape->ToString();
+}
+}  // namespace
+
 void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;
@@ -158,9 +182,12 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
       return;
     }
     const auto &element_shape = shapes[0];
-    MS_EXCEPTION_IF_NULL(seq_shape);
+    MS_EXCEPTION_IF_NULL(element_shape);
     if (element_shape->isa<abstract::TensorShape>()) {
       const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
+      shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
+    } else if (element_shape->isa<abstract::SequenceShape>()) {
+      const ShapeVector &element_shape_vector = GetShapeVectorByBaseShape(element_shape);
       shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
     }
   }
@@ -338,6 +365,40 @@ void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
     // String type element.
     dtype_ = element_type;
     dtype_id_ = dtype_->type_id();
+  } else if (element_type->object_type() == kObjectTypeTuple) {
+    // Sequence type element.
+    auto tuple_type = element_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (tuple_type->dynamic_len()) {
+      if (tuple_type->dynamic_element_type() == nullptr) {
+        return;
+      }
+      SetSequenceDType(tuple_type->dynamic_element_type());
+      return;
+    }
+    const TypePtrList &element_types = tuple_type->elements();
+    if (element_types.empty() || element_types[0] == nullptr) {
+      return;
+    }
+    SetSequenceDType(element_types[0]);
+    return;
+  } else if (element_type->object_type() == kObjectTypeList) {
+    // Sequence type element.
+    auto list_type = element_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    if (list_type->dynamic_len()) {
+      if (list_type->dynamic_element_type() == nullptr) {
+        return;
+      }
+      SetSequenceDType(list_type->dynamic_element_type());
+      return;
+    }
+    const TypePtrList &element_types = list_type->elements();
+    if (element_types.empty() || element_types[0] == nullptr) {
+      return;
+    }
+    SetSequenceDType(element_types[0]);
+    return;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported element type[" << element_type->ToString()
                       << "] to set element data type for KernelTensor.";
