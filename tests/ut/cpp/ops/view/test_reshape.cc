@@ -15,40 +15,34 @@
  */
 
 #include "test_view.h"
-#include "mindspore/core/ops/view/diagonal_strides_calc.h"
+#include "mindspore/core/ops/view/reshape_strides_calc.h"
 
 namespace mindspore {
 namespace ops {
-class TestViewDiagonal : public TestView {
+class TestViewReshape : public TestView {
  public:
-  TestViewDiagonal() {}
+  TestViewReshape() {}
 };
 
-/// Feature: Diagonal strides calculator
-/// Description: Test view Diagonal strides calculator is right
+/// Feature: Reshape strides calculator
+/// Description: Test view Reshape strides calculator is right
 /// Expectation: success
-TEST_F(TestViewDiagonal, View) {
-  auto prim = std::make_shared<Primitive>("Diagonal");
+TEST_F(TestViewReshape, View) {
+  auto prim = std::make_shared<Primitive>("Reshape");
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6, 7, 8};
   auto input_tensor = std::make_shared<tensor::Tensor>(tensor_data, kInt64);
-  input_tensor->set_shape({1, 2, 4});
-  int64_t input_offset = 1;
-  int64_t input_dim1 = 1;
-  int64_t input_dim2 = 2;
-  auto offset_ = MakeValue(input_offset);
-  auto dim1_ = MakeValue(input_dim1);
-  auto dim2_ = MakeValue(input_dim2);
+  input_tensor->set_shape({2, 4});
+  std::vector<int64_t> input_perm_data = {1, 4, 2};
+  auto input_perm = MakeValue(input_perm_data);
   std::vector<ValuePtr> inputs_a;
   inputs_a.emplace_back(input_tensor);
-  inputs_a.emplace_back(offset_);
-  inputs_a.emplace_back(dim1_);
-  inputs_a.emplace_back(dim2_);
-  auto storage_info = DiagonalCalc(prim, inputs_a);
-  std::vector<int64_t> expect_shape({1, 2});
-  std::vector<int64_t> expect_strides({8, 5});
-  size_t expect_offset = 1;
+  inputs_a.emplace_back(input_perm);
+  auto storage_info = ReshapeCalc(prim, inputs_a);
+  std::vector<int64_t> expect_shape({1, 4, 2});
+  std::vector<int64_t> expect_strides({8, 2, 1});
+  size_t expect_offset = 0;
   ASSERT_FALSE(storage_info.empty());
-  ASSERT_FALSE(storage_info[0]->is_contiguous);
+  ASSERT_TRUE(storage_info[0]->is_contiguous);
   ASSERT_TRUE(storage_info[0]->shape == expect_shape);
   ASSERT_TRUE(storage_info[0]->strides == expect_strides);
   ASSERT_TRUE(storage_info[0]->storage_offset == expect_offset);

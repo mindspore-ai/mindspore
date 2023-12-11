@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_DIAGONAL_H_
-#define MINDSPORE_CORE_OPS_DIAGONAL_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DIAGONAL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DIAGONAL_H_
+
 #include <memory>
 #include <vector>
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDiagonal = "Diagonal";
-class MIND_API Diagonal : public BaseOperator {
+class MIND_API DiagonalFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Diagonal);
-  Diagonal() : BaseOperator(kNameDiagonal) { InitIOName({"x"}, {"y"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-MIND_API abstract::AbstractBasePtr DiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_DIAGONAL_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DIAGONAL_H_
