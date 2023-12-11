@@ -15,6 +15,8 @@
 """msprof PROF data export api file"""
 import os
 import shutil
+import json
+from json import JSONDecodeError
 from collections import defaultdict
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
@@ -39,7 +41,7 @@ class AscendMsprofExporter:
         >> ms_exporter = AscendMsprofExporter("path/to/profiler/data")
         >> ms_exporter.export(start_time)
     """
-
+    DRV_VERSION = 467473
     _hiai_msprof_tail = "Ascend/latest/tools/profiler/bin"
     _msprof_cmd = "msprof"
     _ascend_mark = "Ascend"
@@ -49,27 +51,67 @@ class AscendMsprofExporter:
     _op_summary_mark = "op_summary"
     _op_statistic_mark = "op_statistic"
 
-    def __init__(self, source_path, time_out=3000):
+    def __init__(self, source_path, time_out=3600):
         self._time_out = time_out
         self.source_path = source_path
-        self.prof_root_dir = os.path.abspath(os.path.join(self.source_path, os.path.pardir))
+        self.prof_root_dir = os.path.abspath(os.path.join(self.source_path, os.path.pardir))  # PROF*/
 
         self._check_msprof_env()
+
+    def get_drv_version(self):
+        """Get the drv_version for choosing the export mode."""
+        script_path = self._get_msprof_info_path()
+        if not script_path:
+            logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
+            return False
+
+        logger.info("get_msprof_info.py path is : %s", script_path)
+        host_dir = os.path.join(self.prof_root_dir, 'host')
+        cmd = ['python',
+               script_path,
+               '-dir', host_dir]
+        try:
+            outs, _ = self._run_cmd(cmd)
+            if not outs:
+                logger.warning('Check the drvVersion can`t find the result, use single-export mode instead.')
+                return False
+            result = json.loads(outs)
+            logger.info('get drv_version result is : %s', result)
+            status = result.get('status', 1)
+            if status == 1:
+                return False
+            drv_version = result.get('data', {}).get('version_info', {}).get('drv_version', 0)
+            if drv_version >= self.DRV_VERSION:
+                return True
+            return False
+        except (RuntimeError, JSONDecodeError, AttributeError) as err:
+            logger.warning('Get the drvVersion error, use single-export mode instead. detail : %s', err)
+            return False
 
     def export(self, model_iteration_dict=None):
         """start_time is the time to collect PROF data"""
 
-        if not model_iteration_dict:
-            model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
+        flag = self.get_drv_version()
+        if not flag or model_iteration_dict:
+            if not model_iteration_dict:
+                model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
 
-        if model_iteration_dict:
-            for model_id, value in model_iteration_dict.items():
-                for iteration_id in value:
-                    msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
-                    self._run_cmd(msprof_export_cmd)
-            self._check_export_files(self.source_path, model_iteration_dict)
+            if model_iteration_dict:
+                for model_id, value in model_iteration_dict.items():
+                    for iteration_id in value:
+                        msprof_export_cmd = self._msprof_command_generator_old(self.prof_root_dir, model_id,
+                                                                               iteration_id)
+                        self._run_cmd(msprof_export_cmd)
 
-    def _run_cmd(self, cmd, raise_error=True):
+                self._check_export_files_old(self.source_path, model_iteration_dict)
+        else:
+            msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir)
+            self._run_cmd(msprof_export_cmd)
+            self._check_export_files(self.source_path)
+
+        return flag
+
+    def _run_cmd(self, cmd):
         """run shell command"""
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
@@ -84,11 +126,9 @@ class AscendMsprofExporter:
             logger.error(msg)
             raise TimeoutError(msg) from err
         logger.info(outs)
-        if raise_error and errs != "":
-            raise RuntimeError(errs)
-        return outs
+        return outs, errs
 
-    def _msprof_command_generator(self, output, model_id=None, iter_id=None):
+    def _msprof_command_generator_old(self, output, model_id=None, iter_id=None):
         """msprof export helper"""
         export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
         if isinstance(model_id, int) and model_id >= 0:
@@ -96,6 +136,10 @@ class AscendMsprofExporter:
         if isinstance(iter_id, int) and iter_id >= 0:
             export_cmd.append("--iteration-id={}".format(iter_id))
         return export_cmd
+
+    def _msprof_command_generator(self, output):
+        """msprof export helper"""
+        return [self._msprof_cmd, "--export=on", "--output={}".format(output)]
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""
@@ -109,7 +153,7 @@ class AscendMsprofExporter:
             return False
 
         msprof_cmd = ["which", self._msprof_cmd]
-        outs = self._run_cmd(msprof_cmd, raise_error=False)
+        outs, _ = self._run_cmd(msprof_cmd)
         if outs != "":
             return
         logger.warning("[Profiler]The msprof command was not found. Searching from environment variables...")
@@ -137,13 +181,24 @@ class AscendMsprofExporter:
 
         logger.info("The msprof command has been added to the path!")
 
+    def _get_msprof_info_path(self):
+        """Check the existence of get_msprof_info.py script"""
+        outs, _ = self._run_cmd(['which', self._msprof_cmd])
+        if not outs:
+            return ""
+        sup_path = outs.strip().split('toolkit')[0]
+        script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
+        if not os.path.exists(script_path):
+            return ""
+        return script_path
+
     def _generate_step_trace(self, prof_path, device_path):
         """"generate model_id iteration_id dict"""
 
         summary_path = os.path.join(device_path, self._summary_dir)
         timeline_path = os.path.join(device_path, self._timeline_dir)
 
-        self._run_cmd(self._msprof_command_generator(prof_path))
+        self._run_cmd(self._msprof_command_generator_old(prof_path))
 
         if not os.path.isdir(summary_path):
             msg = "Path {} is not a existing directory. Make sure there is " \
@@ -174,7 +229,28 @@ class AscendMsprofExporter:
 
         return step_trace
 
-    def _check_export_files(self, source_path, step_trace):
+    def _check_export_files_old(self, source_path, step_trace):
+        """Check the existence of op_summary & op_statistic files."""
+        summary_path = os.path.join(source_path, self._summary_dir)
+        if not os.path.isdir(summary_path):
+            raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
+        op_summary = set()
+        op_statistic = set()
+
+        for summary_file in os.listdir(summary_path):
+            if summary_file.startswith(self._op_summary_mark):
+                op_summary.add(summary_file)
+            elif summary_file.startswith(self._op_statistic_mark):
+                op_statistic.add(summary_file)
+
+        if not op_summary:
+            raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
+        if not op_statistic:
+            raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
+
+        logger.info("Finish checking files.")
+
+    def _check_export_files(self, source_path):
         """Check the existence of op_summary & op_statistic files."""
         summary_path = os.path.join(source_path, self._summary_dir)
         if not os.path.isdir(summary_path):
@@ -193,25 +269,4 @@ class AscendMsprofExporter:
             raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
         if not op_statistic:
             raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
-
-        device_id = source_path.split('_')[-1].replace("/", "")
-
-        for model_id, value in step_trace.items():
-            for iteration_id in value:
-                tag = f"_{device_id}_{model_id}_{iteration_id}"
-                op_summary_name = self._op_summary_mark + tag + '.csv'
-                op_statistic_file = self._op_statistic_mark + tag + '.csv'
-                for name in op_summary:
-                    if tag in name:
-                        break
-                else:
-                    logger.warning("[Profiler]The file {} was not found, " \
-                                   "perhaps the original data was not collected.".format(op_summary_name))
-                for name in op_statistic:
-                    if tag in name:
-                        break
-                else:
-                    logger.warning("[Profiler]The file {} was not found, " \
-                                   "perhaps the original data was not collected.".format(op_statistic_file))
-
         logger.info("Finish checking files.")
