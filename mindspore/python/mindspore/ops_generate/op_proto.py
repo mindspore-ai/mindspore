@@ -72,13 +72,15 @@ class OpProto:
             arg_dtype = args_dict[arg_name]['dtype']
             default = None
             as_init_arg = False
+            is_type_id = False
             type_cast = []
             if default_str in args_dict[arg_name]:
                 default = args_dict[arg_name][default_str]
                 as_init_arg = True
             if 'type_cast' in args_dict[arg_name]:
                 type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
-            if 'arg_handler' in args_dict[arg_name] and args_dict[arg_name]['arg_handler'] == 'dtype_to_enum':
+            arg_handler_key = 'arg_handler'
+            if arg_handler_key in args_dict[arg_name] and args_dict[arg_name][arg_handler_key] == 'dtype_to_enum':
                 is_type_id = True
             arg = Arg(arg_name, arg_dtype, type_cast, is_type_id, as_init_arg, default)
             op_args.append(arg)
