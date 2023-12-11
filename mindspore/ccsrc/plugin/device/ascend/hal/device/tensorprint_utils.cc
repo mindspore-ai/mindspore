@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include <ctime>
 #include <fstream>
+#include <sstream>
 #include <memory>
 #include <string>
 #include <thread>

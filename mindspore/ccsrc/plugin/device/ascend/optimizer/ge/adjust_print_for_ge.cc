@@ -21,17 +21,31 @@
 #include <vector>
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kIndexOne = 1;
 constexpr size_t kInputSizeTwo = 2;
+
+bool PrintUnvisited(const BaseRef &ref) {
+  if (utils::isa<AnfNodePtr>(ref)) {
+    auto node = utils::cast<AnfNodePtr>(ref);
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsPrimitive(node, prim::kPrimPrint)) {
+      return false;
+    }
+    return UnVisited(ref);
+  }
+  return false;
+}
 }  // namespace
 
 const BaseRef AdjustPrintForGe::DefinePattern() const {
+  VarPtr V = std::make_shared<CondVar>(PrintUnvisited);
   VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimPrint, Xs});
+  return VectorRef({V, Xs});
 }
 
 // replace print(i1, i2, U) with 1. print(<i1, i2, U>) 2. depend(0.0, print)
@@ -39,6 +53,7 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
                                            const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   const std::vector<AnfNodePtr> &inputs = cnode->inputs();
@@ -46,21 +61,34 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
     return nullptr;
   }
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(kMakeTupleOpName))};
-  make_tuple_inputs.insert(make_tuple_inputs.end(), inputs.begin() + kIndexOne, inputs.end());
+  make_tuple_inputs.insert(make_tuple_inputs.end(), inputs.begin() + kIndexOne, inputs.end() - 1);
   auto make_tuple_node = func_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple_node);
   std::vector<AbstractBasePtr> abstract_list;
-  for (size_t input_index = kIndexOne; input_index < inputs.size(); ++input_index) {
+  for (size_t input_index = kIndexOne; input_index < inputs.size() - 1; ++input_index) {
     auto input_node = inputs.at(input_index);
     MS_EXCEPTION_IF_NULL(input_node);
     (void)abstract_list.emplace_back(input_node->abstract());
   }
   make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   std::vector<AnfNodePtr> new_print_inputs{NewValueNode(std::make_shared<Primitive>(kPrintOpName))};
+  auto tensor_name = "print";
+  AnfNodePtr input_tensor_name = NewValueNode(std::make_shared<StringImm>(tensor_name));
+  input_tensor_name->set_abstract(std::make_shared<abstract::AbstractScalar>(kString));
+  (void)new_print_inputs.emplace_back(input_tensor_name);
   (void)new_print_inputs.emplace_back(make_tuple_node);
+  (void)new_print_inputs.emplace_back(inputs.at(inputs.size() - 1));
   auto new_print_node = func_graph->NewCNode(new_print_inputs);
   MS_EXCEPTION_IF_NULL(new_print_node);
   new_print_node->set_abstract(node->abstract());
+
+  auto primitive = GetCNodePrimitive(new_print_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  primitive = primitive->Clone();
+  MS_EXCEPTION_IF_NULL(primitive);
+  (void)primitive->AddAttr("channel_name", MakeValue("_npu_log"));
+  new_print_node->set_input(0, std::make_shared<ValueNode>(primitive));
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), new_print_node);
 
   auto tensor = std::make_shared<tensor::Tensor>(0.0);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();

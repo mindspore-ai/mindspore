@@ -621,7 +621,7 @@ def test_print_in_lambda_func_graph_with_isolate_node():
         time.sleep(0.1)
         assert (output == data).all()
 
-    patterns = {"Tensor(shape=[2 2], dtype=Int64, value=\n[[0 2]\n [4 6]])"}
+    patterns = {"Tensor(shape=[2, 2], dtype=Int64, value=\n[[0 2]\n [4 6]])"}
     check_output(cap.output, patterns)
 
 
