@@ -5,10 +5,10 @@ mindspore.ops.OneHot
 
     返回一个one-hot类型的Tensor。
 
-    生成一个新的Tensor，由索引 `indices` 表示的位置取值为 `on_value` ，而在其他所有位置取值为 `off_value` 。当执行设备是 Ascend 时，如果 `on_value` 为int64类型，则 `indices` 也必须为int64类型。
+    生成一个新的Tensor，由索引 `indices` 表示的位置取值为 `on_value` ，而在其他所有位置取值为 `off_value` 。
 
     .. note::
-        如果输入索引为秩 `N` ，则输出为秩 `N+1` 。新轴在 `axis` 处创建。
+        如果输入索引为秩 `N` ，则输出为秩 `N+1` 。新轴在 `axis` 处创建。当执行设备是 Ascend 时，如果 `on_value` 为int64类型，则 `indices` 也必须为int64类型。
 
     参数：
      - **axis** (int) - 指定one-hot的计算维度。例如，如果 `indices` 的shape为 :math:`(N, C)` ，`axis` 为-1，则输出shape为 :math:`(N, C, D)` ，如果 `axis` 为0，则输出shape为 :math:`(D, N, C)` 。默认值： ``-1`` 。
