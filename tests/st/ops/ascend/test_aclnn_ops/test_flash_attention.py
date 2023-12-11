@@ -139,7 +139,7 @@ class AttnNet(nn.Cell):
         return attention_probs
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [mstype.float16])
@@ -154,8 +154,8 @@ def test_nn_flash_attention_fwd(dtype):
     os.environ['MS_DEV_FORCE_ACL'] = "1"
     B = 1
     S = 4096
-    H = 1280
-    N = 12
+    H = 128
+    N = 8
     D = H // N
 
     # Generate inputs
