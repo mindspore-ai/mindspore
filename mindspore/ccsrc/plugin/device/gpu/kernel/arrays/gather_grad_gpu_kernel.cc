@@ -43,6 +43,10 @@ constexpr size_t kDynamicGradIdx = 3;
 
 bool GatherGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_v2_) {
+    int dim = GetDimValue<int>(inputs, kIndex1, kernel_name_, dim_type_);
+    CalculateDim(dim);
+  }
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs, cuda_stream_);
 }
@@ -141,11 +145,6 @@ int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
   grad_shapes_ = inputs.at(grad_idx_)->GetShapeVector();
   if (is_v2_) {
-    int64_t dim = 0;
-    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &dim)) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
-    }
-    CalculateDim(dim);
     dim_shapes_ = inputs.at(dim_idx_)->GetShapeVector();
   } else {
     auto dim = GetGatherDGradDimValue(base_operator);
