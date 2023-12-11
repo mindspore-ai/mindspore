@@ -29,13 +29,6 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace kernel {
-struct PyExecuteInputInfo {
-  py::object py_obj_output;
-  abstract::AbstractBasePtr abstract;
-  TypeId type;
-  std::vector<int64_t> shape;
-};
-
 struct PyExecuteOutputUserData {
   py::object obj;
   constexpr static char key[] = "PyExecuteOutputUserData";

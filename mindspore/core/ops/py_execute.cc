@@ -38,7 +38,10 @@ AbstractBasePtr PyExecuteInfer::InferPy(const PrimitivePtr &primitive,
   if (infer_handler_ == nullptr) {
     MS_LOG(EXCEPTION) << "infer_handler_ should not be null.";
   }
-  const auto &abs = infer_handler_(primitive, input_args);
+  std::vector<abstract::AbstractBase *> real_args;
+  std::transform(input_args.begin(), input_args.end(), std::back_inserter(real_args),
+                 [](auto &input_arg) { return input_arg.get(); });
+  const auto &abs = infer_handler_(primitive, real_args);
   MS_LOG(DEBUG) << "output abstract: " << abs;
   return abs;
 }

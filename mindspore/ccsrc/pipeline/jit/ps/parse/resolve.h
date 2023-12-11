@@ -110,7 +110,10 @@ class PyObjectWrapper : public Named {
  public:
   explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object")
       : Named(name), obj_(std::make_unique<py::object>(obj)) {}
-  ~PyObjectWrapper() override;
+  ~PyObjectWrapper() {
+    py::gil_scoped_acquire acquire_gil;
+    obj_ = nullptr;
+  }
 
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() const { return *obj_; }

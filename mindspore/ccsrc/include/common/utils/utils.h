@@ -106,6 +106,7 @@ constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
 constexpr auto kAttrListStartIndex = "list_start_index";
 constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
+constexpr auto kAttrPyExecuteOutput = "pyexecute_output";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
 constexpr auto kAttrMultiples = "multiples";

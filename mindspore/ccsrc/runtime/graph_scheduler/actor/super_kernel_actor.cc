@@ -72,6 +72,10 @@ void SuperKernelActor::Init() {
       auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, output_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
       if (device_address->is_ptr_persisted() || graph_->is_dynamic_shape()) {
+        MS_LOG(DEBUG) << "Actor:" << GetAID() << " skip alloc memory for device address:" << device_address
+                      << " is persist:" << device_address->is_ptr_persisted()
+                      << " is dynamic shape:" << graph_->is_dynamic_shape()
+                      << " output node:" << output_node->DebugString();
         continue;
       }
       // Free the ptr in device address of output node.
