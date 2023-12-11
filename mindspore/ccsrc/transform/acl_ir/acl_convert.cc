@@ -397,10 +397,10 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector
 
 void AclConverter::ConvertInputsNormal(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
                                        const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input) {
-  // NOTE: num of real inputs params may less than `info->GetNumInputsOfMsOpProto()`, e.g. Conv2D without bias
-  size_t num_real_inputs = inputs.size();
-  size_t ms_real_idx = 0;
-  for (size_t ms_idx = 0; ms_idx < info->GetNumInputsOfMsOpProto(); ++ms_idx) {
+  // NOTE: num of real inputs params may less than `info->GetMaxMsProtoIndexOfInputMap()`, e.g. Conv2D without bias
+  int num_real_inputs = static_cast<int>(inputs.size());
+  int ms_real_idx = 0;
+  for (int ms_idx = 0; ms_idx <= info->GetMaxMsProtoIndexOfInputMap(); ++ms_idx) {
     // skip attribute convert input
     auto attr_iter = info->attr_input_map().find(ms_idx);
     if ((attr_iter != info->attr_input_map().end()) && (prim->attrs().count(attr_iter->second) > 0)) {
@@ -423,7 +423,9 @@ void AclConverter::ConvertInputsNormal(const PrimitivePtr &prim, const std::vect
 
     auto &ge_input_info = opt_ge_input_info.value();
     size_t count = (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? num_folded_inputs_ : 1);
-    MsInputInfo ms_input_info{.proto_index = ms_idx, .real_offset = ms_real_idx, .folded_size = count};
+    MsInputInfo ms_input_info{.proto_index = static_cast<size_t>(ms_idx),
+                              .real_offset = static_cast<size_t>(ms_real_idx),
+                              .folded_size = count};
     size_t ge_start_idx = (ge_input_info.is_after_dynamic ? ge_input_info.index + count - 1 : ge_input_info.index);
 
     convert_one_input(ms_input_info, ge_start_idx, ge_input_info);
