@@ -810,6 +810,1574 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
   {KernelAttr().AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex64),
    CreateCastFunc<std::complex<double>, std::complex<float>>},
   {KernelAttr().AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<std::complex<double>, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint8_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint8_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint8_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint8_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint8_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint8_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint8_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint8_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint8_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint8_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint8_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint8_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint8_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint16_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint16_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint16_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint16_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint16_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint16_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint16_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint16_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint16_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint16_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint16_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint16_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint16_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint32_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint32_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint32_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint32_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint32_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint32_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint32_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint32_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint32_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint32_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint32_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint32_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint32_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint64_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint64_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint64_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint64_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint64_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint64_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint64_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint64_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint64_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint64_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint64_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint64_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint64_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int8_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int8_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int8_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int8_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int8_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int8_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int8_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int8_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int8_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int8_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int8_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int8_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int8_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int16_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int16_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int16_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int16_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int16_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int16_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int16_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int16_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int16_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int16_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int16_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int16_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int16_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int32_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int32_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int32_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int32_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int32_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int32_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int32_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int32_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int32_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int32_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int32_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int32_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int32_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int64_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int64_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int64_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int64_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int64_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int64_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int64_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int64_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int64_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int64_t, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int64_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int64_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int64_t, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<float16, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<float16, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<float16, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<float16, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<float16, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<float16, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<float16, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<float16, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<float16, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<float16, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<float16, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<float16, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<float16, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<float16, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<float16, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<float, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<float, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<float, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<float, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<float, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<float, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<float, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<float, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<float, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<float, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<float, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<float, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<float, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<double, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<double, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<double, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<double, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<double, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<double, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<double, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<double, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<double, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<double, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<double, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<double, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<double, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<double, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<bfloat16, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<bfloat16, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<bfloat16, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<bfloat16, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<bfloat16, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<bfloat16, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<bfloat16, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<bfloat16, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<bfloat16, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<bfloat16, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<bfloat16, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<bfloat16, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<bfloat16, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<bfloat16, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<bfloat16, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<bool, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<bool, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<bool, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<bool, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<bool, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<bool, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<bool, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<bool, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<bool, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<bool, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<bool, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<bool, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<bool, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<bool, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<bool, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<std::complex<float>, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<std::complex<float>, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<std::complex<float>, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<std::complex<float>, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<std::complex<float>, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<std::complex<float>, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<std::complex<float>, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<std::complex<float>, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<std::complex<float>, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<std::complex<float>, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<std::complex<float>, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<std::complex<float>, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<std::complex<float>, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<std::complex<float>, std::complex<double>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<std::complex<double>, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<std::complex<double>, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<std::complex<double>, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<std::complex<double>, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<std::complex<double>, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<std::complex<double>, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<std::complex<double>, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<std::complex<double>, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<std::complex<double>, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<std::complex<double>, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<std::complex<double>, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<std::complex<double>, bfloat16>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<std::complex<double>, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<std::complex<double>, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<std::complex<double>, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint8_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint8_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint8_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint8_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint8_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint8_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint8_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint8_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint8_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint8_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint8_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint8_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint8_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint8_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint16_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint16_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint16_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint16_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint16_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint16_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint16_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint16_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint16_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint16_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint16_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint16_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint16_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint32_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint32_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint32_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint32_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint32_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint32_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint32_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint32_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint32_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint32_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint32_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint32_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint32_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<uint64_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<uint64_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<uint64_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<uint64_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<uint64_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<uint64_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<uint64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<uint64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<uint64_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<uint64_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<uint64_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<uint64_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<uint64_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<uint64_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<uint64_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int8_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int8_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int8_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int8_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int8_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int8_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int8_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int8_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int8_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int8_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int8_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int8_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int8_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int8_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int8_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int16_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int16_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int16_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int16_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int16_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int16_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int16_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int16_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int16_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int16_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int16_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int16_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int16_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int32_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int32_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int32_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int32_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int32_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int32_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int32_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int32_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int32_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int32_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int32_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int32_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int32_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<int64_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<int64_t, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<int64_t, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<int64_t, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<int64_t, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<int64_t, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<int64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<int64_t, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<int64_t, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<int64_t, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<int64_t, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<int64_t, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<int64_t, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<int64_t, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<float16, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<float16, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<float16, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<float16, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<float16, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<float16, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<float16, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<float16, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<float16, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<float16, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<float16, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<float16, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<float16, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<float16, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<float16, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<float, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<float, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<float, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<float, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<float, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<float, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<float, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<float, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<float, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<float, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<float, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<float, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<float, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<float, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<float, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<double, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<double, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<double, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<double, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<double, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<double, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<double, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<double, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<double, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<double, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<double, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<double, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<double, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<double, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<double, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<bfloat16, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<bfloat16, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<bfloat16, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<bfloat16, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<bfloat16, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<bfloat16, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<bfloat16, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<bfloat16, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<bfloat16, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<bfloat16, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<bfloat16, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<bfloat16, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<bfloat16, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<bfloat16, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<bfloat16, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<bool, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<bool, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<bool, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<bool, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<bool, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<bool, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<bool, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<bool, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<bool, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<bool, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<bool, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<bool, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<bool, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<bool, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<bool, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<std::complex<float>, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<std::complex<float>, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<std::complex<float>, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<std::complex<float>, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<std::complex<float>, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<std::complex<float>, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<std::complex<float>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<std::complex<float>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<std::complex<float>, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<std::complex<float>, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<std::complex<float>, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<std::complex<float>, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<std::complex<float>, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<std::complex<float>, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateCastFunc<std::complex<float>, std::complex<double>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateCastFunc<std::complex<double>, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateCastFunc<std::complex<double>, uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateCastFunc<std::complex<double>, uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateCastFunc<std::complex<double>, uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateCastFunc<std::complex<double>, int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateCastFunc<std::complex<double>, int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateCastFunc<std::complex<double>, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateCastFunc<std::complex<double>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateCastFunc<std::complex<double>, float16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateCastFunc<std::complex<double>, float>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateCastFunc<std::complex<double>, double>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBFloat16),
+   CreateCastFunc<std::complex<double>, bfloat16>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateCastFunc<std::complex<double>, bool>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateCastFunc<std::complex<double>, std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
    CreateCastFunc<std::complex<double>, std::complex<double>>}};
 }  // namespace
 

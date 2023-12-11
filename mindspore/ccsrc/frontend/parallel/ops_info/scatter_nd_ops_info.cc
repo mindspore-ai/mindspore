@@ -296,7 +296,9 @@ std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph() {
   auto minimum = gen_g_.PushBack({gen_g_.NewOpInst(MINIMUM), relu, CreateInt32Tensor(delta_value)});
   auto equal = gen_g_.PushBack({gen_g_.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g_.PushBack({gen_g_.NewOpInst(DTYPE), gen_g_.virtual_input_node()});
-  auto cast = gen_g_.PushBack({gen_g_.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g_.PushBack({gen_g_.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g_.PushBack({gen_g_.NewOpInst(CAST), equal, dtype_id});
   Shape update_shapes(inputs_shape_[2]);
   for (size_t i = inputs_shape_[1].size() - 1; i < update_shapes.size(); ++i) {
     update_shapes[i] = 1;

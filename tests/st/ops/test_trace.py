@@ -208,6 +208,7 @@ def test_mlp_cell_reuse_trace():
 @pytest.mark.env_onecard
 @pytest.mark.skip(reason="No support trace in r2.3")
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.skip(reason="hook适配问题")
 def test_adam_trace(mode):
     """
     Feature: trace grad and mixed_precision

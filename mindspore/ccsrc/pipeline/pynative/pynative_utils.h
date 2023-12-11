@@ -199,12 +199,12 @@ struct PyBoost {
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info,
                                       const std::vector<std::vector<size_t>> &same_type_table, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
+    op_run_info->input_size = sizeof...(t);
     if (op_run_info->op_grad_info->op_prim->name() == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
-    op_run_info->input_size = sizeof...(t);
     if constexpr (N != 0) {
       return pyboost_cast_operation->DoImplicitCast<N>(op_run_info, same_type_table, ret);
     }

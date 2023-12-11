@@ -289,7 +289,9 @@ ReplaceGraphPtr GatherDInfo::replace_graph(const CNodePtr &cnode) {
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto gatherd = gen_g.PushBack({gen_g.NewOpInst(GATHERD), gen_g.virtual_input_node(), CreatInt64Imm(dim_), minimum});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gatherd});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), gatherd, cast});
 
   if (InferGroup() != SUCCESS) {

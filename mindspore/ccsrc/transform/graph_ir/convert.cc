@@ -3327,7 +3327,8 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
 AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {
   auto func_graph = input->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input, NewValueNode(dst_type)};
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input,
+                           NewValueNode(static_cast<int64_t>(dst_type->type_id()))};
   auto cnode = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
   auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dst_type, input->Shape());

@@ -160,7 +160,7 @@ NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) {
   if (node->dtype()->type_id() == type->type_id()) {
     return node;
   }
-  return Emit("Cast", {node, EmitValue(type)});
+  return Emit("Cast", {node, Value(static_cast<int64_t>(type->type_id()))});
 }
 
 NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {

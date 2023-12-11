@@ -59,7 +59,7 @@ const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t inp
     (void)cast_prim->AddAttr("SrcT", TypeIdToType(src_type));
     // Create dest type node.
     auto dest_type_ptr = TypeIdToType(dest_type);
-    auto dest_type_node = NewValueNode(dest_type_ptr);
+    auto dest_type_node = NewValueNode(static_cast<int64_t>(dest_type));
     MS_EXCEPTION_IF_NULL(dest_type_node);
     MS_EXCEPTION_IF_NULL(dest_type_ptr);
     dest_type_node->set_abstract(dest_type_ptr->ToAbstract());

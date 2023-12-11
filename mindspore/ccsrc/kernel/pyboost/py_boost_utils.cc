@@ -26,7 +26,7 @@
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/pyboost/ops/cast.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 #include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore {
@@ -464,9 +464,10 @@ tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, cons
   if (tensor->Dtype()->type_id() == type_id) {
     return tensor;
   }
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
   const auto &cast_op = CREATE_PYBOOST_OP(Cast, device_target);
   cast_op->set_primitive(prim::kPrimCast);
-  return cast_op->Call(tensor, TypeIdToType(type_id));
+  return cast_op->Call(tensor, type_id64);
 }
 
 std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor::TensorPtr> &tensors,

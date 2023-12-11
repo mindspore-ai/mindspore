@@ -28,7 +28,6 @@
 #include "ops/addn.h"
 #include "ops/apply_momentum.h"
 #include "ops/batch_to_space.h"
-#include "ops/cast.h"
 #include "ops/crop.h"
 #include "ops/depth_to_space.h"
 #include "ops/fused_batch_norm.h"

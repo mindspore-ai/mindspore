@@ -125,11 +125,13 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   int64_t slice_output_size = output_size_ / split_num_;
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), gen_g.virtual_input_node()});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), sub});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
   AnfNodePtr interval = nullptr;
   if (output_size_ == 2) {
     interval = sub;
   } else {
-    auto interval_divsor = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(output_size_ - 2), dtype});
+    auto interval_divsor = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(output_size_ - 2), dtype_id});
     interval = gen_g.PushBack({gen_g.NewOpInst(DIV), sub, interval_divsor});
   }
 
@@ -137,10 +139,12 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   // new_end = new_start + (slice_output_size - 1) * interval
   // new_x = slice_output_size
   InferSliceId();
-  auto offset_size = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(slice_id_ * slice_output_size), dtype});
+  auto offset_size =
+    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(slice_id_ * slice_output_size), dtype_id});
   auto start_offset = gen_g.PushBack({gen_g.NewOpInst(MUL), interval, offset_size});
   auto new_start = gen_g.PushBack({gen_g.NewOpInst(ADD), gen_g.virtual_input_node(), start_offset});
-  auto end_start_offset_size = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(slice_output_size - 1), dtype});
+  auto end_start_offset_size =
+    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(slice_output_size - 1), dtype_id});
   auto start_end_offset = gen_g.PushBack({gen_g.NewOpInst(MUL), interval, end_start_offset_size});
   auto new_end = gen_g.PushBack({gen_g.NewOpInst(ADD), new_start, start_end_offset});
   auto lin_space = gen_g.PushBack({gen_g.NewOpInst(LIN_SPACE), new_start, new_end, CreatInt64Imm(slice_output_size)});

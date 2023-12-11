@@ -25,7 +25,8 @@ NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   NodePtr row = nullptr;
   if (IsDynamic(shape)) {
     auto real_shape = ib->Shape(x);
-    row = ib->Emit("Cast", {ib->TupleGetItem(real_shape, ib->Value(static_cast<int64_t>(-1))), ib->EmitValue(kInt32)});
+    row = ib->Emit("ScalarToTensor", {ib->TupleGetItem(real_shape, ib->Value(static_cast<int64_t>(-1))),
+                                      ib->Value<int64_t>(kInt32->type_id())});
   } else {
     row = ib->Tensor(shape[shape.size() - 1], kInt32);
   }

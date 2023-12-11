@@ -189,11 +189,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceOpName)
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kBatchToSpaceNDOpName).set_backend_op_name(kBatchToSpaceNDDOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName)
-  .set_target_op_name(kCastOpName)
-  .set_input_attr_info(1, "int")
-  .set_is_ascend_mindir();
-
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarToTensorOpName)
   .set_target_op_name(kScalarToTensorOpName)
   .set_input_attr_info(1, "int");

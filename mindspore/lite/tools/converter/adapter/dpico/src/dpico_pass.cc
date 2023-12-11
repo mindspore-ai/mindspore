@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <utility>
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/cast.h"
 #include "ops/return.h"
 #include "ops/depend.h"
 #include "common/format_utils.h"

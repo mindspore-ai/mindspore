@@ -50,6 +50,7 @@ class CastGpuKernelMod : public NativeGpuKernelMod {
   template <typename S, typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  void ResetKernelFunc(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   using CastFunc =
     std::function<bool(CastGpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
                        const std::vector<KernelTensor *> &, void *)>;

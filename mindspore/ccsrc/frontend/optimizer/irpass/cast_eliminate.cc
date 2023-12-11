@@ -58,13 +58,11 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
   MS_EXCEPTION_IF_NULL(src_type);
 
   // tgt type check
-  auto tgt_type = GetValueNode<TypePtr>(tgt_);
-  MS_EXCEPTION_IF_NULL(tgt_type);
-  if (tgt_type->isa<TensorType>()) {
-    tgt_type = tgt_type->cast<TensorTypePtr>()->element();
-  }
+  auto tgt_type_id_value = GetValueNode<Int64ImmPtr>(tgt_);
+  MS_EXCEPTION_IF_NULL(tgt_type_id_value);
+  int64_t tgt_type_id = tgt_type_id_value->value();
 
-  if (src_type->type_id() == tgt_type->type_id()) {
+  if (src_type->type_id() == tgt_type_id) {
     // If 2nd input of cast is a depend, can't erase cast directly, but should replace cast with a new depend.
     if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(2), prim::kPrimDepend)) {
       auto new_depend =
@@ -117,20 +115,15 @@ bool TwoCastEliminater::CheckTypesIsIncreasingOrDecreasing() {
     x_type = x_type->cast<TensorTypePtr>()->element();
   }
 
-  auto y_type = GetValueNode<TypePtr>(y_);
-  MS_EXCEPTION_IF_NULL(y_type);
-  if (y_type->isa<TensorType>()) {
-    y_type = y_type->cast<TensorTypePtr>()->element();
-  }
+  auto y_dtype_id_value = GetValueNode<Int64ImmPtr>(y_);
+  MS_EXCEPTION_IF_NULL(y_dtype_id_value);
+  auto y_type_id = static_cast<TypeId>(y_dtype_id_value->value());
 
-  auto t_type = GetValueNode<TypePtr>(t_);
-  MS_EXCEPTION_IF_NULL(t_type);
-  if (t_type->isa<TensorType>()) {
-    t_type = t_type->cast<TensorTypePtr>()->element();
-  }
+  auto t_dtype_id_value = GetValueNode<Int64ImmPtr>(t_);
+  MS_EXCEPTION_IF_NULL(t_dtype_id_value);
+  auto t_type_id = static_cast<TypeId>(t_dtype_id_value->value());
+
   auto x_type_id = x_type->type_id();
-  auto y_type_id = y_type->type_id();
-  auto t_type_id = t_type->type_id();
   // y_type == t_type
   if (y_type_id == t_type_id) {
     return true;
@@ -157,9 +150,7 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
     return nullptr;
   }
   if (CheckTypesIsIncreasingOrDecreasing()) {
-    auto cast_op = python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
-    ValuePtr cast = parse::data_converter::PyDataToValue(cast_op);
-    auto cnode = NewCNode({NewValueNode(cast), x_, t_}, node->func_graph());
+    auto cnode = NewCNode({NewValueNode(prim::kPrimCast), x_, t_}, node->func_graph());
     cnode->set_abstract(node->abstract());
     return cnode;
   }

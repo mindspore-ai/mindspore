@@ -17,6 +17,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore._c_expression import typing
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
@@ -74,7 +75,7 @@ def vm_impl_cast(self):
             t = t.element_type()
         # update the src type
         x = x.asnumpy()
-        out = x.astype(mstype.dtype_to_nptype(t))
+        out = x.astype(mstype.dtype_to_nptype(typing.type_id_to_type(t)))
         return Tensor(out)
 
     return vm_impl

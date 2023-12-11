@@ -34,7 +34,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/fse_decode.h"
 #include "ops/op_name.h"
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
