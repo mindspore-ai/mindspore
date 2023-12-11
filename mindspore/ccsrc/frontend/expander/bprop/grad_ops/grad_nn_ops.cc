@@ -635,6 +635,27 @@ REG_BPROP_BUILDER("MirrorPad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(paddings)};
 });
 
+REG_BPROP_BUILDER("GLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("GluGrad", {dout, x}, {{"axis", ib->GetAttr("axis")}});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MaxPoolWithArgmaxV2").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("MaxPoolGradWithArgmaxV2", {x, ib->TupleGetItem(dout, i0), ib->TupleGetItem(out, i1)},
+                     {{"kernel_size", ib->GetAttr("kernel_size")},
+                      {"strides", ib->GetAttr("strides")},
+                      {"pads", ib->GetAttr("pads")},
+                      {"dilation", ib->GetAttr("dilation")},
+                      {"ceil_mode", ib->GetAttr("ceil_mode")},
+                      {"argmax_type", ib->GetAttr("argmax_type")}});
+  return {dx};
+});
+
 REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
@@ -1469,6 +1490,31 @@ REG_BPROP_BUILDER("DynamicRNN").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   dc_prev = ib->ExpandDims(dc_prev, 0);
   constexpr int64_t zero = 0;
   return {dx, dw, db, ib->OutZeros(ib->Tensor(zero)), dh_prev, dc_prev};
+});
+
+REG_BPROP_BUILDER("GRUV2").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto hx = ib->GetInput(kIndex1);
+  auto w = ib->GetInput(kIndex2);
+  auto seq_length = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+  auto y = ib->TupleGetItem(out, i0);
+  auto hy = ib->TupleGetItem(out, i1);
+  auto reverse = ib->TupleGetItem(out, i2);
+  auto dy = ib->TupleGetItem(dout, i0);
+  auto dhy = ib->TupleGetItem(dout, i1);
+  auto tmp = ib->Emit("GRUV2Grad", {x, hx, w, seq_length, y, hy, dy, dhy, reverse},
+                      {{"input_size", ib->GetAttr("input_size")},
+                       {"hidden_size", ib->GetAttr("hidden_size")},
+                       {"num_layers", ib->GetAttr("num_layers")},
+                       {"has_bias", ib->GetAttr("has_bias")},
+                       {"bidirectional", ib->GetAttr("bidirectional")},
+                       {"dropout", ib->GetAttr("dropout")}});
+  auto dx = ib->TupleGetItem(tmp, i0);
+  auto dhx = ib->TupleGetItem(tmp, i1);
+  auto dw = ib->TupleGetItem(tmp, i2);
+  return {dx, dhx, dw, ib->OutZeros(seq_length)};
 });
 
 REG_BPROP_BUILDER("DynamicGRUV2").SetUnusedInputs({i3, i4, i5}).SetBody(BODYFUNC(ib) {

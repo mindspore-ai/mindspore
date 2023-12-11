@@ -2125,5 +2125,13 @@ REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
                       {"padding", MakeValue(padding)}});
   return {dx};
 });
+
+REG_BPROP_BUILDER("TransShape").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto shape = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("TransShape", {dout, ib->Shape(x)});
+  return {dx, ib->OutZeros(shape)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
