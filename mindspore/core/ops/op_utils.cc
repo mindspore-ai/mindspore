@@ -837,6 +837,19 @@ size_t GetInputIndexByName(const std::string &op_name, const std::string &input_
   return SIZE_MAX;
 }
 
+std::string GetInputNameByIndex(const std::string &op_name, size_t index) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return "";
+  }
+  if (index >= op_def->args_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Get input name by index out of range, index: " << index
+                               << ", size: " << op_def->args_.size() << ", op name: " << op_name;
+  }
+  auto input = op_def->args_[index];
+  return input.arg_name_;
+}
+
 size_t GetOpInputsNum(const std::string &op_name) {
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
   if (op_def == nullptr) {

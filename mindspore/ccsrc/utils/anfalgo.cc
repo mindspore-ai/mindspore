@@ -2376,6 +2376,10 @@ abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &a
 }
 
 std::string AnfAlgo::GetInputName(const CNodePtr &origin_op, size_t input_index) {
+  auto prim_func_input_name = ops::GetInputNameByIndex(GetCNodeName(origin_op), input_index);
+  if (prim_func_input_name != "") {
+    return prim_func_input_name;
+  }
   auto origin_primitive = GetCNodePrimitive(origin_op);
   MS_EXCEPTION_IF_NULL(origin_primitive);
   auto input_names = origin_primitive->GetAttr(kAttrInputNames);

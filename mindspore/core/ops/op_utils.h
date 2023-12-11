@@ -279,6 +279,7 @@ inline bool IsValueKnown(const AbstractBasePtr &abs) {
 }
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
+MS_CORE_API std::string GetInputNameByIndex(const std::string &op_name, size_t index);
 MS_CORE_API size_t GetOpInputsNum(const std::string &op_name);
 MS_CORE_API std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim);
 
