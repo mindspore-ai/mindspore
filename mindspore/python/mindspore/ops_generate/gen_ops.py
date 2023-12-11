@@ -297,6 +297,7 @@ def process_args(args):
         dtype = arg_info.get('dtype')
         default_value = arg_info.get('default')
         has_default = 'default' in arg_info.keys()
+        is_optional = arg_info.get('default') == "None" if has_default else False
         is_prim_init = arg_info.get('prim_init')
         arg_handler = arg_info.get('arg_handler')
 
@@ -314,6 +315,8 @@ def process_args(args):
             assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
             if arg_handler:
                 assign_str = f'{arg_handler}({assign_str})'
+                if is_optional:
+                    assign_str += f' if {assign_str} != None else None'
             assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
             args_assign.append(assign_str)
         # step2: get inputs infos:
@@ -607,9 +610,14 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                 ', '.join('DT_' + type.replace('[', '_').replace(']', '').upper() for type in
                           (ct.strip() for ct in type_cast.split(",")))
 
+            # default: None is regarded as a optional argument.
+            is_optional_str = "false"
+            if 'default' in arg_info.keys() and arg_info.get('default') == "None":
+                is_optional_str = "true"
+
             opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
                         f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
-                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}}},"""
+                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}, /*.is_optional_=*/{is_optional_str}}},"""
         opdef_cc += f"""\n  }},"""
         opdef_cc += f"""\n  /* .returns_ = */ {{"""
 
@@ -619,8 +627,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             ref_name = return_info.get('inplace')
             ref_index_str = -1 if ref_name is None else args_dict.get(ref_name)
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str},
-            /*.inplace_input_index_=*/{ref_index_str}}}, """
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}, """ + \
+                        f"""/*.inplace_input_index_=*/{ref_index_str}}}, """
         opdef_cc += f"""\n  }},"""
 
         cc_index_str += f"""\n  }},"""

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,10 +172,6 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     // Save inputs
     auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
-      if (common::AnfAlgo::IsNoneInput(node, i)) {
-        (void)exe_kernel_info.inputs_device_address_.emplace_back(nullptr);
-        continue;
-      }
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
       auto node_address = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, false);
       auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);

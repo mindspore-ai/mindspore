@@ -128,7 +128,7 @@ ValueNodePtr InputsUnifyMindIR::CreateValueTensor(const FuncGraphPtr &func_graph
     tensor = ScalarToTensor(value->cast<ScalarPtr>());
   } else if (value->isa<ValueSequence>()) {
     tensor = SequenceToTensor(value->cast<ValueSequencePtr>());
-  } else if (value->isa<tensor::Tensor>() || value->isa<StringImm>()) {
+  } else if (value->isa<tensor::Tensor>() || value->isa<StringImm>() || value->isa<None>()) {
     return node->cast<ValueNodePtr>();
   } else {
     MS_LOG(WARNING) << "Value is unsupported type. Value: " << value->ToString();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
   for (size_t i = 0; i < input_size; ++i) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
       MS_EXCEPTION_IF_NULL(node);
-      MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None.";
+      MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None, no need to allocate.";
       continue;
     }
     auto input_address = runtime_info->GetInputDeviceAddress(i);
@@ -384,12 +384,6 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<
   auto input_size = runtime_info->GetInputSize();
   std::vector<kernel::KernelTensor *> inputs;
   for (size_t i = 0; i < input_size; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(std::make_shared<kernel::KernelTensor>().get());
-      MS_LOG(DEBUG) << "Input[" << i << "]:"
-                    << " is None Input";
-      continue;
-    }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(device_address->kernel_tensor().get());
@@ -405,12 +399,6 @@ std::vector<abstract::AbstractBasePtr> GetInputKernelTensorsForInfer(const std::
   auto input_size = runtime_info->GetInputSize();
   std::vector<abstract::AbstractBasePtr> inputs;
   for (size_t i = 0; i < input_size; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(nullptr);
-      MS_LOG(DEBUG) << "Input[" << i << "]:"
-                    << " is None Input";
-      continue;
-    }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(device_address->kernel_tensor());

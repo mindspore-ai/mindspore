@@ -97,8 +97,18 @@ AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNod
   if (src_cast_dtype_list.empty() || ops::ValidateArgsType(abs_arg, dst_cast_dtype)) {
     return node;
   }
+
   bool mismatch = true;
   std::stringstream ss;
+  if (op_arg.is_optional_) {
+    auto abs_type = abs_arg->BuildType();
+    MS_EXCEPTION_IF_NULL(abs_type);
+    if (abs_type->isa<TypeNone>()) {
+      return node;
+    }
+    ss << "None, ";
+  }
+
   for (auto src_cast_dtype : src_cast_dtype_list) {
     if (ops::ValidateArgsType(abs_arg, src_cast_dtype)) {
       mismatch = false;
@@ -107,6 +117,7 @@ AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNod
     ss << ops::EnumToString(src_cast_dtype) << ", ";
   }
   ss << ops::EnumToString(dst_cast_dtype);
+
   if (mismatch) {
     std::string dtype_list_str = ss.str();
     MS_EXCEPTION(TypeError) << "For Operator[" << prim_name << "], the supported dtype list of '" << op_arg.arg_name_
@@ -1184,7 +1195,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto &added_attrs = prim_py->evaluate_added_attrs();
   eval_result = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>(added_attrs));
   if (py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-    // Call 'infer_value()' method if it is exsited, for constant propagation.
+    // Call 'infer_value()' method if it is existed, for constant propagation.
     eval_result = RunPyInferValue(engine, eval_result->abstract(), args);
   }
   // Save infer result to caches (evaluator cache and global cache).
@@ -1250,6 +1261,16 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
     }
   }
 }
+
+bool ValidateArgOptional(const AbstractBasePtr &abs_arg, const ops::OpInputArg &input_arg) {
+  if (!input_arg.is_optional_) {
+    return false;
+  }
+
+  auto abs_type = abs_arg->BuildType();
+  MS_EXCEPTION_IF_NULL(abs_type);
+  return abs_type->isa<TypeNone>();
+}
 }  // namespace
 
 PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitivePtr &prim_func)
@@ -1272,9 +1293,11 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
     MS_LOG(EXCEPTION) << "For Operator[" << op_def_->name_ << "], the inputs number should be " << op_args.size()
                       << " but got " << real_abs_args.size() << ".";
   }
+
   // Check inputs type.
   for (size_t i = 0; i < op_args.size(); i++) {
-    if (!ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
+    if (!ValidateArgOptional(real_abs_args[i], op_args[i]) &&
+        !ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
       std::vector<std::string> op_type_list;
       for (const auto &op_abs : real_abs_args) {
         (void)op_type_list.emplace_back(op_abs->BuildType()->ToString());

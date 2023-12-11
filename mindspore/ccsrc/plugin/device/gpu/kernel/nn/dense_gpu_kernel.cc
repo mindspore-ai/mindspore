@@ -208,29 +208,22 @@ bool DenseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
+#define DENSE_GPU_KERNEL_REG(T, S1, S2)                                                    \
+  {                                                                                        \
+    KernelAttr().AddInputAttr(T).AddInputAttr(T).AddOptionalInputAttr(T).AddOutputAttr(T), \
+      &DenseGpuKernelMod::LaunchKernel<S1, S2>                                             \
+  }
+
 std::map<std::string, std::vector<std::pair<KernelAttr, DenseGpuKernelMod::DenseFunc>>>
   DenseGpuKernelMod::kernel_attr_map_ = {
     {kDenseOpName,
-     {{KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &DenseGpuKernelMod::LaunchKernel<half, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &DenseGpuKernelMod::LaunchKernel<float, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &DenseGpuKernelMod::LaunchKernel<double, double>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-       &DenseGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-       &DenseGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-       &DenseGpuKernelMod::LaunchKernel<uint8_t, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-       &DenseGpuKernelMod::LaunchKernel<int8_t, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-       &DenseGpuKernelMod::LaunchKernel<int16_t, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &DenseGpuKernelMod::LaunchKernel<int32_t, float>},
-      {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-       &DenseGpuKernelMod::LaunchKernel<int64_t, float>}}}};
+     {DENSE_GPU_KERNEL_REG(kNumberTypeFloat16, half, float), DENSE_GPU_KERNEL_REG(kNumberTypeFloat32, float, float),
+      DENSE_GPU_KERNEL_REG(kNumberTypeFloat64, double, double),
+      DENSE_GPU_KERNEL_REG(kNumberTypeComplex64, Complex<float>, Complex<float>),
+      DENSE_GPU_KERNEL_REG(kNumberTypeComplex128, Complex<double>, Complex<double>),
+      DENSE_GPU_KERNEL_REG(kNumberTypeUInt8, uint8_t, float), DENSE_GPU_KERNEL_REG(kNumberTypeInt8, int8_t, float),
+      DENSE_GPU_KERNEL_REG(kNumberTypeInt16, int16_t, float), DENSE_GPU_KERNEL_REG(kNumberTypeInt32, int32_t, float),
+      DENSE_GPU_KERNEL_REG(kNumberTypeInt64, int64_t, float)}}};
 
 std::vector<KernelAttr> DenseGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);

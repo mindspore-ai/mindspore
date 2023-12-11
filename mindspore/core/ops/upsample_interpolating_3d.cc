@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "abstract/abstract_value.h"
@@ -55,10 +56,12 @@ constexpr int64_t kVALUE_2 = 2;
 constexpr int64_t kVALUE_3 = 3;
 constexpr int64_t kVALUE_5 = 5;
 
-void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                        size_t *const scales_idx, const std::string &prim_name) {
+std::pair<size_t, std::vector<int64_t>> CheckAndGetScalesIdxAndNoneList(const PrimitivePtr &primitive,
+                                                                        const std::vector<AbstractBasePtr> &input_args,
+                                                                        const std::string &prim_name) {
+  size_t scales_idx = kInputIndex2;
+  std::vector<int64_t> none_list{};
   if (input_args.size() == kVALUE_3) {
-    std::vector<int64_t> none_list{};
     auto size_type = input_args[kInputIndex1]->GetType();
     MS_EXCEPTION_IF_NULL(size_type);
     auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
@@ -76,10 +79,11 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
     } else {
       none_list.push_back(static_cast<int64_t>(kInputIndex2));
     }
-    (void)primitive->AddAttr(kAttrNoneList, MakeValue<std::vector<int64_t>>(none_list));
   } else {
-    *scales_idx = kInputIndex1;
+    scales_idx = kInputIndex1;
   }
+
+  return std::make_pair(scales_idx, none_list);
 }
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
@@ -126,9 +130,11 @@ void GetOutputShape(const PrimitivePtr &primitive, const std::vector<AbstractBas
                     const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
   auto prim_name = primitive->name();
   // none_list and idx
-  size_t scales_idx(kInputIndex2);
-  UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
-  auto none_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrNoneList));
+  auto [scales_idx, none_list] = CheckAndGetScalesIdxAndNoneList(primitive, input_args, prim_name);
+  if (none_list.empty()) {
+    return;
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("the length of non_list", SizeToLong(none_list.size()), kEqual, kVALUE_1,
                                            prim_name);
   // infer output shape

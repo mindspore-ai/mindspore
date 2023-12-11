@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@
 #include <utility>
 #include <vector>
 #include "abstract/utils.h"
+#include "kernel/kernel.h"
 #include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "ops/upsample_nearest_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_impl.cuh"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,14 +59,19 @@ int UpsampleNearest3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
 
-  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
-  if (none_list_.size() != kIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+  auto type_idx1 = inputs[kIndex1]->GetType();
+  MS_EXCEPTION_IF_NULL(type_idx1);
+  auto output_size_none = type_idx1->isa<TypeNone>();
+  auto scales_opt = inputs[kIndex2]->GetOptionalValueWithCheck<std::vector<float>>();
+  auto scales_none = !scales_opt.has_value();
+  if (output_size_none == scales_none) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
+    return KRET_RESIZE_FAILED;
   }
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+  if (scales_none) {
     scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex1]->GetValueWithCheck<std::vector<float>>();
+    scales_ = scales_opt.value();
   }
   return KRET_OK;
 }
@@ -89,24 +96,25 @@ bool UpsampleNearest3dGpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   return true;
 }
 
-#define UpsampleNearest3D_GPU_KERNEL_REG(M_S, M_T, S) \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(M_T).AddOutputAttr(M_S), &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>
+#define UpsampleNearest3D_GPU_KERNEL_REG(X_T, S)                   \
+  std::make_pair(KernelAttr()                                      \
+                   .AddInputAttr(X_T)                              \
+                   .AddOptionalInputAttr(kNumberTypeInt32)         \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)       \
+                   .AddOutputAttr(X_T),                            \
+                 &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>), \
+    std::make_pair(KernelAttr()                                    \
+                     .AddInputAttr(X_T)                            \
+                     .AddOptionalInputAttr(kNumberTypeInt64)       \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)     \
+                     .AddOutputAttr(X_T),                          \
+                   &UpsampleNearest3dGpuKernelMod::LaunchKernel<S>)
 
 std::vector<std::pair<KernelAttr, UpsampleNearest3dGpuKernelMod::UpsampleNearest3dFunc>>
-  UpsampleNearest3dGpuKernelMod::func_list_ = {
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt32, half)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt64, half)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeUInt8, kNumberTypeFloat32, uint8_t)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeFloat32, half)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeFloat32, float)},
-    {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeFloat32, double)},
-};
+  UpsampleNearest3dGpuKernelMod::func_list_ = {UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeUInt8, uint8_t),
+                                               UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat16, half),
+                                               UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat32, float),
+                                               UpsampleNearest3D_GPU_KERNEL_REG(kNumberTypeFloat64, double)};
 
 std::vector<KernelAttr> UpsampleNearest3dGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

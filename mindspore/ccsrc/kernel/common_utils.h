@@ -139,11 +139,12 @@ BACKEND_EXPORT size_t UnitSizeInBytes(const mindspore::TypeId &t);
 
 struct DataType {
   explicit DataType(const TypeId &dtype, const string &format = kOpFormat_DEFAULT,
-                    const TypeId &object_type = kObjectTypeTensorType)
-      : dtype(dtype), format(format), object_type(object_type) {}
+                    const TypeId &object_type = kObjectTypeTensorType, bool is_optional = false)
+      : dtype(dtype), format(format), object_type(object_type), is_optional(is_optional) {}
   TypeId dtype;
   std::string format;
   TypeId object_type;
+  bool is_optional;
 };
 
 class BACKEND_EXPORT KernelAttr {
@@ -152,9 +153,12 @@ class BACKEND_EXPORT KernelAttr {
   ~KernelAttr() = default;
 
   KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
+  KernelAttr &AddOptionalInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddInputAttr(const TypeId &object_type, const TypeId &ms_type,
                            const std::string &formatt = kOpFormat_DEFAULT);
+  KernelAttr &AddOptionalInputAttr(const TypeId &object_type, const TypeId &ms_type,
+                                   const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &object_type, const TypeId &ms_type,
                             const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddAllSameAttr(bool all_same, size_t all_same_input_num = 1, bool group_allsame = false);
@@ -224,8 +228,8 @@ BACKEND_EXPORT void SetKernelObjectTypeBuildInfo(const AnfNodePtr &kernel_node,
 BACKEND_EXPORT void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node,
                                                         const kernel::KernelAttr &selected_kernel_attr);
 BACKEND_EXPORT bool SelectKernelByObjectType(const CNodePtr &kernel_node,
-                                             const std::vector<KernelAttr> &ori_kernel_attrs,
-                                             std::vector<KernelAttr> *selected_kernel_attrs, bool strict);
+                                             const std::vector<KernelAttr> &registered_kernel_attrs,
+                                             std::vector<KernelAttr> *selected_kernel_attrs);
 // Tuple --> Tuple.
 BACKEND_EXPORT KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id);
 BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids);

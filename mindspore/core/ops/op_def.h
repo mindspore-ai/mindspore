@@ -57,6 +57,7 @@ struct OpInputArg {
   bool as_init_arg_;  // true if this is a primitive init arg.
   std::string arg_handler_;
   std::vector<OP_DTYPE> cast_dtype_;
+  bool is_optional_;
 };
 
 struct OpOutputArg {

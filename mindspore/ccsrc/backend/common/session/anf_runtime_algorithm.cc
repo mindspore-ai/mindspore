@@ -1643,9 +1643,6 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      continue;
-    }
     auto real_input = GetInputGraphIdxByKernelIdx(node, i);
     auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -2013,6 +2010,10 @@ TypeId AnfRuntimeAlgorithm::GetAbstractObjectType(const AbstractBasePtr &abstrac
     // scalar input may not converted to tensor
     return kObjectTypeNumber;
   }
+  if (abstract->isa<abstract::AbstractNone>()) {
+    return kMetaTypeNone;
+  }
+
   return kTypeUnknown;
 }
 
