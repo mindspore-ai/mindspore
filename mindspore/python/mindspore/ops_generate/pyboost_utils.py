@@ -282,15 +282,15 @@ def convert_types(inputs):
             if  data_type == 'tensor':
                 logging.info("Not support tuple[tensor] input.")
             elif data_type == 'int':
-                inputs_dtypes[i] = 'transform::aclIntArray *'
+                inputs_dtypes[i] = 'std::vector<int64_t>'
             elif data_type == 'float':
-                inputs_dtypes[i] = 'transform::aclFloatArray *'
+                inputs_dtypes[i] = 'std::vector<float>'
             elif data_type == 'bool':
-                inputs_dtypes[i] = 'transform::aclBoolArray *'
+                inputs_dtypes[i] = 'std::vector<uint8_t>'
             else:
                 logging.warning("Not support tuple[%s]] input.", data_type)
         if inputs_dtypes[i] == 'number':
-            inputs_dtypes[i] = 'transform::aclScalar *'
+            inputs_dtypes[i] = 'ScalarPtr'
     return inputs_dtypes, flag
 
 

@@ -462,7 +462,7 @@ ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) const {
   return new_value_node;
 }
 
-ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const {
+ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(value);
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value);
@@ -470,6 +470,7 @@ ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const Va
   new_value_node->set_abstract(abstract);
   SetKernelInfoForNode(new_value_node);
   AnfAlgo::SetGraphId(graph_id(), new_value_node.get());
+  AddValueNodeToGraph(new_value_node);
   return new_value_node;
 }
 

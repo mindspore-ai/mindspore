@@ -171,8 +171,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
-  ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const;
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
+  ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
   ValueNodePtr NewValueNode(const ValuePtr &input_value);
   // trans tuple output to maketuple + no_tuple out

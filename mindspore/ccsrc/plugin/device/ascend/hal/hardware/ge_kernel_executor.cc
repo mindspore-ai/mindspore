@@ -127,9 +127,10 @@ void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType 
   MS_LOG(ERROR) << ss.str();
 }
 
-std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
+std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node,
+                                                                                             bool enable_aclnn) {
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
-  if (kernel::IsRegisteredAclnnOp(node)) {
+  if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
     return {KernelType::OPAPI_KERNEL, {}};
   }
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
@@ -382,10 +383,11 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
   GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
+  bool enable_aclnn = !kernel_graph->is_from_single_op();
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [kernel_type, kernel_info_list] = QueryKernelType(kernel);
+    auto [kernel_type, kernel_info_list] = QueryKernelType(kernel, enable_aclnn);
     if (kernel_type == KernelType::UNKNOWN_KERNEL_TYPE) {
       MS_EXCEPTION(TypeError) << "Query kernel type failed, node name: " << kernel->fullname_with_scope()
                               << ", node info: " << kernel->DebugString();

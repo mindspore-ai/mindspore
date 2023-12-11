@@ -106,7 +106,7 @@ class AclnnKernelMod : public KernelMod {
   auto GetKernelTuple(const std::vector<Ts> &... vecs) {
     const auto &new_vec = ConcatVecs(vecs...);
     if (new_vec.size() != N) {
-      MS_LOG(EXCEPTION) << "Config op input and output's size must be same, but get " << N << " with "
+      MS_LOG(EXCEPTION) << op_type_ << "'s config op input and output's size must be same, but get " << N << " with "
                         << new_vec.size();
     }
     const auto &result = GetTupleFront<N>(new_vec);
