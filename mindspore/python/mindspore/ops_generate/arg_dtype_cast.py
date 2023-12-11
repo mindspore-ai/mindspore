@@ -43,7 +43,7 @@ def list_to_tuple(data):
 
 def tensor_to_tuple(data):
     # Since tuple is not supported for precision conversion during KernelSelect, the original int32 tensor input cases
-    # would be failed. Thus, raise the tuple precision from int32 to int64 at frontend. But sequence data type cast
+    # would be failed. Thus, the tuple precision is raised from int32 to int64 at frontend. But sequence data type cast
     # must be adapted in future version.
     if data.dtype == ms.int32:
         data = ops.cast(data, ms.int64)
