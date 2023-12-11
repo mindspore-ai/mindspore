@@ -32,7 +32,34 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-using BpropGraphCacheMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
+class SimpleNode {
+ public:
+  explicit SimpleNode(const AbstractBasePtr &abs) : abs_(abs->Clone()) {}
+  SimpleNode(const ValuePtr &value, const AbstractBasePtr &abs) : abs_(abs->Clone()), value_(value) {}
+  SimpleNode(const PrimitivePtr &prim, const AbstractBasePtr &abs, const std::vector<size_t> &input_indexs)
+      : input_indexs(std::move(input_indexs)), abs_(abs->Clone()), prim_(prim->Clone()) {}
+  ~SimpleNode() = default;
+  bool is_valuenode() const { return value_ != nullptr; }
+  PrimitivePtr get_primitive() const { return prim_->Clone(); }
+  AbstractBasePtr get_abstract() const { return abs_->Clone(); }
+  ValuePtr get_value() const { return value_; }
+
+  std::vector<size_t> input_indexs;
+
+ protected:
+  AbstractBasePtr abs_;
+  ValuePtr value_;
+  PrimitivePtr prim_;
+};
+using SimpleNodePtr = std::shared_ptr<SimpleNode>;
+
+struct SimpleGraph {
+  std::vector<SimpleNodePtr> nodes;
+  std::vector<size_t> output_indexs;
+  std::vector<size_t> input_indexs;
+};
+using SimpleGraphPtr = std::shared_ptr<SimpleGraph>;
+using BpropGraphCacheMap = std::unordered_map<abstract::AbstractBasePtrList, SimpleGraphPtr,
                                               abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 using KernelGraph = session::KernelGraph;
 
@@ -48,15 +75,12 @@ class ShapeCalcException : public std::runtime_error {
 
 class PynativeIRBuilder : public BpropIRBuilder {
  public:
-  PynativeIRBuilder(const std::string &name, const FuncGraphPtr &fg, const ExpanderInferPtr &infer, UserMap *users,
+  PynativeIRBuilder(const PrimitivePtr &prim, const FuncGraphPtr &fg, const ExpanderInferPtr &infer, UserMap *users,
                     const AnfNodePtr &dout)
-      : BpropIRBuilder(name, fg, infer), users_(users), dout_(dout) {
+      : BpropIRBuilder(prim->name(), fg, infer), users_(users), dout_(dout), prim_(prim) {
     MS_EXCEPTION_IF_NULL(users);
   }
   ~PynativeIRBuilder() = default;
-
-  inline static std::unordered_map<PrimitivePtr, BpropGraphCacheMap, PrimitiveHasher, PrimitiveTotalEqual>
-    bprop_op_graph_map;
 
   NodePtr OutZeros(const NodePtr &node) override {
     need_infer_ = false;
@@ -65,9 +89,14 @@ class PynativeIRBuilder : public BpropIRBuilder {
     return ret;
   }
 
-  NodePtrList Build(const std::vector<NodePtr> &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
-                    const BpropHandle &handle, const std::string &instance_name) {
-    auto output_nodes = Run(input_nodes, attrs, handle, instance_name);
+  virtual NodePtrList Build(const std::vector<NodePtr> &input_nodes, const std::vector<ValuePtr> &input_values,
+                            const HashMap<std::string, ValuePtr> &attrs, const BpropHandle &handle) {
+    if (!input_values.empty()) {
+      for (size_t i = 0; i < input_values.size(); ++i) {
+        input_nodes[i]->SetValue(input_values[i]);
+      }
+    }
+    auto output_nodes = Run(input_nodes, attrs, handle, prim_->instance_name());
     for (size_t i = 0; i < output_nodes.size(); i++) {
       auto &node = output_nodes[i];
       // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
@@ -87,110 +116,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
     return output_nodes;
   }
 
-  NodePtrList BuildWithCache(const NodePtrList &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
-                             const BpropHandle &handle, const std::string &instance_name, const PrimitivePtr &prim) {
-    BpropGraphCacheMap &bprop_map = PynativeIRBuilder::bprop_op_graph_map[prim];
-    AbstractBasePtrList abs_list;
-    abs_list.reserve(input_nodes.size());
-    (void)std::transform(input_nodes.cbegin(), input_nodes.cend(), std::back_insert_iterator(abs_list),
-                         [](const NodePtr &no) { return no->abstract()->Clone(); });
-    FuncGraphPtr graph;
-    auto it = bprop_map.find(abs_list);
-    if (it == bprop_map.end()) {
-      bool skip_cache = false;
-      graph = BuildBpropOpGraph(input_nodes, attrs, handle, instance_name, &skip_cache);
-      bprop_map[abs_list] = skip_cache ? nullptr : graph;
-    } else {
-      graph = it->second;
-    }
-    if (graph == nullptr) {
-      return Build(input_nodes, attrs, handle, instance_name);
-    }
-
-    need_infer_ = false;
-    std::unordered_map<AnfNodePtr, NodePtr> node_map;
-    auto parm = graph->parameters();
-    auto output = graph->output();
-    bool is_multi_outputs = graph->has_flag("multi");
-    auto nodes = TopoSort(graph->get_return(), SuccIncoming,
-                          [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
-    nodes.pop_back();
-    for (size_t i = 0; i < input_nodes.size(); i++) {
-      node_map[parm[i]] = input_nodes[i];
-    }
-    for (auto &node : nodes) {
-      auto cnode = node->cast<CNodePtr>();
-      NodePtrList cnode_list;
-      if (node == output && is_multi_outputs) {
-        (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(cnode_list),
-                             [&node_map](const AnfNodePtr &no) { return node_map.at(no); });
-        return cnode_list;
-      }
-      PrimitivePtr primitive = nullptr;
-      for (auto &no : cnode->inputs()) {
-        if (no->isa<ValueNode>()) {
-          auto value = no->cast<ValueNodePtr>()->value();
-          if (value->isa<Primitive>()) {
-            primitive = value->cast<PrimitivePtr>()->Clone();
-          } else {
-            auto value_node = NewValueNode(value);
-            value_node->set_abstract(value->ToAbstract());
-            cnode_list.emplace_back(NewNode(value_node));
-          }
-        } else {
-          cnode_list.emplace_back(node_map.at(no));
-        }
-      }
-      auto new_node = EmitOp(primitive, cnode_list);
-      new_node->get()->set_abstract(node->abstract()->Clone());
-      node_map[node] = new_node;
-    }
-    return NodePtrList{node_map.at(output)};
-  }
-
  protected:
-  FuncGraphPtr BuildBpropOpGraph(const NodePtrList &input_nodes, const HashMap<std::string, ValuePtr> &attrs,
-                                 const BpropHandle &handle, const std::string &instance_name, bool *skip_cache) {
-    // This section of code can have a very long runtime with certain operations, such as the MaskedSelect operator.
-    auto graph = std::make_shared<FuncGraph>();
-    NodePtrList inputs;
-    inputs.reserve(input_nodes.size());
-    std::vector<bool> value_index(input_nodes.size());
-    for (size_t i = 0; i < input_nodes.size(); i++) {
-      auto inp = input_nodes[i];
-      auto p = inputs.emplace_back(NewNode(graph->add_parameter()));
-      p->get()->set_abstract(inp->abstract()->Clone());
-      if (!p->HasAbstractValue()) {
-        p->SetValue(inp->Value());
-        value_index[i] = true;
-      }
-    }
-
-    std::swap(graph, func_graph_);
-    need_record_users_ = false;
-    auto output_nodes = Build(inputs, attrs, handle, instance_name);
-    need_record_users_ = true;
-    std::swap(graph, func_graph_);
-
-    if (output_nodes.size() == 1) {
-      graph->set_output(output_nodes[0]->get());
-    } else {
-      AnfNodePtrList new_outputs{NewValueNode(prim::kPrimMakeTuple)};
-      (void)std::transform(output_nodes.cbegin(), output_nodes.cend(), std::back_inserter(new_outputs),
-                           [](const NodePtr &node) { return node->get(); });
-      auto mt = graph->NewCNode(new_outputs);
-      graph->set_output(mt);
-      graph->set_flag("multi", true);
-    }
-    for (size_t i = 0; i < inputs.size(); i++) {
-      if (value_index[i] && inputs[i]->is_used_value()) {
-        *skip_cache = true;
-        break;
-      }
-    }
-    return graph;
-  }
-
   NodePtr EmitGetItemValue(const NodePtrList &inputs) {
     auto real_input = inputs[0]->get<ValueNodePtr>();
     if (real_input != nullptr) {
@@ -247,9 +173,6 @@ class PynativeIRBuilder : public BpropIRBuilder {
       }
       infer_->Infer(node);
     }
-    if (!need_record_users_) {
-      return node;
-    }
     // record the users
     for (size_t i = 1; i < cnode_inputs.size(); i++) {
       auto &inp = cnode_inputs[i];
@@ -270,10 +193,124 @@ class PynativeIRBuilder : public BpropIRBuilder {
   UserMap *users_;
   AnfNodePtr dout_;
   bool need_infer_{true};
-  bool need_record_users_{true};
+  PrimitivePtr prim_;
 };
 
-void ClearBpropOpGraphMap() { PynativeIRBuilder::bprop_op_graph_map.clear(); }
+class PynativeIRBuilderWithCache : public PynativeIRBuilder {
+ public:
+  using PynativeIRBuilder::PynativeIRBuilder;
+  ~PynativeIRBuilderWithCache() = default;
+
+  inline static std::unordered_map<PrimitivePtr, BpropGraphCacheMap, PrimitiveHasher, PrimitiveTotalEqual>
+    bprop_op_graph_map;
+
+  NodePtrList Build(const NodePtrList &input_nodes, const std::vector<ValuePtr> &input_values,
+                    const HashMap<std::string, ValuePtr> &attrs, const BpropHandle &handle) override {
+    AbstractBasePtrList abs_list;
+    NodePtrList output_nodes;
+    abs_list.reserve(input_nodes.size());
+    (void)std::transform(input_nodes.cbegin(), input_nodes.cend(), std::back_insert_iterator(abs_list),
+                         [](const NodePtr &no) { return no->abstract(); });
+    std::vector<size_t> value_index(input_nodes.size());
+    for (size_t i = 0; i < input_values.size(); ++i) {
+      if (!input_nodes[i]->HasAbstractValue()) {
+        input_nodes[i]->SetValue(input_values[i]);
+        value_index[i] = true;
+      }
+    }
+    BpropGraphCacheMap &bprop_map = PynativeIRBuilderWithCache::bprop_op_graph_map[prim_];
+    auto it = bprop_map.find(abs_list);
+    if (it == bprop_map.end()) {
+      need_record_nodes_ = true;
+      output_nodes = PynativeIRBuilder::Build(input_nodes, {}, attrs, handle);
+      need_record_nodes_ = false;
+      // need not grad if grad depend input_values.
+      for (size_t i = 0; i < input_nodes.size(); i++) {
+        if (value_index[i] && input_nodes[i]->is_used_value()) {
+          return output_nodes;
+        }
+      }
+      bprop_map[abs_list] = BuildBpropOpGraph(input_nodes, output_nodes);
+    } else {
+      need_infer_ = false;
+      SimpleGraphPtr graph = it->second;
+      std::vector<NodePtr> node_map(input_nodes);
+      node_map.reserve(graph->nodes.size());
+      auto SimpleNodeToMsNode = [&graph, &node_map, this](const SimpleNodePtr &node) -> NodePtr {
+        if (node->is_valuenode()) {
+          return EmitValue(node->get_value());
+        }
+        NodePtrList cnode_list;
+        cnode_list.reserve(node->input_indexs.size());
+        for (size_t i : node->input_indexs) {
+          (void)cnode_list.emplace_back(node_map[i]);
+        }
+        NodePtr new_node = EmitOp(node->get_primitive(), cnode_list);
+        AnfNodePtr ms_node = new_node->get();
+        if (ms_node->abstract() == nullptr) {
+          ms_node->set_abstract(node->get_abstract());
+        }
+        return new_node;
+      };
+      for (size_t i = graph->input_indexs.size(); i < graph->nodes.size(); i++) {
+        (void)node_map.emplace_back(SimpleNodeToMsNode(graph->nodes[i]));
+      }
+      output_nodes.reserve(graph->output_indexs.size());
+      for (size_t i : graph->output_indexs) {
+        (void)output_nodes.emplace_back(node_map[i]);
+      }
+    }
+    return output_nodes;
+  }
+
+ protected:
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override {
+    auto node = PynativeIRBuilder::EmitOp(prim, inputs);
+    if (need_record_nodes_) {
+      (void)bprop_nodes_.emplace_back(std::make_pair(node, inputs));
+    }
+    return node;
+  }
+
+ private:
+  SimpleGraphPtr BuildBpropOpGraph(const NodePtrList &input_nodes, const NodePtrList &output_nodes) {
+    std::unordered_map<NodePtr, size_t> node_map;
+    SimpleGraphPtr graph = std::make_shared<SimpleGraph>();
+    for (auto &parm : input_nodes) {
+      node_map[parm] = graph->nodes.size();
+      (void)graph->input_indexs.emplace_back(graph->nodes.size());
+      (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(parm->abstract()));
+    }
+    for (auto &[node, inputs] : bprop_nodes_) {
+      std::vector<size_t> input_indexs;
+      input_indexs.reserve(inputs.size());
+      for (auto &no : inputs) {
+        auto it = node_map.find(no);
+        if (it == node_map.end()) {
+          auto value = no->get<ValueNodePtr>()->value();
+          node_map[node] = graph->nodes.size();
+          (void)input_indexs.emplace_back(graph->nodes.size());
+          (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(value, value->ToAbstract()));
+        } else {
+          (void)input_indexs.emplace_back(it->second);
+        }
+      }
+      PrimitivePtr primitive = node->isa<ValueNode>() ? prim::kPrimTupleGetItem : GetCNodePrimitive(node->get());
+      node_map[node] = graph->nodes.size();
+      (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(primitive, node->abstract(), input_indexs));
+    }
+    graph->output_indexs.reserve(output_nodes.size());
+    for (auto &node : output_nodes) {
+      (void)graph->output_indexs.emplace_back(node_map[node]);
+    }
+    return graph;
+  }
+
+  bool need_record_nodes_{false};
+  std::vector<std::pair<NodePtr, NodePtrList>> bprop_nodes_;
+};
+
+void ClearBpropOpGraphMap() { PynativeIRBuilderWithCache ::bprop_op_graph_map.clear(); }
 
 bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -317,17 +354,20 @@ const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &o
 }
 
 bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
+  static const bool cache_env = (common::GetEnv("MS_DEV_DISABLE_BPROP_CACHE") != "on");
   const auto prim = GetCNodePrimitive(cnode);
-  auto name = prim->name();
-  PynativeIRBuilder ir_builder(name, cnode->func_graph(), std::make_shared<CppInfer>(), users_, cnode->inputs().back());
+  const auto name = prim->name();
+  std::shared_ptr<PynativeIRBuilder> ir_builder;
+  if (cache_env) {
+    ir_builder = std::make_shared<PynativeIRBuilderWithCache>(prim, cnode->func_graph(), std::make_shared<CppInfer>(),
+                                                              users_, cnode->inputs().back());
+  } else {
+    ir_builder = std::make_shared<PynativeIRBuilder>(prim, cnode->func_graph(), std::make_shared<CppInfer>(), users_,
+                                                     cnode->inputs().back());
+  }
   input_nodes_.reserve(cnode->size());
   (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
-                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
-  if (!input_values.empty()) {
-    for (size_t i = 0; i < input_values.size(); ++i) {
-      input_nodes_[i]->SetValue(input_values[i]);
-    }
-  }
+                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder.get()); });
   mindspore::HashMap<std::string, ValuePtr> attrs;
   {
     PrimitiveReadLock read_lock(prim->shared_mutex());
@@ -338,12 +378,7 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  static const bool cache_env = (common::GetEnv("MS_DEV_DISABLE_BPROP_CACHE") != "on");
-  if (cache_env) {
-    output_nodes_ = ir_builder.BuildWithCache(input_nodes_, attrs, *handle, prim->instance_name(), prim);
-  } else {
-    output_nodes_ = ir_builder.Build(input_nodes_, attrs, *handle, prim->instance_name());
-  }
+  output_nodes_ = ir_builder->Build(input_nodes_, input_values, attrs, *handle);
   if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
