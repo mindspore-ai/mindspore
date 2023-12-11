@@ -357,7 +357,6 @@ BaseRef PrimitivePy::RunCellBpropFunction(const py::tuple &py_args) const {
   if (backward_hook_fn_.size() > 1) {
     MS_LOG(EXCEPTION) << "Multiple registration of bprop function is not supported.";
   }
-  SyncData(py_args);
   py::tuple converted_args(py_args.size());
   ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t non_inp_args_size = 2;  // out and dout.

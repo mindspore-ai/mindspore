@@ -75,7 +75,7 @@ void TopCellInfo::ClearDeviceMemory() const {
     if (device_address == nullptr) {
       continue;
     }
-    if (!device_address->from_persistent_mem() && !tensor->is_parameter()) {
+    if (!device_address->from_persistent_mem() && !tensor->is_parameter() && !IsOutputTensor(tensor)) {
       // Parameters can not be cleaned up. In the case of Parameter(Tensor(xxx).view(xxx), requires_grad=False),
       // the param will be converted to value node into bprop graph. Tensor will be zero after cleaning.
       tensor->set_device_address(nullptr);
@@ -205,6 +205,11 @@ void TopCellInfo::ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_sh
   already_run_cell_id_ = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->GetAlreadyRunCellId(new_cell_id);
   input_args_info_->already_run_cell_id = already_run_cell_id_;
   is_unknown_shape_ = true;
+}
+
+bool TopCellInfo::IsOutputTensor(const tensor::TensorPtr &tensor) const {
+  return std::any_of(output_ids().begin(), output_ids().end(),
+                     [&tensor](const std::string &output_id) { return tensor->id() == output_id; });
 }
 }  // namespace pynative
 }  // namespace mindspore
