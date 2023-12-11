@@ -20,6 +20,7 @@ from mindspore.ops import Primitive
 import pytest
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

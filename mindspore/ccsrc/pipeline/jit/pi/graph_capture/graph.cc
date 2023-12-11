@@ -137,6 +137,8 @@ static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv,
 
 static bool CheckDepth(int depth, int max_depth) { return depth < max_depth || max_depth == -1; }
 
+static bool CheckObjPtr(node) { return node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr; }
+
 TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
   if (!CheckDepth(depth, max_depth)) {
     MS_LOG(DEBUG) << "too deep trace for guard";
@@ -146,7 +148,7 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
   ValueNode *p = node;
   bool has_unsupported = false;
   if (!PrepareTraceParam(&(node->getInputs()), &tv, depth, max_depth, &has_unsupported, strict, print) ||
-      node->GetVobj() == nullptr) {
+      CheckObjPtr(node)) {
     return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, p->GetOpcode(), p->GetOparg());
   }
   TracePtr ret = nullptr;
