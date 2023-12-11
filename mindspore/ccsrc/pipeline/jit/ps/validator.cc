@@ -57,6 +57,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   // Primitive must in whitelist
   auto prim = GetValueNode<PrimitivePtr>(node);
   MS_EXCEPTION_IF_NULL(prim);
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal DoSignaturePrimitive '" << prim->name() << "' in the graph.";
+  }
   if (abstract::IsInWhiteList(prim)) {
     return;
   }
