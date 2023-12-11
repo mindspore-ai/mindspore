@@ -140,13 +140,16 @@ bool ValidateArgsType(const AbstractBasePtr &abs_arg, OP_DTYPE type_arg) {
       return abs_arg->isa<abstract::AbstractScalar>() && (abs_type->isa<Float>() || abs_type->isa<BFloat>());
     }
     case OP_DTYPE::DT_NUMBER: {
-      return abs_arg->isa<abstract::AbstractScalar>() && (abs_type->isa<Number>());
+      return abs_arg->isa<abstract::AbstractScalar>() && abs_type->isa<Number>();
     }
     case OP_DTYPE::DT_STR: {
-      return abs_arg->isa<abstract::AbstractScalar>() && (abs_type->isa<String>());
+      return abs_arg->isa<abstract::AbstractScalar>() && abs_type->isa<String>();
     }
     case OP_DTYPE::DT_TENSOR: {
       return abs_arg->isa<abstract::AbstractTensor>();
+    }
+    case OP_DTYPE::DT_TYPE: {
+      return abs_arg->isa<abstract::AbstractType>() && abs_type->isa<Type>();
     }
     default: {
       return ValidateArgsSequenceType(abs_arg, type_arg);

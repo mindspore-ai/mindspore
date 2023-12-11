@@ -400,6 +400,8 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
+  } else if (value->isa<FP64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<double>(), &acl_scalar);
   } else if (value->isa<FP32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
