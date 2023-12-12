@@ -38,12 +38,6 @@ class BACKEND_EXPORT OpExecutor {
  public:
   static OpExecutor &GetInstance();
 
-  class ExecuteGuard {
-   public:
-    ExecuteGuard() { OpExecutor::GetInstance().executing_ = true; }
-    ~ExecuteGuard() { OpExecutor::GetInstance().executing_ = false; }
-  };
-
   void RegisterForwardCallback(const std::function<void()> &callback);
 
   // Register build callback function
@@ -97,7 +91,7 @@ class BACKEND_EXPORT OpExecutor {
   std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> op_build_tasks_;
   std::function<void()> batch_build_callback_{nullptr};
   inline static size_t kMaxQueueSize = 20;
-  bool executing_{false};
+  std::mutex building_;
   std::mutex build_mutex_;
   std::function<void()> forward_callback_{nullptr};
 };

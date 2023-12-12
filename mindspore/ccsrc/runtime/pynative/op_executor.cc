@@ -50,11 +50,9 @@ void OpExecutor::ClearResources() {
 }
 
 void OpExecutor::WaitForBuild() {
-  if (!executing_) {
-    ExecuteGuard guard;
-    if (batch_build_callback_ != nullptr) {
-      batch_build_callback_();
-    }
+  std::unique_lock<std::mutex> lock(building_);
+  if (batch_build_callback_ != nullptr) {
+    batch_build_callback_();
   }
 }
 
