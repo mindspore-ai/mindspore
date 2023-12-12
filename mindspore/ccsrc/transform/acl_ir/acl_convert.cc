@@ -22,6 +22,8 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "ops/op_utils.h"
 #include "include/backend/device_address.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::transform {
 namespace {
@@ -328,6 +330,32 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
     }
     input_on_host_.emplace(ms_real_idx, acl_host_input);
   }
+}
+
+bool AclConverter::IsNeedSkipExecute(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  auto opinfo = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(opinfo);
+  auto op_type = opinfo->op_type();
+
+  if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
+    return false;
+  }
+  auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
+  if (acl_info.input_check_selector() != nullptr) {
+    auto func = acl_info.input_check_selector();
+    auto is_real_skip = func(inputs);
+    if (is_real_skip) {
+      aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                         inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+      if (status != ACL_ERROR_NONE) {
+        MS_LOG(EXCEPTION) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status
+                          << " destMax:" << outputs[0]->size() << " count:" << inputs[0]->size();
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
