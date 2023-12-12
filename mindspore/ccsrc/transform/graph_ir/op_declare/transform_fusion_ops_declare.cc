@@ -26,6 +26,24 @@ ATTR_MAP(KVCacheMgr) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(KVCacheMgr) = {{0, OUTPUT_DESC(past)}};
 REG_ADPT_DESC(KVCacheMgr, "KVCacheMgr", ADPT_DESC(KVCacheMgr))
 
+// DecoderKVCache
+INPUT_MAP(DecoderKvCache) = {{1, INPUT_DESC(cache)},          {2, INPUT_DESC(update)},
+                             {3, INPUT_DESC(valid_seq_len)},  {4, INPUT_DESC(batch_index)},
+                             {5, INPUT_DESC(seq_len_axis)},   {6, INPUT_DESC(new_max_seq_len)},
+                             {7, INPUT_DESC(cur_max_seq_len)}};
+ATTR_MAP(DecoderKvCache) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DecoderKvCache) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(DecoderKvCache, "DecoderKVCache", ADPT_DESC(DecoderKvCache))
+
+// PromptKVCache
+INPUT_MAP(PromptKvCache) = {{1, INPUT_DESC(cache)},          {2, INPUT_DESC(update)},
+                            {3, INPUT_DESC(valid_seq_len)},  {4, INPUT_DESC(batch_index)},
+                            {5, INPUT_DESC(seq_len_axis)},   {6, INPUT_DESC(new_max_seq_len)},
+                            {7, INPUT_DESC(cur_max_seq_len)}};
+ATTR_MAP(PromptKvCache) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(PromptKvCache) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(PromptKvCache, "PromptKVCache", ADPT_DESC(PromptKvCache))
+
 // FlashAttention
 INPUT_MAP(FlashAttention) = {
   {1, INPUT_DESC(q)}, {2, INPUT_DESC(k)}, {3, INPUT_DESC(v)}, {4, INPUT_DESC(attention_mask)}};
