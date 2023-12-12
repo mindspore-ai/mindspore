@@ -817,12 +817,10 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       InputInfo input_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
-        WaitTaskFinish();
         const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
         RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
                            inputs[graph_index], &input_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
-        WaitTaskFinish();
       } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
