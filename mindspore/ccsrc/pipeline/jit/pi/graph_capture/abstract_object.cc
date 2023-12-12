@@ -774,6 +774,16 @@ AObject *AbstractTuple::Binary(AObject *o, int op) {
   }
   // tuple binary
   if (o == nullptr || this->GetType() != o->GetType()) {
+    if (this->GetType() == kTypeList && op == BINARY_MULTIPLY && (o != nullptr) && o->GetType() == kTypeInt) {
+      AbstractTuple *ret = static_cast<AbstractTuple *>(MakeAObject(this->GetType()));
+      std::vector<AObject *> temp;
+      int res = PyLong_AsLong(o->GetPyObject().ptr());
+      for (int i = 0; i < res; i++) {
+        std::copy(items_.begin(), items_.end(), std::back_inserter(temp));
+      }
+      ret->Update(std::move(temp));
+      return ret;
+    }
     return MakeAObject(kTypeAnyValue);
   }
   AbstractTuple *r_list = static_cast<AbstractTuple *>(o);
@@ -991,6 +1001,35 @@ AObject *AbstractTuple::GetItem(AObject *k) {
   }
   if (!IsElementValid()) {
     return AObject::MakeAObject(element_type_);
+  }
+  if (k->GetType() == AObject::kTypeSlice) {
+    if (this->GetPyObject().ptr() != nullptr) {
+      return this->AbstractSequence::GetItem(k);
+    }
+    AObject *resultTuple = AObject::MakeAObject(this->type_);
+    PyObject *slicePyObject = k->GetPyObject().ptr();
+    Py_ssize_t start, stop, step;
+    if (PySlice_Unpack(slicePyObject, &start, &stop, &step) < 0) {
+      return AObject::MakeAObject(kTypeAnyValue);
+    }
+    if (start >= stop) {
+      return resultTuple;
+    }
+    Py_ssize_t sliceLength = PySlice_AdjustIndices(this->items().size(), &start, &stop, step);
+    AbstractTuple *resultTuplePtr = static_cast<AbstractTuple *>(resultTuple);
+    if (start == 0 && step == 1 && sliceLength == this->size()) {
+      return this;
+    }
+    if (step > 1) {
+      int cursor = 0;
+      std::vector<AObject *> itemsVector;
+      for (cursor = 0; cursor < stop; cursor += step) {
+        itemsVector.push_back(this->items()[cursor]);
+      }
+      resultTuplePtr->Update(itemsVector);
+      return resultTuplePtr;
+    }
+    return AObject::MakeAObject(kTypeAnyValue);
   }
   Py_ssize_t index = GetTupleIndex(k, this->size());
   if (index == -1) {
