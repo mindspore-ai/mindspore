@@ -137,7 +137,9 @@ static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv,
 
 static bool CheckDepth(int depth, int max_depth) { return depth < max_depth || max_depth == -1; }
 
-static bool CheckObjPtr(node) { return node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr; }
+static bool CheckObjPtr(ValueNode *node) {
+  return node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr;
+}
 
 TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
   if (!CheckDepth(depth, max_depth)) {
