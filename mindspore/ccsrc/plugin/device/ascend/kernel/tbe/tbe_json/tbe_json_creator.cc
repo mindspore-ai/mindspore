@@ -218,6 +218,9 @@ std::vector<int64_t> ParseListIntDefaultValue(const std::string &value) {
       k = 0;
     }
   }
+  if (value.size() != 0 && value.back() != ',') {
+    (void)attr_values.emplace_back(k);
+  }
   return attr_values;
 }
 
