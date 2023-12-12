@@ -44,6 +44,7 @@ from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax
 
 abs_ = P.Abs()
+add_ = P.Add()
 bias_add_ = P.BiasAdd()
 cast_ = P.Cast()
 div_ = P.Div()
