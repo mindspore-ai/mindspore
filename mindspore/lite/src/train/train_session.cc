@@ -1195,7 +1195,6 @@ int TrainSession::ExportByDifferentType(DestType destination, ModelType model_ty
       status = texport.ExportNet(
         (model_type == MT_TRAIN) ? train_kernels_ : const_fold_kernels_, tensors_, const_output_tensors_,
         (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_, model_.get(), quant_type);
-
     } else {
       status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_, {},
                                  (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,

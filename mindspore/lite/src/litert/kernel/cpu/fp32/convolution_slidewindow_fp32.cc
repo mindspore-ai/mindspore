@@ -232,7 +232,7 @@ int ConvolutionSWCPUKernel::MallocWeightBiasData() {
       MS_LOG(ERROR) << "malloc bias failed.";
       return RET_NULL_PTR;
     }
-    (void)memset(bias_data_, 0, oc_block_num * oc_tile_ * sizeof(float));
+    (void)memset(bias_data_, 0, static_cast<size_t>(oc_block_num * oc_tile_ * sizeof(float)));
   }
   return RET_OK;
 }

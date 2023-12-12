@@ -45,8 +45,8 @@ int LstmNonMindirFp32CPUKernel::InitInputWeightBias() {
                            lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_,
                            stride, nullptr);
   // input bias
-  input_bias_ = reinterpret_cast<float *>(
-    ms_context_->allocator->Malloc(weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float)));
+  input_bias_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
+    static_cast<size_t>(weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float))));
   MS_CHECK_TRUE_MSG(input_bias_ != nullptr, lite::RET_NULL_PTR, "LstmNonMindirCPUKernel malloc input_bias_ failed.");
   (void)memset(input_bias_, 0, weight_segment_num_ * lstm_param_->input_col_align_ * sizeof(float));
   running_buffer_.push_back(input_bias_);

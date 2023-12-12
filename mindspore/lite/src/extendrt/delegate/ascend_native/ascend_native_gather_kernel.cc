@@ -37,7 +37,8 @@ int AscendNativeGatherKernel::Run() {
   auto axis_tensor = reinterpret_cast<int64_t *>(in_tensors.at(THIRD_INPUT)->device_data());
   ascend_native::CopyDeviceFp32ToHostFp32(axis_tensor, &axis, 2, const_cast<void *>(this->get_stream()));
   auto shape = in_tensors.at(FIRST_INPUT)->shape();
-  size_t num_tiles = 1, m = 1;
+  size_t num_tiles = 1;
+  size_t m = 1;
   for (auto i = 0; i < axis; i++) {
     num_tiles *= shape.at(i);
   }

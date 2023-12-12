@@ -207,7 +207,7 @@ int ConvolutionDepthwiseSWCPUKernel::MallocWeightBiasData() {
       return RET_ERROR;
     }
   }
-  memset(bias_data_, 0, malloc_size * sizeof(float));
+  memset(bias_data_, 0, static_cast<size_t>(malloc_size * sizeof(float)));
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
 }
