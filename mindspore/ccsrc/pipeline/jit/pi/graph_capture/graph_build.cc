@@ -712,16 +712,85 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
   return true;
 }
 
+PyObject *SetLocalPyObject(ValueNode *node) {
+  if (node == nullptr || node->GetVobj() == nullptr) {
+    return NULL;
+  } else {
+    return node->GetVobj()->GetPyObject().ptr();
+  }
+}
+
+std::pair<PyObject *, ValueNode *> GraphBuilder::SearchSelfPyObject(PyCodeObject *co) {
+  std::pair<PyObject *, ValueNode *> obj_value;
+  ValueNode *value = frame_.Local(0);
+  // get self or son class, eg.super(Son, self)
+  PyObject *obj = SetLocalPyObject(frame_.Local(0));
+  Py_ssize_t i, n;
+  if (obj == NULL && co->co_cell2arg) {
+    // the first argument might be a cell
+    n = PyTuple_GET_SIZE(co->co_cellvars);
+    for (i = 0; i < n; i++) {
+      if (co->co_cell2arg[i] == 0) {
+        value = frame_.Closure(i);
+        PyObject *cell = SetLocalPyObject(frame_.Closure(i));
+        assert(PyCell_Check(cell));
+        obj = PyCell_GET(cell);
+        break;
+      }
+    }
+  }
+  obj_value = std::make_pair(obj, value);
+  return obj_value;
+}
+
 bool GraphBuilder::DoAttrAccess(const Instr &instr) {
   int opcode = instr.op();
   switch (opcode) {
     case LOAD_METHOD: /* fall-through */
     case LOAD_ATTR: {
       auto o = pop();
-      auto n = NewValueNode(nullptr, instr, {o});
-      n->SetOpcode(LOAD_ATTR);
-      push(n);
-      n->SetVobj(o->get_attr(n->GetName()));
+      AObject *super = o->GetVobj();
+      ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
+      if (super->GetTypeObject() == &PySuper_Type) {
+        auto &nodes = current_block_->GetNodes();
+        auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
+        py::object method = super->GetPyObject().attr(instr.name().c_str());
+        if (PyMethod_Check(method.ptr())) {
+          PyObject *m = PyMethod_GET_FUNCTION(method.ptr());
+          AObject *m_tp = AObject::Convert(mtype_obj);
+          // set node name
+          std::stringstream node_name;
+          node_name << (m_tp->GetTypeObject()->tp_name) << "<" << m_tp->GetPyObject().ptr() << ">";
+
+          // new method type
+          ValueNode *global_node = NewValueNode(m_tp, LOAD_GLOBAL, -1, {});
+          global_node->SetName(node_name.str());
+          graph_->InstallToGlobal(global_node->GetName(), py::reinterpret_borrow<py::object>(mtype_obj));
+          nodes.push_back(global_node);
+
+          // new method node
+          ValueNode *method_node = NewValueNode(AObject::Convert(m), LOAD_GLOBAL, -1, {});
+          node_name << (instr.name().c_str()) << "<" << m << ">";
+          method_node->SetName(node_name.str());
+          graph_->InstallToGlobal(method_node->GetName(), py::reinterpret_borrow<py::object>(m));
+          nodes.push_back(method_node);
+
+          // new func node
+          py::tuple tuple_obj(2);
+          tuple_obj[0] = method;
+          tuple_obj[1] = self_super->GetVobj()->GetPyObject();
+          PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
+          ValueNode *func_node =
+            NewValueNode(AObject::Convert(ret), CALL_FUNCTION, 2, {global_node, method_node, self_super});
+          nodes.push_back(func_node);
+          push(func_node);
+        }
+      } else {
+        auto n = NewValueNode(nullptr, instr, {o});
+        n->SetOpcode(LOAD_ATTR);
+        push(n);
+        n->SetVobj(o->get_attr(n->GetName()));
+      }
       break;
     }
     case STORE_ATTR: {
@@ -1444,7 +1513,7 @@ bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
     const char *name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(frees, i));
     if (!strcmp("__class__", name)) {
       MS_LOG(INFO) << ("unimplemented super call");
-      return true;
+      return false;
     }
   }
   return false;
@@ -1494,6 +1563,67 @@ bool CheckSupportCreateInstance(CallNode *call_node) {
   return support_create_instance;
 }
 
+AObject *GraphBuilder::BuildSuperObject(PyCodeObject *co) {
+  if (co->co_argcount == 0) {
+    PyErr_SetString(PyExc_RuntimeError, "super(): no arguments");
+    return nullptr;
+  }
+
+  Py_ssize_t i, n;
+  // search self object
+  PyObject *obj = SearchSelfPyObject(co).first;
+  if (obj == NULL) {
+    PyErr_SetString(PyExc_RuntimeError, "super(): arg[0] deleted");
+    return nullptr;
+  }
+
+  if (co->co_freevars == NULL) {
+    n = 0;
+  } else {
+    assert(PyTuple_Check(co->co_freevars));
+    n = PyTuple_GET_SIZE(co->co_freevars);
+  }
+
+  PyTypeObject *type = NULL;
+  for (i = 0; i < n; i++) {
+    PyObject *name = PyTuple_GET_ITEM(co->co_freevars, i);
+    assert(PyUnicode_Check(name));
+    // check class id
+    if (!strcmp("__class__", PyUnicode_AsUTF8(name))) {
+      Py_ssize_t index = PyTuple_GET_SIZE(co->co_cellvars) + i;
+      PyObject *cell = SetLocalPyObject(frame_.Closure(index));
+      if (cell == NULL || !PyCell_Check(cell)) {
+        PyErr_SetString(PyExc_RuntimeError, "super(): bad __class__ cell");
+        return nullptr;
+      }
+      type = reinterpret_cast<PyTypeObject *>(PyCell_GET(cell));
+      if (type == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "super(): empty __class__ cell");
+        return nullptr;
+      }
+      if (!PyType_Check(type)) {
+        PyErr_Format(PyExc_RuntimeError, "super(): __class__ is not a tyep (%s)", Py_TYPE(type)->tp_name);
+        return nullptr;
+      }
+      break;
+    }
+  }
+  if (type == NULL) {
+    PyErr_SetString(PyExc_RuntimeError, "super(): __class__ cell not found");
+    return nullptr;
+  }
+
+  py::object py_obj = py::reinterpret_borrow<py::object>(obj);
+  py::object py_type = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(type));
+  py::tuple tuple_obj(2);
+  tuple_obj[0] = py_type;
+  tuple_obj[1] = py_obj;
+  PyObject *ret = PyObject_Call(reinterpret_cast<PyObject *>(&PySuper_Type), tuple_obj.ptr(), nullptr);
+  AObject *super_obj = AObject::Convert(ret);
+  Py_DECREF(ret);
+  return super_obj;
+}
+
 bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   AObject *vobj = call_node->input(0)->GetVobj();
   if (!vobj || vobj->GetType() != AObject::kTypeType) {
@@ -1517,12 +1647,17 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
     instance = res.ptr() ? AObject::Convert(res) : nullptr;
   }
 
+  auto &nodes = current_block_->GetNodes();
+  PyTypeObject *super_tp = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(vobj)->GetPyObject().ptr());
+  if (super_tp == &PySuper_Type) {
+    nodes.pop_back();
+  }
+
   // make instance is global
   if (constant && instance != nullptr) {
     // guard parameters
     bool guard_success = GuardConstCallNodeParam(call_node, call_node->GetGraph(), 4);
     if (guard_success) {
-      auto &nodes = current_block_->GetNodes();
       MS_EXCEPTION_IF_CHECK_FAIL(nodes.back() == call_node, "CallNode must be last when build sub graph");
 
       nodes.pop_back();
@@ -1535,6 +1670,13 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
       seek(0) = new_node;
       this->graph_->InstallToGlobal(new_node->GetName(), instance->GetPyObject());
     }
+  }
+
+  // take super ptr and compare with PySuper_Type
+  AObject *cls_info = call_node->input(0)->GetVobj();
+  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(cls_info)->GetPyObject().ptr());
+  if (tp != nullptr && tp == &PySuper_Type) {
+    instance = BuildSuperObject(graph_->GetCodeObj());
   }
 
   if (!instance) {
