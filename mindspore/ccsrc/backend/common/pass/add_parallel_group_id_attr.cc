@@ -35,7 +35,7 @@ namespace {
 constexpr auto kMirrorSubStr = "mirror";
 constexpr auto kParallelGroupId = "_parallel_group_id";
 
-enum class GroupId { FORWARD = 0, BACKWARD = 1, UNKNOWN = 2 };
+enum class GroupId { FORWARD = 5, BACKWARD = 6, UNKNOWN = 7 };
 
 enum class Index { DATA_PARALLEL = 0, MODEL_PARALLEL = 1, PIPELINE_PARALLEL = 2, COMPUTE = 3, UNKNOWN = 4 };
 }  // namespace
