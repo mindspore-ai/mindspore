@@ -12,3 +12,10 @@ add:
   returns:
     output:
       dtype: tensor
+  # Generate c++ op but not enabled for Primitive.
+  # This is added to make it easier for other operators
+  # to call the Add operator in C++ functions.
+  # Delete this when AddExt is ready.
+  dispatch:
+    enable: False
+    Ascend: AddAscend
