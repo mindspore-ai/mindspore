@@ -20,23 +20,10 @@
 
 namespace mindspore {
 namespace pynative {
-namespace {
-using OP_DTYPE = mindspore::ops::OP_DTYPE;
-ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg) {
-  for (auto &cast_dtype : op_arg.cast_dtype_) {
-    auto convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
-    if (convert_func == nullptr) {
-      MS_LOG(EXCEPTION) << "Can't find convert function for src_dtype[" << cast_dtype << "] and dst_type"
-                        << op_arg.arg_dtype_ << "].";
-    }
-    auto value = convert_func(input);
-    if (value != nullptr) {
-      return value;
-    }
-  }
-  return nullptr;
-}
 
+namespace {
+static constexpr size_t N = 10;
+using OP_DTYPE = mindspore::ops::OP_DTYPE;
 template <typename T, typename U>
 std::shared_ptr<U> PyCast(const py::object &obj) {
   return std::make_shared<U>(py::cast<T>(obj));
@@ -103,7 +90,7 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(ops::OpDef *op_def) { op_def_ = op_def; }
+Converter::Converter(ops::OpDef *op_def) : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(N)) {}
 
 void Converter::Parse(py::list python_args) {
   python_args_ = &python_args;
@@ -116,16 +103,18 @@ void Converter::Parse(py::list python_args) {
 ValuePtr Converter::ToTensor(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
     return tensor;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg)->cast<TensorPtr>();
+    auto convert = ConvertByCastDtype(obj, op_arg, i)->cast<TensorPtr>();
     if (convert != nullptr) {
       return convert;
     }
   }
+
   ThrowException(i);
   return nullptr;
 }
@@ -142,13 +131,14 @@ template <typename T>
 ValueTuplePtr Converter::ToTensorList(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto val_seq = parse::ConvertSequence<py::tuple, ValueTuple, parse::ConvertTensor>(obj);
 
   if (val_seq != nullptr && val_seq->isa<ValueTuple>()) {
     return val_seq->cast<ValueTuplePtr>();
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg);
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
     if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
       return convert_value->cast<ValueTuplePtr>();
     }
@@ -160,12 +150,13 @@ ValueTuplePtr Converter::ToTensorList(size_t i) {
 Int64ImmPtr Converter::ToInt(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertInt(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<Int64ImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg, i)->cast<Int64ImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -191,7 +182,7 @@ ValueTuplePtr Converter::ToIntList(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg);
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
     if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
       return convert_value->cast<ValueTuplePtr>();
     }
@@ -212,12 +203,13 @@ std::optional<ValueTuplePtr> Converter::ToIntListOptional(size_t i) {
 BoolImmPtr Converter::ToBool(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertBool(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<BoolImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg, i)->cast<BoolImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -238,12 +230,13 @@ template <typename T>
 ValueTuplePtr Converter::ToBoolList(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   ValueTuplePtr convert = ConvertList<T, py::bool_, BoolImm>(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg);
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
     if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
       return convert_value->cast<ValueTuplePtr>();
     }
@@ -255,6 +248,7 @@ ValueTuplePtr Converter::ToBoolList(size_t i) {
 template <typename T>
 std::optional<ValueTuplePtr> Converter::ToBoolListOptional(size_t i) {
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
@@ -264,12 +258,13 @@ std::optional<ValueTuplePtr> Converter::ToBoolListOptional(size_t i) {
 FP32ImmPtr Converter::ToFloat(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertFloat(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<FP32ImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg, i)->cast<FP32ImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -282,12 +277,13 @@ template <typename T>
 ValueTuplePtr Converter::ToFloatList(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   ValueTuplePtr convert = ConvertList<T, py::float_, FP32Imm>(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg);
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
     if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
       return convert_value->cast<ValueTuplePtr>();
     }
@@ -308,12 +304,13 @@ std::optional<ValueTuplePtr> Converter::ToFloatListOptional(size_t i) {
 ScalarPtr Converter::ToScalar(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertNumber(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<ScalarPtr>();
+    convert = ConvertByCastDtype(obj, op_arg, i)->cast<ScalarPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -333,12 +330,13 @@ std::optional<ScalarPtr> Converter::ToScalarOptional(size_t i) {
 StringImmPtr Converter::ToString(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertStr(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<StringImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg, i)->cast<StringImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -357,6 +355,7 @@ std::optional<StringImmPtr> Converter::ToStringOptional(size_t i) {
 
 TypePtr Converter::ToDtype(size_t i) {
   const py::object &obj = (*python_args_)[i];
+  source_type_[i] = OP_DTYPE::DT_BEGIN;
   if (!py::isinstance<mindspore::Type>(obj)) {
     MS_LOG(EXCEPTION) << "Get arg is not mindspore type: " << py::str(obj);
   }
@@ -369,6 +368,22 @@ std::optional<TypePtr> Converter::ToDtypeOptional(size_t i) {
     return std::nullopt;
   }
   return std::make_optional(ToDtype(i));
+}
+
+ValuePtr Converter::ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t i) {
+  for (auto &cast_dtype : op_arg.cast_dtype_) {
+    auto convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+    if (convert_func == nullptr) {
+      MS_LOG(EXCEPTION) << "Can't find convert function for src_dtype[" << cast_dtype << "] and dst_type"
+                        << op_arg.arg_dtype_ << "].";
+    }
+    auto value = convert_func(input);
+    if (value != nullptr) {
+      source_type_[i] = cast_dtype;
+      return value;
+    }
+  }
+  return nullptr;
 }
 
 void Converter::ThrowException(size_t i) {

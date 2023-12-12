@@ -48,7 +48,7 @@ class PyBoostCastOperation : public CastBaseOperation {
   }
 
   template <typename T>
-  T SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const T &t, size_t index) {
+  T SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const T &t, size_t index) const {
     MS_EXCEPTION_IF_NULL(t);
     return t;
   }
@@ -93,67 +93,8 @@ class PyBoostCastOperation : public CastBaseOperation {
                        std::index_sequence<N...>) const {
     MS_EXCEPTION_IF_NULL(op_run_info);
     mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
-    (GetDstType(op_run_info, type_indexes, &dst_type, std::get<N>(input_args)), ...);
+    GetDstType(op_run_info, type_indexes, &dst_type);
     return std::make_tuple(DoSignatureCast(op_run_info, dst_type, dtypes, N, std::get<N>(input_args))...);
-  }
-
-  template <typename Item>
-  void GetDstType(const FrontendOpRunInfoPtr &op_run_info,
-                  const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                  mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type, const Item &v) const {
-    constexpr size_t index_size = 2;
-    for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
-      const auto &type = it->first;
-      const auto &indexes = it->second;
-      if (type == SignatureEnumDType::kDTypeEmptyDefaultValue || indexes.size() < index_size) {
-        continue;
-      }
-      size_t priority = 0;
-      TypeId max_type = TypeId::kTypeUnknown;
-      bool has_scalar_float32 = false;
-      bool has_scalar_int64 = false;
-      bool has_tensor_int8 = false;
-      // Find the maximum priority of the same dtype
-      for (size_t index : indexes) {
-        if (index >= op_run_info->input_size) {
-          MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << op_run_info->input_size;
-        }
-        if (v->template isa<FloatImm>()) {
-          has_scalar_float32 = true;
-        }
-        if (!v->template isa<BoolImm>() && v->template isa<IntegerImm>()) {
-          has_scalar_int64 = true;
-        }
-        if (v->template isa<tensor::Tensor>()) {
-          auto arg = v->template cast<tensor::TensorPtr>();
-          TypeId arg_type_id = arg->data_type();
-          auto type_priority = prim::type_map.find(arg_type_id);
-          if (type_priority == prim::type_map.end()) {
-            continue;
-          }
-          if (arg_type_id == kNumberTypeInt8) {
-            has_tensor_int8 = true;
-          }
-          if (type_priority->second > priority) {
-            max_type = type_priority->first;
-            priority = type_priority->second;
-          }
-        }
-      }
-      max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
-      MS_EXCEPTION_IF_NULL(dst_type);
-      (void)dst_type->emplace(std::make_pair(type, max_type));
-    }
-  }
-
-  template <typename Item>
-  void GetDstType(const FrontendOpRunInfoPtr &op_run_info,
-                  const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                  mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type, const std::optional<Item> &v) const {
-    if (!v.has_value()) {
-      return;
-    }
-    GetDstType(op_run_info, type_indexes, dst_type, v.value());
   }
 
   template <typename Item>
@@ -196,7 +137,7 @@ class PyBoostCastOperation : public CastBaseOperation {
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << index
                   << "th input, and to type " << TypeIdToType(it->second)->ToString();
-    return DoAutoCast(op_run_info, it->second, t);
+    return DoAutoCast(op_run_info, it->second, index, t);
   }
 
   template <typename Item>
@@ -219,18 +160,19 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   //  template <class Item, class = typename std::enable_if<std::is_same<Item, tensor::Tensor>::value, Item>::type>
   template <class Item>
-  Item DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id, const Item &t) const {
+  Item DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id, size_t index, const Item &t) const {
     return t;
   }
 
-  tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id,
+  tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id, size_t index,
                                const tensor::TensorPtr &t) const;
   tensor::TensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &t,
-                                              size_t index);
+                                              size_t index) const;
   std::optional<tensor::TensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                             const std::optional<tensor::TensorPtr> &t, size_t index);
+                                                             const std::optional<tensor::TensorPtr> &t,
+                                                             size_t index) const;
   ValuePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &v_seq,
-                                     size_t index);
+                                     size_t index) const;
 };
 using PyBoostCastOperationPtr = std::shared_ptr<PyBoostCastOperation>;
 

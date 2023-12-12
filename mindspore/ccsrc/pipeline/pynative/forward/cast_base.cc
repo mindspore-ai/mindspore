@@ -106,6 +106,63 @@ void CastBaseOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtyp
   }
 }
 
+void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
+                                   const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
+                                   mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  constexpr size_t index_size = 2;
+  for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
+    const auto &type = it->first;
+    const auto &indexes = it->second;
+    if (type == SignatureEnumDType::kDTypeEmptyDefaultValue || indexes.size() < index_size) {
+      continue;
+    }
+    int64_t priority = INT_MIN;
+    TypeId max_type = TypeId::kTypeUnknown;
+    bool has_scalar_float32 = false;
+    bool has_scalar_int64 = false;
+    bool has_tensor_int8 = false;
+    // Find the maximum priority of the same dtype
+    for (size_t index : indexes) {
+      const auto &v = op_run_info->op_grad_info->input_value[index];
+      if (v->isa<FloatImm>()) {
+        has_scalar_float32 = true;
+      }
+      if ((!v->isa<BoolImm>() && v->isa<IntegerImm>())) {
+        has_scalar_int64 = true;
+      }
+      if (v->isa<tensor::Tensor>()) {
+        auto arg = v->cast<tensor::TensorPtr>();
+        TypeId arg_type_id = arg->data_type();
+        auto type_priority = prim::type_map.find(arg_type_id);
+        if (type_priority == prim::type_map.end()) {
+          continue;
+        }
+        if (arg_type_id == kNumberTypeInt8) {
+          has_tensor_int8 = true;
+        }
+        int64_t cur_priority = type_priority->second;
+        if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
+          cur_priority = cur_priority - kLowerPriority;
+          if (arg_type_id == kNumberTypeFloat32) {
+            has_scalar_float32 = true;
+          }
+          if (arg_type_id == kNumberTypeInt32 || arg_type_id == kNumberTypeInt64) {
+            has_scalar_int64 = true;
+          }
+        }
+        if (cur_priority > priority) {
+          max_type = type_priority->first;
+          priority = cur_priority;
+        }
+      }
+    }
+    max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
+    MS_EXCEPTION_IF_NULL(dst_type);
+    (void)dst_type->emplace(std::make_pair(type, max_type));
+  }
+}
+
 TypeId CastBaseOperation::JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_int64,
                                        bool has_tensor_int8) const {
   if (max_type == TypeId::kNumberTypeBool) {
@@ -149,5 +206,12 @@ bool CastBaseOperation::GetSignatureType(const std::vector<Signature> &signature
   return has_sig_dtype;
 }
 
+tensor::TensorPtr CastBaseOperation::TensorToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type_id) const {
+  MS_EXCEPTION_IF_NULL(src_value);
+  auto src_tensor = src_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(src_tensor);
+  src_tensor->set_data_type(dst_type_id);
+  return src_tensor;
+}
 }  // namespace pynative
 }  // namespace mindspore

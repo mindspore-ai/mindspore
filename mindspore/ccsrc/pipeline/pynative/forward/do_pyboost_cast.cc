@@ -22,7 +22,13 @@
 namespace mindspore {
 namespace pynative {
 tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id,
-                                                   const tensor::TensorPtr &t) const {
+                                                   size_t index, const tensor::TensorPtr &t) const {
+  if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
+    MS_LOG(DEBUG) << "Try cast Source tensor: " << t->ToString();
+    auto dst_tensor = TensorToDstDtypeValue(t, type_id);
+    MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << "without dispatching cast op";
+    return dst_tensor;
+  }
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   auto cast_prim = GetPrimByTypeId(type_id);
   // Use pyboost op call
@@ -47,7 +53,7 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
 }
 
 tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                                  const tensor::TensorPtr &t, size_t index) {
+                                                                  const tensor::TensorPtr &t, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(t);
   const auto &signature = op_run_info->signatures;
@@ -71,7 +77,7 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
         *source_dtype != *dst_dtype) {
       MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
                     << "th input, and to type " << dst_dtype->ToString();
-      auto cast_t = DoAutoCast(op_run_info, dst_dtype->type_id(), t);
+      auto cast_t = DoAutoCast(op_run_info, dst_dtype->type_id(), index, t);
       return cast_t;
     }
   }
@@ -79,7 +85,7 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
 }
 
 std::optional<tensor::TensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast(
-  const FrontendOpRunInfoPtr &op_run_info, const std::optional<tensor::TensorPtr> &t, size_t index) {
+  const FrontendOpRunInfoPtr &op_run_info, const std::optional<tensor::TensorPtr> &t, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (!t.has_value()) {
     return std::nullopt;
@@ -88,7 +94,7 @@ std::optional<tensor::TensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast
 }
 
 ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                         const ValueSequencePtr &v_seq, size_t index) {
+                                                         const ValueSequencePtr &v_seq, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v_seq);
 

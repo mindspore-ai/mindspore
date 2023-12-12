@@ -134,6 +134,13 @@ struct PyBoost {
     return val.value();
   }
 
+  template <typename Tuple, size_t... N>
+  static std::vector<ValuePtr> TupleToVector(const Tuple &tuple, std::index_sequence<N...>) {
+    std::vector<ValuePtr> inputs;
+    ((void)inputs.emplace_back(OptionalToValue(std::get<N>(tuple))), ...);
+    return inputs;
+  }
+
   template <typename T>
   static T OptionalToValue(const T &val) {
     return val;
@@ -143,13 +150,14 @@ struct PyBoost {
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     // For auto grad use
-    op_run_info->op_grad_info->input_value = {OptionalToValue(t)...};
-    op_run_info->input_size = sizeof...(t);
+
     if (op_run_info->base_op_run_info.op_name == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
+    op_run_info->op_grad_info->input_value = TupleToVector(ret, std::make_index_sequence<sizeof...(t)>());
+    op_run_info->input_size = sizeof...(t);
     return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
   }
 };

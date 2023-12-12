@@ -31,6 +31,7 @@
 #include "abstract/abstract_value.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/tensor_future.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace pynative {
@@ -138,6 +139,7 @@ struct FrontendOpRunInfo {
   std::vector<std::string> input_value_id{};
   stub::StubNodePtr stub_output{nullptr};
   std::vector<Signature> signatures{};
+  std::vector<ops::OP_DTYPE> source_type{};
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
   std::vector<DeviceAddressPromisePtr> device_sync_promises;

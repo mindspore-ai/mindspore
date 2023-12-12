@@ -5,7 +5,7 @@ assign:
             dtype: tensor
         value:
             dtype: tensor
-            #type_cast: number
+            type_cast: number
     args_signature:
         rw_write: variable
         dtype_group: (variable, value)
