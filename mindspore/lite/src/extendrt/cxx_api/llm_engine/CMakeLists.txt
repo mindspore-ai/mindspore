@@ -21,7 +21,13 @@ add_library(llm_engine_plugin SHARED ${LLM_ENGINE_PLUGIN_SRC})
 file(GLOB LLM_ENGINE_MOCK_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine_mock.cc
     )
-add_library(llm_engine SHARED ${LLM_ENGINE_MOCK_SRC})
+
+file(GLOB LLM_ENGINE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ms_llm_engine.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/post_process_model_manager.cc
+    )
+
+add_library(llm_engine SHARED ${LLM_ENGINE} ${LLM_ENGINE_MOCK_SRC})
 
 #find_library(llm_engine libllm_engine.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 target_link_libraries(llm_engine_plugin llm_engine mindspore_converter mindspore_core)
