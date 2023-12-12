@@ -28,10 +28,28 @@
 
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
+#include "kernel/framework_utils.h"
+#include "include/common/debug/common.h"
+#include "utils/file_utils.h"
 
 namespace mindspore::graphkernel::symbol {
 constexpr const char *kPrefix = "symbol_engine_jit_";
 using ast::Shape, ast::BinOpType;
+
+static string KernelMetaPath() {
+  static string result = "";
+  if (result != "") {
+    return result;
+  }
+  auto config_path = kernel::GetCompilerCachePath();
+  auto kernel_meta_path = config_path + std::string(kernel::kAkgKernelMeta);
+  auto real_path = FileUtils::GetRealPath(kernel_meta_path.c_str());
+  if (!real_path.has_value()) {
+    MS_LOG(EXCEPTION) << "get real path failed: " << kernel_meta_path;
+  }
+  result = real_path.value() + "/";
+  return result;
+}
 
 CppVisitor::CppVisitor() {
   time_t t = time(nullptr);
@@ -88,7 +106,10 @@ void CppVisitor::Compile() {
 }
 
 void CppVisitor::CompileImpl() {
-  std::string cpp_file_name(kPrefix + name_ + ".cc");
+  auto kernel_meta_path = KernelMetaPath();
+  (void)FileUtils::CreateNotExistDirs(kernel_meta_path);
+  std::string cpp_file_name(kernel_meta_path + kPrefix + name_ + ".cc");
+  MS_LOG(DEBUG) << "SymbolEngineJit c++ function saved to: " << cpp_file_name;
   std::ofstream cpp_file(cpp_file_name);
 
   // --- generate  .cc file
@@ -107,7 +128,7 @@ void CppVisitor::CompileImpl() {
 
   // compile to dyn lib
   std::stringstream cmd;
-  std::string so_name(kPrefix + name_ + ".so");
+  std::string so_name(kernel_meta_path + kPrefix + name_ + ".so");
   cmd << "g++ -fPIC -shared -std=c++17 " << cpp_file_name << " -o " << so_name << " 2>&1";
 
   // create library
@@ -116,14 +137,17 @@ void CppVisitor::CompileImpl() {
   string result;
   FILE *pipe = popen(cmd.str().c_str(), "r");
   if (!pipe) {
-    MS_LOG_EXCEPTION << "fail to run command to compile c++ code, error:" << strerror(errno);
+    MS_LOG(EXCEPTION) << "fail to run command to compile c++ code, error:" << strerror(errno);
     return;
   }
   while (fgets(buffer.data(), kBufferSize, pipe)) {
     result += buffer.data();
   }
   void(pclose(pipe));
-  MS_LOG(INFO) << "Finished compiling, information from pipe: \n" << result << std::endl;
+  if (!Common::FileExists(so_name)) {
+    MS_LOG(EXCEPTION) << "compile failed: no .so file: " << so_name << "\n Information from pipe: " << result;
+  }
+  MS_LOG(DEBUG) << "Finished compiling, information from pipe: \n" << result;
 }
 
 CppVisitor::DynFuncType CppVisitor::LoadFunc(const std::string &func_name) {
@@ -132,7 +156,7 @@ CppVisitor::DynFuncType CppVisitor::LoadFunc(const std::string &func_name) {
     compile_thread_.join();
   }
   if (!dynlib_) {
-    dynlib_ = dlopen((kPrefix + name_ + ".so").c_str(), RTLD_LAZY);
+    dynlib_ = dlopen((KernelMetaPath() + kPrefix + name_ + ".so").c_str(), RTLD_LAZY);
     if (!dynlib_) {
       MS_LOG(EXCEPTION) << "Cannot open dynamic library " << name_ << ".so :" << dlerror() << '\n';
     }
@@ -177,7 +201,7 @@ void CppVisitor::Visit(const ast::BinOp &op) {
       prefix = false;
       break;
     default:
-      MS_LOG_EXCEPTION << "Unexpected operation";
+      MS_LOG(EXCEPTION) << "Unexpected operation";
       break;
   }
 
