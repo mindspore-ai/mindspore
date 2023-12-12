@@ -1,0 +1,10 @@
+approvers:
+- xu_anyue
+- jianghui58
+
+reviewers:
+- qinzheng
+- zhangyanhui
+
+options:
+  no_parent_owners: true
