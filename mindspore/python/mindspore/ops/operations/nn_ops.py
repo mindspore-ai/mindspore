@@ -11334,8 +11334,7 @@ class PromptFlashAttention(Primitive):
     S -- Sequence length
     H -- Hidden size
 
-    Note:
-    is only supported on ascend910B
+    Refer to :func:mindspore.ops.prompt_flash_attention for more detail.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -11389,9 +11388,8 @@ class PromptFlashAttention(Primitive):
         >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-        >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
         >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
-        >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
+        >>> out = pfa(query, key, value, None, None, None, None, None, None, None, None, None)
         >>> print(out[0].shape)
         (1, 16, 256, 16)
     """
