@@ -762,4 +762,23 @@ ATTR_MAP(NanToNum) = {{"nan", ATTR_DESC(nan, AnyTraits<float>())},
                       {"neginf", ATTR_DESC(neginf, AnyTraits<float>())}};
 OUTPUT_MAP(NanToNum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NanToNum, kNameNanToNum, ADPT_DESC(NanToNum))
+
+// AdamApplyOneWithDecayAssign
+INPUT_MAP(AdamApplyOneWithDecayAssign) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(input1)}, {3, INPUT_DESC(input2)},
+                                          {4, INPUT_DESC(input3)},  {5, INPUT_DESC(input4)}, {6, INPUT_DESC(mul0_x)},
+                                          {7, INPUT_DESC(mul1_x)},  {8, INPUT_DESC(mul2_x)}, {9, INPUT_DESC(mul3_x)},
+                                          {10, INPUT_DESC(mul4_x)}, {11, INPUT_DESC(add2_y)}};
+ATTR_MAP(AdamApplyOneWithDecayAssign) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdamApplyOneWithDecayAssign) = {
+  {0, OUTPUT_DESC(input1)}, {1, OUTPUT_DESC(input2)}, {2, OUTPUT_DESC(input3)}};
+REG_ADPT_DESC(AdamApplyOneWithDecayAssign, kAdamApplyOneWithDecayAssignOpName, ADPT_DESC(AdamApplyOneWithDecayAssign))
+
+// AdamApplyOneWithDecay
+INPUT_MAP(AdamApplyOneWithDecay) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(input1)}, {3, INPUT_DESC(input2)},
+                                    {4, INPUT_DESC(input3)},  {5, INPUT_DESC(input4)}, {6, INPUT_DESC(mul0_x)},
+                                    {7, INPUT_DESC(mul1_x)},  {8, INPUT_DESC(mul2_x)}, {9, INPUT_DESC(mul3_x)},
+                                    {10, INPUT_DESC(mul4_x)}, {11, INPUT_DESC(add2_y)}};
+ATTR_MAP(AdamApplyOneWithDecay) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdamApplyOneWithDecay) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}, {2, OUTPUT_DESC(output2)}};
+REG_ADPT_DESC(AdamApplyOneWithDecay, kAdamApplyOneWithDecayOpName, ADPT_DESC(AdamApplyOneWithDecay))
 }  // namespace mindspore::transform
