@@ -223,7 +223,10 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
   }
   if (inputs.size() == unary_input_num) {
     mindspore::HashMap<std::string, std::function<TM(const TM &)>> func_map = {
+      {"Abs", [](const TM &a) { return a <= TM(0) ? -a : a; }},
       {"Exp", [](const TM &a) { return exp(a); }},
+      {"Log", [](const TM &a) { return log(a); }},
+      {"Neg", [](const TM &a) { return -a; }},
       {"Reciprocal",
        [](const TM &a) {
          if (a == TM(0)) {
@@ -238,6 +241,7 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
          }
          return TM(1) / sqrt(a);
        }},
+      {"Sqrt", [](const TM &a) { return sqrt(a); }},
     };
     if (func_map.find(op) == func_map.end()) {
       return nullptr;
