@@ -38,8 +38,10 @@ class CppVisitor : public ast::Visitor {
   ~CppVisitor();
 
   /// \brief Generate c++ function corresponding to the ast
+  /// \note func_name should be valid c++ function name
   /// \return name of the function
-  std::string CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table);
+  std::string CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table,
+                      const std::string &func_name = "");
   void Compile();
   DynFuncType LoadFunc(const std::string &func_name);
 

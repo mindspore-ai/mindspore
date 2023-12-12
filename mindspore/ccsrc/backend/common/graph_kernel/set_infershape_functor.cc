@@ -126,7 +126,9 @@ bool Process(const AnfNodePtrList &cnodes, bool use_jit) {
           jit_succeed = transform_visitor.Transform(output_symbol.get());
         }
         if (jit_succeed) {
-          auto func_name = cpp_visitor->CodeGen(transform_visitor.GetShapes(), transform_visitor.GetSymbolTable());
+          auto func_name = cpp_visitor->CodeGen(
+            transform_visitor.GetShapes(), transform_visitor.GetSymbolTable(),
+            func_graph->has_attr("info_name") ? GetValue<std::string>(func_graph->get_attr("info_name")) : "");
           MS_LOG(DEBUG) << "Set infershape functor(SymbolEngineJit) for cnode: " << cnode->fullname_with_scope();
           common::AnfAlgo::SetNodeAttrSafely(
             "infer_shape_functor",
