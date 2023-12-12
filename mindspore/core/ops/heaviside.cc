@@ -50,9 +50,9 @@ TypePtr HeavisideType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
   auto values_dtype = input_args[1]->GetType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("values", values_dtype, valid_types, primitive->name());
+  std::map<std::string, TypePtr> inputs_dtype = {{"x", x_dtype}, {"values", values_dtype}};
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(inputs_dtype, valid_types, primitive->name(), false);
   return x_dtype;
 }
 }  // namespace
