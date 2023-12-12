@@ -66,6 +66,9 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    if (GetRunMode(func_graph) == RunMode::kKernelMode) {
+      return true;
+    }
     opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();

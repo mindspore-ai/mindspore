@@ -88,7 +88,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   } else if (graph_mode) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -100,7 +99,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     // TODO(hbhu_bin): In mindspore, SparseSoftmaxCrossEntropyWithLogits has different outputs based on the "is_grad"
     // attribute, but it has two outputs in CANN. These pass cann be removed when convert "is_grad" attribute to input.
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
