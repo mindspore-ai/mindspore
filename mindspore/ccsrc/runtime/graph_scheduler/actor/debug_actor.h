@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 
 // The debug actor is used to debug and dump kernel info, it gets the kernel real time execution info in the device, so
 // it is synchronous and blocked.
@@ -40,7 +40,7 @@ class DebugActor : public ActorBase {
   ~DebugActor() override = default;
 
   // The debug of each node.
-  void Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
+  void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info_, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
   // The debug of kernel graph.

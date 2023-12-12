@@ -392,18 +392,17 @@ void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const
   BindOutputTensorAddressPtr(outputs);
 }
 
-void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list) {
+void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::KernelTensor *> *input_list) {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(input_list);
-  kernel::AddressPtr input = std::make_shared<kernel::Address>();
+  const auto &input = address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(input);
   if (address->GetDevicePtr() == nullptr) {
-    address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->GetSize()));
+    auto addr = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->GetSize());
+    MS_EXCEPTION_IF_NULL(addr);
+    input->set_device_ptr(addr);
   }
-  MS_EXCEPTION_IF_NULL(address->GetDevicePtr());
-  input->addr = address->GetDevicePtr();
-  input->size = address->GetSize();
-  input_list->push_back(input);
+  input_list->push_back(input.get());
 }
 
 void CPUKernelRuntime::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
@@ -414,9 +413,9 @@ void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseSummaryRefCount(summary_outputs);
 }
 
-void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::AddressPtr> *inputs,
-                                                 std::vector<kernel::AddressPtr> *outputs,
-                                                 std::vector<kernel::AddressPtr> *workspaces) {
+void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::KernelTensor *> *inputs,
+                                                 std::vector<kernel::KernelTensor *> *outputs,
+                                                 std::vector<kernel::KernelTensor *> *workspaces) {
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(workspaces);
@@ -476,9 +475,9 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed!";
       }
     }
-    std::vector<kernel::AddressPtr> kernel_inputs;
-    std::vector<kernel::AddressPtr> kernel_workspaces;
-    std::vector<kernel::AddressPtr> kernel_outputs;
+    std::vector<kernel::KernelTensor *> kernel_inputs;
+    std::vector<kernel::KernelTensor *> kernel_workspaces;
+    std::vector<kernel::KernelTensor *> kernel_outputs;
     GetRuntimeAddressFromNode(kernel, &kernel_inputs, &kernel_outputs, &kernel_workspaces);
     bool ret = true;
 #ifndef ENABLE_SECURITY
@@ -490,7 +489,9 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
 #ifdef ENABLE_DUMP_IR
     kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
+    kernel::KernelLaunchAddr mem_addr_info;
+    ConvertLaunchInfoToAddr(mem_info, &mem_addr_info);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_addr_info);
 #endif
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, nullptr);

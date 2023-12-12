@@ -221,10 +221,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static KernelGraphPtr FetchKernelGraph(const AnfNode *node);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
-  // Save inputs/outputs/workspace address in kernel_mod.
-  static void CacheAddrForGraph(const KernelGraphPtr &kernel_graph);
-  static void CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
-  static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
 
   static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
   static bool IsDynamicShapeSkipExecute(bool skip_mode, const ShapeVector &axes_shape);

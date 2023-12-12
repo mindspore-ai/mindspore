@@ -138,10 +138,10 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
  */
 #ifdef ENABLE_DEBUGGER
 void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
-                    const std::vector<mindspore::kernel::AddressPtr> &kernel_inputs,
-                    const std::vector<mindspore::kernel::AddressPtr> &kernel_workspaces,
-                    const std::vector<mindspore::kernel::AddressPtr> &kernel_outputs, int exec_order, void *stream_ptr,
-                    bool dump_enabled, bool last_kernel) {
+                    const std::vector<mindspore::kernel::KernelTensor *> &kernel_inputs,
+                    const std::vector<mindspore::kernel::KernelTensor *> &kernel_workspaces,
+                    const std::vector<mindspore::kernel::KernelTensor *> &kernel_outputs, int exec_order,
+                    void *stream_ptr, bool dump_enabled, bool last_kernel) {
   MS_EXCEPTION_IF_NULL(debugger);
   MS_EXCEPTION_IF_NULL(kernel);
   // check if we should read the kernel data
@@ -170,15 +170,16 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       auto input_kernel = kernel->input(j + 1);
       MS_EXCEPTION_IF_NULL(input_kernel);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
-      auto addr = kernel_inputs[j];
+      auto kernel_input = kernel_inputs[j];
       auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, kParameterOutputIndex);
       // For example, this happens with the Depend op
       if (type == kMetaTypeNone) {
         continue;
       }
       auto format = kOpFormat_DEFAULT;
-      MS_EXCEPTION_IF_NULL(addr);
-      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+      MS_EXCEPTION_IF_NULL(kernel_input);
+      auto gpu_addr =
+        std::make_unique<GPUDeviceAddress>(kernel_input->device_ptr(), kernel_input->size(), format, type);
       string input_tensor_name = input_kernel_name + ':' + "0";
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, kParameterOutputIndex);
       auto ret =
@@ -198,15 +199,16 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
 
     for (int j : real_outputs) {
-      auto addr = kernel_outputs[j];
+      auto kernel_output = kernel_outputs[j];
       auto type = common::AnfAlgo::GetOutputInferDataType(kernel, j);
       // For example, this happens with the Depend op
       if (type == kMetaTypeNone) {
         continue;
       }
       auto format = kOpFormat_DEFAULT;
-      MS_EXCEPTION_IF_NULL(addr);
-      auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
+      MS_EXCEPTION_IF_NULL(kernel_output);
+      auto gpu_addr =
+        std::make_unique<GPUDeviceAddress>(kernel_output->device_ptr(), kernel_output->size(), format, type);
       string tensor_name = kernel_name + ':' + std::to_string(j);
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(kernel, j);
       auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, 0, false, true);
@@ -385,7 +387,10 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
     if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       continue;
     }
-    const auto &input_size_list = kernel_mode->GetInputSizeList();
+    auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+    std::vector<size_t> input_size_list;
+    std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_size_list),
+                   [](auto input) { return input->size(); });
     const auto &output_size_list = kernel_mode->GetOutputSizeList();
     const auto &workspace_size_list = kernel_mode->GetWorkspaceSizeList();
 
@@ -779,9 +784,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       }
     }
 
-    AddressPtrList kernel_inputs;
-    AddressPtrList kernel_workspaces;
-    AddressPtrList kernel_outputs;
+    KernelTensorList kernel_inputs;
+    KernelTensorList kernel_workspaces;
+    KernelTensorList kernel_outputs;
     auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs, mock);
     if (!ret) {
 #ifdef ENABLE_DEBUGGER
@@ -796,7 +801,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 #ifdef ENABLE_DUMP_IR
     kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_info);
+    kernel::KernelLaunchAddr mem_addr_info;
+    kernel::ConvertLaunchInfoToAddr(mem_info, &mem_addr_info);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_addr_info);
 #endif
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
@@ -844,8 +851,8 @@ void *GPUKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
 }
 
 void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
-                                               const AddressPtrList &inputs, const AddressPtrList &workspaces,
-                                               const AddressPtrList &outputs, bool profiling) {
+                                               const KernelTensorList &inputs, const KernelTensorList &workspaces,
+                                               const KernelTensorList &outputs, bool profiling) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(kernel);
 #ifndef ENABLE_SECURITY
@@ -910,13 +917,11 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
       }
     }
     // alloc kernel res
-    AddressPtrList kernel_inputs;
-    AddressPtrList kernel_workspaces;
-    AddressPtrList kernel_outputs;
     KernelLaunchInfo kernel_launch_info;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
     MS_EXCEPTION_IF_NULL(stream_);
-    auto ret = kernel_mod->Launch(kernel_launch_info, stream_);
+    auto ret = kernel_mod->Launch(kernel_launch_info.inputs_, kernel_launch_info.workspaces_,
+                                  kernel_launch_info.outputs_, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
@@ -928,8 +933,9 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
   return true;
 }
 
-void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
-                                                     const AddressPtrList &workspace, const AddressPtrList &outputs) {
+void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const KernelTensorList &inputs,
+                                                     const KernelTensorList &workspace,
+                                                     const KernelTensorList &outputs) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -1100,8 +1106,8 @@ bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, 
 }
 
 bool GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
-                                             const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs,
-                                             AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs,
+                                             const mindspore::AnfNodePtr &kernel, KernelTensorList *kernel_inputs,
+                                             KernelTensorList *kernel_workspaces, KernelTensorList *kernel_outputs,
                                              bool mock) {
   if (!AllocKernelInputDynamicRes(kernel, kernel_inputs, mock)) {
     return false;
@@ -1115,7 +1121,7 @@ bool GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
   return true;
 }
 
-bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs,
+bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, KernelTensorList *kernel_inputs,
                                                   bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
@@ -1145,18 +1151,15 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
     MS_EXCEPTION_IF_NULL(device_address);
     UpdateHostSwapInQueue(device_address, mock);
     MS_EXCEPTION_IF_NULL(device_address->GetDevicePtr());
-    kernel::AddressPtr input = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(input);
-    input->addr = device_address->GetDevicePtr();
-    input->size = device_address->GetSize();
-    (void)kernel_inputs->emplace_back(input);
+    const auto &input = device_address->kernel_tensor();
+    (void)kernel_inputs->emplace_back(input.get());
   }
   return true;
 }
 
 bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
-                                                   const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_outputs,
-                                                   bool mock) {
+                                                   const mindspore::AnfNodePtr &kernel,
+                                                   KernelTensorList *kernel_outputs, bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
   UpdateHostSwapOutQueue(mock);
@@ -1170,18 +1173,16 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
     if (device_address->GetDevicePtr() == nullptr && !AttemptMallocMem(device_address, output_sizes[i], mock)) {
       return false;
     }
-    kernel::AddressPtr output = std::make_shared<kernel::Address>();
+    const auto &output = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(output);
-    output->addr = device_address->GetDevicePtr();
-    output->size = output_sizes[i];
-    (void)kernel_outputs->emplace_back(output);
+    (void)kernel_outputs->emplace_back(output.get());
   }
   return true;
 }
 
 bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
                                                       const mindspore::AnfNodePtr &kernel,
-                                                      AddressPtrList *kernel_workspaces, bool mock) {
+                                                      KernelTensorList *kernel_workspaces, bool mock) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_workspaces);
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
@@ -1195,11 +1196,10 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
     if (device_address->GetDevicePtr() == nullptr && !AttemptMallocMem(device_address, workspace_sizes[i], mock)) {
       return false;
     }
-    kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
+    const auto &workspace = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(workspace);
-    workspace->addr = device_address->GetDevicePtr();
-    workspace->size = workspace_sizes[i];
-    (void)kernel_workspaces->emplace_back(workspace);
+    workspace->set_size(workspace_sizes[i]);
+    (void)kernel_workspaces->emplace_back(workspace.get());
   }
   return true;
 }
@@ -1229,10 +1229,11 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
   size_t total_size = 0;
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto intput_sizes = kernel_mod->GetInputSizeList();
-  for (size_t i = 0; i < intput_sizes.size(); ++i) {
+  auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+  std::vector<size_t> input_sizes;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_sizes),
+                 [](auto input) { return input->size(); });
+  for (size_t i = 0; i < input_sizes.size(); ++i) {
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
       // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
@@ -1247,8 +1248,8 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
     } else {
       is_need_free_memory = true;
     }
-    total_size += intput_sizes[i];
-    (void)size_list.emplace_back(intput_sizes[i]);
+    total_size += input_sizes[i];
+    (void)size_list.emplace_back(input_sizes[i]);
     (void)addr_list.emplace_back(device_address);
   }
   AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);

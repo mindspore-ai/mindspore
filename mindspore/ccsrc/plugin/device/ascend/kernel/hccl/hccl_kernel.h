@@ -50,15 +50,6 @@ class HcclKernel : public KernelMod {
     MS_LOG(EXCEPTION) << "This interface is not support in hccl kernel module.";
   }
 
-  // =======================Old interface, will deleted after all kernel modified used new interface=================
-
-  virtual bool Init(const AnfNodePtr &anf_node) { MS_LOG(EXCEPTION) << "Deprecated hccl kernel initialize interface"; }
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    MS_LOG(EXCEPTION) << "Deprecated hccl kernel module launch interface";
-  }
-
  protected:
   virtual HcclDataType GetHcclDataType() const;
   virtual void CalLoopSize();

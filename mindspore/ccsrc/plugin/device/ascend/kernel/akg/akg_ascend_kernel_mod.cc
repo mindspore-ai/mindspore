@@ -46,8 +46,8 @@ AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack, const AnfNodePtr &a
   }
 }
 
-bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AkgKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
@@ -72,7 +72,7 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
         MS_LOG(ERROR) << "Input index must be in range [0, " << inputs.size() << "), but got " << idx;
         return false;
       }
-      runtime_args.push_back(inputs[idx]->addr);
+      runtime_args.push_back(inputs[idx]->device_ptr());
     }
     auto io_size = inputs.size() + outputs.size();
     for (const auto &idx : args_remap_[1]) {
@@ -81,20 +81,20 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
         return false;
       }
       if (idx < inputs.size()) {
-        runtime_args.push_back(inputs[idx]->addr);
+        runtime_args.push_back(inputs[idx]->device_ptr());
       } else {
-        runtime_args.push_back(outputs[idx - inputs.size()]->addr);
+        runtime_args.push_back(outputs[idx - inputs.size()]->device_ptr());
       }
     }
   } else {
     (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtime_args),
-                         [](const AddressPtr &input) { return input->addr; });
+                         [](const KernelTensor *input) { return input->device_ptr(); });
     (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtime_args),
-                         [](const AddressPtr &output) { return output->addr; });
+                         [](const KernelTensor *output) { return output->device_ptr(); });
   }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtime_args),
-                         [](const AddressPtr &addr) { return addr->addr; });
+                         [](const KernelTensor *addr) { return addr->device_ptr(); });
   }
 
   rtL2Ctrl_t *l2ctrl = nullptr;
@@ -110,9 +110,9 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   return true;
 }
 
-std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &workspace,
+                                               const std::vector<KernelTensor *> &outputs, uint32_t stream_id) {
   if (kernel_pack_ == nullptr) {
     MS_LOG(EXCEPTION) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
   }
@@ -141,7 +141,7 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
       if (idx >= inputs.size()) {
         MS_LOG(EXCEPTION) << "Input index must be in range [0, " << inputs.size() << "), but got " << idx;
       }
-      input_data_addrs.push_back(inputs[idx]->addr);
+      input_data_addrs.push_back(inputs[idx]->device_ptr());
     }
     auto io_size = inputs.size() + outputs.size();
     for (const auto &idx : args_remap_[1]) {
@@ -149,20 +149,20 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
         MS_LOG(EXCEPTION) << "Output index must be in range [0, " << io_size << "), but got " << idx;
       }
       if (idx < inputs.size()) {
-        output_data_addrs.push_back(inputs[idx]->addr);
+        output_data_addrs.push_back(inputs[idx]->device_ptr());
       } else {
-        output_data_addrs.push_back(outputs[idx - inputs.size()]->addr);
+        output_data_addrs.push_back(outputs[idx - inputs.size()]->device_ptr());
       }
     }
   } else {
     (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                         [](const AddressPtr &input) { return input->addr; });
+                         [](const KernelTensor *input) { return input->device_ptr(); });
     (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                         [](const AddressPtr &output) { return output->addr; });
+                         [](const KernelTensor *output) { return output->device_ptr(); });
   }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(workspace_addrs),
-                         [](const AddressPtr &workspace) { return workspace->addr; });
+                         [](const KernelTensor *workspace) { return workspace->device_ptr(); });
   }
 
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.

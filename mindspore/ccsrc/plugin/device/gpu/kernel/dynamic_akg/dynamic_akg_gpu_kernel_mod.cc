@@ -190,8 +190,9 @@ std::vector<std::vector<int64_t>> DynamicAkgGpuKernelMod::GetArgSizeVec() {
   return arg_size_vec;
 }
 
-bool DynamicAkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool DynamicAkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &workspace,
+                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
@@ -220,9 +221,9 @@ bool DynamicAkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
+                       [](const KernelTensor *input) { return input->device_ptr(); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
+                       [](const KernelTensor *output) { return output->device_ptr(); });
   if (is_dynamic_) {
     // calculate shape info: [0, dims, strides] and update workspace
     // std::vector<std::vector<int64_t>> arg_size_vec = GetArgSizeVec();
@@ -232,7 +233,7 @@ bool DynamicAkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
+                         [](const KernelTensor *addr) { return addr->device_ptr(); });
   }
   result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
                           thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],

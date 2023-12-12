@@ -37,6 +37,7 @@ namespace device {
 namespace gpu {
 using mindspore::device::memswap::MemSwapManagerPtr;
 using mindspore::memreuse::MemReuseUtilPtr;
+using KernelTensorList = std::vector<kernel::KernelTensor *>;
 class GPUKernelRuntime : public KernelRuntime {
  public:
   GPUKernelRuntime() = default;
@@ -83,17 +84,17 @@ class GPUKernelRuntime : public KernelRuntime {
   bool RefineMemSwapScheme(const session::KernelGraph *graph);
   bool LaunchKernelDynamic(const session::KernelGraph *graph, bool mock = false, bool profiling = false);
   bool RunOpLaunchKernelDynamic(const session::KernelGraph *graph);
-  void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
-                                     const AddressPtrList &workspace, const AddressPtrList &outputs);
+  void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const KernelTensorList &inputs,
+                                     const KernelTensorList &workspace, const KernelTensorList &outputs);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size, bool mock);
   bool AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
-                             AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
-                             AddressPtrList *kernel_outputs, bool mock);
-  bool AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs, bool mock);
+                             KernelTensorList *kernel_inputs, KernelTensorList *kernel_workspaces,
+                             KernelTensorList *kernel_outputs, bool mock);
+  bool AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, KernelTensorList *kernel_inputs, bool mock);
   bool AllocKernelOutputDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
-                                   AddressPtrList *kernel_outputs, bool mock);
+                                   KernelTensorList *kernel_outputs, bool mock);
   bool AllocKernelWorkspaceDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
-                                      const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_workspaces,
+                                      const mindspore::AnfNodePtr &kernel, KernelTensorList *kernel_workspaces,
                                       bool mock);
   void AllocCommunicationOpDynamicRes(const session::KernelGraph *graph);
   void AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel);
@@ -116,8 +117,8 @@ class GPUKernelRuntime : public KernelRuntime {
   session::KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &node, size_t i);
 
   void LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
-                               const AddressPtrList &inputs, const AddressPtrList &workspaces,
-                               const AddressPtrList &outputs, bool profiling);
+                               const KernelTensorList &inputs, const KernelTensorList &workspaces,
+                               const KernelTensorList &outputs, bool profiling);
 
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;

@@ -29,7 +29,7 @@ class BACKEND_EXPORT LaunchKernel {
   virtual ~LaunchKernel() = default;
 
   std::vector<uint8_t *> GetKernelOutputAddr() { return outputs_addr_; }
-  void LaunchSingleKernel(const std::vector<uint8_t *> &inputs_addr);
+  void LaunchSingleKernel(const AnfNodePtr &node, const std::vector<uint8_t *> &inputs_addr);
   void FreeOutputAndWorkspaceDeviceMem();
 
   virtual void FreeDeviceMem(void *addr) = 0;
@@ -48,11 +48,12 @@ class BACKEND_EXPORT LaunchKernel {
   std::vector<uint8_t *> outputs_addr_;
   std::vector<uint8_t *> workspaces_addr_;
 
-  std::vector<kernel::AddressPtr> ObtainKernelAddress(const std::vector<size_t> &list, std::vector<uint8_t *> *addr);
-  std::vector<kernel::AddressPtr> ObtainKernelInputs(const std::vector<size_t> &inputs_list,
-                                                     const std::vector<uint8_t *> &inputs_addr);
-  std::vector<kernel::AddressPtr> ObtainKernelOutputs(const std::vector<size_t> &outputs_list);
-  std::vector<kernel::AddressPtr> ObtainKernelWorkspaces(const std::vector<size_t> &workspaces_list);
+  std::vector<kernel::KernelTensor *> ObtainKernelAddress(const std::vector<size_t> &list,
+                                                          std::vector<uint8_t *> *addr);
+  std::vector<kernel::KernelTensor *> ObtainKernelInputs(const std::vector<size_t> &inputs_list,
+                                                         const std::vector<uint8_t *> &inputs_addr);
+  std::vector<kernel::KernelTensor *> ObtainKernelOutputs(const std::vector<size_t> &outputs_list);
+  std::vector<kernel::KernelTensor *> ObtainKernelWorkspaces(const std::vector<size_t> &workspaces_list);
 };
 }  // namespace mindspore::device
 

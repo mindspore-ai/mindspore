@@ -35,7 +35,7 @@ std::string MemInfo2String(const std::string &label, const kernel::AddressPtrLis
 }
 }  // namespace
 
-void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo &mem_info) {
+void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchAddr &mem_info) {
   std::lock_guard<std::mutex> lock(mtx_);
   if (!printed_) {
     MS_LOG(INFO) << "RDR update mem info.";
@@ -93,7 +93,7 @@ bool RecordMemAddressInfo(const SubModuleId module, const std::string &name) {
 }
 
 bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                      const kernel::KernelLaunchInfo &mem_info) {
+                      const kernel::KernelLaunchAddr &mem_info) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }

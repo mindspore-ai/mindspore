@@ -62,7 +62,7 @@ class BACKEND_EXPORT KernelRuntime {
   void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph &graph) const;
   using TbeLaunchKernelModCallBack =
-    std::function<void(const AnfNodePtr &, const kernel::KernelMod *kernel_mod, std::vector<AddressPtr> *)>;
+    std::function<void(const AnfNodePtr &, const kernel::KernelMod *kernel_mod, std::vector<KernelTensor *> *)>;
   static void tbe_call_setter(const TbeLaunchKernelModCallBack &call) { tbe_call_ = call; }
 #ifdef ENABLE_DEBUGGER
   BACKEND_EXPORT static bool DumpDataEnabled();
@@ -176,7 +176,7 @@ class BACKEND_EXPORT KernelRuntime {
   void AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
                            KernelLaunchInfo *kernel_launch_address) const;
   static void GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
-                                 const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr);
+                                 const DeviceAddress *device_address, const kernel::KernelTensorPtr &kernel_tensor);
   void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
                              const AnfNodePtr &kernel);
   void SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &mem_scheduler, const KernelWithIndex &output,
@@ -187,8 +187,8 @@ class BACKEND_EXPORT KernelRuntime {
   void LaunchKernelEvent(const std::map<AnfNodePtr, std::vector<std::function<void()>>> &run_events,
                          const AnfNodePtr &node) const;
   void DebugStreamSync(const CNodePtr &kernel);
-  static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs,
-                                     const std::shared_ptr<MemScheduler> &mem_schedule = nullptr);
+  static void GenKernelTensorLaunchArgs(const CNodePtr &cnode, std::vector<kernel::KernelTensor *> *kernel_inputs,
+                                        const std::shared_ptr<MemScheduler> &mem_schedule = nullptr);
   void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel,
                                const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,

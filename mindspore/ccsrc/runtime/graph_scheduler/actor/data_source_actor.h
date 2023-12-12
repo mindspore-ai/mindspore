@@ -35,7 +35,7 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq
@@ -109,7 +109,7 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   bool is_dynamic_shape_;
 
   // The kernel launch info is fetched by the device tensors.
-  KernelLaunchInfo launch_info_;
+  KernelLaunchAddr launch_info_;
 
   // The kernel tensors for resize and launch.
   std::vector<KernelTensor *> output_kernel_tensors_;

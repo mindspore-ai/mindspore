@@ -37,12 +37,14 @@ void GPULaunchMul::KernelBuild(const std::shared_ptr<session::KernelGraph> &kern
 }
 
 void GPULaunchMul::LaunchOpKernel() {
-  kernel_mod_ = ObtainLaunchMulKernelMod();
-  MS_EXCEPTION_IF_NULL(kernel_mod_);
+  auto cnode = ObtainLaunchMulKernelMod();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel = cnode->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(kernel);
   // construct mul inputs addr
   ObtainMulInputsAddr();
   // launch mul
-  LaunchSingleKernel(inputs_addr_);
+  LaunchSingleKernel(kernel, inputs_addr_);
 }
 
 void GPULaunchMul::FreeLaunchDeviceMem() {
