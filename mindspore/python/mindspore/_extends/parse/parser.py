@@ -1107,10 +1107,12 @@ class Parser:
 
     def check_lambda(self, src):
         obj_type = get_obj_type(self.fn)
-        if is_lambda_function(self.fn) and (obj_type != RESOLVE_TYPE_FUNCTION or src[:4] == "def "):
+        if (obj_type != RESOLVE_TYPE_FUNCTION or src[:4] == "def ") and is_lambda_function(self.fn):
             logger.debug("fn is lambda: %r", self.fn)
             raise ValueError("An error occurred while parsing the positional information of the lambda expression. "
-                             "Please write the lambda expression on a separate line.")
+                             "Please write the lambda expression on a separate line.\nFor example, "
+                             "the code 'def __init__(self, combine_fn=lambda x: x + 1):' rewritten as\n"
+                             "'def __init__(self, combine_fn=\nlambda x: x + 1\n):' will solve the problem.")
 
     def parse(self):
         """Parse the function or method."""

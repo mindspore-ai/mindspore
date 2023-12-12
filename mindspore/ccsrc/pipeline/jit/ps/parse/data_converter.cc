@@ -136,23 +136,30 @@ class ByTypeDataConvertFunc : public DataConvertFunc {
 // Convert the data according to object attribute.
 class ByAttrDataConvertFunc : public DataConvertFunc {
  public:
-  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
+  ByAttrDataConvertFunc(const ArgsObjConvertFunc &convert_func, const std::string &attr_name,
+                        const std::string &cell_list_from_top = "")
       : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
           return convert_func(obj);
         }),
-        attr_name_(attr_name) {}
+        attr_name_(attr_name),
+        cell_list_from_top_(cell_list_from_top) {}
 
-  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
+  ByAttrDataConvertFunc(const ArgsObjSigConvertFunc &convert_func, const std::string &attr_name,
+                        const std::string &cell_list_from_top = "")
       : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
                                        const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        attr_name_(attr_name) {}
+        attr_name_(attr_name),
+        cell_list_from_top_(cell_list_from_top) {}
 
   ~ByAttrDataConvertFunc() override = default;
 
-  bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_.c_str()); }
+  bool Matched(const py::object &obj) override {
+    return py::hasattr(obj, attr_name_.c_str()) && !py::hasattr(obj, cell_list_from_top_.c_str());
+  }
 
  private:
   std::string attr_name_;
+  std::string cell_list_from_top_;
 };
 
 // Convert the data according to match function.
@@ -668,6 +675,13 @@ ValuePtr ConvertFloatWithType(const py::object &obj, const TypePtr &dtype = null
   return ConvertNumberWithType<pyfloat>(obj_float32, dtype);
 }
 
+ValuePtr ConvertNameSpace(const py::object &obj, bool use_signature) {
+  MS_LOG(DEBUG) << "Converting python NameSpace";
+  auto res = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
+  MS_LOG(DEBUG) << "name_space: " << res->ToString();
+  return res;
+}
+
 template <typename T, typename U>
 ValuePtr PyCast(const py::object &obj) {
   return std::make_shared<T>(py::cast<U>(obj));
@@ -698,24 +712,18 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByTypeDataConvertFunc<MapTensor>>(ObjCast<MapTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConvertFunc<py::module>>(ConvertModuleNameSpace),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_MS_CLASS, ConvertMsClass),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertMsClass, PYTHON_MS_CLASS),
     std::make_shared<ByTypeDataConvertFunc<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConvertFunc<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConvertFunc<IOMonad>>(ObjCast<IOMonadPtr>),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CLASS_MEMBER_NAMESPACE,
-                                            [](const py::object &obj) -> ValuePtr {
-                                              auto res =
-                                                std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
-                                              MS_LOG(DEBUG) << "name_space: " << res->ToString();
-                                              return res;
-                                            }),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertNameSpace, PYTHON_CLASS_MEMBER_NAMESPACE),
     std::make_shared<ByTypeDataConvertFunc<py::dict>>(ConvertDict),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_DICT, ConvertDict),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertDict, PYTHON_CELL_AS_DICT),
     std::make_shared<ByTypeDataConvertFunc<py::slice>>(ConvertSlice),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_LIST, ConvertCellList),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertCellList, PYTHON_CELL_AS_LIST, PYTHON_CELL_LIST_FROM_TOP),
     std::make_shared<ByTypeDataConvertFunc<Cell>>(ConvertCellObjToFuncGraph),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FUNCTION_FLAG, ConvertPrimitiveFunction),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertPrimitive, PYTHON_PRIMITIVE_FLAG),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertPrimitiveFunction, PYTHON_PRIMITIVE_FUNCTION_FLAG),
     std::make_shared<ByTypeDataConvertFunc<MetaFuncGraph>>(ConvertMetaFuncGraph),
     std::make_shared<ByTypeDataConvertFunc<FuncGraph>>(ConvertFuncGraph),
   };

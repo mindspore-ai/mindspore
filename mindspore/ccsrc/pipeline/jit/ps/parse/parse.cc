@@ -527,7 +527,10 @@ FuncGraphPtr Parser::ParseFuncGraph() {
     if (py::isinstance<py::none>(lambda_node) || ast_->GetNodeType(lambda_node)->node_name() != lambda_name) {
       MS_INTERNAL_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
                                        << ast_->GetNodeType(lambda_node)->node_name() << ". Please check lambda"
-                                       << " expression to make sure it is defined on a separate line.";
+                                       << " expression to make sure it is defined on a separate line.\n For example, "
+                                       << "the code 'func = nn.ReLU() if y < 1 else lambda x: x + 1' rewritten as\n"
+                                       << "'if y < 1:\n    func = nn.ReLU()\nelse:\n    func = lambda x: x + 1\n'"
+                                       << "will solve the problem.";
     }
     fn_block = ParseLambdaFunction(lambda_node);
   }
