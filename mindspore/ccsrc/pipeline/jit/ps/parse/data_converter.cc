@@ -372,15 +372,23 @@ ValuePtr ConvertMsClass(const py::object &obj) {
   return std::make_shared<MsClassObject>(obj, cls_name);
 }
 
-ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
-  MS_LOG(DEBUG) << "Converting primitive object" << use_signature;
-
+ValuePtr ConvertPrimitiveClassType(const py::object &obj) {
   // need check the primitive is class type or instance
   auto obj_type = data_converter::GetObjType(obj);
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
     auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
     // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
+  }
+  return nullptr;
+}
+
+ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
+  MS_LOG(DEBUG) << "Converting primitive object " << use_signature;
+
+  auto class_type = ConvertPrimitiveClassType(obj);
+  if (class_type != nullptr) {
+    return class_type;
   }
   py::object adapter_obj = obj;
   if (py::hasattr(obj, "__setattr_flag__")) {
@@ -404,12 +412,17 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
 }
 
 ValuePtr ConvertPrimitiveFunction(const py::object &obj) {
+  MS_LOG(DEBUG) << "Converting primitive function";
+  auto class_type = ConvertPrimitiveClassType(obj);
+  if (class_type != nullptr) {
+    return class_type;
+  }
   auto prim_func_adapter = obj.cast<PrimitiveFunctionAdapterPtr>();
   MS_EXCEPTION_IF_NULL(prim_func_adapter);
   auto cpp_primitive_func = prim_func_adapter->attached_primitive_function();
   if (cpp_primitive_func == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Cannot get cpp primitive function object from primitive function adapter:"
-                               << prim_func_adapter->name();
+    auto prim_name = py::getattr(obj, "name").cast<std::string>();
+    return std::make_shared<prim::DoTransPrimitiveFunction>(std::make_shared<Primitive>(prim_name));
   }
   return cpp_primitive_func;
 }
