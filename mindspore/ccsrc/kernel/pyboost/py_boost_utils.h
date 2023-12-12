@@ -25,6 +25,7 @@
 #include "runtime/pynative/op_executor.h"
 #include "mindspore/core/ops/view/view_strides_calculator.h"
 #include "runtime/device/device_address_utils.h"
+#include "kernel/pyboost/pyboost_kernel_extra_func.h"
 
 namespace mindspore {
 namespace kernel {
@@ -63,6 +64,47 @@ class BACKEND_EXPORT PyBoostUtils {
   template <typename... T>
   static void MallocOpInputs(DeviceContext *device_context, const T &... args) {
     (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
+  }
+
+  template <typename... T>
+  static std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList> GetKernelTensors(
+    DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
+    std::vector<kernel::KernelTensor *> kernel_tensor_list;
+    // Kernel tensor is a raw ppointer, device address need to be returned.
+    device::DeviceAddressPtrList device_address_list;
+    size_t index = 0;
+    auto get_index = [&index]() { return index; };
+    auto add_index = [&index]() { return index++; };
+    (GetKernelTensor(device_context, input_abs[add_index()], get_index(), &kernel_tensor_list, &device_address_list,
+                     args),
+     ...);
+    return std::make_pair(kernel_tensor_list, device_address_list);
+  }
+
+  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor);
+
+  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list,
+                              const std::optional<tensor::TensorPtr> &tensor);
+
+  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list, const std::vector<TensorPtr> &tensors);
+
+  template <typename T>
+  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list, const T &val) {
+    // Value ptr alloc device address and malloc mem here
+    auto device_address = runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_abs, index, val);
+    MS_EXCEPTION_IF_NULL(device_address);
+    MS_EXCEPTION_IF_NULL(device_address_list);
+    MS_EXCEPTION_IF_NULL(kernel_tensor_list);
+    (void)device_address_list->emplace_back(device_address);
+    (void)kernel_tensor_list->emplace_back(device_address->kernel_tensor().get());
   }
 
   // Create input device address with kernel tensor
@@ -114,6 +156,10 @@ class BACKEND_EXPORT PyBoostUtils {
   // Create workspace device address with kernel tensor
   static std::vector<kernel::KernelTensor *> GetKernelTensorFromAddress(
     const device::DeviceAddressPtrList &input_device_address);
+
+  static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
+                                              DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs);
 };
 
 template <typename T>
@@ -127,10 +173,41 @@ std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
   return result;
 }
 
-kernel::KernelModPtr BACKEND_EXPORT CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
-                                                    DeviceContext *device_context,
-                                                    const std::vector<KernelTensor *> &inputs,
-                                                    const std::vector<KernelTensor *> &outputs);
+// Shield kernel hardware differences. Call some func of derived classes based on base classes.
+// Just like SetThreadPool
+class BACKEND_EXPORT PyboostKernelExtraFuncFactory {
+ public:
+  static PyboostKernelExtraFuncFactory &GetInstance();
+  PyboostKernelExtraFuncFactory() = default;
+  ~PyboostKernelExtraFuncFactory() = default;
+  void AddPyboostKernelExtraFunc(const std::string &op_name, const PyboostKernelExtraFuncPtr &func) {
+    kernel_func_map_[op_name] = func;
+  }
+
+  void SetThreadPool(const std::string &device_name, const kernel::KernelModPtr &kernel) {
+    auto iter = kernel_func_map_.find(device_name);
+    if (iter == kernel_func_map_.end()) {
+      return;
+    }
+
+    iter->second->SetThreadPool(kernel);
+  }
+
+ private:
+  mindspore::HashMap<std::string, PyboostKernelExtraFuncPtr> kernel_func_map_;
+};
+
+class PyboostKernelExtraFuncRegistrar {
+ public:
+  PyboostKernelExtraFuncRegistrar(const std::string &op_name, const PyboostKernelExtraFuncPtr &func) {
+    PyboostKernelExtraFuncFactory::GetInstance().AddPyboostKernelExtraFunc(op_name, func);
+  }
+
+  ~PyboostKernelExtraFuncRegistrar() = default;
+};
+
+#define REG_PYBOOST_KERNEL_EXTRA_FUN(op_name, func) \
+  static PyboostKernelExtraFuncRegistrar g_##op_name##PyboostKernelExtraFunc(#op_name, std::make_shared<func>());
 
 }  // namespace pyboost
 }  // namespace kernel

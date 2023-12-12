@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "plugin/device/ascend/kernel/pyboost/customize/copy.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/py_boost_utils.h"
@@ -22,7 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-
 tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   auto input_abs = input_tensor->ToAbstract();
@@ -37,6 +35,7 @@ tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const
   PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
+  // Async
   PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();

@@ -88,33 +88,36 @@ class TemplatePaths:
         self.code_generate_path = code_generate_path
 
 
-def generate_malloc_input(is_ascend, need_malloc_tensors, call_args_after_convert):
+def generate_malloc_input(need_malloc_tensors):
     """
     generate malloc inputs
-    :param is_ascend:
     :param need_malloc_tensors:
-    :param call_args_after_convert:
     :return:
     """
     malloc_inputs = ''
-    if is_ascend:
-        args_list = ''
-        for item in need_malloc_tensors:
-            args_list += f'{item}, '
-        args_list = args_list[:-2]
-        if args_list:
-            malloc_inputs += f'PyBoostUtils::MallocOpInputs(device_context, {args_list});\n'
-    else:
-        args_list = ''
-        for item in call_args_after_convert:
-            args_list += f'{item}, '
-        args_list = args_list[:-2]
-        malloc_inputs += f'const auto &inputs_device_address = ' \
-                         f'PyBoostUtils::CreateInputDeviceAddress(device_context, op->input_abs(), {args_list});\n'
-        malloc_inputs += f'const auto &inputs_kernel_tensors = ' \
-                         f'PyBoostUtils::GetKernelTensorFromAddress(inputs_device_address);'
+    args_list = ''
+    for item in need_malloc_tensors:
+        args_list += f'{item}, '
+    args_list = args_list[:-2]
+    if args_list:
+        malloc_inputs += f'PyBoostUtils::MallocOpInputs(device_context, {args_list});\n'
     return malloc_inputs
 
+def generate_get_inputs_kernel_tensors(call_args):
+    """
+    generate get inputs kernel tensors
+    :param call_args:
+    :return:
+    """
+    inputs_kernel_tensors = ''
+    args_list = ''
+    for item in call_args:
+        args_list += f'{item}, '
+    args_list = args_list[:-2]
+    if args_list:
+        inputs_kernel_tensors += f'const auto &input_address_info = ' \
+                                 f'PyBoostUtils::GetKernelTensors(device_context, op->input_abs(), {args_list});\n'
+    return inputs_kernel_tensors
 
 def generate_create_input_address(need_malloc_tensors):
     """create input address"""
@@ -144,9 +147,9 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         is_ascend = 'ascend' in gen_path
         is_cpu = 'cpu' in gen_path
         is_gpu = 'gpu' in gen_path
-        malloc_inputs = generate_malloc_input(is_ascend, converter.need_malloc_tensors,
-                                              converter.call_args_after_convert)
+        malloc_inputs = generate_malloc_input(converter.need_malloc_tensors)
         create_input_address = generate_create_input_address(converter.need_malloc_tensors)
+        get_inputs_kernel_tensors = generate_get_inputs_kernel_tensors(converter.call_args)
 
         # call_impl
         call_impl = ''
@@ -203,6 +206,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          const_number_convert=converter.const_number_convert,
                                          create_input_address=create_input_address,
                                          malloc_inputs=malloc_inputs,
+                                         get_inputs_kernel_tensors=get_inputs_kernel_tensors,
                                          get_cube_math_type=get_cube_math_type,
                                          cube_math_type=cube_math_type,
                                          real_call_args=converter.call_args_after_convert,

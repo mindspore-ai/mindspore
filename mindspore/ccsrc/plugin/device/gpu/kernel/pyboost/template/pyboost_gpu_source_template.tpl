@@ -16,10 +16,7 @@
 
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/${operator_name}.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
-#include "kernel/kernel_mod_cache.h"
 ${customize_include}
 
 namespace mindspore {

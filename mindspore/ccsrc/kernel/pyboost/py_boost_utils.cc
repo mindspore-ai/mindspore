@@ -17,6 +17,7 @@
 #include "kernel/pyboost/py_boost_utils.h"
 #include <algorithm>
 #include "kernel/common_utils.h"
+#include "kernel/kernel_mod_cache.h"
 #include "runtime/device/device_address_utils.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_def.h"
@@ -128,14 +129,26 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
   return device_context;
 }
 
-kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
-                                     DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
-                                     const std::vector<KernelTensor *> &outputs) {
-  const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!kernel_mod->Init(prim, inputs, outputs)) {
-    MS_LOG(EXCEPTION) << "KernelMod Init Failed: " << op_name;
+kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
+                                                   DeviceContext *device_context,
+                                                   const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  const auto &device_name = device_context->device_context_key().device_name_;
+
+  auto &cache_helper = kernel::KernelModCache::GetInstance();
+  const auto &key = cache_helper.GetKernelModKey(op_name, device_name, inputs);
+  auto kernel_mod = cache_helper.GetKernelMod(key);
+  if (kernel_mod == nullptr) {
+    kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    if (!kernel_mod->Init(prim, inputs, outputs)) {
+      MS_LOG(EXCEPTION) << "KernelMod Init Failed: " << op_name;
+    }
+    cache_helper.SetCache(key, kernel_mod);
+    PyboostKernelExtraFuncFactory::GetInstance().SetThreadPool(device_name, kernel_mod);
   }
+
   return kernel_mod;
 }
 
@@ -308,10 +321,8 @@ void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  // TODO(caifubi): enable cpu/gpu async.
-  if (sync || device == kGPUDevice || device == kCPUDevice || mode == mindspore::kGraphMode) {
+  if (sync || mode == mindspore::kGraphMode) {
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
@@ -325,6 +336,43 @@ std::vector<kernel::KernelTensor *> PyBoostUtils::GetKernelTensorFromAddress(
   std::transform(input_device_address.begin(), input_device_address.end(), std::back_inserter(input_kernel_tensors),
                  [](const auto &item) { return item->kernel_tensor().get(); });
   return input_kernel_tensors;
+}
+
+void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
+                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                                   device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(kernel_tensor_list);
+  MS_EXCEPTION_IF_NULL(device_address_list);
+
+  const auto &device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  (void)device_address_list->emplace_back(device_address);
+  (void)kernel_tensor_list->emplace_back(device_address->kernel_tensor().get());
+}
+
+void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
+                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                                   device::DeviceAddressPtrList *device_address_list,
+                                   const std::vector<TensorPtr> &tensors) {
+  for (const auto &tensor : tensors) {
+    // input_abs is not used in GetKernelTensor when value is TensorPtr.
+    GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor);
+  }
+}
+
+void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
+                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                                   device::DeviceAddressPtrList *device_address_list,
+                                   const std::optional<tensor::TensorPtr> &tensor) {
+  if (tensor.has_value()) {
+    GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor.value());
+  } else {
+    MS_EXCEPTION_IF_NULL(kernel_tensor_list);
+    MS_EXCEPTION_IF_NULL(device_address_list);
+    (void)device_address_list->emplace_back(nullptr);
+    (void)kernel_tensor_list->emplace_back(nullptr);
+  }
 }
 
 device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const KernelModPtr &kernel_mod,
@@ -359,6 +407,10 @@ device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const Ke
   return workspaces_address;
 }
 
+PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
+  static PyboostKernelExtraFuncFactory instance;
+  return instance;
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
