@@ -18,6 +18,11 @@
 #include "plugin/device/gpu/kernel/arrays/contiguous_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/arrays/copy_with_slice_gpu_kernel.h"
 
+namespace {
+// dim will be 9, when op is pixel shuffle
+constexpr size_t kMaxDim = 9;
+}  // namespace
+
 namespace mindspore::device::gpu {
 kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
                                                 const device::DeviceContext *device_context) {
@@ -28,6 +33,27 @@ kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate device memory failed!";
     }
+  }
+
+  return std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize());
+}
+
+kernel::AddressPtr MallocMemoryAndCopyValue(const device::DeviceAddressPtr &device_address,
+                                            const device::DeviceContext *device_context, std::vector<int64_t> vec) {
+  if (!device_address) {
+    return std::make_shared<kernel::Address>();
+  }
+  if (device_address->GetPtr() == nullptr) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate device memory failed!";
+    }
+  }
+
+  std::reverse(vec.begin(), vec.end());
+  vec.resize(kMaxDim, 0);
+  if (!device_address->SyncHostToDevice(ShapeVector(), device_address->GetSize(), kNumberTypeInt64, vec.data(),
+                                        kOpFormat_DEFAULT)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed, vec:" << vec;
   }
 
   return std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize());
@@ -47,9 +73,27 @@ bool GpuContiguousKernelTask::RunWithRet() {
   auto input = MallocMemoryForDeviceAddress(input_address, device_context);
   auto output = MallocMemoryForDeviceAddress(output_address, device_context);
 
+  // Ensure address life cycle
+  device::DeviceAddressPtr shape_dev_addr = nullptr;
+  device::DeviceAddressPtr strides_dev_addr = nullptr;
+
+  kernel::AddressPtr shape_addr = nullptr;
+  kernel::AddressPtr strides_addr = nullptr;
+
+  if (!input_storage_info->is_contiguous) {
+    // No need shape_addr and strides_addr, when tensor is contiguous
+    shape_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, kMaxDim * sizeof(int64_t), kOpFormat_DEFAULT, kNumberTypeInt64, ShapeVector());
+    strides_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, kMaxDim * sizeof(int64_t), kOpFormat_DEFAULT, kNumberTypeInt64, ShapeVector());
+
+    shape_addr = MallocMemoryAndCopyValue(shape_dev_addr, device_context, input_storage_info->shape);
+    strides_addr = MallocMemoryAndCopyValue(strides_dev_addr, device_context, input_storage_info->strides);
+  }
+
   kernel::ContiguousGpuKernel contiguous_kernel;
   auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input, input_storage_info,
-                                                output_address->type_id(), output, stream);
+                                                output_address->type_id(), output, shape_addr, strides_addr, stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "LaunchContiguous failed";
   }
