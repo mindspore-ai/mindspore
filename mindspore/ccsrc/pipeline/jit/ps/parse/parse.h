@@ -240,6 +240,7 @@ class Parser {
 
   std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> GetRealKeysValues(const FunctionBlockPtr &block,
                                                                                 const py::object &node);
+  std::pair<AnfNodePtr, AnfNodePtr> GetRealKeysValuesFromName(const FunctionBlockPtr &block, const py::object &node);
   // Process DictComp expression.
   AnfNodePtr ParseDictComp(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseDictCompIter(const FunctionBlockPtr &block, const py::object &node,

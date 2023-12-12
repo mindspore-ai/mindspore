@@ -29,17 +29,50 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
   if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
-        (key->isa<abstract::AbstractTensor>() && !key_value->ContainsValueAny()) ||
-        key->isa<abstract::AbstractTuple>())) {
+        (key->isa<AbstractTensor>() && !key_value->ContainsValueAny()) || key->isa<AbstractTuple>())) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
                       << key->BuildValue()->ToString();
   }
-  if (key->isa<abstract::AbstractTuple>() && !key->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
+  if (key->isa<AbstractTuple>() && !key->cast_ptr<AbstractTuple>()->ContainsAllConstants()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
                       << key->BuildValue()->ToString();
   }
 }
 }  // namespace
+
+void ProcessUnpackDict(const AbstractTuplePtr &key_tuple, const AbstractTuplePtr &value_tuple,
+                       std::unordered_map<std::string, AbstractBasePtr> *key_str_value_set,
+                       std::vector<AbstractBasePtr> *key_set) {
+  // The size of need unpack tuple must be 1
+  const auto &key_elements = key_tuple->elements();
+  const auto &value_elements = value_tuple->elements();
+  if (key_elements.size() != 1) {
+    MS_LOG(EXCEPTION) << "The size of need unpack key tuple must be 1, but got " << key_elements.size();
+  }
+  if (value_elements.size() != 1) {
+    MS_LOG(EXCEPTION) << "The size of need unpack value tuple must be 1, but got " << value_elements.size();
+  }
+
+  auto unpack_keys = key_elements[0];
+  auto unpack_keys_tuple = unpack_keys->cast<AbstractTuplePtr>();
+  const auto &unpack_keys_elements = unpack_keys_tuple->elements();
+
+  auto unpack_values = value_elements[0];
+  auto unpack_values_tuple = unpack_values->cast<AbstractTuplePtr>();
+  const auto &unpack_values_elements = unpack_values_tuple->elements();
+
+  if (unpack_keys_elements.size() != unpack_values_elements.size()) {
+    MS_LOG(EXCEPTION) << "The keys' size should be equal to values' size, but the keys' size is "
+                      << unpack_keys_elements.size() << ", the values' size is " << unpack_values_elements.size();
+  }
+
+  for (size_t inner_index = 0; inner_index < unpack_keys_elements.size(); ++inner_index) {
+    auto inner_key = unpack_keys_elements[inner_index];
+    auto key_str = inner_key->BuildValue()->ToString();
+    (void)key_str_value_set->emplace(key_str, unpack_values_elements[inner_index]);
+    (void)key_set->emplace_back(inner_key);
+  }
+}
 
 AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_abs_list) {
@@ -60,8 +93,21 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
   std::vector<AbstractBasePtr> key_set;
   std::vector<AbstractElementPair> key_value;
   AbstractBasePtrList value_list = values->elements();
+  constexpr auto need_unpack = "need_unpack";
   for (size_t index = 0; index < keys_size; index++) {
     const auto &key = key_list[index];
+    bool is_need_unpack = false;
+    if (key->isa<AbstractTuple>()) {
+      auto key_tuple = key->cast<AbstractTuplePtr>();
+      if (key_tuple->HasData(need_unpack)) {
+        is_need_unpack = *key_tuple->GetData<bool>(need_unpack);
+        if (is_need_unpack) {
+          auto value_tuple = value_list[index]->cast<AbstractTuplePtr>();
+          MS_EXCEPTION_IF_NULL(value_tuple);
+          ProcessUnpackDict(key_tuple, value_tuple, &key_str_value_set, &key_set);
+        }
+      }
+    }
     CheckDictKey(key, op_name);
     auto key_val = key->BuildValue()->ToString();
     auto iter = key_str_value_set.find(key_val);
@@ -69,7 +115,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     // {Tensor[1]: x, Tensor[1}: y} the length of dict is 2, means the two keys are not duplicate.
     if (iter != key_str_value_set.end() && !key->isa<AbstractTensor>()) {
       iter->second = value_list[index];
-    } else {
+    } else if (!is_need_unpack) {
       auto key_str = key->BuildValue()->ToString();
       key_str_value_set.insert(std::pair<std::string, AbstractBasePtr>(key_str, value_list[index]));
       key_set.push_back(key);
@@ -363,17 +409,17 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   auto data = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(data);
   if (!variable_len) {
-    if (data->isa<abstract::AbstractSequence>() && data->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+    if (data->isa<AbstractSequence>() && data->cast<AbstractSequencePtr>()->dynamic_len()) {
       MS_LOG(EXCEPTION) << "Can not convert a dynamic length sequence to constant length.";
     }
     CheckMutableArgAbstract(data);
     return AbstractBroaden(data);
   }
   auto ret = data->Clone();
-  if (ret->isa<abstract::AbstractAny>()) {
+  if (ret->isa<AbstractAny>()) {
     return ret;
   }
-  if (!ret->isa<abstract::AbstractSequence>()) {
+  if (!ret->isa<AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
                             << " list or tuple, but got: " << ret->ToString();
   }
@@ -383,7 +429,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   }
   if (ret->isa<AbstractList>()) {
     // Dynamic length list should not attach python object.
-    auto ret_list = ret->cast<abstract::AbstractListPtr>();
+    auto ret_list = ret->cast<AbstractListPtr>();
     ret_list->ClearExtraInfo();
   }
   return ret;

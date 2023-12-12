@@ -989,8 +989,53 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 
+class MS_CORE_API ExtraInfoHolder {
+ public:
+  ~ExtraInfoHolder() = default;
+
+  /// \brief Set data to ExtraInfoHolder.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \param[in] data The data to store in ExtraInfoHolder.
+  template <typename T>
+  void SetData(const std::string &key, const std::shared_ptr<T> &data) {
+    extra_info_->set<T>(key, data);
+  }
+
+  /// \brief Get data from ExtraInfoHolder using key.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \return The corresponding data.
+  template <typename T>
+  std::shared_ptr<T> GetData(const std::string &key) const {
+    return extra_info_->get<T>(key);
+  }
+
+  /// \brief Check whether ExtraInfoHolder has specific data.
+  ///
+  /// \param[in] key The key for data in ExtraInfoHolder.
+  /// \return True if it exists, otherwise false.
+  bool HasData(const std::string &key) const { return extra_info_->has(key); }
+
+  /// \brief Get corresponding extra info user data.
+  ///
+  /// \return The corresponding extra info user data.
+  UserDataPtr extra_info() const { return extra_info_; }
+
+  /// \brief Set corresponding extra info user data.
+  ///
+  /// \param[in] extra_info The corresponding extra info user data.
+  void set_extra_info(const UserDataPtr &extra_info) { extra_info_ = extra_info; }
+
+  /// \brief Clear corresponding extra info user data.
+  void ClearExtraInfo() { extra_info_ = std::make_shared<UserData>(); }
+
+ protected:
+  UserDataPtr extra_info_ = std::make_shared<UserData>();
+};
+
 /// \brief Class AbstractTuple describes a tuple.
-class MS_CORE_API AbstractTuple : public AbstractSequence {
+class MS_CORE_API AbstractTuple : public AbstractSequence, public ExtraInfoHolder {
  public:
   /// \brief Constructor of AbstractTuple.
   ///
@@ -1048,51 +1093,6 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   ValuePtr RealBuildValue() const override;
 };
 using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
-
-class MS_CORE_API ExtraInfoHolder {
- public:
-  ~ExtraInfoHolder() = default;
-
-  /// \brief Set data to ExtraInfoHolder.
-  ///
-  /// \param[in] key The key for data in ExtraInfoHolder.
-  /// \param[in] data The data to store in ExtraInfoHolder.
-  template <typename T>
-  void SetData(const std::string &key, const std::shared_ptr<T> &data) {
-    extra_info_->set<T>(key, data);
-  }
-
-  /// \brief Get data from ExtraInfoHolder using key.
-  ///
-  /// \param[in] key The key for data in ExtraInfoHolder.
-  /// \return The corresponding data.
-  template <typename T>
-  std::shared_ptr<T> GetData(const std::string &key) const {
-    return extra_info_->get<T>(key);
-  }
-
-  /// \brief Check whether ExtraInfoHolder has specific data.
-  ///
-  /// \param[in] key The key for data in ExtraInfoHolder.
-  /// \return True if it exists, otherwise false.
-  bool HasData(const std::string &key) const { return extra_info_->has(key); }
-
-  /// \brief Get corresponding extra info user data.
-  ///
-  /// \return The corresponding extra info user data.
-  UserDataPtr extra_info() const { return extra_info_; }
-
-  /// \brief Set corresponding extra info user data.
-  ///
-  /// \param[in] extra_info The corresponding extra info user data.
-  void set_extra_info(const UserDataPtr &extra_info) { extra_info_ = extra_info; }
-
-  /// \brief Clear corresponding extra info user data.
-  void ClearExtraInfo() { extra_info_ = std::make_shared<UserData>(); }
-
- protected:
-  UserDataPtr extra_info_ = std::make_shared<UserData>();
-};
 
 /// \brief Class AbstractList describes a list.
 class MS_CORE_API AbstractList final : public AbstractSequence, public ExtraInfoHolder {
