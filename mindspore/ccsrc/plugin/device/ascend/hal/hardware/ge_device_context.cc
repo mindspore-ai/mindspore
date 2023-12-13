@@ -319,6 +319,15 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.exec.op_precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
     MS_LOG(INFO) << "Set op_precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_OP_PRECISION_MODE) << ".";
   }
+
+  std::string ge_op_mode = common::GetEnv("GE_OP_MODE");
+  if (ge_op_mode == "HIGH_PERFORMANCE") {
+    (*ge_options)["ge.opSelectImplmode"] = "high_performance_for_all";
+    MS_LOG(INFO) << "Set opSelectImplMode to high_performance.";
+  } else {
+    (*ge_options)["ge.opSelectImplmode"] = "high_precision_for_all";
+    MS_LOG(INFO) << "Set opSelectImplMode to high_precision.";
+  }
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
