@@ -17,6 +17,7 @@
 #include "include/api/context.h"
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "src/common/config_file.h"
+#include "src/common/common.h"
 #ifdef ENABLE_OPENSSL
 #include "src/common/decrypt.h"
 #include "src/common/file_utils.h"
@@ -462,6 +463,10 @@ Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack 
 
 std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
   std::vector<char> ret;
+  if (CharToString(key) != lite::KModelUserInfo) {
+    MS_LOG(WARNING) << "Unsupported key, only user info is supported.";
+    return ret;
+  }
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return ret;

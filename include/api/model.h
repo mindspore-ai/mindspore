@@ -358,6 +358,11 @@ class MS_API Model {
 
   const std::shared_ptr<ModelImpl> impl() const { return impl_; }
 
+  /// \brief Get model info by key
+  ///
+  /// \param[in] key The key of model info key-value pair
+  ///
+  /// \return The value of the model info associated with the given key.
   inline std::string GetModelInfo(const std::string &key);
 
  private:
@@ -420,6 +425,6 @@ Status Model::Build(const std::string &model_path, ModelType model_type,
   return Build(StringToChar(model_path), model_type, model_context);
 }
 
-std::string Model::GetModelInfo(const std::string &key) { return CharToString(GetModelInfo(StringToChar(key))); }
+inline std::string Model::GetModelInfo(const std::string &key) { return CharToString(GetModelInfo(StringToChar(key))); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H
