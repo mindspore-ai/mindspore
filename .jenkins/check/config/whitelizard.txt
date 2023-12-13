@@ -55,6 +55,7 @@ mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
+mindspore/mindspore/ccsrc/pybind_api/ir/tensor_index_py.cc:mindspore::tensor::TensorIndex::GetItemByTupleWithView
 mindspore/mindspore/lite/src/litert/thread_pool.c:GetArch
 mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/conv2d.cc:mindspore::kernel::UseWinograd4x4To6x6
 mindspore/mindspore/lite/src/litert/scheduler.cc:mindspore::lite::Scheduler::FindBackendKernel

@@ -1527,11 +1527,10 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
   }
   MS_LOG(DEBUG) << "In branch get item by tuple with view, data_shape: " << data_shape
                 << " tensor_indexes: " << py_index;
-
   size_t data_dims = data_shape.size();
   auto new_tuple_index = py_index.cast<py::tuple>();
   size_t specified_dimensions = GetSpecifiedDimensions(new_tuple_index, data_dims);
-
+  bool empty_strided_slice_result = false;
   auto new_data_shape = data_shape;
   size_t dim = 0;
   std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
@@ -1558,18 +1557,16 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       std::vector<int64_t> begin_info(new_data_shape.size(), 0);
       std::vector<int64_t> end_info(new_data_shape);
       std::vector<int64_t> step_info(new_data_shape.size(), 1);
-
       if (slice_info.step() < 0) {
         data_transfer_types->clear();
         data_transfer_args->clear();
         return false;
       }
-
       if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
         dim++;
         continue;
       }
-
+      empty_strided_slice_result = (slice_info.start() >= slice_info.stop());
       begin_info[dim] = slice_info.start();
       end_info[dim] = slice_info.stop();
       step_info[dim] = slice_info.step();
@@ -1593,7 +1590,6 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       (void)slice_op_info->data_indexs.emplace_back(0);
       (void)slice_op_infos.emplace_back(slice_op_info);
       new_data_shape.insert(new_data_shape.begin() + dim, 1);
-
       dim++;
     } else {
       data_transfer_types->clear();
@@ -1604,6 +1600,11 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
   CheckDataDim(new_data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
+    if (empty_strided_slice_result) {
+      data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kByPass));
+      data_transfer_args->emplace_back(py::none());
+      return true;
+    }
     slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
     if (slice_output == py::none()) {
       return false;
