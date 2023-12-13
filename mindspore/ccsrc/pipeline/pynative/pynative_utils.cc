@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -930,6 +930,11 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
   for (size_t i = 0; i < op_def->args_.size(); i++) {
     auto const &op_arg = op_def->args_[i];
     op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
+
+    if (py::isinstance<py::none>(op_inputs[i])) {
+      op_run_info->op_grad_info->input_value[i] = kNone;
+      continue;
+    }
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     MS_EXCEPTION_IF_NULL(convert_func);
@@ -1361,7 +1366,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
     }
-  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>()) {
+  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>() || v->isa<None>()) {
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
     (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
@@ -1380,7 +1385,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
   } else if (v->isa<tensor::CSRTensor>()) {
     ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), top_cell, index);
     return;
-  } else if (v->isa<None>() || v->isa<Monad>()) {
+  } else if (v->isa<Monad>()) {
     return;
   } else if (v->isa<parse::InterpretedObject>()) {
     MS_EXCEPTION(TypeError) << "Not support for " << v->ToString();

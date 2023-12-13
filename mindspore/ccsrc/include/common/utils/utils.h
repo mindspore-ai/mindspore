@@ -35,7 +35,6 @@
 
 namespace mindspore {
 // attr key name
-constexpr auto kAttrNoneList = "none_list";
 constexpr auto kAttrSegment = "segment";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "base/base.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/kernel_graph.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "ir/anf.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -74,6 +76,11 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   size_t in_num = common::AnfAlgo::GetInputTensorNum(cnode);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
+    // Do not insert cast for None input which is optional().
+    if (common::AnfAlgo::IsNoneInput(cnode, input_index)) {
+      continue;
+    }
+
     auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
     auto origin_type = AnfAlgo::GetOutputDeviceDataType(prev_node.first, prev_node.second);
     if (origin_type == kTypeUnknown) {
@@ -83,7 +90,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cur_input);
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
     const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
-    TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index);
+    auto device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index);
     if (origin_type != device_type && origin_type != kTypeUnknown && device_type != kTypeUnknown) {
       auto cast = AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape);
       MS_EXCEPTION_IF_NULL(cast);

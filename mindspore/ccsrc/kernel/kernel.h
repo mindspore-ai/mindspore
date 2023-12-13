@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
@@ -270,7 +271,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      return std::make_shared<None>();
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
         return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
@@ -292,7 +295,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid scalar value.";
+      return std::nullopt;
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
@@ -325,7 +331,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid value for vector or string.";
+      return std::nullopt;
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
@@ -354,6 +363,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid value.";
+      return std::nullopt;
+    }
     if (value_ && !value_->isa<ValueAny>()) {
       return mindspore::GetValue<T>(value_);
     }
@@ -375,6 +388,15 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
            "file to see if the input for the current operator value is from an operator.";
     }
     return value_opt.value();
+  }
+
+  // Get the value in KernelTensor, return it if there is specific value, otherwise throw an exception.
+  template <typename T>
+  std::optional<T> GetOptionalValueWithCheck() {
+    if (value_ && value_->isa<None>()) {
+      return std::nullopt;
+    }
+    return GetValueWithCheck<T>();
   }
 
   // Get the data format.

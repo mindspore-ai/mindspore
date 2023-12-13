@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
   bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) override;
   bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) override;
   bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) override;
-  void AclOptimizer(const FuncGraphPtr &graph) override;
   bool CheckIsAscend910Soc() override;
   void AclLoadModel(Buffer *om_data) override;
   void UnregisterExternalAllocator() override;

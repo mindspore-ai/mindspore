@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,13 @@ device::DeviceAddressPtr CreateDeviceAddressForScalarAndString(const DeviceConte
       {value_node, 0}, nullptr, GetTypeByte(TypeIdToType(type_id)), kOpFormat_DEFAULT, type_id, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  } else if (node_value->isa<None>()) {
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {value_node, 0}, nullptr, 0, kOpFormat_DEFAULT, kTypeNone->type_id(), ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
+
   return address;
 }
 

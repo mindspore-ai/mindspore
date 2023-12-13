@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@
 #include "framework/common/helper/model_helper.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
@@ -348,15 +347,6 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
     MS_LOG(EXCEPTION) << "nullptr";
   }
   return ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) > 0;
-}
-
-void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
-  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
-  optimizer->AddPassManager(pm);
-  (void)optimizer->Optimize(graph);
 }
 
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {

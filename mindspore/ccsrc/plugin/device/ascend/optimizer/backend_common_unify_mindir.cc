@@ -33,8 +33,6 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
@@ -67,8 +65,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayAddFlowCond2>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayPrepare>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());

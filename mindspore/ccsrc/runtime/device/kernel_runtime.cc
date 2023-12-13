@@ -1255,9 +1255,6 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
-    if (common::AnfAlgo::IsNoneInput(kernel, i)) {
-      continue;
-    }
     auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);

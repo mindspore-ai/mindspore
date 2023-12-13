@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &) { return true; }
 bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &, bool) { return true; }
 bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &) { return true; }
-void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {}
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() { return true; }
 void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {}
 void AscendDeprecatedInterface::UnregisterExternalAllocator() {}

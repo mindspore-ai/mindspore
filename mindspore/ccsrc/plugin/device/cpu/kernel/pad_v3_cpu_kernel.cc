@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 
 #include "plugin/device/cpu/kernel/pad_v3_cpu_kernel.h"
+#include <utility>
+#include "kernel/kernel.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/op_name.h"
 #include "mindspore/core/ops/pad_v3.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,10 +48,15 @@ bool PadV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
                   << mode_;
     return false;
   }
-  if (mode_ == "constant" || inputs.size() == kConstantInputsNum) {
+  if (mode_ == "constant") {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConstantInputsNum, kernel_name_);
   } else {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOtherInputsNum, kernel_name_);
+    // For not constant mode, the const_value argument may be none or nothing.
+    auto input_num = inputs.size();
+    if (input_num != kOtherInputsNum && input_num != kConstantInputsNum) {
+      MS_LOG(EXCEPTION) << kernel_name_ << " requires " << kOtherInputsNum << " or " << kConstantInputsNum
+                        << " inputs, but got " << input_num << ".";
+    }
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -71,6 +79,21 @@ int PadV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   } else {
     paddings_num_ = SizeToLong(padding_shape[0]);
   }
+
+  if (inputs.size() == kConstantInputsNum) {
+    auto type = inputs[kIndex2]->GetType();
+    MS_ERROR_IF_NULL_W_RET_VAL(type, KRET_RESIZE_FAILED);
+    if (mode_ == ops::kConstant && type->isa<TypeNone>()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', const value(" << inputs[kIndex2]->ToString()
+                    << ") is not valid for constant mode!";
+      return KRET_RESIZE_FAILED;
+    } else if (mode_ != ops::kConstant && !type->isa<TypeNone>()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', const value(" << inputs[kIndex2]->ToString()
+                    << ") should be None for " << mode_ << " mode!";
+      return KRET_RESIZE_FAILED;
+    }
+  }
+
   return KRET_OK;
 }
 
@@ -332,75 +355,34 @@ bool PadV3CpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, 
   return true;
 }
 
-#define PAD_V3_GRAD_CPU_TWO_INPUTS_REG(MS_T, MS_S, T, S) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), &PadV3CpuKernelMod::LaunchKernel<T, S>
-
-#define PAD_V3_GRAD_CPU_THREE_INPUTS_REG(MS_T, MS_S, T, S)                                   \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
-    &PadV3CpuKernelMod::LaunchKernel<T, S>
+#define PAD_V3_CPU_REG(MS_T, T)                                                                                      \
+  std::make_pair(KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(MS_T),                 \
+                 &PadV3CpuKernelMod::LaunchKernel<T, int32_t>),                                                      \
+    std::make_pair(KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(MS_T),               \
+                   &PadV3CpuKernelMod::LaunchKernel<T, int64_t>),                                                    \
+    std::make_pair(                                                                                                  \
+      KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt32).AddOptionalInputAttr(MS_T).AddOutputAttr(MS_T), \
+      &PadV3CpuKernelMod::LaunchKernel<T, int32_t>),                                                                 \
+    std::make_pair(                                                                                                  \
+      KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOptionalInputAttr(MS_T).AddOutputAttr(MS_T), \
+      &PadV3CpuKernelMod::LaunchKernel<T, int64_t>)
 
 const std::vector<std::pair<KernelAttr, PadV3CpuKernelMod::KernelRunFunc>> &PadV3CpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, PadV3CpuKernelMod::KernelRunFunc>> func_list = {
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeComplex64, kNumberTypeInt64, std::complex<float>, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeComplex128, kNumberTypeInt64, std::complex<double>, int64_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
-
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeComplex64, kNumberTypeInt32, std::complex<float>, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeComplex128, kNumberTypeInt32, std::complex<double>, int32_t)},
-    {PAD_V3_GRAD_CPU_TWO_INPUTS_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t)},
-
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeComplex64, kNumberTypeInt64, std::complex<float>, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeComplex128, kNumberTypeInt64, std::complex<double>, int64_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
-
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeComplex64, kNumberTypeInt32, std::complex<float>, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeComplex128, kNumberTypeInt32, std::complex<double>, int32_t)},
-    {PAD_V3_GRAD_CPU_THREE_INPUTS_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t)},
-  };
+    PAD_V3_CPU_REG(kNumberTypeFloat16, float16),
+    PAD_V3_CPU_REG(kNumberTypeFloat32, float),
+    PAD_V3_CPU_REG(kNumberTypeFloat64, double),
+    PAD_V3_CPU_REG(kNumberTypeInt8, int8_t),
+    PAD_V3_CPU_REG(kNumberTypeInt16, int16_t),
+    PAD_V3_CPU_REG(kNumberTypeInt32, int32_t),
+    PAD_V3_CPU_REG(kNumberTypeInt64, int64_t),
+    PAD_V3_CPU_REG(kNumberTypeUInt8, uint8_t),
+    PAD_V3_CPU_REG(kNumberTypeUInt16, uint16_t),
+    PAD_V3_CPU_REG(kNumberTypeUInt32, uint32_t),
+    PAD_V3_CPU_REG(kNumberTypeUInt64, uint64_t),
+    PAD_V3_CPU_REG(kNumberTypeComplex64, std::complex<float>),
+    PAD_V3_CPU_REG(kNumberTypeComplex128, std::complex<double>),
+    PAD_V3_CPU_REG(kNumberTypeBool, bool)};
   return func_list;
 }
 

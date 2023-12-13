@@ -130,9 +130,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   if (node->isa<ValueNode>()) {
     auto value = node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<None>()) {
-      return ret;
-    } else if (value->isa<ValueSequence>()) {
+    if (value->isa<ValueSequence>()) {
       auto value_tuple = value->cast<ValueSequencePtr>();
       auto value_tuple_size = CountValueNum(value_tuple);
       for (size_t i = 0; i < value_tuple_size; ++i) {
@@ -1866,17 +1864,18 @@ bool AnfAlgo::IsNonTaskOp(const CNodePtr &node) {
 
 bool AnfAlgo::IsNoneInput(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  static std::set<std::string> node_set = {kDynamicRNNOpName, kDynamicGRUV2OpName};
-  auto cnode_name = common::AnfAlgo::GetCNodeName(node);
-  if (node_set.find(cnode_name) == node_set.end()) {
-    return false;
+  auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, index);
+  auto prev_node = kernel_with_index.first;
+  MS_EXCEPTION_IF_NULL(prev_node);
+  // Only const optional input(None) support now.
+  if (prev_node->isa<ValueNode>()) {
+    auto value = prev_node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<None>()) {
+      return true;
+    }
   }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
-    auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
-    return find(none_index.begin(), none_index.end(), index) != none_index.end();
-  }
+
   return false;
 }
 

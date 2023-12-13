@@ -23,6 +23,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "kernel/oplib/oplib.h"
+#include "mindapi/base/type_id.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
@@ -163,7 +164,9 @@ bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::v
   auto input_num = input_types.size();
   for (size_t i = 0; i < input_num; ++i) {
     auto is_tuple = (kernel_attr.GetInputAttr(i).object_type == kObjectTypeTuple);
-    if (!InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], (strict || is_tuple))) {
+    // Optional input may be a None.
+    if (!(input_types[i] == kMetaTypeNone && kernel_attr.GetInputAttr(i).is_optional) &&
+        !InputDtypeMatch(kernel_attr.GetInputAttr(i).dtype, input_types[i], (strict || is_tuple))) {
       MS_LOG(DEBUG) << i << " required dtype:" << TypeIdToString(kernel_attr.GetInputAttr(i).dtype)
                     << ", actual input dtype:" << TypeIdToString(input_types[i]) << ", strict " << strict;
       return false;
@@ -638,10 +641,10 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
 
     auto new_kernel_attr = FillNoneInKernelAttr(kernel_node, input_types, output_types, kernel_attr);
     bool input_dtype_matched = InputDtypeFormatMatched(new_kernel_attr, input_types, strict);
-    bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
     if (input_dtype_matched) {
       input_matched = true;
       *selected_kernel_attr = new_kernel_attr;
+      bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
       // All formats and data types matched.
       if (output_dtype_matched) {
         return true;
@@ -720,8 +723,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     return KernelNotSupportWarning(kernel_node, false);
   } else if (kernel_attrs[0].GetSkipCheck()) {
     object_selected_kernel_attrs = kernel_attrs;
-  } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
-             !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
+  } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
     return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
 

@@ -861,9 +861,6 @@ ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGra
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<None>()) {
-    return nullptr;
-  }
   // Copy data from device if the tensor is an output of Op or Graph.
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<TensorPtr>();
@@ -1692,8 +1689,6 @@ void KernelGraphMgr::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       // anf has been created before
       if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
         (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
-        continue;
-      } else if (IsValueNode<None>(anf)) {
         continue;
       } else if (anf->isa<Parameter>()) {
         auto new_parameter = CreateNewParameterFromParameter(anf, graph);

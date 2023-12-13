@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,16 +64,20 @@ int UpsampleTrilinear3DGradGpuKernelMod::Resize(const std::vector<KernelTensor *
   dinput_d_ = dinput_shape[kIndex2];
   dinput_h_ = dinput_shape[kIndex3];
   dinput_w_ = dinput_shape[kIndex4];
-  // none list
 
-  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
-  if (none_list_.size() != kIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
-  }
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
+  auto type = inputs[kIndex2]->GetType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto output_size_none = type->isa<TypeNone>();
+  if (!output_size_none) {
     scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<float>>();
+    auto scales_opt = inputs[kIndex3]->GetOptionalValueWithCheck<std::vector<float>>();
+    bool scales_none = !scales_opt.has_value();
+    if (scales_none) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', output_size or scales should be specified.";
+      return KRET_RESIZE_FAILED;
+    }
+    scales_ = scales_opt.value();
   }
   return KRET_OK;
 }
@@ -98,34 +102,41 @@ bool UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel(const std::vector<KernelT
   return true;
 }
 
-#define UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(M_S, M_T, T, S)                                 \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(kNumberTypeInt32).AddInputAttr(M_T).AddOutputAttr(M_S), \
-    &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>
-
-#define UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(M_S, M_T, T, S)                                 \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(kNumberTypeInt64).AddInputAttr(M_T).AddOutputAttr(M_S), \
-    &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>
+#define UpsampleTrilinear3D_GRAD_GPU_KERNEL_REG(M_S, T, S)                    \
+  std::make_pair(KernelAttr()                                                 \
+                   .AddInputAttr(M_S)                                         \
+                   .AddInputAttr(kNumberTypeInt32)                            \
+                   .AddOptionalInputAttr(kNumberTypeInt32)                    \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)                  \
+                   .AddOutputAttr(M_S),                                       \
+                 &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>),   \
+    std::make_pair(KernelAttr()                                               \
+                     .AddInputAttr(M_S)                                       \
+                     .AddInputAttr(kNumberTypeInt32)                          \
+                     .AddOptionalInputAttr(kNumberTypeInt64)                  \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)                \
+                     .AddOutputAttr(M_S),                                     \
+                   &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>), \
+    std::make_pair(KernelAttr()                                               \
+                     .AddInputAttr(M_S)                                       \
+                     .AddInputAttr(kNumberTypeInt64)                          \
+                     .AddOptionalInputAttr(kNumberTypeInt32)                  \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)                \
+                     .AddOutputAttr(M_S),                                     \
+                   &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>), \
+    std::make_pair(KernelAttr()                                               \
+                     .AddInputAttr(M_S)                                       \
+                     .AddInputAttr(kNumberTypeInt64)                          \
+                     .AddOptionalInputAttr(kNumberTypeInt64)                  \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)                \
+                     .AddOutputAttr(M_S),                                     \
+                   &UpsampleTrilinear3DGradGpuKernelMod::LaunchKernel<T, S>)
 
 std::vector<std::pair<KernelAttr, UpsampleTrilinear3DGradGpuKernelMod::UpsampleTrilinear3DGradFunc>>
   UpsampleTrilinear3DGradGpuKernelMod::func_list_ = {
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat16, kNumberTypeInt32, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat32, kNumberTypeInt32, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat64, kNumberTypeInt32, double, double)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat16, kNumberTypeInt64, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat32, kNumberTypeInt64, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat64, kNumberTypeInt64, double, double)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat16, kNumberTypeFloat32, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat32, kNumberTypeFloat32, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT32_REG(kNumberTypeFloat64, kNumberTypeFloat32, double, double)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat16, kNumberTypeInt32, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat32, kNumberTypeInt32, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat64, kNumberTypeInt32, double, double)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat16, kNumberTypeInt64, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat32, kNumberTypeInt64, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat64, kNumberTypeInt64, double, double)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat16, kNumberTypeFloat32, half, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat32, kNumberTypeFloat32, float, float)},
-    {UpsampleTrilinear3D_GRAD_GPU_KERNEL_INT64_REG(kNumberTypeFloat64, kNumberTypeFloat32, double, double)}};
+    UpsampleTrilinear3D_GRAD_GPU_KERNEL_REG(kNumberTypeFloat16, half, float),
+    UpsampleTrilinear3D_GRAD_GPU_KERNEL_REG(kNumberTypeFloat32, float, float),
+    UpsampleTrilinear3D_GRAD_GPU_KERNEL_REG(kNumberTypeFloat64, double, double)};
 
 std::vector<KernelAttr> UpsampleTrilinear3DGradGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
