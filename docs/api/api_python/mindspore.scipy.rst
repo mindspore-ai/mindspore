@@ -4,7 +4,7 @@ mindspore.scipy
 Scipy-like interfaces in mindspore.
 
 .. warning::
-    These are experimental APIs that are subject to change or deletion.
+    These are experimental APIs that are subject to change or deletion. Only support Linux.
 
 mindspore.scipy.linalg
 ----------------------
