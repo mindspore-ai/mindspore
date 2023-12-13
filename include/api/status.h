@@ -83,11 +83,14 @@ enum StatusCode : uint32_t {
   kLiteModelRebuild = kLite | (0x0FFFFFFF & -12),    /**< Model has been built. */
 
   // Executor error code, range: [-100,-200)
-  kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100), /**< Failed to check range. */
-  kLiteInputTensorError = kLite | (0x0FFFFFFF & -101), /**< Failed to check input tensor. */
-  kLiteReentrantError = kLite | (0x0FFFFFFF & -102),   /**< Exist executor running. */
-  kLiteLLMWaitProcessTimeOut = kLite | (0x0FFFFFFF & -103),   /**< Wait to be processed time out. */
-  kLiteLLMKVCacheNotExist = kLite | (0x0FFFFFFF & -104),   /**< KV Cache not exist. */
+  kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100),           /**< Failed to check range. */
+  kLiteInputTensorError = kLite | (0x0FFFFFFF & -101),           /**< Failed to check input tensor. */
+  kLiteReentrantError = kLite | (0x0FFFFFFF & -102),             /**< Exist executor running. */
+  kLiteLLMWaitProcessTimeOut = kLite | (0x0FFFFFFF & -103),      /**< Wait to be processed time out. */
+  kLiteLLMKVCacheNotExist = kLite | (0x0FFFFFFF & -104),         /**< KV Cache not exist. */
+  kLiteLLMRepeatRequest = kLite | (0x0FFFFFFF & -105),           /**< repeat request. */
+  kLiteLLMRequestAlreadyCompleted = kLite | (0x0FFFFFFF & -106), /**< request already complete!. */
+  kLiteLLMEngineFinalized = kLite | (0x0FFFFFFF & -107),         /**< llm engine finalized. */
 
   // Graph error code, range: [-200,-300)
   kLiteGraphFileError = kLite | (0x0FFFFFFF & -200), /**< Failed to verify graph file. */

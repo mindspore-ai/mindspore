@@ -84,6 +84,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool OfflineBuildGraph(const FuncGraphPtr &graph);
 
  private:
+  bool enable_update_weight_ = false;
   const std::shared_ptr<mindspore::Context> context_;
   ConfigInfos config_infos_;
   std::shared_ptr<ge::Session> ge_session_ = nullptr;
@@ -92,7 +93,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::vector<uint32_t> compute_graph_id_list_;
   transform::RefModeFlag ref_mode_flag_ = transform::RefModeFlag::kRefModeNone;
   bool offline_mode_ = false;
-  bool cache_mode_ = false;
+  std::string cache_mode_;
   std::vector<RefDataInfo> ref_data_infos_;
   std::vector<InOutBufferInfo> inputs_buffer_infos_;
   std::vector<InOutBufferInfo> outputs_buffer_infos_;
@@ -165,6 +166,9 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   transform::DfGraphPtr CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                             std::map<std::string, std::string> *ge_options_ptr);
+
+  transform::DfGraphPtr CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr);
+
   bool CreateGeGraphOffline(const FuncGraphPtr &anf_graph, std::map<std::string, std::string> *ge_options_ptr,
                             uint32_t *graph_id);
   bool UpdateGraphInputs(const FuncGraphPtr &graph);

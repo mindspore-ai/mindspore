@@ -53,6 +53,7 @@
 #include "inc/ops/array_ops.h"
 #include "inc/ops/elewise_calculation_ops.h"
 #include "mindspore/lite/tools/optimizer/graph/attr_to_args_pass.h"
+#include <nlohmann/json.hpp>
 
 namespace mindspore {
 namespace {
@@ -90,6 +91,23 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   return param;
 }
 #endif
+
+transform::DfGraphPtr GenExampleGraph(const std::string &name) {
+  MS_LOG(INFO) << "Gen fake graph name is " << name;
+  auto graph = std::make_shared<transform::DfGraph>(name);
+  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
+  transform::GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
+  auto data = ge::op::Data("data");
+  data.set_attr_index(0);
+  data.update_input_desc_x(desc_data);
+  data.update_output_desc_y(desc_data);
+  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
+  std::vector<transform::Operator> inputs{data};
+  std::vector<transform::Operator> outputs{add};
+  graph->SetInputs(inputs);
+  graph->SetOutputs(outputs);
+  return graph;
+}
 }  // namespace
 
 std::atomic_uint32_t GeGraphExecutor::global_graph_idx_ = 0;
@@ -125,9 +143,6 @@ transform::DfGraphPtr GetDataFlowGraph(const FuncGraphPtr &anf_graph,
 
 GeGraphExecutor::~GeGraphExecutor() {
   if (ge_session_) {
-    for (auto graph_id : init_graph_id_list_) {
-      ge_session_->RemoveGraph(graph_id);
-    }
     for (auto graph_id : compute_graph_id_list_) {
       ge_session_->RemoveGraph(graph_id);
       auto session_context = GeSessionManager::GetGeSessionContext(session_id_);
@@ -206,8 +221,8 @@ bool GeGraphExecutor::Init() {
   std::string model_cache_mode;
   (void)GetConfigOption(lite::kAscendContextSection, lite::kModelCacheMode, &model_cache_mode);
   if (!model_cache_mode.empty()) {
-    cache_mode_ = true;
-    MS_LOG(INFO) << "Set set variable ref mode";
+    cache_mode_ = model_cache_mode;
+    MS_LOG(INFO) << "Set set model cache mode " << model_cache_mode;
   }
   return true;
 }
@@ -241,7 +256,7 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
 }
 
 bool GeGraphExecutor::SetModelCacheDir(std::map<std::string, std::string> *session_options_ptr) {
-  if (!offline_mode_ && !cache_mode_) {
+  if (!offline_mode_ && cache_mode_.empty()) {
     return true;
   }
   auto &ge_options = *session_options_ptr;
@@ -816,6 +831,75 @@ bool GeGraphExecutor::InitRefDataContext(const std::vector<std::pair<std::string
   return true;
 }
 
+transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std::string> *ge_options_ptr) {
+  if (enable_update_weight_) {
+    MS_LOG(INFO) << "Enable update weight, skip create small ge graph";
+    return nullptr;
+  }
+  if (offline_mode_) {
+    MS_LOG(INFO) << "Offline converter mode, skip create small ge graph";
+    return nullptr;
+  }
+  if (cache_mode_ != "mem_opt" || build_cache_dir_.empty()) {
+    MS_LOG(INFO) << "model_cache_mode " << cache_mode_ << " is not mem_opt or " << kGeGraphCompilerCacheDir
+                 << " is empty, skip create small ge graph";
+    return nullptr;
+  }
+  auto graph_it = ge_options_ptr->find(kGeGraphKey);
+  if (graph_it == ge_options_ptr->end()) {
+    MS_LOG(INFO) << "Cannot find option " << kGeGraphKey << ", skip create small ge graph";
+    return nullptr;
+  }
+  auto graph_key = graph_it->second;
+  auto idx_file_name = build_cache_dir_ + "/" + graph_key + ".idx";
+  std::ifstream ifs(idx_file_name);
+  if (!ifs.good() || !ifs.is_open()) {
+    MS_LOG(INFO) << "model cache idx json not exists, idx file: " << idx_file_name << ", skip create small ge graph";
+    return nullptr;
+  }
+  nlohmann::json dump_cfg_json;
+  try {
+    dump_cfg_json = nlohmann::json::parse(ifs);
+    const std::string cache_file_list = "cache_file_list";
+    const std::string var_desc_file_name = "var_desc_file_name";
+    auto &cache_file_config = dump_cfg_json[cache_file_list];
+    if (cache_file_config == nullptr || cache_file_config[0] == nullptr) {
+      MS_LOG(WARNING) << "model cache idx json content invalid, idx file: " << idx_file_name
+                      << ", skip create small ge graph";
+      return nullptr;
+    }
+    auto &config = cache_file_config[0];
+    if (config[var_desc_file_name] != nullptr) {
+      config.erase(var_desc_file_name);
+      auto new_json_str = dump_cfg_json.dump(4);
+      ifs.close();
+      std::ofstream ofs(idx_file_name, std::ios::out);
+      if (!ofs.is_open()) {
+        MS_LOG(WARNING) << "Failed to open model cache idx file for write, idx file: " << idx_file_name
+                        << ", skip create small ge graph";
+        return nullptr;
+      }
+      ofs << new_json_str;
+      ofs.close();
+#ifndef _MSC_VER
+      chmod(idx_file_name.c_str(), S_IRUSR);
+#endif
+      MS_LOG(INFO) << "Erase option " << var_desc_file_name;
+    }
+    auto df_graph = GenExampleGraph(graph_key);
+    if (df_graph == nullptr) {
+      MS_LOG(WARNING) << "Failed to create small ge graph for graph " << graph_key << ", skip create small ge graph";
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Create small  ge graph for graph " << graph_key;
+    return df_graph;
+  } catch (const std::exception &error) {
+    MS_LOG(WARNING) << "parse model cache idx json failed, idx file: " << idx_file_name
+                    << ", skip create small ge graph";
+    return nullptr;
+  }
+}
+
 transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                                            std::map<std::string, std::string> *ge_options_ptr) {
   transform::TensorOrderMap params_vals;
@@ -836,13 +920,13 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
       return nullptr;
     }
-    init_graph_id_list_.push_back(init_graph_id);
     auto init_data_names = converter->GetInitDataNames();
     // copy init weight to device
     if (!RunGeInitGraph(init_graph_id, init_data_names, params_vals)) {
       MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
       return nullptr;
     }
+    ge_session_->RemoveGraph(init_graph_id);
   } else {
     MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
   }
@@ -856,25 +940,12 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       return nullptr;
     }
   }
+  auto fake_df_graph = CreateFakeGraph(ge_options_ptr);
+  if (fake_df_graph != nullptr) {
+    return fake_df_graph;
+  }
   auto df_graph = transform::GetComputeGraph(converter);
   return df_graph;
-}
-
-transform::DfGraphPtr GenExampleGraph(const std::string &name) {
-  MS_LOG(INFO) << "Gen fake graph name is " << name;
-  auto graph = std::make_shared<transform::DfGraph>(name);
-  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
-  transform::GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
-  auto data = ge::op::Data("data");
-  data.set_attr_index(0);
-  data.update_input_desc_x(desc_data);
-  data.update_output_desc_y(desc_data);
-  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
-  std::vector<transform::Operator> inputs{data};
-  std::vector<transform::Operator> outputs{add};
-  graph->SetInputs(inputs);
-  graph->SetOutputs(outputs);
-  return graph;
 }
 
 bool GeGraphExecutor::CreateGeGraphOffline(const FuncGraphPtr &anf_graph,
@@ -1609,6 +1680,10 @@ bool GeGraphExecutor::CreateAsCustomFuncGraph(const FuncGraphPtr &func_graph) {
 }
 
 bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
+  if (ref_mode_flag_ == transform::RefModeFlag::kRefModeNone) {
+    MS_LOG(INFO) << "parameter_as_refdata in ascend_context is none, skip offline build graph";
+    return true;
+  }
   offline_mode_ = true;
   MS_LOG(INFO) << "Set offline mode";
   uint32_t graph_id = 0;
@@ -1616,20 +1691,13 @@ bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
     MS_LOG(ERROR) << "Failed to CompileGraph";
     return false;
   }
-  if (init_graph_id_list_.empty()) {
-    MS_LOG(INFO) << "Call GE CompileGraph start";
-    ge::Status ret = ge_session_->CompileGraph(graph_id);
-    if (ret != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
-      return false;
-    }
-    MS_LOG(INFO) << "Call GE CompileGraph end";
-  } else {
-    if (!Warmup(graph, graph_id)) {
-      MS_LOG(ERROR) << "Failed to Warmup";
-      return false;
-    }
+  MS_LOG(INFO) << "Call GE CompileGraph start";
+  ge::Status ret = ge_session_->CompileGraph(graph_id);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
+    return false;
   }
+  MS_LOG(INFO) << "Call GE CompileGraph end";
   if (!CreateAsCustomFuncGraph(graph)) {
     MS_LOG(ERROR) << "Failed to CreateAsCustomFuncGraph";
     return false;
