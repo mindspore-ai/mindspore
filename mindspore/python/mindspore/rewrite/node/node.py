@@ -186,7 +186,7 @@ class Node:
         else:
             args = [default]
         if ast_node is None:
-            ast_node = ast.arg(arg_name)
+            ast_node = ast.arg(arg_name, annotation="")
         return cls(NodeType.Input, ast_node, [target], None, args, {}, name, None)
 
     @classmethod
@@ -1105,6 +1105,29 @@ class Node:
     def get_source_code(self) -> str:
         """Get source code of node from ast of node."""
         return astunparse.unparse(self._ast_node).strip()
+
+    def append_kwarg(self, kwarg: Dict[str, ScopedValue]):
+        """
+        Append a new keyword arg to node.
+
+        Args:
+            kwarg (Dict[str, ScopedValue]): The new keyword arg.
+
+        """
+        if self.get_node_type() not in [NodeType.Tree, NodeType.CallFunction]:
+            raise TypeError(f"For append_new_kwarg, the type of node can only be one of [Tree, CallFunction], "
+                            f"but got {self.get_node_type()}")
+        Validator.check_element_type_of_dict("kwarg", kwarg, [str], [ScopedValue], "append_new_kwarg")
+        for arg_key, value in kwarg.items():
+            # add keyword into _normalized_args
+            self._normalized_args[arg_key] = value
+            self._normalized_args_keys.append(arg_key)
+            self._kwargs_num += 1
+            # add keyword ast into ast.Call
+            ast_assign: ast.Assign = self._ast_node
+            ast_call: ast.Call = ast_assign.value
+            new_keyword = ast.keyword(arg=arg_key, value=AstModifier.get_ast_by_value(value, None))
+            ast_call.keywords.append(new_keyword)
 
     def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
         """

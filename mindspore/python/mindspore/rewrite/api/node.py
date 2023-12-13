@@ -163,7 +163,7 @@ class Node:
 
     @staticmethod
     def create_input(param_name: str, default: Optional[ScopedValue] = None) -> 'Node':
-    # pylint: disable=missing-function-docstring
+        # pylint: disable=missing-function-docstring
         Validator.check_value_type("param_name", param_name, [str], "Node")
         if default is not None:
             Validator.check_value_type("default", default, [ScopedValue], "Node")
