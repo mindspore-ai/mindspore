@@ -138,7 +138,7 @@ class RAdam(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0):
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.):
         check_not_less_than(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
         check_not_less_than(eps, "eps", self.cls_name)
