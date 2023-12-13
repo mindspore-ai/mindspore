@@ -526,7 +526,8 @@ FuncGraphPtr Parser::ParseFuncGraph() {
     auto lambda_node = python_adapter::GetPyObjAttr(node, "value");
     if (py::isinstance<py::none>(lambda_node) || ast_->GetNodeType(lambda_node)->node_name() != lambda_name) {
       MS_INTERNAL_EXCEPTION(TypeError) << "Parse Lambda Function Fail. Node type must be Lambda, but got "
-                                       << ast_->GetNodeType(lambda_node)->node_name() << ".";
+                                       << ast_->GetNodeType(lambda_node)->node_name() << ". Please check lambda"
+                                       << " expression to make sure it is defined on a separate line.";
     }
     fn_block = ParseLambdaFunction(lambda_node);
   }

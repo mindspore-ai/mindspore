@@ -323,6 +323,14 @@ def get_obj_id(obj):
     return str(id(obj))
 
 
+def is_lambda_function(obj):
+    """Determine whether is a lambda function."""
+    if isinstance(obj, types.FunctionType):
+        source_code = inspect.getsource(obj)
+        return "lambda" in source_code and "<function" in str(obj) and "<lambda>" in str(obj)
+    return False
+
+
 def get_obj_type(obj):
     """Get the obj type."""
     logger.debug("Get object type: %r", obj)
@@ -1097,6 +1105,13 @@ class Parser:
                 return SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
         return SYNTAX_SUPPORTED
 
+    def check_lambda(self, src):
+        obj_type = get_obj_type(self.fn)
+        if is_lambda_function(self.fn) and (obj_type != RESOLVE_TYPE_FUNCTION or src[:4] == "def "):
+            logger.debug("fn is lambda: %r", self.fn)
+            raise ValueError("An error occurred while parsing the positional information of the lambda expression. "
+                             "Please write the lambda expression on a separate line.")
+
     def parse(self):
         """Parse the function or method."""
         logger.debug("fn: %r", self.fn)
@@ -1132,6 +1147,7 @@ class Parser:
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("Get source: %s", src)
+                self.check_lambda(src)
                 try:
                     if self.pack_builder:
                         src = self.pack_builder.get_code_source()
