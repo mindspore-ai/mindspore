@@ -94,20 +94,5 @@ void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *
   }
   release_func_ = std::get<2>(args);
 }
-
-void AclnnKernelMod::SetDTypes(const std::string &op_name) {
-  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
-  if (op_def == nullptr) {
-    MS_LOG(WARNING) << "Not find op:" << op_name << " in OpDef. The inputs/outputs types maybe empty.";
-    return;
-  }
-  auto &args = op_def->args_;
-  auto &returns = op_def->returns_;
-  (void)std::transform(args.begin(), args.end(), std::back_inserter(inputs_dtypes_),
-                       [](const mindspore::ops::OpInputArg &arg) { return arg.arg_dtype_; });
-  (void)std::transform(returns.begin(), returns.end(), std::back_inserter(outputs_dtypes_),
-                       [](const mindspore::ops::OpOutputArg &arg) { return arg.arg_dtype_; });
-}
-
 }  // namespace kernel
 }  // namespace mindspore

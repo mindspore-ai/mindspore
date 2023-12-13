@@ -74,8 +74,6 @@ class AclnnKernelMod : public KernelMod {
   void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
   void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
 
-  void SetDTypes(const std::string &op_name);
-
  protected:
   template <size_t N, std::size_t... Is>
   auto GetTupleFrontImpl(const std::vector<KernelTensor *> &vecs, std::index_sequence<Is...>) {
@@ -115,8 +113,6 @@ class AclnnKernelMod : public KernelMod {
 
   aclOpExecutor *executor_{nullptr};
   CallBackFunc release_func_{nullptr};
-  std::vector<mindspore::ops::OP_DTYPE> inputs_dtypes_;
-  std::vector<mindspore::ops::OP_DTYPE> outputs_dtypes_;
   std::string op_type_;
 };
 
