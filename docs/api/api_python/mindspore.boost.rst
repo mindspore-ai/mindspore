@@ -171,6 +171,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - **network** (Cell) - 训练网络。
 
     .. py:method:: build_gc_params_group(params_dict, parameters)
+        :staticmethod:
 
         构建梯度中心化的分组权重。
 
@@ -179,6 +180,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - **parameters** (list) - 训练权重的列表。
 
     .. py:method:: build_params_dict(network)
+        :staticmethod:
 
         构建网络权重的字典。
 
@@ -202,6 +204,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - **split_point** (list) - 网络梯度切分点。默认为None。
 
     .. py:method:: generate_group_params(parameters, origin_params)
+        :staticmethod:
 
         创建分组权重。
 
