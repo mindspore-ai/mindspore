@@ -20,6 +20,7 @@
 #include "pybind11/pybind11.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/utils/opcode_util.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace jit {
@@ -399,6 +400,68 @@ py::object GetPyCodeObject(const py::object &any, bool exact_func) {
   // just call once
   return GetPyCodeObject(py::reinterpret_steal<py::object>(call), true);
 }
+
+size_t DeviceAvailableMemSize() {
+  const auto &context = MsContext::GetInstance();
+  uint32_t device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  const std::string &device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  const auto &m = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+  MS_EXCEPTION_IF_NULL(m);
+  MS_EXCEPTION_IF_NULL(m->device_res_manager_);
+  return m->device_res_manager_->GetAvailableMemSize();
+}
+
+RefTracker *RefTracker::GetInstance() {
+  static RefTracker instance;
+  return &instance;
+}
+
+PyObject *RefTracker::UnTrack(PyObject *self, PyObject *ref) {
+  auto &refs = RefTracker::GetInstance()->tracked_;
+  void *ptr = PyLong_AsVoidPtr(self);
+  auto iter = refs.find(ptr);
+  assert(iter != refs.end());
+  Py_DECREF(iter->second.first);
+  Py_DECREF(iter->second.second);
+  refs.erase(iter);
+  Py_RETURN_NONE;
+}
+
+bool RefTracker::Track(PyObject *obj, const std::string &descr) {
+  if (obj == nullptr) {
+    return false;
+  }
+  if (tracked_.find(obj) != tracked_.end()) {
+    return true;
+  }
+  PyObject *self = PyLong_FromVoidPtr(obj);
+  PyObject *callback = PyCFunction_New(&mdef_, self);
+  PyObject *ref = PyWeakref_NewRef(obj, callback);
+  Py_DECREF(callback);
+  Py_DECREF(self);
+  if (ref == nullptr) {
+    PyErr_Clear();
+    return false;
+  }
+  tracked_.insert({obj, {ref, PyUnicode_FromStringAndSize(descr.data(), descr.size())}});
+  return true;
+}
+
+RefTracker::~RefTracker() {
+  if (tracked_.empty()) {
+    return;
+  }
+  std::cout << "ref tracker not empty" << std::endl;
+  for (const auto &i : tracked_) {
+    PyObject *obj = PyWeakref_GET_OBJECT(i.second.first);
+    const char *descr = PyUnicode_AsUTF8(i.second.second);
+    assert(obj == i.first && obj != nullptr);
+    std::cout << "object " << (Py_TYPE(obj)->tp_name ? Py_TYPE(obj)->tp_name : "<unnamed>") << " at " << obj
+              << " refcnt " << Py_REFCNT(obj) << " descr " << descr << std::endl;
+  }
+}
+
+RefTracker::RefTracker() : mdef_({"ref_untrack", &RefTracker::UnTrack, METH_O, PyDoc_STR("")}) {}
 
 }  // namespace graph
 }  // namespace jit

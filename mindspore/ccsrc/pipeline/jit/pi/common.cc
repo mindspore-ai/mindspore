@@ -689,7 +689,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     TimeRecorder _time_recorder(TimeRecorder::kTimeCompileCapture,
                                 kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
-                                       "PIJitGapture");
+                                       "PIJitCapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
     code_changed = GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {

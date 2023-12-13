@@ -175,7 +175,7 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
       if (i->GetOpcode() == LOAD_GLOBAL) {
         level = GuardLevel::GId;  // only guard global tensor
       } else {
-        return false;
+        level = GuardLevel::GDeduce;
       }
     }
     traces.push_back({tr, level});
@@ -784,7 +784,7 @@ static bool check_JitForbidden(const py::object &func) {
 }
 
 static bool check_JitConstexpr(const py::object &func) { return kPIJitConfigDefault.CheckJitConstexpr(func); }
-static bool check_MSConstexpr(const py::object &func) {
+bool check_MSConstexpr(const py::object &func) {
   std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
   constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
   constexpr const int size = sizeof(name) - 1;

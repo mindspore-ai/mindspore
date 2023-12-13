@@ -1656,7 +1656,7 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   // make instance is global
   if (constant && instance != nullptr) {
     // guard parameters
-    bool guard_success = GuardConstCallNodeParam(call_node, call_node->GetGraph(), 4);
+    bool guard_success = GuardConstCallNodeParam(call_node, call_node->GetGraph(), INT_MAX);
     if (guard_success) {
       MS_EXCEPTION_IF_CHECK_FAIL(nodes.back() == call_node, "CallNode must be last when build sub graph");
 

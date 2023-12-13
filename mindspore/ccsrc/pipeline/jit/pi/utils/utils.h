@@ -171,6 +171,7 @@ bool IsMsClass(PyObject *obj);
 
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);
+size_t DeviceAvailableMemSize();
 
 class TimeRecorder {
  public:
@@ -205,6 +206,19 @@ class TimeRecorder {
   RecorderType descr_;
   std::chrono::steady_clock::time_point start_;
   bool record_;
+};
+
+class RefTracker {
+ public:
+  ~RefTracker();
+  bool Track(PyObject *obj, const std::string &descr);
+  static RefTracker *GetInstance();
+
+ private:
+  RefTracker();
+  static PyObject *UnTrack(PyObject *ref, PyObject *);
+  std::map<void *, std::pair<PyObject *, PyObject *>> tracked_;
+  PyMethodDef mdef_;
 };
 
 }  // namespace graph

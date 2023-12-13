@@ -48,8 +48,8 @@ namespace graph {
 
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
-  AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,   AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor, AObject::kTypeMSDType,
+  AObject::kTypeInt,  AObject::kTypeBool,   AObject::kTypeFloat,
+  AObject::kTypeNone, AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
@@ -1210,6 +1210,7 @@ bool AbstractTuple::Update() {
     py::object item = (items_[i] != nullptr) ? items_[i]->GetPyObject() : py::object();
     if (item.ptr() == nullptr) {
       value_ = py::object();
+      type_object_ = nullptr;
       return false;
     }
     if (this->type_ == kTypeTuple) {
@@ -1224,6 +1225,7 @@ bool AbstractTuple::Update() {
     }
   }
   modify_ = false;
+  type_object_ = Py_TYPE(c);
   return true;
 }
 

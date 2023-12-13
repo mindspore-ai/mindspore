@@ -218,6 +218,7 @@ Instr *CFG::NewInstrNode(const Instr &instr) {
 
 void CFG::GenerateCFG() {
   MS_EXCEPTION_IF_CHECK_FAIL(pycode_, "shouldn't use this function to generate empty cfg");
+  bytecode_ = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AS_STRING(pycode_->co_code));
   if (!is_generated_) {
     is_generated_ = true;
     BuildInst();
