@@ -30,6 +30,10 @@
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"
+#ifdef ENABLE_DEBUGGER
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace mindspore {
 using tensor::TensorPtr;
@@ -390,6 +394,11 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
                                                       const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  bool enable_debug = debugger->debugger_enabled() || dump_json_parser.InputNeedDump();
+#endif
   // store node without init args, means need device addr
   auto value_nodes_without_init_args = FetchValueNodesNeedDevicePtr(graph);
   for (const ValueNodePtr &value_node : graph->graph_value_nodes()) {
@@ -410,6 +419,11 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
       // Deal with tensor and tuple
       if (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end()) {
         for (const auto &address : address_list) {
+#ifdef ENABLE_DEBUGGER
+          if (enable_debug) {
+            continue;
+          }
+#endif
           address->UpdateFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
           MS_LOG(DEBUG) << "Find node " << value_node->DebugString() << " has init args";
         }
@@ -425,6 +439,11 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
     if (address && (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end())) {
       address->UpdateFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
       MS_LOG(DEBUG) << "Find node " << value_node->DebugString() << " has init args";
+#ifdef ENABLE_DEBUGGER
+      if (enable_debug) {
+        address->ClearFlag(device::kDeviceAddressFlagIgnoreDevicePtr);
+      }
+#endif
     }
     if (address != nullptr) {
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
