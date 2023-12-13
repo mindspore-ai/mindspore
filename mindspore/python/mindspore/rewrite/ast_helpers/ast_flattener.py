@@ -124,9 +124,9 @@ class AstFlattener(ast.NodeTransformer):
         ast_unflattens = (ast.Name, ast.NameConstant, ast.Constant, ast.Num, ast.Str, ast.Bytes, ast.Ellipsis)
         if isinstance(node, ast_unflattens):
             return node, None
-        # ast.Attribute in ControlFlow will be force flatten
-        # when ast.Attribute is not in (ast.For, ast.While), it's value which is not type of ast.Name will be flatten
-        if isinstance(node, ast.Attribute) and not isinstance(father_node, (ast.For, ast.While)):
+        # ast.Attribute in ast.For will be force flatten
+        # when ast.Attribute is not in ast.For, it's value which is not type of ast.Name will be flatten
+        if isinstance(node, ast.Attribute) and not isinstance(father_node, ast.For):
             if isinstance(node.value, ast.Name):
                 return node, None
             new_target_name = self._generate_target_name(node.value, target_names)
@@ -246,22 +246,12 @@ class AstFlattener(ast.NodeTransformer):
         ast_root = ast.fix_missing_locations(ast_root)
         return ast_root
 
-    def transform_if(self, ast_if: ast.If, stree=None):
+    def transform_control_flow(self, ast_control_flow: Union[ast.If, ast.For, ast.While], stree=None):
         """Interface of AstFlattener."""
         self._transform_functions = []
         self._symbol_tree = stree
-        self._visit_ast_bodies(ast_if.body)
-        if ast_if.orelse:
-            self._visit_ast_bodies(ast_if.orelse)
-        ast_if = ast.fix_missing_locations(ast_if)
-        return ast_if
-
-    def transform_for(self, ast_for: ast.For, stree=None):
-        """Interface of AstFlattener."""
-        self._transform_functions = []
-        self._symbol_tree = stree
-        self._visit_ast_bodies(ast_for.body)
-        if ast_for.orelse:
-            self._visit_ast_bodies(ast_for.orelse)
-        ast_for = ast.fix_missing_locations(ast_for)
-        return ast_for
+        self._visit_ast_bodies(ast_control_flow.body)
+        if ast_control_flow.orelse:
+            self._visit_ast_bodies(ast_control_flow.orelse)
+        ast_control_flow = ast.fix_missing_locations(ast_control_flow)
+        return ast_control_flow

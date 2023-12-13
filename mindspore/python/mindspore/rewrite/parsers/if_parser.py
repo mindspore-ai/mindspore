@@ -41,7 +41,7 @@ class IfParser(Parser):
             NotImplementedError: If test of ast.If can not be eval.
         """
         # expand codes in ast.if
-        ast_if = AstFlattener().transform_if(node, stree)
+        ast_if = AstFlattener().transform_control_flow(node, stree)
         # parse ast codes of if branch into ControlFlow Node
         try:
             args = [AstConverter.create_scopedvalue(node.test),]

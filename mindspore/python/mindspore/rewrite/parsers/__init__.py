@@ -25,4 +25,5 @@ from .function_def_parser import FunctionDefParser
 from .if_parser import IfParser
 from .return_parser import ReturnParser
 from .class_def_parser import ClassDefParser
+from .while_parser import WhileParser
 from .expr_parser import ExprParser # Rely on AssignParser
