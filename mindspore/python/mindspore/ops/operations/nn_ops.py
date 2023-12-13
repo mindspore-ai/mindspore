@@ -3729,18 +3729,18 @@ class ComputeAccidentalHits(Primitive):
         num_true (int): The number of target classes per training example. Default: ``1`` .
 
     Inputs:
-        - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
+        - **true_classes** (Tensor) - The target classes. With data type of int64
           and shape :math:`(batch\_size, num\_true)`.
         - **sampled_candidates** (Tensor) - The Candidate sampling results of operators, types of training samples,
-          with data type of int32 or int64 and shape :math:`(num\_sampled, )`.
+          with data type of int64 and shape :math:`(num\_sampled, )`.
 
     Outputs:
         Tuple of 3 Tensors.
 
         - **indices** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`,
-          with the same type as `true_classes`.
+          with data type of int32.
         - **ids** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`,
-          with the same type as `true_classes`.
+          with data type of int64.
         - **weights** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`, with the type float32.
 
     Raises:

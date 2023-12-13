@@ -74,7 +74,7 @@ abstract::TupleShapePtr ComputeAccidentalHitsInferShape(const PrimitivePtr &prim
 TuplePtr ComputeAccidentalHitsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const std::set<TypePtr> valid_types = {kInt32, kInt64};
+  const std::set<TypePtr> valid_types = {kInt64};
   auto true_classes_type = input_args[0]->GetType();
   auto sampled_candidates_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("true_classes", true_classes_type, valid_types, prim_name);
@@ -82,8 +82,8 @@ TuplePtr ComputeAccidentalHitsInferType(const PrimitivePtr &prim, const std::vec
                                                    prim_name);
 
   std::vector<TypePtr> type_tuple;
-  type_tuple.push_back(true_classes_type);
-  type_tuple.push_back(true_classes_type);
+  type_tuple.push_back(kInt32);
+  type_tuple.push_back(kInt64);
   type_tuple.push_back(kFloat32);
   return std::make_shared<Tuple>(type_tuple);
 }
@@ -110,6 +110,17 @@ AbstractBasePtr ComputeAccidentalHitsInfer(const abstract::AnalysisEnginePtr &, 
   auto sampled_candidates_rank = SizeToLong(sampled_candidates_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("dim of sampled_candidates", sampled_candidates_rank, kEqual, kInput2Dim,
                                            prim_name);
+
+  if (!IsDynamicShape(true_classes_shape)) {
+    const auto num_true_ptr = primitive->GetAttr("num_true");
+    MS_EXCEPTION_IF_NULL(num_true_ptr);
+    const auto num_true = GetValue<int64_t>(num_true_ptr);
+    const auto shape_dim1 = true_classes_shape[1];
+    if (shape_dim1 != num_true) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", true_classes shape[1]=" << shape_dim1
+                               << " must be equal to num_true= " << num_true;
+    }
+  }
 
   ShapeVector dyn_shape = {abstract::Shape::kShapeDimAny};
   auto ret_shape = std::make_shared<abstract::Shape>(dyn_shape);
