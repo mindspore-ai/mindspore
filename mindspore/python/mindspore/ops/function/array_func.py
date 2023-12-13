@@ -3254,7 +3254,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
     .. note::
-        1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
+        1. The value of input_indices must be in the range of `[0, input_params.shape[axis])`.
            On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
            undefined.
 
@@ -3281,7 +3281,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         ValueError: If `axis` is a Tensor and its size is not 1.
         TypeError:  If `input_params` is not a tensor.
         TypeError:  If `input_indices` is not a tensor of type int.
-        RuntimeError: If `input_indices` is out of range `[0, input_param.shape[axis])` on CPU or GPU.
+        RuntimeError: If `input_indices` is out of range `[0, input_params.shape[axis])` on CPU or GPU.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
