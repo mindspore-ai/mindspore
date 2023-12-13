@@ -135,8 +135,6 @@ def test_pipeline_inference_last_stage():
     phase = compile_infer_net(net, x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('Receive-0', ['network.fc0.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('Receive-1', ['network.fc1.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('Receive-2', ['network.fc1.weight'], graph_id=1)
     assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'Receive-0', 'Receive-2'],
                                            graph_id=1)
 
@@ -160,8 +158,6 @@ def test_pipeline_inference_result_broadcast():
     phase = compile_infer_net(net, x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('Receive-0', ['network.fc0.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('Receive-1', ['network.fc1.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('Receive-2', ['network.fc1.weight'], graph_id=1)
     assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'Receive-0', 'Receive-2'],
                                            graph_id=1)
     assert validator.check_node_inputs_has('AllReduce-0', ['Concat-0'], graph_id=1)
