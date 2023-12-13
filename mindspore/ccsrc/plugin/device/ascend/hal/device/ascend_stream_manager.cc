@@ -223,7 +223,7 @@ bool AscendStreamMng::SyncNotDefaultStreams() const {
   return res;
 }
 
-bool AscendStreamMng::SyncExceptStreamsInList(const std::set<rtStream_t> &except_streams) const {
+bool AscendStreamMng::SyncExceptStreamsInList(const std::set<aclrtStream> &except_streams) const {
   bool res = true;
   for (size_t i = 0; i < streams_.size(); i++) {
     if (except_streams.count(streams_[i]) > 0) {

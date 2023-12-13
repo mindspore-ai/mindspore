@@ -586,7 +586,7 @@ AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   size_t free_size{0}, total_size{0};
   auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(WARNING) << "Failed get memory info for current device. Error info: " << GetErrorMsg(ret);
+    MS_LOG(WARNING) << "Failed get memory info for current device. Error number: " << ret;
   }
   device_properties.total_memory = total_size;
   device_properties.free_memory = free_size;

@@ -569,7 +569,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetContextForce();
-  std::set<rtStream_t> except_streams;
+  std::set<aclrtStream> except_streams;
   if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);

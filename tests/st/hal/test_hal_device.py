@@ -62,7 +62,7 @@ def test_hal_device_gpu():
           prop.is_integrated, prop.multi_processor_count, prop.total_memory, prop.warp_size)
     print("Device capability is", get_device_capability(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
-    print("Arch list is", get_arch_list())
+    print("Architecture list is", get_arch_list())
     assert not get_arch_list("CPU")
 
 
