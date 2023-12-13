@@ -64,6 +64,7 @@ class PipelineTransformer {
 
   AnfNodePtr GetArgumentsByParameter(const AnfNodePtr &parameter);
   void RemoveMonadNode();
+  bool HasNoUpdateParameter();
   AnfNodePtr CreateTupleZeroTensor(const AnfNodePtr &node, size_t index);
   std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param) const;
   AnfNodePtr ActualOp(const AnfNodePtr &node);
@@ -95,6 +96,7 @@ class PipelineTransformer {
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
+  void FreezeGradient();
   tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
 
@@ -151,6 +153,7 @@ class NodeStageInfo {
  private:
   int64_t stage_;
 };
+bool IsolatedNodeAttach(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
 }  // namespace parallel
 }  // namespace mindspore
 
