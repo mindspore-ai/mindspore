@@ -211,6 +211,7 @@ ATTR_MAP(GetNext) = {{"types", ATTR_DESC(output_types, AnyTraits<std::vector<GET
                      {"output_num", ATTR_DESC(output_num, AnyTraits<int64_t>())},
                      {"shared_name", ATTR_DESC(channel_name, AnyTraits<string>())}};
 REG_ADPT_DESC(GetNext, prim::kPrimGetNext->name(), ADPT_DESC(GetNext))
+REG_ADPT_DESC(DynamicGetNextAscend, prim::kPrimDynamicGetNextAscend->name(), ADPT_DESC(GetNext))
 
 INPUT_MAP(STFT) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(window)}};
 OUTPUT_MAP(STFT) = {{0, OUTPUT_DESC(y)}};

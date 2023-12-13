@@ -33,6 +33,7 @@ constexpr char kChannelNameAttrName[] = "channel_name";
 constexpr char kOutputTypesAttrName[] = "output_types";
 constexpr char kTypesAttrName[] = "types";
 constexpr char kOutputShapesAttrName[] = "output_shapes";
+constexpr char kOutputNumAttrName[] = "output_num";
 constexpr char kShapesAttrName[] = "shapes";
 constexpr char kExecuteModeAttrName[] = "_dynamic_graph_execute_mode";
 constexpr char kInputsShapeRangeAttrName[] = "_getnext_inputs_shape_range";
@@ -115,6 +116,8 @@ const AnfNodePtr ProcessGetNextForDynamicShape(const FuncGraphPtr &graph, const 
   common::AnfAlgo::CopyNodeAttr(kTypesAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::CopyNodeAttr(kShapesAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::CopyNodeAttr(kSharedNameAttrName, kChannelNameAttrName, cnode, dynamic_getnextv2_node);
+  common::AnfAlgo::CopyNodeAttr(kSharedNameAttrName, cnode, dynamic_getnextv2_node);
+  common::AnfAlgo::CopyNodeAttr(kOutputNumAttrName, cnode, dynamic_getnextv2_node);
   common::AnfAlgo::SetNodeAttr(kExecuteModeAttrName, MakeValue("dynamic_execute"), dynamic_getnextv2_node);
   auto input_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(cnode, kShapesAttrName);
   common::AnfAlgo::SetNodeAttr(kInputsShapeRangeAttrName, MakeValue(GetShapesRange(input_shapes)),

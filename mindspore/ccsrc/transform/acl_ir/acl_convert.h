@@ -176,17 +176,21 @@ class AttrHelper {
   void ConvertValueToDstType(const ValuePtr &value, const TypeId src_type);
 
   template <typename T>
-  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) const {
+  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list,
+                                  ShapeVector *shape = nullptr) const {
     MS_EXCEPTION_IF_NULL(array_list);
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
     auto val = value_sequence[0];
     if (val->isa<Scalar>()) {
       auto list_value = GetValue<std::vector<T>>(value);
       array_list->insert(array_list->end(), list_value.begin(), list_value.end());
+      if (shape != nullptr) {
+        (void)shape->emplace_back(list_value.size());
+      }
     }
     if (val->isa<ValueSequence>()) {
       for (size_t i = 0; i < value_sequence.size(); i++) {
-        ConvertValueSequenceToList(value_sequence[i], array_list);
+        ConvertValueSequenceToList(value_sequence[i], array_list, shape);
       }
     }
   }
@@ -244,10 +248,13 @@ class AttrConverter : public AttrHelper<AttrConverter> {
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::vector<T>>> &, const ShapeVector &shape,
                     AclConverter *acl_converter) {
     std::vector<T> array_list;
-    ConvertValueSequenceToList(value, &array_list);
-    std::vector<std::vector<int64_t>> array_list_int64(shape[0], std::vector<int64_t>(shape[1], 0));
+    ShapeVector offset_shape;
+    ConvertValueSequenceToList(value, &array_list, &offset_shape);
+    std::vector<std::vector<int64_t>> array_list_int64(shape[0]);
+    size_t offset = 0;
     for (int64_t i = 0; i < shape[0]; ++i) {
-      array_list_int64[i].assign(array_list.begin() + i * shape[1], array_list.begin() + (i + 1) * shape[1]);
+      array_list_int64[i].assign(array_list.begin() + offset, array_list.begin() + offset + offset_shape[i]);
+      offset += offset_shape[i];
     }
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list_int64);
