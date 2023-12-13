@@ -2552,7 +2552,7 @@ def ms_max_one_element(x):
         if len(x) == 0:
             raise ValueError("max() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
-        if tensor_num == len(x):
+        if F.isconstant(tensor_num) and F.isconstant(len(x)) and tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
             return F._py_interpret("max(x)", {}, {"x": x})
@@ -2574,7 +2574,7 @@ def ms_max(*data):
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
-        if tensor_num == len_data:
+        if F.isconstant(tensor_num) and F.isconstant(len_data) and tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
             return F._py_interpret("max(data)", {}, {"data": data})
@@ -2628,7 +2628,7 @@ def ms_min_one_element(x):
         if len(x) == 0:
             raise ValueError("min() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
-        if tensor_num == len(x):
+        if F.isconstant(tensor_num) and F.isconstant(len(x)) and tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
             return F._py_interpret("min(x)", {}, {"x": x})
@@ -2650,7 +2650,7 @@ def ms_min(*data):
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
-        if tensor_num == len_data:
+        if F.isconstant(tensor_num) and F.isconstant(len_data) and tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
             return F._py_interpret("min(data)", {}, {"data": data})
