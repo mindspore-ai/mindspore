@@ -189,7 +189,7 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   }
   ValuePtr new_shape = MakeValue(input_slice_shape);
   AnfNodePtr val = NewValueNode(new_shape);
-  dropout_gen_mask_cnode->set_input(kIndex1, val);
+  manager->SetEdge(dropout_gen_mask_cnode, kIndex1, val);
 }
 
 // DropoutDoMask needs to be used together with DropoutGenMask. Only the first input tensor of DropoutGenMask is
