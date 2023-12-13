@@ -243,10 +243,10 @@ class TensorDump(Primitive):
 
     .. warning::
         - If a large amount of data is stored within a short period, it may lead to memory overflow on the device side.
-            Consider slicing the data to reduce the data scale.
+          Consider slicing the data to reduce the data scale.
         - Since data saving is processed asynchronously, when the amount of data is too large or the main process exits
-            too quickly, data loss may occur. You need to actively control the destruction time of the main process,
-            such as using sleep.
+          too quickly, data loss may occur. You need to actively control the destruction time of the main process,
+          such as using sleep.
 
     Inputs:
         - **file** (str) - The path of the file to be saved.

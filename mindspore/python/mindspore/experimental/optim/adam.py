@@ -43,7 +43,7 @@ def _run_adam_with_amsgrad_opt(opt, beta1_power, beta2_power, lr, gradient, para
 
 class Adam(Optimizer):
     r"""
-    Implements Adam algorithm..
+    Implements Adam algorithm.
 
     The updating formulas are as follows:
 

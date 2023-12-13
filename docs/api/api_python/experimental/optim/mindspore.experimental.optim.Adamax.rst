@@ -1,14 +1,14 @@
 mindspore.experimental.optim.Adamax
 ===================================
 
-.. py:class:: mindspore.experimental.optim.Adamax(params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., amsgrad=False, *, maximize=False)
+.. py:class:: mindspore.experimental.optim.Adamax(params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., *, maximize=False)
 
     Adamax算法的实现(基于无穷范数的Adam算法)。
 
     更新公式如下：
 
     .. math::
-       \begin{aligned}
+        \begin{aligned}
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{input}      : \gamma \text{ (lr)}, \beta_1, \beta_2
                 \text{ (betas)},\theta_0 \text{ (params)},f(\theta) \text{ (objective)},
@@ -27,7 +27,7 @@ mindspore.experimental.optim.Adamax
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
             &\bf{return} \:  \theta_t                                                     \\[-1.ex]
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
-       \end{aligned}
+        \end{aligned}
 
     .. warning::
         这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。

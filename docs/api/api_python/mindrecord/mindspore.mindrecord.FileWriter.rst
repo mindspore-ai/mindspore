@@ -111,6 +111,7 @@
             - **RuntimeError** - 并行写失败。
 
     .. py:method:: open_for_append(file_name)
+        :classmethod:
 
         打开MindRecord文件，准备追加数据。
 

@@ -1,14 +1,14 @@
 mindspore.experimental.optim.RAdam
 ===================================
 
-.. py:class:: mindspore.experimental.optim.RAdam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.)
+.. py:class:: mindspore.experimental.optim.RAdam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0)
 
     RAdam 算法的实现。
 
     更新公式如下：
 
     .. math::
-       \begin{aligned}
+        \begin{aligned}
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{input}      : \gamma \text{ (lr)}, \: \beta_1, \beta_2
                 \text{ (betas)}, \: \theta_0 \text{ (params)}, \:f(\theta) \text{ (objective)}, \:
@@ -26,18 +26,18 @@ mindspore.experimental.optim.RAdam
             &\hspace{6mm}v_t           \leftarrow   \beta_2 v_{t-1} + (1-\beta_2) g^2_t          \\
             &\hspace{6mm}\widehat{m_t} \leftarrow   m_t/\big(1-\beta_1^t \big)                   \\
             &\hspace{6mm}\rho_t \leftarrow \rho_{\infty} -
-                2 t \beta^t_2 /\big(1-\beta_2^t \big)                                    \\[0.1.ex]
+                2 t \beta^t_2 /\big(1-\beta_2^t \big)                                     \\[-1.ex]
             &\hspace{6mm}\textbf{if} \: \rho_t > 5                                               \\
             &\hspace{12mm} l_t \leftarrow \frac{\sqrt{ (1-\beta^t_2) }}{ \sqrt{v_t} +\epsilon  } \\
             &\hspace{12mm} r_t \leftarrow
-      \sqrt{\frac{(\rho_t-4)(\rho_t-2)\rho_{\infty}}{(\rho_{\infty}-4)(\rho_{\infty}-2) \rho_t}} \\
+                \sqrt{\frac{(\rho_t-4)(\rho_t-2)\rho_{\infty}}{(\rho_{\infty}-4)(\rho_{\infty}-2) \rho_t}} \\
             &\hspace{12mm}\theta_t \leftarrow \theta_{t-1} - \gamma \widehat{m_t} r_t l_t        \\
             &\hspace{6mm}\textbf{else}                                                           \\
             &\hspace{12mm}\theta_t \leftarrow \theta_{t-1} - \gamma \widehat{m_t}                \\
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
             &\bf{return} \:  \theta_t                                                     \\[-1.ex]
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
-       \end{aligned}
+        \end{aligned}
 
     .. warning::
         这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。

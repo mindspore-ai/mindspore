@@ -8,6 +8,7 @@
     将单词或句子表示为字符 n-gram 数量向量，然后使用非线性变换得到低维词向量表示。
 
     .. py:method:: from_file(file_path, max_vectors=None)
+        :classmethod:
 
         加载 CharNGram 预训练向量集文件。
 
