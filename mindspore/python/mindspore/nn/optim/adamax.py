@@ -114,7 +114,9 @@ class AdaMax(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
                        Default: ``0.9`` .
