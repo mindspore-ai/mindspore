@@ -635,12 +635,17 @@ static bool support_create_primitive(PyObject *obj) {
   }
 }
 
+extern bool check_MSConstexpr(const py::object &func);
 static bool SupportCall(PyObject *func, const std::string &name) {
+  py::object handle = py::cast<py::object>(func);
+  if (check_MSConstexpr(handle)) {
+    return true;
+  }
   return support_infer_primitive(func) || support_create_primitive(func) || IsMsClass(func) ||
          (name.size() != 0 && PyDict_GetItemString(PyEval_GetBuiltins(), name.c_str()) == func);
 }
 
-static PyObject *DoCall(const std::vector<PyObject *> &params, int op, std::string name) {
+static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std::string &name) {
   if (!Utils::IsCallOp(op) || params.size() < 1) {
     return nullptr;
   }
@@ -650,11 +655,6 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, std::stri
     list.insert(list.begin(), params.begin() + 1, params.end());
     bool is_abstract = false;
     return inst->InferPrimitive(params[0], list, &is_abstract);
-  }
-  if (!support_create_primitive(params[0]) && !IsMsClass(params[0])) {
-    // current only for builtin func
-    MS_EXCEPTION_IF_CHECK_FAIL(PyDict_GetItemString(PyEval_GetBuiltins(), name.c_str()) == params[0],
-                               "not implement guard none builtin function");
   }
 
   size_t nargs = (params.size() - 1);

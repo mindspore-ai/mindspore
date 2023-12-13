@@ -195,10 +195,7 @@ class Block {
 class CFG {
  public:
   CFG(PyCodeObject *co, Allocator *alloc, const GraphJitConfig &conf)
-      : pycode_(co),
-        bytecode_(reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AS_STRING(co->co_code))),
-        alloc_(*alloc),
-        conf_(conf) {}
+      : pycode_(co), bytecode_(nullptr), alloc_(*alloc), conf_(conf) {}
   ~CFG() { bb_pool_.clear(); }
 
   // BFS Iterator
