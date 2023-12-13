@@ -15,6 +15,8 @@
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore.rewrite import SymbolTree
+from mindspore import Tensor
+import numpy as np
 
 
 def external_func(x):
@@ -326,3 +328,43 @@ def test_generate_codes_with_if_in_init_same_func_name():
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
     assert codes.count("self.net = MOE3Opt(self.net)") == 1
     assert codes.count("self.net = TransformerEncoderLayer3Opt(self.net)") == 2
+
+
+class TestAnnotationSubNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class TestAnnotationNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.sub_net = self.get_subnet(TestAnnotationSubNet())
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = self.sub_net(x)
+        return x
+
+    def get_subnet(self, subnet: TestAnnotationSubNet):
+        return subnet
+
+def test_annotation():
+    """
+    Feature: Python api get_code of Node of Rewrite.
+    Description: Test rewrite generate codes when net has annotation.
+    Expectation: Success with annotation being removed.
+    """
+    net = TestAnnotationNet()
+    y0 = net(Tensor(1.0))
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("def get_subnet(self, subnet):") == 1
+    new_net = stree.get_network()
+    y = new_net(Tensor(1.0))
+    assert np.allclose(y0.asnumpy(), y.asnumpy())
