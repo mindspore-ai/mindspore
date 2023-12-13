@@ -22,36 +22,51 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore.train.serialization import export
-from mindspore.ops.operations._inner_ops import DecoderKVCache
+from mindspore.ops.auto_generate.gen_inner_ops_def import DecoderKVCache
+
+
+b = 26
+h = 40
+s = 32
+d = 128
+us = 1
+ps = s - us
+
+is_4d = True
 
 
 class DecoderKVCacheNet(nn.Cell):
     """
     DecoderKVCacheNet.
     """
+
     def __init__(self):
         super().__init__()
         self.add = ops.Add()
         self.sub = ops.Sub()
         self.decoder_k_v_cache = DecoderKVCache()
-        self.seq_len_axis = [2, 0, 0, 0]
 
     def construct(self, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len):
-        out = self.decoder_k_v_cache(cache, update, valid_seq_len, batch_index, self.seq_len_axis,
+        out = self.decoder_k_v_cache(cache, update, valid_seq_len, batch_index, seq_len_axis,
                                      new_max_seq_len, cur_max_seq_len)
         add_out = self.add(cache, 1)
         sub_out = self.sub(add_out, 1)
         return sub_out
 
 
-def  np_inference(cache, update, valid_seq_len):
+def np_inference(cache, update, valid_seq_len):
     """
     np_inference
     """
     ans = cache.copy()
-    for b in range(cache.shape[0]):
-        bs_idx = valid_seq_len[b]
-        ans[b, :, bs_idx, :] = update[b, :, 0, :]
+    for b_idx in range(cache.shape[0]):
+        s_idx = valid_seq_len[b_idx]
+        if s_idx < 0:
+            continue
+        if is_4d:
+            ans[b_idx, :, s_idx, :] = update[b_idx, :, 0, :]
+        else:
+            ans[b_idx, s_idx, :] = update[b_idx, 0, :]
     return ans
 
 
@@ -59,13 +74,20 @@ def create_numpy_inputs():
     """
     create inputs
     """
-    cache = np.random.rand(4, 2, 4, 32).astype(np.float16)
-    update = np.random.rand(4, 2, 1, 32).astype(np.float16)
-    valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
+    global is_4d
+    if is_4d:
+        cache_shape = (b, h, s, d)
+        update_shape = (b, h, us, d)
+    else:
+        cache_shape = (b, s, h * d)
+        update_shape = (b, us, h * d)
+    cache = np.random.rand(*cache_shape).astype(np.float16)
+    update = np.random.rand(*update_shape).astype(np.float16)
+    valid_seq_len = np.random.randint(-1, s, size=b).astype(np.int64)
     batch_index = np.array([1]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
-    new_max_seq_len = np.array([4]).astype(np.int64)
-    cur_max_seq_len = np.array([1]).astype(np.int64)
+    new_max_seq_len = np.array([s]).astype(np.int64)
+    cur_max_seq_len = np.array([s]).astype(np.int64)
     return (cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)
 
 
@@ -83,13 +105,6 @@ def create_ms_inputs():
     ms_cur_max_seq_len = Tensor(cur_max_seq_len)
     return (ms_cache, ms_update, ms_valid_seq_len, ms_batch_index, ms_seq_len_axis,
             ms_new_max_seq_len, ms_cur_max_seq_len)
-
-
-def create_np_inputs(cache, update, valid_seq_len):
-    """
-    create_np_inputs
-    """
-    return (cache, update, valid_seq_len)
 
 
 def create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len):
@@ -110,23 +125,26 @@ def inference_decoder_k_v_cache(mindir_model):
     """
     inference model
     """
-    cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len = create_numpy_inputs()
 
     lite_ctx1 = mslite.Context()
     lite_ctx1.target = ["ascend"]
-    lite_ctx1.ascend.device_id = 1
+    lite_ctx1.ascend.device_id = 0
     lite_ctx1.ascend.provider = "ge"
 
     model = mslite.Model()
-    model.build_from_file(mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
+    model.build_from_file(
+        mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
 
-    input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
-                                          new_max_seq_len, cur_max_seq_len))
-    mslite_output = model.predict(input_lists)
-
-    np_cache, np_update, np_valid_seq_len = create_np_inputs(cache, update, valid_seq_len)
-    expect_output = np_inference(np_cache, np_update, np_valid_seq_len)
-    assert np.allclose(mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+    for i in range(50):
+        cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, \
+            cur_max_seq_len = create_numpy_inputs()
+        input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
+                                              new_max_seq_len, cur_max_seq_len))
+        mslite_output = model.predict(input_lists)
+        expect_output = np_inference(cache, update, valid_seq_len)
+        assert np.allclose(
+            mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+        print(f"decoder_k_v_cache st {i} times: inference success.")
 
 
 def export_decoder_k_v_cache_model():
@@ -137,7 +155,10 @@ def export_decoder_k_v_cache_model():
     cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len = create_ms_inputs()
 
     net = DecoderKVCacheNet()
-    file_name = "decoder_k_v_cache_primitive"
+    if is_4d:
+        file_name = "decoder_k_v_cache_primitive_4d"
+    else:
+        file_name = "decoder_k_v_cache_primitive_3d"
 
     export(net, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len,
            file_name=file_name, file_format='MINDIR')
@@ -146,9 +167,25 @@ def export_decoder_k_v_cache_model():
     return model_name
 
 
-if __name__ == '__main__':
+def test_4d():
+    global is_4d
+    is_4d = True
     model_path = export_decoder_k_v_cache_model()
-    print("decoder_k_v_cache st : export success path: ", model_path)
+    print("decoder_k_v_cache 4d st : export success path: ", model_path)
 
     inference_decoder_k_v_cache(model_path)
-    print("decoder_k_v_cache st : inference success.")
+    print(f"decoder_k_v_cache 4d st : inference end.")
+
+def test_3d():
+    global is_4d
+    is_4d = False
+    model_path = export_decoder_k_v_cache_model()
+    print("decoder_k_v_cache 3d st : export success path: ", model_path)
+
+    inference_decoder_k_v_cache(model_path)
+    print(f"decoder_k_v_cache 3d st : inference end.")
+
+
+if __name__ == '__main__':
+    test_3d()
+    test_4d()

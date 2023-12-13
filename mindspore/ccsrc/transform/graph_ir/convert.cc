@@ -613,7 +613,8 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
     return true;
   }
   const auto &node_users = manager->node_users();
-  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr, prim::kPrimScatterUpdate};
+  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr, prim::kPrimScatterUpdate,
+                                prim::kPrimPromptKVCache, prim::kPrimDecoderKVCache};
   auto user_it = node_users.find(node);
   if (user_it != node_users.end()) {
     auto &users = user_it->second;
