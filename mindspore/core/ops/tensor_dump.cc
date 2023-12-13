@@ -61,6 +61,7 @@ class MIND_API TensorDumpInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    primitive->AddAttr("dyn_input_sizes", MakeValue(std::vector<int64_t>{-1, 1}));
     return TensorDumpInferShape(primitive, input_args);
   }
 
