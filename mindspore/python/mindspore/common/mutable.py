@@ -39,6 +39,41 @@ class _Dict(dict):
     pass
 
 
+# pylint: disable=super-init-not-called
+class _Bool(int):
+    """Define a _Bool class that inherits from int, because base class 'bool' is a marked final."""
+    def __init__(self, value):
+        self.value = bool(value)
+
+    @property
+    def __class__(self):
+        return bool
+
+    def __and__(self, x):
+        return self.value & x
+
+    def __rand__(self, x):
+        return x & self.value
+
+    def __or__(self, x):
+        return self.value | x
+
+    def __ror__(self, x):
+        return x | self.value
+
+    def __xor__(self, x):
+        return self.value ^ x
+
+    def __rxor__(self, x):
+        return x ^ self.value
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return repr(self.value)
+
+
 def _check_element_type(value):
     """Check if all the elements are Tensor."""
     if isinstance(value, (tuple, list)):
@@ -51,7 +86,7 @@ def _check_element_type(value):
             if not _check_element_type(element):
                 return False
         return True
-    return isinstance(value, (Tensor, Tensor_, int, float)) and not isinstance(value, bool)
+    return isinstance(value, (Tensor, Tensor_, int, float))
 
 
 def mutable(input_data, dynamic_len=False):
@@ -148,7 +183,9 @@ def mutable(input_data, dynamic_len=False):
             f" but got {input_data}")
 
     ret = input_data
-    if isinstance(input_data, int):
+    if isinstance(input_data, bool):
+        ret = _Bool(input_data)
+    elif isinstance(input_data, int):
         ret = _Int(input_data)
     elif isinstance(input_data, float):
         ret = _Float(input_data)

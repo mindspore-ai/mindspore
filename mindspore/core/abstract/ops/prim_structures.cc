@@ -379,15 +379,11 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     return;
   }
   if (abs->isa<AbstractScalar>()) {
-    auto abs_type = abs->BuildType();
-    if (abs_type->type_id() != kBool->type_id()) {
-      return;
-    }
+    return;
   }
   MS_EXCEPTION(TypeError)
-    << "For mutable api in graph, the input arg should be one of (int, float, Tensor, tuple, list, dict) or their"
-       " nested structures, but got "
-    << abs->ToString();
+    << "For mutable api in graph, the input arg should be one of (int, float, bool, Tensor, tuple, list, dict) "
+    << "or their nested structures, but got " << abs->ToString();
 }
 }  // namespace
 
