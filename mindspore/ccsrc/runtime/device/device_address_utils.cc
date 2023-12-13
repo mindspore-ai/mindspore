@@ -861,7 +861,7 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
                                         const std::vector<tensor::TensorPtr> &tensors) {
-  for (const auto &tensor : tensors) {
+  for (auto tensor : tensors) {
     MallocForInput(device_context, tensor);
   }
 }

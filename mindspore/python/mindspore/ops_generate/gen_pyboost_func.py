@@ -116,7 +116,7 @@ def generate_get_inputs_kernel_tensors(call_args):
     args_list = args_list[:-2]
     if args_list:
         inputs_kernel_tensors += f'const auto &input_address_info = ' \
-                                 f'PyBoostUtils::GetKernelTensors(device_context, op->input_abs(), {args_list});\n'
+                                 f'PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), {args_list});\n'
     return inputs_kernel_tensors
 
 def generate_create_input_address(need_malloc_tensors):
@@ -149,7 +149,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         is_gpu = 'gpu' in gen_path
         malloc_inputs = generate_malloc_input(converter.need_malloc_tensors)
         create_input_address = generate_create_input_address(converter.need_malloc_tensors)
-        get_inputs_kernel_tensors = generate_get_inputs_kernel_tensors(converter.call_args)
+        get_inputs_kernel_tensors = generate_get_inputs_kernel_tensors(converter.call_args_with_tensor)
 
         # call_impl
         call_impl = ''
@@ -205,6 +205,8 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          value_tuple_convert=converter.value_tuple_convert,
                                          const_number_convert=converter.const_number_convert,
                                          create_input_address=create_input_address,
+                                         tensor_list_convert=converter.tensor_list_convert,
+                                         call_args_with_tensor=converter.call_args_with_tensor,
                                          malloc_inputs=malloc_inputs,
                                          get_inputs_kernel_tensors=get_inputs_kernel_tensors,
                                          get_cube_math_type=get_cube_math_type,
@@ -507,7 +509,8 @@ class OpTemplateConverter:
         self.call_args = self.parse_original_call_args(op_proto.op_args)
         self.call_args_types = self.parse_call_args_types(op_proto.op_args)
         self.call_args_with_types = self.parse_call_args_with_types(self.call_args, self.call_args_types)
-        self.need_malloc_tensors = self.parse_need_malloc_tensors(op_proto.op_args, self.call_args)
+        self.need_malloc_tensors, self.tensor_list_convert, self.call_args_with_tensor = \
+            self.parse_need_malloc_tensors(op_proto.op_args, self.call_args)
         self.call_args_after_convert, self.value_tuple_convert, self.const_number_convert = \
             self.op_args_converter(op_proto.op_args, self.call_args)
         self.cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
@@ -557,13 +560,20 @@ class OpTemplateConverter:
         :return: need_malloc_tensors
         """
         need_malloc_tensors = []
+        tensor_list_convert = []
+        call_args_with_tensor = []
         for op_arg, call_arg in zip(op_args, call_args):
             if pyboost_utils.is_tensor(op_arg):
                 call_arg = op_arg.arg_name + "_tensor"
                 need_malloc_tensors.append(call_arg)
-            if tuple_input_to_cpp_type(op_arg.arg_dtype) and pyboost_utils.is_tensor_list(op_arg):
+                call_args_with_tensor.append(call_arg)
+            elif tuple_input_to_cpp_type(op_arg.arg_dtype) and pyboost_utils.is_tensor_list(op_arg):
                 need_malloc_tensors.append(call_arg + "_vector")
-        return need_malloc_tensors
+                tensor_list_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
+                call_args_with_tensor.append(call_arg + "_vector")
+            else:
+                call_args_with_tensor.append(call_arg)
+        return need_malloc_tensors, tensor_list_convert, call_args_with_tensor
 
     @staticmethod
     def parse_op_name(name):

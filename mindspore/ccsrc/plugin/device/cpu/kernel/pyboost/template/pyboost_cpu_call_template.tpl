@@ -2,6 +2,8 @@ MS_LOG(DEBUG) << op_name() << " call start";
 
 InferOutput(${call_args});
 
+${tensor_list_convert}
+
 // Create device address for inputs and outputs
 ${create_input_address}
 ${inplace_process}
@@ -10,7 +12,7 @@ PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
 // Async
 auto op = get_op();
 PyBoostUtils::DispatchRun(
-std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args}]() {
+std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
   auto device_context = op->device_context();
   const auto &outputs = op->outputs();
 
@@ -24,7 +26,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args}]() {
 
   // Get outputs kernel tensors
   const auto &output_address_info =
-    PyBoostUtils::GetKernelTensors(device_context, {op->output_abs()}, outputs);
+    PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
 
   // KernelMod init
   auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive(), op_name(), op->device_context(),

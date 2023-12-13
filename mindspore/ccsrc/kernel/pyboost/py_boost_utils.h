@@ -67,7 +67,7 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   template <typename... T>
-  static std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList> GetKernelTensors(
+  static std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList> GetAddressInfo(
     DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
