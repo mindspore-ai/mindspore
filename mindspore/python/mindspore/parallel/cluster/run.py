@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Entrypoint of ms_run"""
+import ast
 from argparse import REMAINDER, ArgumentParser
-from process_entity import  _ProcessManager
+from .process_entity import  _ProcessManager
 
 def get_args():
     """
@@ -23,18 +24,19 @@ def get_args():
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "--total_nodes",
+        "--worker_num",
         type=int,
         default=1,
         help="the total number of nodes participating in the training, an integer variable, "
         "with a default value of 1."
     )
     parser.add_argument(
-        "--local_nodes",
+        "--local_worker_num",
         type=int,
         default=1,
         help="the number of nodes participating in local training, an integer variable, "
         "with a default value of 1."
+        "Worker number on each node is identical on physical nodes in current MindSpore version."
     )
     parser.add_argument(
         "--master_addr",
@@ -52,12 +54,35 @@ def get_args():
         "already in use."
     )
     parser.add_argument(
+        "--node_rank",
+        default=-1,
+        type=int,
+        help="specifies the rank of current physical node, and its data type is integer."
+        " This parameter is used for rank id assignment for each process on the node."
+        " If not set, MindSpore will assign rank ids automatically and"
+        " rank id of each process on the same node will be continuous."
+        " Allowed values: port numbers within the."
+    )
+    parser.add_argument(
+        "--log_dir",
+        default="",
+        type=str,
+        help="specifies the log output file path."
+    )
+    parser.add_argument(
+        "--join",
+        default=False,
+        type=ast.literal_eval,
+        help="specifies whether msrun should join spawned processes and return distributed job results."
+             "If set to True, msrun will check process status and parse the log files."
+    )
+    parser.add_argument(
         "--is_scalein",
         default=0,
         type=int,
         help="an integer parameter indicating if the task involves scaling in. It accepts "
         "values of 0 or 1, where 1 indicates the removal of `scale_num` nodes from "
-        "the local cluster."
+        "the local cluster. This is experimental parameter."
     )
     parser.add_argument(
         "--is_scaleout",
@@ -65,13 +90,14 @@ def get_args():
         type=int,
         help="an integer parameter indicating if the task involves scaling out. It accepts"
         " values of 0 or 1, where 1 indicates the addition of `scale_num` nodes to the"
-        " local cluster."
+        " local cluster. This is experimental parameter."
     )
     parser.add_argument(
         "--scale_num",
         default=0,
         type=int,
-        help=" specifies the number of nodes to be added or removed from the local cluster. "
+        help="specifies the number of nodes to be added or removed from the local cluster."
+             "This is experimental parameter."
     )
     parser.add_argument(
         "training_script",
