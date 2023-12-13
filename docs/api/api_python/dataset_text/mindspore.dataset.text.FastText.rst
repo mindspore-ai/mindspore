@@ -8,6 +8,7 @@
     通过 FastText ，可以创建一种无监督或有监督学习算法，以获得单词的向量表示。
 
     .. py:method:: from_file(file_path, max_vectors=None)
+        :classmethod:
 
         加载 FastText 预训练向量集文件。
 

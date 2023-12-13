@@ -32,6 +32,7 @@ mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
         返回当前使用的学习率。
 
     .. py:method:: in_cooldown()
+        :property:
 
         是否在 `cooldown` 时期。
 
