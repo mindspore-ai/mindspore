@@ -13,6 +13,7 @@ mindspore.amp.LossScaler
         这是一个实验性API，后续可能修改或删除。
 
     .. py:method:: adjust(grads_finite)
+        :abstractmethod:
 
         根据梯度是否为有效值（无溢出）对 `scale_value` 进行调整。
 
@@ -20,6 +21,7 @@ mindspore.amp.LossScaler
             - **grads_finite** (Tensor) - bool类型的标量Tensor，表示梯度是否为有效值（无溢出）。
 
     .. py:method:: scale(inputs)
+        :abstractmethod:
 
         对inputs进行scale，`inputs \*= scale_value`。
 
@@ -27,6 +29,7 @@ mindspore.amp.LossScaler
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
 
     .. py:method:: unscale(inputs)
+        :abstractmethod:
 
         对inputs进行unscale，`inputs /= scale_value`。
 

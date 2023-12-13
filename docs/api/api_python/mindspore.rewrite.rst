@@ -199,6 +199,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **RuntimeError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name: str, scope: str = "")
+        :classmethod:
 
         创建一个使用变量名称命名的ScopedValue。NamingValue表示对另一个变量的引用。
 
@@ -214,6 +215,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **TypeError** - 如果 `scope` 不是str类型。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_variable_value(value)
+        :classmethod:
 
         创建一个保存变量的ScopedValue。ScopedValue的类型由值的类型决定。ScopedValue的范围是空的。
 
@@ -261,6 +263,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **TypeError** - 参数不是Node类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.create(network)
+        :classmethod:
 
         通过传入网络实例 `network` ，创建一个SymbolTree对象。
 
