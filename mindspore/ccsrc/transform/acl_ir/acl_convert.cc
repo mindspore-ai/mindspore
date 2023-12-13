@@ -703,6 +703,7 @@ void AclConverter::SetRunnerSpecialInfo() {
     runner_.SetStaticMode();
   }
   runner_.SetPrecisionMode(precision_mode_);
+  runner_.SetOpPrecisionMode();
 }
 
 void AclConverter::Run(void *stream_ptr) { runner_.Run(stream_ptr, is_need_retrieve_output_shape_); }

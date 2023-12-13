@@ -297,6 +297,20 @@ void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
   }
 }
 
+void AclRunner::SetOpPrecisionMode() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
+  if (op_precision_mode.empty()) {
+    return;
+  }
+  MS_LOG(INFO) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
+  auto ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
+  }
+}
+
 void AclRunner::AoeDump() {
   // Dump acl graph for aoe.
   auto context_ptr = MsContext::GetInstance();

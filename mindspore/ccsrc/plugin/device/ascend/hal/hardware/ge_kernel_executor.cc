@@ -18,7 +18,6 @@
 #include <algorithm>
 #include "include/common/utils/parallel_context.h"
 #include "acl/acl_rt.h"
-#include "acl/acl_op_compiler.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
@@ -342,20 +341,6 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
   }
 }
-
-void SetAclOpPrecisionMode() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
-  if (op_precision_mode.empty()) {
-    return;
-  }
-  MS_LOG(INFO) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
-  auto ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
-  if (ret != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! Error flag is " << ret;
-  }
-}
 }  // namespace
 
 void GeKernelExecutor::Initialize() {
@@ -366,8 +351,6 @@ void GeKernelExecutor::Initialize() {
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
-  // not check graph executor, may use in ascend device context
-  SetAclOpPrecisionMode();
   initialized_ = true;
 }
 
