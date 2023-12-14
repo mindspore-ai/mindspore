@@ -48,7 +48,7 @@ abstract::ShapePtr GeLUInferShape(const PrimitivePtr &, const std::vector<Abstra
 }
 
 TypePtr GeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kBFloat16};
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(prim);
