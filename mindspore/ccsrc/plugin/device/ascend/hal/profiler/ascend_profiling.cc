@@ -185,10 +185,6 @@ void AscendProfiler::Stop() {
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
   }
-  aclRet = aclprofDestroyConfig(acl_config_);
-  if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
-  }
 
   MemoryProfiling::GetInstance().StopMemoryProfiling();
 
@@ -196,8 +192,13 @@ void AscendProfiler::Stop() {
 }
 
 void AscendProfiler::Finalize() {
+  aclError aclRet = aclprofDestroyConfig(acl_config_);
+  if (aclRet != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function.";
+  }
+
   MS_LOG(INFO) << "Begin to finalize profiling";
-  aclError aclRet = aclprofFinalize();
+  aclRet = aclprofFinalize();
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }
