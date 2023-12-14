@@ -18,6 +18,7 @@ import types
 import textwrap
 import inspect
 import os
+from mindspore import nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -60,6 +61,45 @@ def _convert_tensor(node):
         return tuple(_convert_tensor(e) for e in node)
     return node
 
+class PackFunc:
+    pass
+
+def _trace_cell_call(self, *args, **kwargs):
+    """ Run Packed Cell in Pack."""
+    if self.__class__.construct is nn.Cell.construct:
+        raise AttributeError("For 'Cell', the method 'construct' is not defined.")
+
+    if kwargs:
+        bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
+        bound_arguments.apply_defaults()
+        args = bound_arguments.args
+        kwargs = bound_arguments.kwargs
+    args = self._mixed_precision_cast(args)
+    need_subgraph = hasattr(self, "bprop") or hasattr(self, "_pipeline_stage") or self.get_flags()
+    if not PackFunc.current.is_pynative_mode and need_subgraph:
+        expander = PackExpander.get_instance()
+        args = expander.begin_subgraph(self, *args)
+        args = [_convert_tensor(a) for a in args]
+        output = self._run_construct(args, kwargs)
+        ret = expander.end_subgraph(self, output)
+        output = _convert_tensor(ret)
+    else:
+        with _SetMixedPrecision(self):
+            output = self._run_construct(args, kwargs)
+    return output
+
+class _PackHook:
+    """Hook for trace run"""
+
+    def __init__(self):
+        self.origin_call = nn.Cell.__call__
+
+    def __enter__(self):
+        nn.Cell.__call__ = _trace_cell_call
+        return self
+
+    def __exit__(self, *err):
+        nn.Cell.__call__ = self.origin_call
 
 class PackFunc(Primitive):
     """pack function with lazy expander"""
@@ -114,7 +154,7 @@ class PackFunc(Primitive):
         return _convert_tensor(ret)
 
     def _run_op(self, args):
-        with _RunOpHook(PackFunc._trace_run_op):
+        with _RunOpHook(PackFunc._trace_run_op), _PackHook():
             fun_args = [_convert_tensor(a) for a in args]
             ret = self.func(*fun_args, **self.kwargs)
         return ret
