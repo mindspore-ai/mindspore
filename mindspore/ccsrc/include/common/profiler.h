@@ -58,6 +58,7 @@ enum class ProfilerEvent {
   kKernelResize,
   kKernelInferAndResize,
   kKernelLaunch,
+  kKernelLaunckCallback,
   kKernelUpdate,
   kGraphLaunch,
   kInputProcess,

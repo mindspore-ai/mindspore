@@ -23,15 +23,14 @@ constexpr size_t kDeviceMemSize = 5;
 constexpr size_t kMaxVirtualCount = 1024;
 class MemoryManagerStub : public MemoryManager {
  public:
-  MemoryManagerStub() {
-    device_mem_.resize(kMaxVirtualCount, 0);
-  }
+  MemoryManagerStub() { device_mem_.resize(kMaxVirtualCount, 0); }
   void Initialize() override {}
   void Finalize() override {}
 
   size_t GetAvailableMemSize() override { return kDeviceMemSize; }
 
-  void *MallocMemFromMemPool(size_t mem_size, bool useless = false, bool another_useless = false) override {
+  void *MallocMemFromMemPool(size_t mem_size, bool useless = false, bool another_useless = false,
+                             const uint32_t stream_id = UINT32_MAX) override {
     if (device_virtual_count_ >= kDeviceMemSize) {
       return nullptr;
     }
@@ -239,48 +238,48 @@ TEST_F(TestMemScheduler, test_manual_mem_scheduler) {
 /// Description: Test MemScheduler interface
 /// Expectation: MemScheduler GetOrMalloc return valid ptr
 TEST_F(TestMemScheduler, test_mem_scheduler_with_continuous_mem) {
-MemSchedulerManager mem_scheduler_manager;
-auto scheduler = mem_scheduler_manager.GetOrCreateMemScheduler(0);
-ASSERT_NE(scheduler, nullptr);
-auto need_record = scheduler->need_record_event();
-ASSERT_EQ(need_record, true);
-std::shared_ptr<MemHandler> mem_handler = std::make_shared<MemHandler>(std::make_shared<MemoryManagerStub>());
-ASSERT_NE(mem_handler, nullptr);
-scheduler->SetMemHandler(mem_handler);
+  MemSchedulerManager mem_scheduler_manager;
+  auto scheduler = mem_scheduler_manager.GetOrCreateMemScheduler(0);
+  ASSERT_NE(scheduler, nullptr);
+  auto need_record = scheduler->need_record_event();
+  ASSERT_EQ(need_record, true);
+  std::shared_ptr<MemHandler> mem_handler = std::make_shared<MemHandler>(std::make_shared<MemoryManagerStub>());
+  ASSERT_NE(mem_handler, nullptr);
+  scheduler->SetMemHandler(mem_handler);
 
-// input data
-used_tensor_num_ = 8;
-total_step_ = 8;
-std::vector<uint8_t> tensor_keys(used_tensor_num_, 0);
-std::vector<uint8_t> tensor_datas(used_tensor_num_, 0);
-std::vector<size_t> init_tensors = {0, 2, 6, 7};
-// 8 step tensor usage
-//
-// 0-----0-----0
-//    1--1--1
-// 2-----2--------2
-//       3-----------3
-//       4--------------4
-// 6--------------6
-//    7--------7
-//
-std::vector<std::vector<size_t>> step_used_tensors = {{0, 2, 6}, {1, 7}, {0, 1, 2, 3, 4}, {1},
-                                                      {0, 7}, {2, 6}, {3}, {4}};
-tensor_keys_.swap(tensor_keys);
-tensor_datas_.swap(tensor_datas);
-init_tensors_.swap(init_tensors);
-step_used_tensors_.swap(step_used_tensors);
-scheduler->SetTotalStep(total_step_);
+  // input data
+  used_tensor_num_ = 8;
+  total_step_ = 8;
+  std::vector<uint8_t> tensor_keys(used_tensor_num_, 0);
+  std::vector<uint8_t> tensor_datas(used_tensor_num_, 0);
+  std::vector<size_t> init_tensors = {0, 2, 6, 7};
+  // 8 step tensor usage
+  //
+  // 0-----0-----0
+  //    1--1--1
+  // 2-----2--------2
+  //       3-----------3
+  //       4--------------4
+  // 6--------------6
+  //    7--------7
+  //
+  std::vector<std::vector<size_t>> step_used_tensors = {{0, 2, 6}, {1, 7}, {0, 1, 2, 3, 4}, {1}, {0, 7}, {2, 6},
+                                                        {3},       {4}};
+  tensor_keys_.swap(tensor_keys);
+  tensor_datas_.swap(tensor_datas);
+  init_tensors_.swap(init_tensors);
+  step_used_tensors_.swap(step_used_tensors);
+  scheduler->SetTotalStep(total_step_);
 
-// record
-Record(scheduler);
-// Add continuous memory info
-scheduler->AddContinuousMemInfo(true, 2, 3, {1, 1, 1},
-                                {tensor_keys_.data(), tensor_keys_.data() + 1, tensor_keys_.data() + 2});
-scheduler->AddContinuousMemInfo(false, 2, 2, {1, 1}, {tensor_keys_.data() + 3, tensor_keys_.data() + 4});
-// optimize
-scheduler->Optimize();
-// run
-Run(scheduler);
+  // record
+  Record(scheduler);
+  // Add continuous memory info
+  scheduler->AddContinuousMemInfo(true, 2, 3, {1, 1, 1},
+                                  {tensor_keys_.data(), tensor_keys_.data() + 1, tensor_keys_.data() + 2});
+  scheduler->AddContinuousMemInfo(false, 2, 2, {1, 1}, {tensor_keys_.data() + 3, tensor_keys_.data() + 4});
+  // optimize
+  scheduler->Optimize();
+  // run
+  Run(scheduler);
 }
 }  // namespace mindspore::device

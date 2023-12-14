@@ -141,9 +141,9 @@ void CPUDeviceResManager::Destroy() {
   }
 }
 
-void *CPUDeviceResManager::AllocateMemory(size_t size) const {
+void *CPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 void CPUDeviceResManager::FreeMemory(void *ptr) const {

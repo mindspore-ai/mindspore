@@ -42,10 +42,11 @@ uint64_t AscendMemoryManager::GetMsMaxMemSize() const { return AscendMemAdapter:
 
 uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
 
-void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle) {
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle,
+                                                uint32_t stream_id) {
   auto align_size = GetCommonAlignSize(size);
   const auto device_addr =
-    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle);
+    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
   return device_addr;
 }
 
@@ -109,7 +110,8 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 // return the pointer to the start of data address.
 uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   auto align_size = GetCommunicationAlignSize(size);
-  uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+  uint8_t *base_ptr = reinterpret_cast<uint8_t *>(
+    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, false, false, kWorldGroupStreamIndex));
   if (base_ptr != nullptr) {
     return base_ptr + kMemAlignSize;
   }

@@ -213,6 +213,7 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
         device_address->format(), device_address->type_id(), device_address->host_shape(),
         device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
       MS_EXCEPTION_IF_NULL(kernel_tensor);
+      kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(parameter_with_index.first));
       auto new_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
       MS_LOG(DEBUG) << "Create new address for node that has no corresponding backend node:"

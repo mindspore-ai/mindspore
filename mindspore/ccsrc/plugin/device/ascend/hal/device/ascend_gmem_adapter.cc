@@ -21,6 +21,8 @@
 #include <unistd.h>
 
 #include <tuple>
+
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -30,41 +32,6 @@ static constexpr const char kGMemLibName[] = "libgmem.so";
 static constexpr const char kMsEnableGmem[] = "MS_ENABLE_GMEM";
 constexpr uint64_t kAscendMmapAlignSize = 1 << 21;
 constexpr int kMapPeerShared = 0x8000000;
-
-void *callback_thread_func(void *data);
-
-struct CallbackThread {
-  ~CallbackThread() { cancel(); }
-
-  // pthread_cancel may cause bug now, so just set flag to false.
-  void cancel() {
-    if (flag_.load()) {
-      flag_.store(false);
-    }
-  }
-
-  int create() {
-    flag_.store(true);
-    return pthread_create(&thread_, nullptr, &callback_thread_func, this);
-  }
-
-  pthread_t thread_;
-  std::atomic_bool flag_{true};
-  int32_t default_timeout_{100};
-};
-
-void *callback_thread_func(void *data) {
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
-#ifdef WITH_BACKEND
-  auto callback_thread = reinterpret_cast<CallbackThread *>(data);
-  while (callback_thread->flag_.load()) {
-    aclrtProcessReport(callback_thread->default_timeout_);
-  }
-  MS_LOG(INFO) << "Exit callback thread loop.";
-#endif
-  return data;
-}
 
 const size_t AscendGmemAdapter::GetRoundUpAlignSize(size_t input_size) const {
   return (input_size + kAscendMmapAlignSize - 1) & ~(kAscendMmapAlignSize - 1);
@@ -104,49 +71,6 @@ size_t AscendGmemAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size
   return ret != 0 ? 0 : real_size;
 }
 
-bool AscendGmemAdapter::AddCallbackThread(aclrtStream stream) {
-  MS_LOG(DEBUG) << "Enter add callback thread, stream : " << stream << ".";
-  if (!is_eager_free_enabled()) {
-    return false;
-  }
-#ifdef WITH_BACKEND
-  if (callback_map_.count(stream) > 0) {
-    MS_LOG(WARNING) << "Add callback thread failed, stream : " << stream << " is already added.";
-    return false;
-  }
-
-  auto callback_thread = std::make_shared<CallbackThread>();
-  callback_thread->create();
-  auto ret = aclrtSubscribeReport(callback_thread->thread_, (aclrtStream)stream);
-  if (!ret) {
-    MS_LOG(INFO) << "Add callback thread success, stream : " << stream << ".";
-    (void)callback_map_.emplace(stream, callback_thread);
-    return true;
-  } else {
-    MS_LOG(ERROR) << "Add callback thread failed, stream : " << stream << ", ret : " << ret;
-  }
-#endif
-  return false;
-}
-
-bool AscendGmemAdapter::RemoveCallbackThread(aclrtStream stream) {
-  MS_LOG(DEBUG) << "Enter remove callback thread, stream : " << stream << ".";
-  if (!is_eager_free_enabled()) {
-    return false;
-  }
-#ifdef WITH_BACKEND
-  if (callback_map_.count(stream) == 0) {
-    MS_LOG(WARNING) << "Remove callback thread failed, stream : " << stream << " is not exist.";
-    return false;
-  }
-  auto callback_thread = callback_map_.at(stream);
-  // Cannot call aclrtUnSubscribeReport.
-  callback_thread->cancel();
-  callback_map_.erase(stream);
-#endif
-  return true;
-}
-
 uint8_t *AscendGmemAdapter::MmapMemory(size_t size, void *addr) const {
   MS_LOG(DEBUG) << "Enter mmap memory, size : " << size << ".";
   if (size <= 0) {
@@ -180,6 +104,8 @@ void AscendGmemAdapter::LoadGMemLib() noexcept {
     LIB_FUNC(GMEM_FREE_EAGER) gmem_free_eager = DlsymFuncObj(gmemFreeEager, gmem_handle_);
     if (gmem_free_eager != nullptr) {
       is_eager_free_enabled_ = true;
+      // Load gmem lib success, and then enable stream callback.
+      AscendStreamMng::GetInstance().enable_callback(is_eager_free_enabled_);
       free_eager_ = gmem_free_eager;
     } else {
       MS_LOG(WARNING) << "Load gmem free eager failed.";

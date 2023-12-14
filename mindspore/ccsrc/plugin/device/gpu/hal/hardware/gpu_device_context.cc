@@ -244,7 +244,7 @@ void GPUDeviceContext::Destroy() {
   device_res_manager_->Destroy();
 }
 
-void *GPUDeviceResManager::AllocateMemory(size_t size) const {
+void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
@@ -252,7 +252,7 @@ void *GPUDeviceResManager::AllocateMemory(size_t size) const {
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceMemory(size);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 void GPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -286,7 +286,8 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (swap_manager_ != nullptr) {
     device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
+                                                    address->stream_id());
   }
   if (!device_ptr) {
     return false;

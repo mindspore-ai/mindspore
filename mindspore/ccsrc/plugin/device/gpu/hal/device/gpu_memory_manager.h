@@ -29,7 +29,8 @@ class GPUMemoryManager : public MemoryManager {
   void Initialize() override;
   void Finalize() override;
 
-  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false) override;
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
+                             uint32_t stream_id = UINT32_MAX) override;
   void FreeMemFromMemPool(void *device_ptr) override;
   std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,

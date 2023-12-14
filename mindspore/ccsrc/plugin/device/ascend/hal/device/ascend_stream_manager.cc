@@ -84,7 +84,7 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
     default_stream_ = *stream;
     default_stream_id_ = kIndex0;
   }
-  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
+  RegCallback(*stream);
 }
 
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
@@ -100,7 +100,56 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
+  RegCallback(stream);
+}
+
+void AscendStreamMng::RegCallback(aclrtStream stream) {
+  MS_LOG(INFO) << "Register callback thread, stream : " << stream << ".";
+  (void)callback_cached_streams_.emplace_back(stream);
+  if (callback_cached_streams_.size() > 1 && !is_enable_callback_) {
+    is_enable_callback_ = true;
+  }
+  if (!is_enable_callback_) {
+    return;
+  }
+#ifdef WITH_BACKEND
+  for (const auto &callback_cached_stream : callback_cached_streams_) {
+    if (stream_call_backs_.count(callback_cached_stream) > 0) {
+      MS_LOG(WARNING) << "Register callback thread failed, stream : " << callback_cached_stream
+                      << " is already registered.";
+      continue;
+    }
+
+    auto callback_thread = std::make_shared<CallbackThread>();
+    callback_thread->create();
+    auto ret = aclrtSubscribeReport(callback_thread->thread_, (aclrtStream)callback_cached_stream);
+    if (!ret) {
+      MS_LOG(INFO) << "Register callback thread success, stream : " << callback_cached_stream << ".";
+      (void)stream_call_backs_.emplace(callback_cached_stream, callback_thread);
+    } else {
+      MS_LOG(INTERNAL_EXCEPTION) << "Register callback thread failed, stream : " << callback_cached_stream
+                                 << ", ret : " << ret;
+    }
+  }
+#endif
+  callback_cached_streams_.clear();
+}
+
+void AscendStreamMng::UnRegCallback(aclrtStream stream) {
+  MS_LOG(INFO) << "Unregister callback thread, stream : " << stream << ".";
+  if (!is_enable_callback_) {
+    return;
+  }
+#ifdef WITH_BACKEND
+  if (stream_call_backs_.count(stream) == 0) {
+    MS_LOG(WARNING) << "Unregister callback thread failed, stream : " << stream << " is not exist.";
+    return;
+  }
+  auto callback_thread = stream_call_backs_.at(stream);
+  // Cannot call aclrtUnSubscribeReport.
+  callback_thread->cancel();
+  stream_call_backs_.erase(stream);
+#endif
 }
 
 void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority) {
@@ -114,7 +163,7 @@ void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags,
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
+  RegCallback(*stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
@@ -130,7 +179,7 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
+  RegCallback(stream);
 }
 
 aclrtEvent AscendStreamMng::ApplyRtEvent() {
@@ -157,7 +206,7 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
-  AscendGmemAdapter::GetInstance().RemoveCallbackThread(streams_.at(stream_id));
+  UnRegCallback(streams_.at(stream_id));
   streams_[stream_id] = nullptr;
   return true;
 }
@@ -172,7 +221,7 @@ bool AscendStreamMng::DestroyAllStreams() {
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
-    AscendGmemAdapter::GetInstance().RemoveCallbackThread(stream);
+    UnRegCallback(stream);
   }
   streams_.clear();
   return true;

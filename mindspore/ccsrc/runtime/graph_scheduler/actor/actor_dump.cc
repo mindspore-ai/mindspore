@@ -171,7 +171,7 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
 void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   const auto &actor_name = actor->GetAID().Name();
-  ofs << "\tactor_name:" << actor_name << "\n";
+  ofs << "\tactor_name:" << actor_name << "\tactor_id:" << actor->actor_id() << "\n";
 
   if (actor->type() == KernelTransformType::kDeviceDataSourceActor) {
     // Dump the member info of device queue data source actor.
@@ -186,6 +186,7 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+          << "\tstream id:" << device_tensor->stream_id()
           << "\toriginal_ref_count:" << device_tensor->original_ref_count()
           << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
           << "\n ";
@@ -203,6 +204,7 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
       ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node.first->fullname_with_scope()
           << "\tdebug_name:" << data_node.first->DebugString() << "\tindex:" << data_node.second
           << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+          << "\tstream id:" << device_tensor->stream_id()
           << "\toriginal_ref_count:" << device_tensor->original_ref_count()
           << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
           << "\n ";
@@ -215,13 +217,13 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
 
 void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
 
   const auto &kernel = actor->kernel();
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_info = dynamic_cast<KernelInfo *>(kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
-  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
+  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope() << "\tstream id:" << kernel_info->stream_id()
       << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
       << "\tignored_input_addresses_num:" << SchedulerHelper::GetIgnoredInputAddressCount(kernel)
       << "\toutputs_num:" << AnfAlgo::GetOutputTensorNum(kernel) << "\tis_dynamic_shape:" << actor->is_dynamic_shape()
@@ -232,6 +234,7 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+        << "\tstream id:" << device_tensor->stream_id()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
         << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_outputs, i)
@@ -245,6 +248,7 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     auto &device_tensor = workspace_addresses[i];
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\tworkspace_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+        << "\tstream id:" << device_tensor->stream_id()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
         << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_workspace, i)
@@ -272,21 +276,21 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
 
 void DumpCustomActor(const CustomActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
   DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
 
 void DumpSwapActor(const MemorySwapActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
   DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
 
 void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
 
   const auto &graph = actor->graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -302,7 +306,7 @@ void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
 
 void DumpAnyTypeKernelActor(const AnyTypeKernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
   const auto &graph = actor->graph();
   MS_EXCEPTION_IF_NULL(graph);
   ofs << "\t\tgraph_id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
@@ -316,7 +320,7 @@ void DumpAnyTypeKernelActor(const AnyTypeKernelActor *actor, std::ofstream &ofs)
 
 void DumpMemoryActor(const MemoryAwareActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
 
   SomasInfo *somas_info = nullptr;
   if (actor->type() == KernelTransformType::kMemoryAllocActor) {
@@ -339,11 +343,12 @@ void DumpMemoryActor(const MemoryAwareActor *actor, std::ofstream &ofs) {
 
 void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
 
   auto &device_tensor = actor->output();
   if (device_tensor != nullptr) {
     ofs << "\t\toutput_index:" << 0 << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+        << "\tstream id:" << device_tensor->stream_id()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag() << "\n ";
   }
@@ -356,7 +361,7 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
 
 void DumpFusionActor(const FusionActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
   ofs << "\t\tsub actors:" << actor->sub_actors().size() << "\n";
   for (auto &sub_actor : actor->sub_actors()) {
     ofs << "\t\t\tsub_actor_name:" << sub_actor.first << "\n";
@@ -476,13 +481,13 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
 
 void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << '\n';
   DumpControlActor(actor, ofs);
 }
 
 void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << '\n';
   ofs << "\t\tbranch id:" << actor->branch_id() << '\n';
   DumpControlActor(actor, ofs);
 
@@ -517,7 +522,7 @@ void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
 
 void DumpEntranceActor(const EntranceActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << '\n';
   DumpControlActor(actor, ofs);
 
   if (actor->loop_body_input_control_arrow_aids().size() > 0) {
@@ -530,7 +535,7 @@ void DumpEntranceActor(const EntranceActor *actor, std::ofstream &ofs) {
 
 void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << '\n';
   DumpControlActor(actor, ofs);
 
   ofs << "\t\toutput index:" << '\n';
@@ -596,7 +601,7 @@ void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
 
 void DumpStackActor(const StackActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << '\n';
   ofs << "\t\tinput stack data num:" << actor->input_stack_data_num() << '\n';
   ofs << "\t\tinput stack partial num:" << actor->input_stack_partials_num() << '\n';
   ofs << "\t\tinput stack control num:" << actor->input_stack_controls_num() << '\n';
@@ -650,7 +655,7 @@ void DumpDataPrepareActor(const DataPrepareActorPtr &actor, std::ofstream &ofs) 
     return;
   }
 
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id() << "\n";
   DumpAbstractActor(actor.get(), ofs);
 
   ofs << "\t\tcontinuous_memory_nodes:" << actor->continuous_memory_nodes().size() << "\n ";
@@ -669,7 +674,8 @@ void DumpLoopCountActor(const LoopCountActorPtr &actor, std::ofstream &ofs) {
     return;
   }
 
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id()
+      << "\tloop_count:" << actor->loop_count() << "\n";
   DumpAbstractActor(actor.get(), ofs);
 
   ofs << "\t\t\tto_data_prepare_actor:" << actor->data_prepare_aid().Name() << "\n";
@@ -684,8 +690,8 @@ void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {
     return;
   }
 
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count()
-      << "\toutputs_num:" << actor->outputs_num() << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tactor_id:" << actor->actor_id()
+      << "\tloop_count:" << actor->loop_count() << "\toutputs_num:" << actor->outputs_num() << "\n";
 
   DumpAbstractActor(actor.get(), ofs);
 }

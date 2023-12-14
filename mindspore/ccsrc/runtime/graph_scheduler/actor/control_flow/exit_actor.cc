@@ -48,6 +48,9 @@ void ExitActor::Init() {
 
 void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  auto counter = callback_counter();
+  MS_EXCEPTION_IF_NULL(counter);
+  counter->Wait();
   ControlActor::FetchInput(context);
 
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());

@@ -17,9 +17,14 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_UTILS_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_UTILS_H_
 
+#include <pthread.h>
+
+#include <atomic>
+#include <memory>
 #include <string>
 #include <set>
 #include <vector>
+
 #include "common/util/error_manager/error_manager.h"
 #include "include/backend/kernel_graph.h"
 
@@ -61,6 +66,31 @@ class ErrorManagerAdapter {
 
 std::string GetAscendPath();
 std::string GetErrorMsg(uint32_t rt_error_code);
+
+void *callback_thread_func(void *data);
+
+// Callback thread for ascend streams.
+struct CallbackThread {
+  ~CallbackThread() { cancel(); }
+
+  // pthread_cancel may cause bug now, so just set flag to false.
+  void cancel() {
+    if (flag_.load()) {
+      flag_.store(false);
+    }
+  }
+
+  int create() {
+    flag_.store(true);
+    return pthread_create(&thread_, nullptr, &callback_thread_func, this);
+  }
+
+  pthread_t thread_;
+  std::atomic_bool flag_{true};
+  int32_t default_timeout_{100};
+};
+using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
+
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

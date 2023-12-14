@@ -74,6 +74,17 @@ void MemoryActorInsert::InsertMemoryAllocActor(ActorSet *const actor_set, Abstra
   SchedulerHelper::AddControlArrow(alloc_actor, actor);
 }
 
+namespace {
+std::set<uint32_t> GetKernelGraphStreamIds(const KernelGraphPtr &kernel_graph) {
+  std::set<uint32_t> stream_ids;
+  const auto &execution_nodes = kernel_graph->execution_order();
+  for (const auto &node : execution_nodes) {
+    stream_ids.emplace(AnfAlgo::GetStreamId(node));
+  }
+  return stream_ids;
+}
+}  // namespace
+
 void MemoryActorInsert::InsertMemoryFreeActor(ActorSet *const actor_set, AbstractActor *const actor,
                                               SomasInfo *somas_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -90,6 +101,11 @@ void MemoryActorInsert::InsertMemoryFreeActor(ActorSet *const actor_set, Abstrac
     MS_EXCEPTION_IF_NULL(memory_aware_actor);
     auto free_actor_ptr = std::make_shared<MemoryFreeActor>(free_actor_name, memory_aware_actor->memory_manager_aid(),
                                                             somas_info, device_contexts[0]);
+    auto kernel_graph = SchedulerHelper::FetchKernelGraphByActor(actor);
+    auto stream_ids = GetKernelGraphStreamIds(kernel_graph);
+    for (auto stream_id : stream_ids) {
+      free_actor_ptr->AddStreamId(stream_id);
+    }
     (void)actor_set->memory_actors_.emplace_back(free_actor_ptr);
     free_actor = free_actor_ptr.get();
     InsertActor(free_actor);

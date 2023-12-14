@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
 #include <cstddef>
+#include <atomic>
 #include <map>
 #include <memory>
 #include <optional>
@@ -90,7 +91,7 @@ class PointerRefCount {
   PointerRefCount(const PointerRefCount &other)
       : ptr_(other.ptr_),
         original_ref_count_(other.original_ref_count_),
-        ref_count_(other.ref_count_),
+        ref_count_(other.ref_count_.load()),
         dynamic_ref_count_(other.dynamic_ref_count_.load()),
         deleter_(other.deleter_) {}
 
@@ -117,11 +118,30 @@ class PointerRefCount {
   // Set whether pointer in PointerRefCount is allocated from the memory pool.
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
 
+  // Increase ref count or dynamic ref count.
+  size_t IncreaseCounter() {
+    if (ref_count_ != SIZE_MAX) {
+      return ++ref_count_;
+    } else if (dynamic_ref_count_ != INT32_MAX) {
+      return ++dynamic_ref_count_;
+    }
+    return SIZE_MAX;
+  }
+  // Decrease ref count or dynamic ref count.
+  size_t DecreaseCounter() {
+    if (ref_count_ != SIZE_MAX) {
+      return --ref_count_;
+    } else if (dynamic_ref_count_ != INT32_MAX) {
+      return --dynamic_ref_count_;
+    }
+    return SIZE_MAX;
+  }
+
   // The related interface of static reference count operation.
   void set_original_ref_count(size_t original_ref_count) { original_ref_count_ = original_ref_count; }
   size_t original_ref_count() const { return original_ref_count_; }
   void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
-  size_t ref_count() const { return ref_count_; }
+  size_t ref_count() const { return ref_count_.load(); }
   void IncreaseOriginalRefCount() {
     if (original_ref_count_ < SIZE_MAX) {
       original_ref_count_++;
@@ -132,7 +152,7 @@ class PointerRefCount {
       original_ref_count_--;
     }
   }
-  void DecreaseRefCount() { ref_count_--; }
+  size_t DecreaseRefCount() { return --ref_count_; }
   void ResetRefCount() { ref_count_ = original_ref_count_; }
 
   // The related interface of dynamic reference count operation.
@@ -168,7 +188,7 @@ class PointerRefCount {
   size_t original_ref_count_{1};
   // The current reference count value, it will be decreased in the running, and reset by original_ref_count_ when it is
   // zero.
-  size_t ref_count_{1};
+  std::atomic<size_t> ref_count_{1};
 
   // The dynamic reference count, the value can be calculated at compile phase.
   std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
@@ -261,7 +281,7 @@ struct KernelDeviceInfo {
   uint32_t device_id_{0};
 
   // The stream index in all stream array managed by Framework, starting from 0.
-  uint32_t stream_id_{0};
+  uint32_t stream_id_{UINT32_MAX};
 };
 
 // Used to encapsulate host-side related data structures in KernelTensor.
