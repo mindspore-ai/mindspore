@@ -300,9 +300,20 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting cell list";
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
-  for (size_t it = 0; it < list.size(); ++it) {
+
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
+  for (const auto &element : list) {
+    // An element will directly convert to InterpretedObject if:
+    //   1. The container is not a cell list object.
+    //   2. The element should be single cell (cell with no __cell_as_list__ attr).
+    bool to_interpret = !is_celllist && py::isinstance<Cell>(element) && !py::hasattr(element, "__cell_as_list__");
+    if (to_interpret) {
+      value_list.push_back(std::make_shared<parse::InterpretedObject>(element));
+      continue;
+    }
     ValuePtr out = nullptr;
-    bool success = ConvertData(list[it], &out, use_signature);
+    bool success = ConvertData(element, &out, use_signature);
     if (!success) {
       return nullptr;
     }

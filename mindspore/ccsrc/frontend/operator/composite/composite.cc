@@ -1792,7 +1792,8 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
     const auto &elements = tuple_abs->elements();
     if (std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &e) {
           MS_EXCEPTION_IF_NULL(e);
-          return e->isa<abstract::FuncGraphAbstractClosure>() || e->isa<abstract::PartialAbstractClosure>();
+          return e->isa<abstract::FuncGraphAbstractClosure>() || e->isa<abstract::PartialAbstractClosure>() ||
+                 e->isa<abstract::PrimitiveAbstractClosure>();
         })) {
       ret_graph->set_output(ret_graph->NewCNodeInOrder({NewValueNode(prim::kPrimSwitchLayer), index, tuple}));
       return ret_graph;

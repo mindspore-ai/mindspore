@@ -493,9 +493,14 @@ def is_cell_list(obj):
     return isinstance(obj, nn.CellList)
 
 
+def is_module_list(obj):
+    """Check if obj is nn.ModuleList"""
+    return hasattr(obj, "__cell_as_list__") and not isinstance(obj, nn.CellList)
+
+
 def convert_cell_list_to_sequence(obj):
     """Convert nn.CellList to sequence."""
-    if not isinstance(obj, nn.CellList):
+    if not hasattr(obj, "__cell_as_list__"):
         raise TypeError(f"Obj should be nn.CellList, but got {obj}")
     if not hasattr(obj, "_cells"):
         raise AttributeError(f"nn.CellList is missing _cells property.")
