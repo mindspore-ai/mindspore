@@ -312,7 +312,8 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
   if (slice_allgathers.size() == 0) {
     return;
   }
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1 ||
+      parallel::ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
     int64_t current_micro = -1;
     std::vector<CNodePtr> stage_slice_allgathers;
     for (auto &slice_allgather_node : slice_allgathers) {
