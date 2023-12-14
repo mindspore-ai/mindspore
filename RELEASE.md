@@ -2,6 +2,44 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.10 Release Notes
+
+### Major Features and Improvements
+
+#### Operators
+
+- [STABLE] FastGelu, BatchMatMul, AllReduce, AllGather, Broadcast, ReduceScatter support bfloat16 data type
+- [STABLE] AllGather/ReduceScatter support unit8 data type
+
+### Bug Fixes
+
+- [#I8ALW3] Fixed networks including Faster R-CNN, DeepText, MaskRCNN-ResNet50, which had errors while training RandomChoiceWithMask operator in Ascend 910 8P scenario.
+- [#I8LKG7] Fixed graph compilation error of UNet-2D in Ascend 910 1P/8P scenario.
+- [#I8KU3X] Fixed CRNN-ResNet34 network, which stuck in training phase in Ascend 910 1P/8P PyNative mode.
+- [#I8KTHH] Fixed BERT network error when training without allreduce grouped fusion with enable_parallel_optimizer=True, in Ascend 910 8P scenario.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+李林杰, TuDouNi, chengxb7532, Henry Shi, rms-infer-type, 朱家兴, zhouyaqiang0, tanghuikang, gaoyong10, gengdongjie, yao_yf, hujiahui8, hanhuifeng, shenyaxin, KevinYi, 冯一航, chengfeng27, JuiceZ, zhangyanhui, jijiarong, xiaoxiongzhu, 没有窗户的小巷, ling, liyan2022, haozhang, zangqx, xiaoyao, liujunzhu, 胡彬, panzhihui, wangshaocong, linqingke, jianghui58, qiuzhongya, yangruoqi713, zhangminli, moran, 王禹程, shaojunsong, wangtongyu6, zhupuxu, luoyang, 徐安越, qinzheng, caifubi, 徐永飞, chenkang, youshu, XinDu, liubuyu, jxl, yeyunpeng2020, huoxinyou, yefeng, jiaorui, wangpingan, cao1zhg, zjun, zyli2020, yanjiaming, Cynthia叶, 胡安东, 李良灿, liruyu, liuluobin, lihao, huangbingjian, YijieChen, jjfeing, looop5, 刘力力, xiaoxin_zhang, yangluhang, chenweifeng, jiangshanfeng, zichun_ye, 陈宇, NaCN, ligan, YingLai Lin, huangziling, chenjianping, DeshiChen, chengbin, kairui_kou, ccsszz, yanghaoran, zhangdanyang, Yanzhi_YI, zhengzuohe, hangq, TronZhang, wanghenchang, HighCloud, 吕浩宇, VectorSL, ZPaC, mengyuanli, maning202007, 刘勇琪, r1chardf1d0, fary86, 刘崇鸣, yuchaojie, douzhixing, fengyixing
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.10 Release Notes
+
+### Bug Fixes
+
+- [#I8K7CC] Optimize error message when non-string segments are passed to get_model_info.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+gengdongjie, zhangyanhui, xiaoxiongzhu, wangshaocong, jianghui58, moran, wangtongyu6, 徐安越, qinzheng, 徐永飞, youshu, XinDu, yeyunpeng2020, yefeng, wangpingan, zjun, 胡安东, 刘力力, 陈宇, chenjianping, kairui_kou, zhangdanyang, hangq, mengyuanli, 刘崇鸣
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.1 Release Notes
 
 ### Bug Fixes
