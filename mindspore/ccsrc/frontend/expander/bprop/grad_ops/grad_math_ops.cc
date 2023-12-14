@@ -1201,9 +1201,6 @@ REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
   }
   auto axis = ib->GetInput(kIndex1);
-  if (GetIntList(axis).empty()) {
-    return {ib->RealDiv(x, x), ib->OutZeros(axis)};
-  }
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto grad = SumGrad(ib, x, axis, dout);
