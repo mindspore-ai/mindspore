@@ -99,7 +99,16 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   (void)primitive->AddAttr(kAttrChannelName, MakeValue(kChannelNameNpuLog));
   (void)primitive->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{-1, num_inputs, -1}));
 
-  return cnode;
+  // add depend node for print
+  auto tensor = std::make_shared<tensor::Tensor>(0.0);
+  ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
+  kernel_graph->AddValueNodeToGraph(value_node);
+  std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node, cnode};
+  auto new_depend_node = func_graph->NewCNode(depend_input);
+  MS_EXCEPTION_IF_NULL(new_depend_node);
+  new_depend_node->set_abstract(value_node->abstract());
+
+  return new_depend_node;
 }
 }  // namespace opt
 }  // namespace mindspore
