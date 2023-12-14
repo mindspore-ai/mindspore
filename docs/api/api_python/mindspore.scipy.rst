@@ -1,15 +1,15 @@
 mindspore.scipy
 ===============
 
-Scipy-like interfaces in mindspore.
+MindSpore中类似Scipy的接口。
 
 .. warning::
-    These are experimental APIs that are subject to change or deletion.
+    这些是实验性API，可能会被更改或删除。
 
 mindspore.scipy.linalg
 ----------------------
 
-Linear algebra submodule.
+线性代数子模块。
 
 .. msplatformautosummary::
     :toctree: scipy
@@ -28,7 +28,7 @@ Linear algebra submodule.
 mindspore.scipy.optimize
 ------------------------
 
-Optimize submodule.
+优化器子模块。
 
 .. msplatformautosummary::
     :toctree: scipy
