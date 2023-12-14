@@ -739,8 +739,8 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
     auto perm = ib->Range(dim);
     auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
       return ib->Emit("StridedSlice",
-                      {perm, ib->Tensor(std::vector<int64_t>{begin}), ib->Tensor(std::vector<int64_t>{end}),
-                       ib->Tensor(std::vector<int64_t>{step})},
+                      {perm, ib->Value<ShapeVector>(ShapeVector{begin}), ib->Value<ShapeVector>(ShapeVector{end}),
+                       ib->Value<ShapeVector>(ShapeVector{step})},
                       {{"begin_mask", MakeValue<int64_t>(0LL)},
                        {"end_mask", MakeValue<int64_t>(end_mask)},
                        {"ellipsis_mask", MakeValue<int64_t>(0LL)},
