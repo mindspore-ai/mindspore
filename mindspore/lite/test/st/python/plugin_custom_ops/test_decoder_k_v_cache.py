@@ -58,16 +58,35 @@ def np_inference(cache, update, valid_seq_len):
     """
     np_inference
     """
+    cache_rank = len(cache.shape)
     ans = cache.copy()
+    if cache_rank == 4:
+        s_ = cache.shape[2]
+        us_ = update.shape[2]
+    elif cache_rank == 3:
+        s_ = cache.shape[1]
+        us_ = update.shape[1]
     for b_idx in range(cache.shape[0]):
         s_idx = valid_seq_len[b_idx]
         if s_idx < 0:
             continue
+        if s_idx + us_ > s_:
+            s_idx %= s_
         if is_4d:
             ans[b_idx, :, s_idx, :] = update[b_idx, :, 0, :]
         else:
             ans[b_idx, s_idx, :] = update[b_idx, 0, :]
     return ans
+
+
+def generate_random_array(max_num: int, block_size: int, size: int) -> np.ndarray:
+    arr = np.zeros(size, dtype=int)
+    for i in range(size):
+        while True:
+            arr[i] = np.random.randint(low=-1, high=max_num)
+            if np.count_nonzero(arr[:i] % block_size == arr[i] % block_size) == 0:
+                break
+    return arr
 
 
 def create_numpy_inputs():
@@ -83,7 +102,7 @@ def create_numpy_inputs():
         update_shape = (b, us, h * d)
     cache = np.random.rand(*cache_shape).astype(np.float16)
     update = np.random.rand(*update_shape).astype(np.float16)
-    valid_seq_len = np.random.randint(-1, s, size=b).astype(np.int64)
+    valid_seq_len = generate_random_array(4*s, s, b).astype(np.int64)
     batch_index = np.array([1]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
     new_max_seq_len = np.array([s]).astype(np.int64)
