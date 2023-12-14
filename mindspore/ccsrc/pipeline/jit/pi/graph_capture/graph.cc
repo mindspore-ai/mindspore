@@ -232,7 +232,7 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
 }
 
 void Graph::print(int depth) const {
-  std::string prefix(depth, ' ');
+  std::string prefix(depth << 1, ' ');
   if (!cfg_.get()) {
     GRAPH_JIT_LOG_F("%s empty graph\n", prefix.c_str());
     return;
