@@ -737,33 +737,19 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   if (IsDynamicRank(shape)) {
     auto dim = ib->Emit("Rank", {x});
     auto perm = ib->Range(dim);
-    auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
+    auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
       return ib->Emit("StridedSlice",
-                      {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(1))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(2)))},
+                      {perm, ib->Tensor(std::vector<int64_t>{begin}), ib->Tensor(std::vector<int64_t>{end}),
+                       ib->Tensor(std::vector<int64_t>{step})},
                       {{"begin_mask", MakeValue<int64_t>(0LL)},
-                       {"end_mask", MakeValue<int64_t>(0LL)},
+                       {"end_mask", MakeValue<int64_t>(end_mask)},
                        {"ellipsis_mask", MakeValue<int64_t>(0LL)},
                        {"new_axis_mask", MakeValue<int64_t>(0LL)},
                        {"shrink_axis_mask", MakeValue<int64_t>(0LL)}});
     };
-    auto normalize_slice_helper = [&perm, &ib](int64_t x, int64_t y, int64_t z,
-                                               const std::vector<int64_t> &init_by_none) {
-      return ib->Emit("NormalizeSlice",
-                      {perm, ib->Value(static_cast<int64_t>(x)), ib->Value(static_cast<int64_t>(y)),
-                       ib->Value(static_cast<int64_t>(z))},
-                      {{kAttrTupleIndexAxis, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrTupleIndexTypes, MakeValue({})},
-                       {kAttrExpandDimsMask, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrInitByNone, MakeValue(init_by_none)}});
-    };
-    auto range_1 = normalize_slice_helper(0, -2, 0, {1, 0, 1});
-    auto range_2 = normalize_slice_helper(-1, 0, 0, {0, 1, 1});
-    auto range_3 = normalize_slice_helper(-2, -1, 0, {0, 0, 1});
-    auto part_1 = stridedslice_helper(range_1);
-    auto part_2 = stridedslice_helper(range_2);
-    auto part_3 = stridedslice_helper(range_3);
+    auto part_1 = stridedslice_helper(0, -2, 1);
+    auto part_2 = stridedslice_helper(-1, 0, 1, 1);
+    auto part_3 = stridedslice_helper(-2, -1, 1);
     perm = ib->Concat({part_1, part_2, part_3}, -1);
     return ib->Transpose(x, ib->TensorToTuple(perm));
   }
