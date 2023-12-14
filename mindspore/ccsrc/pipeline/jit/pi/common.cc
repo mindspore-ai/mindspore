@@ -880,7 +880,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 
 static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
-
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
+                                     "PIJitGuard");
   c->code = nullptr;
   std::map<std::string, PyObject *> cache;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
@@ -1003,8 +1004,6 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       just_compiled = true;
     /* fallthrough */
     case JitCompileResults::GRAPH_CALLABLE: {
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
-                                         "PIJitGuard");
       if (CheckGuard(c, frame)) {
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
