@@ -17,6 +17,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import numpy as np
+from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore._c_expression import TensorTransform
@@ -221,6 +222,8 @@ def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
         rank = rank_id
     tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
+    if tensor.dtype == mstype.bfloat16:
+        tensor = tensor.float()
     np_tensor = tensor.asnumpy()
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
@@ -260,7 +263,7 @@ def _load_tensor_by_layout(tensor, layout, rank_id):
         rank = get_rank(group)
         size = get_group_size(group)
         tensor_slice = np.split(tensor_slice, size)[rank]
-    return Tensor(tensor_slice)
+    return Tensor(tensor_slice, tensor.dtype)
 
 
 def _reshape_param_data(param_data, dev_mat, tensor_map):
