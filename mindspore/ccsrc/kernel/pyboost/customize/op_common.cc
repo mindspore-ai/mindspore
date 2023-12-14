@@ -34,8 +34,9 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   op->set_outputs(outputs);
 
-  // Create device address for inputs and outputs
+  // Create device address for input tensors
   PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
+  // Create device address for output tensors
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
@@ -44,7 +45,7 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
 
-    // Create device address for input tensors
+    // Malloc for input tensors
     PyBoostUtils::MallocOpInputs(device_context, input_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);

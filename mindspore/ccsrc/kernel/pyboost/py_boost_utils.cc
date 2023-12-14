@@ -32,57 +32,6 @@ using DeviceAddressPromise = pynative::DeviceAddressPromise;
 using DeviceAddressFutureDataPtr = pynative::DeviceAddressFutureDataPtr;
 using DeviceAddressFuture = pynative::DeviceAddressFuture;
 
-namespace {
-template <typename T>
-tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
-  if (scalar == nullptr) {
-    MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
-  }
-  TypePtr data_type = scalar->type();
-  MS_EXCEPTION_IF_NULL(data_type);
-  TypeId type_id = data_type->type_id();
-  T value;
-  switch (type_id) {
-    case kNumberTypeBool:
-      value = static_cast<T>(GetValue<bool>(scalar));
-      break;
-    case kNumberTypeInt8:
-      value = static_cast<T>(GetValue<int8_t>(scalar));
-      break;
-    case kNumberTypeInt16:
-      value = static_cast<T>(GetValue<int16_t>(scalar));
-      break;
-    case kNumberTypeInt32:
-      value = static_cast<T>(GetValue<int32_t>(scalar));
-      break;
-    case kNumberTypeInt64:
-      value = static_cast<T>(GetValue<int64_t>(scalar));
-      break;
-    case kNumberTypeUInt8:
-      value = static_cast<T>(GetValue<uint8_t>(scalar));
-      break;
-    case kNumberTypeUInt16:
-      value = static_cast<T>(GetValue<uint16_t>(scalar));
-      break;
-    case kNumberTypeUInt32:
-      value = static_cast<T>(GetValue<uint32_t>(scalar));
-      break;
-    case kNumberTypeUInt64:
-      value = static_cast<T>(GetValue<uint64_t>(scalar));
-      break;
-    case kNumberTypeFloat32:
-      value = static_cast<T>(GetValue<float>(scalar));
-      break;
-    case kNumberTypeFloat64:
-      value = static_cast<T>(GetValue<double>(scalar));
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
-  }
-  return std::make_shared<tensor::Tensor>(value, type);
-}
-}  // namespace
-
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
@@ -187,13 +136,7 @@ void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const Tens
   auto output_tensor = std::make_shared<tensor::Tensor>(storage_info->data_type, storage_info->shape);
   output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
   output_tensor->set_storage_info(storage_info);
-  if (input->address_future()) {
-    output_tensor->set_address_future(input->address_future());
-  } else if (input->device_address()) {
-    output_tensor->set_device_address(input->device_address());
-  } else {
-    MS_EXCEPTION_IF_NULL(input->device_address());
-  }
+  output_tensor->set_device_address(input->device_address());
   output_tensor->set_contiguous_callback([](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
                                             const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
     if (tensor != nullptr) {
@@ -230,66 +173,6 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     return output_abs;
   }
   MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
-}
-
-device::DeviceAddressPtrList PyBoostUtils::CreateOutputDeviceAddress(DeviceContext *device_context,
-                                                                     const abstract::AbstractBasePtr &abs,
-                                                                     const std::vector<TensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(abs);
-
-  auto output_size = outputs.size();
-  device::DeviceAddressPtrList output_device_address;
-  if (output_size == 1) {
-    (void)output_device_address.emplace_back(
-      runtime::DeviceAddressUtils::CreateOutputAddress(device_context, abs, kIndex0, outputs[kIndex0]));
-  } else {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    if (output_size != abs_seq->size()) {
-      MS_LOG(EXCEPTION) << "Outputs size " << output_size << " but output abstract size " << abs_seq->size();
-    }
-    for (size_t i = 0; i < output_size; ++i) {
-      (void)output_device_address.emplace_back(
-        runtime::DeviceAddressUtils::CreateOutputAddress(device_context, abs_seq->elements()[i], i, outputs[i]));
-    }
-  }
-  return output_device_address;
-}
-
-tensor::TensorPtr PyBoostUtils::ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
-  if (scalar == nullptr) {
-    MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
-  }
-  TypePtr data_type = scalar->type();
-  MS_EXCEPTION_IF_NULL(data_type);
-  TypeId type_id = type->type_id();
-  switch (type_id) {
-    case kNumberTypeBool:
-      return CastToTensor<bool>(scalar, type);
-    case kNumberTypeInt8:
-      return CastToTensor<int8_t>(scalar, type);
-    case kNumberTypeInt16:
-      return CastToTensor<int16_t>(scalar, type);
-    case kNumberTypeInt32:
-      return CastToTensor<int32_t>(scalar, type);
-    case kNumberTypeInt64:
-      return CastToTensor<int64_t>(scalar, type);
-    case kNumberTypeUInt8:
-      return CastToTensor<uint8_t>(scalar, type);
-    case kNumberTypeUInt16:
-      return CastToTensor<uint16_t>(scalar, type);
-    case kNumberTypeUInt32:
-      return CastToTensor<uint32_t>(scalar, type);
-    case kNumberTypeUInt64:
-      return CastToTensor<uint64_t>(scalar, type);
-    case kNumberTypeFloat32:
-      return CastToTensor<float>(scalar, type);
-    case kNumberTypeFloat64:
-      return CastToTensor<double>(scalar, type);
-    default:
-      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the dst type: " << type << " is invalid.";
-  }
 }
 
 tensor::TensorPtr PyBoostUtils::ContiguousTensor(const tensor::TensorPtr &input_tensor) {

@@ -3,9 +3,10 @@ InferOutput(${call_args});
 
 ${tensor_list_convert}
 
-// Create device address for inputs and outputs
+// Create device address for input tensors
 ${create_input_address}
 ${inplace_process}
+// Create device address for output tensors
 PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
 
 // Async
@@ -15,7 +16,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor
   auto device_context = op->device_context();
   const auto &outputs = op->outputs();
 
-  // Create device address for inputs
+  // Malloc for input tensors
   ${malloc_inputs}
 
   // Malloc for output tensors
