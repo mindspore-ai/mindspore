@@ -82,7 +82,7 @@ def _overflow(inputs):
 def _all_finite(inputs, check_overflow_mode):
     """all finite check"""
     if (_ascend_910A_target()) or \
-       (_ascend_910B_target() and check_overflow_mode != "INFNAN_MODE"):
+       (_ascend_910B_target() and check_overflow_mode == "SATURATION_MODE"):
         status = Tensor([0] * 8, mstype.int32)
         status = ops.depend(status, inputs)
         get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
