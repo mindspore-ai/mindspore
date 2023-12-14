@@ -1632,7 +1632,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
   // If enable compilation cache and the cache is read successfully, only do the backend actions.
-  if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
+  if (IsPhaseLoadFromMindIR(PhaseManager::GetInstance().phase())) {
+    actions = MindIRPipeline();
+  } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
     actions = CommonPipeline();
 
     // Optimize
@@ -1690,10 +1692,6 @@ std::vector<ActionItem> MindIRPipeline() {
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
   (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
-  // Compile the ANF graph
-  (void)actions.emplace_back(std::make_pair(kTaskEmit, TaskEmitAction));
-  // Execute the graph
-  (void)actions.emplace_back(std::make_pair(kExecute, ExecuteAction));
   return actions;
 }
 }  // namespace pipeline

@@ -890,14 +890,7 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
 
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
-  bool is_air = IsPhaseExportAir(phase);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->backend_policy();
   compile::SetMindRTEnable();
-  if (use_vm && backend != "ge" && !is_air && IsPhaseLoadFromMindIR(phase)) {
-    return MindIRPipeline();
-  }
   return VmPipeline(resource);
 }
 
