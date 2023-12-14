@@ -45,6 +45,12 @@ class PromptKVCacheInfo : public OperatorInfo {
   Status InferForwardCommunication() { return SUCCESS; }
   Status InferTensorMap() override;
   Status InferDevMatrixShape() override;
+  Status SetDims(const StrategyPtr &strategy);
+  Status CheckStrategy3Dims(const Dimensions &strategy_cache, const Dimensions &strategy_update);
+  Status CheckStrategy4Dims(const Dimensions &strategy_cache, const Dimensions &strategy_update);
+
+ private:
+  bool is_input_dims_4_ = true;
 };
 using PromptKVCacheInfoPtr = std::shared_ptr<PromptKVCacheInfo>;
 }  // namespace parallel
