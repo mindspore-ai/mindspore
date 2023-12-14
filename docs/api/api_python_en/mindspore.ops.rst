@@ -3,8 +3,6 @@ mindspore.ops
 
 For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of ops Interface <https://mindspore.cn/docs/en/r2.2/note/dynamic_shape_func.html>`_ .
 
-For more information about the support for the bfloat16 data type, please refer to `Support List <https://mindspore.cn/docs/en/r2.2/note/bfloat16_support.html>`_ .
-
 Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/r2.2/resource/api_updates/func_api_updates_en.md>`_.
 
 Neural Network Layer Functions

@@ -3,8 +3,6 @@ mindspore.ops
 
 动态shape的支持情况详见 `ops接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/r2.2/note/dynamic_shape_func.html>`_ 。
 
-bfloat16数据类型的支持情况详见 `支持列表 <https://mindspore.cn/docs/zh-CN/r2.2/note/bfloat16_support.html>`_ 。
-
 MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://gitee.com/mindspore/docs/blob/r2.2/resource/api_updates/func_api_updates_cn.md>`_ 。
 
 神经网络层函数
