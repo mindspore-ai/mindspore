@@ -20,8 +20,8 @@ namespace mindspore {
 namespace kernel {
 void BroadcastToAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  const auto &attr_list = primitive()->attrs();
-  shape_ = std::move(GetValue<std::vector<int64_t>>(attr_list.at("shape")));
+  const auto &attrs = primitive()->attrs();
+  shape_ = std::move(GetValue<std::vector<int64_t>>(attrs.at("shape")));
   auto return_value = GEN_EXECUTOR(op_type_, inputs[0], shape_, outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }
@@ -34,6 +34,7 @@ bool BroadcastToAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs
   RunOp(stream_ptr, workspace);
   return true;
 }
+
 MS_ACLLNN_KERNEL_FACTORY_REG(BroadcastTo, BroadcastToAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
