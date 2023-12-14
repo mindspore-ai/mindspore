@@ -19,7 +19,6 @@ import pytest
 from mindspore import log as logger
 from mindspore.mindrecord import Cifar10ToMR
 from mindspore.mindrecord import FileReader
-from mindspore.mindrecord import SUCCESS
 
 CIFAR10_DIR = "../data/mindrecord/testCifar10Data"
 file_name = "./cifar10.mindrecord"
@@ -51,8 +50,6 @@ def test_cifar10_to_mindrecord_without_index_fields(fixture_file):
     assert os.path.exists(file_name + "_test")
     read(file_name)
 
-
-
 def test_cifar10_to_mindrecord(fixture_file):
     """test transform cifar10 dataset to mindrecord."""
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -61,17 +58,6 @@ def test_cifar10_to_mindrecord(fixture_file):
     assert os.path.exists(file_name)
     assert os.path.exists(file_name + "_test")
     read(file_name)
-
-def test_cifar10_to_mindrecord_with_return(fixture_file):
-    """test transform cifar10 dataset to mindrecord."""
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, file_name)
-    ret = cifar10_transformer.transform(['label'])
-    assert ret == SUCCESS, "commit failed"
-    assert os.path.exists(file_name)
-    assert os.path.exists(file_name + "_test")
-    read(file_name)
-
 
 def read(file_name):
     """test file reader"""

@@ -121,14 +121,14 @@ class ImageNetToMR:
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer.commit()
+        self.writer.commit()
 
         t1_total = time.time()
         logger.info("--------------------------------------------")
         logger.info("END. Total time: {}".format(t1_total - t0_total))
         logger.info("--------------------------------------------")
 
-        return ret
+        return 0
 
     def transform(self):
         """
@@ -136,9 +136,6 @@ class ImageNetToMR:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.ImageNetToMR` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -154,7 +151,6 @@ class ImageNetToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
     def _get_imagenet_as_dict(self):
         """

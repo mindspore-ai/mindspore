@@ -24,7 +24,7 @@ from mindspore import log as logger
 from .cifar100 import Cifar100
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
-from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
+from ..shardutils import check_filename, ExceptionThread, SUCCESS
 
 try:
     cv_import = import_module("cv2")
@@ -103,10 +103,8 @@ class Cifar100ToMR:
         data_list = _construct_raw_data(images, fine_labels, coarse_labels)
         test_data_list = _construct_raw_data(test_images, test_fine_labels, test_coarse_labels)
 
-        if _generate_mindrecord(self.destination, data_list, fields, "img_train") != SUCCESS:
-            return FAILED
-        if _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test") != SUCCESS:
-            return FAILED
+        _generate_mindrecord(self.destination, data_list, fields, "img_train")
+        _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
         return SUCCESS
 
     def transform(self, fields=None):
@@ -120,9 +118,6 @@ class Cifar100ToMR:
             fields (list[str], optional):
                 A list of index field, e.g.["fine_label", "coarse_label"]. Default: ``None`` . For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -139,7 +134,6 @@ class Cifar100ToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
 
 def _construct_raw_data(images, fine_labels, coarse_labels):
@@ -182,7 +176,7 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        MSRStatus, SUCCESS or FAILED.
+        SUCCESS or FAILED.
     """
     schema = {"id": {"type": "int64"}, "fine_label": {"type": "int64"},
               "coarse_label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -194,4 +188,4 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
     if fields and isinstance(fields, list):
         writer.add_index(fields)
     writer.write_raw_data(raw_data)
-    return writer.commit()
+    writer.commit()

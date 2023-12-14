@@ -176,9 +176,8 @@ class CsvToMR:
                         "transformed {} record...".format(transform_count))
                 break
 
-        ret = self.writer.commit()
-
-        return ret
+        self.writer.commit()
+        return 0
 
     def transform(self):
         """
@@ -186,9 +185,6 @@ class CsvToMR:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.CsvToMR` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -206,4 +202,3 @@ class CsvToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res

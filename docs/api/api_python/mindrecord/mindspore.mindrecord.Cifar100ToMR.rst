@@ -21,9 +21,6 @@
             - **fields** (list[str]，可选) - 索引字段的列表，例如['fine_label', 'coarse_label']。默认值： ``None`` 。
               索引字段的设置请参考函数 :func:`mindspore.mindrecord.FileWriter.add_index` 。
 
-        返回：
-            MSRStatus，SUCCESS或FAILED。
-
         异常：
             - **ParamTypeError** - 设置MindRecord索引字段失败。
             - **MRMOpenError** - 新建MindRecord文件失败。
