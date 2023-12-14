@@ -82,12 +82,13 @@ class AscendMsprofExporter:
             logger.warning('Get the drvVersion error, use single-export mode instead. detail : %s', err)
             return False
 
-    def export(self):
+    def export(self, model_iteration_dict=None):
         """start_time is the time to collect PROF data"""
 
         flag = self.get_drv_version()
-        if not flag:
-            model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
+        if not flag or model_iteration_dict:
+            if not model_iteration_dict:
+                model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
 
             if model_iteration_dict:
                 for model_id, value in model_iteration_dict.items():

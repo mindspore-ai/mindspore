@@ -273,12 +273,12 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
-def _ascend_graph_msprof_generator(source_path):
+def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
     """Executing the msprof export mode."""
     try:
         ProfilerInfo.set_export_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         msprof_exporter = AscendMsprofExporter(source_path)
-        flag = msprof_exporter.export()
+        flag = msprof_exporter.export(model_iteration_dict)
         ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         return flag
 
@@ -443,6 +443,7 @@ class Profiler:
         self._ascend_profiler = None
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._parallel_strategy = True
+        self._model_iteration_dict = None
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
@@ -604,7 +605,7 @@ class Profiler:
         """
         self._analyse(offline_path=offline_path)
 
-    def _analyse(self, offline_path=None):
+    def _analyse(self, offline_path=None, model_iteration_dict=None):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -612,7 +613,10 @@ class Profiler:
             offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
+            model_iteration_dict: Dictionary with model id as the key and iteration id as the value, Default: ``None``.
         """
+        self._model_iteration_dict = model_iteration_dict
+
         self._init_profiler_info()
         self._is_support_step_info_collect()
         parallel_mode = get_auto_parallel_context("parallel_mode")
@@ -1263,7 +1267,7 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
-            flag = _ascend_graph_msprof_generator(source_path)
+            flag = _ascend_graph_msprof_generator(source_path, self._model_iteration_dict)
             if not flag:
                 logger.warning('Current driver package not support all export mode, use single export mode, '
                                'this may lead to performance degradation. Suggest upgrading the driver package.')
