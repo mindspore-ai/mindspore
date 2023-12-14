@@ -2,7 +2,7 @@ mindspore.scipy
 ===============
 
 .. warning::
-    These are experimental APIs that are subject to change or deletion.
+    These are experimental APIs that are subject to change or deletion. Only support Linux.
 
 .. automodule:: mindspore.scipy
 

@@ -4,14 +4,14 @@ mindspore.scipy
 MindSpore中类似Scipy的接口。
 
 .. warning::
-    这些是实验性API，可能会被更改或删除。
+    这些是实验性API，可能会被更改或删除。只支持Linux。
 
 mindspore.scipy.linalg
 ----------------------
 
 线性代数子模块。
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -30,7 +30,7 @@ mindspore.scipy.optimize
 
 优化器子模块。
 
-.. msplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
