@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import pytest
 
 import mindspore as ms
@@ -46,14 +45,21 @@ def test_tensor_item(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
+    eps = 1e-6
     x = ms.Tensor(1.2, ms.float32)
     net = Net()
     output = net(x)
     expect_output = 1.2
-    assert np.allclose(np.array(output), expect_output)
+    assert abs(output - expect_output) <= eps
+
+    x = ms.Tensor([2.98], ms.float32)
+    net = Net()
+    output = net(x)
+    expect_output = 2.98
+    assert abs(output - expect_output) <= eps
 
     x = ms.Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
     net = Net((0, 1))
     output = net(x)
     expect_output = 2.0
-    assert np.allclose(output.asnumpy(), expect_output)
+    assert abs(output - expect_output) <= eps

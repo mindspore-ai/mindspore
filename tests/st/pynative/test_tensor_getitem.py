@@ -255,7 +255,7 @@ def test_item_by_none():
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
     output_ms = net(input_1d_ms)
-    assert np.all(output_ms == input_1d_np.item())
+    assert output_ms == input_1d_np.item()
 
     with pytest.raises(ValueError):
         net(input_3d_ms)
