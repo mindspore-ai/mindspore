@@ -109,9 +109,9 @@ ValuePtr Converter::ToTensor(size_t i) {
     return tensor;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg, i)->cast<TensorPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert = ConvertByCastDtype(obj, op_arg, i);
+    if (convert != nullptr && convert->isa<tensor::Tensor>()) {
+      return convert->cast<tensor::TensorPtr>();
     }
   }
 
@@ -156,9 +156,9 @@ Int64ImmPtr Converter::ToInt(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg, i)->cast<Int64ImmPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
+    if (convert_value != nullptr && convert_value->isa<Int64Imm>()) {
+      return convert_value->cast<Int64ImmPtr>();
     }
   }
   ThrowException(i);
@@ -209,9 +209,9 @@ BoolImmPtr Converter::ToBool(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg, i)->cast<BoolImmPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
+    if (convert_value != nullptr && convert_value->isa<BoolImm>()) {
+      return convert_value->cast<BoolImmPtr>();
     }
   }
   ThrowException(i);
@@ -264,9 +264,9 @@ FP32ImmPtr Converter::ToFloat(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg, i)->cast<FP32ImmPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
+    if (convert_value != nullptr && convert_value->isa<FP32Imm>()) {
+      return convert_value->cast<FP32ImmPtr>();
     }
   }
   ThrowException(i);
@@ -310,9 +310,9 @@ ScalarPtr Converter::ToScalar(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg, i)->cast<ScalarPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i)->cast<ScalarPtr>();
+    if (convert_value != nullptr && convert_value->isa<Scalar>()) {
+      return convert_value->cast<ScalarPtr>();
     }
   }
   ThrowException(i);
@@ -336,9 +336,9 @@ StringImmPtr Converter::ToString(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg, i)->cast<StringImmPtr>();
-    if (convert != nullptr) {
-      return convert;
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
+    if (convert_value != nullptr && convert_value->isa<StringImm>()) {
+      return convert_value->cast<StringImmPtr>();
     }
   }
   ThrowException(i);
