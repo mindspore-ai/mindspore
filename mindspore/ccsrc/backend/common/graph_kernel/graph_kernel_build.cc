@@ -182,6 +182,9 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";
   }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  sub_func_graph->set_attr("info_name", MakeValue(graph_kernel_json_generator.kernel_name()));
   return std::make_pair(graph_kernel_json_generator, node);
 }
 

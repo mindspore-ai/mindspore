@@ -62,15 +62,16 @@ CppVisitor::~CppVisitor() {
   }
 }
 
-std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table) {
+std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table,
+                                const std::string &func_name) {
   symbols_table_ = &symbol_table;
   static int64_t func_idx = 1;
   std::stringstream func;
-  std::string func_name = "symbol_engine_jit_func_" + std::to_string(func_idx);
+  std::string final_func_name = "func_" + std::to_string(func_idx) + "_" + func_name;
   func_idx++;
   var_tag_ = std::vector<int32_t>(symbols_table_->size(), 0);
   // function implementation
-  func << "extern \"C\" void " << func_name << "(const int64_t **input, int64_t** res){\n";
+  func << "extern \"C\" void " << final_func_name << "(const int64_t **input, int64_t** res){\n";
   //  assemble shape expression
   std::stringstream res_expr;
   for (size_t i = 0; i < shapes.size(); ++i) {
@@ -93,7 +94,7 @@ std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const 
   var_tag_.clear();
   null_ = false;
 
-  return func_name;
+  return final_func_name;
 }
 
 void CppVisitor::Compile() {
@@ -280,7 +281,8 @@ CppVisitor::CppVisitor() {}
 
 CppVisitor::~CppVisitor() {}
 
-std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table) {
+std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table,
+                                const std::string &func_name) {
   return "";
 }
 
