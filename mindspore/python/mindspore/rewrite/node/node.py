@@ -1150,7 +1150,7 @@ class Node:
         if not kwargs:
             kwargs = {}
         normalized_args: dict = dict()
-        if self._instance and hasattr(type(self._instance), "construct"):
+        if (args or kwargs) and self._instance and hasattr(type(self._instance), "construct"):
             parameters = inspect.signature(type(self._instance).construct).parameters
             names = Node._get_construct_arg_names(parameters)
             Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)

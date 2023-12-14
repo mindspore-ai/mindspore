@@ -208,6 +208,12 @@ class AssignParser(Parser):
         """Store current environments"""
         self._variables_cache.append(
             [self.stree, self.ast_assign, self.node_manager, self.targets, self.args, self.kwargs])
+        self.stree = None
+        self.ast_assign = None
+        self.node_manager = None
+        self.targets = None
+        self.args = None
+        self.kwargs = None
 
     def restore_env(self):
         """Restore last environments"""
