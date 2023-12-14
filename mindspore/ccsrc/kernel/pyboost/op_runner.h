@@ -88,6 +88,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // Member function for Infer and creating output tensors.
   template <typename... T>
   void InferOutput(T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
+                                       primitive_->name(), false);
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
@@ -98,6 +100,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // A static function used for the "customize" operator to generate the operator's output Tensor.
   template <typename... T>
   static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
+                                       op->primitive()->name(), false);
     (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
     op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
     PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_);

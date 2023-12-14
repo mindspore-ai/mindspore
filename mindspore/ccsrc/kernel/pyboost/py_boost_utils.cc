@@ -16,6 +16,7 @@
 
 #include "kernel/pyboost/py_boost_utils.h"
 #include <algorithm>
+#include <unordered_map>
 #include "kernel/common_utils.h"
 #include "kernel/kernel_mod_cache.h"
 #include "runtime/device/device_address_utils.h"
@@ -84,6 +85,9 @@ tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
 }  // namespace
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
   auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
@@ -218,6 +222,8 @@ void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const Tens
 
 AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs) {
   MS_EXCEPTION_IF_NULL(prim);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferByOpDef,
+                                     prim->name(), false);
   auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
   AbstractBasePtr output_abs = nullptr;
   if (frontend_func_impl) {

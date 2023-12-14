@@ -15,6 +15,8 @@ PyBoostUtils::DispatchRun(
 std::make_shared<pynative::PyBoostDeviceTask>(
   [op, ${real_call_args}]() {
       MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
+                                         op_name(), false);
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors

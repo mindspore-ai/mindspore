@@ -97,7 +97,16 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeGradExpander, "Expander"},
   {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
   {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
-  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"}};
+  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
+  // PyBoost events
+  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
+  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
+  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
+  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
+  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
+  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+};
 
 namespace {
 std::string GetRealPathName(const std::string &name) {
@@ -157,7 +166,7 @@ void ProfilerAnalyzer::Initialize() {
   if (init_) {
     return;
   }
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   init_ = true;
 
   if (common::GetEnv(kEnableRuntimeProfiler) != "1") {
@@ -190,7 +199,7 @@ std::string ProfilerAnalyzer::GetTidString(const std::thread::id &tid) const {
 }
 
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   thread_id_to_name_[id] = name;
 }
 
@@ -216,7 +225,7 @@ void ProfilerAnalyzer::ProcessData() {
 }
 
 void ProfilerAnalyzer::Clear() noexcept {
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   if (!init_ || !profiler_enable_ || data_line_.empty()) {
     return;
   }
@@ -251,7 +260,7 @@ std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const 
 
 void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   MS_EXCEPTION_IF_NULL(data);
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   (void)data_.emplace_back(data);
 }
 
@@ -261,7 +270,7 @@ void ProfilerAnalyzer::StartStep() {
     return;
   }
 
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   ++step_;
   // Reset the saved data.
   data_.clear();
@@ -314,7 +323,7 @@ void ProfilerAnalyzer::EndStep() {
     return;
   }
 
-  std::unique_lock<std::mutex> lock(data_mutex_);
+  std::unique_lock<SpinLock> lock(data_mutex_);
   if (data_.empty()) {
     return;
   }
