@@ -135,7 +135,13 @@ void GeDeviceContext::Initialize() {
       auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
       auto ret = aclrtSetDeviceSatMode(mode);
       if (ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "aclrtSetDeviceSatMode failed";
+        MS_LOG(EXCEPTION) << "Set INFNAN mode failed";
+      }
+    } else {
+      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
+      auto ret = aclrtSetDeviceSatMode(mode);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Set saturation mode failed";
       }
     }
   }
