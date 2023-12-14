@@ -68,6 +68,9 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    return false;
+    /*
+    // dynamic shape default kernel be kernel before ge support
     if (GetRunMode(func_graph) == RunMode::kKernelMode) {
       return true;
     }
@@ -115,6 +118,7 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     }
     return all_support;
+    */
   }
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
@@ -126,6 +130,10 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
     return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
+  }
+  if (IsDynamicShapeFuncGraph(func_graph)) {
+    MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
+    return RunMode::kKernelMode;
   }
   if (common::GetEnv("GRAPH_OP_RUN") == "1") {
     MS_LOG(INFO) << "RunMode::kKernelMode";
