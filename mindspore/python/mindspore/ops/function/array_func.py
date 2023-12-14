@@ -61,7 +61,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
+    nonzero, flip, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
     strided_slice, ones, zeros
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -445,6 +445,14 @@ def where(condition, x, y):
     x = broadcast_to(x, output_shape)
     y = broadcast_to(y, output_shape)
     return tensor_select_(condition, x, y)
+
+
+def reverse(x, axis):
+    """
+    :func:`mindspore.ops.reverse` will be deprecated in the future.
+    Please use :func:`mindspore.ops.flip` instead.
+    """
+    return _get_cache_prim(P.array_ops.ReverseV2)(axis)(x)
 
 
 def ravel(input):
@@ -6491,6 +6499,7 @@ __all__ = [
     'aminmax',
     'sort',
     'top_k',
-    'deepcopy'
+    'deepcopy',
+    'flip'
 ]
 __all__.sort()
