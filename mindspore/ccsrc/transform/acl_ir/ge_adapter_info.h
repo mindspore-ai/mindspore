@@ -129,6 +129,11 @@ class GeAdapterInfo {
     return info_.output_idx_ms2ge.size();
   }
 
+  size_t GetNumStaticOutputsOfMsOpProto() const {
+    // Note: number of ms operator static outputs(not real outputs)
+    return adapter_->getOutputMap().size();
+  }
+
   int64_t GetDynInputMsProtoIndex() { return dyn_input_ms_proto_idx_; }
 
   int GetMaxMsProtoIndexOfInputMap() { return max_input_ms_proto_idx_; }

@@ -36,7 +36,6 @@ file(GLOB_RECURSE UNUSED_SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ge_runtime/*.cc"
         "./tasksink/*.cc"
         "./kernel_build_ascend.cc"
-        "./kernel_select_ascend.cc"
         "./kernel_select_graph_kernel.cc"
         "./ascend_label_assign.cc"
         "./ascend_launch_mul.cc"

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace transform {
 class GeAdapterInfo;
-typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp } ErrorAclType;
+typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp, kInvalidBuildInfo } ErrorAclType;
 
 class AclHelper {
  public:

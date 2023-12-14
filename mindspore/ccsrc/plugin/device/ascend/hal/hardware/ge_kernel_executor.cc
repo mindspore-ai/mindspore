@@ -29,6 +29,7 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
+#include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
@@ -45,244 +46,13 @@
 
 namespace mindspore::device::ascend {
 namespace {
-static const HashMap<::ge::DataType, std::string> kGeTypeToString = {{::ge::DataType::DT_BOOL, "bool"},
-                                                                     {::ge::DataType::DT_INT8, "int8"},
-                                                                     {::ge::DataType::DT_INT16, "int16"},
-                                                                     {::ge::DataType::DT_INT32, "int32"},
-                                                                     {::ge::DataType::DT_INT64, "int64"},
-                                                                     {::ge::DataType::DT_UINT8, "uint8"},
-                                                                     {::ge::DataType::DT_UINT16, "uint16"},
-                                                                     {::ge::DataType::DT_UINT32, "uint32"},
-                                                                     {::ge::DataType::DT_UINT64, "uint64"},
-                                                                     {::ge::DataType::DT_FLOAT16, "float16"},
-                                                                     {::ge::DataType::DT_FLOAT, "float"},
-                                                                     {::ge::DataType::DT_DOUBLE, "double"},
-                                                                     {::ge::DataType::DT_STRING, "string"},
-                                                                     {::ge::DataType::DT_COMPLEX64, "complex64"},
-                                                                     {::ge::DataType::DT_COMPLEX128, "complex128"},
-                                                                     {::ge::DataType::DT_BF16, "bf16"}};
-std::string ConvertGeTypeToString(::ge::DataType type) {
-  if (kGeTypeToString.count(type) != 0) {
-    return kGeTypeToString.at(type);
-  }
-  return "";
-}
-
-void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType acl_err_type) {
-  std::stringstream ss;
-  ss << "The current [" << node->fullname_with_scope()
-     << "] operator did not match any operator prototype library. The reason is:" << std::endl;
-
-  switch (acl_err_type) {
-    case transform::kUnknownOp: {
-      ss << "The current operator needs to be supplemented with an adapter, please check in `transform` directory."
-         << std::endl;
-      break;
-    }
-    case transform::kInValidType: {
-      auto cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      ss << "The supported input and output data types for the current operator are:" << std::endl;
-      std::string name = GetCNodeFuncName(cnode);
-      const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
-      const auto &input_supported_dtypes = info->input_supported_dtypes();
-      for (auto [index, dtypes] : input_supported_dtypes) {
-        ss << "InputDesc [" << index << "] support {";
-        for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
-        }
-        ss << "}" << std::endl;
-      }
-      const auto &output_supported_dtypes = info->output_supported_dtypes();
-      for (auto [index, dtypes] : output_supported_dtypes) {
-        ss << "OutputDesc [" << index << "] support {";
-        for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
-        }
-        ss << "}" << std::endl;
-      }
-      ss << std::endl;
-      ss << "But current operator's input and output data types is:" << std::endl;
-      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-      size_t output_num = AnfUtils::GetOutputTensorNum(node);
-      for (size_t i = 0; i < input_num; ++i) {
-        ss << "InputDesc [" << i << "] is ";
-        ss << TypeIdToString(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i)) << std::endl;
-      }
-      for (size_t i = 0; i < output_num; ++i) {
-        ss << "OutputDesc [" << i << "] is ";
-        ss << TypeIdToString(common::AnfAlgo::GetOutputInferDataType(node, i)) << std::endl;
-      }
-      break;
-    }
-    case transform::kSpecialOp: {
-      ss << "The current operator is specified not to select ACL. Please contact the relevant engineer for help."
-         << std::endl;
-      break;
-    }
-    default:
-      return;
-  }
-
-  MS_LOG(ERROR) << ss.str();
-}
-
-std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node,
-                                                                                             bool enable_aclnn) {
-  transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
-  if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
-    return {KernelType::OPAPI_KERNEL, {}};
-  }
-  auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
-  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel_type != KernelType::HCCL_KERNEL) {
-    return {kernel_type, {}};
-  }
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list{};
-  if (kernel_type == KernelType::HCCL_KERNEL) {
-    kernel::HcclMetadataInfo(cnode, &kernel_info_list);
-    return {KernelType::HCCL_KERNEL, kernel_info_list};
-  }
-  kernel::HostMetadataInfo(cnode, &kernel_info_list);
-  if (!kernel_info_list.empty()) {
-    return {KernelType::HOST_KERNEL, kernel_info_list};
-  }
-  PrintQueryAclTypeErr(node, acl_err_type);
-  return {KernelType::UNKNOWN_KERNEL_TYPE, {}};
-}
-
-std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
-                                    const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
-  MS_EXCEPTION_IF_NULL(build_info);
-  std::ostringstream output_buffer;
-  output_buffer << std::endl;
-  output_buffer << "need build info: " << std::endl;
-  output_buffer << build_info->ToString() << std::endl;
-  output_buffer << "candidate build info list: " << std::endl;
-  for (const auto &info : kernel_info_list) {
-    output_buffer << info->ToString() << std::endl;
-  }
-  return output_buffer.str();
-}
-
-using AclKernelFormatList = std::vector<std::pair<std::vector<string>, std::vector<string>>>;
-AclKernelFormatList GetValidFormat(size_t input_num, size_t output_num) {
-  std::vector<std::string> inputs_format(input_num, kOpFormat_DEFAULT);
-  std::vector<std::string> outputs_format(output_num, kOpFormat_DEFAULT);
-  return {std::make_pair(inputs_format, outputs_format)};
-}
-}  // namespace
-namespace {
-constexpr uint32_t kFirstItem = 0;
-
-TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  TypeId type = kTypeUnknown;
-  auto [input_node, idx] = common::AnfAlgo::GetPrevNodeOutput(kernel_node, input_idx);
-  MS_EXCEPTION_IF_NULL(input_node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
-  if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
-    type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_idx);
-    if (type == kTypeUnknown) {
-      MS_LOG(DEBUG) << "This node kernel build info in valid, it may be parameter or value node: "
-                    << kernel_node->DebugString() << ", idx: " << input_idx
-                    << ", input node: " << input_node->DebugString();
-      type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
-      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-      MS_EXCEPTION_IF_NULL(build_info);
-      build_info->SetOutputDeviceType(type, idx);
-    }
-  } else {
-    MS_LOG(DEBUG) << "Node no build info, node name: " << kernel_node->DebugString() << ", idx: " << input_idx
-                  << ", input node: " << input_node->DebugString();
-    type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
-  }
-  return type;
-}
-
-void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_type) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  std::vector<std::string> input_formats;
-  std::vector<std::string> output_formats;
-  std::vector<std::string> input_reshape_types;
-  std::vector<std::string> output_reshape_types;
-  auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-  auto output_num = AnfUtils::GetOutputTensorNum(kernel);
-  if (kernel_type == ACL_KERNEL) {
-    transform::AclHelper::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
-                                                  &output_reshape_types);
-  } else if (kernel_type == OPAPI_KERNEL) {
-    transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
-                                                  &output_reshape_types);
-  } else {
-    auto cand_format = GetValidFormat(input_num, output_num);
-    if (cand_format.empty()) {
-      MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope()
-                        << " does not have a supported dynamic shape format on the Ascend platform.";
-    }
-    input_formats = cand_format.at(kFirstItem).first;
-    output_formats = cand_format.at(kFirstItem).second;
-    input_reshape_types.assign(input_num, "");
-    output_reshape_types.assign(output_num, "");
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
-      auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-      if ((!transform::AclHelper::CheckDefaultSupportFormat(input_format)) && (kernel_type != HCCL_KERNEL)) {
-        MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
-                          << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
-      }
-    }
-  }
-  std::vector<TypeId> input_types;
-  input_types.reserve(input_num);
-  std::vector<TypeId> output_types;
-  output_types.reserve(output_num);
-  std::vector<kernel::KernelObjectType> input_object_types;
-  input_object_types.reserve(input_num);
-  std::vector<kernel::KernelObjectType> output_object_types;
-  output_object_types.reserve(output_num);
-
-  for (size_t i = 0; i < input_num; i++) {
-    (void)input_types.push_back(GetInputDeviceType(kernel, i));
-    // no tuple in PyNative dynamic shape
-    (void)input_object_types.push_back(kernel::KernelObjectType::TENSOR);
-  }
-  for (size_t i = 0; i < output_num; i++) {
-    (void)output_types.push_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
-    // no tuple in PyNative dynamic shape
-    (void)output_object_types.push_back(kernel::KernelObjectType::TENSOR);
-  }
-  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  MS_EXCEPTION_IF_NULL(builder);
-  builder->SetKernelType(kernel_type);
-  builder->SetInputsFormat(input_formats);
-  builder->SetInputsDeviceType(input_types);
-  builder->SetInputsKernelObjectType(input_object_types);
-  builder->SetOutputsFormat(output_formats);
-  builder->SetOutputsDeviceType(output_types);
-  builder->SetOutputsKernelObjectType(output_object_types);
-  builder->SetInputsReshapeType(input_reshape_types);
-  builder->SetOutputsReshapeType(output_reshape_types);
-  if (input_formats.size() != input_types.size() || input_formats.size() != input_object_types.size()) {
-    MS_LOG(EXCEPTION) << "The input buildInfo size kernel: " << kernel->fullname_with_scope()
-                      << "is not equal, input_formats size: " << input_formats.size()
-                      << ", input_types size: " << input_types.size()
-                      << ", input_object_types size: " << input_object_types.size();
-  }
-  if (output_formats.size() != output_types.size() || output_formats.size() != output_object_types.size()) {
-    MS_LOG(EXCEPTION) << "The output buildInfo size kernel: " << kernel->fullname_with_scope()
-                      << "is not equal, output_formats size: " << output_formats.size()
-                      << ", output_types size: " << output_types.size()
-                      << ", output_object_types size: " << output_object_types.size();
-  }
-  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
-}
-
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelMod(kernel)) {
+      continue;
+    }
+    if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
       continue;
     }
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
@@ -387,30 +157,17 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [kernel_type, kernel_info_list] = QueryKernelType(kernel, enable_aclnn);
-    if (kernel_type == KernelType::UNKNOWN_KERNEL_TYPE) {
-      MS_EXCEPTION(TypeError) << "Query kernel type failed, node name: " << kernel->fullname_with_scope()
-                              << ", node info: " << kernel->DebugString();
-    }
-    // in this func, no select process, acl/aicpu/host kernel may not support pre node's format.
-    GenerateKernelBuildInfo(kernel, kernel_type);
-    if (kernel_type != ACL_KERNEL && kernel_type != OPAPI_KERNEL) {
-      auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
-      MS_EXCEPTION_IF_NULL(kernel_info);
-      auto build_info = kernel_info->select_kernel_build_info();
-      MS_EXCEPTION_IF_NULL(build_info);
-      bool find_valid = std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
-                                    [&build_info](const kernel::KernelBuildInfoPtr &item) {
-                                      MS_EXCEPTION_IF_NULL(item);
-                                      return item->IsSimilarityKernelBuildInfo(*build_info);
-                                    });
-      if ((!find_valid) && (kernel_type != HCCL_KERNEL)) {
-        MS_EXCEPTION(TypeError) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
-                                << ", node: " << kernel->fullname_with_scope()
-                                << KernelSelectDebugString(build_info, kernel_info_list);
-      }
+    auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(kernel, enable_aclnn);
+    if (!select_res) {
+      MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
+      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+      device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
     }
   }
+  if (!kernel_graph->is_from_single_op()) {
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
+  }
+
   GEGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
@@ -428,6 +185,7 @@ void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   MS_LOG(DEBUG) << "Status record: start create kernel.";
   profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 0);
   PROF_START(create_kernel);
+  device::ascend::SetKernelInfoBeforeCreateKernel(nodes);
   auto ret = GenerateKernelMod(nodes);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Kernel build error.";
