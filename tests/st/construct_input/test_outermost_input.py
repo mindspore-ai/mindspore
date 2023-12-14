@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore import Tensor, Parameter, ParameterTuple, jit
@@ -661,3 +662,23 @@ def test_dict_cell_as_input():
     net = TestNet(4, 0.5)
     out = net(x, block)
     assert np.allclose(x.asnumpy(), out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_empty_tuple_input():
+    """
+    Feature: Graph mode compiling args.
+    Description:  Support empty tuple input for the top cell.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def test_net(x, shape):
+        shape = shape + (1,)
+        return ops.reshape(x, shape)
+
+    x = ms.Tensor([1])
+    out = test_net(x, ())
+    assert out.shape == (1,)

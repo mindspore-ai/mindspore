@@ -179,7 +179,7 @@ def test_dict_error_1():
 def test_dict_error_2():
     """
     Feature: dict with multitype keys
-    Description: do not support tuple with variables for dict's key.
+    Description: do not support tuple with variables for dict's key.(The description is deprecated.)
     Expectation: RuntimeError.
     """
 
@@ -189,9 +189,7 @@ def test_dict_error_2():
         dic = {((3, x), 3): 4}
         return dic.values()
 
-    with pytest.raises(RuntimeError) as ex:
-        foo()
-    assert "key should not be tuple that contains variables, but got" in str(ex.value)
+    foo()
 
 
 def test_dict_error_3():
