@@ -83,8 +83,9 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (runtime_instance_ != nullptr) {
     runtime_instance_->SetContext();
   }
-  void *device_ptr =
-    mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), address->need_recycle());
+  auto size =
+    address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
+  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle());
   if (!device_ptr) {
     return false;
   }

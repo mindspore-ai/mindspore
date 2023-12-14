@@ -426,7 +426,8 @@ void AclConverter::ConvertInputsNormal(const PrimitivePtr &prim, const std::vect
     MsInputInfo ms_input_info{.proto_index = static_cast<size_t>(ms_idx),
                               .real_offset = static_cast<size_t>(ms_real_idx),
                               .folded_size = count};
-    size_t ge_start_idx = (ge_input_info.is_after_dynamic ? ge_input_info.index + count - 1 : ge_input_info.index);
+    size_t ge_start_idx =
+      (ge_input_info.is_after_dynamic ? ge_input_info.index + num_folded_inputs_ - 1 : ge_input_info.index);
 
     convert_one_input(ms_input_info, ge_start_idx, ge_input_info);
     ms_real_idx += count;
@@ -738,6 +739,9 @@ aclDataType AclConverter::ConvertType(TypeId type) {
   if (type == kMetaTypeNone || type == kTypeUnknown) {
     return ACL_DT_UNDEFINED;
   }
+  if (type == kObjectTypeString) {
+    return ACL_STRING;
+  }
   if (type <= kNumberTypeBegin || type >= kNumberTypeEnd) {
     MS_LOG(EXCEPTION) << "Invalid datatype:" << type;
   }
@@ -754,35 +758,6 @@ aclFormat AclConverter::ConvertFormat(const std::string &format) {
     MS_LOG(EXCEPTION) << "Invalid format:" << format;
   }
   return iter->second;
-}
-
-std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::CreateTensorDesc(const tensor::TensorPtr &tensor,
-                                                                           const ShapeVector &dev_shape,
-                                                                           const std::string &dev_format,
-                                                                           const std::string &desc_name) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  AclTensorDescMaker acl_tensor;
-  aclTensorDesc *acl_desc = nullptr;
-
-  const auto &device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  MS_EXCEPTION_IF_NULL(device_address);
-
-  auto acl_data_type = ConvertType(tensor->data_type());
-  auto acl_ori_format = ConvertFormat(device_address->format());
-  auto acl_dev_format = ConvertFormat(dev_format);
-  acl_desc = acl_tensor.Create(acl_data_type, tensor->shape(), acl_ori_format)
-               .SetShape(dev_shape)
-               .SetFormat(acl_dev_format)
-               .SetName(desc_name)
-               .Get();
-  MS_EXCEPTION_IF_NULL(acl_desc);
-
-  // Create buf.
-  auto buffer_maker =
-    std::make_shared<AclTensorBufferMaker>(device_address->GetMutablePtr(), device_address->GetSize());
-  auto acl_data = buffer_maker->Get();
-  MS_EXCEPTION_IF_NULL(acl_data);
-  return std::make_pair(acl_desc, acl_data);
 }
 
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const AddressPtr &address,
@@ -817,7 +792,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
   MS_EXCEPTION_IF_NULL(acl_desc);
 
   // Create buf.
-  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(address->addr, address->size);
+  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(address->addr, address->size, params.data_type);
   auto acl_data = buffer_maker->Get();
   MS_EXCEPTION_IF_NULL(acl_data);
 
@@ -854,7 +829,8 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
   MS_EXCEPTION_IF_NULL(acl_desc);
 
   // Create buf.
-  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(acl_host_info->host_addr, acl_host_info->size);
+  auto buffer_maker =
+    std::make_shared<AclTensorBufferMaker>(acl_host_info->host_addr, acl_host_info->size, acl_host_info->dtype_id);
   auto acl_data = buffer_maker->Get();
   MS_EXCEPTION_IF_NULL(acl_data);
 

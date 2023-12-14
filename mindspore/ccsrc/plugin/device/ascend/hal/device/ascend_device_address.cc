@@ -20,6 +20,7 @@
 #include <utility>
 #include <set>
 #include "acl/acl_rt.h"
+#include "graph/def_types.h"
 #include "runtime/mem.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -800,7 +801,16 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size) const
     SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
-    SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+    if (type_id() == kObjectTypeString) {
+      ge::StringHead head{.addr = sizeof(ge::StringHead), static_cast<int64_t>(size)};
+      // sync string head info from device to host
+      SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE);
+      // sync string body (real contents) from device to host
+      SyncMemory(static_cast<void *>(static_cast<char *>(GetDevicePtr()) + sizeof(ge::StringHead)), src, size,
+                 ACL_MEMCPY_HOST_TO_DEVICE);
+    } else {
+      SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+    }
   }
 }
 
