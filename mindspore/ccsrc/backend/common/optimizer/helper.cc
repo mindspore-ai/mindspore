@@ -333,7 +333,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   } else {
     auto type = scalar->type();
     auto type_str = (type == nullptr) ? "nullptr" : type->ToString();
-    MS_LOG(ERROR) << "Invalid scalar type: " << type_str;
+    MS_LOG(INFO) << "Invalid scalar type: " << type_str;
     return nullptr;
   }
   return tensor;
