@@ -14,22 +14,25 @@
 # ============================================================================
 import pytest
 import numpy as np
+import mindspore
 from mindspore import Tensor
 import mindspore.context as context
-import mindspore.ops.operations.nn_ops as P
+from mindspore.ops.function.nn_func import prompt_flash_attention
 import mindspore.nn as nn
 
 
 class PromptFlashAttention(nn.Cell):
-    def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=0, sparse_mode=0):
+    def __init__(self):
         super(PromptFlashAttention, self).__init__()
-        self.fa_op = P.PromptFlashAttention(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
-                                            num_key_value_heads, sparse_mode)
+        self.pfa = prompt_flash_attention
 
-    def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv):
-        return self.fa_op(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, None, None, None,
-                          None, None, None)
+    def construct(self, query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+                  deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads, scale_value=1.0,
+                  pre_tokens=2147483547, next_tokens=0, input_layout='BSH', num_key_value_heads=0, sparse_mode=0):
+        return self.pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+                        deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads=num_heads,
+                        scale_value=scale_value, pre_tokens=pre_tokens, next_tokens=next_tokens,
+                        input_layout=input_layout, num_key_value_heads=num_key_value_heads, sparse_mode=sparse_mode)
 
 
 @pytest.mark.level0
@@ -42,17 +45,21 @@ def test_prompt_flash_attention_bsh_fwd():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    B = 2
+    B = 1
     S = 256
-    H = 256
+    Q_H = 256
+    KV_H = 128
     N = 16
-    query = Tensor(np.ones((B, S, H), dtype=np.float16))
-    key = Tensor(np.ones((B, S, H), dtype=np.float16))
-    value = Tensor(np.ones((B, S, H), dtype=np.float16))
+    KV_N = 8
+    query = Tensor(np.ones((B, S, Q_H), dtype=np.float16))
+    key = Tensor(np.ones((B, S, KV_H), dtype=np.float16))
+    value = Tensor(np.ones((B, S, KV_H), dtype=np.float16))
+    padding_mask = Tensor(0.1)
     attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
-    net = PromptFlashAttention(N)
-    attention_out = net(query, key, value, attn_mask, [S, S], [S, 128])
-    assert attention_out[0].shape == (B, S, H)
+    net = PromptFlashAttention()
+    attention_out = net(query, key, value, attn_mask, [S], [S], padding_mask, None, None, None, None, None, N,
+                        num_key_value_heads=KV_N)
+    assert attention_out[0].shape == (B, S, Q_H)
 
 
 @pytest.mark.level0
@@ -66,17 +73,18 @@ def test_prompt_flash_attention_bnsd_fwd():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     B = 1
-    N = 16
-    S = 256
-    D = 16
+    Q_N = 10
+    N = 5
+    S = 1024
+    D = 32
 
-    query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-    key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-    value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
-    net = PromptFlashAttention(N, input_layout='BNSD')
-    attention_out = net(query, key, value, attn_mask, [S], [S])
-    assert attention_out[0].shape == (B, N, S, D)
+    query = Tensor(np.ones((B, Q_N, S, D)), dtype=mindspore.bfloat16)
+    key = Tensor(np.ones((B, N, S, D)), dtype=mindspore.bfloat16)
+    value = Tensor(np.ones((B, N, S, D)), dtype=mindspore.bfloat16)
+    net = PromptFlashAttention()
+    attention_out = net(query, key, value, None, None, None, None, None, None, None, None, None, num_heads=Q_N,
+                        input_layout='BNSD', num_key_value_heads=N)
+    assert attention_out[0].shape == (B, Q_N, S, D)
 
 
 @pytest.mark.level0
@@ -97,7 +105,9 @@ def test_prompt_flash_attention_bnsd_mod2_fwd():
     query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+    padding_mask = Tensor(0.1)
     attn_mask = Tensor(np.ones((2048, 2048), dtype=np.float16))
-    net = PromptFlashAttention(N, input_layout='BNSD', sparse_mode=2)
-    attention_out = net(query, key, value, attn_mask, [S], [S])
+    net = PromptFlashAttention()
+    attention_out = net(query, key, value, attn_mask, [S], [S], padding_mask, None, None, None, None, None, N,
+                        input_layout='BNSD', sparse_mode=2)
     assert attention_out[0].shape == (B, N, S, D)

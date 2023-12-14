@@ -33,8 +33,8 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     attn_mask = None
     padding_mask = None
-    actual_seq_lengths = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths else None
-    actual_seq_lengths_kv = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths_kv else None
+    actual_seq_lengths = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths else None
+    actual_seq_lengths_kv = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths_kv else None
     deq_scale1 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale1 else None
     quant_scale1 = Tensor(1, dtype=mindspore.uint64) if has_quant_scale1 else None
     deq_scale2 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale2 else None
@@ -141,7 +141,7 @@ def test_self_attention_standalone(input_layout):
     context.set_auto_parallel_context(parallel_mode="stand_alone")
     B, N, S, D = 8, 16, 1024, 128
     dims = [B, N, S, D]
-    optinal_inputs = [True, True, True, True, True, True, True, True, True]
+    optinal_inputs = [True, False, False, False, False, False, False, False, False]
     inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout)
     net = Net(N, input_layout=input_layout)
     compile_net(net, *inputs)
