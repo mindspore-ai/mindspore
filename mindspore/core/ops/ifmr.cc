@@ -77,14 +77,10 @@ abstract::TupleShapePtr IFMRInferShape(const PrimitivePtr &primitive, const std:
   auto cumsum_shape = cumsum_shape_element->shape();
   if (IsDynamicRank(data_shape) || IsDynamicRank(data_min_shape) || IsDynamicRank(data_max_shape) ||
       IsDynamicRank(cumsum_shape)) {
-    auto out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
-    abstract::BaseShapePtrList out_shape_list = {out_shape_ptr, out_shape_ptr};
-    return std::make_shared<abstract::TupleShape>(out_shape_list);
+    MS_EXCEPTION(NotSupportError) << "IFMR doesn't support dynamic shape.";
   }
   if (IsDynamic(data_shape) || IsDynamic(data_min_shape) || IsDynamic(data_max_shape) || IsDynamic(cumsum_shape)) {
-    auto out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny});
-    abstract::BaseShapePtrList out_shape_list = {out_shape_ptr, out_shape_ptr};
-    return std::make_shared<abstract::TupleShape>(out_shape_list);
+    MS_EXCEPTION(NotSupportError) << "IFMR doesn't support dynamic shape.";
   }
   (void)CheckAndConvertUtils::CheckInteger("[data_min] rank", SizeToLong(data_min_shape.size()), kEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("[data_min] dim_0", data_min_shape.front(), kEqual, 1, prim_name);
