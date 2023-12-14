@@ -24,6 +24,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "utils/anf_utils.h"
 #include "ops/array_op_name.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
@@ -47,7 +48,7 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
   std::list<CNodePtr> orders = func_graph->GetOrderedCnodes();
   std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
   for (const auto &cnode : origin_nodes_topological) {
-    if (IsPrimitiveCNode(cnode, prim::kPrimReturn)) {
+    if (!AnfUtils::IsRealKernel(cnode)) {
       continue;
     }
     auto prim = GetCNodePrimitive(cnode);
