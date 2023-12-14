@@ -608,7 +608,7 @@ class Profiler:
                 for online mode. Default: ``None``.
         """
         if offline_path:
-            self._ascend_graph_analyse()
+            self._ascend_graph_analyse(offline_path)
             _offline_parse(offline_path)
             return
         if self._msprof_enable:
@@ -1454,7 +1454,7 @@ class Profiler:
         """
 
         if offline_path:
-            self._output_path = offline_path
+            self._output_path = os.path.join(offline_path, 'profiler')
 
         job_id = ""
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and os.path.isdir(
