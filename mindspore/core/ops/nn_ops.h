@@ -179,6 +179,10 @@ GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannel
 GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScore, std::make_shared<Primitive>(kFlashAttentionScoreOpName));
 GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScoreGrad, std::make_shared<Primitive>(kFlashAttentionScoreGradOpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyCamePart1, std::make_shared<Primitive>(kApplyCamePart1OpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyCamePart2, std::make_shared<Primitive>(kApplyCamePart2OpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyCamePart3, std::make_shared<Primitive>(kApplyCamePart3OpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyCamePart4, std::make_shared<Primitive>(kApplyCamePart4OpName));
 }  // namespace prim
 }  // namespace mindspore
 
