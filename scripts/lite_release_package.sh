@@ -69,7 +69,6 @@ function windows_release_package()
 {
     mkdir -p ${output_path}/release/windows/
     cp ${input_path}/windows_x64/avx/*.zip* ${output_path}/release/windows/
-    cp ${input_path}/windows_x32/sse/*.zip* ${output_path}/release/windows/
 }
 
 echo "============================== begin =============================="
