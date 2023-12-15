@@ -23,7 +23,7 @@ __constant__ size_t output_cal[5];
 template <typename T>
 struct HeavisideFunc {
   __device__ __host__ __forceinline__ T operator()(const T &x1, const T &x2) {
-    if (x1 > T(1)) {
+    if (x1 > T(0)) {
       return T(1);
     } else if (x1 == T(0)) {
       return x2;
