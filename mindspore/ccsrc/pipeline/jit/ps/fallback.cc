@@ -566,9 +566,7 @@ void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool cr
   if (!abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractDictionary>()) {
     return;
   }
-  constexpr auto cell_list_attr = "__cell_as_list__";
-  constexpr auto cell_dict_attr = "__cell_as_dict__";
-  if (py::hasattr(obj, cell_list_attr) || py::hasattr(obj, cell_dict_attr)) {
+  if (py::hasattr(obj, PYTHON_CELL_AS_LIST) || py::hasattr(obj, PYTHON_CELL_AS_DICT)) {
     // CellList and CellDict do not support inplace operations, do not need to attach python object.
     return;
   }

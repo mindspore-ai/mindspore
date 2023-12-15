@@ -3919,7 +3919,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
                               << trace::GetDebugInfoStr(value_node->debug_info());
     }
     auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
-    if (py::hasattr(obj, "__cell_as_list__") || py::hasattr(obj, "__cell_as_dict__")) {
+    if (py::hasattr(obj, PYTHON_CELL_AS_LIST) || py::hasattr(obj, PYTHON_CELL_AS_DICT)) {
       MS_EXCEPTION(TypeError) << "CellList or CellDict object " << py::str(obj).cast<std::string>()
                               << " is not support to do assign subscript.";
     }

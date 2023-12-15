@@ -349,9 +349,7 @@ bool ParseAction(const ResourcePtr &resource) {
 
   py::object input = resource->source_input();
   // CellList need convert to FuncGraph in Parse, add flag for input from top graph.
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_IS_CELL_LIST, input));
-  if (is_celllist) {
+  if (py::hasattr(input, PYTHON_CELL_AS_LIST)) {
     py::setattr(input, PYTHON_CELL_LIST_FROM_TOP, py::bool_(true));
   }
   parse::Parser::InitParserEnvironment(input);
