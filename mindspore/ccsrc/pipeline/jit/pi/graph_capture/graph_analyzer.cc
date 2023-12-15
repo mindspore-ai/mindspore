@@ -189,7 +189,9 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
     GetCaptureInfo().has_grad_ = o->TestMsFlag(AObject::kMsFlagGradFunc);
     return true;
   }
-
+  if (v->GetOpcode() == STORE_ATTR || v->GetOpcode() == STORE_DEREF) {
+    return false;
+  }
   if (ProduceInterpretValue(v)) {
     return true;
   }
