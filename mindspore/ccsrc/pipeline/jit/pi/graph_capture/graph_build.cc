@@ -795,10 +795,15 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
           push(func_node);
         }
       } else {
-        auto n = NewValueNode(nullptr, instr, {o});
-        n->SetOpcode(LOAD_ATTR);
-        push(n);
-        n->SetVobj(o->get_attr(n->GetName()));
+        auto attrs = o->GetAttrs();
+        if (attrs.find(instr.name().c_str()) != attrs.end()) {
+          push(attrs[instr.name().c_str()]);
+        } else {
+          auto n = NewValueNode(nullptr, instr, {o});
+          n->SetOpcode(LOAD_ATTR);
+          push(n);
+          n->SetVobj(o->get_attr(n->GetName()));
+        }
       }
       break;
     }
