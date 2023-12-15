@@ -1660,6 +1660,8 @@ class AdaptiveMaxPool3d(Cell):
     def __init__(self, output_size, return_indices=False):
         """Initialize AdaptiveMaxPool3d."""
         super(AdaptiveMaxPool3d, self).__init__()
+        if isinstance(output_size, int):
+            output_size = (output_size, output_size, output_size)
         self.output_size = Tensor(output_size, dtype=mstype.int32)
         self.return_indices = return_indices
         self.adaptive_max_pool3d = AdaptiveMaxPool3D()
