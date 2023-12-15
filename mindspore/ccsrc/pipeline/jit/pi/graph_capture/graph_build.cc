@@ -339,18 +339,24 @@ bool GraphBuilder::PruneBranch(const Instr &instr) {
   int opcode = instr.op();
   int oparg = instr.arg();
   const auto &conf = root_->graph_->Config();
-  if (opcode == JUMP_IF_FALSE_OR_POP || opcode == JUMP_IF_TRUE_OR_POP) {
-    MS_LOG(DEBUG) << "not implement prune JUMP_IF_FALSE_OR_POP, JUMP_IF_TRUE_OR_POP";
-    return false;
-  }
   ValueNode *cond = frame_.GetCondition();
   int ret = CondIsTrue(cond);
 
   if (isSatisfyPruneLimit(conf, ret, graph_, cond)) {
     graph_->SetPruneBranchCount(graph_->GetPruneBranchCount() + 1);
     if (ret == 0 || ret == 1) {
-      bool fall_through = (ret == 1 && opcode == POP_JUMP_IF_FALSE) || (ret == 0 && opcode == POP_JUMP_IF_TRUE);
-      graph_->SetInstr(cur_bci_, NewInstrNode(POP_TOP, 0));
+      bool fall_through = ((ret == 0) ^ (opcode == POP_JUMP_IF_FALSE || opcode == JUMP_IF_FALSE_OR_POP));
+      if (opcode == POP_JUMP_IF_FALSE || opcode == POP_JUMP_IF_TRUE) {
+        graph_->SetInstr(cur_bci_, NewInstrNode(POP_TOP, 0));
+      } else {  // opcode == JUMP_IF_FALSE_OR_POP || opcode == JUMP_IF_TRUE_OR_POP
+        if (fall_through) {
+          graph_->SetInstr(cur_bci_, NewInstrNode(POP_TOP, 0));
+          pop();
+        } else {
+          graph_->SetInstr(cur_bci_, NewInstrNode(NOP, 0));
+        }
+      }
+
       // set next block
       Block *target_block = fall_through ? current_block_->GetFallBB() : current_block_->GetJumpBB();
       Block *prune_bb = fall_through ? current_block_->GetJumpBB() : current_block_->GetFallBB();
@@ -527,6 +533,9 @@ bool GraphBuilder::DoJumpIf(const Instr &instr) {
     case JUMP_IF_TRUE_OR_POP: {
       CreateAndSetConditionNode(seek(0));
       if (root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase)) {
+        if (!current_block_->is_loop_head()) {
+          return PruneBranch(instr);
+        }
         return false;
       }
       frame_.SetConditionIsTrue(opcode == JUMP_IF_TRUE_OR_POP);
