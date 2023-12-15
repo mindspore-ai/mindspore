@@ -2192,7 +2192,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.inplace_update`.
         """
-        return tensor_operator_registry.get('inplace_update')(self, indices, v)
+        return tensor_operator_registry.get('inplace_update')(self, v, indices)
 
     def copy(self):
         """
