@@ -64,7 +64,7 @@ void GetUnfoldInputs(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_nod
         const auto real_cnode_inputs = real_cnode->inputs();
         nodes.insert(nodes.end(), real_cnode_inputs.begin() + kIndex1, real_cnode_inputs.end());
       } else {
-        MS_LOG(WARNING) << "Unknown tuple input.";
+        MS_LOG(INFO) << "Unknown tuple input.";
         nodes.push_back(input);
       }
     } else {
