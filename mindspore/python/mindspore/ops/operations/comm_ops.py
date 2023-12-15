@@ -1310,4 +1310,4 @@ class _GetTensorSlice(PrimitiveWithInfer):
         from mindspore.parallel._tensor import _load_tensor
         validator.check_value_type("dev_mat", dev_mat, [tuple], self.name)
         validator.check_value_type("tensor_map", tensor_map, [tuple], self.name)
-        return Tensor(_load_tensor(x, dev_mat, tensor_map))
+        return Tensor(_load_tensor(x, dev_mat, tensor_map), x.dtype)

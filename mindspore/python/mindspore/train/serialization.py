@@ -2647,7 +2647,11 @@ def _merge_and_split(sliced_params, train_strategy, predict_strategy):
     split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank)
     requires_grad = merged_param.requires_grad
     layerwise_parallel = merged_param.layerwise_parallel
-    split_param = Parameter(split_tensor, param_name, requires_grad, layerwise_parallel)
+    data_type = merged_param.data.dtype
+    if data_type == mstype.bfloat16:
+        split_param = Parameter(Tensor(split_tensor, mstype.bfloat16), param_name, requires_grad, layerwise_parallel)
+    else:
+        split_param = Parameter(split_tensor, param_name, requires_grad, layerwise_parallel)
     return split_param
 
 
