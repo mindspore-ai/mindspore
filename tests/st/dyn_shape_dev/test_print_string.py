@@ -22,7 +22,7 @@ import tempfile
 from contextlib import contextmanager
 import mindspore.nn as nn
 import mindspore as ms
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, ops
 from mindspore.ops import operations as P
 from tests.security_utils import security_off_wrap
 import test_utils
@@ -100,4 +100,69 @@ def test_print(mode):
 
     patterns = ['input_x:', 'Tensor(shape=[], dtype=Int32, value=3)',
                 'input_y:', 'Tensor(shape=[], dtype=Int32, value=4)']
+    check_output(cap.output, patterns)
+
+
+class SideEffectOneInputBprop(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = P.ReLU()
+        self.mul = P.Mul()
+        self.print1 = P.Print()
+
+    def construct(self, x):
+        return self.relu(x)
+
+    def bprop(self, x, out, dout):
+        x = self.relu(x)
+        x = 5 * x
+        self.print1("x1: ", x)
+        x = self.mul(x, x)
+        self.print1("x2: ", x)
+        return (5 * x,)
+
+
+class GradNetAllInputs(nn.Cell):
+    def __init__(self, net):
+        super(GradNetAllInputs, self).__init__()
+        self.net = net
+        self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
+
+    def construct(self, params1, grad_ys):
+        grad_net = self.grad_op(self.net)
+        return grad_net(params1, grad_ys)
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_side_effect_bprop_one_input():
+    """
+    Feature: Test side effect bprop with one input.
+    Description: Test side effect bprop with one input.
+    Expectation: No exception and result is correct.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    cap = Capture()
+    with capture(cap):
+        net = SideEffectOneInputBprop()
+        grad_net = GradNetAllInputs(net)
+        grad_ys = Tensor(np.ones([2, 2]).astype(np.float32))
+        input1 = Tensor(np.ones([2, 2]).astype(np.float32))
+        grads = grad_net(input1, grad_ys)
+        assert grads[0].asnumpy().shape == (2, 2)
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = ['x1:',
+                'Tensor(shape=[2, 2], dtype=Float32, value=',
+                '[[ 5.00000000e+00  5.00000000e+00]',
+                ' [ 5.00000000e+00  5.00000000e+00]])',
+                'x2:',
+                'Tensor(shape=[2, 2], dtype=Float32, value=',
+                '[[ 2.50000000e+01  2.50000000e+01]',
+                ' [ 2.50000000e+01  2.50000000e+01]])',
+                ]
     check_output(cap.output, patterns)
