@@ -1592,7 +1592,7 @@ AnfNodePtr SetTypeForGetAttr(const AnfNodePtr &getattr_node, const AbstractBaseP
     auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
     if (abs_tensor != nullptr) {
       if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
-        getattr_node->set_user_data<bool>("is_adapter", std::make_shared<bool>(true));
+        getattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
       }
     }
   }
@@ -1730,6 +1730,10 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
     auto shape = value_abs->BuildShape();
     fallback::SetRealType<AnfNode, Type>(setattr_node, type);
     fallback::SetRealShape<AnfNode, abstract::BaseShape>(setattr_node, shape);
+    auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
+    if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
+      setattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
+    }
   }
 
   auto eng = out_conf->engine();
@@ -2853,7 +2857,7 @@ AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePt
     auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
     res = std::make_shared<abstract::AbstractTensor>(element, shape);
     auto abs_tensor = res->cast_ptr<abstract::AbstractTensor>();
-    if (node->has_user_data("is_adapter")) {
+    if (node->has_user_data(fallback::kAdapterTag)) {
       abs_tensor->set_is_adapter(true);
     }
   } else {
