@@ -866,6 +866,8 @@ def get_dtype(name: str):
 
 
 def check_attrs(target_object, func_name: str):
+    if isinstance(target_object, Tensor):
+        return False
     if hasattr(target_object, func_name):
         if not hasattr(target_object.__class__.__base__, func_name):
             return True
