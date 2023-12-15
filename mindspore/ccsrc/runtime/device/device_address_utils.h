@@ -97,6 +97,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
     const auto &type = abs->GetType();
     const auto &value = abs->GetValueTrack();
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
+    kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     device_address->set_from_persistent_mem(true);
 
