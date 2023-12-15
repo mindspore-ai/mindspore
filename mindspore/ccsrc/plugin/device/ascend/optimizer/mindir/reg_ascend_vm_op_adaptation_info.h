@@ -162,7 +162,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgMaxV2OpName)
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminOpName)
   .set_backend_op_name(kArgMinOpName)
   .set_target_op_name(kArgMinDOpName)
-  .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName)
