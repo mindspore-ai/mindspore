@@ -170,6 +170,15 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
       << "It is required that the `pads` is no more than half of the `kernel_size`, but gets pads(" << pads[kAttrH]
       << ", " << pads[kAttrW] << ") and kernel_size(" << kernel_size[kAttrH] << ", " << kernel_size[kAttrW] << ").";
   }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
+      std::any_of(dilation.begin(), dilation.end(), [](const int64_t &value) { return value != 1; })) {
+    MS_EXCEPTION(ValueError) << "While running in Ascend, the attribute of `dilation` of '" << prim->name()
+                             << "' is required to be all one, but got (" << dilation[kAttrH] << ", " << dilation[kAttrW]
+                             << ").";
+  }
   auto H_in = x_shape[kIndex2];
   auto W_in = x_shape[kIndex3];
   auto H_out = 0;
