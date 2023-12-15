@@ -344,6 +344,36 @@ void AclRunner::AoeDump() {
   }
 }
 
+void AclRunner::FillOptInputWithPlaceHolder() {
+  if (acl_param_.input_desc.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
+                             "Acl param input_desc size is not equal to acl param input_buffer size");
+  bool effective_flag = false;
+  for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
+    if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
+      if (!effective_flag) {
+        effective_flag = true;
+      }
+      continue;
+    }
+    if (!effective_flag) {
+      continue;
+    }
+
+    // create placeholder for input_desc
+    if (acl_param_.input_desc[i] == nullptr) {
+      acl_param_.input_desc[i] = aclCreateTensorDesc(ACL_DT_UNDEFINED, 0, nullptr, ACL_FORMAT_UNDEFINED);
+    }
+
+    // create placeholder for input_buffer
+    if (acl_param_.input_buffer[i] == nullptr) {
+      acl_param_.input_buffer[i] = aclCreateDataBuffer(nullptr, 0);
+    }
+  }
+}
+
 void AclRunner::Run(void *stream_ptr, bool is_sync) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   AclAllocatorRegister::Instance().RegisterAllocator(stream_ptr);
