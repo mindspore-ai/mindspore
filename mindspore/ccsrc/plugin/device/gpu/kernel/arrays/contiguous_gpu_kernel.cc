@@ -48,20 +48,22 @@ std::map<std::pair<TypeId, TypeId>, ContiguousGpuKernel::ContiguousFunc> Contigu
 
 bool ContiguousGpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &input,
                                            const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                                           const kernel::AddressPtr &output, void *stream_ptr) {
+                                           const kernel::AddressPtr &output, const kernel::AddressPtr &shape_addr,
+                                           const kernel::AddressPtr &strides_addr, void *stream_ptr) {
   const auto &iter = func_list_.find(std::make_pair(input_type_id, output_type_id));
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
   }
   int64_t type_size = GetDataTypeSize(input_type_id) / GetDataTypeSize(output_type_id);
 
-  return iter->second(this, input, input_storage_info, output, type_size, stream_ptr);
+  return iter->second(this, input, input_storage_info, output, shape_addr, strides_addr, type_size, stream_ptr);
 }
 
 template <typename T>
 bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::AddressPtr &output, const int64_t &type_size,
+                                               const kernel::AddressPtr &output, const kernel::AddressPtr &shape_addr,
+                                               const kernel::AddressPtr &strides_addr, const int64_t &type_size,
                                                void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
   T *input_addr = GetDeviceAddress<T>({input}, 0);
@@ -82,7 +84,9 @@ bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpy output failed");
   } else {
-    auto status = CalAsStrided(output_size, input_addr, output_addr, input_storage_info,
+    int64_t *shape = GetDeviceAddress<int64_t>({shape_addr}, 0);
+    int64_t *strides = GetDeviceAddress<int64_t>({strides_addr}, 0);
+    auto status = CalAsStrided(output_size, input_addr, output_addr, input_storage_info, shape, strides,
                                reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, "Contiguous");
   }

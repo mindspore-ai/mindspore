@@ -30,16 +30,18 @@ class ContiguousGpuKernel {
 
   bool LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &inputs,
                         const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                        const kernel::AddressPtr &outputs, void *stream_ptr);
+                        const kernel::AddressPtr &outputs, const kernel::AddressPtr &shape_addr,
+                        const kernel::AddressPtr &strides_addr, void *stream_ptr);
 
  private:
-  using ContiguousFunc =
-    std::function<bool(ContiguousGpuKernel *, const kernel::AddressPtr &, const TensorStorageInfoPtr &,
-                       const kernel::AddressPtr &, const int64_t &, void *)>;
+  using ContiguousFunc = std::function<bool(
+    ContiguousGpuKernel *, const kernel::AddressPtr &, const TensorStorageInfoPtr &, const kernel::AddressPtr &,
+    const kernel::AddressPtr &, const kernel::AddressPtr &, const int64_t &, void *)>;
 
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs, const int64_t &type_size, void *stream_ptr);
+                            const kernel::AddressPtr &outputs, const kernel::AddressPtr &shape_addr,
+                            const kernel::AddressPtr &strides_addr, const int64_t &type_size, void *stream_ptr);
   static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel
