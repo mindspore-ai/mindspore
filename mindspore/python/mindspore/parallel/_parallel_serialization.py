@@ -335,7 +335,8 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst
     return list(result_list)
 
 
-def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_list, dst_strategy_list):
+def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_list,
+                                   dst_strategy_list, param_type_dict):
     """
     Transform model parallel dimension for distributed checkpoint files.
     """
@@ -397,15 +398,21 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         transform_tensor = ms.Tensor(param_total_dict[param_name][rank_id % device_num])
         requires_grad = param_attr_dict[param_name][rank_id % device_num][0]
         layerwise_parallel = param_attr_dict[param_name][rank_id % device_num][1]
-        transform_param_dict[param_name] = ms.Parameter(transform_tensor, param_name, requires_grad, layerwise_parallel)
+        transform_para = ms.Parameter(transform_tensor, param_name, requires_grad, layerwise_parallel)
+        if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
+            transform_para.set_dtype(ms.bfloat16)
+        transform_param_dict[param_name] = transform_para
 
     # Handle those parameter like learning_rate, global_step which not in strategy_file.
     for param_name, _ in param_total_dict.items():
         if param_name not in transform_param_dict:
-            transform_param_dict[param_name] = ms.Parameter(
+            transform_para = ms.Parameter(
                 ms.Tensor(param_total_dict[param_name][rank_id % device_num]), param_name,
                 param_attr_dict[param_name][rank_id % device_num][0],
                 param_attr_dict[param_name][rank_id % device_num][1])
+            if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
+                transform_para.set_dtype(ms.bfloat16)
+            transform_param_dict[param_name] = transform_para
 
     transform_param_list = [{"name": param_name, "data": param_data}
                             for param_name, param_data in transform_param_dict.items()]

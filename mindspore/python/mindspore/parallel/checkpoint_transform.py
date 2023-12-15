@@ -21,6 +21,7 @@ import copy
 from collections import defaultdict
 import numpy as np
 import mindspore as ms
+from mindspore.common import dtype as mstype
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
@@ -192,6 +193,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
             raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
     param_total_dict = defaultdict(dict)
     param_attr_dict = defaultdict(dict)
+    param_type_dict = defaultdict(dict)
     src_strategy_list, dst_strategy_list = _extract_src_dst_layout_map(rank_id, src_strategy_file, dst_strategy_file)
     # src rank => local rank inside pipeline stage
     src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
@@ -208,11 +210,15 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
                     and _parameter_not_in_local_stage(param_name, origin_dst_strategy_list, dst_strategy_list):
                 continue
             src_rank = rank % src_stage_device_num
+            param_type_dict[param_name][src_rank] = str(param.data.dtype)
+            if param.data.dtype == mstype.bfloat16:
+                param.set_dtype(mstype.float32)
             param_total_dict[param_name][src_rank] = param.data.asnumpy()
             param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
     local_rank_id = rank_id % dst_stage_device_num
     transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict,
-                                                          param_attr_dict, src_strategy_list, dst_strategy_list)
+                                                          param_attr_dict, src_strategy_list, dst_strategy_list,
+                                                          param_type_dict)
     ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
 
 
@@ -297,11 +303,15 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     for needed_rank_list_key, transform_rank_list in needed_rank_list_map.items():
         param_total_dict = defaultdict(dict)
         param_attr_dict = defaultdict(dict)
+        param_type_dict = defaultdict(dict)
         needed_rank_list = needed_rank_list_key.split("-")
         for needed_rank in needed_rank_list:
             ckpt_dict = ms.load_checkpoint(all_checkpoint_files_map.get(int(needed_rank)))
             for param_name, param in ckpt_dict.items():
                 src_rank = int(needed_rank) % src_stage_device_num
+                param_type_dict[param_name][src_rank] = str(param.data.dtype)
+                if param.data.dtype == mstype.bfloat16:
+                    param.set_dtype(mstype.float32)
                 param_total_dict[param_name][src_rank] = param.data.asnumpy()
                 param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
         for transform_rank in transform_rank_list:
@@ -316,7 +326,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
 
             local_rank_id = transform_rank % dst_stage_device_num
             transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict_copy,
-                                                                  param_attr_dict, src_strategy_list, dst_strategy_list)
+                                                                  param_attr_dict, src_strategy_list, dst_strategy_list,
+                                                                  param_type_dict)
             save_checkpoint_file = "{}{}.ckpt".format(ckpt_prefix, transform_rank)
             save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(transform_rank))
             if not os.path.exists(save_checkpoint_file_dir):
