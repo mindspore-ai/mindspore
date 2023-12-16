@@ -175,7 +175,9 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
       std::any_of(dilation.begin(), dilation.end(), [](const int64_t &value) { return value != 1; })) {
-    MS_EXCEPTION(ValueError) << "For Ascend, attr `dilation` must be all one";
+    MS_EXCEPTION(ValueError) << "While running in Ascend, the attribute `dilation` of '" << prim->name()
+                             << "' is required to be all one, but got (" << dilation[kAttrH] << ", " << dilation[kAttrW]
+                             << ").";
   }
   auto H_in = x_shape[kIndex2];
   auto W_in = x_shape[kIndex3];
