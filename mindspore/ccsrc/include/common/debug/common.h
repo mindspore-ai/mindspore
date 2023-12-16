@@ -67,7 +67,9 @@ class COMMON_EXPORT Common {
 
   inline static bool debugger_terminate_ = false;
   inline static bool exit_success_ = false;
+#ifndef _MSC_VER
   inline static std::mutex random_data_lock_;
+#endif
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {
