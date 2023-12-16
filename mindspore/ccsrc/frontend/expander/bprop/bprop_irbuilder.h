@@ -68,8 +68,8 @@ class BpropIRBuilder : public Emitter {
   TypeId GetDtypeId(const NodePtr &node) const { return GetDtype(node)->type_id(); }
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
   int64_t GetSize(const NodePtr &node) const;
-  NodePtr DynSize(const NodePtr &node, const TypePtr &type) { return Cast(DynSize(node), type); }
-  NodePtr DynSize(const NodePtr &node, TypeId type_id) { return Cast(DynSize(node), type_id); }
+  NodePtr DynSize(const NodePtr &node, const TypePtr &type);
+  NodePtr DynSize(const NodePtr &node, TypeId type_id);
   NodePtr DynSize(const NodePtr &node);
   NodePtr Range(const NodePtr &limit) { return Range(Value<int64_t>(0), limit, Value<int64_t>(1)); }
   NodePtr Range(const NodePtr &start, const NodePtr &limit, const NodePtr &delta, int64_t max_len = 1000000) {

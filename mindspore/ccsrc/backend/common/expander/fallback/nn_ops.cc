@@ -101,8 +101,8 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   bool need_reshape = (is_dynamic_rank || x_shape.size() != kRank2 || w_shape.size() != kRank2);
   if (need_reshape) {
     reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x, w});
-    x = ib->Reshape(x, ib->TensorToTuple(reshape_shapes[kIndex0]));
-    w = ib->Reshape(w, ib->TensorToTuple(reshape_shapes[kIndex1]));
+    x = ib->Reshape(x, reshape_shapes[kIndex0]);
+    w = ib->Reshape(w, reshape_shapes[kIndex1]);
   }
   auto ret = ib->MatMul(x, w, false, true);
   if (has_bias) {
@@ -110,7 +110,7 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
     ret = ib->Add(ret, b);
   }
   if (need_reshape) {
-    ret = ib->Reshape(ret, ib->TensorToTuple(reshape_shapes[kIndex2]));
+    ret = ib->Reshape(ret, reshape_shapes[kIndex2]);
   }
   return {ret};
 });

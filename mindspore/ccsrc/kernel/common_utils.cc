@@ -51,6 +51,39 @@ constexpr auto kQuad = 4;
 constexpr size_t kInputFirstIndex = 0;
 }  // namespace
 
+size_t GetOutputNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &type = node->Type();
+  if (type == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to get type in node:" << node->fullname_with_scope();
+  } else if (type->isa<Tuple>()) {
+    auto tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (tuple_type->dynamic_len()) {
+      return 1;
+    }
+    const auto &sub_types = tuple_type->elements();
+    return static_cast<size_t>(std::count_if(sub_types.begin(), sub_types.end(), [](const TypePtr &sub_type) {
+      return sub_type != nullptr && (!sub_type->isa<MonadType>());
+    }));
+  } else if (type->isa<List>()) {
+    auto list_type = type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    if (list_type->dynamic_len()) {
+      return 1;
+    }
+    const auto &sub_types = list_type->elements();
+    return static_cast<size_t>(std::count_if(sub_types.begin(), sub_types.end(), [](const TypePtr &sub_type) {
+      return sub_type != nullptr && (!sub_type->isa<MonadType>());
+    }));
+  } else if (type->isa<CSRTensorType>()) {
+    return 5;
+  } else if (type->isa<COOTensorType>()) {
+    return 4;
+  }
+  return 1;
+}
+
 int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
                   const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment) {
   bool right_align_super_diagonal = (alignment.first == MatrixDiag::RIGHT);
@@ -208,17 +241,6 @@ std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const kernel::KernelAtt
   return res;
 }
 
-bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr) {
-  if (kernel_attr.GetOutputSize() > 1) {
-    for (size_t i = 0; i < kernel_attr.GetOutputSize(); i++) {
-      if (kernel_attr.GetOutputAttr(i).object_type == kObjectTypeTuple) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {
   std::unordered_map<TypeId, KernelObjectType> trans_map{{kObjectTypeTuple, KernelObjectType::TUPLE},
                                                          {kObjectTypeNumber, KernelObjectType::SCALAR},
@@ -319,7 +341,9 @@ std::vector<KernelObjectType> CalOutputElementObjectTypes(const AnfNodePtr &kern
                                                           const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_output_object_types = GetOutputObjectTypeListFromKernelAttr(selected_kernel_attr);
-  auto element_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  MS_LOG(DEBUG) << "Output object type:" << selected_output_object_types << " for node:" << kernel_node->DebugString()
+                << " select attr:" << kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr);
+  auto element_num = GetOutputNum(kernel_node);
   if (selected_kernel_attr.GetAllSame() && selected_output_object_types.size() == 1) {
     return std::vector<KernelObjectType>(element_num, TypeIdToKernelObjectType(selected_output_object_types[0]));
   }

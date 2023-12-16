@@ -497,7 +497,9 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
-  if (auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>(); tuple_abs != nullptr && !tuple_abs->dynamic_len()) {
+  auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abs);
+  if (!tuple_abs->dynamic_len() && tuple_abs->size() != 0 && tuple_abs->elements()[0]->isa<abstract::AbstractTuple>()) {
     res.reserve(tuple_abs->size());
     for (size_t i = 0; i < tuple_abs->size(); ++i) {
       res.push_back(TupleGetItem(out, i));
