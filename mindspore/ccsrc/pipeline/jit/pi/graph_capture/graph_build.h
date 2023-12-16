@@ -123,8 +123,9 @@ class GraphBuilder {
   bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper, bool *has_kw,
                           CallNode *call_node);
 
-  bool UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper);
-
+  bool UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper, CallNode *call_node);
+  bool UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper,
+                                         CallNode *call_node, ValueNode *dict_node);
   // generate the general unpack operations of dict, return operations
   std::vector<AbstractNode *> GenerateDictUnpack(ValueNode *kwargs_node);
 
