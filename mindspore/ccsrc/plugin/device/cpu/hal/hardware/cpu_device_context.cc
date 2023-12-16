@@ -196,6 +196,10 @@ void FillUserData(const UserDataPtr &user_data, DeviceAddress *device_address) {
 
 DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (kernel_tensor->device_name().empty()) {
+    kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+    kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+  }
   auto device_address = std::make_shared<CPUDeviceAddress>(kernel_tensor);
 
   const auto &user_data = kernel_tensor->user_data();

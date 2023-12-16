@@ -348,6 +348,10 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
 
 DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (kernel_tensor->device_name().empty()) {
+    kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+    kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+  }
   auto device_address = std::make_shared<GPUDeviceAddress>(kernel_tensor);
 
   const auto &user_data = kernel_tensor->user_data();

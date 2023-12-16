@@ -131,10 +131,18 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   if (common::IsEnableRefMode()) {
+    if (kernel_tensor->device_name().empty()) {
+      kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+      kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+    }
     auto device_address = std::make_shared<AscendDeviceAddress>(kernel_tensor);
     device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
     return device_address;
   } else {
+    if (kernel_tensor->device_name().empty()) {
+      kernel_tensor->set_device_name(kCPUDevice);
+      kernel_tensor->set_device_id(0);
+    }
     auto device_address = std::make_shared<cpu::CPUDeviceAddress>(kernel_tensor);
     device_address->set_device_synchronizer(std::make_shared<cpu::CPUDeviceSynchronizer>());
     return device_address;
