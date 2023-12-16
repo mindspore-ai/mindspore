@@ -48,7 +48,7 @@ TypePtr LayerNormXBackpropInferType(const PrimitivePtr &prim, const std::vector<
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   // check
-  std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   const int64_t x_index = 1;
   auto x_type = input_args[x_index]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
