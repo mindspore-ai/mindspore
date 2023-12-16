@@ -845,10 +845,13 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  if (device_address->GetPtr() != nullptr) {
+  const auto &device_sync = tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_sync);
+  if (device_sync->GetMutablePtr() != nullptr) {
     return;
   }
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
@@ -861,7 +864,7 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
                                         const std::vector<tensor::TensorPtr> &tensors) {
-  for (auto tensor : tensors) {
+  for (const auto &tensor : tensors) {
     MallocForInput(device_context, tensor);
   }
 }
