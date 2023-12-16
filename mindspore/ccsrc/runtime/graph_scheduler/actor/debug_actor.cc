@@ -42,6 +42,13 @@ namespace runtime {
  */
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
                        const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context, const AID *) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -102,6 +109,13 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
  */
 void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
                                OpContext<DeviceTensor> *const op_context, const AID *) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -131,6 +145,13 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
@@ -217,6 +238,13 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Ascend and update step number of online debugger GPU.
  */
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
