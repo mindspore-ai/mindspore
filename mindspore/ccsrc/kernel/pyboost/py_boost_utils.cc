@@ -119,13 +119,21 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
 }
 
 DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_type, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  static std::unordered_map<std::string, DeviceContext *> device_contexts;
+  auto iter = device_contexts.find(device_type);
+  if (iter != device_contexts.end()) {
+    return iter->second;
+  }
+
+  auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_type, device_id});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  device_contexts[device_type] = device_context;
+  MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
   return device_context;
 }
 

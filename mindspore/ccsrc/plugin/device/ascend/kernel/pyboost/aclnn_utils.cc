@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#include "transform/acl_ir/op_api_util.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-int8_t GetCubeMathType() { return 0; }
+int8_t GetCubeMathType() { return transform::OpApiUtil::GetCubeMathType(); }
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -34,6 +34,12 @@
       RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr, \
                        release_function);                                                                           \
     }                                                                                                               \
+    static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);               \
+    if (sync) {                                                                                                     \
+      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
+        MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
+      }                                                                                                             \
+    }                                                                                                               \
   } while (false)
 
 namespace mindspore {

@@ -46,6 +46,12 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor
     MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name();
   }
   MS_LOG(DEBUG) << "Launch end";
+  static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  if (sync) {
+    if (!device_context->device_res_manager_->SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed for op " << op_name();
+    }
+  }
 }
 )
 );
