@@ -1118,6 +1118,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> import mindspore as ms
             >>> x = ms.Tensor([1, 2, 3, 4, 5], dtype=ms.float32)
             >>> ret = x.storage_offset()
+            >>> print(ret)
             0
         """
         return Tensor_.storage_offset(self)

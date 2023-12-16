@@ -104,7 +104,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
-from mindspore.ops.operations.math_ops import Diagonal
+from mindspore.ops.auto_generate import Diagonal
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Quantile
