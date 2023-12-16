@@ -1748,7 +1748,7 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &new_func) 
     self->set_bci(call_node->bci());
     self->SetLineNo(call_node->GetLineNo());
     nodes.insert(nodes.end() - 1, self);
-  } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
+  } else if (func_type == AObject::kTypeCell || func_type == AObject::kTypeAnyValue) {
     self = call_node->input(0);
   }
 
@@ -1837,17 +1837,52 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   return StopTraceReason::kNonStopTrace;
 }
 
-static bool UnpackDynamicLengthDictByBytecode() {
+bool GraphBuilder::UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper,
+                                                     CallNode *call_node, ValueNode *dict_node) {
   // user defined mappings, dynamic length dictionary unpack
-  return false;
+  if (dict_node->GetVobj()->GetType() != AObject::kTypeDict) {
+    return false;
+  }
+  auto dict = static_cast<AbstractDict *>(dict_node->GetVobj());
+  if (!dict->IsElementValid()) {
+    return false;
+  }
+  AbstractNodeList unpack_dict;
+  py::dict py_dict = dict->GetPyObject();
+  py::tuple keys(py_dict.size());
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  Py_ssize_t cnt = 0;
+  while (PyDict_Next(py_dict.ptr(), &pos, &key, &value)) {
+    PyObject *py_key = key;
+    MS_EXCEPTION_IF_CHECK_FAIL(PyUnicode_CheckExact(py_key), "key must be string");
+    PyObject *py_value = value;
+    ValueNode *index = NewValueNode(AObject::Convert(py_key), LOAD_CONST, -1, {});
+    ValueNode *val = NewValueNode(AObject::Convert(py_value), BINARY_SUBSCR, 0, {dict_node, index});
+    keys[cnt++] = py_key;
+    params->push_back(val);
+    call_node->AddParam(val);
+    unpack_dict.push_back(NewInstrNode(DUP_TOP, 0));
+    unpack_dict.push_back(index);
+    unpack_dict.push_back(val);
+    unpack_dict.push_back(NewInstrNode(ROT_TWO, 0));
+  }
+  ValueNode *const_keys = NewValueNode(AObject::Convert(keys), LOAD_CONST, -1, {});
+  params->push_back(const_keys);
+  unpack_dict.push_back(NewInstrNode(POP_TOP, 0));
+  unpack_dict.push_back(const_keys);
+  extra_oper->insert(nullptr, &unpack_dict);
+  return true;
 }
 
-bool GraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper) {
+bool GraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper,
+                                    CallNode *call_node) {
   ValueNode *dict_node = params->back();
   AbstractNodeList dict_unpack;
   params->clear();
   if (dict_node->GetOpcode() != BUILD_MAP) {
-    return UnpackDynamicLengthDictByBytecode();
+    return UnpackDynamicLengthDictByBytecode(params, extra_oper, call_node, dict_node);
   }
   if (dict_node->GetOparg() == 0) {
     extra_oper->push_back(this->NewInstrNode(POP_TOP, 0));
@@ -1928,23 +1963,29 @@ bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extr
   ValueNode *args_node = params->operator[](0);
   AbstractNodeList tuple_unpack;
   AbstractNodeList dict_unpack;
-  if (!has_dict) {
-    params->clear();
-  } else if (!UnpackCallExDict(params, &dict_unpack)) {
-    return false;
-  }
-  *has_kw = params->size();
-
-  if (args_node->GetOpcode() != BUILD_TUPLE) {
-    if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
+  if (has_dict) {
+    if (!UnpackCallExDict(params, &dict_unpack, call_node)) {
       return false;
     }
-    tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
-    return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
+    if (args_node->GetOpcode() != BUILD_TUPLE) {
+      if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
+        return false;
+      }
+      tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
+    }
+    *has_kw = params->size();
+  } else {
+    params->clear();
+    if (args_node->GetOpcode() != BUILD_TUPLE) {
+      if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
+        return false;
+      }
+      tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
+      return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
+    }
   }
 
   params->insert(params->begin(), args_node->getInputs().begin(), args_node->getInputs().end());
-
   // extra operations of unpack-call tuple args for graph break
   for (int i = 0; i < args_node->GetOparg(); ++i) {
     ValueNode *idx_node = this->NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
