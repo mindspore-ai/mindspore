@@ -57,6 +57,7 @@ class GraphJitConfig {
     kTestGraphIR,
     kEnableOptimizeForAttrItem,
     kEnableEliminateUnusedOperation,
+    kEnableDynamicShape,
     /* ------------------------------ */
     kIntConf,
     kMaxInlineDepth,
