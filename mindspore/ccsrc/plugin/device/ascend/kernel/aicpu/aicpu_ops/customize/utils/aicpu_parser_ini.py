@@ -136,7 +136,6 @@ cust_op_lists = [
     "padv3",
     "padv3grad",
     "parameterizedtruncatednormal",
-    "pow",
     "qr",
     "raggedrange",
     "randompoisson",
