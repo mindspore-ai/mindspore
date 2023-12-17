@@ -116,6 +116,10 @@ class ItemData {
     }
   }
 
+  virtual ItemType GetItemType() { return tp_; }
+
+  virtual bool MatchDynamicShape(std::shared_ptr<ItemData> other) { return false; }
+
  protected:
   ItemType tp_;
   bool specialized_;
@@ -753,6 +757,28 @@ class ParamInfoData : public ItemData {
   mindspore::ParamInfoPtr param_;
 };
 
+static constexpr int64_t kDynamicDim = -2;
+static constexpr int64_t kDynamicShape = -1;
+
+static bool IsDynamicDim(const ShapeVector &shape) {
+  return std::any_of(shape.begin(), shape.end(), [](ShapeValueDType dim) { return dim == kDynamicDim; });
+}
+
+static bool CheckShape(const ShapeVector &a, const ShapeVector &b) {
+  if (IsDynamicDim(a) || IsDynamicDim(b)) {
+    return true;
+  } else if (a.size() == b.size()) {
+    for (size_t idx = 0; idx < a.size(); idx++) {
+      if (a[idx] != kDynamicShape && b[idx] != kDynamicShape && a[idx] != b[idx]) {
+        return false;
+      }
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 class MetaTensorData : public ItemData {
  public:
   MetaTensorData(mindspore::tensor::MetaTensorPtr tensor_ptr, bool needSpecialize, int recurseDepth)
@@ -806,7 +832,7 @@ class MetaTensorData : public ItemData {
       if (is_stubtensor_ || other.is_stubtensor_) {
         ret = shape_ == other.shape_ && CheckDataType(other);
       } else {
-        ret = tid_ == other.tid_ && shape_ == other.shape_ && format_.compare(other.format_) == 0 &&
+        ret = tid_ == other.tid_ && CheckShape(shape_, other.shape_) && format_.compare(other.format_) == 0 &&
               host_format_.compare(other.host_format_) == 0 && is_parameter_ == other.is_parameter_ &&
               CheckDataType(other);
         if (is_parameter_ == true) {
@@ -819,9 +845,39 @@ class MetaTensorData : public ItemData {
     return false;
   }
 
+  mindspore::tensor::TensorPtr MakeTensor() {
+    return std::make_shared<mindspore::tensor::Tensor>(data_type_->type_id(), shape_);
+  }
+
+  bool IsDynamicShape() const {
+    return std::any_of(shape_.begin(), shape_.end(),
+                       [](ShapeValueDType dim) { return dim == kDynamicDim || dim == kDynamicShape; });
+  }
+
   std::string ToString() override {
     std::string meta_tensor = ToStringIntern();
     return DESC(meta_tensor) + DESC_END;
+  }
+
+  bool MatchDynamicShape(std::shared_ptr<ItemData> other) override {
+    auto type = other->GetItemType();
+    if (type != ItemType::Tensor && type != ItemType::MetaTensor) {
+      return false;
+    }
+    auto o = static_cast<MetaTensorData *>(other.get());
+    if (!CheckDataType(*o) || specialized_ != false || o->specialized_ != false) {
+      return false;
+    }
+    if (shape_.size() != o->shape_.size()) {
+      shape_ = {kDynamicDim};
+    } else {
+      for (size_t idx = 0; idx < shape_.size(); ++idx) {
+        if (shape_[idx] != kDynamicShape && shape_[idx] != o->shape_[idx]) {
+          shape_[idx] = kDynamicShape;
+        }
+      }
+    }
+    return true;
   }
 
  protected:
@@ -971,7 +1027,11 @@ class TensorData : public MetaTensorData {
         return false;
       }
     }
-    return CheckData(other);
+    if (IsDynamicShape() || other.IsDynamicShape()) {
+      return true;
+    } else {
+      return CheckData(other);
+    }
   }
 
   std::string ToString() override {
@@ -1547,7 +1607,7 @@ static ItemDataPtr CreateItem(PyObject *obj, bool need_specialize, int recurse_d
   return dp;
 }
 
-GuardItem::GuardItem(TracePtr tt) : var_(tt) {}
+GuardItem::GuardItem(TracePtr tt) : var_(tt), type_(GIType::GTUnknown) {}
 
 void GuardItem::Replace(TracePtr dst, TracePtr src) {
   if (!var_) {
@@ -1562,13 +1622,17 @@ void GuardItem::Replace(TracePtr dst, TracePtr src) {
 
 TracePtr GuardItem::GetTrace() { return var_; }
 
+bool GuardItem::operator==(const GuardItem &obj) const { return type_ == obj.type_ && *var_ == *(obj.var_); }
+
 class EqGuard : public GuardItem {
  public:
   EqGuard(TracePtr obj, bool needSpecialize, int recurseDepth)
       : GuardItem(obj),
         dp_(CreateItem(obj->GetObject(), needSpecialize, recurseDepth)),
         specialized_(needSpecialize),
-        recurse_(recurseDepth) {}
+        recurse_(recurseDepth) {
+    type_ = GIType::GTEqual;
+  }
 
   virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
     PyObject *obj = GetObjectFromTrace(frame, var_, cache);
@@ -1586,6 +1650,38 @@ class EqGuard : public GuardItem {
 
   virtual std::string ToString() { return var_->ToString() + "==" + dp_->ToString(); }
 
+  bool operator==(const GuardItem &obj) const override {
+    if (GuardItem::operator==(obj)) {
+      auto other = (const EqGuard &)obj;
+      return specialized_ == other.specialized_ && recurse_ == other.recurse_ && *dp_ == *(other.dp_);
+    }
+    return false;
+  }
+
+  bool MatchDynamicShape(std::shared_ptr<GuardItem> other) override {
+    var_->Detach();
+    other->GetTrace()->Detach();
+    if (other->GetType() != GIType::GTEqual || !(*var_ == *(other->GetTrace())) ||
+        !dp_->MatchDynamicShape((static_cast<EqGuard *>(other.get()))->dp_)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  PyObject *ApplyDynamicShape(PyObject *obj) override {
+    auto type = dp_->GetItemType();
+    if (type != ItemType::MetaTensor && type != ItemType::Tensor) {
+      return nullptr;
+    }
+    auto item = (MetaTensorData &)(*dp_);
+    if (item.IsDynamicShape()) {
+      return py::cast(item.MakeTensor()).inc_ref().ptr();
+    } else {
+      return nullptr;
+    }
+  }
+
  protected:
   ItemDataPtr dp_;
   bool specialized_;
@@ -1595,6 +1691,7 @@ class EqGuard : public GuardItem {
 class TypeGuard : public GuardItem {
  public:
   explicit TypeGuard(TracePtr obj) : GuardItem(obj) {
+    type_ = GIType::GTType;
     if (obj->GetTraceType() == TraceType::Type) {
       refType_ = std::dynamic_pointer_cast<TypeTrace>(obj)->GetType();
     } else {
@@ -1636,13 +1733,23 @@ class TypeGuard : public GuardItem {
     }
   }
 
+  bool operator==(const GuardItem &obj) const override {
+    if (GuardItem::operator==(obj)) {
+      return refType_ == ((const TypeGuard &)obj).refType_;
+    }
+    return false;
+  }
+
  protected:
   PyTypeObject *refType_;
 };
 
 class IdGuard : public GuardItem {
  public:
-  explicit IdGuard(TracePtr obj) : GuardItem(obj) { refId_ = obj->GetObject(); }
+  explicit IdGuard(TracePtr obj) : GuardItem(obj) {
+    type_ = GIType::GTId;
+    refId_ = obj->GetObject();
+  }
 
   virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
     PyObject *obj = GetObjectFromTrace(frame, var_, cache);
@@ -1670,13 +1777,23 @@ class IdGuard : public GuardItem {
     return std::string("id(") + var_->ToString() + std::string(")==") + std::to_string((size_t)refId_);
   }
 
+  bool operator==(const GuardItem &obj) const override {
+    if (GuardItem::operator==(obj)) {
+      return refId_ == ((const IdGuard &)obj).refId_;
+    }
+    return false;
+  }
+
  protected:
   PyObject *refId_;
 };
 
 class ReprGuard : public GuardItem {
  public:
-  explicit ReprGuard(TracePtr obj) : GuardItem(obj) { refRepr_ = PyObject_Repr(obj->GetObject()); }
+  explicit ReprGuard(TracePtr obj) : GuardItem(obj) {
+    type_ = GIType::GTRepr;
+    refRepr_ = PyObject_Repr(obj->GetObject());
+  }
 
   virtual ~ReprGuard() { Py_XDECREF(refRepr_); }
 
@@ -1707,6 +1824,13 @@ class ReprGuard : public GuardItem {
 
   std::string ToString() override { return std::string(PyUnicode_AsUTF8(refRepr_)); }
 
+  bool operator==(const GuardItem &obj) const override {
+    if (GuardItem::operator==(obj)) {
+      return refRepr_ == ((const ReprGuard &)obj).refRepr_;
+    }
+    return false;
+  }
+
  protected:
   PyObject *refRepr_;
 };
@@ -1714,6 +1838,7 @@ class ReprGuard : public GuardItem {
 class AttrGuard : public GuardItem {
  public:
   explicit AttrGuard(TracePtr pObj) : GuardItem(pObj) {
+    type_ = GIType::GTAttr;
     AttrTracePtr t = std::dynamic_pointer_cast<AttrTrace>(pObj);
     PyObject *obj = t->GetOrigin()->GetObject();
     nameAttr_ = t->GetAttribute();
@@ -1787,6 +1912,13 @@ class AttrGuard : public GuardItem {
   }
 
   virtual std::string ToString() { return std::string("exist(") + var_->ToString() + std::string(")"); }
+
+  bool operator==(const GuardItem &obj) const override {
+    if (GuardItem::operator==(obj)) {
+      return hasAttr_ == ((const AttrGuard &)obj).hasAttr_ && nameAttr_ == ((const AttrGuard &)obj).nameAttr_;
+    }
+    return false;
+  }
 
  protected:
   bool hasAttr_;

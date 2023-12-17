@@ -30,6 +30,15 @@ namespace mindspore {
 namespace jit {
 namespace graph {
 
+typedef enum _GIType {
+  GTUnknown = 0,
+  GTEqual,
+  GTType,
+  GTId,
+  GTAttr,
+  GTRepr,
+} GIType;
+
 class GuardItem {
  public:
   explicit GuardItem(TracePtr var);
@@ -39,9 +48,14 @@ class GuardItem {
   virtual std::string ToString() = 0;
   virtual void Replace(TracePtr dst, TracePtr src);
   virtual TracePtr GetTrace();
+  virtual bool operator==(const GuardItem &obj) const;
+  virtual GIType GetType() { return type_; }
+  virtual bool MatchDynamicShape(std::shared_ptr<GuardItem> other) { return false; }
+  virtual PyObject *ApplyDynamicShape(PyObject *obj) { return nullptr; }
 
  protected:
   TracePtr var_;
+  GIType type_;
 };
 using GuardItemPtr = std::shared_ptr<GuardItem>;
 

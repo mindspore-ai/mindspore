@@ -66,9 +66,33 @@ static bool CompareOptCodeByCount(OptCodePtr a, OptCodePtr b) {
   }
 }
 
-void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, OptCodePtr except) {
+void ShrinkCodeSet(OptCodeSet *set, OptCodePtr target) {
+  OptCodeSet match, mismatch;
+  auto guard_target = target->GetGuard();
+  for (size_t i = set->size(); i != 0;) {
+    i--;
+    auto item = set->at(i);
+    auto guard_item = item->GetGuard();
+    if (guard_target->MatchShape(guard_item)) {
+      match.insert(match.begin(), item);
+    } else {
+      mismatch.insert(mismatch.begin(), item);
+    }
+  }
+  set->clear();
+  set->insert(set->begin(), mismatch.begin(), mismatch.end());
+  set->insert(set->end(), match.begin(), match.end());
+}
+
+static constexpr int64_t kDynamicShapeLimitCount = 3;
+
+void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, bool enable_dynamicshape,
+                                 OptCodePtr except) {
   if (limit_size <= 0 && limit_count <= 0) {
-    return;
+    if (!enable_dynamicshape) {
+      return;
+    }
+    limit_count = kDynamicShapeLimitCount;
   }
   std::vector<OptCodeSet> vec = hub->GetAllOptTarget();
   for (auto set : vec) {
@@ -80,6 +104,9 @@ void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_co
     if (limit_count > 0) {
       if (set.size() > (size_t)limit_count) {
         OptCodeSet toDel;
+        if (enable_dynamicshape) {
+          ShrinkCodeSet(&set, except);
+        }
         toDel.insert(toDel.begin(), set.begin() + limit_count, set.end());
         for (auto item : toDel) {
           hub->DelOptTarget(item);
@@ -89,6 +116,9 @@ void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_co
     if (limit_size > 0) {
       auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
       OptCodeSet toDel;
+      if (enable_dynamicshape) {
+        ShrinkCodeSet(&set, except);
+      }
       for (auto item : set) {
         if (limit_size == 0) {
           toDel.push_back(item);

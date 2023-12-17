@@ -38,7 +38,8 @@ class OptStrategy {
   static ExecKind MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, int count,
                                          double adj_coef = 0.1);
   static ExecKind MakeExecStrategyByComplex(PyCodeObject *code, int threshold);
-  static void MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, OptCodePtr except);
+  static void MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_count, bool enable_dynamicshape,
+                             OptCodePtr except);
   typedef enum {
     kCalcUnsupported = 0,
     kCalcShape,

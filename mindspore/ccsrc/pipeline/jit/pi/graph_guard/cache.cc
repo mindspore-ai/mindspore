@@ -168,7 +168,8 @@ void OptCodeHub::DelOptTarget(OptCodePtr code) {
 
 std::vector<OptCodeSet> OptCodeHub::GetAllOptTarget() {
   std::vector<OptCodeSet> ret;
-  std::transform(codeMap_.begin(), codeMap_.end(), ret.begin(), [](const auto &item) { return item.second; });
+  std::transform(codeMap_.begin(), codeMap_.end(), std::back_inserter(ret),
+                 [](const auto &item) { return item.second; });
   return ret;
 }
 
