@@ -50,7 +50,8 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  kernel_mod_ptr->SetValueDependArgs(abstract::GetValueDependArgIndices(cnode));
+  // acl_kernel_mod use proto value_depend indices
+  kernel_mod_ptr->SetValueDependArgs(abstract::GetValueDependArgIndices(cnode, true));
   if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
     return kernel_mod_ptr;
   }

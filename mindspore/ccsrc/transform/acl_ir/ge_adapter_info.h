@@ -134,8 +134,6 @@ class GeAdapterInfo {
     return adapter_->getOutputMap().size();
   }
 
-  int64_t GetDynInputMsProtoIndex() { return dyn_input_ms_proto_idx_; }
-
   int GetMaxMsProtoIndexOfInputMap() { return max_input_ms_proto_idx_; }
 
   const Ms2GeParamInfo GetGeOutputByMsOutputIndex(size_t ms_output_idx) const {
@@ -190,7 +188,6 @@ class GeAdapterInfo {
   GeTensorInfo info_;
   // max MindSpore input index in op prototype of INPUT_MAP and DYN_INPUT_MAP
   int max_input_ms_proto_idx_ = INT_MIN;
-  int64_t dyn_input_ms_proto_idx_ = INT_MAX;
   std::unordered_map<std::pair<std::string, ValuePtr>, ValuePtr, ValuePairHasher> get_attr_cache_;
   std::unordered_map<std::pair<uint32_t, ValuePtr>, ValuePtr, ValuePairHasher> get_input_attr_cache_;
 };
