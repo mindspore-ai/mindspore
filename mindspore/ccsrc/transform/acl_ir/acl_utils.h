@@ -26,8 +26,6 @@
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 
-#define MAX_INPUT_TO_HOST 40
-
 namespace mindspore {
 namespace transform {
 struct AclExecParam {
@@ -49,43 +47,36 @@ using AclHostInfoPtr = std::shared_ptr<AclHostInfo>;
 
 class AclInputToHost {
  public:
-  AclInputToHost() { clear(); }
-
-  void clear() {
-    for (auto &item : input_to_host_) {
-      item = nullptr;
-    }
-    size_ = 0;
+  AclInputToHost() {
+    static constexpr size_t reserve_size = 40;
+    input_to_host_.reserve(reserve_size);
   }
 
+  void clear() { input_to_host_.clear(); }
+
   AclHostInfoPtr get(size_t index) const {
-    if (index >= MAX_INPUT_TO_HOST) {
-      MS_LOG(EXCEPTION) << "Index is bigger than max input to host size, index: " << index
-                        << ", max_input_to_host: " << MAX_INPUT_TO_HOST;
+    if (index >= input_to_host_.size()) {
+      return nullptr;
     }
     return input_to_host_[index];
   }
 
   void emplace(size_t index, const AclHostInfoPtr &acl_input) {
-    auto origin_input = get(index);
-    if (origin_input == nullptr && acl_input != nullptr) {
-      size_++;
+    if (index >= input_to_host_.size()) {
+      input_to_host_.resize(index + 1, nullptr);
     }
     input_to_host_[index] = acl_input;
   }
 
   void build(const std::map<uint32_t, AclHostInfoPtr> &inputs_on_host) {
     clear();
-    for (auto &kv : inputs_on_host) {
+    for (const auto &kv : inputs_on_host) {
       emplace(kv.first, kv.second);
     }
   }
 
-  bool empty() const { return size_ == 0; }
-
  private:
-  AclHostInfoPtr input_to_host_[MAX_INPUT_TO_HOST];
-  size_t size_{};
+  std::vector<AclHostInfoPtr> input_to_host_;
 };
 
 class AclAttrMaker {
