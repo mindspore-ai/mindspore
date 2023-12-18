@@ -1784,8 +1784,35 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
 
     def reshape(self, *shape):
-        """
-        For details, please refer to :func:`mindspore.ops.reshape`.
+        r"""
+        Rearranges the input Tensor based on the given shape.
+
+        The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+        the number of elements in the input.
+
+        Args:
+            shape (Union[int, tuple[int], list[int]]): If 'shape' is a tuple or list, its elements should be
+                integers, and only constant value is allowed. i.e., :math:`(y_1, y_2, ..., y_S)`.
+
+        Returns:
+            Tensor, If the given 'shape' does not contain -1, the the 'shape' of tensor is :math:`(y_1, y_2, ..., y_S)`.
+                If the k-th position in the given 'shape' is -1, the the 'shape' of tensor is :math:`(y_1, ..., y_{k-1},
+                \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1},
+                ..., y_S)`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> output = input.reshape(3, 2)
+            >>> print(output)
+            [[-0.1  0.3]
+             [ 3.6  0.4]
+             [ 0.5 -3.2]]
         """
         new_shape = validator.check_reshape_shp(shape)
         return tensor_operator_registry.get('reshape')(self, new_shape)
