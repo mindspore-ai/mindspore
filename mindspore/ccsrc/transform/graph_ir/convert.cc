@@ -1897,9 +1897,9 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
     if (!it->isa<CNode>()) {
       continue;
     }
-    auto cnode = it->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->inputs().size() == kCnodeInputSizeOne) {
+    auto adpt = FindAdapter(it, training_);
+    MS_EXCEPTION_IF_NULL(adpt);
+    if (adpt->getInputMap().empty() && adpt->getAttrInputMap().empty()) {
       auto cnode_op = op_cache_.find(it.get());
       if (cnode_op != op_cache_.end()) {
         (void)inputs->push_back(*(cnode_op->second));
