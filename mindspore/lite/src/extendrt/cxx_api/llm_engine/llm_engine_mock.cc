@@ -44,10 +44,19 @@ ge::Status LLMEngine::LLMReqComplete(const LLMReq &) { return ge::GRAPH_SUCCESS;
 ge::Status LLMEngine::PreloadPromptPrefix(const LLMReq &, const std::vector<ge::Tensor> &) { return ge::GRAPH_SUCCESS; }
 ge::Status LLMEngine::ReleasePromptPrefix(const LLMReq &) { return ge::GRAPH_SUCCESS; }
 
-ge::Status PullKv(const LLMReq &) { return ge::GRAPH_SUCCESS; }
-ge::Status MergeKv(const uint64_t req_id, const int32_t batch_index) { return ge::GRAPH_SUCCESS; }
+ge::Status LLMEngine::PullKv(const LLMReq &) { return ge::GRAPH_SUCCESS; }
+ge::Status LLMEngine::MergeKv(const uint64_t req_id, const int32_t batch_index) { return ge::GRAPH_SUCCESS; }
 
-ge::Status RunDecoder(const std::vector<uint64_t> &, const std::vector<ge::Tensor> &, std::vector<ge::Tensor> &) {
+ge::Status LLMEngine::RunDecoder(const std::vector<uint64_t> &, const std::vector<ge::Tensor> &,
+                                 std::vector<ge::Tensor> &) {
+  return ge::GRAPH_SUCCESS;
+}
+
+ge::Status LLMEngine::LinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &, const int32_t timeout) {
+  return ge::GRAPH_SUCCESS;
+}
+ge::Status LLMEngine::UnlinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &,
+                                     const int32_t timeout) {
   return ge::GRAPH_SUCCESS;
 }
 }  // namespace llm

@@ -20,6 +20,7 @@
 #include "mindspore/ccsrc/transform/graph_ir/transform_util.h"
 #include "mindspore/lite/src/extendrt/utils/tensor_utils.h"
 #include "mindspore/lite/src/common/common.h"
+#include "mindspore/lite/src/common/utils.h"
 #include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
 #include "common/ge_common/ge_inner_error_codes.h"
 
@@ -46,6 +47,9 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   Status PullKV(const LLMReq &req) override;
   Status MergeKV(const LLMReq &req, uint32_t batch_index) override;
 
+  Status LinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) override;
+  Status UnlinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) override;
+
  private:
   LLMRole role_ = kLLMRolePrompt;
   uint64_t cluster_id_ = 0;
@@ -58,6 +62,8 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   Status CheckModelInfos(const std::vector<LLMEngineModelInfo> &model_infos);
   void InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess);
   void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
+  void TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
+                            std::vector<llm::ClusterInfo> *llm_clusters) const;
   Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
   Status OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase);
 };
@@ -354,6 +360,33 @@ void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) c
   llm_req.SetPrefixId(req.prefix_id);
 }
 
+void LLMEnginePlugin::TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
+                                           std::vector<llm::ClusterInfo> *llm_clusters_ptr) const {
+  if (llm_clusters_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input argument llm_clusters_ptr is nullptr";
+    return;
+  }
+  auto &llm_clusters = *llm_clusters_ptr;
+  for (auto &cluster : clusters) {
+    llm::ClusterInfo llm_cluster;
+    llm_cluster.remote_cluster_id = cluster.remote_cluster_id;
+    llm_cluster.remote_role_type = cluster.remote_role_type;
+    for (auto &item : cluster.local_ip_infos) {
+      llm::IpInfo llm_ip_info;
+      llm_ip_info.ip = item.ip;
+      llm_ip_info.port = item.port;
+      llm_cluster.local_ip_infos.push_back(llm_ip_info);
+    }
+    for (auto &item : cluster.remote_ip_infos) {
+      llm::IpInfo llm_ip_info;
+      llm_ip_info.ip = item.ip;
+      llm_ip_info.port = item.port;
+      llm_cluster.remote_ip_infos.push_back(llm_ip_info);
+    }
+    llm_clusters.push_back(llm_cluster);
+  }
+}
+
 Status LLMEnginePlugin::MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs) {
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
@@ -546,6 +579,106 @@ Status LLMEnginePlugin::ReleasePromptPrefix(const LLMReq &req) {
   TransLLMReq(req, &llm_req);
   auto ge_ret = llm_engine_->ReleasePromptPrefix(llm_req);
   return OnGeStatus(ge_ret, "ReleasePromptPrefix", "return");
+}
+
+Status LLMEnginePlugin::LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
+                                     int32_t timeout) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  if (rets == nullptr) {
+    MS_LOG(ERROR) << "Input argument rets is nullptr";
+    return kLiteError;
+  }
+  MS_LOG(INFO) << "Start to call llm::LLMEngine::LinkClusters, cluster size " << clusters.size();
+  std::function<std::string(const LLMIpInfo &)> ip_info_as_str = [](const LLMIpInfo &info) {
+    return std::to_string(info.ip) + ":" + std::to_string(info.port);
+  };
+  std::vector<llm::ClusterInfo> llm_clusters;
+  for (size_t i = 0; i < clusters.size(); i++) {
+    auto &cluster = clusters[i];
+    MS_LOG(INFO) << "Cluster " << i << ", remote_cluster_id " << cluster.remote_cluster_id << ", remote_role_type "
+                 << cluster.remote_role_type;
+    MS_LOG(INFO) << "local ip infos: " << lite::VectorToStr(cluster.local_ip_infos, ip_info_as_str);
+    MS_LOG(INFO) << "remote ip infos: " << lite::VectorToStr(cluster.remote_ip_infos, ip_info_as_str);
+  }
+  TransLLMClusterInfos(clusters, &llm_clusters);
+  std::vector<ge::Status> ge_rets;
+  auto ret = llm_engine_->LinkClusters(llm_clusters, ge_rets, timeout);
+  if (!ge_rets.empty() && llm_clusters.size() != ge_rets.size()) {
+    MS_LOG(ERROR) << "Cluster info size " << llm_clusters.size() << "!="
+                  << " LinkClusters rets size " << ge_rets.size();
+    return kLiteError;
+  }
+  for (size_t i = 0; i < ge_rets.size(); i++) {
+    auto ge_ret = ge_rets[i];
+    if (ge_ret != ge::GRAPH_SUCCESS) {
+      rets->push_back(kLiteError);
+      auto &cluster = clusters[i];
+      MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
+                    << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type
+                    << ", local ip infos: " << lite::VectorToStr(cluster.local_ip_infos, ip_info_as_str)
+                    << "remote ip infos: " << lite::VectorToStr(cluster.remote_ip_infos, ip_info_as_str);
+    } else {
+      rets->push_back(kSuccess);
+    }
+  }
+  return OnGeStatus(ret, "LinkClusters", "return");
+}
+
+Status LLMEnginePlugin::UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
+                                       int32_t timeout) {
+  if (finalized_) {
+    MS_LOG(ERROR) << "LLMEngine has been finalized";
+    return kLiteLLMEngineFinalized;
+  }
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  if (rets == nullptr) {
+    MS_LOG(ERROR) << "Input argument rets is nullptr";
+    return kLiteError;
+  }
+  MS_LOG(INFO) << "Start to call llm::LLMEngine::UnlinkClusters, cluster size " << clusters.size();
+  std::function<std::string(const LLMIpInfo &)> ip_info_as_str = [](const LLMIpInfo &info) {
+    return std::to_string(info.ip) + ":" + std::to_string(info.port);
+  };
+  std::vector<llm::ClusterInfo> llm_clusters;
+  for (size_t i = 0; i < clusters.size(); i++) {
+    auto &cluster = clusters[i];
+    MS_LOG(INFO) << "Cluster " << i << ", remote_cluster_id " << cluster.remote_cluster_id << ", remote_role_type "
+                 << cluster.remote_role_type;
+    MS_LOG(INFO) << "local ip infos: " << lite::VectorToStr(cluster.local_ip_infos, ip_info_as_str);
+    MS_LOG(INFO) << "remote ip infos: " << lite::VectorToStr(cluster.remote_ip_infos, ip_info_as_str);
+  }
+  TransLLMClusterInfos(clusters, &llm_clusters);
+  std::vector<ge::Status> ge_rets;
+  auto ret = llm_engine_->UnlinkClusters(llm_clusters, ge_rets, timeout);
+  if (!ge_rets.empty() && llm_clusters.size() != ge_rets.size()) {
+    MS_LOG(ERROR) << "Cluster info size " << llm_clusters.size() << "!="
+                  << " UnlinkClusters rets size " << ge_rets.size();
+    return kLiteError;
+  }
+  for (size_t i = 0; i < ge_rets.size(); i++) {
+    auto ge_ret = ge_rets[i];
+    if (ge_ret != ge::GRAPH_SUCCESS) {
+      rets->push_back(kLiteError);
+      auto &cluster = clusters[i];
+      MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
+                    << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type
+                    << ", local ip infos: " << lite::VectorToStr(cluster.local_ip_infos, ip_info_as_str)
+                    << "remote ip infos: " << lite::VectorToStr(cluster.remote_ip_infos, ip_info_as_str);
+    } else {
+      rets->push_back(kSuccess);
+    }
+  }
+  return OnGeStatus(ret, "UnlinkClusters", "return");
 }
 
 MSTensor LLMEnginePlugin::ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr) {
