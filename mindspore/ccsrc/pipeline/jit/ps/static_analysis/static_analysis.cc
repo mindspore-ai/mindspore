@@ -1124,7 +1124,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
   }
   EvaluatorPtr partial_evaluator = nullptr;
   if (func->need_append_to_end()) {
-    partial_evaluator = std::make_shared<PartialToEndEvaluator>(primal_func, func->node());
+    partial_evaluator = std::make_shared<PartialToEndEvaluator>(primal_func);
   } else {
     auto primal_evaluator = GetEvaluatorFor(primal_func);
     partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());

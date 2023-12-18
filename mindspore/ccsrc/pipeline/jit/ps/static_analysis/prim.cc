@@ -143,40 +143,6 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg 
   return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
 }
 
-AnfNodePtrList DoTypeConversionForPrimitiveInputs(const PrimitivePtr &prim, const AnfNodePtrList &params_list,
-                                                  const FuncGraphPtr &fg, const AnalysisEnginePtr &engine,
-                                                  const AnfNodeConfigPtr &out_conf) {
-  auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr) {
-    return params_list;
-  }
-  auto params_size = params_list.size();
-  if (op_def->args_.size() < params_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], inputs size should be less than or equal to "
-                               << op_def->args_.size() << ", but got " << params_size << ".";
-  }
-
-  AnfNodePtrList op_inputs;
-  for (size_t i = 0; i < params_size; i++) {
-    auto input = params_list[i];
-    auto op_arg = op_def->args_[i];
-    if (op_arg.as_init_arg_) {
-      MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], " << op_arg.arg_name_
-                                 << " is an initialization argument and it does not need type conversion here. "
-                                 << "Please check if the number of inputs is correct.";
-    }
-    AnfNodeConfigPtr input_conf = engine->MakeConfig(input, out_conf->context(), out_conf->func_graph());
-    MS_EXCEPTION_IF_NULL(input_conf);
-    const auto &eval_result = input_conf->ObtainEvalResult();
-    MS_EXCEPTION_IF_NULL(eval_result);
-    auto abs = eval_result->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto new_input = GetNodeAfterTypeConversion(prim->name(), input, op_arg, abs, fg);
-    (void)op_inputs.emplace_back(new_input);
-  }
-  return op_inputs;
-}
-
 CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
                                                            const AbstractBasePtrList &args_abs_list,
                                                            const AnalysisEnginePtr &engine,
@@ -197,10 +163,6 @@ CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
   // Handle primitive signatures.
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   auto op_inputs = prim::GetNewInputsBySignatures(fg, prim_->ToString(), func, args_abs_list, args_inputs);
-  // Do type conversion for primitive inputs.
-  if (func->isa<Primitive>() && !ContainsAbstractAny(args_abs_list)) {
-    op_inputs = DoTypeConversionForPrimitiveInputs(func->cast<PrimitivePtr>(), op_inputs, fg, engine, out_conf);
-  }
   AnfNodePtrList new_inputs{NewValueNode(func)};
   (void)std::copy(op_inputs.begin(), op_inputs.end(), std::back_inserter(new_inputs));
   return fg->NewCNodeInOrder(new_inputs);
@@ -2517,7 +2479,8 @@ std::vector<AnfNodePtr> GenerateNewPrimitiveArgs(const ops::OpDefPtr &op_def, co
 }
 
 std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
-                                            const FuncGraphPtr &fg) {
+                                            const FuncGraphPtr &fg, const AnalysisEnginePtr &engine,
+                                            const AnfNodeConfigPtr &out_conf) {
   // Get init args and inputs of primitive.
   size_t index_input = 1;
   std::vector<AnfNodePtr> prim_input_nodes;
@@ -2544,7 +2507,15 @@ std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std:
         MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args `" << index_input
                                    << "` exceeds the size of cnode inputs `" << inputs.size() << "`.";
       }
-      auto new_input = GetNodeAfterArgHandler(inputs[index_input], op_arg, fg);
+      AnfNodeConfigPtr input_conf =
+        engine->MakeConfig(inputs[index_input], out_conf->context(), out_conf->func_graph());
+      MS_EXCEPTION_IF_NULL(input_conf);
+      const auto &eval_result = input_conf->ObtainEvalResult();
+      MS_EXCEPTION_IF_NULL(eval_result);
+      auto input_abs = eval_result->abstract();
+      MS_EXCEPTION_IF_NULL(input_abs);
+      auto new_input = GetNodeAfterTypeConversion(prim->name(), inputs[index_input], op_arg, input_abs, fg);
+      new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
       (void)prim_input_nodes.emplace_back(new_input);
       index_input++;
     }
@@ -2571,7 +2542,7 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   constexpr size_t index_data = 1;
   auto op_node = cnode->input(index_op);
   if (IsPrimitive(op_node, prim_)) {
-    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg);
+    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
     // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
     std::vector<AnfNodePtr> partial_inputs;
@@ -2579,7 +2550,7 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
     (void)std::copy(op_cnode->inputs().begin() + index_data, op_cnode->inputs().end(),
                     std::back_inserter(partial_inputs));
     (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(partial_inputs));
-    new_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg);
+    new_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
              IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
@@ -2589,10 +2560,10 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
     (void)getattr_inputs.emplace_back(NewValueNode(new_prim));
     (void)getattr_inputs.emplace_back(op_cnode->input(index_data));
     (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(getattr_inputs));
-    new_inputs = ConvertArgsToInputs(prim_, getattr_inputs, fg);
+    new_inputs = ConvertArgsToInputs(prim_, getattr_inputs, fg, engine, out_conf);
   } else {
     constexpr int recursive_level = 2;
-    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg);
+    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
     MS_LOG(DEBUG) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
                   << cnode->DebugString(recursive_level);
   }
@@ -2654,7 +2625,7 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
     }
   }
   // Handle init args.
-  AnfNodePtrList cnode_inputs = cnode->inputs();
+  const AnfNodePtrList &cnode_inputs = cnode->inputs();
   AnfNodePtrList origin_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
   AbstractBasePtrList origin_init_abs_list(args_abs_list.begin() + args_abs_list.size() - init_args_size,
                                            args_abs_list.end());
@@ -2704,8 +2675,10 @@ EvalResultPtr PartialToEndEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
     (void)new_inputs.emplace_back(cnode->input(i));
   }
   // Add args: a, b.
-  MS_EXCEPTION_IF_NULL(partial_node_);
-  auto partial_cnode = partial_node_->cast<CNodePtr>();
+  constexpr size_t op_index = 0;
+  auto partial_node = cnode->input(op_index);
+  MS_EXCEPTION_IF_NULL(partial_node);
+  auto partial_cnode = partial_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(partial_cnode);
   for (size_t i = 1; i < partial_cnode->size(); i++) {
     (void)new_inputs.emplace_back(partial_cnode->input(i));
