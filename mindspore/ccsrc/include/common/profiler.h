@@ -31,6 +31,7 @@
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "include/common/visible.h"
+#include "mindrt/include/async/spinlock.h"
 
 namespace mindspore {
 namespace runtime {
@@ -88,6 +89,14 @@ enum class ProfilerEvent {
   kPyNativeGradUpdateSens,
   kPyNativeGradClearTopCell,
   kPyNativeGradClearAutoGradCell,
+  // PyBoost
+  kPyBoostInferOutput,
+  kPyBoostInferByOpDef,
+  kPyBoostCreateOutputTensor,
+  kPyBoostDeviceTask,
+  kPyBoostMallocInput,
+  kPyBoostMallocOutput,
+  kPyBoostLaunchAclnn,
 };
 
 #define PROFILER_START(start_time)                                          \
@@ -342,7 +351,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   ProfilerDataSpan data_;
   // Container list for all data_ points.
   std::list<std::pair<StepInfoPtr, ProfilerDataSpan>> data_line_;
-  std::mutex data_mutex_;
+  SpinLock data_mutex_;
   nlohmann::json json_infos_;
   // The data analyzed level is module-->event-->op, these data would not be cleared in unit test.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;

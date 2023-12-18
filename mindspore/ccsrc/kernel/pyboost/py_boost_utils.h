@@ -61,6 +61,8 @@ class BACKEND_EXPORT PyBoostUtils {
 
   template <typename... T>
   static void MallocOpInputs(DeviceContext *device_context, const T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocInput,
+                                       runtime::ProfilerRecorder::kNoName, false);
     (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
   }
 
@@ -112,6 +114,8 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create output tensor device address without kernel tensor
   static void MallocOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocOutput,
+                                       runtime::ProfilerRecorder::kNoName, false);
     runtime::DeviceAddressUtils::MallocForOutputs(device_context, outputs);
   }
 

@@ -26,6 +26,8 @@
 #define LAUNCH_ACLNN(aclnn_api, device_context, stream_ptr, ...)                                                    \
   do {                                                                                                              \
     static const std::string aclnn_name = #aclnn_api;                                                               \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                          \
+                                       runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);             \
     auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_name, __VA_ARGS__);                      \
     if (ws_size == 0) {                                                                                             \
       RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function);                      \
