@@ -636,8 +636,8 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
   py::object obj = GetSymbolObject(name_space, symbol, node);
   // If obj is nn.CellList, convert it to sequence.
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
-  if (is_celllist) {
+  bool is_cell_list = py::hasattr(obj, PYTHON_CELL_AS_LIST);
+  if (is_cell_list) {
     obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE, obj);
   }
   if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {

@@ -318,7 +318,7 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
     // An element will directly convert to InterpretedObject if:
     //   1. The container is not a cell list object.
     //   2. The element should be single cell (cell with no __cell_as_list__ attr).
-    bool to_interpret = !is_celllist && py::isinstance<Cell>(element) && !py::hasattr(element, "__cell_as_list__");
+    bool to_interpret = !is_celllist && py::isinstance<Cell>(element);
     if (to_interpret) {
       value_list.push_back(std::make_shared<parse::InterpretedObject>(element));
       continue;
