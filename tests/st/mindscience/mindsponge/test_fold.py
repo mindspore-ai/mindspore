@@ -85,7 +85,7 @@ def test_910B_Ascend_fold():
     assert compile_time < 200
     assert exectue_time < 35
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_910A_Ascend_fold():
