@@ -96,7 +96,7 @@ bool ValueDependOpUtils::AddConstInputToAttr(const CNodePtr &cnode, const HashSe
   const auto &op_name = primitive->name();
   auto op_def = mindspore::ops::GetOpDef(op_name);
   if (op_def == nullptr) {
-    MS_LOG(WARNING) << op_name << " not found in op def.";
+    MS_LOG(INFO) << op_name << " not found in op def.";
     return false;
   }
   const auto &input_vec = op_def->args_;
