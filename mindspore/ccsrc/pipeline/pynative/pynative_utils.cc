@@ -37,6 +37,7 @@
 #include "ops/structure_ops.h"
 #include "ops/other_ops.h"
 #include "pipeline/pynative/predict_out_type_map.h"
+#include "kernel/pyboost/auto_generate/contiguous.h"
 
 namespace mindspore {
 namespace pynative {
@@ -519,20 +520,43 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-std::optional<tensor::TensorPtr> Common::StubNodeToTensorOptional(const std::optional<ValuePtr> &value) {
-  if (!value.has_value()) {
-    return std::nullopt;
+tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return tensor;
   }
-  return std::make_optional(StubNodeToTensor(value.value()));
+
+  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
+  return contiguous_op->Call(tensor);
 }
 
-ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
+TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous) {
+  const auto &tensor = StubNodeToTensor(v);
+  if (!need_contiguous || device_target == kAscendDevice) {
+    return tensor;
+  }
+  return ConvertToContiguousTensor(tensor, device_target);
+}
+
+std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
+                                                                 const std::string &device_target,
+                                                                 bool need_contiguous) {
+  if (!v.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), device_target, need_contiguous));
+}
+
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
+                                                  bool need_contiguous) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [](const ValuePtr &value) { return StubNodeToTensor(value); });
+                         [&device_target, need_contiguous](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, device_target, need_contiguous);
+                         });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
