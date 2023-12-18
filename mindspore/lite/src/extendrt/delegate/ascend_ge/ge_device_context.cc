@@ -25,6 +25,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
+#include "acl/acl_rt.h"
 #include "runtime/config.h"
 #include "common/config_infos.h"
 #include "common/common.h"
@@ -191,6 +192,22 @@ std::shared_ptr<AscendDeviceInfo> GeDeviceContext::GetGeAscendDeviceInfo(const s
 
 Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MsContext::GetInstance()->set_backend_policy("ge");
+  std::string overflow_mode = common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE");
+  if (overflow_mode == "INFNAN_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    auto ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set INFNAN mode failed";
+      return kLiteError;
+    }
+  } else if (overflow_mode == "SATURATION_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
+    auto ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set SATURATION mode failed";
+      return kLiteError;
+    }
+  }
   auto status = InitGe(MsContext::GetInstance(), context, config_info);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to Init GE";
