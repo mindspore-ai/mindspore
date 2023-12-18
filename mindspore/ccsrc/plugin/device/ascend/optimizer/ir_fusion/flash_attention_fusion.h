@@ -35,8 +35,9 @@ class FlashAttentionFusion : public PatternProcessPass {
  protected:
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
-                                                  const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                  float scale_value, int64_t num_key_value_heads) const;
+                                                  const AnfNodePtr &atten_mask, const int64_t num_heads,
+                                                  const int64_t next_token, const float scale_value,
+                                                  const int64_t num_key_value_heads) const;
 
  private:
   virtual CNodePtr CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
