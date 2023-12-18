@@ -20,7 +20,9 @@
 #include <string>
 #include <optional>
 #include <set>
+#if defined(SYSTEM_ENV_POSIX)
 #include <mutex>
+#endif
 #include "include/common/visible.h"
 #include "include/common/utils/contract.h"
 #include "utils/ms_context.h"
@@ -71,7 +73,9 @@ class COMMON_EXPORT Common {
   inline static bool debugger_terminate_ = false;
   inline static bool exit_success_ = false;
   inline static size_t g_id_ = 0;
+#if defined(SYSTEM_ENV_POSIX)
   inline static std::mutex random_data_lock_;
+#endif
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {
