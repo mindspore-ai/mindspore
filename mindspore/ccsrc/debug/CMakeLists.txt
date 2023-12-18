@@ -11,7 +11,6 @@ set(_OFFLINE_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/dbg_services.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/mi_pybind_register.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/md5.cc"
 )
 
 if(ENABLE_DUMP_IR)
@@ -54,7 +53,6 @@ if(NOT ENABLE_SECURITY)
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST
             "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/e2e_dump.cc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/md5.cc"
             )
     endif()
 endif()
@@ -79,6 +77,7 @@ if(ENABLE_DEBUGGER)
         target_link_libraries(_mindspore_offline_debug PRIVATE
             mindspore::pybind11_module
             mindspore_core
+            mindspore::ssl mindspore::crypto
             )
         set_target_properties(_mindspore_offline_debug PROPERTIES
             PREFIX "${PYTHON_MODULE_PREFIX}"
