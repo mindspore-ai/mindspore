@@ -51,7 +51,9 @@ def test_make_coo():
     compare_coo(coo3, coo2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_coo_tensor_with_control_if():
