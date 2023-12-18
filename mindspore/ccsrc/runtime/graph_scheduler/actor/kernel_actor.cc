@@ -129,7 +129,7 @@ void KernelActor::InitOutputInfo() {
       }
       // Used to keep graph output address when somas block memory free, and reused by the ref conut in other graphs.
       if (somas_graph_output_indexes_.count(i) > 0) {
-        (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].second);
+        (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].first, somas_outputs[i].second);
       } else {
         UpdateRefCount(output_address.get(), true);
       }

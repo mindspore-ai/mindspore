@@ -26,6 +26,7 @@
 #include "runtime/pynative/op_executor.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/ps/pipeline.h"
+#include "include/common/thread_pool.h"
 #include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
@@ -38,6 +39,10 @@ void RegisterForkCallbacks() {
   MS_LOG(DEBUG) << "Register ActorMgr fork callbacks.";
   ForkUtils::GetInstance().RegisterCallbacks(ActorMgr::GetActorMgrRef(), static_cast<void (ActorMgr::*)()>(nullptr),
                                              static_cast<void (ActorMgr::*)()>(nullptr), &ActorMgr::ChildAfterFork);
+  MS_LOG(DEBUG) << "Register Common ThreadPool fork callbacks.";
+  ForkUtils::GetInstance().RegisterCallbacks(
+    &common::ThreadPool::GetInstance(), static_cast<void (common::ThreadPool::*)()>(nullptr),
+    static_cast<void (common::ThreadPool::*)()>(nullptr), &common::ThreadPool::ChildAfterFork);
   MS_LOG(DEBUG) << "Register PyNativeExecutor fork callbacks.";
   ForkUtils::GetInstance().RegisterCallbacks(
     pynative::PyNativeExecutor::GetInstance(), &pynative::PyNativeExecutor::ParentBeforeFork,

@@ -22,6 +22,7 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include "acl/acl_base.h"
 #include "acl/acl.h"
 #include "transform/acl_ir/op_api_convert.h"
@@ -133,9 +134,32 @@ class ReleaseCall {
   T converted_params_;
 };
 
+class ApiCachePool {
+ public:
+  ApiCachePool() = default;
+  ~ApiCachePool() = default;
+
+  const char *get(const std::string &str) {
+    auto it = pool_.find(str);
+    if (it != pool_.end()) {
+      return it->second.c_str();
+    }
+    auto [map_iter, inserted] = pool_.emplace(str, str);
+    if (!inserted) {
+      MS_LOG(EXCEPTION) << "Failed to cache api.";
+    }
+    return map_iter->second.c_str();
+  }
+
+ private:
+  std::unordered_map<std::string, std::string> pool_;
+};
+
 // For normal generate executor.
 #define GEN_EXECUTOR(aclnn_api, ...)                                                                              \
-  [](const char *api_name, const std::string &workspace_api_name, const auto &... args) -> auto {                 \
+  [](const std::string &api_str, const std::string &workspace_api_name, const auto &... args) -> auto {           \
+    static transform::ApiCachePool api_cache_pool;                                                                \
+    const char *api_name = api_cache_pool.get(api_str);                                                           \
     static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
     if (get_workspace_size_func_ptr == nullptr) {                                                                 \
       MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
@@ -163,7 +187,7 @@ class ReleaseCall {
     release_func = std::function<void()>(releas_call);                                                            \
     return std::make_tuple(workspace_size, executor, release_func);                                               \
   }                                                                                                               \
-  (aclnn_api.c_str(), aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
+  (aclnn_api, aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // For custom generate executor.
 #define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                         \

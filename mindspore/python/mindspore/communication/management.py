@@ -166,7 +166,7 @@ def init(backend_name=None):
 
     if backend_name == "hccl":
         if _is_ps_mode():
-            # Use MindSpore cluster to build network for Parameter Server traning.
+            # Use MindSpore cluster to build network for Parameter Server training.
             init_cluster()
             if _is_role_sched() or _is_role_pserver():
                 raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")

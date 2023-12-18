@@ -120,6 +120,8 @@ package_data = {
         'lib/plugin/*/*/*/*/*/*',
         'lib/plugin/*/*/*/*/*/*/*',
         'lib/plugin/*/*/*/*/*/*/*/*',
+        'lib/plugin/*/*/*/*/*/*/*/*/*',
+        'lib/plugin/*/*/*/*/*/*/*/*/*/*',
         'lib/*.so*',
         'lib/*.a',
         'lib/*.dylib*',

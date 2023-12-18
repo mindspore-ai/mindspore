@@ -68,17 +68,7 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread
   }
 }
 
-bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return false;
-  }
-
-  if (node->isa<CNode>() && common::AnfAlgo::IsGetNextNode(node)) {
-    return true;
-  }
-  return false;
-}
+bool IsDeviceQueueDSActor(const AnfNodePtr &, GraphExecutionStrategy) { return false; }
 
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
                         const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
@@ -136,7 +126,7 @@ bool IsCustomActor(const AnfNodePtr &node) {
   return AnfUtils::IsCustomActorNode(node);
 }
 
-bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
+bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsCustomActor(node)) {
     return false;
@@ -146,11 +136,7 @@ bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
     return false;
   }
 
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return true;
-  }
-
-  return !common::AnfAlgo::IsGetNextNode(node);
+  return true;
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {

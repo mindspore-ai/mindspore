@@ -43,7 +43,11 @@ file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost/*.cc"
         "pyboost/auto_generate/*.cc"
         "pyboost/ops/*.cc"
-        "ascend_kernel_mod.cc"
+        "rts/send.cc"
+        "rts/recv.cc"
+        "rts/rt_kernel.cc"
+        "rts/rt_kernel_build.cc"
+        "rts/rt_kernel_info.cc"
         )
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
 

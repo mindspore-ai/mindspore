@@ -98,6 +98,12 @@ class BACKEND_EXPORT KernelGraphMgr {
 
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> GetFrontBackendGraphMap() const { return front_backend_graph_map_; }
   void CacheKernelGraph(const KernelGraphPtr &kg);
+  // do inline
+  static AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                             const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
+                             const uint32_t &target_graph_id,
+                             const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
+                             const KernelGraphPtr &graph);
 
  private:
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;

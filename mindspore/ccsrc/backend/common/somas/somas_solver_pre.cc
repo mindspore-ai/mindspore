@@ -161,7 +161,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
         }
       }
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
     BestInfo best_info;
     FindBest(total_sol, solvers, &best_info);
     auto end = std::chrono::system_clock::now();

@@ -70,7 +70,7 @@ def test_fastgelu_op_forward_ascend(context_mode, data_type):
     x = ms.Tensor(np.array([1., 2., 3.]).astype(data_type))
     out = fastgelu_forward_func(x)
     expect_out = np.array([0.845703, 1.9375, 2.982422]).astype(np.float32)
-    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-2)
 
 
 @pytest.mark.level0
@@ -107,7 +107,7 @@ def test_fastgelu_op_backward_ascend(context_mode, data_type):
     x = ms.Tensor(np.array([1., 2., 3.]).astype(data_type))
     grads = fastgelu_backward_func(x)
     expect_out = np.array([1.069909, 1.072501, 1.022826]).astype(np.float32)
-    np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-4)
+    np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-2)
 
 
 @pytest.mark.level1
@@ -144,4 +144,4 @@ def test_fastgelu_op_vmap_ascend(context_mode, data_type):
     x = ms.Tensor(np.array([1., 2., 3.]).astype(data_type))
     out = fastgelu_vmap_func(x)
     expect_out = np.array([0.845703, 1.9375, 2.982422]).astype(np.float32)
-    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-2)

@@ -14,6 +14,7 @@
 # ============================================================================
 """navier stokes pinns"""
 import time
+import os
 import pytest
 
 import numpy as np
@@ -55,6 +56,7 @@ def test_mindflow_navier_stokes():
     Description: test train
     Expectation: success
     """
+    os.environ['GRAPH_OP_RUN'] = "0"
     context.set_context(mode=context.GRAPH_MODE)
     model = Net(in_channels=3, out_channels=3)
     optimizer = nn.Adam(model.trainable_params(), 0.0001)
@@ -127,3 +129,4 @@ def test_mindflow_navier_stokes():
     else:
         assert epoch_time < 0.01
     assert train_loss < 0.8
+    del os.environ['GRAPH_OP_RUN']
