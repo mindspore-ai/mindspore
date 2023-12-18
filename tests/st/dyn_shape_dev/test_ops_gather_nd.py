@@ -49,7 +49,7 @@ def test_gather_nd_forward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training

@@ -40,7 +40,12 @@ using OpApiUtil = transform::OpApiUtil;
 
 class EmptyKernelTensor {
  public:
-  EmptyKernelTensor() { tensor_ = new KernelTensor(); }
+  EmptyKernelTensor() {
+    tensor_ = new KernelTensor();
+    auto tensor_shape = std::make_shared<abstract::TensorShape>();
+    tensor_shape->SetShapeVector({0});
+    tensor_->SetShape(tensor_shape);
+  }
   ~EmptyKernelTensor() { delete tensor_; }
   void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
   KernelTensor *get() const { return tensor_; }

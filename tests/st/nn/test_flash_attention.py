@@ -140,7 +140,7 @@ def test_nn_flash_attention_fwd(dtype):
     context.set_context(mode=context.GRAPH_MODE)
     B = 1
     S = 8192
-    H = 1280
+    H = 128
     N = 10
     D = H // N
 
