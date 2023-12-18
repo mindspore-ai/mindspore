@@ -32,7 +32,7 @@ constexpr char kVerticalFlipOperation[] = "VerticalFlip";
 
 class VerticalFlipOperation : public TensorOperation {
  public:
-  VerticalFlipOperation();
+  explicit VerticalFlipOperation(const std::string &device_target = "CPU");
 
   ~VerticalFlipOperation() override;
 
@@ -42,7 +42,14 @@ class VerticalFlipOperation : public TensorOperation {
 
   std::string Name() const override;
 
+  Status to_json(nlohmann::json *out_json) override;
+
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
+  MapTargetDevice Type() override;
+
+ private:
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

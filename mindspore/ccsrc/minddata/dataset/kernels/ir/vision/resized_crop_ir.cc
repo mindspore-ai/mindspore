@@ -19,6 +19,9 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/resized_crop_op.h"
 #endif
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_resized_crop.h"
+#endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -28,8 +31,15 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 // ResizedCropOperation
 ResizedCropOperation::ResizedCropOperation(int32_t top, int32_t left, int32_t height, int32_t width,
-                                           const std::vector<int32_t> &size, InterpolationMode interpolation)
-    : top_(top), left_(left), height_(height), width_(width), size_(size), interpolation_(interpolation) {}
+                                           const std::vector<int32_t> &size, InterpolationMode interpolation,
+                                           const std::string &device_target)
+    : top_(top),
+      left_(left),
+      height_(height),
+      width_(width),
+      size_(size),
+      interpolation_(interpolation),
+      device_target_(device_target) {}
 
 ResizedCropOperation::~ResizedCropOperation() = default;
 
@@ -49,13 +59,30 @@ Status ResizedCropOperation::ValidateParams() {
     std::string err_msg = "ResizedCrop: Invalid InterpolationMode, check input value of enum.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "ResizedCrop: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> ResizedCropOperation::Build() {
-  std::shared_ptr<ResizedCropOp> tensor_op =
-    std::make_shared<ResizedCropOp>(top_, left_, height_, width_, size_, interpolation_);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<ResizedCropOp> tensor_op =
+      std::make_shared<ResizedCropOp>(top_, left_, height_, width_, size_, interpolation_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::shared_ptr<DvppResizedCropOp> dvpp_tensor_op =
+      std::make_shared<DvppResizedCropOp>(top_, left_, height_, width_, size_, interpolation_);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "ResizedCrop: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status ResizedCropOperation::to_json(nlohmann::json *out_json) {
@@ -67,6 +94,7 @@ Status ResizedCropOperation::to_json(nlohmann::json *out_json) {
   args["width"] = width_;
   args["size"] = size_;
   args["interpolation"] = interpolation_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -79,15 +107,28 @@ Status ResizedCropOperation::from_json(nlohmann::json op_params, std::shared_ptr
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "width", kResizedCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kResizedCropOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kResizedCropOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kResizedCropOperation));
   int32_t top = op_params["top"];
   int32_t left = op_params["left"];
   int32_t height = op_params["height"];
   int32_t width = op_params["width"];
   std::vector<int32_t> size = op_params["size"];
   auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  std::string device_target = op_params["device_target"];
 
-  *operation = std::make_shared<ResizedCropOperation>(top, left, height, width, size, interpolation);
+  *operation = std::make_shared<ResizedCropOperation>(top, left, height, width, size, interpolation, device_target);
   return Status::OK();
+}
+
+MapTargetDevice ResizedCropOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "ResizedCrop: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 #endif
 }  // namespace vision

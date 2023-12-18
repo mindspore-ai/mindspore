@@ -35,7 +35,7 @@ constexpr char kResizedCropOperation[] = "ResizedCrop";
 class ResizedCropOperation : public TensorOperation {
  public:
   ResizedCropOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-                       InterpolationMode interpolation);
+                       InterpolationMode interpolation, const std::string &device_target = "CPU");
 
   ~ResizedCropOperation() override;
 
@@ -49,6 +49,8 @@ class ResizedCropOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   int32_t top_;
   int32_t left_;
@@ -56,6 +58,7 @@ class ResizedCropOperation : public TensorOperation {
   int32_t width_;
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

@@ -36,7 +36,8 @@ constexpr char kPerspectiveOperation[] = "Perspective";
 class PerspectiveOperation : public TensorOperation {
  public:
   PerspectiveOperation(const std::vector<std::vector<int32_t>> &start_points,
-                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
+                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation,
+                       const std::string &device_target = "CPU");
 
   ~PerspectiveOperation() override;
 
@@ -50,10 +51,13 @@ class PerspectiveOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<std::vector<int32_t>> start_points_;
   std::vector<std::vector<int32_t>> end_points_;
   InterpolationMode interpolation_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset
