@@ -137,7 +137,7 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBNSD(const Func
 
   CNodePtr prompt_flash_attention_cnode = nullptr;
   if (atten_mask != nullptr) {
-    prompt_flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v, atten_mask, atten_mask});
+    prompt_flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v, atten_mask});
   } else {
     prompt_flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v});
   }
@@ -245,12 +245,13 @@ CNodePtr FlashAttentionFusionV1::CreateFlashAttentionNode(const FuncGraphPtr &fu
 
   auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
   auto input_tensor_k_shape = GetTensorShape(k_input_transpose, kNumIndex1);
-  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
+  int64_t num_heads = input_tensor_q_shape[kNumIndex1];
+  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
   int64_t num_key_value_heads = input_tensor_k_shape[1];
   if (seq_len != 1) {
-    return CreatePromptFlashAttentionCnodeForBNSD(
-      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
+    return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask, num_heads, 0, scale_value,
+                                                  num_key_value_heads);
   }
   MS_LOG(INFO) << "Seq_len is not equal to 1, do not create PromptFlashAttention cnode.";
   return nullptr;
@@ -357,12 +358,13 @@ CNodePtr FlashAttentionFusionV2::CreateFlashAttentionNode(const FuncGraphPtr &fu
 
   auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
   auto input_tensor_k_shape = GetTensorShape(k_input_transpose, kNumIndex1);
-  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
+  int64_t num_heads = input_tensor_q_shape[kNumIndex1];
+  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
   int64_t num_key_value_heads = input_tensor_k_shape[1];
   if (seq_len != 1) {
-    return CreatePromptFlashAttentionCnodeForBNSD(
-      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
+    return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask, num_heads, 65535, scale_value,
+                                                  num_key_value_heads);
   }
   MS_LOG(INFO) << "Seq_len is not equal to 1, do not create PromptFlashAttention cnode.";
   return nullptr;
