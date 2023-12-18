@@ -32,6 +32,18 @@ struct LLMReq {
   uint64_t prefix_id = UINT64_MAX;
 };
 
+struct LLMIpInfo {
+  uint32_t ip;
+  uint16_t port;
+};
+
+struct LLMClusterInfo {
+  uint64_t remote_cluster_id;
+  int32_t remote_role_type;
+  std::vector<LLMIpInfo> local_ip_infos;
+  std::vector<LLMIpInfo> remote_ip_infos;
+};
+
 struct LLMEngineStatus {
   uint64_t empty_max_prompt_kv = 0;
 };
@@ -58,6 +70,9 @@ class MS_API LLMEngine {
   Status ReleasePromptPrefix(const LLMReq &req);
   Status PullKV(const LLMReq &req);
   Status MergeKV(const LLMReq &req, uint32_t batch_index);
+
+  Status LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
+  Status UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
 
  private:
   std::shared_ptr<LLMEnginePluginBase> plugin_ = nullptr;

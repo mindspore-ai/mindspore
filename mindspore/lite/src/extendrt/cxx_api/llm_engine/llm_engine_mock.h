@@ -67,8 +67,22 @@ class LLMReq {
   uint64_t prefix_id_{kInvalidPrefixId};
   int8_t reserved_[128];
 };
+struct IpInfo {
+  uint32_t ip = 0U;
+  uint16_t port = 0U;
+};
+
+struct ClusterInfo {
+  uint64_t remote_cluster_id = 0U;
+  int32_t remote_role_type = 0;
+  std::vector<IpInfo> local_ip_infos;
+  std::vector<IpInfo> remote_ip_infos;
+};
+
 class DecoderManager;
 class PromptManager;
+class PriorityScheduleManager;
+enum class RunMode : uint32_t { kSeparateSchedule = 0, kPrioritySchedule };
 class LLMEngine {
  public:
   explicit LLMEngine(uint64_t cluster_id) : cluster_id_(cluster_id) {}
@@ -109,13 +123,18 @@ class LLMEngine {
 
   ge::Status RunDecoder(const std::vector<uint64_t> &, const std::vector<ge::Tensor> &, std::vector<ge::Tensor> &);
 
+  ge::Status LinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &, const int32_t timeout = -1);
+  ge::Status UnlinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &, const int32_t timeout = -1);
+
  private:
   std::shared_ptr<PromptManager> prompt_manager_;
   std::shared_ptr<DecoderManager> decoder_manager_;
+  std::shared_ptr<PriorityScheduleManager> priority_schedule_manager_;
   uint64_t cluster_id_;
   std::string role_;
   std::atomic<bool> is_initialized_{false};
   std::atomic<bool> is_finalized_{false};
+  RunMode run_mode_{RunMode::kSeparateSchedule};
 };
 }  // namespace llm
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_LLM_ENGINE_MOCK_H_
