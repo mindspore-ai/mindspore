@@ -20,8 +20,7 @@
 #include "ir/func_graph.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/optimizer.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol.h"
-#include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace opt {
@@ -30,13 +29,6 @@ class SymbolEngineBuilder {
  public:
   SymbolEngineBuilder() = default;
   ~SymbolEngineBuilder() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &);
-};
-
-class RemoveSymbolEngineAttr {
- public:
-  RemoveSymbolEngineAttr() = default;
-  ~RemoveSymbolEngineAttr() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &);
 };
 
@@ -65,8 +57,7 @@ class ElimShapeCalcOnBroadcastArgsGrad : public AnfVisitor {
 
  protected:
   bool Check(const OptimizerPtr &opt, const AnfNodePtr &shape_calc, size_t input_index);
-  bool CheckSymbolEqual(const graphkernel::symbol::ListSymbolPtr &input_shape,
-                        const graphkernel::symbol::ListSymbolPtr &output_shape, size_t shift);
+  bool CheckSymbolEqual(const ListSymbolPtr &input_shape, const ListSymbolPtr &output_shape, size_t shift);
 };
 
 // Some ops like ReduceSum or Reshape, if the input shape and output shape are the same (in symbolic shape), it means

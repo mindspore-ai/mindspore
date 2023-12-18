@@ -1,0 +1,5 @@
+file(GLOB_RECURSE _SYMBOL_ENGINE_IMPL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "*.cc"
+        )
+
+add_library(_mindspore_common_symbol_engine_obj OBJECT ${_SYMBOL_ENGINE_IMPL_SRC_LIST})

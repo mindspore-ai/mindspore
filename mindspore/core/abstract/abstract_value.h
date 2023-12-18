@@ -37,6 +37,7 @@
 #include "abstract/dshape.h"
 #include "abstract/utils.h"
 #include "utils/shape_utils.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace abstract {
@@ -173,6 +174,22 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return The value of the AbstractBase if exists, else return kValueAny.
   virtual ValuePtr GetValue() const;
 
+  /// \brief Set the symbolic shape of the abstract.
+  void SetSymbolicShape(const ListSymbolPtr &s) { symbolic_shape_ = s; }
+
+  /// \brief Get the symbolic shape of the abstract.
+  ///
+  /// \return The symbolic shape if exists, else return nullptr.
+  const ListSymbolPtr &GetSymbolicShape() const { return symbolic_shape_; }
+
+  /// \brief Set the symbolic shape of the abstract.
+  void SetSymbolicValue(const SymbolPtr &s) { symbolic_value_ = s; }
+
+  /// \brief Get the symbolic value of the abstract.
+  ///
+  /// \return The symbolic value if exists, else return nullptr.
+  const SymbolPtr &GetSymbolicValue() const { return symbolic_value_; }
+
   /// \brief Clone an abstract from the abstract.
   ///
   /// \return A pointer to the cloned abstract.
@@ -246,6 +263,8 @@ class MS_CORE_API AbstractBase : public Base {
   BaseShapePtr shape_;
   std::string value_desc_;  // Store initial value description for error report.
   std::string name_;        // Store for mindir input and output names.
+  ListSymbolPtr symbolic_shape_{nullptr};
+  SymbolPtr symbolic_value_{nullptr};
 
  private:
   AbstractBasePtr inplace_abstract_{nullptr};  // Cover *this abstract for inplace primitive.

@@ -365,6 +365,7 @@ set(COMMON_SUB_COMP
         common
         common/debug
         common/expander
+        common/symbol_engine
         )
 
 foreach(_comp ${COMMON_SUB_COMP})

@@ -372,6 +372,23 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
   return false;
 }
 
+std::vector<std::string> GraphKernelJsonGenerator::QuerySymbolicShapeStr(const AnfNodePtr &node) {
+  auto node_abs = node->abstract();
+  ListSymbolPtr sym_shape = node_abs->GetSymbolicShape();
+  if (sym_shape == nullptr) {
+    sym_shape = node_abs->GetShape()->BuildSymbolicShape();
+    MS_EXCEPTION_IF_NULL(sym_shape);
+  }
+  if (sym_shape->size() == 0) {
+    return {"1"};
+  }
+  std::vector<std::string> res;
+  res.reserve(sym_shape->size());
+  (void)std::transform(sym_shape->symbols().cbegin(), sym_shape->symbols().cend(), std::back_inserter(res),
+                       [](const SymbolPtr &s) { return s->ToRawString(); });
+  return res;
+}
+
 void GraphKernelJsonGenerator::SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json,
                                          const ShapeVector &shape) {
   if (symbol_engine_ == nullptr) {
@@ -384,7 +401,7 @@ void GraphKernelJsonGenerator::SaveShape(const AnfNodePtr &node, nlohmann::json 
     symbol_shape.resize(shape.size());
     (void)std::transform(shape.begin(), shape.end(), symbol_shape.begin(), [](int64_t v) { return std::to_string(v); });
   } else {
-    symbol_shape = symbol_engine_->QuerySymbolicShapeStr(node);
+    symbol_shape = QuerySymbolicShapeStr(node);
     if (shape.size() != symbol_shape.size()) {
       MS_LOG(EXCEPTION) << "The length of tensor shape and symbol shape should be equal but got " << shape.size()
                         << " and " << symbol_shape.size() << ". node: " << node->DebugString() << ", shape: " << shape

@@ -23,15 +23,13 @@
 #include <utility>
 #include <vector>
 
-#include "backend/common/graph_kernel/symbol_engine/symbol_visitor.h"
+#include "mindspore/core/symbolic_shape/symbol_visitor.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/syntax.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine_impl.h"
+#include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 
-namespace mindspore::graphkernel::symbol {
-
-struct TransformError : public std::runtime_error {
-  explicit TransformError(const char *msg) : std::runtime_error(msg) {}
-};
+namespace mindspore::graphkernel::symshape {
+using mindspore::symshape::Operation;
+using mindspore::symshape::SymbolVisitor;
 
 /// \brief transform Symbol to ast::Symbol
 class TransformVisitor : public SymbolVisitor {
@@ -41,21 +39,18 @@ class TransformVisitor : public SymbolVisitor {
 
   /// \brief Init Transformer.
   /// Get abstract index information
-  void Init(const std::shared_ptr<SymbolEngineImpl> &symbol_engine);
+  void Init(const FuncGraphPtr &func_graph);
 
-  using SymbolVisitor::Visit;
-  /// \brief Transform a Symbol to ast::shape
-  bool Transform(Symbol *symbol);
-  void Visit(DynamicSymbol *symbol) override { MS_LOG(EXCEPTION) << "Unexpected Symbol"; }
-  void Visit(InputSymbol *symbol) override;
-  void Visit(ScalarSymbol *symbol) override;
-  void Visit(IntSymbol *symbol) override;
-  void Visit(BoolSymbol *symbol) override;
-  void Visit(FloatSymbol *symbol) override;
-  void Visit(ListSymbol *symbol) override;
-  void Visit(IListSymbol *symbol) override;
+  /// \brief Transform the output symbol to ast::shape
+  bool Transform(const FuncGraphPtr &func_graph);
+  void VisitImpl(DynamicSymbol *symbol) override { MS_LOG(EXCEPTION) << "Unexpected DynamicSymbol"; }
+  void VisitImpl(ScalarSymbol *symbol) override { MS_LOG(EXCEPTION) << "Unexpected ScalarSymbol"; }
+  void VisitImpl(IntSymbol *symbol) override;
+  void VisitImpl(BoolSymbol *symbol) override { MS_LOG(EXCEPTION) << "Unsupported BoolSymbol"; }
+  void VisitImpl(FloatSymbol *symbol) override { MS_LOG(EXCEPTION) << "Unsupported FloatSymbol"; }
+  void VisitImpl(ListSymbol *symbol) override;
 
-  void Visit(ops::Operation *op) override;
+  void VisitImpl(Operation *op) override;
 
   const ast::SymbolTable &GetSymbolTable() { return symbols_table_; }
   const std::vector<ast::ShapePtr> &GetShapes() const { return shapes_; }
@@ -64,7 +59,7 @@ class TransformVisitor : public SymbolVisitor {
 
  protected:
   // A helper to emit BinOp
-  void EmitBinOp(ast::BinOpType type, const ops::Operation *operation);
+  void EmitBinOp(ast::BinOpType type, const Operation *operation);
   ast::VarPtr NewVal(ast::TermPtr term, const std::string &name);
 
  protected:
@@ -74,17 +69,17 @@ class TransformVisitor : public SymbolVisitor {
   ast::SymbolTable symbols_table_;                         // a map: id -> symbol
 };
 
-inline void TransformVisitor::EmitBinOp(ast::BinOpType optype, const ops::Operation *operation) {
+inline void TransformVisitor::EmitBinOp(ast::BinOpType optype, const Operation *operation) {
   ast::BinOp op;
   op.optype_ = optype;
-  SymbolVisitor::Visit(operation->input(1).get());
+  Visit(operation->input(1).get());
   op.b_ = symbols_.back();
   symbols_.pop_back();
-  SymbolVisitor::Visit(operation->input(0).get());
+  Visit(operation->input(0).get());
   op.a_ = symbols_.back();
   symbols_.pop_back();
   ast::SingleTermPtr smbl_p = std::make_shared<ast::BinOp>(std::move(op));
   symbols_.push_back(smbl_p);
 }
-}  // namespace mindspore::graphkernel::symbol
+}  // namespace mindspore::graphkernel::symshape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_JIT_TRANSFORM_VISITOR_H_

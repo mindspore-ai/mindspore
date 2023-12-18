@@ -18,11 +18,11 @@
 #include <algorithm>
 #include <memory>
 
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/transform_visitor.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine_impl.h"
+#include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/cpp_visitor.h"
 
 namespace mindspore::graphkernel {
@@ -32,20 +32,13 @@ BaseShapePtr SymbolEngineInfer::InferShape(const CNodePtr &cnode, const Abstract
   auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto output = func_graph->output();
-  auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine));
+  auto symbol_engine = func_graph->symbol_engine();
   MS_EXCEPTION_IF_NULL(symbol_engine);
   if (!symbol_engine->Infer(args)) {
     MS_LOG(WARNING) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
     return nullptr;
   }
-  auto out_shapes = symbol_engine->QueryShape(output);
-  if (cnode->abstract()->isa<abstract::AbstractTuple>()) {
-    abstract::BaseShapePtrList shapes(out_shapes.size());
-    (void)std::transform(out_shapes.begin(), out_shapes.end(), shapes.begin(),
-                         [](const ShapeVector &s) { return std::make_shared<abstract::TensorShape>(s); });
-    return std::make_shared<abstract::TupleShape>(shapes);
-  }
-  return std::make_shared<abstract::TensorShape>(out_shapes.front());
+  return symbol_engine->QueryShape(output);
 }
 
 BaseShapePtr SymbolEngineJitInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &inputs) {
@@ -83,28 +76,33 @@ BaseShapePtr SymbolEngineJitInfer::InferShape(const CNodePtr &cnode, const Abstr
   return std::make_shared<abstract::TensorShape>(out_shapes_.front());
 }
 
-void SymbolEngineJitInfer::Init(const symbol::SymbolPtr &output_symbol) {
+void SymbolEngineJitInfer::Init() {
   // Prepare outputs space
-  if (output_symbol->as<symbol::IListSymbol>() != nullptr) {
-    out_shapes_.resize(1);
-    out_shapes_[0].resize(output_symbol->as<symbol::IListSymbol>()->symbols().size());
-  } else {
-    auto &output_symbols = output_symbol->as<symbol::ListSymbol>()->symbols();
-    out_shapes_.resize(output_symbols.size());
-    for (size_t i = 0; i < output_symbols.size(); ++i) {
-      out_shapes_[i].resize(output_symbols[i]->as<symbol::IListSymbol>()->symbols().size());
-    }
+  MS_EXCEPTION_IF_CHECK_FAIL(output_symbol_->HasData(), "SymbolEngineJit does not support dynamic rank");
+  if (output_symbol_->size() == 0) {
+    out_shapes_.resize(1, ShapeVector(1));
+    output_parm_.resize(1, out_shapes_[0].data());
+    return;
   }
-  output_parm_.resize(out_shapes_.size(), nullptr);
-  for (size_t i = 0; i < out_shapes_.size(); ++i) {
-    output_parm_[i] = out_shapes_[i].data();
+  if (output_symbol_->item(0)->is<IntSymbol>()) {
+    out_shapes_.resize(1, ShapeVector(output_symbol_->size()));
+    output_parm_.resize(1, out_shapes_[0].data());
+  } else {
+    out_shapes_.resize(output_symbol_->size());
+    output_parm_.resize(out_shapes_.size());
+    for (size_t i = 0; i < out_shapes_.size(); ++i) {
+      auto out_i = output_symbol_->item_as<ListSymbol>(i);
+      MS_EXCEPTION_IF_NULL(out_i);
+      out_shapes_[i].resize(out_i->size());
+      output_parm_[i] = out_shapes_[i].data();
+    }
   }
 }
 
 bool Process(const AnfNodePtrList &cnodes, bool use_jit) {
-  symbol::CppVisitorPtr cpp_visitor = nullptr;
+  symshape::CppVisitorPtr cpp_visitor = nullptr;
   if (use_jit) {
-    cpp_visitor = std::make_shared<symbol::CppVisitor>();
+    cpp_visitor = std::make_shared<symshape::CppVisitor>();
   }
 
   bool changed = false;
@@ -112,24 +110,20 @@ bool Process(const AnfNodePtrList &cnodes, bool use_jit) {
     if (common::AnfAlgo::IsGraphKernel(cnode) && common::AnfAlgo::IsDynamicShape(cnode)) {
       auto func_graph = GetCNodeFuncGraph(cnode);
       MS_EXCEPTION_IF_NULL(func_graph);
-      if (func_graph->has_attr(kAttrSymbolEngine)) {
+      if (func_graph->symbol_engine() != nullptr) {
         bool jit_succeed = false;
-        symbol::TransformVisitor transform_visitor;
-        symbol::SymbolPtr output_symbol = nullptr;
+        symshape::TransformVisitor transform_visitor;
         if (use_jit) {
-          auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine))
-                                 ->cast<std::shared_ptr<symbol::SymbolEngineImpl>>();
-          MS_EXCEPTION_IF_NULL(symbol_engine);
-          transform_visitor.Init(symbol_engine);
-          output_symbol = symbol_engine->QuerySymbolicShape(func_graph->output());
-          MS_EXCEPTION_IF_NULL(output_symbol);
-          jit_succeed = transform_visitor.Transform(output_symbol.get());
+          transform_visitor.Init(func_graph);
+          jit_succeed = transform_visitor.Transform(func_graph);
         }
         if (jit_succeed) {
           auto func_name = cpp_visitor->CodeGen(
             transform_visitor.GetShapes(), transform_visitor.GetSymbolTable(),
-            func_graph->has_attr("info_name") ? GetValue<std::string>(func_graph->get_attr("info_name")) : "");
+            (func_graph->has_attr("info_name") ? GetValue<std::string>(func_graph->get_attr("info_name")) : ""));
           MS_LOG(DEBUG) << "Set infershape functor(SymbolEngineJit) for cnode: " << cnode->fullname_with_scope();
+          auto output_symbol = func_graph->output()->abstract()->GetSymbolicShape();
+          MS_EXCEPTION_IF_NULL(output_symbol);
           common::AnfAlgo::SetNodeAttrSafely(
             "infer_shape_functor",
             std::make_shared<SymbolEngineJitInfer>("symbol_engine_jit_infer_functor", func_name, cpp_visitor,

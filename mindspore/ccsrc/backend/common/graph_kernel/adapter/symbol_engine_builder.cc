@@ -16,34 +16,15 @@
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include <memory>
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 
 namespace mindspore::graphkernel {
 bool SymbolEngineBuilder::Run(const FuncGraphPtr &func_graph) {
-  BuildSymbolEngine(func_graph, multi_engine_);
-  return true;
-}
-
-SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg, bool multi_engine) {
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg, multi_engine);
-  fg->set_attr(kAttrSymbolEngine, engine);
-  engine->PreBuild();
-  engine->Build();
-  return engine;
-}
-
-SymbolEnginePtr BuildSubSymbolEngine(const FuncGraphPtr &sub_fg, const AnfNodePtr &node) {
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(sub_fg, true);
-  sub_fg->set_attr(kAttrSymbolEngine, engine);
-  engine->PreBuild();
-  if (node->func_graph()->has_attr(kAttrSymbolEngine)) {
-    auto main_engine = node->func_graph()->get_attr(kAttrSymbolEngine)->cast_ptr<symbol::SymbolEngineImpl>();
-    MS_EXCEPTION_IF_NULL(main_engine);
-    main_engine->BuildSubgraph(cnode);
+  if (multi_engine_) {
+    symshape::MultiSymbolEngine::Build(func_graph);
   } else {
-    engine->Build();
+    symshape::SymbolEngineImpl::Build(func_graph);
   }
-  return engine;
+  return true;
 }
 }  // namespace mindspore::graphkernel

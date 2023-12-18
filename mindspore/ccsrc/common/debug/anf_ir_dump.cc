@@ -341,6 +341,63 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   }
 }
 
+void PrintNodeOutputSymbolicInfo(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  auto abstract = node->abstract();
+  if (abstract == nullptr) {
+    buffer << "<null>";
+    return;
+  }
+  auto shape = abstract->GetSymbolicShape();
+  auto value = abstract->GetSymbolicValue();
+  if (shape != nullptr || value != nullptr) {
+    if (shape != nullptr) {
+      buffer << "S:" << shape->ToString();
+    }
+    if (value != nullptr) {
+      buffer << "V:" << value->ToString();
+    }
+  } else {
+    buffer << "<null>";
+  }
+}
+
+void PrintNodeInputSymbolicInfo(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  const auto &inputs = GetInputs(node);
+  if (inputs.size() <= 1) {
+    return;
+  }
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (i != 1) {
+      buffer << ", ";
+    }
+    PrintNodeOutputSymbolicInfo(buffer, inputs[i]);
+  }
+}
+
+void DumpSymbolicInfo(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (node == nullptr || fg == nullptr || gsub == nullptr || fg->symbol_engine() == nullptr) {
+    return;
+  }
+  if (node != fg->get_return()) {
+    gsub->buffer << "      : (";
+    PrintNodeInputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ") -> (";
+    PrintNodeOutputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ")";
+  } else {
+    gsub->buffer << "      : (";
+    PrintNodeInputSymbolicInfo(gsub->buffer, node);
+    gsub->buffer << ")";
+  }
+  gsub->buffer << std::endl;
+}
+
 void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node) {
   buffer << "      : (";
   PrintNodeInputType(buffer, node);
@@ -846,6 +903,9 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
     // Print shape info
     DumpShape(node, sub_graph, gsub);
 
+    // Print symbolic shape or symbolic value
+    DumpSymbolicInfo(node, sub_graph, gsub);
+
     // Print kernel info
     DumpKernelInfo(node, gsub);
   } else {
@@ -876,6 +936,13 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
     MS_EXCEPTION_IF_NULL(node);
     oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
     ++i;
+  }
+}
+
+void DumpSymbolEngine(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
+  if (sub_graph->symbol_engine() != nullptr && sub_graph->symbol_engine()->func_graph() == sub_graph) {
+    oss << "\nsymbol engine details:\n";
+    oss << sub_graph->symbol_engine()->DumpText();
   }
 }
 
@@ -956,6 +1023,10 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
         }
         oss << std::endl;
       }
+      if (sg.first->symbol_engine() != nullptr) {
+        oss << "subgraph symbol engine: " << sg.first->symbol_engine()->ToString() << " : "
+            << sg.first->symbol_engine().get() << std::endl;
+      }
       oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     }
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
@@ -990,6 +1061,9 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     oss << sg.second->buffer.str();
     oss << "}" << std::endl;
     OutputOrderList(sg.first, oss);
+    if (format_level > kAdvancedLevel) {
+      DumpSymbolEngine(sg.first, oss);
+    }
     oss << std::endl;
     oss << std::endl;
   }

@@ -26,7 +26,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "include/common/utils/convert_utils.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;
@@ -122,6 +122,7 @@ class GraphKernelJsonGenerator {
   size_t GenHashId(const std::string &info) const;
   void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
   void SaveShape(const AnfNodePtr &node, nlohmann::json *kernel_json, const ShapeVector &shape);
+  std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node);
 
   DumpOption dump_option_;
   std::string kernel_name_;

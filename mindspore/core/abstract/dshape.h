@@ -31,6 +31,7 @@
 #include "utils/log_adapter.h"
 #include "base/base.h"
 #include "mindapi/base/shape_vector.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace abstract {
@@ -102,6 +103,14 @@ class MS_CORE_API BaseShape : public Base {
   virtual void SetShapeVector(const ShapeVector &shape) {
     MS_LOG(EXCEPTION) << "The method 'SetShapeVector()' doesn't implement";
   }
+
+  /// \brief Build symbolic shape according to the digital shape.
+  /// Constant symbols are generated for static dims, and variable symbols are generated for dynamic dims.
+  ///
+  /// \return Symbolic Shape.
+  virtual ListSymbolPtr BuildSymbolicShape() const {
+    MS_LOG(EXCEPTION) << "The method 'BuildSymbolicShape()' doesn't implement";
+  }
 };
 
 /// \brief NoShape defines an invalid shape.
@@ -121,6 +130,8 @@ class MS_CORE_API NoShape final : public BaseShape {
   bool IsDimZero() const override { return true; };
 
   bool IsDimUnknown() const override { return false; }
+
+  ListSymbolPtr BuildSymbolicShape() const override { return ListSymbol::Make({}); }
 };
 
 GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
@@ -221,6 +232,8 @@ class MS_CORE_API TensorShape final : public BaseShape {
     return std::any_of(shape_.begin(), shape_.end(), [](ShapeValueDType s) { return s < -1; });
   }
 
+  ListSymbolPtr BuildSymbolicShape() const override;
+
  private:
   ShapeVector shape_;      // use kShapeDimAny to implement the any shape in python
   ShapeVector max_shape_;  // record maximum length for each dynamic dimension
@@ -264,6 +277,8 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   ///
   /// \return True if any element shape of DynamicSequenceShape is dynamic shape.
   bool IsDimUnknown() const override;
+
+  ListSymbolPtr BuildSymbolicShape() const override { return ListSymbol::Make(); }
 
   BaseShapePtr Clone() const override {
     if (element_shape_ == nullptr) {
@@ -377,6 +392,8 @@ class MS_CORE_API SequenceShape : public BaseShape {
   bool IsDimUnknown() const override {
     return std::any_of(p_shapes_.begin(), p_shapes_.end(), [](const BaseShapePtr &bs) { return bs->IsDimUnknown(); });
   }
+
+  ListSymbolPtr BuildSymbolicShape() const override;
 
  protected:
   BaseShapePtrList p_shapes_;  // shape list of each elements

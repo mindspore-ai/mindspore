@@ -631,11 +631,14 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
 }
 
 OptPassGroupMap GetSymbolEngineOptPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") != "on") {
+    MS_LOG(INFO) << "SymbolEngine optimizer is disabled, use 'export MS_SYMBOL_ENGINE_OPTIMIZE=on' to enable it.";
+    return OptPassGroupMap();
+  }
   OptPassGroupMap map({{"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())},
                        {"elim_shapecalc", opt::OptPassConfig({irpass.elim_shapecalc_of_broadcastargs_})},
                        {"elim_not_effective", opt::OptPassConfig({irpass.elim_not_effective_node_})},
                        {"opt_reshape", opt::OptPassConfig({irpass.opt_reshape_})},
-                       {"remove_attr", opt::OptPassConfig(opt::irpass::RemoveSymbolEngineAttr())},
                        {"renormalize", opt::OptPassConfig::Renormalize()}});
   return map;
 }

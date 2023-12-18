@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "utils/log_adapter.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/syntax.h"
+#include "utils/log_adapter.h"
 
-namespace mindspore::graphkernel::symbol::ast {
-
+namespace mindspore::graphkernel::symshape::ast {
 std::string BinOpType2Str(BinOpType tag) {
   switch (tag) {
     case BinOpType::ScalarAdd:
@@ -80,4 +79,4 @@ std::string Shape::ToString() const {
   res << "]";
   return res.str();
 }
-}  // namespace mindspore::graphkernel::symbol::ast
+}  // namespace mindspore::graphkernel::symshape::ast
