@@ -118,6 +118,7 @@ bool JustCallAndSetRes(CallNode *call_node) {
   }
   call_node->SetVobj(AObject::Convert(value));
   call_node->SetSubGraph(nullptr);
+  Py_XDECREF(value);
   return false;
 }
 
