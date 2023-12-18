@@ -48,6 +48,8 @@ constexpr auto kStackInitOpName = "StackInit";
 constexpr auto kStackPopOpName = "StackPop";
 constexpr auto kStackPushOpName = "StackPush";
 constexpr auto kStopGradientOpName = "StopGradient";
+constexpr auto kMakeSliceOpName = "make_slice";
+constexpr auto kJoinedStrOpName = "JoinedStr";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_STRUCTURE_OP_NAME_H_

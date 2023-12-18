@@ -1623,6 +1623,7 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
       (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
     return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
   }
+  // To add EvalPrim call of TransitionPrimEvaluator such as GetAttr.
   MS_LOG(ERROR) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
                 << evaluator->ToString();
   return nullptr;
