@@ -39,7 +39,7 @@ from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
 from mindspore.ops._tracefunc import PackFunc
-from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache
 
 
 # Bit operation
