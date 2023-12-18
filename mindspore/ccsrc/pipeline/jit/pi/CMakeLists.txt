@@ -2,6 +2,7 @@ file(GLOB_RECURSE _PIJIT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "graph_capture/*.cc"
         "graph_compiler/*.cc"
         "graph_guard/*.cc"
+        "graph_build/*.cc"
         "utils/*.cc"
         "*.cc"
 )

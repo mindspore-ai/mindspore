@@ -85,12 +85,38 @@ static constexpr const char *kMindsporeNameMsCell = "mindspore.nn.Cell";
  * refer to convert_object_map in mindspore._extends.parse.resources.py
  */
 static constexpr const char *kMindsporeNameConvertMap = "mindspore._extends.parse.resources.convert_object_map";
+static constexpr const char *kMindsporeNameTensorInitCheck = "_init_check";
+static constexpr const char *kMindsporeNameTensorContiguous = "contiguous";
 // ------------------------------mindspore functions-------------------------------
 
 static constexpr const char *kJitForbidden = ".pijit_forbidden";
 static constexpr const char *kJitConstexpr = ".pijit_constexpr";
 
+static const std::vector<std::string> tensor_module = {"mindspore.common.tensor", "mindtorch.torch.tensor"};
+static const std::vector<std::string> bypass_function_whilelist = {kMindsporeNameTensorInitCheck,
+                                                                   kMindsporeNameTensorContiguous};
+
 static py::object GetGradClass() { return Utils::GetModuleAttr("mindspore._c_expression", "GradOperation_"); }
+
+static const char *GetFuncName(const py::object &f) {
+  PyObject *func = f.ptr();
+  if (PyMethod_Check(func)) {
+    func = PyMethod_GET_FUNCTION(func);
+  }
+  if (PyCFunction_Check(func)) {
+    return reinterpret_cast<PyCFunctionObject *>(func)->m_ml->ml_name;
+  }
+  PyCodeObject *co = nullptr;
+  if (PyFunction_Check(func)) {
+    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
+  }
+  if (co) {
+    return PyUnicode_AsUTF8(co->co_name);
+  }
+  PyTypeObject *tp = PyType_Check(func) ? reinterpret_cast<PyTypeObject *>(func) : Py_TYPE(func);
+  const char *res = strrchr(tp->tp_name, '.');
+  return res ? res + 1 : tp->tp_name;
+}
 
 template <AObject::Type type>
 bool SetCallResType(CallNode *call_node) {
@@ -290,6 +316,39 @@ bool InferGetCachePrim_(CallNode *n) {
   Graph *g = n->GetSubGraph();
   n->SetVobj(n->input(1)->GetVobj());
   g->SetRetVal(n->input(1));
+  return true;
+}
+
+bool IsTensorModule(const std::string &name) {
+  return std::any_of(tensor_module.begin(), tensor_module.end(), [name](const auto &item) { return item == name; });
+}
+
+bool IsFuncInByPassWhiteList(const std::string &name) {
+  return std::any_of(bypass_function_whilelist.begin(), bypass_function_whilelist.end(),
+                     [name](const auto &item) { return item == name; });
+}
+
+bool CheckTensorBypass(const py::object &f) {
+  if (!PyMethod_Check(f.ptr())) {
+    return false;
+  }
+  auto func_ptr = reinterpret_cast<PyFunctionObject *>(PyMethod_Function(f.ptr()));
+  std::string module = PyUnicode_AsUTF8(func_ptr->func_module);
+  if (IsTensorModule(module)) {
+    std::string func_name = GetFuncName(f);
+    return IsFuncInByPassWhiteList(func_name);
+  }
+  return false;
+}
+
+bool InferTensorBypass(CallNode *n) {
+  if (n->input(0)->GetOpcode() != LOAD_ATTR) {
+    n->SetSubGraph(nullptr);
+    return false;
+  }
+  Graph *g = n->GetSubGraph();
+  n->SetVobj(AObject::Convert(PyMethod_Self(n->input(0)->GetVobj()->GetPyObject().ptr())));
+  g->SetRetVal(n->input(0)->input(0));
   return true;
 }
 
@@ -806,6 +865,8 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kMindsporeNameJitFunc, {CheckJitFunc, SetCallResType<AObject::kTypeTensor>}},
   {kMindsporeNameGetCachePrim, {CheckGetCachePrim_, InferGetCachePrim_}},
   {kMindsporeNameRegistryGet, {CheckRegistryGet, InferRegistryGet}},
+  {kMindsporeNameTensorInitCheck, {CheckTensorBypass, InferTensorBypass}},
+  {kMindsporeNameTensorContiguous, {CheckTensorBypass, InferTensorBypass}},
   // builtin_function_or_method
   {kBuiltinNameFunctionOrMethod, {CheckBuiltinFuncOrMethod, InferBuiltinFuncOrMethod}},
   // object convert map
@@ -826,26 +887,6 @@ static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyM
   {CheckBuiltinFuncOrMethod, kBuiltinNameFunctionOrMethod},
   {CheckJitForbidden, kJitForbidden},
 };
-
-static const char *GetFuncName(const py::object &f) {
-  PyObject *func = f.ptr();
-  if (PyMethod_Check(func)) {
-    func = PyMethod_GET_FUNCTION(func);
-  }
-  if (PyCFunction_Check(func)) {
-    return reinterpret_cast<PyCFunctionObject *>(func)->m_ml->ml_name;
-  }
-  PyCodeObject *co = nullptr;
-  if (PyFunction_Check(func)) {
-    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
-  }
-  if (co) {
-    return PyUnicode_AsUTF8(co->co_name);
-  }
-  PyTypeObject *tp = PyType_Check(func) ? reinterpret_cast<PyTypeObject *>(func) : Py_TYPE(func);
-  const char *res = strrchr(tp->tp_name, '.');
-  return res ? res + 1 : tp->tp_name;
-}
 
 bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive) {
   if (f.ptr() == nullptr) {

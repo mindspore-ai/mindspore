@@ -624,13 +624,17 @@ bool CheckTensorDataInitialized(const py::object &py_tensor) {
   return false;
 }
 
+extern bool IsFuncInByPassWhiteList(const std::string &name);
 bool FindTensorName(const std::string &name) {
   const auto &meth = pipeline::GetMethodMap().find(kObjectTypeTensorType)->second;
   if (meth.find(name) != meth.end()) {
     return true;
   }
   const auto &attr = pipeline::GetAttrMap().find(kObjectTypeTensorType)->second;
-  return attr.find(name) != attr.end();
+  if (attr.find(name) != attr.end()) {
+    return true;
+  }
+  return IsFuncInByPassWhiteList(name);
 }
 
 }  // namespace graph
