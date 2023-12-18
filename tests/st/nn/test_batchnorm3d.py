@@ -24,7 +24,7 @@ from mindspore import Tensor
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.batchnorm3d = nn.BatchNorm3d(num_features=3, dtype=ms.float16)
+        self.batchnorm3d = nn.BatchNorm3d(num_features=3)
 
     def construct(self, x):
         out = self.batchnorm3d(x)
@@ -34,8 +34,9 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Non-standard scenarios, torch also do not support all float16 inputs.")
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_batchnorm3d_para_customed_dtype(mode):
     """
