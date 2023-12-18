@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.tensor import Tensor
-from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode
+from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -169,6 +169,136 @@ class LLMParamInvalid(RuntimeError):
     """
 
 
+class LLMClusterInfo:
+    """
+    The `LLMClusterInfo` class defines a MindSpore Lite's LLMEngine cluster, used to link and unlink clusters.
+
+    Args:
+        remote_role (LLMRole): Role of remote LLMEngine object.
+        remote_cluster_id (int): Cluster id of remote LLMEngine object.
+
+    Raises:
+        TypeError: `role` is not a LLMRole.
+        TypeError: `cluster_id` is not an int.
+
+    Examples:
+        >>> import mindspore_lite as mslite
+        >>> remote_cluster_id = 1
+        >>> cluster = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, remote_cluster_id)
+        >>> cluster.append_local_ip_info(("192.168.1.1", 2222))
+        >>> cluster.append_remote_ip_info(("192.168.2.1", 2222))
+        >>> local_cluster_id = 0
+        >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Decoder, local_cluster_id)
+        >>> # ... llm_engine.init
+        >>> llm_engine.link_clusters([cluster])
+    """
+    def __init__(self, remote_role: LLMRole, remote_cluster_id: int):
+        check_isinstance("remote_cluster_id", remote_cluster_id, int)
+        check_isinstance("remote_role", remote_role, LLMRole)
+        self.llm_cluster_ = LLMClusterInfo_()
+        self.llm_cluster_.remote_cluster_id = remote_cluster_id
+        remote_role_type_int = 0 if remote_role == LLMRole.Prompt else 1  # 0: Prompt, 1: Decoder
+        self.llm_cluster_.remote_role_type = remote_role_type_int
+
+    @property
+    def remote_role(self):
+        """Get remote role of this LLMClusterInfo object"""
+        remote_role_type_int = self.llm_cluster_.remote_role
+        return LLMRole.Prompt if remote_role_type_int == 0 else LLMRole.Decoder  # 0: Prompt, 1: Decoder
+
+    @remote_role.setter
+    def remote_role(self, remote_role):
+        """Set remote role of this LLMClusterInfo object"""
+        check_isinstance("remote_role_type", remote_role, LLMRole)
+        remote_role_type_int = 0 if remote_role == LLMRole.Prompt else 1  # 0: Prompt, 1: Decoder
+        self.llm_cluster_.remote_role_type = remote_role_type_int
+
+    @property
+    def remote_cluster_id(self):
+        """Get remote cluster id of this LLMClusterInfo object"""
+        return self.llm_cluster_.remote_cluster_id
+
+    @remote_cluster_id.setter
+    def remote_cluster_id(self, remote_cluster_id):
+        """Set remote cluster id of this LLMClusterInfo object"""
+        check_isinstance("remote_cluster_id", remote_cluster_id, int)
+        self.llm_cluster_.remote_cluster_id = remote_cluster_id
+
+    def append_local_ip_info(self, address):
+        """
+        Append local ip info.
+
+        Args:
+            address: ip address, in format ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx).
+
+        Raises:
+            TypeError: `address` format or type is invalid.
+            ValueError: `address` value is invalid.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> cluster_id = 1
+            >>> cluster = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 0)
+            >>> cluster.append_local_ip_info(("192.168.1.1", 2222))
+        """
+        ip, port = LLMClusterInfo._trans_address(address)
+        self.llm_cluster_.append_local_ip_info(ip, port)
+
+    @property
+    def local_ip_infos(self):
+        """Get all local ip infos of this LLMClusterInfo object"""
+        return tuple((ip, port) for ip, port in self.llm_cluster_.get_local_ip_infos())
+
+    def append_remote_ip_info(self, address):
+        """
+        Append remote ip info.
+
+        Args:
+            address: ip address, in format ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx).
+
+        Raises:
+            TypeError: `address` format or type is invalid.
+            ValueError: `address` value is invalid.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> cluster_id = 1
+            >>> cluster = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 0)
+            >>> cluster.append_remote_ip_info(("192.168.1.1", 2222))
+        """
+        ip, port = LLMClusterInfo._trans_address(address)
+        self.llm_cluster_.append_remote_ip_info(ip, port)
+
+    @property
+    def remote_ip_infos(self):
+        """Get all remote ip infos of this LLMClusterInfo object"""
+        return tuple((ip, port) for ip, port in self.llm_cluster_.get_remote_ip_infos())
+
+    @staticmethod
+    def _trans_address(address):
+        """Transfer address from str format 'xxx.xxx.xxx.xxx' to int"""
+        if not isinstance(address, tuple):
+            raise TypeError(f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
+        if len(address) != 2:
+            raise TypeError(f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
+        ip, port = address
+        if not isinstance(ip, (str, int)) or not isinstance(port, int):
+            raise TypeError(f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
+        if isinstance(ip, int) and (ip < 0 or ip > pow(2, 32) - 1):
+            raise ValueError(f"address ip should in range [0,{pow(2, 32) - 1}], but got {ip}")
+        if port < 0 or port > 65535:
+            raise ValueError(f"address port should in range [0,65535], but got {port}")
+        if isinstance(ip, str):
+            try:
+                import socket
+                ip = socket.inet_aton(ip)
+                ip = int.from_bytes(ip, byteorder='big')
+            except OSError:
+                raise ValueError(
+                    f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
+        return ip, port
+
+
 class LLMEngine:
     """
     The `LLMEngine` class defines a MindSpore Lite's LLMEngine, used to load and manage Large Language Mode,
@@ -224,6 +354,7 @@ class LLMEngine:
 
     @property
     def batch_mode(self):
+        """Get batch mode of this LLMEngine object"""
         return self.batch_mode_
 
     def init(self, model_paths: Union[Tuple[str], List[str]], options: Dict[str, str],
@@ -502,3 +633,103 @@ class LLMEngine:
         # pylint: disable=protected-access
         ret = self.engine_.release_prompt_prefix(llm_req.llm_request_)
         LLMEngine._handle_llm_status(ret, "release_prompt_prefix", "llm_req " + LLMEngine._llm_req_str(llm_req))
+
+    def link_clusters(self, clusters: Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]], timeout=-1):
+        """
+        Link clusters.
+
+        Args:
+            clusters (Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]]): clusters.
+            timeout (int): timeout in seconds.
+
+        Raises:
+            TypeError: `clusters` is not list/tuple of LLMClusterInfo.
+            RuntimeError: LLMEngine is not inited or init failed.
+
+        Returns:
+            Status, tuple[Status], Whether all clusters link normally, and the link status of each cluster.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> cluster_id = 1
+            >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, cluster_id)
+            >>> model_paths = [os.path.join(model_dir, f"device_${rank}") for rank in range(4)]
+            >>> options = {}
+            >>> llm_engine.init(model_paths, options)
+            >>> cluster = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 0)
+            >>> cluster.append_local_ip_info(("192.168.1.1", 2222))
+            >>> cluster.append_remote_ip_info(("192.168.2.1", 2222))
+            >>> cluster2 = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 1)
+            >>> cluster2.append_local_ip_info(("192.168.3.1", 2222))
+            >>> cluster2.append_remote_ip_info(("192.168.4.2", 2222))
+            >>> ret, rets = llm_engine.link_clusters((cluster, cluster2))
+            >>> if not ret.IsOk():
+            >>>    for ret_item in rets:
+            >>>        if not ret_item.IsOk():
+            >>>            # do something
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        if not isinstance(clusters, (tuple, list)):
+            raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")
+        for i, element in enumerate(clusters):
+            if not isinstance(element, LLMClusterInfo):
+                raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
+        clusters_inners = [item.llm_cluster_ for item in clusters]
+        ret, rets = self.engine_.link_clusters(clusters_inners, timeout)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
+        if not rets:
+            raise RuntimeError(f"Failed to call link_clusters")
+        return ret, rets
+
+    def unlink_clusters(self, clusters: Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]], timeout=-1):
+        """
+        Unlink clusters.
+
+        Args:
+            clusters (Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]]): clusters.
+            timeout (int): LLMEngine is not inited or init failed.
+
+        Raises:
+            TypeError: `clusters` is not list/tuple of LLMClusterInfo.
+            RuntimeError: Some error occurred.
+
+        Returns:
+            Status, tuple[Status], Whether all clusters unlink normally, and the unlink status of each cluster.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> cluster_id = 1
+            >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, cluster_id)
+            >>> model_paths = [os.path.join(model_dir, f"device_${rank}") for rank in range(4)]
+            >>> options = {}
+            >>> llm_engine.init(model_paths, options)
+            >>> cluster = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 0)
+            >>> cluster.append_local_ip_info(("192.168.1.1", 2222))
+            >>> cluster.append_remote_ip_info(("192.168.2.1", 2222))
+            >>> cluster2 = mslite.LLMClusterInfo(mslite.LLMRole.Prompt, 1)
+            >>> cluster2.append_local_ip_info(("192.168.3.1", 2222))
+            >>> cluster2.append_remote_ip_info(("192.168.4.2", 2222))
+            >>> ret, rets = llm_engine.unlink_clusters((cluster, cluster2))
+            >>> if not ret.IsOk():
+            >>>    for ret_item in rets:
+            >>>        if not ret_item.IsOk():
+            >>>            # do something
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        if not isinstance(clusters, (tuple, list)):
+            raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")
+        for i, element in enumerate(clusters):
+            if not isinstance(element, LLMClusterInfo):
+                raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
+        clusters_inners = [item.llm_cluster_ for item in clusters]
+        ret, rets = self.engine_.unlink_clusters(clusters_inners, timeout)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
+        if not rets:
+            raise RuntimeError(f"Failed to call unlink_clusters")
+        return ret, rets

@@ -284,4 +284,22 @@ Status LLMEngine::MergeKV(const LLMReq &req, uint32_t batch_index) {
   }
   return plugin_->MergeKV(req, batch_index);
 }
+
+Status LLMEngine::LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
+                               int32_t timeout) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->LinkClusters(clusters, rets, timeout);
+}
+
+Status LLMEngine::UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
+                                 int32_t timeout) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->UnlinkClusters(clusters, rets, timeout);
+}
 }  // namespace mindspore
