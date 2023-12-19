@@ -39,9 +39,9 @@ std::string KernelModCache::GetKernelModKey(const std::string &op_name, const st
   std::string key = op_name;
   key += "_";
   key += device_name;
-  for (auto &input : inputs) {
+  for (const auto &input : inputs) {
     key += "_";
-    key += input->dtype_id();
+    key += std::to_string(input->dtype_id());
   }
   return key;
 }
