@@ -608,8 +608,9 @@ def batch_norm_(input_x,
 
     .. warning::
         - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
-            then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
-        - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+          then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
+        - For Atlas 200/300/500 inference product,
+          the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Note:
         - If `training` is `False`, `weight`, `bias`, `running_mean` and `running_var` are tensors.
