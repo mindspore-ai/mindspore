@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include <string>
 #include <functional>
 #include <utility>
+#include <vector>
+#include <unordered_map>
 #include "mindspore/core/ops/other_ops.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
