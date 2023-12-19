@@ -1554,7 +1554,7 @@ AnfNodePtr SetTypeForGetAttr(const AnfNodePtr &getattr_node, const AbstractBaseP
     auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
     if (abs_tensor != nullptr) {
       if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
-        getattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
+        getattr_node->set_user_data<bool>(fallback::kIsAdapter, std::make_shared<bool>(true));
       }
     }
   }
@@ -1694,7 +1694,7 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
     fallback::SetRealShape<AnfNode, abstract::BaseShape>(setattr_node, shape);
     auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
     if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
-      setattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
+      setattr_node->set_user_data<bool>(fallback::kIsAdapter, std::make_shared<bool>(true));
     }
   }
 
@@ -1826,8 +1826,10 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
   if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(overridden_method)) {
     return nullptr;
   }
-
-  inner_fg = parse::ParsePythonCode(overridden_method);
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    inner_fg = parse::ParsePythonCode(overridden_method);
+  }
   MS_EXCEPTION_IF_NULL(out_conf);
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -2830,7 +2832,7 @@ AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePt
     auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
     res = std::make_shared<abstract::AbstractTensor>(element, shape);
     auto abs_tensor = res->cast_ptr<abstract::AbstractTensor>();
-    if (node->has_user_data(fallback::kAdapterTag)) {
+    if (node->has_user_data(fallback::kIsAdapter)) {
       abs_tensor->set_is_adapter(true);
     }
   } else {

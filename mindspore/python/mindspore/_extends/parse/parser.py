@@ -861,10 +861,13 @@ def get_dtype(name: str):
 
 
 def check_attrs(target_object, func_name: str):
+    """Check if attr is overridden."""
     if isinstance(target_object, Tensor):
         return False
     if hasattr(target_object, func_name):
         if not hasattr(target_object.__class__.__base__, func_name):
+            if target_object.__class__.__base__ is object:
+                return False
             return True
         if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
             return True
