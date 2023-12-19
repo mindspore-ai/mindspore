@@ -9,7 +9,7 @@
 #### 算子
 
 - [STABLE] FastGelu、BatchMatMul、AllReduce、AllGather、Broadcast、ReduceScatter算子支持bfloat16数据类型
-- [STABLE] AllGather、ReduceScatter支持unit8数据类型
+- [STABLE] AllGather支持uint8数据类型
 
 ### 问题修复
 
