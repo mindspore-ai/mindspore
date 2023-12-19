@@ -451,7 +451,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         status = Tensor([0] * 8, mstype.int32)
         if self.ascend_910a_target or (self.ascend_910b_target and \
-                                       self._ascend910b_check_overflow_status_mode != "INFNAN_MODE"):
+                                       self._ascend910b_check_overflow_status_mode == "SATURATION_MODE"):
             status = F.depend(status, pre_cond)
             # clear overflow buffer
             clear_status = NPUClearFloatStatusV2()(status)
@@ -532,7 +532,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         if self.gpu_target:
             overflow = self._get_gpu_overflow_status(compute_output)
         elif self.ascend_910b_target:
-            if self._ascend910b_check_overflow_status_mode != "INFNAN_MODE":
+            if self._ascend910b_check_overflow_status_mode == "SATURATION_MODE":
                 overflow = self._get_ascend_overflow_status_on_saturation_mode(status, compute_output)
             else:
                 overflow = self._get_ascend_overflow_status_on_infnan_mode(compute_output)

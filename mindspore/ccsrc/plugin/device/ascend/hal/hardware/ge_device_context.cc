@@ -46,6 +46,8 @@ namespace ascend {
 namespace {
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+constexpr auto kSaturationMode = "Saturation";
+constexpr auto kINFNANMode = "INFNAN";
 
 bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
@@ -147,19 +149,14 @@ void GeDeviceContext::Initialize() {
   // set overflow mode in ascend910b
   const auto &soc_version = ms_context->ascend_soc_version();
   if (soc_version == "ascend910b") {
-    bool is_infnan = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "INFNAN_MODE");
-    if (is_infnan) {
-      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
-      auto ret = aclrtSetDeviceSatMode(mode);
-      if (ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "Set INFNAN Mode failed";
-      }
-    } else {
-      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
-      auto ret = aclrtSetDeviceSatMode(mode);
-      if (ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "Set Saturation Mode failed";
-      }
+    bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
+    auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
+                         : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    auto overflow_mode = (is_sat) ? kSaturationMode : kINFNANMode;
+    MS_LOG(INFO) << "The current overflow detection mode is " << overflow_mode << ".";
+    auto ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set " << overflow_mode << " mode failed.";
     }
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);

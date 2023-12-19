@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """eval script"""
+import os
 import numpy as np
 import time
 import pytest
@@ -72,6 +73,7 @@ def test_910B_Ascend_fold():
     Description: test train and eval
     Expectation: success
     """
+    os.environ["MS_ASCEND_CHECK_OVERFLOW_MODE"] = "SATURATION_MODE"
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         memory_optimize_level="O1",
@@ -81,6 +83,7 @@ def test_910B_Ascend_fold():
     confidence, time_list = fold_infer(mixed_precision, crop_size)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
+    os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
     assert confidence > 0.9
     assert compile_time < 200
     assert exectue_time < 35
