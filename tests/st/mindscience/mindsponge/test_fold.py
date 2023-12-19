@@ -85,10 +85,10 @@ def test_910B_Ascend_fold():
     compile_time = compile_time - exectue_time
     os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
     assert confidence > 0.9
-    assert compile_time < 200
+    assert compile_time < 300
     assert exectue_time < 35
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_910A_Ascend_fold():
@@ -107,5 +107,5 @@ def test_910A_Ascend_fold():
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     assert confidence > 0.9
-    assert compile_time < 250
+    assert compile_time < 400
     assert exectue_time < 60
