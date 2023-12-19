@@ -693,39 +693,39 @@ def test_constant_ascend_e2e_dump():
     run_constant_e2e_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 def test_save_cce_graph():
     """
     Feature: Save cce file for Ascend ops
     Description: Test save cce file in GRAPH_MODE
-    Expectation: there are cce files saved in rank_0/kernel_meta
+    Expectation: there are cce files saved in kernel_meta/kernel_meta_*/kernel_meta
     """
     os.environ["MS_COMPILER_OP_LEVEL"] = "1"
     cur_path = os.path.split(os.path.realpath(__file__))[0]
-    cce_path = os.path.join(cur_path, "rank_0", "kernel_meta")
+    cce_path = os.path.join(cur_path, "kernel_meta")
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     add = Net()
     add(Tensor(x), Tensor(y))
-    cce_file = glob.glob(os.path.join(cce_path, "*.cce"))[0]
+    cce_file = glob.glob(cce_path + "/kernel_meta_*/kernel_meta/*.cce")[0]
     assert cce_file
     del os.environ["MS_COMPILER_OP_LEVEL"]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 def test_save_cce_pynative():
     """
     Feature: Save cce file for Ascend ops
     Description: Test save cce file in PYNATIVE_MODE
-    Expectation: there are cce files saved in rank_0/kernel_meta
+    Expectation: there are cce files saved in kernel_meta/kernel_meta_*/kernel_meta
     """
     os.environ["MS_COMPILER_OP_LEVEL"] = "1"
     cur_path = os.path.split(os.path.realpath(__file__))[0]
-    cce_path = os.path.join(cur_path, "rank_0", "kernel_meta")
+    cce_path = os.path.join(cur_path, "kernel_meta")
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     add = Net()
     add(Tensor(x), Tensor(y))
-    cce_file = glob.glob(os.path.join(cce_path, "*.cce"))[0]
+    cce_file = glob.glob(cce_path + "/kernel_meta_*/kernel_meta/*.cce")[0]
     assert cce_file
     del os.environ["MS_COMPILER_OP_LEVEL"]
