@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/convert_tensor_utils.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_hash_table_util.h"
 #ifndef ENABLE_SECURITY
@@ -71,13 +72,24 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
   return true;
 }
 }  // namespace
-CPUDeviceAddress::~CPUDeviceAddress() { ClearDeviceMemory(); }
+
+void CPUDeviceAddress::SetDevicePtrDeleter() {
+  const auto &kernel_tensor = this->kernel_tensor();
+  if (!kernel_tensor) {
+    return;
+  }
+  kernel_tensor->set_deleter([](void *ptr, bool from_mem_pool) {
+    if (ptr != nullptr && from_mem_pool) {
+      CPUMemoryPool::GetInstance().FreeTensorMem(ptr);
+    }
+  });
+}
 
 void CPUDeviceAddress::ClearDeviceMemory() {
   if (GetDevicePtr() == nullptr) {
     return;
   }
-  if (from_mem_pool_) {
+  if (from_mem_pool()) {
     CPUMemoryPool::GetInstance().FreeTensorMem(GetDevicePtr());
     SetDevicePtr(nullptr);
   }
@@ -207,13 +219,13 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
     }
 
     // Use the tensor host ptr to set the device ptr.
-    if (from_mem_pool_) {
+    if (from_mem_pool()) {
       CPUMemoryPool::GetInstance().FreeTensorMem(GetDevicePtr());
-      from_mem_pool_ = false;
+      set_from_mem_pool(false);
     }
     SetDevicePtr(const_cast<void *>(host_ptr));
-    original_ref_count_ = SIZE_MAX;
-    ref_count_ = SIZE_MAX;
+    set_original_ref_count(SIZE_MAX);
+    set_ref_count(SIZE_MAX);
   } else if (type_id() == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
     HalfToFloat(GetDevicePtr(), host_ptr, size >> 1);
   } else if (type_id() == kNumberTypeFloat32 && type == kNumberTypeFloat64) {

@@ -124,7 +124,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(const session::KernelGraph *kernel
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
         }
       }
-      address->ref_count_ = INIT_NODE_REF;
+      address->set_ref_count(INIT_NODE_REF);
       AnfAlgo::SetOutputAddr(address, 0, item_node.get());
     }
   }
@@ -355,7 +355,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(item, 0)}, {tensor_shape},
                                                   item.get());
     }
-    address->ref_count_ = INIT_NODE_REF;
+    address->set_ref_count(INIT_NODE_REF);
     if (common::AnfAlgo::IsParameterWeight(input_param)) {
       tensor->set_device_address(address);
     }
@@ -379,7 +379,7 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
       if (address_ptr->type_id() == tensor->data_type_c() && tensor->sync_status() == kNoNeedSync) {
         address_ptr->SetDevicePtr(tensor->data_c());
       }
-      address_ptr->ref_count_ = INIT_NODE_REF;
+      address_ptr->set_ref_count(INIT_NODE_REF);
     }
   }
 }

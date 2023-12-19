@@ -144,7 +144,7 @@ void CPUMemoryManager::IncreaseSummaryRefCount(const session::NamedSummaryOutput
     size_t index = IntToSize(output_item.second.second);
     auto address = AnfAlgo::GetMutableOutputAddr(node, index);
     MS_EXCEPTION_IF_NULL(address);
-    address->ref_count_++;
+    address->set_ref_count(address->ref_count() + 1);
   }
 }
 
@@ -160,8 +160,8 @@ void CPUMemoryManager::DecreaseSummaryRefCount(const session::NamedSummaryOutput
     size_t index = IntToSize(output_item.second.second);
     auto address = AnfAlgo::GetMutableOutputAddr(node, index);
     MS_EXCEPTION_IF_NULL(address);
-    address->ref_count_--;
-    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+    address->DecreaseRefCount();
+    if (address->ref_count() == 0 && address->GetDevicePtr() != nullptr) {
       MemFree(address->GetDevicePtr());
       address->SetDevicePtr(nullptr);
     }
@@ -180,14 +180,14 @@ void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph
     for (size_t i = 0; i < input_num; ++i) {
       auto address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      address->ref_count_++;
+      address->set_ref_count(address->ref_count() + 1);
     }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
       auto address = AnfAlgo::GetWorkspaceAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
-      address->ref_count_++;
+      address->set_ref_count(address->ref_count() + 1);
     }
   }
 }
@@ -201,8 +201,8 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
   for (size_t i = 0; i < input_num; ++i) {
     auto address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(address);
-    address->ref_count_--;
-    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+    address->DecreaseRefCount();
+    if (address->ref_count() == 0 && address->GetDevicePtr() != nullptr) {
       MemFree(address->GetDevicePtr());
       address->SetDevicePtr(nullptr);
     }
@@ -212,8 +212,8 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
   for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
     auto address = AnfAlgo::GetWorkspaceAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(address);
-    address->ref_count_--;
-    if (address->ref_count_ == 0 && address->GetDevicePtr() != nullptr) {
+    address->DecreaseRefCount();
+    if (address->ref_count() == 0 && address->GetDevicePtr() != nullptr) {
       MemFree(address->GetDevicePtr());
       address->SetDevicePtr(nullptr);
     }

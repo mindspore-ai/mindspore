@@ -63,6 +63,106 @@ enum KernelType : int {
   ACL_KERNEL,
   OPAPI_KERNEL,
 };
+
+// PointerRefCount encapsulates pointer and reference count-related operations, and supports custom deleter to free
+// resources. In Ref scenarios, KernelTensor of different DeviceAddress may hold the same PointerRefCount object.
+class PointerRefCount {
+ public:
+  // The arguments are pointer and a bool variable that identifies whether pointer is from the memory pool.
+  using Deleter = std::function<void(void *, bool)>;
+
+  PointerRefCount() = default;
+  explicit PointerRefCount(void *ptr) : ptr_(ptr) {}
+  PointerRefCount(void *ptr, const Deleter &deleter) : ptr_(ptr), deleter_(deleter) {}
+
+  PointerRefCount(const PointerRefCount &other)
+      : ptr_(other.ptr_),
+        original_ref_count_(other.original_ref_count_),
+        ref_count_(other.ref_count_),
+        dynamic_ref_count_(other.dynamic_ref_count_.load()),
+        deleter_(other.deleter_) {}
+
+  ~PointerRefCount() {
+    try {
+      if (ptr_ != nullptr && deleter_) {
+        deleter_(ptr_, from_mem_pool_);
+      }
+      ptr_ = nullptr;
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "PointerRefCount destructed failed: " << e.what();
+    } catch (...) {
+      MS_LOG(ERROR) << "PointerRefCount destructed failed.";
+    }
+  }
+
+  // Get raw pointer.
+  void *ptr() const { return ptr_; }
+  // Set raw pointer.
+  void set_ptr(void *ptr) { ptr_ = ptr; }
+
+  // Get whether pointer in PointerRefCount is allocated from the memory pool.
+  bool from_mem_pool() const { return from_mem_pool_; }
+  // Set whether pointer in PointerRefCount is allocated from the memory pool.
+  void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
+
+  // The related interface of static reference count operation.
+  void set_original_ref_count(size_t original_ref_count) { original_ref_count_ = original_ref_count; }
+  size_t original_ref_count() const { return original_ref_count_; }
+  void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
+  size_t ref_count() const { return ref_count_; }
+  void IncreaseOriginalRefCount() {
+    if (original_ref_count_ < SIZE_MAX) {
+      original_ref_count_++;
+    }
+  }
+  void DecreaseOriginalRefCount() {
+    if ((original_ref_count_ < SIZE_MAX) && (original_ref_count_ > 0)) {
+      original_ref_count_--;
+    }
+  }
+  void DecreaseRefCount() { ref_count_--; }
+  void ResetRefCount() { ref_count_ = original_ref_count_; }
+
+  // The related interface of dynamic reference count operation.
+  void set_dynamic_ref_count(int32_t dynamic_ref_count) { dynamic_ref_count_ = dynamic_ref_count; }
+  int32_t dynamic_ref_count() const { return dynamic_ref_count_; }
+  void IncreaseDynamicRefCount(const std::string &op_object) {
+    if (dynamic_ref_count_ < INT32_MAX) {
+      (void)++dynamic_ref_count_;
+      MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr();
+    }
+  }
+  void DecreaseDynamicRefCount(const std::string &op_object) {
+    if (dynamic_ref_count_ <= 0) {
+      MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
+    }
+    (void)--dynamic_ref_count_;
+    MS_LOG(DEBUG) << op_object << " The dynamic ref count decreases to:" << dynamic_ref_count_ << " for ptr:" << ptr();
+  }
+
+  // Set pointer resource destructor.
+  void set_deleter(const Deleter &deleter) { deleter_ = deleter; }
+
+ private:
+  void *ptr_{nullptr};
+
+  // Whether ptr_  is allocated from the memory pool.
+  bool from_mem_pool_{false};
+
+  // The static reference count, the value can be calculated at compile phase.
+  size_t original_ref_count_{1};
+  // The current reference count value, it will be decreased in the running, and reset by original_ref_count_ when it is
+  // zero.
+  size_t ref_count_{1};
+
+  // The dynamic reference count, the value can be calculated at compile phase.
+  std::atomic_int32_t dynamic_ref_count_{INT32_MAX};
+
+  // The pointer resource destructor.
+  Deleter deleter_;
+};
+using PointerRefCountPtr = std::shared_ptr<PointerRefCount>;
+
 namespace kernel {
 // Backend processor
 enum Processor {
@@ -142,7 +242,9 @@ struct IsValidContainer {
 // operators Infer and Launch, and provides related Get/Set interfaces.
 class BACKEND_EXPORT KernelTensor : public AbstractBase {
  public:
-  KernelTensor() = default;
+  using Deleter = PointerRefCount::Deleter;
+
+  KernelTensor();
   ~KernelTensor() = default;
 
   // Constructor of KernelTensor by shape, type, value.
@@ -172,7 +274,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     value_ = other.value_;
 
     format_ = other.format_;
-    device_ptr_ = other.device_ptr_;
+    ptr_ref_cnt_ = other.ptr_ref_cnt_;
     size_ = other.size_;
     device_name_ = std::move(other.device_name_);
     device_id_ = other.device_id_;
@@ -191,7 +293,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     value_ = other.value_;
 
     format_ = other.format_;
-    device_ptr_ = other.device_ptr_;
+    ptr_ref_cnt_ = other.ptr_ref_cnt_;
     size_ = other.size_;
     device_name_ = std::move(other.device_name_);
     device_id_ = other.device_id_;
@@ -417,11 +519,24 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set the padding type of format.
   void set_padding_type(const std::string &padding_type);
 
+  // Get pointer and reference count.
+  const PointerRefCountPtr &pointer_ref_count() const { return ptr_ref_cnt_; }
+
+  // Set pointer and reference count.
+  void set_pointer_ref_count(const PointerRefCountPtr &ptr_ref_cnt) { ptr_ref_cnt_ = ptr_ref_cnt; }
+
+  //  Set the pointer and reference count to nullptr, resource reclaiming of the device pointer is automatically
+  //  released.
+  void ReleaseDeviceRes() { ptr_ref_cnt_ = nullptr; }
+
+  // Set pointer resource destructor.
+  void set_deleter(const Deleter &deleter) { ptr_ref_cnt_->set_deleter(deleter); }
+
   // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
-  void *device_ptr() const { return device_ptr_; }
+  void *device_ptr() const { return ptr_ref_cnt_->ptr(); }
 
   // Set pointer to the device side that corresponds to KernelTensor, used in runtime.
-  void set_device_ptr(void *ptr) { device_ptr_ = ptr; }
+  void set_device_ptr(void *ptr) { ptr_ref_cnt_->set_ptr(ptr); }
 
   // Get the memory size in byte of the KernelTensor.
   size_t size() const { return size_; }
@@ -586,8 +701,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The padding type corresponds to data format.
   std::string padding_type_;
 
-  // The pointer to the device side that corresponds to KernelTensor, used in runtime.
-  void *device_ptr_{nullptr};
+  // The pointer to the device side and reference count that corresponds to KernelTensor, used in runtime.
+  PointerRefCountPtr ptr_ref_cnt_{nullptr};
 
   // The memory size in byte of the KernelTensor.
   size_t size_{0};

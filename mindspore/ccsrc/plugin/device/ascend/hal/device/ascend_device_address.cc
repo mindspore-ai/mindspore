@@ -162,6 +162,25 @@ bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *s
   return true;
 }
 
+void AscendDeviceAddress::SetDevicePtrDeleter() {
+  const auto &kernel_tensor = this->kernel_tensor();
+  if (!kernel_tensor) {
+    return;
+  }
+
+  kernel_tensor->set_deleter([communication_ptr = this->communication_ptr_](void *ptr, bool from_mem_pool) {
+    if (ptr == nullptr || !from_mem_pool) {
+      return;
+    }
+
+    if (communication_ptr != nullptr) {
+      AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr);
+    } else {
+      AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
+    }
+  });
+}
+
 void AscendDeviceAddress::BindDevice() const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -772,7 +791,7 @@ void AscendDeviceAddress::ClearDeviceMemory() {
     device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
     offload_ptr_ = nullptr;
   }
-  if (GetDevicePtr() != nullptr && from_mem_pool_) {
+  if (GetDevicePtr() != nullptr && from_mem_pool()) {
     if (communication_ptr_ != nullptr) {
       AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr_);
       communication_ptr_ = nullptr;
@@ -843,7 +862,16 @@ bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size
 
 AscendDeviceAddress::~AscendDeviceAddress() {
   try {
-    ClearDeviceMemory();
+    // Only release offload memory, release device memory when `kernel_tensor_` in base class destroyed, because maybe
+    // multi GPUDeviceAddress objects use same device pointer in ref case.
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    (void)Wait();
+    if (offload_ptr_ != nullptr) {
+      auto device_context = GetDeviceContext();
+      MS_EXCEPTION_IF_NULL(device_context);
+      device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
+      offload_ptr_ = nullptr;
+    }
     LoadableDeviceAddress::ReleaseResource();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "AscendDeviceAddress destructor failed: " << e.what();
