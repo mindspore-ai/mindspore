@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/math/bernoulli_gpu_kernel.h"
 #include <functional>
 #include <utility>
+#include <chrono>
 #include <string>
 #include <algorithm>
 #include <memory>
@@ -135,7 +136,10 @@ bool BernoulliGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   S *y = GetDeviceAddress<S>(outputs, kIndex0);
   uint64_t seed;
   if (seed_ == -1) {
-    seed = static_cast<uint64_t>(time(NULL));
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = now.time_since_epoch();
+    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+    seed = static_cast<uint64_t>(nanoseconds);
   } else {
     seed = static_cast<uint64_t>(seed_);
   }
