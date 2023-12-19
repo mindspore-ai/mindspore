@@ -561,6 +561,7 @@ enum PrimType {
   PrimType_Inner_CustomGru = 10010,
   PrimType_Inner_CastGatherReduceFusion = 10011,
   PrimType_Inner_ReduceConcatFusion = 10012,
+  PrimType_Inner_AclCustomOp = 10013,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };
