@@ -29,5 +29,7 @@ REGISTER_ACL_OP(CTCGreedyDecoder).set_is_need_retrieve_output_shape();
 REGISTER_ACL_OP(DynamicGetNextV2).set_is_need_retrieve_output_shape();
 
 REGISTER_ACL_OP(NonZero).set_is_need_retrieve_output_shape();
+
+REGISTER_ACL_OP(ComputeAccidentalHits).set_is_need_retrieve_output_shape();
 }  // namespace transform
 }  // namespace mindspore
