@@ -30,7 +30,7 @@ def expand_dims_backward_func(x, axis):
     return ops.grad(expand_dims_forward_func, (0,))(x, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -51,7 +51,7 @@ def test_expand_dims_forward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -72,7 +72,7 @@ def test_expand_dims_backward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

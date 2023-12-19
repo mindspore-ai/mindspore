@@ -57,7 +57,7 @@ def test_minimum_two_tensors_tensor_dynamic():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_min_tensor_with_bfloat16():

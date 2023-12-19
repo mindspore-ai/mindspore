@@ -62,7 +62,7 @@ def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
@@ -85,7 +85,7 @@ def test_inplace_add(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(10, 4, 3, 2), (5, 2, 4, 6)])
@@ -107,7 +107,7 @@ def test_inplace_add_same_indice(shape, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])

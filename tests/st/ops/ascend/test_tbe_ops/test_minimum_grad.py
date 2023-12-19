@@ -103,7 +103,7 @@ def test_min_tensor_grad_with_same_input():
     gen_data(inputA_np, inputB_np, grad_, ms_type=ms.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_min_tensor_grad_with_bfloat16():
@@ -118,7 +118,7 @@ def test_min_tensor_grad_with_bfloat16():
     gen_data(inputA_np, inputB_np, grad_, ms_type=ms.bfloat16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_min_tensor_grad_with_bf16():

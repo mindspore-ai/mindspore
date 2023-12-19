@@ -33,7 +33,7 @@ def grid_sampler_3d_backward_func(input_x, grid):
     return ops.grad(grid_sampler_3d_forward_func, (0, 1))(input_x, grid)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -80,7 +80,7 @@ def test_grid_sampler_3d_forward(mode):
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -139,7 +139,7 @@ def test_grid_sampler_3d_backward(mode):
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

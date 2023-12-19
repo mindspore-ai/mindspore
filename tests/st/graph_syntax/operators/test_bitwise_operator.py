@@ -154,7 +154,7 @@ def test_bitwise_or_3():
     assert np.allclose(result.asnumpy(), np.array([1, 3, -3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

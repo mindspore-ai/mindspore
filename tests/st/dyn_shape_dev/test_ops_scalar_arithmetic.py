@@ -21,7 +21,7 @@ import mindspore.ops.operations.manually_defined as F
 import test_utils
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -61,7 +61,7 @@ def test_scalar_add(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -98,7 +98,7 @@ def test_scalar_sub(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -134,7 +134,7 @@ def test_scalar_mul(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -170,7 +170,7 @@ def test_scalar_div(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -206,7 +206,7 @@ def test_scalar_mod(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -242,7 +242,7 @@ def test_scalar_floordiv(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -278,7 +278,7 @@ def test_scalar_eq(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -314,7 +314,7 @@ def test_scalar_ge(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -350,7 +350,7 @@ def test_scalar_gt(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -386,7 +386,7 @@ def test_scalar_le(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -421,7 +421,7 @@ def test_scalar_lt(mode):
         mutable_grad_output = scalar_lt_backward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

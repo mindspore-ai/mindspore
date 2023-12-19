@@ -37,7 +37,7 @@ def onehot_vmap_func(indices, depth, on_value, off_value, axis):
     return ops.vmap(onehot_forward_func, in_axes=in_axis, out_axes=0)(indices, depth, on_value, off_value, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -61,7 +61,7 @@ def test_onehot_op_forward(context_mode, data_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -84,7 +84,7 @@ def test_onehot_op_forward_depth_tensor(context_mode):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -108,7 +108,7 @@ def test_onehot_op_backward(context_mode, data_type):
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

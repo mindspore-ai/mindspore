@@ -42,7 +42,7 @@ def dyn_case():
     assert y.asnumpy().shape == (2, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_matrix_logarithm_dyn():

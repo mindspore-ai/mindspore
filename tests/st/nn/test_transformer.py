@@ -187,7 +187,7 @@ def test_transformerencoder_square_input_ascend(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
@@ -236,7 +236,7 @@ def test_transformerencoder_square_input_gpu(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
@@ -370,7 +370,7 @@ def test_transformer_cpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])

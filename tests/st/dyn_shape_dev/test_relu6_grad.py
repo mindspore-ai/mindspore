@@ -27,7 +27,7 @@ def relu6_grad_func(dy, x):
     return _relu6_grad(dy, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -54,7 +54,7 @@ def test_relu6_grad(mode):
     assert (out.asnumpy() == expect_out).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

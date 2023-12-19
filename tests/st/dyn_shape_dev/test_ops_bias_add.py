@@ -49,7 +49,7 @@ def test_bias_add_4d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -77,7 +77,7 @@ def test_bias_add_2d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -105,7 +105,7 @@ def test_bias_add_3d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -133,7 +133,7 @@ def test_bias_add_5d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -157,7 +157,7 @@ def test_bias_add_backward(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

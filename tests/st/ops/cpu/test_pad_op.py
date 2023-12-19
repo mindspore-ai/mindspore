@@ -43,7 +43,7 @@ def vmap_case():
     assert np.allclose(expect1, out_ms1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_vmap_cpu():

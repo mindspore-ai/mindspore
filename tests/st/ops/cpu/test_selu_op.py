@@ -62,7 +62,7 @@ def selu_np_bencmark(input_x):
     return result
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("data_shape", [(4,), (3, 4), (4, 5, 7)])
@@ -87,7 +87,7 @@ def test_selu(data_shape, data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_selu_vmap_cpu():
@@ -109,7 +109,7 @@ def test_selu_vmap_cpu():
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_selu_dy_shape():

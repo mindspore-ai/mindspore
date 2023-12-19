@@ -71,7 +71,7 @@ def test_sigmoid_grad_backward(mode):
     ddy, _ = sigmoid_grad_backward_func(y, dy)
     assert np.allclose(ddy.numpy(), expect_out.numpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

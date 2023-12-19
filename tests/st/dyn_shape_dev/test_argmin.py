@@ -69,7 +69,7 @@ def argmin_argmax_case_dyn(op_func, np_func):
     assert np.allclose(output2.asnumpy(), expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -85,7 +85,7 @@ def test_argmin(mode):
     argmin_argmax_case(P.argmin_, np.argmin)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -101,7 +101,7 @@ def test_argmin_vmap(mode):
     argmin_argmax_case_vmap(P.argmin_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

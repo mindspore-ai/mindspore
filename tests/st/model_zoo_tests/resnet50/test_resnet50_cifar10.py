@@ -131,7 +131,7 @@ def test_resnet50_cifar10_gpu_accuracy():
     print("loss_list is", loss_list)
     assert sum(loss_list) / len(loss_list) < 0.70
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resnet50_cifar10_gpu_performance():

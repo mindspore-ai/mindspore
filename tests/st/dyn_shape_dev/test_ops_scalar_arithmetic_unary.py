@@ -20,7 +20,7 @@ from mindspore import ops
 import mindspore.ops.operations.manually_defined as F
 import test_utils
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -54,7 +54,7 @@ def test_scalar_bool_mutable(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -88,7 +88,7 @@ def test_scalar_uadd_mutable(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -122,7 +122,7 @@ def test_scalar_usub_mutable(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

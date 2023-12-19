@@ -30,7 +30,7 @@ def resize_nearest_neighbor_grad_dyn_shape_func(x, size, align_corners):
     return ops.auto_generate.resize_nearest_neighbor_grad(x, size, align_corners)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

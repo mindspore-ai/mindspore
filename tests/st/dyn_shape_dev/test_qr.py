@@ -30,7 +30,7 @@ def qr_backward_func(x, full_matrices):
     return ops.grad(qr_forward_func, (0, 1))(x, full_matrices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

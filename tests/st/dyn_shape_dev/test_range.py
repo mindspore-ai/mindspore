@@ -31,7 +31,7 @@ def range_backward_func(start, limit, delta):
     return ops.grad(range_forward_func, (0, 1, 2))(start, limit, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -52,7 +52,7 @@ def test_range_forward_tensor_input(mode):
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -75,7 +75,7 @@ def test_range_forward(mode):
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

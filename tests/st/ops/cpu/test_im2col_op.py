@@ -26,7 +26,7 @@ from mindspore.ops.functional import vmap
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_im2col_vmap():
@@ -69,7 +69,7 @@ class NetIm2Col(nn.Cell):
         return self.im2col(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_im2col_cpu_dynamic_shape():

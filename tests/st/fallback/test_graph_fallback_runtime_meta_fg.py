@@ -392,7 +392,7 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -572,7 +572,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_xor():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -824,7 +824,7 @@ def test_fallback_meta_fg_not_support_type_pow():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -959,7 +959,7 @@ def test_fallback_meta_fg_not_support_type_not_equal():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -989,7 +989,7 @@ def test_fallback_setitem_meta():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1045,7 +1045,7 @@ def test_shift_operator_error_list_input():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1077,7 +1077,7 @@ def test_user_made_meta_fg():
     assert res == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1109,7 +1109,7 @@ def test_user_made_meta_fg_with_error():
     assert "cannot find fn match given args." in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1141,7 +1141,7 @@ def test_user_made_meta_fg_with_hyper_map():
     assert res == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1165,7 +1165,7 @@ def test_getitem_with_no_script():
     assert res == (1, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

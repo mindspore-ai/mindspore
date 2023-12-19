@@ -26,7 +26,7 @@ def prelu_grad_func(y, x, weight):
     return ops.auto_generate.prelu_grad(y, x, weight)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
