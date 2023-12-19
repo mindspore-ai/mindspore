@@ -175,8 +175,7 @@ class Adam(Optimizer):
             beta2_power = self.op_pow(beta2, self.state_step)
             adam_with_amsgrad_opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, False)
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id]
-            grads = grads if not maximize else -grads
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(weight_decay, params, grads)
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)

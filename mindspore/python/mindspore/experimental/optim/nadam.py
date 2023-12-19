@@ -120,6 +120,7 @@ class NAdam(Optimizer):
 
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)

@@ -147,7 +147,7 @@ class Adagrad(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
             accum = self.accum[start_id: end_id]
             self.hyper_map(F.partial(_adagrad_opt, opt, decay_lr), params, accum, grads)

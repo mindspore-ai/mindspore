@@ -117,6 +117,7 @@ class ASGD(Optimizer):
         self.step = Parameter(Tensor(0, mstype.int32), "step")
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.step, self.increase_tensor)
@@ -129,7 +130,7 @@ class ASGD(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
 
             ax = self.ax[start_id: end_id]

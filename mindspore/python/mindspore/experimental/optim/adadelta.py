@@ -128,6 +128,7 @@ class Adadelta(Optimizer):
         self.accum = self.parameters.clone(prefix="accum", init=0)
         self.accum_update = self.parameters.clone(prefix="accum_update", init=0)
         self.opt = P.ApplyAdadelta()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
@@ -139,7 +140,7 @@ class Adadelta(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
             accum = self.accum[start_id: end_id]
             accum_update = self.accum_update[start_id: end_id]
