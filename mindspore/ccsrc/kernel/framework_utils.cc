@@ -187,22 +187,6 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   return std::make_pair(input_tensors, output_tensors);
 }
 
-std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(const KernelAttr &kernel_attr) {
-  size_t input_attr_size = kernel_attr.GetInputSize();
-  std::vector<DataType> input_data_types;
-  for (size_t i = 0; i < input_attr_size; ++i) {
-    input_data_types.push_back(kernel_attr.GetInputAttr(i));
-  }
-
-  size_t output_attr_size = kernel_attr.GetOutputSize();
-  std::vector<DataType> output_data_types;
-  for (size_t i = 0; i < output_attr_size; ++i) {
-    output_data_types.push_back(kernel_attr.GetOutputAttr(i));
-  }
-
-  return std::make_pair(input_data_types, output_data_types);
-}
-
 bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_types,
                                  const std::vector<DataType> &kernel_data_types) {
   if (object_types.size() != kernel_data_types.size()) {
@@ -241,6 +225,21 @@ bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_types, const st
 }
 }  // namespace
 
+std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(const KernelAttr &kernel_attr) {
+  size_t input_attr_size = kernel_attr.GetInputSize();
+  std::vector<DataType> input_data_types;
+  for (size_t i = 0; i < input_attr_size; ++i) {
+    input_data_types.push_back(kernel_attr.GetInputAttr(i));
+  }
+
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  std::vector<DataType> output_data_types;
+  for (size_t i = 0; i < output_attr_size; ++i) {
+    output_data_types.push_back(kernel_attr.GetOutputAttr(i));
+  }
+
+  return std::make_pair(input_data_types, output_data_types);
+}
 std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
 
 bool CheckCache(const std::string &kernel_name) {
