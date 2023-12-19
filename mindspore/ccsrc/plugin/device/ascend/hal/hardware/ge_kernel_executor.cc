@@ -226,8 +226,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     bool is_nop_op = transform::AclHelper::IsNopNode(node);
     bool is_transpose_nop = (op_name == prim::kPrimTranspose->name() || op_name == prim::kPrimTransposeD->name()) &&
                             common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
-    bool is_dynamic_shape_skip_execute = AnfAlgo::IsDynamicShapeSkipExecute(node);
-    if (is_dynamic_shape_skip_execute || is_transpose_nop || (is_nop_op && !is_host_reshape_op)) {
+    if (is_transpose_nop || (is_nop_op && !is_host_reshape_op)) {
       nop_op_to_memcpy_.insert(node);
     }
   }
@@ -283,10 +282,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_EXCEPTION_IF_NULL(stream);
-  bool is_dynamic_shape_skip_execute = AnfAlgo::IsDynamicShapeSkipExecute(kernel);
-  if (is_dynamic_shape_skip_execute) {
-    nop_op_to_memcpy_.insert(kernel);
-  }
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
     auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
@@ -295,7 +290,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
 #endif
   // launch kernel
-  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end() || is_dynamic_shape_skip_execute) {
+  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
       return false;

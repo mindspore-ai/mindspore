@@ -223,6 +223,10 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   // operator validation (e.g. ReduceSum), so put it on host will be more efficiencient to reduce the count of sync from
   // device to host.
   MS_EXCEPTION_IF_NULL(converter_);
+  auto is_need_skip_execute = converter_->IsNeedSkipExecute(kernel_name_, inputs, outputs, stream_ptr);
+  if (is_need_skip_execute) {
+    return true;
+  }
   converter_->ConvertValueDependToHostInput(kernel_name_, inputs, input_params_, value_depend_args_);
   converter_->ConvertToAclInput(primitive_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);

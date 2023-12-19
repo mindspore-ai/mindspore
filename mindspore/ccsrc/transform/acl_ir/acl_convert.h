@@ -86,6 +86,8 @@ class AclConverter {
                          const std::vector<TensorParams> &input_params);
   void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                           const std::vector<TensorParams> &output_params);
+  bool IsNeedSkipExecute(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
+                         const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
   void ConvertValueDependToHostInput(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<TensorParams> &input_params,

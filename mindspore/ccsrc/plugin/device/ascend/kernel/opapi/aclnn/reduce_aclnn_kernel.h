@@ -66,6 +66,13 @@ class ReduceMathAclnnKernelMod : public ReduceAclnnKernelMod {
 class ReduceSumAclnnKernelMod : public ReduceMathAclnnKernelMod {
  public:
   ReduceSumAclnnKernelMod() : ReduceMathAclnnKernelMod("aclnnReduceSum") {}
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+ private:
+  TypeId dtype_;
+  bool need_skip_execute_{false};
 };
 
 class ReduceMeanAclnnKernelMod : public ReduceMathAclnnKernelMod {

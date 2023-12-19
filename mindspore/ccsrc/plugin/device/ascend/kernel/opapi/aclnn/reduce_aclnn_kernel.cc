@@ -57,6 +57,41 @@ bool ReduceMathAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
+void ReduceSumAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  dims_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
+  keep_dim_ = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
+  dtype_ = transform::ConvertKernelTensor<TypeId>(inputs[kIndex0]);
+  auto skip_mode = transform::ConvertKernelTensor<bool>(inputs[kIndex3]);
+  if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode, inputs[kIndex1]->GetShapeVector())) {
+    need_skip_execute_ = true;
+    return;
+  } else {
+    need_skip_execute_ = false;
+  }
+  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]);
+  UpdateWorkspace(return_value);
+}
+
+bool ReduceSumAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &workspace,
+                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  if (need_skip_execute_) {
+    aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                       inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    if (status != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size()
+                    << " count:" << inputs[0]->size();
+      return false;
+    }
+    return true;
+  }
+  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]));
+  RunOp(stream_ptr, workspace);
+  return true;
+}
+
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAll, ReduceAllAclnnKernelMod);
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAny, ReduceAnyAclnnKernelMod);
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceSum, ReduceSumAclnnKernelMod);
