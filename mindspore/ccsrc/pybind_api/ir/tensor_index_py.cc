@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "pybind_api/ir/tensor_index_py.h"
 #include <pybind11/stl.h>
 #include <memory>
 #include <string>
@@ -22,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 #include "pybind11/pytypes.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "utils/hash_set.h"
@@ -29,6 +29,8 @@
 #include "frontend/expander/pack/pack_expander.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "pybind_api/ir/tensor_index_py.h"
+#include "pybind_api/ir/tensor_tuple_index_py.h"
 
 namespace mindspore::tensor {
 using tensor::TensorPy;
@@ -1276,7 +1278,7 @@ static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *
   (void)slice_op_infos->emplace_back(broadcastto_op_info);
 
   auto copy_op_info = std::make_shared<pynative::SliceOpInfo>();
-  copy_op_info->slice_op_name = kCopyWithScileOpName;
+  copy_op_info->slice_op_name = kCopyWithSliceOpName;
   copy_op_info->data_indexs = {0, 1};
   (void)slice_op_infos->emplace_back(copy_op_info);
   ValuePtr rdata_value;
@@ -1512,10 +1514,22 @@ void CheckDataDim(const ShapeVector &data_shape) {
   }
 }
 
-void CheckNumberOfEllipsis(const size_t counter) {
-  if (counter > 0) {
-    MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
-  }
+static std::unordered_map<std::string, std::shared_ptr<IGetItemByTupleWithView>> GenerateGetItemMap(void) {
+  std::unordered_map<std::string, std::shared_ptr<IGetItemByTupleWithView>> obj_map{
+    {"int", std::make_shared<GetItemByIntWithView>()},
+    {"slice", std::make_shared<GetItemBySliceWithView>()},
+    {"ellipsis", std::make_shared<GetItemByEllipsisWithView>()},
+    {"none", std::make_shared<GetItemByNoneWithView>()}};
+  return obj_map;
+}
+
+std::string MapPyObjToString(py::handle obj) {
+  if (py::isinstance<py::bool_>(obj)) return "bool";
+  if (py::isinstance<py::int_>(obj)) return "int";
+  if (py::isinstance<py::slice>(obj)) return "slice";
+  if (py::isinstance<py::ellipsis>(obj)) return "ellipsis";
+  if (py::isinstance<py::none>(obj)) return "none";
+  return "invalid";
 }
 }  // namespace
 
@@ -1530,91 +1544,51 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
   size_t data_dims = data_shape.size();
   auto new_tuple_index = py_index.cast<py::tuple>();
   size_t specified_dimensions = GetSpecifiedDimensions(new_tuple_index, data_dims);
-  bool empty_strided_slice_result = false;
-  auto new_data_shape = data_shape;
   size_t dim = 0;
   std::vector<pynative::SliceOpInfoPtr> slice_op_infos;
-  size_t ellipsis_count = 0;
+  TensorTupleIndexInfoForView view_info(dim, data_shape, specified_dimensions, data_transfer_types, data_transfer_args,
+                                        &slice_op_infos);
+
+  static auto obj_map = GenerateGetItemMap();
   for (auto const &obj : new_tuple_index) {
-    if (py::isinstance<py::int_>(obj) && !py::isinstance<py::bool_>(obj)) {
-      auto index = py::cast<int64_t>(obj);
-      if (index >= new_data_shape[dim] || index < -new_data_shape[dim]) {
-        // Raise exception in python, because python iterator need raise IndexError to stop for loop.
-        data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kRaiseIndexError));
-        data_transfer_args->emplace_back(py::make_tuple(index, new_data_shape[dim]));
-        return true;
-      }
-      int64_t transformed_number = CheckRange(index, new_data_shape[dim]);
-      auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
-      slice_op_info->slice_op_name = prim::kPrimSelectView->name();
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(transformed_number));
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(dim));
-      (void)slice_op_info->data_indexs.emplace_back(0);
-      (void)slice_op_infos.emplace_back(slice_op_info);
-      (void)new_data_shape.erase(new_data_shape.begin() + dim);
-    } else if (py::isinstance<py::slice>(obj)) {
-      auto slice_info = Slice(TensorIndex(obj).slice(), new_data_shape[dim]);
-      std::vector<int64_t> begin_info(new_data_shape.size(), 0);
-      std::vector<int64_t> end_info(new_data_shape);
-      std::vector<int64_t> step_info(new_data_shape.size(), 1);
-      if (slice_info.step() < 0) {
-        data_transfer_types->clear();
-        data_transfer_args->clear();
-        return false;
-      }
-      if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
-        dim++;
-        continue;
-      }
-      empty_strided_slice_result = (slice_info.start() >= slice_info.stop());
-      begin_info[dim] = slice_info.start();
-      end_info[dim] = slice_info.stop();
-      step_info[dim] = slice_info.step();
-      auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
-      slice_op_info->slice_op_name = prim::kPrimStridedSlice->name();
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(begin_info));
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(end_info));
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(step_info));
-      (void)slice_op_info->data_indexs.emplace_back(0);
-      (void)slice_op_infos.emplace_back(slice_op_info);
-      new_data_shape[dim] = (slice_info.stop() + slice_info.step() - 1 - slice_info.start()) / slice_info.step();
-      dim++;
-    } else if (py::isinstance<py::ellipsis>(obj)) {
-      CheckNumberOfEllipsis(ellipsis_count);
-      dim += data_shape.size() - specified_dimensions;
-      ellipsis_count += 1;
-    } else if (py::isinstance<py::none>(obj)) {
-      auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
-      slice_op_info->slice_op_name = prim::kPrimExpandDims->name();
-      (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(dim));
-      (void)slice_op_info->data_indexs.emplace_back(0);
-      (void)slice_op_infos.emplace_back(slice_op_info);
-      new_data_shape.insert(new_data_shape.begin() + dim, 1);
-      dim++;
-    } else {
-      data_transfer_types->clear();
+    std::string index_type_string = MapPyObjToString(obj);
+    auto iter = obj_map.find(index_type_string);
+    if (iter == obj_map.end()) {
       data_transfer_args->clear();
+      data_transfer_types->clear();
+      return false;
+    }
+    iter->second->GetItemWithView(&view_info, obj);
+    if (!view_info.m_could_apply_view) {
       return false;
     }
   }
-  CheckDataDim(new_data_shape);
+  data_transfer_args = view_info.m_data_transfer_args;
+  data_transfer_types = view_info.m_data_transfer_types;
+  slice_op_infos = *view_info.m_slice_op_infos;
+  CheckDataDim(view_info.m_new_data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
-    if (empty_strided_slice_result) {
+    MS_LOG(DEBUG)
+      << "For 'GetItemByTupleWithView', data type is not null pointer should go to Setitem Copy View branch.";
+    if (view_info.m_empty_strided_slice_result) {
       data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kByPass));
       data_transfer_args->emplace_back(py::none());
       return true;
     }
-    slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
+    slice_output =
+      SetitemCopyView(&slice_op_infos, data_value, view_info.m_new_data_shape, data_type, py_value_handle_);
     if (slice_output == py::none()) {
       return false;
     }
   } else {
-    if (slice_op_infos.empty()) {
+    if (view_info.m_slice_op_infos->empty()) {
+      MS_LOG(DEBUG) << "slice info is empty should just return";
       data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kByPass));
       data_transfer_args->emplace_back(py::none());
       return true;
     }
+    MS_LOG(DEBUG) << "GetItemByTupleWithView is running slice op";
     slice_output = pynative::PyNativeExecutor::GetInstance()->RunSliceOpStub({data_value}, slice_op_infos);
   }
   data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kJustReturn));
@@ -1665,7 +1639,8 @@ py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std:
   return TensorGetitemByTuple(new_data_shape, new_tuple_indexes, &data_transfer_types, &data_transfer_args);
 }
 
-py::object TensorIndex::GetItemByBool(const ValuePtr &data_value, const ShapeVector &data_shape, bool index) {
+py::object TensorIndex::GetItemByBool(const ValuePtr &data_value, const ShapeVector &data_shape, bool index,
+                                      const TypeId &type_id) {
   MS_LOG(INFO) << "(View) In branch get item by bool, data_shape: " << data_shape << " tensor_indexes: " << index;
   constexpr int min_data_dim = 0;
   constexpr int max_data_dim = 7;
@@ -1674,8 +1649,23 @@ py::object TensorIndex::GetItemByBool(const ValuePtr &data_value, const ShapeVec
   if (!index) {
     MS_EXCEPTION(IndexError) << "When tensor is indexed by a bool object, the value only support 'True'.";
   }
-  auto transfer_type = (data_value == nullptr ? ValueTransferType::kExpandDims : ValueTransferType::kUnsqueeze);
-  return py::make_tuple(py::none(), py::make_tuple(static_cast<int>(transfer_type)), py::make_tuple(py::int_(0)));
+
+  if (data_value == nullptr) {
+    return py::make_tuple(py::none(), py::make_tuple(static_cast<int>(ValueTransferType::kExpandDims)),
+                          py::make_tuple(py::int_(0)));
+  }
+  auto slice_op_info = std::make_shared<pynative::SliceOpInfo>();
+  auto copy_op_info = std::make_shared<pynative::SliceOpInfo>();
+  auto deep_copied_tensor = std::make_shared<tensor::Tensor>(type_id, data_shape);
+  copy_op_info->slice_op_name = kCopyWithSliceOpName;
+  copy_op_info->data_indexs = {1, 0};
+  slice_op_info->slice_op_name = prim::kPrimExpandDims->name();
+  (void)slice_op_info->slice_index_inputs.emplace_back(std::make_shared<pynative::FastValue>(0));
+  (void)slice_op_info->data_indexs.emplace_back(py::int_(0));
+  auto slice_output = pynative::PyNativeExecutor::GetInstance()->RunSliceOpStub({data_value, deep_copied_tensor},
+                                                                                {copy_op_info, slice_op_info});
+  return py::make_tuple(py::none(), py::make_tuple(static_cast<int>(static_cast<int>(ValueTransferType::kJustReturn))),
+                        py::make_tuple(slice_output));
 }
 
 py::object TensorIndex::GetItemByNumber(const ShapeVector &data_shape, int64_t index) {
@@ -1799,9 +1789,9 @@ py::object TensorIndex::GetItemBySlice(const ValuePtr &data_value, const ShapeVe
 }
 
 py::object TensorIndex::GetItemIndexSimpleIndex(const py::object &py_index, const ValuePtr &data_value,
-                                                const ShapeVector &data_shape) {
+                                                const ShapeVector &data_shape, const TypeId &type_id) {
   if (py::isinstance<py::bool_>(py_index)) {
-    return TensorIndex::GetItemByBool(data_value, data_shape, TensorIndex(py_index).boolean());
+    return TensorIndex::GetItemByBool(data_value, data_shape, TensorIndex(py_index).boolean(), type_id);
   }
   if (data_value != nullptr && py::isinstance<py::int_>(py_index)) {
     return TensorIndex::GetItemByNumberWithView(data_value, data_shape, TensorIndex(py_index).integer());
@@ -1810,7 +1800,7 @@ py::object TensorIndex::GetItemIndexSimpleIndex(const py::object &py_index, cons
     return TensorIndex::GetItemBySlice(data_value, data_shape, TensorIndex(py_index));
   }
   if (py::isinstance<py::none>(py_index)) {
-    return TensorIndex::GetItemByBool(data_value, data_shape, 1);
+    return TensorIndex::GetItemByBool(data_value, data_shape, true, type_id);
   }
   return py::none();
 }
@@ -1849,6 +1839,8 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
                                          const py::bool_ &is_ascend) {
   ShapeVector data_shape;
   ValuePtr data_value;
+  TypeId type_id;
+
   if (IsStubTensor(py_data)) {
     auto value_info = GetStubTensorValue(py_data);
     MS_EXCEPTION_IF_NULL(value_info.first);
@@ -1856,14 +1848,15 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
 
-    const auto &type_id = GetStubAbsTypeId(abs);
+    type_id = GetStubAbsTypeId(abs);
     if (EnableView(value_info.second, type_id, is_ascend)) {
       data_value = value_info.first;
     }
   } else if (py::isinstance<Tensor>(py_data)) {
     auto tensor = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    if (EnableView(false, tensor->data_type(), is_ascend)) {
+    type_id = tensor->data_type();
+    if (EnableView(false, type_id, is_ascend)) {
       data_value = tensor;
     }
     data_shape = tensor->shape();
@@ -1871,7 +1864,7 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
     MS_EXCEPTION(TypeError) << "First input of Tensor index must be tensor but got " << py_data;
   }
 
-  const auto &simple_index_output = GetItemIndexSimpleIndex(py_index, data_value, data_shape);
+  const auto &simple_index_output = GetItemIndexSimpleIndex(py_index, data_value, data_shape, type_id);
   if (simple_index_output != py::none()) {
     return simple_index_output;
   }
@@ -1907,7 +1900,7 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
       break;
     }
     case TensorIndexType::Boolean: {
-      output = GetItemByBool(data_value, data_shape, index.boolean());
+      output = GetItemByBool(data_value, data_shape, index.boolean(), type_id);
       break;
     }
     case TensorIndexType::Ellipsis: {

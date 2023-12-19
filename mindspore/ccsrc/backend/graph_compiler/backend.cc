@@ -1225,10 +1225,9 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
-  if (old_storage_info->data_type == kTypeUnknown) {
-    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
-  }
-  auto type_id = old_storage_info->data_type;
+
+  // the type id should be granted from device address.
+  auto type_id = old_device_address->type_id();
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, address_size, Format::DEFAULT_FORMAT, type_id, old_storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);

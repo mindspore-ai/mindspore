@@ -335,13 +335,14 @@ class TensorIndex final {
   static bool GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
                                      const py::object &py_index, std::vector<int64_t> *data_transfer_types,
                                      std::vector<py::object> *data_transfer_args, const TypePtr &data_type);
-  static py::object GetItemByBool(const ValuePtr &data_value, const ShapeVector &data_shape, bool index);
+  static py::object GetItemByBool(const ValuePtr &data_value, const ShapeVector &data_shape, bool index,
+                                  const TypeId &type_id);
   static py::object GetItemByNumber(const ShapeVector &data_shape, int64_t index);
   static py::object GetItemByNumberWithView(const ValuePtr &data_value, const ShapeVector &data_shape, int64_t index);
   static py::object GetItemBySlice(const ValuePtr &data_value, const ShapeVector &data_shape,
                                    const TensorIndex &py_index);
   static py::object GetItemIndexSimpleIndex(const py::object &py_index, const ValuePtr &data_value,
-                                            const ShapeVector &data_shape);
+                                            const ShapeVector &data_shape, const TypeId &type_id);
   static py::object GetItemIndexInfo(const py::object &data, const py::object &index, const py::bool_ &is_ascend);
 
   static py::object SetItemByNumber(const ShapeVector &data_shape, const TypePtr &data_type, bool is_parameter,
