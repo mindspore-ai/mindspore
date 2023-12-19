@@ -43,8 +43,6 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
-from mindspore._c_expression import PackExpander
-from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision, PackFunc
 
 
 class Cell(Cell_):
@@ -666,9 +664,6 @@ class Cell(Cell_):
             bound_arguments.apply_defaults()
             args = bound_arguments.args
             kwargs = bound_arguments.kwargs
-
-        if PackFunc.is_tracing():
-            return self._run_tracefunc(*args, **kwargs)
 
         if hasattr(self, '_is_check_and_refresh') and not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
@@ -2518,22 +2513,6 @@ class Cell(Cell_):
                     raise ValueError(
                         f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
                         f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
-
-    def _run_tracefunc(self, *args, **kwargs):
-        """ Run Packed Cell in Pack."""
-        args = self._mixed_precision_cast(args)
-        need_subgraph = hasattr(self, "bprop") or hasattr(self, "_pipeline_stage") or self.get_flags()
-        if not PackFunc.current.is_pynative_mode and need_subgraph:
-            expander = PackExpander.get_instance()
-            args = expander.begin_subgraph(self, *args)
-            args = [_convert_tensor(a) for a in args]
-            output = self._run_construct(args, kwargs)
-            ret = expander.end_subgraph(self, output)
-            output = _convert_tensor(ret)
-        else:
-            with _SetMixedPrecision(self):
-                output = self._run_construct(args, kwargs)
-        return output
 
     def _mixed_precision_cast(self, inputs):
         mixed_type = self.get_mixed_precision_type()
