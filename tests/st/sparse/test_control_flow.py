@@ -25,7 +25,7 @@ from .sparse_utils import compare_csr, get_csr_tensor, csr_add, get_csr_componen
     forward_grad_net
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -103,7 +103,7 @@ def test_control_flow_while_if_continue_not_relevant_gt():
     assert isinstance(grad_graph[0], CSRTensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -141,7 +141,7 @@ def test_control_flow_for_while_return_in_while_no():
     assert isinstance(grad_graph[1], CSRTensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

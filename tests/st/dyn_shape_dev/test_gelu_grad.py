@@ -37,7 +37,7 @@ def gelu_grad_dyn_shape_func(dy, x, y):
     return ops.auto_generate.gelu_grad(dy, x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -59,7 +59,7 @@ def test_gelu_grad_forward(mode):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -93,7 +93,7 @@ def test_gelu_grad_dynamic(mode):
     assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -26,7 +26,7 @@ def cholesky_forward_func(x, upper):
     return P.Cholesky(upper)(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training

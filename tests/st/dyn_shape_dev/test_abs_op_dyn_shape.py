@@ -72,7 +72,7 @@ def abs_infervalue_func2():
     return ops.auto_generate.abs(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -132,7 +132,7 @@ def test_abs_vmap(mode):
     eltwise_case_vmap(abs_func, mode)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

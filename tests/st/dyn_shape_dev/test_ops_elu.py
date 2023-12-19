@@ -30,7 +30,7 @@ def elu_backward_func(x):
     return ops.grad(elu_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -50,7 +50,7 @@ def test_elu_forward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -70,7 +70,7 @@ def test_elu_backward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

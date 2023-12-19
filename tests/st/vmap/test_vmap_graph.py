@@ -471,7 +471,7 @@ def test_vmap_as_vmap_input():
     assert np.allclose(output.asnumpy(), expect_res.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

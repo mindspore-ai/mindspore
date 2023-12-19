@@ -42,7 +42,7 @@ def layer_norm_grad_dyn_shape_func(x, dy, variance, mean, gamma):
                                              begin_params_axis=1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -125,7 +125,7 @@ def test_layer_norm_grad_vmap(mode):
                        atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -30,7 +30,7 @@ def nllloss_grad_vmap_func(logits, loss_grad, labels, weight, total_weight):
                                                                                           weight, total_weight)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -87,7 +87,7 @@ def get_grad_inputs_and_output(nptype_input, nptype_weight, reduction, input_typ
     return inputs, outputs
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

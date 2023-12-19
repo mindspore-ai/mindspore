@@ -33,7 +33,7 @@ class SearchSortedNet(nn.Cell):
     def construct(self, sequence, values):
         return self.searchsorted(sequence, values)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_right_out32():
@@ -55,7 +55,7 @@ def test_right_out32():
     assert output.dtype == mstype.int32
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out32():
@@ -77,7 +77,7 @@ def test_out32():
     assert output.dtype == mstype.int32
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_right_out64():
@@ -96,7 +96,7 @@ def test_right_out64():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_out64():

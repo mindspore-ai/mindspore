@@ -50,7 +50,7 @@ def notequal_vmap_func(x, y):
     return ops.vmap(notequal_forward_func, in_axes=0, out_axes=0)(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -72,7 +72,7 @@ def test_notequal_op_forward(context_mode, data_type):
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -94,7 +94,7 @@ def test_notequal_op_infervalue(context_mode):
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -116,7 +116,7 @@ def test_notequal_op_backward(context_mode, data_type):
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

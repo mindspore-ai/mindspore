@@ -262,7 +262,7 @@ def test_dynamic_getitem_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -381,7 +381,7 @@ def test_dynamic_rank_getitem_slice():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -422,7 +422,7 @@ def test_dynamic_rank_getitem_with_single_basic_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -460,7 +460,7 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -497,7 +497,7 @@ def test_dynamic_rank_getitem_with_tensor_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -535,7 +535,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -570,7 +570,7 @@ def test_dynamic_rank_getitem_with_list_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -725,7 +725,7 @@ def test_dynamic_getitem_int_001():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -911,7 +911,7 @@ def test_dynamic_getitem_tuple_002():
     fact.grad_impl()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

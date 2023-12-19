@@ -28,7 +28,7 @@ def grid_sampler_3d_grad_forward_func(grad, input_x, grid):
     return grid_sampler_3d_grad
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -96,7 +96,7 @@ def test_grid_sampler_3d_grad_forward(mode):
     assert np.allclose(out[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

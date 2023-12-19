@@ -31,7 +31,7 @@ def prelu_backward_func(x, weight):
     return ops.grad(prelu_forward_func, (0, 1))(x, weight)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_prelu_forward(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

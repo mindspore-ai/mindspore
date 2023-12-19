@@ -30,7 +30,7 @@ def sqrt_grad_dyn_shape_func(dy, x):
     return ops.auto_generate.sqrt_grad(dy, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -52,7 +52,7 @@ def test_sqrt_grad_forward(mode):
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -77,7 +77,7 @@ def test_sqrt_grad_vmap(mode):
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -109,7 +109,7 @@ def test_sqrt_grad_dynamic(mode):
     assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

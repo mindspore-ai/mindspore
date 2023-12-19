@@ -153,7 +153,7 @@ def test_sequence_in_sequence():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -175,7 +175,7 @@ def test_all_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -197,7 +197,7 @@ def test_slice_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -260,7 +260,7 @@ def test_math_ceil_with_variable():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -382,7 +382,7 @@ def test_numpy_prod_with_variable_axis():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -406,7 +406,7 @@ def test_for_with_interpret_object():
 
 
 @pytest.mark.skip(reason="not support now")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

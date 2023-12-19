@@ -31,7 +31,7 @@ def softmax_backward_func(x):
     return ops.grad(softmax_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -54,7 +54,7 @@ def test_softmax_op(mode):
     assert np.allclose(output.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -73,7 +73,7 @@ def test_softmax_backward(mode):
     assert grads.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -98,7 +98,7 @@ def test_sofmax_vmap(mode):
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -180,7 +180,7 @@ def test_softmax_dynamic_backward_shape(mode):
 
 # 反向动态shape有公共问题，待解决后再放开用例
 @pytest.mark.skip
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

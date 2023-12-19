@@ -43,7 +43,7 @@ class MaxmumGradNet(Cell):
         return self.maximum_grad(x, y, dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_grad_random():

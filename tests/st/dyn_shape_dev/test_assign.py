@@ -66,7 +66,7 @@ def test_assign_forward_ascend(mode):
     output = assign_forward_func(variable, value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

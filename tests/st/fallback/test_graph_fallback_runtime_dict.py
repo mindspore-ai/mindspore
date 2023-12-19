@@ -253,7 +253,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -305,7 +305,7 @@ def test_net_dict_1():
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -584,7 +584,7 @@ def test_return_nested_dict_with_inputs():
     assert out == {'a': [x, y], 'b': (1, 2, {'a': 1})}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -888,7 +888,7 @@ def test_return_dict_with_dict_items():
     assert out == {'a': (x, y)}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -908,7 +908,7 @@ def test_return_dict_with_empty_shape_tensor():
     assert out['a'].shape == ()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -960,7 +960,7 @@ def test_return_different_size_dict_in_if_else():
         assert "Cannot join the return values of different branches, perhaps you need to make them equal." in str(e)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -982,7 +982,7 @@ def test_get_item_with_string_input():
     assert out == x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1004,7 +1004,7 @@ def test_get_item_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1025,7 +1025,7 @@ def test_return_dict_with_string_input():
     assert out == {"a": x}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1046,7 +1046,7 @@ def test_return_dict_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

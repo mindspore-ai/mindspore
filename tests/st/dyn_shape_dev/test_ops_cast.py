@@ -31,7 +31,7 @@ class Net(ms.nn.Cell):
         return self.Cast(x, self.dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -53,7 +53,7 @@ def test_cast_forward(mode):
     assert output.asnumpy().dtype == 'float64'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -74,7 +74,7 @@ def test_cast_backward(mode):
     assert np.allclose(grads.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

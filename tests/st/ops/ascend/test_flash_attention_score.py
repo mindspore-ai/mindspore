@@ -71,7 +71,7 @@ def test_flash_attention_score_fwd():
     assert softmax_sum.shape == (B, N, S, 8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_flash_attention_score_fwd_bwd():

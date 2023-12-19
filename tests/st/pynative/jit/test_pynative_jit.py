@@ -358,7 +358,7 @@ def test_pynative_jit_empty_graph():
     assert output.asnumpy() == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

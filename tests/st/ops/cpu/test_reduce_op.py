@@ -184,7 +184,7 @@ def test_reduce_all_onnx():
     os.remove(file)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce():
@@ -253,7 +253,7 @@ def test_reduce():
     assert (output[17].asnumpy() == 0.0).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce_logic():
@@ -290,7 +290,7 @@ def test_reduce_logic():
     assert (output[7].asnumpy() == expect_any_4).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce_prod():

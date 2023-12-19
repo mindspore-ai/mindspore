@@ -61,7 +61,7 @@ def forward_datas_prepare(shape, num=2, axis=0, diff_shapes=False, need_expect=T
     return tuple(tensor_inputs), np_expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -79,7 +79,7 @@ def test_concat_forward(mode):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -128,7 +128,7 @@ def test_concat_vmap(mode):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -164,7 +164,7 @@ def test_concat_forward_dynamic(mode, dyn_mode):
     assert np.allclose(out3.asnumpy(), expect3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -199,7 +199,7 @@ def test_concat_backward_dynamic(mode, dyn_mode):
         assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

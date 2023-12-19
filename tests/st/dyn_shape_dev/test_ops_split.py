@@ -35,7 +35,7 @@ def split_dyn_shape_func(x, axis=0, output_num=2):
     return ops.auto_generate.split_(x, axis, output_num)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_split_forward(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -77,7 +77,7 @@ def test_split_backward(mode):
     assert np.allclose(grads.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -100,7 +100,7 @@ def test_split_vmap(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -130,7 +130,7 @@ def test_split_dynamic(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

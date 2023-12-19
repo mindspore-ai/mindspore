@@ -20,7 +20,7 @@ from mindspore.ops import auto_generate as P
 from test_argmin import argmin_argmax_case, argmin_argmax_case_dyn, argmin_argmax_case_vmap
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -36,7 +36,7 @@ def test_argmax(mode):
     argmin_argmax_case(P.argmax_, np.argmax)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -52,7 +52,7 @@ def test_argmax_vmap(mode):
     argmin_argmax_case_vmap(P.argmax_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

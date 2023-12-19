@@ -95,7 +95,7 @@ def test_grad_fast_gelu_input_10240_1024():
     input_shape = [10240, 1024]
     fast_gelu_backward_cmp(input_shape)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_grad_fast_gelu_input_10240_1024_bf16():
