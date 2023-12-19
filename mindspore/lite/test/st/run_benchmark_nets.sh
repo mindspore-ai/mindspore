@@ -264,3 +264,12 @@ if [[ $backend == "all" || $backend == "mslite_large_model_inference_arm_ascend9
     exit 1
   fi
 fi
+
+if [[ $backend == "all" || $backend == "mslite_large_model_cloud_infer" ]]; then
+  sh $cur_path/scripts/ascend/run_large_models_cloud_infer.sh -r $release_path -m $models_path -e $backend -l $level
+  ascend_status=$?
+  if [[ ascend_status -ne 0 ]]; then
+    echo "Run ${backend} failed"
+    exit 1
+  fi
+fi

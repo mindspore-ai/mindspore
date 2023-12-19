@@ -248,6 +248,7 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/cmake/util/replay_codegen.py"              "bad-continuation"
 "mindspore/mindspore/lite/python/api/_checkparam.py"                                                     "len-as-condition"
 "mindspore/mindspore/lite/python/api/base_model.py"                                                      "len-as-condition"
+"mindspore/mindspore/lite/test/st/python/test_large_model_inference.py"                                  "redefined-outer-name"
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "wrong-import-order"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "wrong-import-order"
