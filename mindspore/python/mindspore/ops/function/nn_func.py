@@ -5787,7 +5787,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
 
     .. warning::
-        - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+        - For Atlas 200/300/500 inference product,
+          the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Note:
         - If `training` is `False`, `weight`, `bias`, `running_mean` and `running_var` are Tensors.

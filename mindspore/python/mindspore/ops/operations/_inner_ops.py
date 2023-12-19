@@ -74,7 +74,7 @@ class Quant(PrimitiveWithInfer):
         y = round(scale * x * scale + offset)
 
     Note:
-        This operation only support Ascend 310 inference environment.
+        This operation only support Atlas 200/300/500 inference product.
 
     Args:
         scale (float) : Specifies the scaling ratio.
@@ -186,7 +186,7 @@ class Dequant(PrimitiveWithInfer):
         y = x * deq\_scale * deq\_scale
 
     Note:
-        This operation only support Ascend 310 inference environment.
+        This operation only support Atlas 200/300/500 inference product.
 
     Args:
         sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
@@ -2639,7 +2639,7 @@ class ApplyCamePart1(Primitive):
     Compute Part 1 of the CAME Optimizer
 
     Note:
-    Is only supported on Ascend910B
+    Is only supported on Atlas A2 training series
     grad current on support 2D
 
     .. math::
@@ -2686,7 +2686,7 @@ class ApplyCamePart2(Primitive):
     Compute Part 2 of the CAME Optimizer
 
     Note:
-    Is only supported on Ascend910B
+    Is only supported on Atlas A2 training series
     grad current on support 2D
 
     .. math::
@@ -2757,7 +2757,7 @@ class ApplyCamePart3(Primitive):
     Compute Part 3 of the CAME Optimizer
 
     Note:
-    Is only supported on Ascend910B
+    Is only supported on Atlas A2 training series
 
     .. math::
 
@@ -2821,7 +2821,7 @@ class ApplyCamePart4(Primitive):
     Compute Part 4 of the CAME Optimizer
 
     Note:
-    Is only supported on Ascend910B
+    Is only supported on Atlas A2 training series
     grad current on support 2D
 
     .. math::
