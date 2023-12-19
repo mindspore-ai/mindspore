@@ -133,6 +133,23 @@ std::string ShapeVectorToStr(const std::vector<T> &shape) {
 }
 
 template <typename T>
+std::string VectorToStr(const std::vector<T> &list, std::function<std::string(const T &)> func) {
+  if (func == nullptr) {
+    return "";
+  }
+  std::ostringstream s_str;
+  s_str << "[";
+  for (size_t i = 0; i < list.size(); i++) {
+    s_str << func(list[i]);
+    if (i + 1 < list.size()) {
+      s_str << ", ";
+    }
+  }
+  s_str << "]";
+  return s_str.str();
+}
+
+template <typename T>
 bool CommonCheckTensorType(const std::vector<T *> &tensors, size_t index, TypeId input_type) {
   if (tensors.at(index) == nullptr) {
     MS_LOG(ERROR) << "Tensors index: " << index << " is a nullptr";

@@ -62,6 +62,9 @@ class LLMEnginePluginBase {
   virtual Status ReleasePromptPrefix(const LLMReq &req) = 0;
   virtual Status PullKV(const LLMReq &req) = 0;
   virtual Status MergeKV(const LLMReq &req, uint32_t batch_index) = 0;
+
+  virtual Status LinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) = 0;
+  virtual Status UnlinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) = 0;
 };
 
 extern "C" MS_API LLMEnginePluginBase *CreateLLMEnginePlugin();
