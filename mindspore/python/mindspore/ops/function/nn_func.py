@@ -836,6 +836,8 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
         >>> print(output[1].asnumpy())
         [[[[33 35]]]]
     """
+    if isinstance(output_size, int):
+        output_size = (output_size, output_size, output_size)
     adaptive_max_pool3d_ = _get_cache_prim(NN_OPS.AdaptiveMaxPool3D)()
     output_size_ = Tensor(output_size, dtype=mstype.int32)
     out = adaptive_max_pool3d_(input, output_size_)
