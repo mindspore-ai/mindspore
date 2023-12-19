@@ -844,15 +844,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Get the item at the specified index of the tensor.
 
-        Note:
-            Tensor.item returns a Tensor scalar instead of a Python scalar. And if the tensor is a Tensor scalar,
-            Tensor.item will return the numpy.ndarray.
-
         Args:
             index (Union[None, int, tuple(int)]): The index in Tensor. Default: ``None``.
 
         Returns:
-            A Tensor scalar, dtype is the same with the original Tensor.
+            A scalar, type is defined by the dtype of the Tensor.
 
         Raises:
             ValueError: If the length of the `index` is not equal to self.ndim.
