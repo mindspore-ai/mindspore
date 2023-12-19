@@ -17,7 +17,6 @@ from __future__ import absolute_import, division
 
 import numpy as np
 
-from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.common.api import jit
@@ -1023,10 +1022,7 @@ class AdamWeightDecay(Optimizer):
         self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
         self.fused_opt = P.AdamWeightDecay()
-        if context.get_context("device_target") == "Ascend":
-            self.use_fused_opt = False
-        else:
-            self.use_fused_opt = True
+        self.use_fused_opt = True
 
     @jit
     def construct(self, gradients):
