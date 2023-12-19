@@ -57,8 +57,7 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
 }
 
 bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  const auto &outputs =
-    common::AnfAlgo::GetAllOutputIndexByReturnTypes(func_graph->output(), {prim::kPrimTupleGetItem});
+  const auto &outputs = common::AnfAlgo::GetAllOutputIndexByReturnTypes(func_graph->output());
   return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) { return output.first == node; }) !=
          outputs.end();
 }
